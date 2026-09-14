@@ -387,9 +387,6 @@ func TestStoreHashedGarageSlotWritesObjectAndIndexesGarageRow(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
 	}
-	if url, ok := client.URLForFile(context.Background(), "/anything.png"); ok {
-		t.Fatalf("URLForFile on a non-local slot = %q", url)
-	}
 }
 
 func TestStoreHashedSkipsLocalStatForGarageRows(t *testing.T) {

@@ -14,7 +14,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 	_ "modernc.org/sqlite"
 )
 
@@ -26,7 +25,6 @@ func Run(ctx context.Context) {
 	logStartupInfo(mainLogger)
 	redisClient := initRedis(ctx, mainLogger)
 	app := createFiberApp(mainLogger)
-	drawingCacheService := initDrawingCacheIfConfigured(ctx, mainLogger, app)
 	usersClient := initUsers(ctx, mainLogger)
 	banChecker := accountdata.NewBanService(usersClient)
 	banChecker.SetReadOnly(harukiConfig.Cfg.Node.ReadOnly)
@@ -67,9 +65,6 @@ func Run(ctx context.Context) {
 	defer closeClients(redisClient, censorService, usersClient, chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
 	if botRouteDispatchers != nil {
 		defer botRouteDispatchers.Close()
-	}
-	if drawingCacheService != nil {
-		defer func() { _ = drawingCacheService.Close() }()
 	}
 	if renderRuntime != nil {
 		defer func() { _ = renderRuntime.Close() }()

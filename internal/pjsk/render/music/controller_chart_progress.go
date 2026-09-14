@@ -50,13 +50,23 @@ func (c *Controller) RenderMusicChart(query ChartQuery) ([]byte, error) {
 }
 
 func (c *Controller) RenderMusicChartRequest(payload *drawing.GenerateMusicChartRequest) ([]byte, error) {
+	image, err := c.RenderMusicChartRequestImage(payload)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+// RenderMusicChartRequestImage renders a chart through the normal render cache
+// path, so an artifact-mode chart comes back as a ref instead of bytes.
+func (c *Controller) RenderMusicChartRequestImage(payload *drawing.GenerateMusicChartRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	if payload == nil {
-		return nil, fmt.Errorf("music chart payload is required")
+		return drawing.ImageResult{}, fmt.Errorf("music chart payload is required")
 	}
-	return c.drawing.GenerateMusicChart(payload)
+	return c.drawing.GenerateMusicChartImage(payload)
 }
 
 func (c *Controller) BuildMusicProgressRequest(query ProgressQuery) (*drawing.PlayProgressRequest, error) {

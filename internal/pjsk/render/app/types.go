@@ -54,9 +54,6 @@ type Config struct {
 	// DrawingArtifact enables Drawing artifact mode; nil Objects/Hosts are
 	// filled from Stores.ImageCache / ImageHosts.
 	DrawingArtifact     drawing.ArtifactConfig
-	ImageCacheURI       string
-	ChartsBaseURL       string
-	ImageCacheDir       string
 	ImageCachePGURL     string // PostgreSQL DSN for image cache deduplication (optional)
 	ImageCachePGMaxOpen int    // image cache index pool bound; <= 0 selects the default (8)
 	// ImageCacheRenderIndexDDL runs the render index DDL at index Init.
@@ -72,7 +69,6 @@ type Config struct {
 	CensorService            *censor.Service
 	AssetPrimaryDir          string
 	AssetLegacyDirs          []string
-	AssetsBaseURL            string // CDN base URL for direct asset serving; skips imagecache for region assets
 	LocalMasterdata          LocalMasterdataConfig
 	SekaiDBType              string
 	SekaiDSN                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files

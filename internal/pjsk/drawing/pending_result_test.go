@@ -5,32 +5,15 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 )
 
-func TestPendingRenderReusedUntilStoreCompletes(t *testing.T) {
-	entered, release := make(chan struct{}), make(chan struct{})
-	var unblock sync.Once
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
-			w.WriteHeader(404)
-			return
-		}
-		close(entered)
-		<-release
-		w.WriteHeader(200)
-	}))
-	defer server.Close()
-	client := NewRenderCacheClient(RenderCacheConfig{BaseURL: server.URL, StorageDir: t.TempDir(), TTL: time.Hour})
-	defer client.waitForPendingStores()
-	defer unblock.Do(func() { close(release) })
+func TestPendingRenderReusedAndIsolated(t *testing.T) {
+	client := newIndexClient(t, &fakeRenderIndex{})
 	var renders atomic.Int32
 	render := func(context.Context) ([]byte, error) { renders.Add(1); return []byte("original image"), nil }
 	policy := renderCachePolicy{APIPath: "api/pjsk/profile", UserID: "public", TTL: time.Hour}
@@ -38,11 +21,6 @@ func TestPendingRenderReusedUntilStoreCompletes(t *testing.T) {
 	first, err := client.renderRemoteFlight(t.Context(), "/api/pjsk/profile", key, policy, render)
 	if err != nil {
 		t.Fatal(err)
-	}
-	select {
-	case <-entered:
-	case <-time.After(5 * time.Second):
-		t.Fatal("store not started")
 	}
 	first[0] = 'X'
 	for range 10 {
@@ -53,11 +31,6 @@ func TestPendingRenderReusedUntilStoreCompletes(t *testing.T) {
 	}
 	if renders.Load() != 1 {
 		t.Fatalf("renders=%d want 1", renders.Load())
-	}
-	unblock.Do(func() { close(release) })
-	client.waitForPendingStores()
-	if _, hit := client.pending.get(key); hit {
-		t.Fatal("successful store must retire pending result")
 	}
 }
 
@@ -87,17 +60,8 @@ func TestPendingRenderLimitsExpiryAndGeneration(t *testing.T) {
 	}
 }
 
-func TestPendingRenderSurvivesStoreFailureUntilExpiry(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
-			w.WriteHeader(404)
-		} else {
-			w.WriteHeader(500)
-		}
-	}))
-	defer server.Close()
-	client := NewRenderCacheClient(RenderCacheConfig{BaseURL: server.URL, StorageDir: t.TempDir(), TTL: time.Hour})
-	defer client.waitForPendingStores()
+func TestPendingRenderRetriesAfterExpiry(t *testing.T) {
+	client := newIndexClient(t, &fakeRenderIndex{})
 	var renders atomic.Int32
 	render := func(context.Context) ([]byte, error) { renders.Add(1); return []byte("image"), nil }
 	key := strings.Repeat("b", 64)
@@ -106,10 +70,9 @@ func TestPendingRenderSurvivesStoreFailureUntilExpiry(t *testing.T) {
 		if _, err := client.renderRemoteFlight(t.Context(), "/api/pjsk/card/list", key, policy, render); err != nil {
 			t.Fatal(err)
 		}
-		client.waitForPendingStores()
 	}
 	if renders.Load() != 1 {
-		t.Fatalf("failed store caused immediate rerender: %d", renders.Load())
+		t.Fatalf("pending image not reused: %d", renders.Load())
 	}
 	client.pending.mu.Lock()
 	client.pending.entries[key].expiresAt = time.Now().Add(-time.Second)
@@ -125,12 +88,12 @@ func TestPendingRenderSurvivesStoreFailureUntilExpiry(t *testing.T) {
 func TestPendingRefReusedUntilIndexed(t *testing.T) {
 	key := strings.Repeat("4", 64)
 	index := &fakeRenderIndex{}
-	client := newIndexClient(t, index, "")
+	client := newIndexClient(t, index)
 	ref := testRef(t, "cn09")
 	ref.IndexWritten = false
 	var renders atomic.Int32
 	for range 3 {
-		image, err := client.renderRemoteImageFlight(artifactCtx(t), "/api/pjsk/card/list", key, testIndexPolicy, artifactRender(t, ref, &renders), false)
+		image, err := client.renderRemoteImageFlight(artifactCtx(t), "/api/pjsk/card/list", key, testIndexPolicy, artifactRender(t, ref, &renders))
 		if err != nil || image.Ref() != ref {
 			t.Fatalf("image=%+v err=%v", image, err)
 		}
@@ -146,7 +109,7 @@ func TestPendingRefReusedUntilIndexed(t *testing.T) {
 	ttl := time.Until(entry.expiresAt)
 	size := entry.size
 	client.pending.mu.Unlock()
-	if ttl <= pendingRenderCacheTTL || ttl > pendingRenderCacheTTLIndex {
+	if ttl <= 30*time.Second || ttl > pendingRenderCacheTTLIndex {
 		t.Fatalf("pending ref ttl = %v", ttl)
 	}
 	if size != int64(len(ref.CDNPath)+pendingRefBaseBytes) {
@@ -155,39 +118,25 @@ func TestPendingRefReusedUntilIndexed(t *testing.T) {
 }
 
 func TestPendingBytesKeptOnDegradedInIndexMode(t *testing.T) {
-	legacy, _, posts := countingLegacyServer(t, nil)
-	for name, legacyURL := range map[string]string{"legacy store": legacy.URL, "index only": ""} {
-		t.Run(name, func(t *testing.T) {
-			posts.Store(0)
-			key := strings.Repeat("5", 64)
-			client := newIndexClient(t, &fakeRenderIndex{}, legacyURL)
-			var renders atomic.Int32
-			render := func(ctx context.Context) ([]byte, error) {
-				renders.Add(1)
-				if d, ok := directiveFrom(ctx); ok {
-					d.outcome.Degraded = true
-				}
-				return []byte("degraded"), nil
-			}
-			policy := renderCachePolicy{APIPath: "api/pjsk/card/list", UserID: "public", TTL: 10 * time.Second}
-			for range 2 {
-				data, err := client.renderRemoteFlight(artifactCtx(t), "/api/pjsk/card/list", key, policy, render)
-				if err != nil || string(data) != "degraded" {
-					t.Fatalf("data=%q err=%v", data, err)
-				}
-			}
-			client.waitForPendingStores()
-			if renders.Load() != 1 {
-				t.Fatalf("degraded bytes not pending: renders=%d", renders.Load())
-			}
-			wantPosts := int32(0)
-			if legacyURL != "" {
-				wantPosts = 1
-			}
-			if posts.Load() != wantPosts {
-				t.Fatalf("storeAsync posts=%d want %d", posts.Load(), wantPosts)
-			}
-		})
+	key := strings.Repeat("5", 64)
+	client := newIndexClient(t, &fakeRenderIndex{})
+	var renders atomic.Int32
+	render := func(ctx context.Context) ([]byte, error) {
+		renders.Add(1)
+		if d, ok := directiveFrom(ctx); ok {
+			d.outcome.Degraded = true
+		}
+		return []byte("degraded"), nil
+	}
+	policy := renderCachePolicy{APIPath: "api/pjsk/card/list", UserID: "public", TTL: 10 * time.Second}
+	for range 2 {
+		data, err := client.renderRemoteFlight(artifactCtx(t), "/api/pjsk/card/list", key, policy, render)
+		if err != nil || string(data) != "degraded" {
+			t.Fatalf("data=%q err=%v", data, err)
+		}
+	}
+	if renders.Load() != 1 {
+		t.Fatalf("degraded bytes not pending: renders=%d", renders.Load())
 	}
 }
 

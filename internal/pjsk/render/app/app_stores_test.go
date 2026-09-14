@@ -46,16 +46,7 @@ func TestNormalizeAppConfigZeroStores(t *testing.T) {
 	}
 }
 
-func TestNormalizeAppConfigDerivesSingleHosts(t *testing.T) {
-	cfg := Config{MetaLoader: meta.NewLoader(nil), ImageCacheURI: "https://ic.example/", AssetsBaseURL: "https://assets.example"}
-	normalizeAppConfig(&cfg)
-	if cfg.ImageHosts.Len() != 1 || cfg.ImageHosts.Base("") != "https://ic.example" {
-		t.Fatalf("image hosts = %v", cfg.ImageHosts.Hosts())
-	}
-	if cfg.AssetHosts.Len() != 1 || cfg.AssetHosts.Base("") != "https://assets.example" {
-		t.Fatalf("asset hosts = %v", cfg.AssetHosts.Hosts())
-	}
-
+func TestNormalizeAppConfigDefaultsHostSets(t *testing.T) {
 	empty := Config{MetaLoader: meta.NewLoader(nil)}
 	normalizeAppConfig(&empty)
 	if empty.ImageHosts == nil || empty.ImageHosts.Len() != 0 || empty.AssetHosts == nil || empty.AssetHosts.Len() != 0 {
@@ -66,7 +57,7 @@ func TestNormalizeAppConfigDerivesSingleHosts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	kept := Config{MetaLoader: meta.NewLoader(nil), AssetsBaseURL: "https://legacy.example", AssetHosts: explicit}
+	kept := Config{MetaLoader: meta.NewLoader(nil), AssetHosts: explicit}
 	normalizeAppConfig(&kept)
 	if kept.AssetHosts != explicit {
 		t.Fatal("configured asset hosts were replaced")

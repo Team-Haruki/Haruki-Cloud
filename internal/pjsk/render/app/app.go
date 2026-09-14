@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -306,10 +305,10 @@ func normalizeAppConfig(cfg *Config) context.Context {
 	cfg.DefaultRegion = renderregion.WithDefault(cfg.DefaultRegion)
 	cfg.Stores = cfg.Stores.Normalized()
 	if cfg.ImageHosts == nil {
-		cfg.ImageHosts = urlhost.Single(cfg.ImageCacheURI)
+		cfg.ImageHosts = urlhost.Single("")
 	}
 	if cfg.AssetHosts == nil {
-		cfg.AssetHosts = urlhost.Single(cfg.AssetsBaseURL)
+		cfg.AssetHosts = urlhost.Single("")
 	}
 	initCtx := cfg.InitContext
 	if initCtx == nil {
@@ -351,11 +350,6 @@ func newAppDrawingClient(initCtx context.Context, cfg Config) (*drawing.HarukiDr
 		MaxOpen: cfg.ImageCachePGMaxOpen, RenderIndexDDL: cfg.ImageCacheRenderIndexDDL,
 	})
 	cacheConfig := cfg.DrawingCache
-	cacheConfig.ImageCacheDir = cfg.ImageCacheDir
-	// Typed-nil guard: only a non-nil pointer reaches the config.
-	if imageStore != nil {
-		cacheConfig.ImageStore = imageStore
-	}
 	configureRenderIndex(initCtx, &cacheConfig, imageStore, cfg)
 	client := drawing.NewHarukiDrawingClientWithTargetsAndResources(
 		cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, appDrawingOptions(cfg)...,
@@ -443,15 +437,13 @@ func openAppImageStoreWith(initCtx context.Context, dsn string, opts imagecache.
 	return store, nil
 }
 
-// newAppImageCache builds the image cache client on the image_cache slot. A
-// config without the slot falls back to a local store on ImageCacheDir, as
-// before the storage slots existed. Nothing configured at all keeps the
-// client nil silently; a half-configured client (hosts without objects or the
+// newAppImageCache builds the image cache client on the image_cache slot.
+// Nothing configured at all keeps the client nil silently; a half-configured client (hosts without objects or the
 // reverse) is logged at ERROR instead of being dropped silently.
 func newAppImageCache(initCtx context.Context, cfg Config, index *imagecache.PGStore) *imagecache.Client {
 	objects, localRoot := cfg.Stores.ImageCache, strings.TrimSpace(cfg.ImageCacheLocalRoot)
-	if objects == nil || objects == storage.Disabled() {
-		objects, localRoot = legacyImageCacheStore(cfg.ImageCacheDir)
+	if objects == storage.Disabled() {
+		objects, localRoot = nil, ""
 	}
 	hostsConfigured := cfg.ImageHosts.Len() > 0
 	if !hostsConfigured && objects == nil {
@@ -465,21 +457,6 @@ func newAppImageCache(initCtx context.Context, cfg Config, index *imagecache.PGS
 		return nil
 	}
 	return client
-}
-
-func legacyImageCacheStore(dir string) (storage.Store, string) {
-	if strings.TrimSpace(dir) == "" {
-		return nil, ""
-	}
-	root, err := filepath.Abs(strings.TrimSpace(dir))
-	if err != nil {
-		return nil, ""
-	}
-	store, err := storage.NewLocal(root, 0)
-	if err != nil {
-		return nil, ""
-	}
-	return store, root
 }
 
 func appMasterdataDirs(cfg Config) (bool, string, string) {

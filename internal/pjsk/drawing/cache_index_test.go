@@ -3,17 +3,12 @@ package drawing
 import (
 	"context"
 	"errors"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/storage/storagetest"
 	"haruki-cloud/utils/imagecache"
 )
@@ -73,46 +68,17 @@ func indexEntry(key string, expiresAt time.Time) imagecache.RenderIndexEntry {
 
 var testIndexPolicy = renderCachePolicy{APIPath: "api/pjsk/card/list", UserID: "public", TTL: time.Hour}
 
-func newIndexClient(t *testing.T, index RenderIndex, legacyURL string) *RenderCacheClient {
+func newIndexClient(t *testing.T, index RenderIndex) *RenderCacheClient {
 	t.Helper()
 	objects := storagetest.NewMemory()
 	objects.Seed(map[string][]byte{testIndexCDNPath: []byte("stored")})
 	cfg := RenderCacheConfig{TTL: time.Hour, Index: index, Artifacts: objects, TouchInterval: time.Minute}
-	if legacyURL != "" {
-		cfg.BaseURL, cfg.StorageDir = legacyURL, t.TempDir()
-	}
 	client := NewRenderCacheClient(cfg)
 	if client == nil {
 		t.Fatal("index-mode client not constructed")
 	}
 	t.Cleanup(func() { _ = client.Close() })
 	return client
-}
-
-func countingLegacyServer(t *testing.T, filePath func() string) (*httptest.Server, *atomic.Int32, *atomic.Int32) {
-	t.Helper()
-	var gets, posts atomic.Int32
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
-			gets.Add(1)
-			path := ""
-			if filePath != nil {
-				path = filePath()
-			}
-			if path == "" {
-				w.WriteHeader(http.StatusNotFound)
-				return
-			}
-			raw, _ := json.Marshal(map[string]string{"file_path": path})
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write(raw)
-			return
-		}
-		posts.Add(1)
-		w.WriteHeader(http.StatusOK)
-	}))
-	t.Cleanup(server.Close)
-	return server, &gets, &posts
 }
 
 func failRender(t *testing.T) func(context.Context) ([]byte, error) {
@@ -131,21 +97,17 @@ func TestNewRenderCacheClientIndexModeEnableCondition(t *testing.T) {
 		t.Fatal("zero TTL enabled the cache")
 	}
 	client := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, Index: &fakeRenderIndex{}})
-	if client == nil || !client.indexMode() || client.legacyConfigured() || client.fetcher == nil {
+	if client == nil || !client.indexMode() || client.fetcher == nil || client.indexWriter == nil {
 		t.Fatalf("index-only client = %+v", client)
 	}
 	if err := client.Close(); err != nil {
 		t.Fatal(err)
 	}
-	legacy := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, BaseURL: "http://x", StorageDir: t.TempDir()})
-	if legacy == nil || legacy.indexMode() || legacy.indexWriter != nil {
-		t.Fatalf("legacy client = %+v", legacy)
-	}
-	if err := legacy.Close(); err != nil {
-		t.Fatal(err)
+	if NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour}) != nil {
+		t.Fatal("a client without an index was constructed")
 	}
 	var nilClient *RenderCacheClient
-	if nilClient.Close() != nil || nilClient.indexMode() || nilClient.legacyConfigured() {
+	if nilClient.Close() != nil || nilClient.indexMode() {
 		t.Fatal("nil client not inert")
 	}
 }
@@ -153,10 +115,9 @@ func TestNewRenderCacheClientIndexModeEnableCondition(t *testing.T) {
 func TestIndexLookupHitServesRefAndTouches(t *testing.T) {
 	key := strings.Repeat("a", 64)
 	index := &fakeRenderIndex{entries: map[string]imagecache.RenderIndexEntry{key: indexEntry(key, time.Now().Add(time.Hour))}}
-	legacy, gets, _ := countingLegacyServer(t, nil)
-	client := newIndexClient(t, index, legacy.URL)
+	client := newIndexClient(t, index)
 	for range 3 {
-		image, err := client.renderRemoteImageFlight(t.Context(), "/api/pjsk/card/list", key, testIndexPolicy, failRender(t), false)
+		image, err := client.renderRemoteImageFlight(t.Context(), "/api/pjsk/card/list", key, testIndexPolicy, failRender(t))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -168,9 +129,6 @@ func TestIndexLookupHitServesRefAndTouches(t *testing.T) {
 			t.Fatalf("bytes = %q, %v", data, err)
 		}
 	}
-	if gets.Load() != 0 {
-		t.Fatalf("index hit consulted the legacy lookup %d times", gets.Load())
-	}
 	_ = client.Close()
 	_, touched, deleted := index.calls()
 	if len(touched) != 1 || len(touched[0]) != 1 || touched[0][0] != key || len(deleted) != 0 {
@@ -181,7 +139,7 @@ func TestIndexLookupHitServesRefAndTouches(t *testing.T) {
 func TestIndexLookupInfiniteRowHasNoExpiry(t *testing.T) {
 	key := strings.Repeat("d", 64)
 	index := &fakeRenderIndex{entries: map[string]imagecache.RenderIndexEntry{key: indexEntry(key, time.Time{})}}
-	client := newIndexClient(t, index, "")
+	client := newIndexClient(t, index)
 	image, hit := client.lookupIndexContext(t.Context(), key)
 	if !hit || image.Ref().ExpiresAt != nil {
 		t.Fatalf("infinite row = %+v hit=%v", image.Ref(), hit)
@@ -191,7 +149,7 @@ func TestIndexLookupInfiniteRowHasNoExpiry(t *testing.T) {
 func TestIndexLookupExpiredRowRendersAndDeletes(t *testing.T) {
 	key := strings.Repeat("e", 64)
 	index := &fakeRenderIndex{entries: map[string]imagecache.RenderIndexEntry{key: indexEntry(key, time.Now().Add(-time.Second))}}
-	client := newIndexClient(t, index, "")
+	client := newIndexClient(t, index)
 	var renders atomic.Int32
 	render := func(context.Context) ([]byte, error) { renders.Add(1); return []byte("fresh"), nil }
 	data, err := client.renderRemoteFlight(t.Context(), "/api/pjsk/card/list", key, testIndexPolicy, render)
@@ -208,7 +166,7 @@ func TestIndexLookupExpiredRowRendersAndDeletes(t *testing.T) {
 func TestIndexLookupErrorAndUnusableRowAreMisses(t *testing.T) {
 	key := strings.Repeat("f", 64)
 	index := &fakeRenderIndex{lookupErr: errors.New("pg down")}
-	client := newIndexClient(t, index, "")
+	client := newIndexClient(t, index)
 	for range 2 {
 		if _, hit := client.lookupIndexContext(t.Context(), key); hit {
 			t.Fatal("lookup error served a hit")
@@ -220,33 +178,15 @@ func TestIndexLookupErrorAndUnusableRowAreMisses(t *testing.T) {
 	bad := indexEntry(key, time.Time{})
 	bad.Entry.CDNPath = "../escape.png"
 	index = &fakeRenderIndex{entries: map[string]imagecache.RenderIndexEntry{key: bad}}
-	client = newIndexClient(t, index, "")
+	client = newIndexClient(t, index)
 	if _, hit := client.lookupIndexContext(t.Context(), key); hit {
 		t.Fatal("unusable cdn_path served a hit")
 	}
 }
 
-func TestIndexMissFallsBackToLegacyLookup(t *testing.T) {
-	key := strings.Repeat("1", 64)
-	var cachedPath string
-	legacy, gets, _ := countingLegacyServer(t, func() string { return cachedPath })
-	client := newIndexClient(t, &fakeRenderIndex{}, legacy.URL)
-	cachedPath = filepath.Join(client.storageDir, "old.png")
-	if err := os.WriteFile(cachedPath, []byte("legacy"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	image, err := client.renderRemoteImageFlight(t.Context(), "/api/pjsk/card/list", key, testIndexPolicy, failRender(t), false)
-	if err != nil || image.FilePath() == "" || image.Ref() != nil || gets.Load() != 1 {
-		t.Fatalf("image=%+v err=%v gets=%d", image, err, gets.Load())
-	}
-	if data, err := image.Bytes(t.Context()); err != nil || string(data) != "legacy" {
-		t.Fatalf("bytes = %q, %v", data, err)
-	}
-}
-
-func TestIndexModeWithoutLegacySkipsLegacyLookupAndStore(t *testing.T) {
+func TestIndexMissRendersOnceAndReusesPendingBytes(t *testing.T) {
 	key := strings.Repeat("2", 64)
-	client := newIndexClient(t, &fakeRenderIndex{}, "")
+	client := newIndexClient(t, &fakeRenderIndex{})
 	var renders atomic.Int32
 	render := func(context.Context) ([]byte, error) { renders.Add(1); return []byte("bytes"), nil }
 	for range 2 {
@@ -254,7 +194,6 @@ func TestIndexModeWithoutLegacySkipsLegacyLookupAndStore(t *testing.T) {
 			t.Fatalf("data=%q err=%v", data, err)
 		}
 	}
-	client.waitForPendingStores()
 	if renders.Load() != 1 {
 		t.Fatalf("pending bytes not reused: renders=%d", renders.Load())
 	}
@@ -278,8 +217,7 @@ func artifactCtx(t *testing.T) context.Context {
 	return context.WithValue(t.Context(), artifactModeCtxKey{}, newArtifactSettings(ArtifactConfig{Endpoints: []string{"*"}}))
 }
 
-func TestIndexModeRefSkipsStoreAsync(t *testing.T) {
-	legacy, _, posts := countingLegacyServer(t, nil)
+func TestIndexModeRefPendingUntilIndexed(t *testing.T) {
 	for _, written := range []bool{true, false} {
 		key := strings.Repeat("3", 63)
 		if written {
@@ -287,17 +225,13 @@ func TestIndexModeRefSkipsStoreAsync(t *testing.T) {
 		} else {
 			key += "b"
 		}
-		client := newIndexClient(t, &fakeRenderIndex{}, legacy.URL)
+		client := newIndexClient(t, &fakeRenderIndex{})
 		ref := testRef(t, "cn09")
 		ref.IndexWritten = written
 		var renders atomic.Int32
-		image, err := client.renderRemoteImageFlight(artifactCtx(t), "/api/pjsk/card/list", key, testIndexPolicy, artifactRender(t, ref, &renders), false)
-		if err != nil || image.Ref() != ref || image.FilePath() != "" {
+		image, err := client.renderRemoteImageFlight(artifactCtx(t), "/api/pjsk/card/list", key, testIndexPolicy, artifactRender(t, ref, &renders))
+		if err != nil || image.Ref() != ref {
 			t.Fatalf("image=%+v err=%v", image, err)
-		}
-		client.waitForPendingStores()
-		if posts.Load() != 0 {
-			t.Fatalf("ref result reached storeAsync (%d posts)", posts.Load())
 		}
 		_, pendingRef, pending := client.pending.lookupEntry(key)
 		if written && pending {
@@ -315,7 +249,7 @@ func TestIndexModeRefSkipsStoreAsync(t *testing.T) {
 func TestImageArtifactAndEscapedCDNPath(t *testing.T) {
 	ref := &ArtifactRef{CDNPath: "pjsk/api/a b/ü.png"}
 	image := ImageArtifact(ref)
-	if image.Ref() != ref || image.FilePath() != "" {
+	if image.Ref() != ref {
 		t.Fatalf("image = %+v", image)
 	}
 	if _, err := image.Bytes(t.Context()); !errors.Is(err, ErrArtifactBytesUnavailable) {
@@ -331,10 +265,10 @@ func TestImageArtifactAndEscapedCDNPath(t *testing.T) {
 }
 
 func TestIndexModeRenderErrorPropagates(t *testing.T) {
-	client := newIndexClient(t, &fakeRenderIndex{}, "")
+	client := newIndexClient(t, &fakeRenderIndex{})
 	want := errors.New("drawing down")
 	_, err := client.renderRemoteImageFlight(t.Context(), "/api/pjsk/card/list", strings.Repeat("6", 64), testIndexPolicy,
-		func(context.Context) ([]byte, error) { return nil, want }, false)
+		func(context.Context) ([]byte, error) { return nil, want })
 	if !errors.Is(err, want) {
 		t.Fatalf("err = %v", err)
 	}

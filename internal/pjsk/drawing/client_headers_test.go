@@ -32,25 +32,12 @@ type artifactDrawingServer struct {
 	mu      sync.Mutex
 	shape   drawingResponseShape
 	headers map[string]http.Header
-	stores  int
 }
 
 func newArtifactDrawingServer(t *testing.T) *artifactDrawingServer {
 	t.Helper()
 	s := &artifactDrawingServer{shape: shapePNG, headers: map[string]http.Header{}}
 	s.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/cache" {
-			if r.Method == http.MethodGet {
-				http.Error(w, `{"error":"miss"}`, http.StatusNotFound)
-				return
-			}
-			s.mu.Lock()
-			s.stores++
-			s.mu.Unlock()
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"ok":true}`))
-			return
-		}
 		s.mu.Lock()
 		s.headers[r.URL.Path] = r.Header.Clone()
 		shape := s.shape
@@ -107,13 +94,15 @@ func harukiHeaders(header http.Header) map[string]string {
 	return out
 }
 
-func newArtifactTestClient(t *testing.T, server *artifactDrawingServer, cfg ArtifactConfig) (*HarukiDrawingClient, *RenderCacheClient) {
+// newArtifactTestClient wires an index-mode render cache whose index always
+// misses, so every call renders through Drawing.
+func newArtifactTestClient(t *testing.T, server *artifactDrawingServer, cfg ArtifactConfig) *HarukiDrawingClient {
 	t.Helper()
 	client := NewHarukiDrawingClient(server.URL, WithArtifactConfig(cfg))
-	cache := NewRenderCacheClient(RenderCacheConfig{BaseURL: server.URL, StorageDir: t.TempDir(), TTL: time.Hour})
+	cache := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, Index: &fakeRenderIndex{}, Artifacts: cfg.Objects})
 	client.SetRenderCache(cache)
-	t.Cleanup(cache.waitForPendingStores)
-	return client.WithContext(context.Background()), cache
+	t.Cleanup(func() { _ = cache.Close() })
+	return client.WithContext(context.Background())
 }
 
 func requireFullDirective(t *testing.T, headers map[string]string, store, ttl, version, apiPath string) {
@@ -137,7 +126,7 @@ func requireFullDirective(t *testing.T, headers map[string]string, store, ttl, v
 
 func TestArtifactHeadersOnCachedAllowListedRequest(t *testing.T) {
 	server := newArtifactDrawingServer(t)
-	client, _ := newArtifactTestClient(t, server, ArtifactConfig{Endpoints: []string{"api/pjsk/card/box", "api/pjsk/event/list"}})
+	client := newArtifactTestClient(t, server, ArtifactConfig{Endpoints: []string{"api/pjsk/card/box", "api/pjsk/event/list"}})
 	data, err := client.GenerateCardBox(&CardBoxRequest{})
 	if err != nil || string(data) != "plain-png" {
 		t.Fatalf("card box = %q, %v", data, err)
@@ -163,7 +152,7 @@ func TestArtifactHeadersOnCachedAllowListedRequest(t *testing.T) {
 
 func TestArtifactHeadersImageEndpointAndInfiniteTTL(t *testing.T) {
 	server := newArtifactDrawingServer(t)
-	client, _ := newArtifactTestClient(t, server, ArtifactConfig{Endpoints: []string{"*"}})
+	client := newArtifactTestClient(t, server, ArtifactConfig{Endpoints: []string{"*"}})
 	image, err := client.GenerateCardBoxImage(&CardBoxRequest{})
 	if err != nil {
 		t.Fatal(err)
@@ -186,7 +175,7 @@ func TestArtifactHeadersImageEndpointAndInfiniteTTL(t *testing.T) {
 
 func TestArtifactHeadersAbsentWithEmptyAllowList(t *testing.T) {
 	server := newArtifactDrawingServer(t)
-	client, _ := newArtifactTestClient(t, server, ArtifactConfig{})
+	client := newArtifactTestClient(t, server, ArtifactConfig{})
 	server.setShape(shapeDegraded)
 	calls := map[string]func() ([]byte, error){
 		"/api/pjsk/card/box":        func() ([]byte, error) { return client.GenerateCardBox(&CardBoxRequest{}) },
@@ -241,7 +230,7 @@ func TestArtifactHeadersOnUncachedCallSites(t *testing.T) {
 	}
 }
 
-func TestArtifactRefOnCachedPathResolvesBytesAndKeepsStore(t *testing.T) {
+func TestArtifactRefOnCachedPathResolvesBytes(t *testing.T) {
 	server := newArtifactDrawingServer(t)
 	objects := storagetest.NewMemory()
 	ref, err := parseArtifactRef([]byte(testArtifactRefJSON(nil)))
@@ -249,18 +238,11 @@ func TestArtifactRefOnCachedPathResolvesBytesAndKeepsStore(t *testing.T) {
 		t.Fatal(err)
 	}
 	objects.Seed(map[string][]byte{ref.CDNPath: []byte("stored-artifact")})
-	client, cache := newArtifactTestClient(t, server, ArtifactConfig{Endpoints: []string{"api/pjsk/card/box"}, Objects: objects})
+	client := newArtifactTestClient(t, server, ArtifactConfig{Endpoints: []string{"api/pjsk/card/box"}, Objects: objects})
 	server.setShape(shapeRef)
 	data, err := client.GenerateCardBox(&CardBoxRequest{})
 	if err != nil || string(data) != "stored-artifact" {
 		t.Fatalf("card box via ref = %q, %v", data, err)
-	}
-	cache.waitForPendingStores()
-	server.mu.Lock()
-	stores := server.stores
-	server.mu.Unlock()
-	if stores != 1 {
-		t.Fatalf("write-behind stores = %d, want 1 (byte path kept)", stores)
 	}
 
 	server.setShape(shapeBadJSON)
@@ -274,7 +256,7 @@ func TestArtifactRefOnCachedPathResolvesBytesAndKeepsStore(t *testing.T) {
 
 func TestArtifactRefOnCachedPathFailsWhenBytesUnavailable(t *testing.T) {
 	server := newArtifactDrawingServer(t)
-	client, _ := newArtifactTestClient(t, server, ArtifactConfig{Endpoints: []string{"api/pjsk/card/box"}})
+	client := newArtifactTestClient(t, server, ArtifactConfig{Endpoints: []string{"api/pjsk/card/box"}})
 	server.setShape(shapeRef)
 	if _, err := client.GenerateCardBox(&CardBoxRequest{}); !errors.Is(err, ErrArtifactBytesUnavailable) {
 		t.Fatalf("err = %v", err)

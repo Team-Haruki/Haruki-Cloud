@@ -418,14 +418,8 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_TIMEOUT", &cfg.PJSKRender.DrawingTimeout)
 	envInt("HARUKI_PJSK_RENDER_DRAWING_RETRY_COUNT", &cfg.PJSKRender.DrawingRetryCount)
 	envStr("CACHE_STORAGE_DIR", &cfg.PJSKRender.DrawingCache.StorageDir)
-	envStr("CACHE_DB_PATH", &cfg.PJSKRender.DrawingCache.DBPath)
-	envDuration("CACHE_GC_INTERVAL", &cfg.PJSKRender.DrawingCache.GCInterval)
-	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_BASE_URL", &cfg.PJSKRender.DrawingCache.BaseURL)
 	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_STORAGE_DIR", &cfg.PJSKRender.DrawingCache.StorageDir)
-	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_DB_PATH", &cfg.PJSKRender.DrawingCache.DBPath)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_TTL", &cfg.PJSKRender.DrawingCache.TTL)
-	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_GC_INTERVAL", &cfg.PJSKRender.DrawingCache.GCInterval)
-	envBool("HARUKI_PJSK_RENDER_DRAWING_CACHE_REQUIRE_AUTH", &cfg.PJSKRender.DrawingCache.RequireAuth)
 	envInt("HARUKI_PJSK_RENDER_DRAWING_SK_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingSKMaxConcurrency)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_SK_ACQUIRE_TIMEOUT", &cfg.PJSKRender.DrawingSKAcquireTimeout)
 	envInt("HARUKI_PJSK_RENDER_DRAWING_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingMaxConcurrency)
@@ -436,7 +430,6 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ARTIFACT_TIMEOUT", &cfg.PJSKRender.DrawingArtifact.ArtifactTimeout)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_URI", &cfg.PJSKRender.ImageCache.URI)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR", &cfg.PJSKRender.ImageCache.Dir)
-	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", &cfg.PJSKRender.ImageCache.ChartsURI)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
 	envInt("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_MAX_OPEN", &cfg.PJSKRender.ImageCache.PGMaxOpen)
 	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_REQUIRE_PG", &cfg.PJSKRender.ImageCache.RenderIndex.RequirePG)
@@ -605,23 +598,17 @@ type DeckRecommendConfig struct {
 	DefaultAlgs               []string                `yaml:"default_algs"`
 }
 
+// RenderCacheConfig is pjsk_render.drawing_cache. The SQLite /cache service
+// and its keys (base_url, db_path, gc_interval, require_auth) are gone; TTL is
+// the render cache fallback TTL and StorageDir only seeds the legacy
+// derivation of the cache storage slot.
 type RenderCacheConfig struct {
-	BaseURL    string        `yaml:"base_url"`
 	StorageDir string        `yaml:"storage_dir"`
 	TTL        time.Duration `yaml:"ttl"`
-	DBPath     string        `yaml:"db_path"`
-	GCInterval time.Duration `yaml:"gc_interval"`
-	// RequireAuth, when true, gates the /cache and /cache/stats routes behind the
-	// internal API authorization (VerifyAPIAuthorization). Defaults to false to
-	// preserve current behavior; enable ONLY after remote consumers (e.g. the
-	// cache-proxy / secondary nodes) are updated to send the internal token,
-	// otherwise they will get 401.
-	RequireAuth bool `yaml:"require_auth"`
 }
 
 type ImageCacheConfig struct {
 	URI       string `yaml:"uri"`
-	ChartsURI string `yaml:"charts_uri"`
 	Dir       string `yaml:"dir"`
 	PGURL     string `yaml:"pg_url"`      // PostgreSQL DSN for deduplication store (optional)
 	PGMaxOpen int    `yaml:"pg_max_open"` // index pool bound; 0 = default (8)

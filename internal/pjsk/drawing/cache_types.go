@@ -4,13 +4,11 @@ import (
 	"container/list"
 	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/storage"
-	"haruki-cloud/utils/imagecache"
 	neturl "net/url"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/go-resty/resty/v2"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -40,13 +38,9 @@ type localRenderEntry struct {
 }
 
 type RenderCacheConfig struct {
-	BaseURL       string
-	StorageDir    string
-	TTL           time.Duration
-	ImageCacheDir string
-	ImageStore    *imagecache.PGStore
-	// Index enables index mode: lookups read render_cache_index. Assign it
-	// only from a non-nil pointer (typed nils are ignored anyway).
+	TTL time.Duration
+	// Index is the render_cache_index reader; the client is disabled without
+	// it. Assign it only from a non-nil pointer (typed nils are ignored anyway).
 	Index RenderIndex
 	// Artifacts is the image_cache slot used to read a ref's bytes back.
 	Artifacts storage.Store
@@ -59,36 +53,15 @@ type RenderCacheConfig struct {
 }
 
 type RenderCacheClient struct {
-	http          *resty.Client
-	baseURL       string
-	storageDir    string
-	ttl           time.Duration
-	imageCacheDir string
-	imageStore    *imagecache.PGStore
-	// index is non-nil in index mode; indexWriter batches its touches and
-	// expired-row deletes, fetcher reads ref bytes back.
+	ttl time.Duration
+	// index is always set; indexWriter batches its touches and expired-row
+	// deletes, fetcher reads ref bytes back.
 	index       RenderIndex
 	indexWriter *renderIndexWriter
 	indexErrLog atomic.Int64
 	fetcher     *artifactFetcher
 	flight      singleflight.Group
-	readFlight  singleflight.Group
 	pending     *localRenderCache
-	// storeSlots bounds concurrent write-behind cache stores; storeWG lets
-	// tests (and future shutdown hooks) wait for pending stores to drain.
-	storeSlots chan struct{}
-	storeWG    sync.WaitGroup
-}
-
-type renderCacheRecord struct {
-	Key       string `json:"key"`
-	FilePath  string `json:"file_path"`
-	CreatedAt string `json:"created_at"`
-	ExpiresAt string `json:"expires_at"`
-}
-
-type renderCacheAPIError struct {
-	Error string `json:"error"`
 }
 
 type renderCacheEndpoint struct {

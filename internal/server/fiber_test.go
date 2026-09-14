@@ -37,9 +37,6 @@ func TestRequestBodyLimitForPath(t *testing.T) {
 		{path: "/api/v2/bot/66666666/pjsk/profile/settings", want: botCommandRequestBodyLimit},
 		{path: "/internal/subscription-events/mysekai-birthday", want: birthdayEventRequestBodyLimit},
 		{path: "/internal/subscription-events/mysekai-birthday/", want: birthdayEventRequestBodyLimit},
-		{path: "/cache", want: cacheControlRequestBodyLimit},
-		{path: "/cache/", want: cacheControlRequestBodyLimit},
-		{path: "/cache/stats", want: cacheControlRequestBodyLimit},
 	}
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {

@@ -3,27 +3,20 @@ package drawing
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"haruki-cloud/internal/observability/commandtrace"
 )
 
-// ImageResult keeps a cached file lazy until a caller actually needs its bytes.
-// File paths are validated against the render cache root before being exposed.
+// ImageResult is a rendered image: its bytes, or an artifact ref whose bytes
+// are read back only when a caller actually needs them.
 type ImageResult struct {
-	data     []byte
-	filePath string
-	ref      *ArtifactRef
-	fetcher  *artifactFetcher
-	cache    *RenderCacheClient
-	fallback func(context.Context) ([]byte, error)
+	data    []byte
+	ref     *ArtifactRef
+	fetcher *artifactFetcher
 }
 
 func ImageBytes(data []byte) ImageResult { return ImageResult{data: data} }
-
-func (r ImageResult) FilePath() string { return r.filePath }
 
 // ImageArtifact wraps a ref without a byte reader: URL emission works, Bytes
 // reports ErrArtifactBytesUnavailable.
@@ -42,43 +35,7 @@ func (r ImageResult) Bytes(ctx context.Context) ([]byte, error) {
 	if r.ref != nil && r.data == nil {
 		return r.fetcher.fetch(ctx, r.ref)
 	}
-	if r.filePath == "" {
-		return r.data, nil
-	}
-	data, err := r.cache.readSharedImage(ctx, r.filePath)
-	if err != nil && r.fallback != nil {
-		return r.fallback(ctx)
-	}
-	return data, err
-}
-
-func (c *RenderCacheClient) cachedFile(candidate string) (ImageResult, error) {
-	resolved, err := resolveContainedCacheFile(c.storageDir, candidate)
-	if err != nil {
-		return ImageResult{}, err
-	}
-	info, err := os.Stat(resolved)
-	if err != nil {
-		return ImageResult{}, err
-	}
-	if !info.Mode().IsRegular() || info.Size() < 0 || info.Size() > drawingMaxResponseBytes {
-		return ImageResult{}, fmt.Errorf("invalid render cache image file")
-	}
-	root, err := filepath.Abs(c.storageDir)
-	if err != nil {
-		return ImageResult{}, err
-	}
-	realRoot, err := filepath.EvalSymlinks(root)
-	if err != nil {
-		return ImageResult{}, err
-	}
-	relative, err := filepath.Rel(realRoot, resolved)
-	if err != nil {
-		return ImageResult{}, err
-	}
-	// Pin the validated target while retaining the configured root's namespace
-	// for cache reads and CDN paths when the root itself is a symlink.
-	return ImageResult{filePath: filepath.Join(root, relative), cache: c}, nil
+	return r.data, nil
 }
 
 func (c *RenderCacheClient) RenderImageSharedContext(ctx context.Context, endpoint string, request any, render func(context.Context) ([]byte, error)) (ImageResult, error) {
@@ -94,7 +51,7 @@ func (c *RenderCacheClient) RenderImageSharedContext(ctx context.Context, endpoi
 		data, err := render(ctx)
 		return ImageBytes(data), err
 	}
-	return c.renderRemoteImageFlight(ctx, endpoint, key, policy, render, false)
+	return c.renderRemoteImageFlight(ctx, endpoint, key, policy, render)
 }
 
 func (c *HarukiDrawingClient) cachedPostImage(endpoint string, body any) (ImageResult, error) {
@@ -122,20 +79,4 @@ func (c *HarukiDrawingClient) cachedPostImage(endpoint string, body any) (ImageR
 	}
 	data, err := render(ctx)
 	return ImageBytes(data), err
-}
-
-func (c *RenderCacheClient) readSharedImage(ctx context.Context, path string) ([]byte, error) {
-	finish := commandtrace.MeasureOperation(ctx, "drawing.cache_read_wait")
-	defer finish()
-	caller := new(renderFlightToken)
-	result := c.readFlight.DoChan(path, func() (any, error) {
-		completed := runSharedRenderFlight(ctx, func(sharedCtx context.Context) ([]byte, error) {
-			finish := commandtrace.MeasureOperation(sharedCtx, "drawing.cache_read")
-			defer finish()
-			return c.readCacheFile(path)
-		})
-		completed.leader = caller
-		return completed, nil
-	})
-	return waitForRenderFlight(ctx, result, caller, "file")
 }

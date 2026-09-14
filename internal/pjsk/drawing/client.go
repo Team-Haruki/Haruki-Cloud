@@ -751,3 +751,7 @@ func (c *HarukiDrawingClient) GenerateDetailMusicRewardsImage(req *DetailMusicRe
 func (c *HarukiDrawingClient) GeneratePlayProgressImage(req *PlayProgressRequest) (ImageResult, error) {
 	return c.cachedPostImage("/api/pjsk/music/progress", req)
 }
+
+func (c *HarukiDrawingClient) GenerateMusicChartImage(req *GenerateMusicChartRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/chart", req)
+}

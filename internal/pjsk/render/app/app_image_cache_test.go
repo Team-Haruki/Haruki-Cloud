@@ -3,8 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -43,30 +41,6 @@ func TestNewAppImageCacheOnSlot(t *testing.T) {
 	}
 }
 
-func TestNewAppImageCacheLegacyDirFallback(t *testing.T) {
-	ctx := context.Background()
-	dir := t.TempDir()
-	cfg := Config{Stores: storage.Set{}.Normalized(), ImageCacheDir: dir, ImageHosts: urlhost.Single("https://ic.example/")}
-	client := newAppImageCache(ctx, cfg, nil)
-	if client == nil {
-		t.Fatal("legacy dir image cache not built")
-	}
-	url, err := client.StoreAndGetURL(ctx, []byte("legacy image"), "pjsk")
-	if err != nil {
-		t.Fatal(err)
-	}
-	name := url[strings.LastIndex(url, "/")+1:]
-	if url != "https://ic.example/pjsk/"+name {
-		t.Fatalf("url = %q", url)
-	}
-	if _, err := os.Stat(filepath.Join(dir, "pjsk", name)); err != nil {
-		t.Fatalf("legacy file not written: %v", err)
-	}
-	if got, ok := client.URLForFile(ctx, filepath.Join(dir, "pjsk", name)); !ok || got != url {
-		t.Fatalf("URLForFile() = %q, %v", got, ok)
-	}
-}
-
 func TestNewAppImageCacheUnconfiguredAndPartial(t *testing.T) {
 	ctx := context.Background()
 	if client := newAppImageCache(ctx, Config{Stores: storage.Set{}.Normalized(), ImageHosts: urlhost.Single("")}, nil); client != nil {
@@ -77,9 +51,6 @@ func TestNewAppImageCacheUnconfiguredAndPartial(t *testing.T) {
 	}
 	if client := newAppImageCache(ctx, Config{Stores: storage.Set{ImageCache: storagetest.NewMemory()}.Normalized(), ImageHosts: urlhost.Single("")}, nil); client != nil {
 		t.Fatal("objects without hosts built a client")
-	}
-	if store, root := legacyImageCacheStore("  "); store != nil || root != "" {
-		t.Fatalf("blank legacy dir = %v, %q", store, root)
 	}
 }
 

@@ -166,13 +166,8 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			ArtifactTimeout: harukiConfig.Cfg.PJSKRender.DrawingArtifact.ArtifactTimeout,
 		},
 		DrawingCache: drawing.RenderCacheConfig{
-			BaseURL:    harukiConfig.Cfg.PJSKRender.DrawingCache.BaseURL,
-			StorageDir: harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir,
-			TTL:        harukiConfig.Cfg.PJSKRender.DrawingCache.TTL,
+			TTL: harukiConfig.Cfg.PJSKRender.DrawingCache.TTL,
 		},
-		ImageCacheURI:                      harukiConfig.Cfg.PJSKRender.ImageCache.URI,
-		ChartsBaseURL:                      harukiConfig.Cfg.PJSKRender.ImageCache.ChartsURI,
-		ImageCacheDir:                      harukiConfig.Cfg.PJSKRender.ImageCache.Dir,
 		ImageCachePGURL:                    harukiConfig.Cfg.PJSKRender.ImageCache.PGURL,
 		ImageCachePGMaxOpen:                harukiConfig.Cfg.PJSKRender.ImageCache.PGMaxOpen,
 		ImageCacheRenderIndexDDL:           harukiConfig.Cfg.PJSKRender.ImageCache.RenderIndex.DDLEnabled,
@@ -181,7 +176,6 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		ImageCacheLocalRoot:                imageCacheLocalRoot,
 		AssetPrimaryDir:                    harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
 		AssetLegacyDirs:                    harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
-		AssetsBaseURL:                      harukiConfig.Cfg.PJSKRender.AssetDirs.AssetsBaseURL,
 		LocalMasterdata: renderapp.LocalMasterdataConfig{
 			Enabled:         harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,
 			AllowFallback:   harukiConfig.Cfg.PJSKRender.LocalMasterdata.AllowFallback,

@@ -31,7 +31,7 @@ func TestImageResultRefBytesStoreHit(t *testing.T) {
 	objects := storagetest.NewMemory()
 	objects.Seed(map[string][]byte{ref.CDNPath: []byte("from-store")})
 	result := ImageResult{ref: ref, fetcher: newArtifactFetcher(objects, nil, time.Second)}
-	if result.Ref() != ref || result.FilePath() != "" {
+	if result.Ref() != ref {
 		t.Fatalf("result = %+v", result)
 	}
 	data, err := result.Bytes(t.Context())

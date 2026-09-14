@@ -5,11 +5,7 @@ package drawing
 import (
 	"context"
 	"errors"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
+	"haruki-cloud/utils/imagecache"
 	"testing"
 	"time"
 
@@ -42,11 +38,7 @@ func TestRenderCacheFallbackContexts(t *testing.T) {
 		t.Fatalf("nil-client fallback = %q, called=%v, err=%v", data, called, err)
 	}
 
-	client := NewRenderCacheClient(RenderCacheConfig{
-		BaseURL:    "http://127.0.0.1:1",
-		StorageDir: t.TempDir(),
-		TTL:        time.Minute,
-	})
+	client := newIndexClient(t, &fakeRenderIndex{})
 	data, err = client.RenderSharedContext(nil, "/api/pjsk/event/detail", nil, func(ctx context.Context) ([]byte, error) {
 		if ctx == nil {
 			t.Fatal("configured client did not supply a fallback context")
@@ -96,29 +88,15 @@ func assertRenderFlightError(t *testing.T, completed singleflight.Result, expect
 }
 
 func TestRenderRemoteFlightWorkHitAndRenderFailure(t *testing.T) {
-	storageDir := t.TempDir()
-	cachePath := filepath.Join(storageDir, "cached.png")
-	if err := os.WriteFile(cachePath, []byte("cached"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Query().Get("key") == "hit" {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = fmt.Fprintf(w, `{"file_path":%q}`, cachePath)
-			return
-		}
-		http.NotFound(w, r)
-	}))
-	defer server.Close()
-
-	client := NewRenderCacheClient(RenderCacheConfig{BaseURL: server.URL, StorageDir: storageDir, TTL: time.Minute})
+	index := &fakeRenderIndex{entries: map[string]imagecache.RenderIndexEntry{"hit": indexEntry("hit", time.Now().Add(time.Hour))}}
+	client := newIndexClient(t, index)
 	policy := renderCachePolicy{APIPath: "api/pjsk/profile", TTL: time.Minute}
 	rendered := false
 	data, err := client.renderRemoteFlightWork(context.Background(), "/api/pjsk/profile", "hit", policy, func(context.Context) ([]byte, error) {
 		rendered = true
 		return nil, nil
 	})
-	if err != nil || rendered || string(data) != "cached" {
+	if err != nil || rendered || string(data) != "stored" {
 		t.Fatalf("cache hit = %q, rendered=%v, err=%v", data, rendered, err)
 	}
 
@@ -127,15 +105,5 @@ func TestRenderRemoteFlightWorkHitAndRenderFailure(t *testing.T) {
 		return nil, sentinel
 	}); !errors.Is(err, sentinel) {
 		t.Fatalf("render failure = %v", err)
-	}
-}
-
-func TestRenderCacheStoreAsyncDropsSaturatedWork(t *testing.T) {
-	client := &RenderCacheClient{storeSlots: make(chan struct{}, 1)}
-	client.storeSlots <- struct{}{}
-	client.storeAsync(context.Background(), "/api/pjsk/profile", "key", "api/pjsk/profile", "public", []byte("image"), time.Minute, false)
-	client.waitForPendingStores()
-	if len(client.storeSlots) != 1 {
-		t.Fatalf("saturated slot count = %d", len(client.storeSlots))
 	}
 }

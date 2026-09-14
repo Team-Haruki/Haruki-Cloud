@@ -7,8 +7,9 @@
 >    五个固定槽位 `assets` / `user_upload` / `static` / `cache` / `image_cache`）与
 >    `internal/core/urlhost`（按 Drawing 节点选择公开 image-cache / assets 主机）。
 > 2. 渲染缓存索引迁往 PostgreSQL（`image_cache_entries` + `render_cache_index`）；Drawing 以
->    ArtifactRef 回传已上传的对象，Cloud 只输出 URL。`internal/cache/drawingcache` 仍保留至
->    门控删除任务，见 `docs/storage-migration.cn.md`。
+>    ArtifactRef 回传已上传的对象，Cloud 只输出 URL。旧的 `internal/cache/drawingcache`（SQLite +
+>    `/cache` API）、Cloud 侧渲染缓存写入与谱面静态缓存已在门控删除任务（T16）中移除，见
+>    `docs/storage-migration.cn.md`。
 > 3. 新增图片缓存 GC（`image_cache.gc_*`，默认关闭、开启后默认 dry-run）与 `/ic/*` 301 开关
 >    （`image_cache.legacy_redirect.enabled`）。
 >
@@ -21,7 +22,7 @@
 > 3. `BotCommandRequest` 新增可选字段 `event_time`/`event_id`（事件时间去重）与
 >    `timestamp`/`nonce`（Noise 通道重放保护，默认强制校验；仅
 >    `haruki_bot.allow_requests_without_nonce=true` 时放宽）。
-> 4. `internal/` 新增 `cache/drawingcache`（绘图缓存，Phase-2 后为待删除的旧写入路径）、`cluster`（节点只读模式）、
+> 4. `internal/` 新增 `cache/drawingcache`（绘图缓存，已于 2026-09 Phase-2 T16 删除）、`cluster`（节点只读模式）、
 >    `jsonutil`、`observability/commandtrace`、`core/upstream`；`internal/pjsk/`
 >    新增 `filteralias`、`subscription`；render 新增 `costume`、`inventory` 模块。
 >
@@ -85,7 +86,6 @@ Haruki-Cloud/
 │       └── pjsk/                 #     Bot 指令端点（由 handler registry 动态注册）→ /api/v2/bot/:botId/pjsk/*
 │
 ├── internal/                     # ── 内部业务逻辑（不对外暴露） ──
-│   ├── cache/drawingcache/       #   旧绘图缓存（SQLite + 本地目录 + /cache API），门控删除前保留
 │   ├── cluster/                  #   集群节点角色 / 只读模式（config.Cfg.Node）
 │   ├── core/crypto/              #   Noise NK 协议加密工具（含多 key 密钥环）
 │   ├── core/urlhost/             #   按节点选择公开主机（image_cache.hosts / assets_base_urls）
@@ -477,13 +477,13 @@ Bot 客户端
 
 **索引与对象。** 渲染索引在 PostgreSQL：`image_cache_entries`（按内容 hash 去重，记录 `cdn_path`、`storage_backend`（`garage` / `legacy_disk`）、`media_type`、`last_referenced_at`）与 `render_cache_index`（`request_key` → `content_hash`，带 `ttl_seconds` / `expires_at`）。DDL 只由 Cloud 执行（`image_cache.render_index.ddl_enabled`），Drawing 只 INSERT/SELECT。对象存放在 `image_cache` 槽位（生产为 Garage 的 `image-cache` 桶，`root=""`）；Drawing 写入 `pjsk/api/<api_path>/<sha256>.<ext>`，Cloud 自己的 `StoreAndGetURL` 写入 `pjsk/<sha256>.<ext>`，两者共用同一表与桶。只针对 Drawing 产物的运维工具必须使用前缀 `pjsk/api/`。
 
-**请求路径。** `drawing_artifact.endpoints` 白名单内的端点发送完整 C13 指令头（`X-Haruki-Artifact: 1`、`X-Haruki-Cache-Key`、`-Key-Version`、`-TTL`、`-Group`、`-Api-Path`、`-User-Id`、`-Store`）；Drawing 返回 ArtifactRef（含 `node_name`），Cloud 用 `urlhost` 优先选该节点的公开主机输出 URL，不读取图片字节。Drawing 仍可能返回 `image/*` 字节（`Cache-Store: 0`、写入降级、未升级的 Drawing），这是永久分支。`render_index.lookup_enabled` 打开后命中直接来自 PG，命中续期（`TouchRender`）按 `touch_interval` 限流。未进入白名单的端点仍走旧的 `drawingcache` 写入路径，直到门控删除任务。
+**请求路径。** `drawing_artifact.endpoints` 白名单内的端点发送完整 C13 指令头（`X-Haruki-Artifact: 1`、`X-Haruki-Cache-Key`、`-Key-Version`、`-TTL`、`-Group`、`-Api-Path`、`-User-Id`、`-Store`）；Drawing 返回 ArtifactRef（含 `node_name`），Cloud 用 `urlhost` 优先选该节点的公开主机输出 URL，不读取图片字节。Drawing 仍可能返回 `image/*` 字节（`Cache-Store: 0`、写入降级、未升级的 Drawing），这是永久分支。`render_index.lookup_enabled` 打开后命中直接来自 PG，命中续期（`TouchRender`）按 `touch_interval` 限流。Cloud 不再持久化渲染字节：未进入白名单的端点（以及上述字节分支）只进入进程内暂存缓存，没有索引行即视为未命中；`/cache`、`/cache/stats` 与 SQLite 绘图缓存均已删除。谱面（`/api/pjsk/chart`）不再使用 `image_cache.charts_uri` 静态缓存，而是走同一渲染路径，渲染规则 TTL 为 7 天（该规则只影响 TTL，不改变缓存键）。
 
 **GC（C6）。** `utils/imagecache.GC` 由 `internal/server/run.go` 以运行上下文启动：`image_cache.gc_enabled` 默认关闭，开启后 `gc_dry_run` 默认开启（只执行 SELECT，按阶段输出计数与最多 10 个样本）。每个周期先重试上轮未删除成功的对象，然后阶段 1 删除 `expires_at IS NOT NULL AND expires_at < now()` 的 `render_cache_index` 行（`expires_at IS NULL` 的永久行永不回收）；阶段 2 选出 `storage_backend = 'garage'`、无任何 `render_cache_index` 引用且 `last_referenced_at` 早于 `gc_object_retention_days`（默认 30 天）的 `image_cache_entries` 行，**先删行（删除语句重新套用全部条件）、再按记录的 `cdn_path` 原样删对象**；删对象前（含重试）若发现已有行重新记录同一 `cdn_path`（内容寻址 key 被重新写入），放弃删除并计入 `SkippedLiveObjectDeletes`。Cloud 在 `garage` 行去重命中（每 hash 每小时最多一次）与插入冲突时更新 `last_referenced_at`。`image_cache_entries.expires_at` 不参与判断；`legacy_disk` 行永不回收。行已删除但对象删除失败计为 `ObjectLeaks`，放入内存中的待删列表（上限 10 000）在下个周期重试。每个周期输出一行汇总。外键不带级联，误删仍被引用的行会直接失败。
 
 **旧路由 `/ic/*`（E3）。** 默认仍由 `static.New(image_cache.dir)` 原样提供文件；`image_cache.legacy_redirect.enabled` 且配置了图片主机时改为 301 到同一 key 的主机 URL（非法 key 返回 404，重定向本身 `Cache-Control: public, max-age=86400`）。开启后至少保留 30 天。
 
-**旧字节路径。** 非 Artifact 端点的持久缓存命中仍可返回 `ImageResult`，只有字节消费者调用 `Bytes(ctx)` 时才读取图片；异步持久化前的暂存缓存最多 128 项、64 MiB，有效期不超过 30 秒与业务 TTL。`internal/cache/drawingcache.Service` 负责这条旧路径的命中续期、SQLite GC 与停机刷写，随门控删除任务一起移除。
+**字节与暂存。** 渲染缓存只在 `render_index.lookup_enabled` 打开且索引可用时启用；`ImageResult` 要么携带字节，要么携带 ArtifactRef（只有字节消费者调用 `Bytes(ctx)` 时才从 `image_cache` 槽位或主机读回）。索引行出现前的暂存缓存最多 128 项、64 MiB，有效期不超过 120 秒与业务 TTL。
 
 绘图缓存键准备对已规范化请求一次完成复制和字段清理，忽略字段的子树不参与复制；保留的 map/slice 与渲染请求分离，允许后续渲染准备修改原请求。标准 JSON 子树使用与 hashstructure FormatV2 相同的 FNV-1、数值表示和集合/序列组合规则直接计算哈希，特殊类型回退到原实现；外围键结构和版本保持不变，已有持久缓存键继续兼容。请求 JSON 规范化和时间/时区处理仍沿用原入口。
 

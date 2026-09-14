@@ -351,32 +351,15 @@ func TestApplyEnvOverridesSekaiRemoteSync(t *testing.T) {
 
 }
 
-func TestApplyEnvOverridesPJSKRenderChartsURI(t *testing.T) {
-	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts")
-
-	cfg := &Config{}
-	ApplyEnvOverrides(cfg)
-	testutil.Require(t, !(cfg.PJSKRender.ImageCache.ChartsURI != "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts"), "unexpected charts uri override: %q", cfg.PJSKRender.ImageCache.ChartsURI)
-
-}
-
 func TestApplyEnvOverridesDrawingCache(t *testing.T) {
 	t.Setenv("CACHE_STORAGE_DIR", "/legacy/cache")
-	t.Setenv("CACHE_DB_PATH", "/legacy/cache/cache.db")
-	t.Setenv("CACHE_GC_INTERVAL", "12h")
-	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_BASE_URL", "http://haruki-cloud:6666")
 	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_STORAGE_DIR", "/data/drawing-cache")
-	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_DB_PATH", "/data/drawing-cache/cache.db")
 	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_TTL", "10m")
-	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_GC_INTERVAL", "24h")
 
 	cfg := &Config{}
 	ApplyEnvOverrides(cfg)
-	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.BaseURL != "http://haruki-cloud:6666"), "unexpected drawing cache base url: %q", cfg.PJSKRender.DrawingCache.BaseURL)
 	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.StorageDir != "/data/drawing-cache"), "unexpected drawing cache storage dir: %q", cfg.PJSKRender.DrawingCache.StorageDir)
-	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.DBPath != "/data/drawing-cache/cache.db"), "unexpected drawing cache db path: %q", cfg.PJSKRender.DrawingCache.DBPath)
 	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.TTL != 10*time.Minute), "unexpected drawing cache ttl: %v", cfg.PJSKRender.DrawingCache.TTL)
-	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.GCInterval != 24*time.Hour), "unexpected drawing cache gc interval: %v", cfg.PJSKRender.DrawingCache.GCInterval)
 
 }
 

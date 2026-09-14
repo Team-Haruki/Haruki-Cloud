@@ -234,11 +234,6 @@ func throttleLog(last *atomic.Int64, now time.Time) bool {
 // indexMode reports whether the render cache reads the PostgreSQL index.
 func (c *RenderCacheClient) indexMode() bool { return c != nil && c.index != nil }
 
-// legacyConfigured reports whether the legacy /cache API is still wired.
-func (c *RenderCacheClient) legacyConfigured() bool {
-	return c != nil && c.baseURL != "" && c.storageDir != ""
-}
-
 // lookupIndexContext serves a render from render_cache_index. Expiry is
 // evaluated in Go; a hit slides the TTL through the batched, throttled touch.
 func (c *RenderCacheClient) lookupIndexContext(ctx context.Context, key string) (ImageResult, bool) {

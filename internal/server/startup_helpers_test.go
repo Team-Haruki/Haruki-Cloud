@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
-	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -432,36 +431,6 @@ func TestValidBotCryptographicConfiguration(t *testing.T) {
 	ring = initNoiseKeyRing(logger)
 	if ring.Len() != 1 || ring.Primary().ID != "next" {
 		t.Fatalf("noise_keys-only ring = len %d primary %q", ring.Len(), ring.Primary().ID)
-	}
-}
-
-func TestDrawingCacheInitializationBranches(t *testing.T) {
-	preserveServerConfig(t)
-	var output bytes.Buffer
-	logger := startupTestLogger(&output)
-
-	if service := initDrawingCacheIfConfigured(context.Background(), logger, fiber.New()); service != nil {
-		t.Fatal("empty drawing cache configuration returned a service")
-	}
-
-	storageDir := t.TempDir()
-	harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir = storageDir
-	harukiConfig.Cfg.PJSKRender.DrawingCache.GCInterval = -1
-	app := fiber.New()
-	service := initDrawingCacheIfConfigured(context.Background(), logger, app)
-	if service == nil {
-		t.Fatal("configured drawing cache did not initialize")
-	}
-	t.Cleanup(func() { _ = service.Close() })
-	if got := service.Config().DBPath; got != filepath.Join(storageDir, "cache.db") {
-		t.Fatalf("drawing cache database path = %q", got)
-	}
-	response, err := app.Test(httptest.NewRequest("GET", "/cache/stats", nil))
-	if err != nil {
-		t.Fatalf("query cache stats: %v", err)
-	}
-	if response.StatusCode != 200 {
-		t.Fatalf("cache stats status = %d", response.StatusCode)
 	}
 }
 

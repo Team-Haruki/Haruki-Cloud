@@ -48,6 +48,20 @@ func renderCacheKeyGoldenFixtures() []struct {
 		Profile:              &DetailedProfileCardRequest{ID: "7354311836516539153", Region: "jp", Nickname: "golden", Source: "suite", UpdateTime: 1710000000},
 		Title:                &title,
 	}
+	styleName := "white"
+	chart := &GenerateMusicChartRequest{
+		MusicID:    1,
+		Title:      "golden chart",
+		Artist:     "golden artist",
+		Difficulty: "master",
+		PlayLevel:  30,
+		Skill:      true,
+		JacketPath: "asset/jp-assets/startapp/music/jacket/jacket_s_001/jacket_s_001.png",
+		SusPath:    "asset/jp-assets/ondemand/music/music_score/0001_01/master",
+		StylePath:  &styleName,
+		NoteHost:   "https://notes.example",
+		MusicMeta:  map[string]any{"music_id": 1, "difficulty": "master", "skill_score_solo": []any{0.1, 0.2}},
+	}
 	fixtures = append(fixtures,
 		struct {
 			name, endpoint string
@@ -57,6 +71,10 @@ func renderCacheKeyGoldenFixtures() []struct {
 			name, endpoint string
 			request        any
 		}{"MusicList", "/api/pjsk/music/list?show_id=true&show_leak=false", musicList},
+		struct {
+			name, endpoint string
+			request        any
+		}{"Chart", "/api/pjsk/chart", chart},
 	)
 	return fixtures
 }
@@ -72,6 +90,10 @@ var renderCacheKeyGoldenValues = map[string]string{
 	"EventList/Asia/Shanghai":   "59d87ab661bc720d7f9003994e941676288f39bc375b0d3b28972c68e5f7c4b3",
 	"MusicList/Asia/Tokyo":      "ab274a8e8e411bf8696639a258f3e1b8831c00317dd544ae33644190209a2c9b",
 	"MusicList/Asia/Shanghai":   "45d71c2ea5231d7d46d68bf3abb25984ac7fd72b8f01811693edb44943dd4a45",
+	// Chart keys were computed before T16 added the /api/pjsk/chart rule: the
+	// rule changes only the TTL, never the key.
+	"Chart/Asia/Tokyo":    "bc82d2007cc5518cfef0b6fec537293bc9e4bdb055aff63cdc8dab50d6a1ef19",
+	"Chart/Asia/Shanghai": "2ea7b1a62250cbd5f9ee4006f4ec9114fcf71f304a50dd95b11a3f66634f66ab",
 }
 
 func computeRenderCacheGoldenKey(t *testing.T, endpoint string, request any, zone string) string {
@@ -175,11 +197,19 @@ func TestRenderCacheRuleTableShape(t *testing.T) {
 		endpoints = append(endpoints, endpoint)
 	}
 	sort.Strings(endpoints)
-	if len(endpoints) != 39 {
-		t.Fatalf("rule table has %d /api/pjsk/ entries (incl. disabled), want 39: %v", len(endpoints), endpoints)
+	// 38 rules from before the storage work, plus /api/pjsk/chart added by
+	// T16 (the chart static cache moved onto the render path).
+	if len(endpoints) != 40 {
+		t.Fatalf("rule table has %d /api/pjsk/ entries (incl. disabled), want 40: %v", len(endpoints), endpoints)
 	}
-	if len(renderCacheRules) != 38 {
-		t.Fatalf("renderCacheRules has %d entries, want 38", len(renderCacheRules))
+	if len(renderCacheRules) != 39 {
+		t.Fatalf("renderCacheRules has %d entries, want 39", len(renderCacheRules))
+	}
+	if rule := resolveRenderCacheRule("/api/pjsk/chart"); !rule.Enabled || rule.Infinite || rule.TTL != 7*24*time.Hour {
+		t.Fatalf("chart rule = %+v, want a 7-day TTL", rule)
+	}
+	if _, ok := resolveRenderCacheRule("/api/pjsk/chart").IgnoreFieldNames["dt"]; !ok {
+		t.Fatal("chart rule must keep the default dt ignore field")
 	}
 
 	if len(renderCacheDisabledEndpoints) != 1 {

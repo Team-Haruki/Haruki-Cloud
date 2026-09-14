@@ -372,6 +372,9 @@ func appDrawingOptions(cfg Config) []drawing.ClientOption {
 	if cfg.DrawingRetryCount > 0 {
 		options = append(options, drawing.WithRetryCount(cfg.DrawingRetryCount))
 	}
+	if len(cfg.DrawingArtifact.Endpoints) > 0 {
+		options = append(options, drawing.WithArtifactConfig(appArtifactConfig(cfg)))
+	}
 	if cfg.DrawingSKMaxConcurrency > 0 || cfg.DrawingSKAcquireTimeout > 0 || cfg.DrawingMaxConcurrency > 0 {
 		options = append(options, drawing.WithLimiter(drawing.LimiterConfig{
 			SKMaxConcurrency: cfg.DrawingSKMaxConcurrency, SKAcquireTimeout: cfg.DrawingSKAcquireTimeout,
@@ -379,6 +382,19 @@ func appDrawingOptions(cfg Config) []drawing.ClientOption {
 		}))
 	}
 	return options
+}
+
+// appArtifactConfig fills the artifact read-back dependencies from the
+// image_cache slot and the per-node image hosts.
+func appArtifactConfig(cfg Config) drawing.ArtifactConfig {
+	artifact := cfg.DrawingArtifact
+	if artifact.Objects == nil {
+		artifact.Objects = cfg.Stores.ImageCache
+	}
+	if artifact.Hosts == nil {
+		artifact.Hosts = cfg.ImageHosts
+	}
+	return artifact
 }
 
 // openAppImageStore opens the image cache index. An empty DSN disables the

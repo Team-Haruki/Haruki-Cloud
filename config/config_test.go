@@ -598,6 +598,33 @@ func TestApplyEnvOverridesRenderIndexFlags(t *testing.T) {
 	testutil.Require(t, err == nil && ri.DDLEnabled && ri.LookupEnabled && ri.TouchInterval == 2*time.Minute, "yaml = %+v, %v", ri, err)
 }
 
+func TestDrawingArtifactConfigEnvAndYAML(t *testing.T) {
+	cfg := &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	da := cfg.PJSKRender.DrawingArtifact
+	testutil.Require(t, len(da.Endpoints) == 0 && da.FetchTimeout == 0 && da.ArtifactTimeout == 0, "drawing artifact defaults on: %+v", da)
+
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ENDPOINTS", "api/pjsk/card/box, api/pjsk/event/list")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_FETCH_TIMEOUT", "3s")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ARTIFACT_TIMEOUT", "20s")
+	cfg = &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	da = cfg.PJSKRender.DrawingArtifact
+	testutil.Require(t, len(da.Endpoints) == 2 && da.Endpoints[0] == "api/pjsk/card/box" && da.Endpoints[1] == "api/pjsk/event/list" &&
+		da.FetchTimeout == 3*time.Second && da.ArtifactTimeout == 20*time.Second, "drawing artifact env = %+v", da)
+
+	var decoded PJSKRenderConfig
+	err := yaml.Unmarshal([]byte("drawing_artifact:\n  endpoints: [\"*\"]\n  fetch_timeout: 10s\n  artifact_timeout: 15s\n"), &decoded)
+	da = decoded.DrawingArtifact
+	testutil.Require(t, err == nil && len(da.Endpoints) == 1 && da.Endpoints[0] == "*" && da.FetchTimeout == 10*time.Second && da.ArtifactTimeout == 15*time.Second, "yaml = %+v, %v", da, err)
+}
+
+func TestApplyEnvOverridesDrawingArtifactEndpointsMalformed(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ENDPOINTS", `["api/pjsk/card/box"`)
+	err := ApplyEnvOverrides(&Config{})
+	testutil.Require(t, err != nil && strings.Contains(err.Error(), "HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ENDPOINTS"), "error = %v", err)
+}
+
 func TestApplyEnvOverridesPublicHostsMalformed(t *testing.T) {
 	for _, tc := range []struct{ name, value string }{
 		{"HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS", "cn09"},

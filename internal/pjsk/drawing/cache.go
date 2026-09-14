@@ -62,6 +62,11 @@ func runSharedRenderFlight(parent context.Context, work func(context.Context) ([
 		logger.DetachedContext(parent),
 		displaytime.RequestTimeZoneFromContext(parent),
 	)
+	// Artifact mode: the same window also covers Drawing's encode + upload.
+	if mode := artifactModeFrom(parent); mode != nil {
+		timeout += mode.artifactTimeout
+		detached = context.WithValue(detached, artifactModeCtxKey{}, mode)
+	}
 	detached = logger.WithContextAttrs(detached, slog.Bool("shared_work", true))
 	sharedBase, cancel := context.WithTimeout(detached, timeout)
 	defer cancel()
@@ -351,7 +356,7 @@ func waitForImageFlight(ctx context.Context, result <-chan singleflight.Result, 
 		if flightResult.err != nil {
 			return ImageResult{}, flightResult.err
 		}
-		if flightResult.image.filePath != "" {
+		if flightResult.image.filePath != "" || flightResult.image.ref != nil {
 			return flightResult.image, nil
 		}
 		return ImageBytes(cloneRenderBytes(flightResult.data)), nil
@@ -443,13 +448,29 @@ func (c *RenderCacheClient) renderRemoteImageWork(ctx context.Context, endpoint,
 }
 
 func (c *RenderCacheClient) renderRemoteMiss(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error)) ([]byte, error) {
-	image, err := render(ctx)
-	if err != nil {
-		return nil, err
-	}
 	ttl := policy.TTL
 	if ttl <= 0 && !policy.Infinite {
 		ttl = c.ttl
+	}
+	// Attach point A: allow-listed cached renders carry the full directive.
+	renderCtx := ctx
+	mode := artifactModeFrom(ctx)
+	var directive *renderDirective
+	if mode != nil && mode.allow.has(policy.APIPath) {
+		directive = newRenderDirective(key, policy, ttl, true)
+		renderCtx = withDirective(ctx, directive)
+	}
+	image, err := render(renderCtx)
+	if err != nil {
+		return nil, err
+	}
+	if directive != nil && directive.outcome.Ref != nil {
+		// Index mode is not wired yet: resolve the ref to bytes and keep the
+		// byte path (pending entry + write-behind store) unchanged.
+		image, err = mode.fetcher.fetch(ctx, directive.outcome.Ref)
+		if err != nil {
+			return nil, err
+		}
 	}
 	// Store write-behind: failures were already warn-only, so no waiter
 	// depends on the store having completed.

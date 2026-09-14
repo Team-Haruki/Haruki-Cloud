@@ -15,6 +15,8 @@ import (
 type ImageResult struct {
 	data     []byte
 	filePath string
+	ref      *ArtifactRef
+	fetcher  *artifactFetcher
 	cache    *RenderCacheClient
 	fallback func(context.Context) ([]byte, error)
 }
@@ -23,12 +25,18 @@ func ImageBytes(data []byte) ImageResult { return ImageResult{data: data} }
 
 func (r ImageResult) FilePath() string { return r.filePath }
 
+// Ref returns the artifact ref of a result Drawing stored, or nil.
+func (r ImageResult) Ref() *ArtifactRef { return r.ref }
+
 func (r ImageResult) Bytes(ctx context.Context) ([]byte, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
+	}
+	if r.ref != nil && r.data == nil {
+		return r.fetcher.fetch(ctx, r.ref)
 	}
 	if r.filePath == "" {
 		return r.data, nil
@@ -89,7 +97,7 @@ func (c *HarukiDrawingClient) cachedPostImage(endpoint string, body any) (ImageR
 	if c == nil {
 		return ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
-	ctx := c.requestCtx
+	ctx := c.withArtifactMode(c.requestCtx, endpoint)
 	if ctx == nil {
 		ctx = context.Background()
 	}

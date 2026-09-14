@@ -205,6 +205,12 @@ pjsk_render:
     ttl: "10m"                         # endpoint rules may override this (e.g. /sk uses 10s buckets)
   drawing_timeout: "30s"      # env HARUKI_PJSK_RENDER_DRAWING_TIMEOUT
   drawing_retry_count: 2      # env HARUKI_PJSK_RENDER_DRAWING_RETRY_COUNT
+  # Drawing artifact mode (C13 directive headers; Drawing uploads the image and answers an ArtifactRef).
+  # Rollout dial: enable one api path, watch, widen. Empty = off (byte responses exactly as before).
+  drawing_artifact:
+    endpoints: []             # e.g. ["api/pjsk/card/box"]; ["*"] = all (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ENDPOINTS, comma-separated)
+    fetch_timeout: "10s"      # reading a ref's bytes back (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_FETCH_TIMEOUT)
+    artifact_timeout: "15s"   # added to drawing_timeout for encode + upload (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ARTIFACT_TIMEOUT)
   music_meta:
     refresh_interval: "30m"   # how often to re-check the upstream for music_metas updates
     output_dir: ""            # optional: persist music_metas*.json into this directory after updates

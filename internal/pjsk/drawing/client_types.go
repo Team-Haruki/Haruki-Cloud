@@ -2,6 +2,7 @@ package drawing
 
 import (
 	"context"
+	"sync/atomic"
 
 	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/utils/logger"
@@ -20,4 +21,8 @@ type HarukiDrawingClient struct {
 	limiter    *drawingLimiter
 	logger     *logger.Logger
 	requestCtx context.Context
+	// artifact is nil unless drawing_artifact.endpoints is non-empty.
+	artifact *artifactSettings
+	// directiveRejected counts drawing_directive_rejected; shared by clones.
+	directiveRejected *atomic.Int64
 }

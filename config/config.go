@@ -429,6 +429,11 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envInt("HARUKI_PJSK_RENDER_DRAWING_SK_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingSKMaxConcurrency)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_SK_ACQUIRE_TIMEOUT", &cfg.PJSKRender.DrawingSKAcquireTimeout)
 	envInt("HARUKI_PJSK_RENDER_DRAWING_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingMaxConcurrency)
+	if err := envStringSlice("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ENDPOINTS", &cfg.PJSKRender.DrawingArtifact.Endpoints); err != nil {
+		return err
+	}
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_FETCH_TIMEOUT", &cfg.PJSKRender.DrawingArtifact.FetchTimeout)
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ARTIFACT_TIMEOUT", &cfg.PJSKRender.DrawingArtifact.ArtifactTimeout)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_URI", &cfg.PJSKRender.ImageCache.URI)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR", &cfg.PJSKRender.ImageCache.Dir)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", &cfg.PJSKRender.ImageCache.ChartsURI)
@@ -624,6 +629,18 @@ type ImageCacheConfig struct {
 	HostsProbeInterval time.Duration     `yaml:"hosts_probe_interval"` // default 30s
 }
 
+// DrawingArtifactConfig is pjsk_render.drawing_artifact: the rollout dial for
+// Drawing artifact mode (C13 directive headers, ArtifactRef responses).
+type DrawingArtifactConfig struct {
+	// Endpoints lists normalised api paths ("api/pjsk/card/box"); ["*"]
+	// enables every image endpoint. Empty = artifact mode off.
+	Endpoints []string `yaml:"endpoints"`
+	// FetchTimeout bounds reading a ref's bytes back; 0 = default (10s).
+	FetchTimeout time.Duration `yaml:"fetch_timeout"`
+	// ArtifactTimeout extends the render budget for Drawing's upload; 0 = default (15s).
+	ArtifactTimeout time.Duration `yaml:"artifact_timeout"`
+}
+
 // ImageCacheRenderIndexConfig is pjsk_render.image_cache.render_index.
 type ImageCacheRenderIndexConfig struct {
 	// RequirePG makes an unavailable image cache index fatal at startup
@@ -694,6 +711,7 @@ type PJSKRenderConfig struct {
 	DrawingSKMaxConcurrency   int                             `yaml:"drawing_sk_max_concurrency"`
 	DrawingSKAcquireTimeout   time.Duration                   `yaml:"drawing_sk_acquire_timeout"`
 	DrawingMaxConcurrency     int                             `yaml:"drawing_max_concurrency"`
+	DrawingArtifact           DrawingArtifactConfig           `yaml:"drawing_artifact"`
 	ImageCache                ImageCacheConfig                `yaml:"image_cache"`
 	AssetDirs                 AssetDirsConfig                 `yaml:"asset_dirs"`
 	LocalMasterdata           LocalMasterdataConfig           `yaml:"local_masterdata"`

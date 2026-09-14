@@ -160,6 +160,11 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		DrawingSKMaxConcurrency: harukiConfig.Cfg.PJSKRender.DrawingSKMaxConcurrency,
 		DrawingSKAcquireTimeout: harukiConfig.Cfg.PJSKRender.DrawingSKAcquireTimeout,
 		DrawingMaxConcurrency:   harukiConfig.Cfg.PJSKRender.DrawingMaxConcurrency,
+		DrawingArtifact: drawing.ArtifactConfig{
+			Endpoints:       harukiConfig.Cfg.PJSKRender.DrawingArtifact.Endpoints,
+			FetchTimeout:    harukiConfig.Cfg.PJSKRender.DrawingArtifact.FetchTimeout,
+			ArtifactTimeout: harukiConfig.Cfg.PJSKRender.DrawingArtifact.ArtifactTimeout,
+		},
 		DrawingCache: drawing.RenderCacheConfig{
 			BaseURL:    harukiConfig.Cfg.PJSKRender.DrawingCache.BaseURL,
 			StorageDir: harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir,

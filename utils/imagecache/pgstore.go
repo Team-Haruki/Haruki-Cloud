@@ -98,20 +98,27 @@ type ImageEntry struct {
 	SizeBytes      int64
 	// ExpiresAt is zero for "never". It is not a lifetime signal for garage rows.
 	ExpiresAt time.Time
+	// LastReferencedAt is written on every re-reference and drives GC. It is
+	// only read by the render index queries; Lookup leaves it zero.
+	LastReferencedAt time.Time
 }
 
 // PGStoreOptions tunes the connection pool.
 type PGStoreOptions struct {
 	// MaxOpen bounds open connections; <= 0 selects DefaultPGMaxOpen.
 	MaxOpen int
+	// RenderIndexDDL runs the canonical render index DDL (renderIndexDDL) in
+	// Init. Off keeps Init to today's schema statements.
+	RenderIndexDDL bool
 }
 
 // PGStore is a PostgreSQL-backed metadata store for the image cache.
 // It enables deduplication across restarts and multi-instance deployments.
 // A nil PGStore is safe to use — all methods become no-ops.
 type PGStore struct {
-	db      *sql.DB
-	widened atomic.Bool
+	db         *sql.DB
+	widened    atomic.Bool
+	ddlEnabled bool
 }
 
 // NewPGStore opens a PostgreSQL connection pool using the given DSN with the
@@ -138,7 +145,7 @@ func NewPGStoreWithOptions(dsn string, opts PGStoreOptions) (*PGStore, error) {
 // and applies the pool limits. Init must still run before use.
 func NewPGStoreFromDB(db *sql.DB, opts PGStoreOptions) *PGStore {
 	configurePool(db, opts)
-	return &PGStore{db: db}
+	return &PGStore{db: db, ddlEnabled: opts.RenderIndexDDL}
 }
 
 func configurePool(db *sql.DB, opts PGStoreOptions) {
@@ -152,8 +159,8 @@ func configurePool(db *sql.DB, opts PGStoreOptions) {
 }
 
 // Init creates the image_cache_entries table if it does not exist, runs any
-// pending schema migrations (e.g. renaming cdn_url → cdn_path), then probes
-// whether the widened columns exist.
+// pending schema migrations (e.g. renaming cdn_url → cdn_path), runs the
+// render index DDL when enabled, then probes whether the widened columns exist.
 func (s *PGStore) Init(ctx context.Context) error {
 	if s == nil {
 		return nil
@@ -163,6 +170,13 @@ func (s *PGStore) Init(ctx context.Context) error {
 	}
 	if _, err := s.db.ExecContext(ctx, migrateSQL); err != nil {
 		return err
+	}
+	if s.ddlEnabled {
+		for i, stmt := range renderIndexDDL {
+			if _, err := s.db.ExecContext(ctx, stmt); err != nil {
+				return fmt.Errorf("imagecache pgstore: render index ddl step %d: %w", i+1, err)
+			}
+		}
 	}
 	return s.probeSchema(ctx)
 }

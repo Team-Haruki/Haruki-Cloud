@@ -346,7 +346,9 @@ func newAppSnapshotServices(initCtx context.Context, sekaiClient *sekaiDB.Client
 }
 
 func newAppDrawingClient(initCtx context.Context, cfg Config) (*drawing.HarukiDrawingClient, *imagecache.PGStore, error) {
-	imageStore, imageStoreErr := openAppImageStore(initCtx, cfg.ImageCachePGURL, cfg.ImageCachePGMaxOpen)
+	imageStore, imageStoreErr := openAppImageStore(initCtx, cfg.ImageCachePGURL, imagecache.PGStoreOptions{
+		MaxOpen: cfg.ImageCachePGMaxOpen, RenderIndexDDL: cfg.ImageCacheRenderIndexDDL,
+	})
 	cacheConfig := cfg.DrawingCache
 	cacheConfig.ImageCacheDir = cfg.ImageCacheDir
 	// Typed-nil guard: only a non-nil pointer reaches the config.
@@ -381,18 +383,18 @@ func appDrawingOptions(cfg Config) []drawing.ClientOption {
 
 // openAppImageStore opens the image cache index. An empty DSN disables the
 // index (nil, nil); any other failure is returned for startup to report.
-func openAppImageStore(initCtx context.Context, dsn string, maxOpen int) (*imagecache.PGStore, error) {
-	return openAppImageStoreWith(initCtx, dsn, maxOpen, imagecache.NewPGStoreWithOptions)
+func openAppImageStore(initCtx context.Context, dsn string, opts imagecache.PGStoreOptions) (*imagecache.PGStore, error) {
+	return openAppImageStoreWith(initCtx, dsn, opts, imagecache.NewPGStoreWithOptions)
 }
 
 type imageStoreOpener func(dsn string, opts imagecache.PGStoreOptions) (*imagecache.PGStore, error)
 
-func openAppImageStoreWith(initCtx context.Context, dsn string, maxOpen int, open imageStoreOpener) (*imagecache.PGStore, error) {
+func openAppImageStoreWith(initCtx context.Context, dsn string, opts imagecache.PGStoreOptions, open imageStoreOpener) (*imagecache.PGStore, error) {
 	if strings.TrimSpace(dsn) == "" {
 		logger.WarnContext(initCtx, "image cache index disabled: pjsk_render.image_cache.pg_url is empty")
 		return nil, nil
 	}
-	store, err := open(dsn, imagecache.PGStoreOptions{MaxOpen: maxOpen})
+	store, err := open(dsn, opts)
 	if err != nil {
 		return nil, fmt.Errorf("image cache index: %w", err)
 	}

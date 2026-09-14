@@ -251,6 +251,14 @@ pjsk_render:
       # true: an unreachable pg_url / failed schema init stops startup; false: ERROR log, dedup off
       # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_REQUIRE_PG)
       require_pg: false
+      # true: run the render index DDL at startup (widen image_cache_entries, create render_cache_index).
+      # The ALTERs take a brief ACCESS EXCLUSIVE lock: enable for an off-peak restart.
+      # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_DDL_ENABLED)
+      ddl_enabled: false
+      # true: the render cache reads render_cache_index (needs the DDL and an upgraded Drawing)
+      # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_LOOKUP_ENABLED)
+      lookup_enabled: false
+      touch_interval: "60s"     # per-key sliding-TTL throttle (env HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_TOUCH_INTERVAL)
     # Per-node public image-cache hosts, keyed by Drawing node_name (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS,
     # "cn09=https://...,cn01=https://..." or JSON). Empty derives {"default": uri}.
     hosts: {}

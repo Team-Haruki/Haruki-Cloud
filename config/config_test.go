@@ -575,11 +575,27 @@ func TestApplyEnvOverridesImageCacheIndex(t *testing.T) {
 	cfg := &Config{}
 	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
 	ic := cfg.PJSKRender.ImageCache
+	testutil.Require(t, !ic.RenderIndex.DDLEnabled && !ic.RenderIndex.LookupEnabled && ic.RenderIndex.TouchInterval == 0, "render index flags default on: %+v", ic.RenderIndex)
 	testutil.Require(t, ic.PGMaxOpen == 16 && ic.RenderIndex.RequirePG, "image cache index = %+v", ic)
 
 	var decoded PJSKRenderConfig
 	err := yaml.Unmarshal([]byte("image_cache:\n  pg_max_open: 4\n  render_index:\n    require_pg: true\n"), &decoded)
 	testutil.Require(t, err == nil && decoded.ImageCache.PGMaxOpen == 4 && decoded.ImageCache.RenderIndex.RequirePG, "yaml = %+v, %v", decoded.ImageCache, err)
+}
+
+func TestApplyEnvOverridesRenderIndexFlags(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_DDL_ENABLED", "true")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_LOOKUP_ENABLED", "true")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_TOUCH_INTERVAL", "90s")
+	cfg := &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	ri := cfg.PJSKRender.ImageCache.RenderIndex
+	testutil.Require(t, ri.DDLEnabled && ri.LookupEnabled && ri.TouchInterval == 90*time.Second, "render index env = %+v", ri)
+
+	var decoded PJSKRenderConfig
+	err := yaml.Unmarshal([]byte("image_cache:\n  render_index:\n    ddl_enabled: true\n    lookup_enabled: true\n    touch_interval: 2m\n"), &decoded)
+	ri = decoded.ImageCache.RenderIndex
+	testutil.Require(t, err == nil && ri.DDLEnabled && ri.LookupEnabled && ri.TouchInterval == 2*time.Minute, "yaml = %+v, %v", ri, err)
 }
 
 func TestApplyEnvOverridesPublicHostsMalformed(t *testing.T) {

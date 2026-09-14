@@ -85,10 +85,10 @@ func TestNewAppImageCacheUnconfiguredAndPartial(t *testing.T) {
 
 func TestOpenAppImageStoreErrors(t *testing.T) {
 	ctx := context.Background()
-	if store, err := openAppImageStore(ctx, " ", 0); store != nil || err != nil {
+	if store, err := openAppImageStore(ctx, " ", imagecache.PGStoreOptions{}); store != nil || err != nil {
 		t.Fatalf("empty DSN = %v, %v", store, err)
 	}
-	if store, err := openAppImageStore(ctx, "://invalid", 4); store != nil || err == nil || !strings.Contains(err.Error(), "image cache index") {
+	if store, err := openAppImageStore(ctx, "://invalid", imagecache.PGStoreOptions{MaxOpen: 4}); store != nil || err == nil || !strings.Contains(err.Error(), "image cache index") {
 		t.Fatalf("invalid DSN = %v, %v", store, err)
 	}
 
@@ -114,7 +114,7 @@ func TestOpenAppImageStoreErrors(t *testing.T) {
 		schemaSteps(mock)
 		mock.ExpectQuery("information_schema.columns").WillReturnRows(sqlmock.NewRows([]string{"?column?"}))
 	})
-	store, err := openAppImageStoreWith(ctx, "postgres://index", 4, open)
+	store, err := openAppImageStoreWith(ctx, "postgres://index", imagecache.PGStoreOptions{MaxOpen: 4}, open)
 	if err != nil || store == nil || store.Widened() {
 		t.Fatalf("healthy index = %v, %v", store, err)
 	}
@@ -127,9 +127,25 @@ func TestOpenAppImageStoreErrors(t *testing.T) {
 		mock.ExpectQuery("information_schema.columns").WillReturnError(errors.New("permission denied"))
 		mock.ExpectClose()
 	})
-	store, err = openAppImageStoreWith(ctx, "postgres://index", 4, open)
+	store, err = openAppImageStoreWith(ctx, "postgres://index", imagecache.PGStoreOptions{MaxOpen: 4}, open)
 	if store != nil || err == nil || !strings.Contains(err.Error(), "image cache index schema") {
 		t.Fatalf("schema failure = %v, %v", store, err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+
+	// ddl_enabled reaches Init: the render index DDL runs before the probe.
+	open, mock = mockOpener(t, func(mock sqlmock.Sqlmock) {
+		schemaSteps(mock)
+		for range imagecache.RenderIndexDDL() {
+			mock.ExpectExec(".").WillReturnResult(sqlmock.NewResult(0, 0))
+		}
+		mock.ExpectQuery("information_schema.columns").WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
+	})
+	store, err = openAppImageStoreWith(ctx, "postgres://index", imagecache.PGStoreOptions{MaxOpen: 4, RenderIndexDDL: true}, open)
+	if err != nil || store == nil || !store.Widened() {
+		t.Fatalf("ddl-enabled index = %v, %v", store, err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)

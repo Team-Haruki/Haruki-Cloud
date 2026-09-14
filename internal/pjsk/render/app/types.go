@@ -56,6 +56,8 @@ type Config struct {
 	ImageCacheDir           string
 	ImageCachePGURL         string // PostgreSQL DSN for image cache deduplication (optional)
 	ImageCachePGMaxOpen     int    // image cache index pool bound; <= 0 selects the default (8)
+	// ImageCacheRenderIndexDDL runs the render index DDL at index Init.
+	ImageCacheRenderIndexDDL bool
 	// ImageCacheLocalRoot is the absolute directory of the image_cache slot
 	// when it resolved to local, "" otherwise.
 	ImageCacheLocalRoot      string

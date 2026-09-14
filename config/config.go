@@ -435,6 +435,9 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
 	envInt("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_MAX_OPEN", &cfg.PJSKRender.ImageCache.PGMaxOpen)
 	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_REQUIRE_PG", &cfg.PJSKRender.ImageCache.RenderIndex.RequirePG)
+	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_DDL_ENABLED", &cfg.PJSKRender.ImageCache.RenderIndex.DDLEnabled)
+	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_LOOKUP_ENABLED", &cfg.PJSKRender.ImageCache.RenderIndex.LookupEnabled)
+	envDuration("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_TOUCH_INTERVAL", &cfg.PJSKRender.ImageCache.RenderIndex.TouchInterval)
 	if err := envStringMap("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS", &cfg.PJSKRender.ImageCache.Hosts); err != nil {
 		return err
 	}
@@ -626,6 +629,14 @@ type ImageCacheRenderIndexConfig struct {
 	// RequirePG makes an unavailable image cache index fatal at startup
 	// instead of an ERROR log.
 	RequirePG bool `yaml:"require_pg"`
+	// DDLEnabled runs the render index DDL (widen image_cache_entries, create
+	// render_cache_index) at startup. The ALTERs take a brief ACCESS EXCLUSIVE
+	// lock, so schedule the first enabled start off-peak.
+	DDLEnabled bool `yaml:"ddl_enabled"`
+	// LookupEnabled makes the render cache read the render index.
+	LookupEnabled bool `yaml:"lookup_enabled"`
+	// TouchInterval is the per-key sliding-TTL throttle; 0 = default (60s).
+	TouchInterval time.Duration `yaml:"touch_interval"`
 }
 
 type MusicMetaConfig struct {

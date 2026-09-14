@@ -2,27 +2,15 @@ package mysekai
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+	"path"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
-	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 )
-
-const mysekaiBirthdayRefreshIconCacheTTL = 30 * time.Second
-
-type mysekaiBirthdayRefreshIconCacheEntry struct {
-	path      string
-	expiresAt time.Time
-}
-
-var mysekaiBirthdayRefreshIconCache sync.Map
 
 func (c *Controller) obtainedMysekaiFixtureIDs(merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {
 	if fixtures := nestedList(merged, "userMysekaiFixtures"); fixtures != nil {
@@ -384,140 +372,28 @@ func mysekaiBirthdayCharacterImageName(item map[string]any) string {
 	return strings.ToLower(strings.TrimSpace(stringValue(item["givenNameEnglish"])))
 }
 
-func (c *Controller) resolveMysekaiBirthdayRefreshIconPath(region renderregion.Value, item map[string]any, now time.Time) string {
-	if c == nil || c.assets == nil {
-		return ""
-	}
-	imageName := mysekaiBirthdayCharacterImageName(item)
+// mysekaiBirthdayIconCandidateYearOffsets is the FROZEN year window (addendum
+// A4): the current year, the two most recent past years, then the nearest
+// future year. Drawing pins the identical order in its parity replica.
+var mysekaiBirthdayIconCandidateYearOffsets = [...]int{0, -1, -2, 1}
+
+// mysekaiBirthdayIconCandidates returns the bounded year window Drawing must
+// probe, in the preference order the deleted directory scan used. It does no
+// I/O: Drawing takes the first candidate that exists (C1).
+func mysekaiBirthdayIconCandidates(region, imageName string, now time.Time) []string {
+	imageName = strings.TrimSpace(imageName)
 	if imageName == "" {
-		return ""
+		return nil
 	}
-
-	currentYear := now.Year()
-	cacheKey := mysekaiBirthdayIconCacheKey(c.assets.Roots(), region, imageName, currentYear)
-	if cachedPath := loadMysekaiBirthdayRefreshIcon(cacheKey); cachedPath != "" {
-		return cachedPath
-	}
-	selection := mysekaiBirthdayIconSelection{}
-	for _, root := range c.assets.Roots() {
-		candidate, exact := c.scanMysekaiBirthdayIconRoot(root, region, imageName, currentYear)
-		if exact != "" {
-			storeMysekaiBirthdayRefreshIcon(cacheKey, exact)
-			return exact
+	year := now.Year()
+	candidates := make([]string, 0, len(mysekaiBirthdayIconCandidateYearOffsets))
+	for _, offset := range mysekaiBirthdayIconCandidateYearOffsets {
+		rel := path.Join("mysekai", "birthday", imageName+"_"+strconv.Itoa(year+offset), refreshIconFileName)
+		if candidate := assets.ResolveRegionAssetPath(nil, region, rel); candidate != "" {
+			candidates = append(candidates, candidate)
 		}
-		selection = preferredMysekaiBirthdayIcon(selection, candidate)
 	}
-	if selection.name == "" {
-		return ""
-	}
-	resolved := c.resolveMysekaiBirthdayIcon(region, selection.name)
-	storeMysekaiBirthdayRefreshIcon(cacheKey, resolved)
-	return resolved
-}
-
-type mysekaiBirthdayIconSelection struct {
-	name     string
-	year     int
-	isFuture bool
-}
-
-func mysekaiBirthdayIconCacheKey(roots []string, region renderregion.Value, imageName string, year int) string {
-	return strings.Join(roots, "\x00") + "|" + region.String() + "|" + imageName + "|" + strconv.Itoa(year)
-}
-
-func loadMysekaiBirthdayRefreshIcon(cacheKey string) string {
-	cached, ok := mysekaiBirthdayRefreshIconCache.Load(cacheKey)
-	if !ok {
-		return ""
-	}
-	entry, valid := cached.(mysekaiBirthdayRefreshIconCacheEntry)
-	if valid && entry.path != "" && time.Now().Before(entry.expiresAt) {
-		return entry.path
-	}
-	mysekaiBirthdayRefreshIconCache.Delete(cacheKey)
-	return ""
-}
-
-func (c *Controller) scanMysekaiBirthdayIconRoot(root string, region renderregion.Value, imageName string, currentYear int) (mysekaiBirthdayIconSelection, string) {
-	baseDir, ok := localMysekaiBirthdayAssetDir(root, region)
-	if !ok {
-		return mysekaiBirthdayIconSelection{}, ""
-	}
-	finishReadDir := commandtrace.MeasureOperation(c.requestCtx, "asset.readdir")
-	entries, err := os.ReadDir(baseDir)
-	finishReadDir()
-	if err != nil {
-		return mysekaiBirthdayIconSelection{}, ""
-	}
-	prefix := imageName + "_"
-	selection := mysekaiBirthdayIconSelection{}
-	for _, entry := range entries {
-		candidate, ok := c.readMysekaiBirthdayIconCandidate(baseDir, prefix, entry.Name(), entry.IsDir(), currentYear)
-		if !ok {
-			continue
-		}
-		if candidate.year == currentYear {
-			return candidate, c.resolveMysekaiBirthdayIcon(region, candidate.name)
-		}
-		selection = preferredMysekaiBirthdayIcon(selection, candidate)
-	}
-	return selection, ""
-}
-
-func localMysekaiBirthdayAssetDir(root string, region renderregion.Value) (string, bool) {
-	root = strings.TrimSpace(root)
-	if root == "" || strings.HasPrefix(root, "http://") || strings.HasPrefix(root, "https://") {
-		return "", false
-	}
-	return filepath.Join(root, strings.ToLower(strings.TrimSpace(region.String()))+"-assets", assets.RegionAssetOnDemand, "mysekai", "birthday"), true
-}
-
-func (c *Controller) readMysekaiBirthdayIconCandidate(baseDir, prefix, entryName string, isDirectory bool, currentYear int) (mysekaiBirthdayIconSelection, bool) {
-	if !isDirectory || !strings.HasPrefix(entryName, prefix) {
-		return mysekaiBirthdayIconSelection{}, false
-	}
-	iconPath := filepath.Join(baseDir, entryName, refreshIconFileName)
-	finishStat := commandtrace.MeasureOperation(c.requestCtx, "asset.stat")
-	_, statErr := os.Stat(iconPath)
-	finishStat()
-	if statErr != nil {
-		return mysekaiBirthdayIconSelection{}, false
-	}
-	year, err := strconv.Atoi(strings.TrimPrefix(entryName, prefix))
-	if err != nil {
-		return mysekaiBirthdayIconSelection{}, false
-	}
-	return mysekaiBirthdayIconSelection{name: entryName, year: year, isFuture: year > currentYear}, true
-}
-
-func preferredMysekaiBirthdayIcon(current, candidate mysekaiBirthdayIconSelection) mysekaiBirthdayIconSelection {
-	if candidate.name == "" {
-		return current
-	}
-	if current.name == "" || (!candidate.isFuture && current.isFuture) {
-		return candidate
-	}
-	if candidate.isFuture != current.isFuture {
-		return current
-	}
-	if (!candidate.isFuture && candidate.year > current.year) || (candidate.isFuture && candidate.year < current.year) {
-		return candidate
-	}
-	return current
-}
-
-func (c *Controller) resolveMysekaiBirthdayIcon(region renderregion.Value, directory string) string {
-	return assets.ResolveRegionAssetPath(c.assets, region.String(), filepath.ToSlash(filepath.Join("mysekai", "birthday", directory, refreshIconFileName)))
-}
-
-func storeMysekaiBirthdayRefreshIcon(cacheKey, resolved string) {
-	if resolved == "" {
-		return
-	}
-	mysekaiBirthdayRefreshIconCache.Store(cacheKey, mysekaiBirthdayRefreshIconCacheEntry{
-		path:      resolved,
-		expiresAt: time.Now().Add(mysekaiBirthdayRefreshIconCacheTTL),
-	})
+	return candidates
 }
 
 func mysekaiIsBirthdayDrop(resourceType string, resourceID int) bool {

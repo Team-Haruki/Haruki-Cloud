@@ -305,8 +305,6 @@ func TestControllerResourceExtractionAndLifecycleBranches(t *testing.T) {
 		testutil.RequireArgs(t, !(mysekaiBirthdayCharacterImageName(map[string]any{"givenNameEnglish": " Ichika "}) != "ichika"), "birthday image name mismatch")
 	}
 
-	storeMysekaiBirthdayRefreshIcon("", "")
-
 	var nilController *Controller
 	{
 		testutil.RequireArgs(t, !(nilController.WithSnapshot(nil) != nil), "nil controller clones should remain nil")

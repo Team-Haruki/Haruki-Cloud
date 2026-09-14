@@ -45,15 +45,12 @@ const (
 )
 
 type Controller struct {
-	ctx     context.Context
-	sources *regionsource.Registry[DataSource]
-	events  *regionsource.Registry[event.DataSource]
-	drawing *drawing.HarukiDrawingClient
-	assets  *assets.AssetHelper
-	// assetReader answers the original-image existence probe (nil -> local
-	// AssetHelper probing).
-	assetReader *assets.AssetReader
-	nicknames   map[string]int
+	ctx       context.Context
+	sources   *regionsource.Registry[DataSource]
+	events    *regionsource.Registry[event.DataSource]
+	drawing   *drawing.HarukiDrawingClient
+	assets    *assets.AssetHelper
+	nicknames map[string]int
 }
 
 type Builder struct {

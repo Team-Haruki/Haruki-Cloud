@@ -196,22 +196,21 @@ func mysekaiHarvestPointStatus(point map[string]any) string {
 	return status
 }
 
-func (c *Controller) mysekaiHarvestPointImage(region renderregion.Value, fixtureType, rarityType, assetbundleName string, positionX, positionZ float64, birthdayCharacters map[string]int, characters map[int]map[string]any) (string, *string, *int, float64, float64) {
+func (c *Controller) mysekaiHarvestPointImage(region renderregion.Value, fixtureType, rarityType, assetbundleName string, positionX, positionZ float64, birthdayCharacters map[string]int, characters map[int]map[string]any) (drawing.AssetKey, *string, *int, float64, float64) {
 	imageRelPath := fmt.Sprintf("mysekai/harvest_fixture_icon/%s/%s.png", rarityType, assetbundleName)
 	if fixtureType != "birthday_plant" {
-		return c.staticPath(imageRelPath), nil, nil, 0, -48
+		return drawing.AssetPath(c.staticPath(imageRelPath)), nil, nil, 0, -48
 	}
 	fallback := new(c.staticPath("mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png"))
-	characterID := birthdayCharacters[mysekaiHarvestPosKey(positionX, positionZ)]
-	if characterID > 0 {
-		if birthdayPath := c.resolveMysekaiBirthdayRefreshIconPath(region, characters[characterID], time.Now()); birthdayPath != "" {
-			imageRelPath = birthdayPath
+	if characterID := birthdayCharacters[mysekaiHarvestPosKey(positionX, positionZ)]; characterID > 0 {
+		imageName := mysekaiBirthdayCharacterImageName(characters[characterID])
+		if candidates := mysekaiBirthdayIconCandidates(region.String(), imageName, time.Now()); len(candidates) > 0 {
+			// C1: Drawing takes the first existing year and falls back to
+			// fallback_image_path when none exists.
+			return drawing.AssetCandidates(candidates...), fallback, new(50), 7.5, 0
 		}
 	}
-	if strings.HasPrefix(imageRelPath, "asset/") {
-		return imageRelPath, fallback, new(50), 7.5, 0
-	}
-	return c.staticPath(imageRelPath), fallback, new(50), 7.5, 0
+	return drawing.AssetPath(c.staticPath(imageRelPath)), fallback, new(50), 7.5, 0
 }
 
 // HasRemainingHarvestResources reports whether the current map request contains

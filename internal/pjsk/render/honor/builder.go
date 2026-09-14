@@ -1,7 +1,6 @@
 package honor
 
 import (
-	"context"
 	"fmt"
 
 	"haruki-cloud/internal/pjsk/drawing"
@@ -13,17 +12,6 @@ func NewBuilder(source DataSource, assetHelper *assets.AssetHelper) *Builder {
 		source: source,
 		assets: assetHelper,
 	}
-}
-
-// WithAssetReader routes the builder's existence probes through reader, bound
-// to ctx. A nil reader keeps the local AssetHelper probing.
-func (b *Builder) WithAssetReader(ctx context.Context, reader *assets.AssetReader) *Builder {
-	if b == nil {
-		return nil
-	}
-	b.ctx = ctx
-	b.reader = reader
-	return b
 }
 
 func (b *Builder) BuildHonorRequest(query Query) (*drawing.HonorRequest, error) {

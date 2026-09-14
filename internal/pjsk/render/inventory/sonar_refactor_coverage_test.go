@@ -85,7 +85,7 @@ func TestInventoryRefactorMasterdataBranches(t *testing.T) {
 func TestInventoryRefactorRemainingUtilityBranches(t *testing.T) {
 	controller := &Controller{}
 	for _, resource := range []string{"boost_item", "practice_ticket", "skill_practice_ticket"} {
-		if got := controller.inventoryIconPath(renderregion.JP, resource, 0); got != "" {
+		if got := controller.inventoryIconPath(renderregion.JP, resource, 0); got != nil {
 			t.Errorf("invalid %s icon = %q", resource, got)
 		}
 	}

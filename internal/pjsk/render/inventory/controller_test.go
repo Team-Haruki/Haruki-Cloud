@@ -176,13 +176,13 @@ func TestBuildListRequestFromSnapshotGroupsInventoryItems(t *testing.T) {
 	if got := findInventoryItem(t, req.Sections, "training", 10101); got.Name != "练习乐谱（星乃一歌）" || got.Quantity != 2 || got.Description != "成员获得1000经验值。" {
 		t.Fatalf("practice ticket = %+v", got)
 	} else {
-		testutil.Require(t, strings.Contains(got.IconPath, "thumbnail/practice_ticket/ticket10101.png"), "practice ticket icon path = %q", got.IconPath)
+		testutil.Require(t, strings.Contains(got.IconPath.First(), "thumbnail/practice_ticket/ticket10101.png"), "practice ticket icon path = %q", got.IconPath)
 	}
 
 	if got := findInventoryItem(t, req.Sections, "training", 10201); got.Name != "技能升级乐谱（天马咲希）" || got.Quantity != 3 {
 		t.Fatalf("skill practice ticket = %+v", got)
 	} else {
-		testutil.Require(t, strings.Contains(got.IconPath, "thumbnail/skill_practice_ticket/ticket10201.png"), "skill practice ticket icon path = %q", got.IconPath)
+		testutil.Require(t, strings.Contains(got.IconPath.First(), "thumbnail/skill_practice_ticket/ticket10201.png"), "skill practice ticket icon path = %q", got.IconPath)
 	}
 
 	assertInventoryItemMissing(t, req.Sections, "mysekai", 6)
@@ -342,12 +342,12 @@ func TestBuildListRequestFromSnapshotUsesDedicatedTicketAssetDirectories(t *test
 	{
 
 		got := findInventoryItem(t, req.Sections, "tickets", 8)
-		testutil.Require(t, !(got.IconPath != "asset/jp-assets/startapp/thumbnail/gacha_ticket/mission_ticket.png"), "gacha ticket icon path = %q", got.IconPath)
+		testutil.Require(t, !(got.IconPath.First() != "asset/jp-assets/startapp/thumbnail/gacha_ticket/mission_ticket.png" || len(got.IconPath) != 1), "gacha ticket icon path = %q", got.IconPath)
 	}
 	{
 
 		got := findInventoryItem(t, req.Sections, "tickets", 9)
-		testutil.Require(t, !(got.IconPath != "asset/jp-assets/startapp/thumbnail/gacha_item/ceil_item_limited.png"), "gacha ceil item icon path = %q", got.IconPath)
+		testutil.Require(t, !(got.IconPath.First() != "asset/jp-assets/startapp/thumbnail/gacha_item/ceil_item_limited.png" || len(got.IconPath) != 1), "gacha ceil item icon path = %q", got.IconPath)
 	}
 
 }

@@ -1,7 +1,6 @@
 package card
 
 import (
-	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -27,7 +26,7 @@ func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 		return nil, fmt.Errorf("failed to search card: %w", err)
 	}
 
-	paths := resolveCardOriginalImagePaths(c.ctx, c.assetReader, c.assets, region, cardInfo)
+	paths := resolveCardOriginalImagePaths(c.assets, region, cardInfo)
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("card %d does not have original image assets", cardInfo.ID)
 	}
@@ -42,7 +41,11 @@ func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 	}, nil
 }
 
-func resolveCardOriginalImagePaths(ctx context.Context, reader *assets.AssetReader, helper *assets.AssetHelper, region renderregion.Value, card *masterdata.Card) []string {
+// resolveCardOriginalImagePaths returns the Drawing-relative original image
+// paths. It no longer probes existence to swap in an absolute local path (C1,
+// T15): the handler resolves each path through AssetReader.ReadFirst or
+// assets.PublicAssetURL, which both accept the relative form.
+func resolveCardOriginalImagePaths(helper *assets.AssetHelper, region renderregion.Value, card *masterdata.Card) []string {
 	if card == nil || strings.TrimSpace(card.AssetBundleName) == "" {
 		return nil
 	}
@@ -69,12 +72,6 @@ func resolveCardOriginalImagePaths(ctx context.Context, reader *assets.AssetRead
 		path := common.ResolveCardMemberImagePath(helper, region, card.AssetBundleName, item.fileName)
 		if strings.TrimSpace(path) == "" {
 			continue
-		}
-		// Resolve to absolute path when the file exists locally so that callers
-		// using os.ReadFile (card-image mode, no CDN) receive a usable path. A
-		// store-backed reader has no local path, so the Drawing path is kept.
-		if resolved, ok := assets.ProbeExisting(ctx, reader, helper, path); ok && resolved != "" {
-			path = resolved
 		}
 		if _, ok := seen[path]; ok {
 			continue

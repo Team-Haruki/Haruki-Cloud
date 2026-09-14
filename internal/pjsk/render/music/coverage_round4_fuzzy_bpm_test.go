@@ -309,10 +309,6 @@ func TestMusicBPMValidationAndPathHelpers(t *testing.T) {
 
 	var nilController *Controller
 	{
-		testutil.RequireArgs(t, !(nilController.resolveLocalMusicJacket("x") != ""), "invalid local jacket lookup was non-empty")
-		testutil.RequireArgs(t, !(controller.resolveLocalMusicJacket(" ") != ""), "invalid local jacket lookup was non-empty")
-	}
-	{
 		_, nilFound, _ := nilController.loadChartBPM(context.Background(), "jp", 1, "expert")
 		_, zeroFound, _ := controller.loadChartBPM(context.Background(), "jp", 0, "expert")
 		_, blankFound, _ := controller.loadChartBPM(context.Background(), "jp", 1, " ")

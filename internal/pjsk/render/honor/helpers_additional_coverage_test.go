@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -80,12 +79,4 @@ func TestControllerNilAndContextBranches(t *testing.T) {
 		t.Fatal("expected missing drawing client error")
 	}
 
-	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
-	if builder.assetExists(" ") {
-		t.Fatal("empty asset path unexpectedly exists")
-	}
-	builder.assets = nil
-	if builder.assetExists("honor/example.png") {
-		t.Fatal("asset unexpectedly exists without an asset helper")
-	}
 }

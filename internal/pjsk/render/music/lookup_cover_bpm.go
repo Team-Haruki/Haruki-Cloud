@@ -9,7 +9,6 @@ import (
 	"io"
 	"math"
 	"path"
-	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -36,10 +35,9 @@ func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {
 		return nil, fmt.Errorf("failed to search music: %w", err)
 	}
 
+	// C1 (T15): the Drawing-relative jacket path is emitted as is; the bare
+	// local "music/jacket" probe that swapped in an absolute path is gone.
 	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
-	if localPath := c.resolveLocalMusicJacket(musicInfo.AssetBundleName); localPath != "" {
-		jacketPath = localPath
-	}
 	if strings.TrimSpace(jacketPath) == "" {
 		return nil, fmt.Errorf("music %d does not have jacket asset", musicInfo.ID)
 	}
@@ -188,10 +186,9 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 		return nil, fmt.Errorf("当前环境没有可读取的本地谱面文件，无法查询 BPM")
 	}
 
+	// C1 (T15): the Drawing-relative jacket path is emitted as is; the bare
+	// local "music/jacket" probe that swapped in an absolute path is gone.
 	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
-	if localPath := c.resolveLocalMusicJacket(musicInfo.AssetBundleName); localPath != "" {
-		jacketPath = localPath
-	}
 
 	return &BPMResult{
 		Music:      buildLookupMusic(musicInfo, builder, region),
@@ -202,17 +199,6 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 		BarCount:   parsed.BarCount,
 		Duration:   parsed.Duration,
 	}, nil
-}
-
-func (c *Controller) resolveLocalMusicJacket(assetName string) string {
-	if c == nil || c.assets == nil || strings.TrimSpace(assetName) == "" {
-		return ""
-	}
-	// A store-backed hit has no local path, so the builder's Drawing path stays.
-	resolved, _ := assets.ProbeExisting(c.contextOrBackground(), c.assetReader, c.assets,
-		filepath.Join("music", "jacket", assetName, assetName+".png"),
-	)
-	return resolved
 }
 
 // chartScoreCandidates lists the chart object candidates for one difficulty in

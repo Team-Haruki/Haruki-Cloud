@@ -30,14 +30,6 @@ func NewController(
 	}
 }
 
-// SetAssetReader routes the inventory asset existence probe through reader.
-func (c *Controller) SetAssetReader(reader *assets.AssetReader) {
-	if c == nil {
-		return
-	}
-	c.assetReader = reader
-}
-
 // ResetMasterdataCache invalidates all region-specific inventory masterdata.
 func (c *Controller) ResetMasterdataCache() {
 	if c == nil || c.masterdata == nil {
@@ -389,7 +381,7 @@ func (c *Controller) RenderList(query Query) ([]byte, error) {
 	return c.drawing.GenerateInventoryList(payload)
 }
 
-func (c *Controller) inventoryIconPath(region renderregion.Value, resourceType string, id int) string {
+func (c *Controller) inventoryIconPath(region renderregion.Value, resourceType string, id int) drawing.AssetKey {
 	resourceType = strings.ToLower(strings.TrimSpace(resourceType))
 	switch resourceType {
 	case "coin", "virtual_coin", "jewel":
@@ -397,38 +389,38 @@ func (c *Controller) inventoryIconPath(region renderregion.Value, resourceType s
 			filepath.Join("thumbnail", "common_material", resourceType+".png"))
 	case "material":
 		if id <= 0 {
-			return ""
+			return nil
 		}
 		return c.resolveInventoryAssetPath(region,
 			filepath.Join("thumbnail", "material", fmt.Sprintf("material%d.png", id)))
 	case "boost_item":
 		if id <= 0 {
-			return ""
+			return nil
 		}
 		return c.resolveInventoryAssetPath(region,
 			filepath.Join("thumbnail", "boost_item", fmt.Sprintf("boost_item%d.png", id)))
 	case "practice_ticket":
 		if id <= 0 {
-			return ""
+			return nil
 		}
 		return c.resolveInventoryAssetPath(region,
 			filepath.Join("thumbnail", "practice_ticket", fmt.Sprintf("ticket%d.png", id)))
 	case "skill_practice_ticket":
 		if id <= 0 {
-			return ""
+			return nil
 		}
 		return c.resolveInventoryAssetPath(region,
 			filepath.Join("thumbnail", "skill_practice_ticket", fmt.Sprintf("ticket%d.png", id)))
 	default:
-		return ""
+		return nil
 	}
 }
 
-func (c *Controller) inventoryIconByAssetName(region renderregion.Value, resourceType string, assetName string) string {
+func (c *Controller) inventoryIconByAssetName(region renderregion.Value, resourceType string, assetName string) drawing.AssetKey {
 	resourceType = strings.ToLower(strings.TrimSpace(resourceType))
 	assetName = strings.TrimSpace(assetName)
 	if assetName == "" {
-		return ""
+		return nil
 	}
 	switch resourceType {
 	case "event_item":
@@ -449,27 +441,27 @@ func (c *Controller) inventoryIconByAssetName(region renderregion.Value, resourc
 		return c.resolveInventoryAssetPath(region,
 			filepath.Join("mysekai", "thumbnail", "material", assetName+".png"))
 	default:
-		return ""
+		return nil
 	}
 }
 
-func (c *Controller) resolveInventoryAssetPath(region renderregion.Value, relPaths ...string) string {
+// resolveInventoryAssetPath emits the C1 candidate list Drawing probes: the
+// requested region's path first, then the JP fallback (today's hit order).
+// For JP, or when both regions resolve to the same path, it is one path and
+// the wire shape stays a plain string.
+func (c *Controller) resolveInventoryAssetPath(region renderregion.Value, relPaths ...string) drawing.AssetKey {
 	regionKey := renderregion.WithDefault(region).String()
 	if strings.TrimSpace(regionKey) == "" {
 		regionKey = renderregion.JP.String()
 	}
-	if c != nil && c.assets != nil {
-		for _, candidateRegion := range []string{regionKey, renderregion.JP.String()} {
-			path := assets.ResolveRegionAssetPath(c.assets, candidateRegion, relPaths...)
-			if path == "" {
-				continue
-			}
-			if _, ok := assets.ProbeExisting(c.requestCtx, c.assetReader, c.assets, path); ok {
-				return path
-			}
-		}
+	var helper *assets.AssetHelper
+	if c != nil {
+		helper = c.assets
 	}
-	return assets.ResolveRegionAssetPath(c.assets, regionKey, relPaths...)
+	return drawing.AssetCandidates(
+		assets.ResolveRegionAssetPath(helper, regionKey, relPaths...),
+		assets.ResolveRegionAssetPath(helper, renderregion.JP.String(), relPaths...),
+	)
 }
 
 func buildInventorySections(items []drawing.InventoryItem) []drawing.InventorySection {

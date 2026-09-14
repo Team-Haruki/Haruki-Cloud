@@ -27,9 +27,6 @@ func (c *Controller) ResolveMusicCoverByTitleOrAlias(query Query) (*CoverResult,
 	}
 
 	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
-	if localPath := c.resolveLocalMusicJacket(musicInfo.AssetBundleName); localPath != "" {
-		jacketPath = localPath
-	}
 	if strings.TrimSpace(jacketPath) == "" {
 		return nil, fmt.Errorf("music %d does not have jacket asset", musicInfo.ID)
 	}

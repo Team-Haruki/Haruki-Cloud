@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -1884,7 +1885,7 @@ func findMapHarvestPoint(points []drawing.MysekaiMsrMapHarvestPoint, id int) *dr
 
 func assertNormalMapHarvestPoint(t *testing.T, normalPoint *drawing.MysekaiMsrMapHarvestPoint) {
 	t.Helper()
-	if normalPoint.ImagePath != "static_images/mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png" {
+	if !slices.Equal(normalPoint.ImagePath, drawing.AssetKey{"static_images/mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png"}) {
 		t.Fatalf("unexpected normal point image path: %q", normalPoint.ImagePath)
 	}
 	if normalPoint.Size != nil {
@@ -1898,7 +1899,9 @@ func assertNormalMapHarvestPoint(t *testing.T, normalPoint *drawing.MysekaiMsrMa
 
 func assertBirthdayMapHarvestPoint(t *testing.T, birthdayPoint *drawing.MysekaiMsrMapHarvestPoint, birthdayYear int) {
 	t.Helper()
-	if birthdayPoint.ImagePath != fmt.Sprintf("asset/jp-assets/ondemand/mysekai/birthday/haruka_%d/icon_refresh.png", birthdayYear) {
+	// C1: the local haruka_<Y-1> icon is no longer probed; the full frozen
+	// window is sent and Drawing picks the existing year.
+	if len(birthdayPoint.ImagePath) != 4 || birthdayPoint.ImagePath[1] != fmt.Sprintf("asset/jp-assets/ondemand/mysekai/birthday/haruka_%d/icon_refresh.png", birthdayYear) {
 		t.Fatalf("unexpected birthday point image path: %q", birthdayPoint.ImagePath)
 	}
 	gotFallback := "<nil>"

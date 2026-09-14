@@ -222,7 +222,7 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	honorReq := honorRequests["7001:1:main"].(*drawing.HonorRequest)
 	{
 		testutil.Require(t, !(honorReq.HonorImgPath == nil), "unexpected honor image path: %+v", honorReq.HonorImgPath)
-		testutil.Require(t, strings.HasSuffix(*honorReq.HonorImgPath, "honor/honor_bg_event_demo/degree_main.png"), "unexpected honor image path: %+v", honorReq.HonorImgPath)
+		testutil.Require(t, strings.HasSuffix(honorReq.HonorImgPath.First(), "honor/honor_bg_event_demo/degree_main.png"), "unexpected honor image path: %+v", honorReq.HonorImgPath)
 	}
 
 	bondsHonorRequests := resources["bondsHonorRequests"].(map[string]any)

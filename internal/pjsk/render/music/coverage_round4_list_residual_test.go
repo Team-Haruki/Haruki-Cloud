@@ -55,7 +55,8 @@ func TestMusicCoverByTitleLocalAndMissingJacketBranches(t *testing.T) {
 	source.musics[2] = &masterdata.Music{ID: 2, Title: "Local Jacket", AssetBundleName: "local_jacket", PublishedAt: now - 1}
 	controller = NewController(source, nil, assets.NewAssetHelper(root, nil), nil, nil)
 	result, err := controller.ResolveMusicCoverByTitleOrAlias(Query{Query: "Local Jacket", Region: "jp"})
-	if err != nil || filepath.Clean(result.JacketPath) != filepath.Clean(jacket) {
+	// C1 (T15): the bare local jacket is no longer probed into an absolute path.
+	if err != nil || result.JacketPath != "asset/jp-assets/startapp/music/jacket/local_jacket/local_jacket.png" {
 		t.Fatalf("local title cover = %#v, %v", result, err)
 	}
 }

@@ -204,10 +204,11 @@ func TestResolveCardImagesSupportsStandardAndRipPaths(t *testing.T) {
 	if len(result.Paths) != 2 {
 		t.Fatalf("expected 2 images, got %d (%v)", len(result.Paths), result.Paths)
 	}
-	if filepath.Clean(result.Paths[0]) != filepath.Clean(normal) {
+	// C1 (T15): the Drawing-relative path is emitted, not the absolute hit.
+	if result.Paths[0] != "asset/jp-assets/startapp/character/member/card_test/card_normal.png" {
 		t.Fatalf("unexpected normal path: %q", result.Paths[0])
 	}
-	if filepath.Clean(result.Paths[1]) != filepath.Clean(after) {
+	if result.Paths[1] != "asset/jp-assets/startapp/character/member/card_test/card_after_training.png" {
 		t.Fatalf("unexpected after-training path: %q", result.Paths[1])
 	}
 }

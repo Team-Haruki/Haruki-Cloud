@@ -67,7 +67,6 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	inventoryController := inventory.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, inventory.MasterdataOptions{
 		LocalDir: inventoryMasterdataDir,
 	})
-	inventoryController.SetAssetReader(dependencies.assetReader)
 	deckController := newAppDeckController(nil, nil, drawingClient, assetHelper, snapshotService, cfg)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
@@ -204,13 +203,10 @@ func configureAppDatabaseControllers(sekaiClient *sekaiDB.Client, cfg Config, lo
 }
 
 // setAssetReader threads the shared asset reader into every controller whose
-// asset reads or existence probes go through it. The setters are nil-safe, so
-// controllers that were not built (no sekai client) are skipped.
+// asset reads go through it. The setter is nil-safe, so a controller that was
+// not built (no sekai client) is skipped.
 func (c *appDatabaseControllers) setAssetReader(reader *assets.AssetReader) {
-	c.cards.SetAssetReader(reader)
-	c.honors.SetAssetReader(reader)
 	c.music.SetAssetReader(reader)
-	c.profiles.SetAssetReader(reader)
 }
 
 func (c *appDatabaseControllers) registerProvider(source provider.MasterDataProvider) {

@@ -681,7 +681,9 @@ func (s *bridgeMusicSource) GetOutsideCharacterByID(int) (string, error) { retur
 
 func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	root := t.TempDir()
-	jacketPath := filepath.Join(root, "music", "jacket", "jacket_test", "jacket_test.png")
+	// The cover is sent by its Drawing-relative region path (T15), which the
+	// handler reads through the app's asset helper.
+	jacketPath := filepath.Join(root, "jp-assets", "startapp", "music", "jacket", "jacket_test", "jacket_test.png")
 	if err := os.MkdirAll(filepath.Dir(jacketPath), 0o755); err != nil {
 		t.Fatalf("mkdir jacket: %v", err)
 	}
@@ -721,8 +723,10 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 			},
 		},
 	}
+	helper := assets.NewAssetHelper(root, nil)
 	app := &renderapp.App{
-		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
+		Assets:     helper,
+		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), helper, nil, nil),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 
@@ -4852,8 +4856,10 @@ func TestExecuteCardImageReturnsAllOriginalArts(t *testing.T) {
 		}
 	}
 
+	helper := assets.NewAssetHelper(root, nil)
 	app := &renderapp.App{
-		Cards:      rendercard.NewController(&bridgeCardSource{}, &bridgeCardEventSource{}, nil, assets.NewAssetHelper(root, nil)),
+		Assets:     helper,
+		Cards:      rendercard.NewController(&bridgeCardSource{}, &bridgeCardEventSource{}, nil, helper),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 	message, err := executeCard(NewRequestContext(context.Background(), &CommandRequest{

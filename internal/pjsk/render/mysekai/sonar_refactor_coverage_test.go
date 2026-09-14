@@ -119,7 +119,7 @@ func TestMapRefactorHelperBranches(t *testing.T) {
 	}
 	controller := &Controller{}
 	path, fallback, size, offsetX, offsetZ := controller.mysekaiHarvestPointImage(renderregion.JP, "tree", "rarity_1", "tree", 0, 0, nil, nil)
-	if path == "" || fallback != nil || size != nil || offsetX != 0 || offsetZ != -48 {
+	if path.First() == "" || fallback != nil || size != nil || offsetX != 0 || offsetZ != -48 {
 		t.Fatalf("regular harvest image = %q, %#v, %#v, %v, %v", path, fallback, size, offsetX, offsetZ)
 	}
 	assets := mysekaiMapAssets{harvestFixtures: map[int]map[string]any{}}

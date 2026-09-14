@@ -106,10 +106,10 @@ func TestBuildHonorRequestNormalWorldLink(t *testing.T) {
 		t.Fatalf("unexpected group type: %#v", req.GroupType)
 	}
 	expectedHonorPath := "asset/jp-assets/ondemand/honor/honor_bg_001/degree_main.png"
-	if req.HonorImgPath == nil || *req.HonorImgPath != expectedHonorPath {
+	if req.HonorImgPath.First() != expectedHonorPath {
 		t.Fatalf("unexpected honor image path: %#v", req.HonorImgPath)
 	}
-	if req.FrameImgPath == nil || *req.FrameImgPath != "static_images/honor/frame_degree_m_1.png" {
+	if req.FrameImgPath.First() != "static_images/honor/frame_degree_m_1.png" {
 		t.Fatalf("unexpected frame image path: %#v", req.FrameImgPath)
 	}
 }
@@ -337,7 +337,7 @@ func TestBuildHonorRequestBirthdayPrefersBirthdayFramePathForMiddleRarity(t *tes
 		t.Fatalf("unexpected honor type: %#v", req.HonorType)
 	}
 	wantFrame := "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_06/frame_degree_s_2.png"
-	if req.FrameImgPath == nil || *req.FrameImgPath != wantFrame {
+	if req.FrameImgPath.First() != wantFrame {
 		t.Fatalf("expected birthday frame path, got %#v", req.FrameImgPath)
 	}
 	wantLevel := "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_06/frame_degree_level_2.png"
@@ -387,7 +387,7 @@ func TestBuildHonorRequestBirthdayLowUsesBackgroundOnly(t *testing.T) {
 	}
 }
 
-func TestBuildHonorRequestBirthdayFallsBackToStaticFrameWhenBirthdayFrameMissing(t *testing.T) {
+func TestBuildHonorRequestBirthdayListsStaticFrameAfterBirthdayFrame(t *testing.T) {
 	dir := t.TempDir()
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "startapp", "honor", "honor_bg_birthday_01_13", "degree_sub.png"))
 
@@ -418,11 +418,15 @@ func TestBuildHonorRequestBirthdayFallsBackToStaticFrameWhenBirthdayFrameMissing
 	if req.HonorType == nil || *req.HonorType != "birthday" {
 		t.Fatalf("unexpected honor type: %#v", req.HonorType)
 	}
-	if req.FrameImgPath == nil || *req.FrameImgPath != "static_images/honor/frame_degree_s_4.png" {
-		t.Fatalf("expected static fallback frame, got %#v", req.FrameImgPath)
+	// C1: the missing birthday frame is no longer probed; the static frame is
+	// the last candidate Drawing falls back to, and Drawing only consults the
+	// level icon when the named frame loads.
+	if req.FrameImgPath.First() != "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_13/frame_degree_s_4.png" ||
+		req.FrameImgPath.Last() != "static_images/honor/frame_degree_s_4.png" {
+		t.Fatalf("expected birthday frame then static fallback, got %#v", req.FrameImgPath)
 	}
-	if req.FrameDegreeLevelImgPath != nil {
-		t.Fatalf("expected missing birthday level frame to stay nil, got %#v", req.FrameDegreeLevelImgPath)
+	if req.FrameDegreeLevelImgPath == nil || *req.FrameDegreeLevelImgPath != "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_13/frame_degree_level_4.png" {
+		t.Fatalf("expected birthday level frame alongside the named frame, got %#v", req.FrameDegreeLevelImgPath)
 	}
 }
 
@@ -456,7 +460,7 @@ func TestBuildHonorRequestBirthdayDerivesFrameNameFromBackgroundWhenMissing(t *t
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
 	wantFrame := "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_06/frame_degree_s_2.png"
-	if req.FrameImgPath == nil || *req.FrameImgPath != wantFrame {
+	if req.FrameImgPath.First() != wantFrame {
 		t.Fatalf("expected derived birthday frame path, got %#v", req.FrameImgPath)
 	}
 	wantLevel := "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_06/frame_degree_level_2.png"
@@ -493,7 +497,7 @@ func TestBuildHonorRequestFallsBackToLevelAssetWhenTopLevelAssetIsEmpty(t *testi
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
 	expectedHonorPath := "asset/jp-assets/ondemand/honor/honor_3009_100/degree_main.png"
-	if req.HonorImgPath == nil || *req.HonorImgPath != expectedHonorPath {
+	if req.HonorImgPath.First() != expectedHonorPath {
 		t.Fatalf("unexpected honor image path: %#v", req.HonorImgPath)
 	}
 	if req.HonorRarity == nil || *req.HonorRarity != "low" {
@@ -740,7 +744,7 @@ func TestBuildHonorRequestEventFrameFallsBackToStaticForLowRarity(t *testing.T) 
 	if err != nil {
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
-	if req.FrameImgPath == nil || *req.FrameImgPath != "static_images/honor/frame_degree_s_2.png" {
+	if req.FrameImgPath.First() != "static_images/honor/frame_degree_s_2.png" {
 		t.Fatalf("expected static fallback frame, got %#v", req.FrameImgPath)
 	}
 }
@@ -773,7 +777,7 @@ func TestBuildHonorRequestRankMatchUsesRankLiveBackground(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
-	if req.HonorImgPath == nil || *req.HonorImgPath != "asset/jp-assets/startapp/rank_live/honor/season_2025_winter/degree_sub.png" {
+	if req.HonorImgPath.First() != "asset/jp-assets/startapp/rank_live/honor/season_2025_winter/degree_sub.png" {
 		t.Fatalf("unexpected honor image path: %#v", req.HonorImgPath)
 	}
 	if req.RankImgPath == nil || *req.RankImgPath != "asset/jp-assets/startapp/rank_live/honor/common/tier_11/sub.png" {

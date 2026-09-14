@@ -102,21 +102,23 @@ func TestChartBPMStoreMissAndFailure(t *testing.T) {
 	}
 }
 
-func TestMusicProbesThroughStoreKeepDrawingPaths(t *testing.T) {
+// C1 (T15): static icons are fixed Drawing paths; nothing is probed, so the
+// store sees no Stat for them.
+func TestMusicStaticIconsAreNotProbed(t *testing.T) {
 	memory := storagetest.NewMemory()
-	memory.Seed(map[string][]byte{
-		"music/jacket/jacket_test/jacket_test.png": []byte("png"),
-		"static_images/jewel.png":                  []byte("png"),
-	})
+	memory.Seed(map[string][]byte{"static_images/jewel.png": []byte("png")})
 	controller := newStoreChartController(memory)
-	if got := controller.resolveLocalMusicJacket("jacket_test"); got != "" {
-		t.Fatalf("store jacket hit must not emit a local path, got %q", got)
-	}
 	if got := controller.resolveStaticIcon(nil, "jewel.png"); got == nil || *got != "static_images/jewel.png" {
 		t.Fatalf("store static icon = %v", got)
 	}
 	if got := controller.resolveStaticIcon(nil, "shard.png"); got == nil || *got != "static_images/shard.png" {
 		t.Fatalf("store static icon miss = %v", got)
+	}
+	if got := controller.resolveStaticIcon(new(" explicit.png "), "jewel.png"); got == nil || *got != "explicit.png" {
+		t.Fatalf("explicit static icon = %v", got)
+	}
+	if calls := memory.Calls(); len(calls) != 0 {
+		t.Fatalf("static icons must not touch the store: %+v", calls)
 	}
 	var nilController *Controller
 	nilController.SetAssetReader(nil)
@@ -172,12 +174,11 @@ func writeMusicAssetTree(t *testing.T, files map[string]string) string {
 }
 
 // An unchanged config (asset_dirs set, storage.assets derived from Primary)
-// keeps 664281d1's strings: the jacket probe emits the absolute local path and
-// charts that exist only in a legacy root (bare layout) are still read.
+// still reads charts that exist only in a legacy root (bare layout), and the
+// jacket is the Drawing-relative path (the bare jacket probe is gone, T15).
 func TestDerivedAssetsSlotKeepsLegacyMusicLookups(t *testing.T) {
 	primary := writeMusicAssetTree(t, map[string]string{
-		"music/jacket/jacket_test/jacket_test.png": "png",
-		"static_images/jewel.png":                  "png",
+		"static_images/jewel.png": "png",
 	})
 	legacy := writeMusicAssetTree(t, map[string]string{
 		"music/music_score/0001_01/expert.txt": "#BPM01:150\n#00008:01",
@@ -191,13 +192,6 @@ func TestDerivedAssetsSlotKeepsLegacyMusicLookups(t *testing.T) {
 	after := NewController(storeChartSource(), nil, helper, nil, nil)
 	after.SetAssetReader(assets.NewAssetReader(helper, store))
 
-	wantJacket := filepath.ToSlash(filepath.Join(primary, "music/jacket/jacket_test/jacket_test.png"))
-	if got := before.resolveLocalMusicJacket("jacket_test"); got != wantJacket {
-		t.Fatalf("legacy jacket = %q, want %q", got, wantJacket)
-	}
-	if got := after.resolveLocalMusicJacket("jacket_test"); got != wantJacket {
-		t.Fatalf("derived slot jacket = %q, want the absolute path %q", got, wantJacket)
-	}
 	for name, controller := range map[string]*Controller{"legacy": before, "derived slot": after} {
 		if got := controller.resolveStaticIcon(nil, "jewel.png"); got == nil || *got != "static_images/jewel.png" {
 			t.Fatalf("%s static icon = %v", name, got)
@@ -205,6 +199,9 @@ func TestDerivedAssetsSlotKeepsLegacyMusicLookups(t *testing.T) {
 		bpm, err := controller.ResolveMusicBPM(Query{Query: "Song A", Region: "jp", Difficulty: "expert"})
 		if err != nil || bpm.MainBPM != 150 {
 			t.Fatalf("%s legacy-root chart = %+v, %v", name, bpm, err)
+		}
+		if filepath.IsAbs(bpm.JacketPath) || !strings.HasPrefix(bpm.JacketPath, "asset/jp-assets/") {
+			t.Fatalf("%s jacket = %q, want a Drawing-relative path", name, bpm.JacketPath)
 		}
 	}
 }

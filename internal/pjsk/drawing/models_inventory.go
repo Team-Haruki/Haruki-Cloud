@@ -3,15 +3,16 @@ package drawing
 // =========================== Inventory Models ===========================
 
 type InventoryItem struct {
-	ID            int    `json:"id"`
-	Name          string `json:"name"`
-	Description   string `json:"description,omitempty"`
-	Category      string `json:"category"`
-	ResourceType  string `json:"resource_type"`
-	IconPath      string `json:"icon_path"`
-	Quantity      int    `json:"quantity"`
-	Seq           int    `json:"seq"`
-	RecoveryValue *int   `json:"recovery_value,omitempty"`
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	Description  string `json:"description,omitempty"`
+	Category     string `json:"category"`
+	ResourceType string `json:"resource_type"`
+	// IconPath is the C1 candidate list: requested region first, JP fallback last.
+	IconPath      AssetKey `json:"icon_path"`
+	Quantity      int      `json:"quantity"`
+	Seq           int      `json:"seq"`
+	RecoveryValue *int     `json:"recovery_value,omitempty"`
 }
 
 type InventorySection struct {

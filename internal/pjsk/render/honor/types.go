@@ -28,19 +28,15 @@ type contextualDataSource interface {
 // ── Controller & builder ────────────────────────────────────────────────────
 
 type Controller struct {
-	sources     *regionsource.Registry[DataSource]
-	drawing     *drawing.HarukiDrawingClient
-	assets      *assets.AssetHelper
-	assetReader *assets.AssetReader
-	requestCtx  context.Context
+	sources    *regionsource.Registry[DataSource]
+	drawing    *drawing.HarukiDrawingClient
+	assets     *assets.AssetHelper
+	requestCtx context.Context
 }
 
 type Builder struct {
 	source DataSource
 	assets *assets.AssetHelper
-	// reader answers assetExists (nil -> local AssetHelper probing).
-	reader *assets.AssetReader
-	ctx    context.Context
 }
 
 // ── Query ───────────────────────────────────────────────────────────────────

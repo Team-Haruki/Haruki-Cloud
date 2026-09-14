@@ -175,7 +175,7 @@ func TestBuildProfileRequestFromAPIUsesRequestedRegionAssetPaths(t *testing.T) {
 		t.Fatalf("expected 1 honor, got %d", len(payload.Honors))
 	}
 	wantHonor := "asset/cn-assets/startapp/honor/honor_exp_1/degree_main.png"
-	if payload.Honors[0].HonorImgPath == nil || *payload.Honors[0].HonorImgPath != wantHonor {
+	if payload.Honors[0].HonorImgPath.First() != wantHonor {
 		t.Fatalf("unexpected honor image path: %#v", payload.Honors[0].HonorImgPath)
 	}
 }

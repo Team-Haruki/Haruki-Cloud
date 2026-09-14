@@ -66,7 +66,7 @@ func (c *Controller) Set3DPreviewConfig(cfg Preview3DConfig) {
 	if c == nil {
 		return
 	}
-	if strings.TrimSpace(cfg.StaticOutputDir) == "" {
+	if strings.TrimSpace(cfg.StaticOutputDir) == "" && !preview3DStoreEnabled(cfg.StaticStore) {
 		cfg.StaticOutputDir = c.default3DPreviewStaticOutputDir(cfg.StaticRelativeDir)
 	}
 	c.preview3D = NewPreview3DService(cfg)

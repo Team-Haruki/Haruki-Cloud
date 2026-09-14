@@ -234,7 +234,11 @@ func (c *appDatabaseControllers) configureDefaultProvider(sekaiClient *sekaiDB.C
 	c.decks.RegisterMusicSource(musicAdapter)
 	c.cards = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)
 	c.costumes = costume.NewController(costumeAdapter, drawingClient, assetHelper)
-	c.costumes.Set3DPreviewConfig(cfg.Preview3D)
+	preview3D := cfg.Preview3D
+	if preview3D.StaticStore == nil {
+		preview3D.StaticStore = cfg.Stores.Static
+	}
+	c.costumes.Set3DPreviewConfig(preview3D)
 	educationController.RegisterSource(education.NewProviderAdapter(c.provider))
 	c.events = event.NewController(eventAdapter, drawingClient, assetHelper)
 	c.gachas = gacha.NewController(gacha.NewProviderAdapter(c.provider), drawingClient, assetHelper)

@@ -236,21 +236,22 @@ func TestPreview3DPublicCapturePathsPropagateEngineFailures(t *testing.T) {
 
 func TestEnsureStaticCaptureFileFastPathsAndFetchFailure(t *testing.T) {
 	service, endpoint := cachedPreview3DServiceForCoverage(t, preview3DCoverageRegistry(), "http://preview.invalid")
-	if err := service.ensureStaticCaptureFile(context.Background(), endpoint, ""); err != nil {
+	if err := service.ensureStaticCaptureObject(context.Background(), endpoint, ""); err != nil {
 		t.Fatalf("empty static output: %v", err)
 	}
 	canceled, cancel := context.WithCancel(context.Background())
 	cancel()
-	if err := service.ensureStaticCaptureFile(canceled, endpoint, "image"); !errors.Is(err, context.Canceled) {
+	if err := service.ensureStaticCaptureObject(canceled, endpoint, "image"); !errors.Is(err, context.Canceled) {
 		t.Fatalf("canceled static write error = %v", err)
 	}
 
 	service.cfg.StaticOutputDir = t.TempDir()
+	service.static = resolvePreview3DStaticTarget(service.cfg)
 	target := filepath.Join(service.cfg.StaticOutputDir, "existing.png")
 	if err := os.WriteFile(target, []byte("png"), 0o644); err != nil {
 		t.Fatalf("seed target: %v", err)
 	}
-	if err := service.ensureStaticCaptureFile(context.Background(), endpoint, "existing"); err != nil {
+	if err := service.ensureStaticCaptureObject(context.Background(), endpoint, "existing"); err != nil {
 		t.Fatalf("existing target: %v", err)
 	}
 
@@ -262,7 +263,7 @@ func TestEnsureStaticCaptureFileFastPathsAndFetchFailure(t *testing.T) {
 			Request:    req,
 		}, nil
 	})
-	if err := service.ensureStaticCaptureFile(context.Background(), endpoint, "missing"); err == nil || !strings.Contains(err.Error(), "fetch failed") {
+	if err := service.ensureStaticCaptureObject(context.Background(), endpoint, "missing"); err == nil || !strings.Contains(err.Error(), "fetch failed") {
 		t.Fatalf("static fetch error = %v", err)
 	}
 }
@@ -536,33 +537,13 @@ func TestPreview3DCaptureProtocolBranches(t *testing.T) {
 	}
 }
 
-func TestReadPreview3DResponseAndAtomicWriteErrorBranches(t *testing.T) {
+func TestReadPreview3DResponseAndSharedContextBranches(t *testing.T) {
 	if _, err := readPreview3DResponse(nil, 1, "nil"); err == nil {
 		t.Fatal("nil response was accepted")
 	}
 	response := &http.Response{Body: io.NopCloser(preview3DCoverageErrorReader{}), ContentLength: -1}
 	if _, err := readPreview3DResponse(response, 1, "broken"); err == nil || !strings.Contains(err.Error(), "read failed") {
 		t.Fatalf("response read error = %v", err)
-	}
-
-	canceled, cancel := context.WithCancel(context.Background())
-	cancel()
-	if err := writePreview3DCaptureAtomically(canceled, filepath.Join(t.TempDir(), "image.png"), []byte("png")); !errors.Is(err, context.Canceled) {
-		t.Fatalf("canceled atomic write error = %v", err)
-	}
-	if err := writePreview3DCaptureAtomically(context.Background(), filepath.Join(t.TempDir(), "missing", "image.png"), []byte("png")); err == nil {
-		t.Fatal("atomic write into missing directory succeeded")
-	}
-	dir := t.TempDir()
-	nonEmptyTarget := filepath.Join(dir, "target")
-	if err := os.Mkdir(nonEmptyTarget, 0o755); err != nil {
-		t.Fatalf("mkdir target: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(nonEmptyTarget, "child"), []byte("x"), 0o644); err != nil {
-		t.Fatalf("seed target child: %v", err)
-	}
-	if err := writePreview3DCaptureAtomically(context.Background(), nonEmptyTarget, []byte("png")); err == nil {
-		t.Fatal("atomic rename over non-empty directory succeeded")
 	}
 
 	service := &Preview3DService{cfg: Preview3DConfig{Timeout: -31 * time.Second}}

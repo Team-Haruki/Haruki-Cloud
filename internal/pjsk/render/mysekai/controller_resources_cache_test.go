@@ -39,12 +39,19 @@ func TestMysekaiHarvestPointImageSendsCandidatesAndFallback(t *testing.T) {
 	controller := &Controller{}
 	characters := map[int]map[string]any{21: {"givenNameEnglish": "Haruka"}}
 	birthdays := map[string]int{mysekaiHarvestPosKey(3, 4): 21}
-	year := time.Now().Year()
 	wantFallback := "static_images/mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png"
 
+	// The builder reads the clock itself; bracket the call so a year boundary
+	// between the reads cannot flake the comparison.
+	before := time.Now()
 	image, fallback, size, offsetX, offsetZ := controller.mysekaiHarvestPointImage(renderregion.JP, "birthday_plant", "rarity_2", "plant", 3, 4, birthdays, characters)
-	want := drawing.AssetKey(mysekaiBirthdayIconCandidates("jp", "haruka", time.Now()))
-	if !slices.Equal(image, want) || len(image) != 4 || image.First() != fmt.Sprintf("asset/jp-assets/ondemand/mysekai/birthday/haruka_%d/icon_refresh.png", year) {
+	after := time.Now()
+	now := before
+	if !slices.Equal(image, drawing.AssetKey(mysekaiBirthdayIconCandidates("jp", "haruka", before))) {
+		now = after
+	}
+	want := drawing.AssetKey(mysekaiBirthdayIconCandidates("jp", "haruka", now))
+	if !slices.Equal(image, want) || len(image) != 4 || image.First() != fmt.Sprintf("asset/jp-assets/ondemand/mysekai/birthday/haruka_%d/icon_refresh.png", now.Year()) {
 		t.Fatalf("birthday candidates = %v, want %v", image, want)
 	}
 	if fallback == nil || *fallback != wantFallback || size == nil || *size != 50 || offsetX != 7.5 || offsetZ != 0 {

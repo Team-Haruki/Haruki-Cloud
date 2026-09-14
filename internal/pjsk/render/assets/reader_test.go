@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/internal/storage/storagetest"
@@ -101,11 +102,108 @@ func TestAssetReaderLegacyReadError(t *testing.T) {
 
 func TestAssetReaderNilHelperAndNilReader(t *testing.T) {
 	var nilReader *AssetReader
+	if _, ok := nilReader.Stat(context.Background(), "jp-assets/x"); ok {
+		t.Fatal("nil reader Stat")
+	}
 	if _, _, err := nilReader.ReadFirst(context.Background(), "jp-assets/x"); !errors.Is(err, storage.ErrNotExist) {
 		t.Fatalf("nil reader ReadFirst = %v", err)
 	}
-	if _, _, err := NewAssetReader(nil, nil).ReadFirst(context.Background(), "jp-assets/x"); !errors.Is(err, storage.ErrNotExist) {
-		t.Fatalf("nil helper ReadFirst = %v", err)
+	reader := NewAssetReader(nil, nil)
+	if reader.Exists(context.Background(), "jp-assets/x") {
+		t.Fatal("nil helper Exists")
+	}
+}
+
+func TestAssetReaderStatParity(t *testing.T) {
+	legacy, store, root := parityReaders(t, parityTree)
+	ctx := context.Background()
+	cases := []struct {
+		candidates []string
+		wantKey    string
+	}{
+		{[]string{"asset/jp-assets/startapp/character/member/card_after.png"}, "jp-assets/startapp/character/member/card_after.png"},
+		{[]string{"asset/jp-assets/startapp/nope.png", "cn-assets/ondemand/honor/frame/frame.png"}, "cn-assets/ondemand/honor/frame/frame.png"},
+		{[]string{"asset/jp-assets/startapp/nope.png"}, ""},
+		{[]string{"", "../x"}, ""},
+	}
+	for _, tc := range cases {
+		legacyResolved, legacyOK := legacy.Stat(ctx, tc.candidates...)
+		storeResolved, storeOK := store.Stat(ctx, tc.candidates...)
+		if legacyOK != storeOK || storeResolved != tc.wantKey {
+			t.Fatalf("%v: legacy=%q,%v store=%q,%v", tc.candidates, legacyResolved, legacyOK, storeResolved, storeOK)
+		}
+		if legacyOK && legacyResolved != filepath.ToSlash(filepath.Join(root, tc.wantKey)) {
+			t.Fatalf("%v: legacy resolved %q", tc.candidates, legacyResolved)
+		}
+		if legacy.Exists(ctx, tc.candidates[0]) != store.Exists(ctx, tc.candidates[0]) {
+			t.Fatalf("%v: Exists disagrees", tc.candidates)
+		}
+	}
+}
+
+func TestAssetReaderLegacyStatVanishedFile(t *testing.T) {
+	root := writeAssetTree(t, map[string]string{"jp-assets/a.png": "a"})
+	helper := NewAssetHelper(root, nil)
+	reader := NewAssetReader(helper, storage.Disabled())
+	if !reader.Exists(context.Background(), "jp-assets/a.png") {
+		t.Fatal("expected hit")
+	}
+	if err := os.Remove(filepath.Join(root, "jp-assets", "a.png")); err != nil {
+		t.Fatal(err)
+	}
+	// FirstExisting keeps its positive resolution for a short TTL; os.Stat is
+	// the final word, exactly as the probe sites check today.
+	if reader.Exists(context.Background(), "jp-assets/a.png") {
+		t.Fatal("a vanished file must not be reported")
+	}
+}
+
+func TestAssetReaderStoreStatMemo(t *testing.T) {
+	memory := storagetest.NewMemory()
+	memory.Seed(map[string][]byte{"jp-assets/hit.png": []byte("hit")})
+	reader := NewAssetReader(nil, memory)
+	now := time.Unix(1_700_000_000, 0)
+	reader.memo.now = func() time.Time { return now }
+	ctx := context.Background()
+
+	statCalls := func() int {
+		n := 0
+		for _, op := range memory.Calls() {
+			if op.Method == "Stat" {
+				n++
+			}
+		}
+		return n
+	}
+
+	for range 3 {
+		if !reader.Exists(ctx, "asset/jp-assets/hit.png") || reader.Exists(ctx, "asset/jp-assets/late.png") {
+			t.Fatal("unexpected Stat answers")
+		}
+	}
+	if got := statCalls(); got != 2 {
+		t.Fatalf("memo hit/miss must avoid repeat HEADs, Stat calls = %d", got)
+	}
+
+	// A later object shows up; a successful read records the hit, so the memo
+	// never keeps turning it into a miss.
+	if err := memory.Put(ctx, "jp-assets/late.png", []byte("late"), storage.PutOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if data, resolved, err := reader.ReadFirst(ctx, "asset/jp-assets/late.png"); err != nil || string(data) != "late" || resolved != "jp-assets/late.png" {
+		t.Fatalf("ReadFirst = %q %q %v", data, resolved, err)
+	}
+	if !reader.Exists(ctx, "asset/jp-assets/late.png") {
+		t.Fatal("memo turned a later hit into a miss")
+	}
+
+	// Expiry re-probes the store.
+	if err := memory.Delete(ctx, "jp-assets/hit.png"); err != nil {
+		t.Fatal(err)
+	}
+	now = now.Add(assetStatMemoTTL)
+	if reader.Exists(ctx, "asset/jp-assets/hit.png") {
+		t.Fatal("expired memo entry must be re-probed")
 	}
 }
 
@@ -114,14 +212,42 @@ func TestAssetReaderStoreErrors(t *testing.T) {
 	memory := storagetest.NewMemory()
 	memory.Seed(map[string][]byte{"jp-assets/a.png": []byte("a")})
 	memory.FailGet = func(storage.Key) error { return boom }
+	memory.FailStat = func(storage.Key) error { return boom }
 	reader := NewAssetReader(nil, memory)
 	ctx := context.Background()
 
 	if _, _, err := reader.ReadFirst(ctx, "jp-assets/a.png"); !errors.Is(err, boom) {
 		t.Fatalf("ReadFirst must return a non-NotExist store error, got %v", err)
 	}
-	memory.FailGet = nil
-	if data, _, err := reader.ReadFirst(ctx, "jp-assets/a.png"); err != nil || string(data) != "a" {
-		t.Fatalf("a transient Get error must not stick: %q %v", data, err)
+	if reader.Exists(ctx, "jp-assets/a.png") {
+		t.Fatal("a failing Stat is a miss")
+	}
+	memory.FailStat = nil
+	if !reader.Exists(ctx, "jp-assets/a.png") {
+		t.Fatal("a transient Stat error must not be memoised")
+	}
+}
+
+func TestAssetStatMemoBound(t *testing.T) {
+	memo := newAssetStatMemo(time.Minute, 2)
+	now := time.Unix(0, 0)
+	memo.now = func() time.Time { return now }
+	memo.store("a", true)
+	now = now.Add(2 * time.Minute)
+	memo.store("b", false)
+	memo.store("c", true) // evicts expired "a"
+	if _, cached := memo.lookup("a"); cached {
+		t.Fatal("expired entry survived")
+	}
+	if exists, cached := memo.lookup("b"); !cached || exists {
+		t.Fatal("b lost")
+	}
+	memo.store("d", true) // full with live entries: cleared
+	if len(memo.entries) != 1 {
+		t.Fatalf("memo size = %d", len(memo.entries))
+	}
+	memo.store("d", false) // overwrite does not evict
+	if exists, cached := memo.lookup("d"); !cached || exists {
+		t.Fatal("overwrite failed")
 	}
 }

@@ -387,7 +387,7 @@ func TestBuildHonorRequestBirthdayLowUsesBackgroundOnly(t *testing.T) {
 	}
 }
 
-func TestBuildHonorRequestBirthdayListsStaticFrameAfterBirthdayFrame(t *testing.T) {
+func TestBuildHonorRequestBirthdayOmitsLevelIconWhenBirthdayFrameMissing(t *testing.T) {
 	dir := t.TempDir()
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "startapp", "honor", "honor_bg_birthday_01_13", "degree_sub.png"))
 
@@ -418,15 +418,37 @@ func TestBuildHonorRequestBirthdayListsStaticFrameAfterBirthdayFrame(t *testing.
 	if req.HonorType == nil || *req.HonorType != "birthday" {
 		t.Fatalf("unexpected honor type: %#v", req.HonorType)
 	}
-	// C1: the missing birthday frame is no longer probed; the static frame is
-	// the last candidate Drawing falls back to, and Drawing only consults the
-	// level icon when the named frame loads.
+	// C1: the frame fork is a candidate list (named frame, then the static
+	// frame). The level icon is not a fork: Drawing fails the render on a
+	// supplied level icon that is missing and would draw it on the static
+	// frame, so Cloud omits it while the named frame is missing.
 	if req.FrameImgPath.First() != "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_13/frame_degree_s_4.png" ||
 		req.FrameImgPath.Last() != "static_images/honor/frame_degree_s_4.png" {
 		t.Fatalf("expected birthday frame then static fallback, got %#v", req.FrameImgPath)
 	}
-	if req.FrameDegreeLevelImgPath == nil || *req.FrameDegreeLevelImgPath != "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_13/frame_degree_level_4.png" {
-		t.Fatalf("expected birthday level frame alongside the named frame, got %#v", req.FrameDegreeLevelImgPath)
+	if req.FrameDegreeLevelImgPath != nil {
+		t.Fatalf("level icon must be omitted without the named frame, got %#v", *req.FrameDegreeLevelImgPath)
+	}
+
+	// The level icon alone (named frame still missing) is not enough.
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "startapp", "honor_frame", "honor_frame_birthday_01_13", "frame_degree_level_4.png"))
+	req, err = NewBuilder(source, assets.NewAssetHelper(dir, nil)).BuildHonorRequest(Query{Region: renderregion.JP, HonorID: 6861, HonorLevel: 3})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	if req.FrameDegreeLevelImgPath != nil {
+		t.Fatalf("level icon must not be drawn on the static frame, got %#v", *req.FrameDegreeLevelImgPath)
+	}
+
+	// Named frame present but level icon missing: still omitted.
+	dir2 := t.TempDir()
+	mustWriteHonorAsset(t, dir2, filepath.Join("asset", "jp-assets", "startapp", "honor_frame", "honor_frame_birthday_01_13", "frame_degree_s_4.png"))
+	req, err = NewBuilder(source, assets.NewAssetHelper(dir2, nil)).BuildHonorRequest(Query{Region: renderregion.JP, HonorID: 6861, HonorLevel: 3})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	if req.FrameDegreeLevelImgPath != nil {
+		t.Fatalf("missing level icon must be omitted, got %#v", *req.FrameDegreeLevelImgPath)
 	}
 }
 

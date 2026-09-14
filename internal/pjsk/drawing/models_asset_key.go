@@ -41,7 +41,9 @@ func (k AssetKey) First() string {
 	return k[0]
 }
 
-// Last returns the final candidate (Drawing's pick when none exists), or "".
+// Last returns the final candidate, or "". Note: when no candidate exists,
+// Drawing's get_asset_image_ref uses the FIRST candidate for its placeholder
+// and log, not the last (addendum A4/B2 wording pending reconciliation).
 func (k AssetKey) Last() string {
 	if len(k) == 0 {
 		return ""

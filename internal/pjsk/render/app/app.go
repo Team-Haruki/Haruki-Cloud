@@ -203,10 +203,14 @@ func configureAppDatabaseControllers(sekaiClient *sekaiDB.Client, cfg Config, lo
 }
 
 // setAssetReader threads the shared asset reader into every controller whose
-// asset reads go through it. The setter is nil-safe, so a controller that was
-// not built (no sekai client) is skipped.
+// asset reads or remaining existence checks go through it. The setters are
+// nil-safe, so controllers that were not built (no sekai client) are skipped.
+// Honor and profile keep the reader for the honor overlays Drawing does not yet
+// tolerate as missing (pending contract item C1-overlays).
 func (c *appDatabaseControllers) setAssetReader(reader *assets.AssetReader) {
+	c.honors.SetAssetReader(reader)
 	c.music.SetAssetReader(reader)
+	c.profiles.SetAssetReader(reader)
 }
 
 func (c *appDatabaseControllers) registerProvider(source provider.MasterDataProvider) {

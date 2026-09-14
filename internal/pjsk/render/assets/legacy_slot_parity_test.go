@@ -24,9 +24,9 @@ func derivedSlotReaders(t *testing.T, primary, legacy string) (helper *AssetHelp
 	return helper, NewAssetReader(helper, storage.Disabled()), NewAssetReader(helper, store)
 }
 
-// With an unchanged config the reads must resolve exactly what 664281d1's
-// AssetHelper resolved: the absolute local path of a Primary hit, of a hit
-// that exists only in a legacy root, and of a case-mismatched hit.
+// With an unchanged config the probes and reads must return exactly what
+// 664281d1's AssetHelper returned: the absolute local path of a Primary hit,
+// of a hit that exists only in a legacy root, and of a case-mismatched hit.
 func TestDerivedSlotKeepsLegacyHitStrings(t *testing.T) {
 	primary := writeAssetTree(t, map[string]string{
 		"music/jacket/jacket_s_001/jacket_s_001.png": "primary",
@@ -46,9 +46,17 @@ func TestDerivedSlotKeepsLegacyHitStrings(t *testing.T) {
 		"case mismatch": "jp-assets/startapp/stamp/stamp0001.png",
 	}
 	for name, path := range cases {
-		want := helper.FirstExisting(path)
-		if want == "" {
-			t.Fatalf("%s: legacy resolution missed", name)
+		want, wantOK := ProbeExisting(ctx, before, helper, path)
+		if !wantOK || want == "" {
+			t.Fatalf("%s: legacy probe = %q %v", name, want, wantOK)
+		}
+		for label, probeHelper := range map[string]*AssetHelper{"request helper": helper, "reader helper": nil} {
+			if got, ok := ProbeExisting(ctx, after, probeHelper, path); !ok || got != want {
+				t.Fatalf("%s (%s): derived slot probe = %q %v, want %q", name, label, got, ok, want)
+			}
+		}
+		if got, ok := after.Stat(ctx, path); !ok || got != want {
+			t.Fatalf("%s: Stat = %q %v, want %q", name, got, ok, want)
 		}
 		wantData, _, err := before.ReadFirst(ctx, path)
 		if err != nil {
@@ -59,10 +67,10 @@ func TestDerivedSlotKeepsLegacyHitStrings(t *testing.T) {
 			t.Fatalf("%s: ReadFirst = %q %q %v, want %q %q", name, gotData, resolved, err, wantData, want)
 		}
 	}
-	if got := helper.FirstExisting(cases["primary hit"]); got != absoluteJacket {
+	if got, _ := ProbeExisting(ctx, after, helper, cases["primary hit"]); got != absoluteJacket {
 		t.Fatalf("jacket hit string = %q, want the absolute path %q", got, absoluteJacket)
 	}
-	if got := helper.FirstExisting(cases["legacy hit"]); got != legacyHit {
+	if got, _ := ProbeExisting(ctx, after, helper, cases["legacy hit"]); got != legacyHit {
 		t.Fatalf("legacy hit string = %q, want %q", got, legacyHit)
 	}
 	if after.StoreOnly() || before.StoreOnly() {
@@ -70,6 +78,12 @@ func TestDerivedSlotKeepsLegacyHitStrings(t *testing.T) {
 	}
 
 	// Misses stay misses on both branches.
+	if got, ok := ProbeExisting(ctx, after, helper, "jp-assets/startapp/missing.png"); ok || got != "" {
+		t.Fatalf("miss = %q %v", got, ok)
+	}
+	if _, ok := after.Stat(ctx, "jp-assets/startapp/missing.png"); ok {
+		t.Fatal("Stat miss reported a hit")
+	}
 	if _, _, err := after.ReadFirst(ctx, "jp-assets/startapp/missing.png"); !errors.Is(err, storage.ErrNotExist) {
 		t.Fatalf("ReadFirst miss err = %v", err)
 	}
@@ -86,6 +100,12 @@ func TestStoreFallbackBehindLocalRoots(t *testing.T) {
 
 	if data, resolved, err := reader.ReadFirst(ctx, "asset/jp-assets/startapp/remote.png"); err != nil || string(data) != "remote" || resolved != "jp-assets/startapp/remote.png" {
 		t.Fatalf("store fallback read = %q %q %v", data, resolved, err)
+	}
+	if local, ok := ProbeExisting(ctx, reader, nil, "jp-assets/startapp/remote.png"); !ok || local != "" {
+		t.Fatalf("store fallback probe = %q %v", local, ok)
+	}
+	if resolved, ok := reader.Stat(ctx, "jp-assets/startapp/remote.png"); !ok || resolved != "jp-assets/startapp/remote.png" {
+		t.Fatalf("store fallback Stat = %q %v", resolved, ok)
 	}
 	if countStoreCalls(memory, "Get") != 1 {
 		t.Fatalf("local hit must not reach the store: %+v", memory.Calls())

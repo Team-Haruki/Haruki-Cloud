@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -29,29 +28,24 @@ const (
 
 type housingCompetitionBannerCache struct {
 	mu         sync.Mutex
-	dir        string
+	store      storage.Store
 	reader     *assets.AssetReader
 	hosts      *urlhost.Set
 	httpClient *http.Client
 	synced     map[string]struct{}
 }
 
-func newHousingCompetitionBannerCache(cacheDir string, reader *assets.AssetReader, hosts *urlhost.Set) *housingCompetitionBannerCache {
+// newHousingCompetitionBannerCache keeps fetched banners in store under
+// mysekai_housing_competition_banners/ (nil store -> no cache, every read goes
+// to the source).
+func newHousingCompetitionBannerCache(store storage.Store, reader *assets.AssetReader, hosts *urlhost.Set) *housingCompetitionBannerCache {
 	return &housingCompetitionBannerCache{
-		dir:        strings.TrimSpace(cacheDir),
+		store:      store,
 		reader:     reader,
 		hosts:      hosts,
 		httpClient: &http.Client{Timeout: housingCompetitionBannerHTTPTimeout},
 		synced:     make(map[string]struct{}),
 	}
-}
-
-func defaultHousingCompetitionBannerCacheDir(statsCachePath string) string {
-	statsCachePath = strings.TrimSpace(statsCachePath)
-	if statsCachePath == "" {
-		return ""
-	}
-	return filepath.Join(filepath.Dir(statsCachePath), housingCompetitionBannerCacheDirName)
 }
 
 func (c *Controller) syncHousingCompetitionBannersFromMasterdata() {
@@ -118,10 +112,10 @@ func (c *housingCompetitionBannerCache) BytesContext(ctx context.Context, imageP
 		return nil, fmt.Errorf("housing competition banner cache is not configured")
 	}
 
-	cachePath := c.cachePath(imagePath)
-	if cachePath != "" {
+	cacheKey := c.cacheKey(imagePath)
+	if cacheKey != "" {
 		finishLookup := commandtrace.MeasureOperation(ctx, "housing_banner.cache_lookup")
-		if raw, err := os.ReadFile(cachePath); err == nil && len(raw) > 0 {
+		if raw, err := c.store.Get(ctx, cacheKey); err == nil && len(raw) > 0 {
 			finishLookup()
 			c.markSynced(imagePath)
 			return raw, nil
@@ -133,9 +127,9 @@ func (c *housingCompetitionBannerCache) BytesContext(ctx context.Context, imageP
 	if err != nil || len(raw) == 0 {
 		return raw, err
 	}
-	if cachePath != "" {
+	if cacheKey != "" {
 		finishStore := commandtrace.MeasureOperation(ctx, "housing_banner.store")
-		_ = c.write(cachePath, raw)
+		_ = c.store.Put(context.WithoutCancel(ctx), cacheKey, raw, storage.PutOptions{})
 		finishStore()
 	}
 	c.markSynced(imagePath)
@@ -220,38 +214,21 @@ func (c *housingCompetitionBannerCache) markHostFailure(base string) {
 	}
 }
 
-func (c *housingCompetitionBannerCache) cachePath(imagePath string) string {
-	if c == nil || strings.TrimSpace(c.dir) == "" {
+// cacheKey returns the store key of imagePath's cached copy, or "" when the
+// cache is off or the path cannot name a key.
+func (c *housingCompetitionBannerCache) cacheKey(imagePath string) storage.Key {
+	if c == nil || c.store == nil {
 		return ""
 	}
 	rel := housingCompetitionBannerCacheRelPath(imagePath)
 	if rel == "" {
 		return ""
 	}
-	return filepath.Join(c.dir, filepath.FromSlash(rel))
-}
-
-func (c *housingCompetitionBannerCache) write(path string, raw []byte) error {
-	if path == "" || len(raw) == 0 {
-		return nil
+	key, err := storage.Join(housingCompetitionBannerCacheDirName, rel)
+	if err != nil {
+		return ""
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if existing, err := os.ReadFile(path); err == nil && len(existing) > 0 {
-		return nil
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, raw, 0o644); err != nil {
-		return err
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		_ = os.Remove(tmp)
-		return err
-	}
-	return nil
+	return key
 }
 
 func housingCompetitionBannerCacheRelPath(imagePath string) string {

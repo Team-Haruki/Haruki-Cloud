@@ -58,6 +58,8 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		AssetReader:                       dependencies.assetReader,
 		AssetHosts:                        cfg.AssetHosts,
 		HousingCompetitionStatsCachePath:  cfg.MySekaiHousingCompetitionCachePath,
+		HousingCompetitionCacheStore:      cfg.MySekaiHousingCompetitionCacheStore,
+		HousingCompetitionStatsCacheKey:   cfg.MySekaiHousingCompetitionCacheKey,
 		HousingCompetitionRefreshInterval: cfg.MySekaiHousingCompetitionRefreshInterval,
 	})
 	inventoryController := inventory.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, inventory.MasterdataOptions{
@@ -304,7 +306,7 @@ func normalizeAppConfig(cfg *Config) context.Context {
 	if initCtx == nil {
 		initCtx = context.Background()
 	}
-	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval, cfg.MusicMetaOutputDir, cfg.MusicMetaSource, cfg.MusicMetaBaseURL)
+	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval, musicMetaPersistence(cfg), cfg.MusicMetaSource, cfg.MusicMetaBaseURL)
 	if cfg.SharedUpstreamResources == nil {
 		cfg.SharedUpstreamResources = &upstream.SharedResources{}
 	}
@@ -420,7 +422,16 @@ func shouldEnableLocalSnapshotFallback(cfg Config) bool {
 	}
 }
 
-func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refreshInterval time.Duration, outputDir, source, baseURL string) *meta.Loader {
+// musicMetaPersistence selects the loader persistence option: the store when
+// set, else the local output directory.
+func musicMetaPersistence(cfg *Config) meta.LoaderOption {
+	if cfg.MusicMetaStore != nil {
+		return meta.WithStore(cfg.MusicMetaStore)
+	}
+	return meta.WithOutputDir(cfg.MusicMetaOutputDir)
+}
+
+func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refreshInterval time.Duration, persistence meta.LoaderOption, source, baseURL string) *meta.Loader {
 	if configured != nil {
 		return configured
 	}
@@ -433,7 +444,7 @@ func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refresh
 		refreshInterval = defaultMusicMetaRefreshInterval
 	}
 
-	loader := meta.NewLoader(logger.NewLoggerFromGlobal("PJSKMeta"), meta.WithOutputDir(outputDir), meta.WithSource(source), meta.WithBaseURL(baseURL))
+	loader := meta.NewLoader(logger.NewLoggerFromGlobal("PJSKMeta"), persistence, meta.WithSource(source), meta.WithBaseURL(baseURL))
 	if err := loader.LoadAll(initCtx); err != nil {
 		logger.WarnContext(initCtx, "music metadata initial load failed", "error_type", fmt.Sprintf("%T", err))
 	}

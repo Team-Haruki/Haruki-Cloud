@@ -40,6 +40,21 @@ func NewLocal(root string, maxObjectBytes int64) (Store, error) {
 	return &localStore{root: filepath.Clean(root), maxObjectBytes: maxObjectBytes}, nil
 }
 
+// NewLocalAt is NewLocal for a directory that may be relative: a relative
+// path resolves against the working directory, exactly as the os-based
+// consumers it replaces resolved it.
+func NewLocalAt(dir string, maxObjectBytes int64) (Store, error) {
+	dir = strings.TrimSpace(dir)
+	if dir == "" {
+		return nil, errors.New("storage: local root is empty")
+	}
+	absolute, err := filepath.Abs(dir)
+	if err != nil {
+		return nil, err
+	}
+	return NewLocal(absolute, maxObjectBytes)
+}
+
 func (s *localStore) resolve(key Key) (Key, string, error) {
 	cleaned, err := CleanKey(string(key))
 	if err != nil {

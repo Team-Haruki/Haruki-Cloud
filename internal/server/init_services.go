@@ -101,6 +101,15 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	}
 	ctx = ensureContext(ctx)
 
+	stores, err := buildRenderStores(harukiConfig.Cfg.PJSKRender, mainLogger)
+	if err != nil {
+		fatalStartup(mainLogger, "storage configuration invalid", "error", err)
+	}
+	cacheTargets, err := resolveRenderCacheTargets(harukiConfig.Cfg.PJSKRender, stores, mainLogger)
+	if err != nil {
+		fatalStartup(mainLogger, "cache storage configuration invalid", "error", err)
+	}
+
 	metaRefreshInterval := harukiConfig.Cfg.PJSKRender.MusicMeta.RefreshInterval
 	if metaRefreshInterval <= 0 {
 		metaRefreshInterval = harukiConfig.MetaRefreshInterval
@@ -110,7 +119,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	metaBaseURL := harukiConfig.Cfg.PJSKRender.MusicMeta.BaseURL
 	metaLoader := meta.NewLoader(
 		harukiLogger.NewLoggerFromGlobal("MusicMeta"),
-		meta.WithOutputDir(metaOutputDir),
+		meta.WithStore(cacheTargets.musicMeta),
 		meta.WithSource(metaSource),
 		meta.WithBaseURL(metaBaseURL),
 	)
@@ -118,16 +127,12 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		mainLogger.Warn("music meta initial load partially failed", "error_type", fmt.Sprintf("%T", err))
 	}
 	metaLoader.StartBackgroundRefresh(ctx, metaRefreshInterval)
-	mainLogger.Info("music meta loader started", "refresh_interval", metaRefreshInterval, "has_output_dir", strings.TrimSpace(metaOutputDir) != "", "source", strings.TrimSpace(metaSource), "has_base_url", strings.TrimSpace(metaBaseURL) != "")
+	mainLogger.Info("music meta loader started", "refresh_interval", metaRefreshInterval, "has_output_dir", strings.TrimSpace(metaOutputDir) != "", "persisted", cacheTargets.musicMeta != nil, "source", strings.TrimSpace(metaSource), "has_base_url", strings.TrimSpace(metaBaseURL) != "")
 
 	sekaiAPIClient := sekaiAPI.NewSekaiAPIClient(&harukiConfig.Cfg.SekaiAPI)
 	toolboxClient := sekaiAPI.NewToolboxClient(&harukiConfig.Cfg.Toolbox)
 	trackerClient := sekaiAPI.NewTrackerClient(&harukiConfig.Cfg.Tracker)
 
-	stores, err := buildRenderStores(harukiConfig.Cfg.PJSKRender, mainLogger)
-	if err != nil {
-		fatalStartup(mainLogger, "storage configuration invalid", "error", err)
-	}
 	imageHosts, assetHosts, err := buildRenderHosts(harukiConfig.Cfg.PJSKRender, mainLogger)
 	if errors.Is(err, errAssetHostsRequired) {
 		fatalStartup(mainLogger, "asset_dirs.assets_base_urls is required", "error", err)
@@ -176,14 +181,17 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			MySekaiJSON:   harukiConfig.Cfg.PJSKRender.UserSnapshot.MySekaiJSON,
 		},
 		MusicMetaOutputDir: metaOutputDir,
+		MusicMetaStore:     cacheTargets.musicMeta,
 		MusicMetaSource:    metaSource,
 		MusicMetaBaseURL:   metaBaseURL,
 		MetaLoader:         metaLoader,
 		SKForecast: renderapp.SKForecastConfig{
 			LocalBaseURL: harukiConfig.Cfg.PJSKRender.SKForecast.LocalBaseURL,
-			CachePath:    resolveSKForecastCachePath(),
+			CacheStore:   cacheTargets.forecast,
+			CacheKey:     cacheTargets.forecastKey,
 		},
-		MySekaiHousingCompetitionCachePath:       resolveMySekaiHousingCompetitionCachePath(),
+		MySekaiHousingCompetitionCacheStore:      cacheTargets.housing,
+		MySekaiHousingCompetitionCacheKey:        cacheTargets.housingKey,
 		MySekaiHousingCompetitionRefreshInterval: harukiConfig.Cfg.PJSKRender.MySekaiHousingCompetition.RefreshInterval,
 		ReadOnly:                                 harukiConfig.Cfg.Node.ReadOnly,
 		Preview3D: rendercostume.Preview3DConfig{
@@ -305,24 +313,90 @@ func resolveDeckRecommendMasterdataDir() string {
 	return strings.TrimSpace(harukiConfig.Cfg.PJSKRender.DeckRecommend.MasterdataDir)
 }
 
-func resolveSKForecastCachePath() string {
-	if path := strings.TrimSpace(harukiConfig.Cfg.PJSKRender.SKForecast.CachePath); path != "" {
-		return path
-	}
-	if dir := strings.TrimSpace(harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir); dir != "" {
-		return filepath.Join(dir, "sk_forecast_cache.json")
-	}
-	return ""
+// Keys of the Cloud-private cache objects on the cache slot.
+const (
+	skForecastCacheKey         storage.Key = "sk_forecast_cache.json"
+	housingCompetitionCacheKey storage.Key = "mysekai_housing_competition_stats.json"
+)
+
+// renderCacheTargets names where each Cloud-private cache is persisted. A nil
+// store means the cache is not persisted, exactly as when no path was set.
+type renderCacheTargets struct {
+	forecast    storage.Store
+	forecastKey storage.Key
+	housing     storage.Store
+	housingKey  storage.Key
+	musicMeta   storage.Store
 }
 
-func resolveMySekaiHousingCompetitionCachePath() string {
-	if path := strings.TrimSpace(harukiConfig.Cfg.PJSKRender.MySekaiHousingCompetition.CachePath); path != "" {
-		return path
+// resolveRenderCacheTargets picks the store and key of each Cloud-private
+// cache. An explicit per-feature path (sk_forecast.cache_path,
+// mysekai_housing_competition.cache_path, music_meta.output_dir) keeps
+// precedence and lands at exactly its old location through a local store; a
+// configured storage.cache slot then only earns a Warn. Without an explicit
+// path the forecast and housing caches use the cache slot, which itself
+// derives from drawing_cache.storage_dir. music_metas were never persisted
+// under drawing_cache.storage_dir, so they use the slot only when
+// storage.cache is configured explicitly.
+func resolveRenderCacheTargets(cfg harukiConfig.PJSKRenderConfig, stores storage.Set, log *harukiLogger.Logger) (renderCacheTargets, error) {
+	slotConfigured := !cfg.Storage.Cache.IsZero()
+	slot := enabledStore(stores.Cache)
+	var targets renderCacheTargets
+	var err error
+	targets.forecast, targets.forecastKey, err = resolveCacheFile(cfg.SKForecast.CachePath, "sk_forecast.cache_path", slot, skForecastCacheKey, cfg.Storage.Cache, log)
+	if err != nil {
+		return renderCacheTargets{}, err
 	}
-	if dir := strings.TrimSpace(harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir); dir != "" {
-		return filepath.Join(dir, "mysekai_housing_competition_stats.json")
+	targets.housing, targets.housingKey, err = resolveCacheFile(cfg.MySekaiHousingCompetition.CachePath, "mysekai_housing_competition.cache_path", slot, housingCompetitionCacheKey, cfg.Storage.Cache, log)
+	if err != nil {
+		return renderCacheTargets{}, err
 	}
-	return ""
+	if dir := strings.TrimSpace(cfg.MusicMeta.OutputDir); dir != "" {
+		warnExplicitCachePath(log, "music_meta.output_dir", dir, cfg.Storage.Cache)
+		targets.musicMeta, err = storage.NewLocalAt(dir, 0)
+		if err != nil {
+			return renderCacheTargets{}, fmt.Errorf("music_meta.output_dir: %w", err)
+		}
+	} else if slotConfigured {
+		targets.musicMeta = slot
+	}
+	return targets, nil
+}
+
+func resolveCacheFile(explicitPath, legacyKey string, slot storage.Store, slotKey storage.Key, slotCfg storage.ProviderConfig, log *harukiLogger.Logger) (storage.Store, storage.Key, error) {
+	explicitPath = strings.TrimSpace(explicitPath)
+	if explicitPath == "" {
+		if slot == nil {
+			return nil, "", nil
+		}
+		return slot, slotKey, nil
+	}
+	warnExplicitCachePath(log, legacyKey, explicitPath, slotCfg)
+	store, err := storage.NewLocalAt(filepath.Dir(explicitPath), 0)
+	if err != nil {
+		return nil, "", fmt.Errorf("%s: %w", legacyKey, err)
+	}
+	return store, storage.Key(filepath.Base(explicitPath)), nil
+}
+
+// warnExplicitCachePath logs the one startup Warn for an explicit legacy path
+// that shadows a configured storage.cache slot.
+func warnExplicitCachePath(log *harukiLogger.Logger, legacyKey, legacyPath string, slotCfg storage.ProviderConfig) {
+	if slotCfg.IsZero() {
+		return
+	}
+	log.Warn("storage slot root disagrees with legacy path",
+		"slot", string(storage.SlotCache), "slot_root", strings.TrimSpace(slotCfg.Root),
+		"legacy_key", legacyKey, "legacy_path", legacyPath)
+}
+
+// enabledStore returns store, or nil when it is absent or Disabled(), so a
+// cache with nowhere to persist skips encoding entirely.
+func enabledStore(store storage.Store) storage.Store {
+	if store == nil || store == storage.Disabled() {
+		return nil
+	}
+	return store
 }
 
 // validateBotAuthSecrets fails fast when a bot JWT signing secret is empty.

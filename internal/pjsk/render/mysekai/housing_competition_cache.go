@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
 )
 
@@ -31,7 +31,8 @@ const (
 
 type housingCompetitionStatsCache struct {
 	mu               sync.Mutex
-	path             string
+	store            storage.Store
+	storeKey         storage.Key
 	refreshInterval  time.Duration
 	buckets          map[housingCompetitionStatsCacheKey]*housingCompetitionStatsBucket
 	entryTTL         time.Duration
@@ -94,12 +95,40 @@ type persistedHousingCompetitionEntry struct {
 	LastSeenAt    int64  `json:"last_seen_at,omitempty"`
 }
 
+// newHousingCompetitionStatsCache persists to a local file at cachePath ("" ->
+// no persistence). It is a wrapper over newHousingCompetitionStatsCacheWithStore.
 func newHousingCompetitionStatsCache(cachePath string, refreshInterval time.Duration) *housingCompetitionStatsCache {
+	store, key := localHousingCompetitionCacheStore(cachePath)
+	return newHousingCompetitionStatsCacheWithStore(store, key, refreshInterval)
+}
+
+// localHousingCompetitionCacheStore opens a local store at the directory of
+// cachePath and returns the file name as the key; ("", nil) when cachePath is
+// empty or unusable.
+func localHousingCompetitionCacheStore(cachePath string) (storage.Store, storage.Key) {
+	cachePath = strings.TrimSpace(cachePath)
+	if cachePath == "" {
+		return nil, ""
+	}
+	store, err := storage.NewLocalAt(filepath.Dir(cachePath), 0)
+	if err != nil {
+		return nil, ""
+	}
+	return store, storage.Key(filepath.Base(cachePath))
+}
+
+// newHousingCompetitionStatsCacheWithStore persists the stats as one JSON
+// object at key in store; a nil store or an empty key disables persistence.
+func newHousingCompetitionStatsCacheWithStore(store storage.Store, key storage.Key, refreshInterval time.Duration) *housingCompetitionStatsCache {
 	if refreshInterval <= 0 {
 		refreshInterval = DefaultHousingCompetitionRefreshInterval
 	}
+	if store == nil || key == "" {
+		store, key = nil, ""
+	}
 	cache := &housingCompetitionStatsCache{
-		path:             strings.TrimSpace(cachePath),
+		store:            store,
+		storeKey:         key,
 		refreshInterval:  refreshInterval,
 		buckets:          make(map[housingCompetitionStatsCacheKey]*housingCompetitionStatsBucket),
 		entryTTL:         housingCompetitionStatsEntryTTL,
@@ -678,10 +707,10 @@ func waitHousingCompetitionSampleInterval(ctx context.Context, interval time.Dur
 }
 
 func (c *housingCompetitionStatsCache) loadPersisted() {
-	if c == nil || c.path == "" {
+	if c == nil || c.store == nil {
 		return
 	}
-	data, err := os.ReadFile(c.path)
+	data, err := c.store.Get(context.Background(), c.storeKey)
 	if err != nil || len(data) == 0 {
 		return
 	}
@@ -778,7 +807,7 @@ func (p persistedHousingCompetitionEntry) toEntry() HousingCompetitionEntry {
 }
 
 func (c *housingCompetitionStatsCache) persistLatest(ctx context.Context, requestedGeneration uint64) {
-	if c == nil || c.path == "" {
+	if c == nil || c.store == nil {
 		return
 	}
 	finishWait := commandtrace.MeasureOperation(ctx, "housing_cache.persist_wait")
@@ -804,38 +833,13 @@ func (c *housingCompetitionStatsCache) persistLatest(ctx context.Context, reques
 		return
 	}
 	finishPersist := commandtrace.MeasureOperation(ctx, "housing_cache.persist")
-	err = writeHousingCompetitionStatsCachePayload(c.path, payload)
+	// Persistence outlives the refresh that triggered it, as the old file
+	// write did: a cancelled caller must not drop the snapshot.
+	err = c.store.Put(context.WithoutCancel(ctx), c.storeKey, payload, storage.PutOptions{ContentType: "application/json"})
 	finishPersist()
 	if err == nil {
 		c.persistedGeneration = generation
 	}
-}
-
-func writeHousingCompetitionStatsCachePayload(path string, payload []byte) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	tmp, err := os.CreateTemp(filepath.Dir(path), "."+filepath.Base(path)+".tmp-*")
-	if err != nil {
-		return err
-	}
-	tmpPath := tmp.Name()
-	defer os.Remove(tmpPath)
-	if err := tmp.Chmod(0o644); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if _, err := tmp.Write(payload); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(tmpPath, path); err != nil {
-		return err
-	}
-	return nil
 }
 
 func timeFromUnixMilli(value int64) time.Time {

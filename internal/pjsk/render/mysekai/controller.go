@@ -11,6 +11,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/storage"
 )
 
 const mysekaiMasterdataResolveTimeout = 10 * time.Second
@@ -202,6 +203,7 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot
 	resolver := newMasterdataResolver(mdOpts)
 	md := resolver.Resolve(region)
 	reader := assets.ReaderOr(mdOpts.AssetReader, assetHelper)
+	cacheStore, statsKey := housingCompetitionCacheStore(mdOpts)
 	return &Controller{
 		drawing:       drawingClient,
 		snapshot:      snapshot,
@@ -211,16 +213,32 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot
 		nicknames:     cloneNicknames(defaultNicknames),
 		assets:        assetHelper,
 		assetReader:   reader,
-		housingCompetitionStats: newHousingCompetitionStatsCache(
-			mdOpts.HousingCompetitionStatsCachePath,
+		housingCompetitionStats: newHousingCompetitionStatsCacheWithStore(
+			cacheStore,
+			statsKey,
 			mdOpts.HousingCompetitionRefreshInterval,
 		),
 		housingCompetitionBanners: newHousingCompetitionBannerCache(
-			defaultHousingCompetitionBannerCacheDir(mdOpts.HousingCompetitionStatsCachePath),
+			cacheStore,
 			reader,
 			mdOpts.AssetHosts,
 		),
 	}
+}
+
+// housingCompetitionCacheStore picks the store holding the housing stats
+// object and the banner cache: the configured store and key, else a local
+// store at the directory of HousingCompetitionStatsCachePath (so the banners
+// keep landing next to the stats file), else none.
+func housingCompetitionCacheStore(opts MasterdataOptions) (storage.Store, storage.Key) {
+	if opts.HousingCompetitionCacheStore != nil {
+		key := opts.HousingCompetitionStatsCacheKey
+		if key == "" {
+			key = DefaultHousingCompetitionStatsCacheKey
+		}
+		return opts.HousingCompetitionCacheStore, key
+	}
+	return localHousingCompetitionCacheStore(opts.HousingCompetitionStatsCachePath)
 }
 
 func (c *Controller) WithContext(ctx context.Context) *Controller {

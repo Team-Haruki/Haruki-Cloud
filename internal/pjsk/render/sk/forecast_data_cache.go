@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -12,6 +13,7 @@ import (
 
 	"haruki-cloud/config"
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/storage"
 )
 
 const (
@@ -27,13 +29,14 @@ type forecastDataCache struct {
 	entries  map[forecastDataCacheKey]*forecastDataCacheEntry
 	inFlight map[forecastDataCacheKey]struct{}
 
-	persistencePath string
-	entryTTL        time.Duration
-	failureTTL      time.Duration
-	retryInterval   time.Duration
-	retryLimit      int
-	maxEntries      int
-	generation      uint64
+	store         storage.Store
+	storeKey      storage.Key
+	entryTTL      time.Duration
+	failureTTL    time.Duration
+	retryInterval time.Duration
+	retryLimit    int
+	maxEntries    int
+	generation    uint64
 
 	persistMu           sync.Mutex
 	persistedGeneration uint64
@@ -74,9 +77,28 @@ func newForecastDataCache(provider ForecastProvider) *forecastDataCache {
 	}
 }
 
+// newForecastDataCacheWithPath persists to a local file at cachePath ("" ->
+// no persistence). It is a wrapper over newForecastDataCacheWithStore.
 func newForecastDataCacheWithPath(provider ForecastProvider, cachePath string) *forecastDataCache {
+	cachePath = strings.TrimSpace(cachePath)
+	if cachePath == "" {
+		return newForecastDataCache(provider)
+	}
+	store, err := storage.NewLocalAt(filepath.Dir(cachePath), 0)
+	if err != nil {
+		return newForecastDataCache(provider)
+	}
+	return newForecastDataCacheWithStore(provider, store, storage.Key(filepath.Base(cachePath)))
+}
+
+// newForecastDataCacheWithStore persists the cache as one JSON object at key
+// in store; a nil store or an empty key disables persistence.
+func newForecastDataCacheWithStore(provider ForecastProvider, store storage.Store, key storage.Key) *forecastDataCache {
 	cache := newForecastDataCache(provider)
-	cache.persistencePath = strings.TrimSpace(cachePath)
+	if store != nil && key != "" {
+		cache.store = store
+		cache.storeKey = key
+	}
 	cache.loadPersisted()
 	return cache
 }

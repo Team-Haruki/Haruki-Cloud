@@ -41,36 +41,43 @@ import (
 // ── Config types ────────────────────────────────────────────────────────────
 
 type Config struct {
-	InitContext                              context.Context
-	DefaultRegion                            renderregion.Value
-	DrawingBaseURL                           string
-	DrawingTargets                           []upstream.TargetConfig
-	DrawingTimeout                           time.Duration
-	DrawingRetryCount                        int
-	DrawingCache                             drawing.RenderCacheConfig
-	DrawingSKMaxConcurrency                  int
-	DrawingSKAcquireTimeout                  time.Duration
-	DrawingMaxConcurrency                    int
-	ImageCacheURI                            string
-	ChartsBaseURL                            string
-	ImageCacheDir                            string
-	ImageCachePGURL                          string // PostgreSQL DSN for image cache deduplication (optional)
-	CensorService                            *censor.Service
-	AssetPrimaryDir                          string
-	AssetLegacyDirs                          []string
-	AssetsBaseURL                            string // CDN base URL for direct asset serving; skips imagecache for region assets
-	LocalMasterdata                          LocalMasterdataConfig
-	SekaiDBType                              string
-	SekaiDSN                                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
-	UserSnapshot                             UserSnapshotConfig
-	MusicMetaRefreshInterval                 time.Duration
-	MusicMetaOutputDir                       string
-	MusicMetaSource                          string
-	MusicMetaBaseURL                         string
-	MetaLoader                               *meta.Loader
-	SharedUpstreamResources                  *upstream.SharedResources
-	SKForecast                               sk.ForecastConfig
-	MySekaiHousingCompetitionCachePath       string
+	InitContext              context.Context
+	DefaultRegion            renderregion.Value
+	DrawingBaseURL           string
+	DrawingTargets           []upstream.TargetConfig
+	DrawingTimeout           time.Duration
+	DrawingRetryCount        int
+	DrawingCache             drawing.RenderCacheConfig
+	DrawingSKMaxConcurrency  int
+	DrawingSKAcquireTimeout  time.Duration
+	DrawingMaxConcurrency    int
+	ImageCacheURI            string
+	ChartsBaseURL            string
+	ImageCacheDir            string
+	ImageCachePGURL          string // PostgreSQL DSN for image cache deduplication (optional)
+	CensorService            *censor.Service
+	AssetPrimaryDir          string
+	AssetLegacyDirs          []string
+	AssetsBaseURL            string // CDN base URL for direct asset serving; skips imagecache for region assets
+	LocalMasterdata          LocalMasterdataConfig
+	SekaiDBType              string
+	SekaiDSN                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
+	UserSnapshot             UserSnapshotConfig
+	MusicMetaRefreshInterval time.Duration
+	MusicMetaOutputDir       string
+	// MusicMetaStore, when non-nil, replaces MusicMetaOutputDir for the
+	// loader New builds when MetaLoader is nil.
+	MusicMetaStore                     storage.Store
+	MusicMetaSource                    string
+	MusicMetaBaseURL                   string
+	MetaLoader                         *meta.Loader
+	SharedUpstreamResources            *upstream.SharedResources
+	SKForecast                         sk.ForecastConfig
+	MySekaiHousingCompetitionCachePath string
+	// MySekaiHousingCompetitionCacheStore/Key name the housing stats object
+	// (and hold the banner cache); nil falls back to the path above.
+	MySekaiHousingCompetitionCacheStore      storage.Store
+	MySekaiHousingCompetitionCacheKey        storage.Key
 	MySekaiHousingCompetitionRefreshInterval time.Duration
 	ReadOnly                                 bool
 	DeckRecommend                            DeckRecommendConfig

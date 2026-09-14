@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"net/http/httptest"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -116,32 +117,123 @@ func TestDisabledDatabaseInitializers(t *testing.T) {
 	}
 }
 
-func TestResolveRuntimeCachePaths(t *testing.T) {
-	preserveServerConfig(t)
-	harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir = "/var/cache/haruki"
+func assertCacheTargetWrites(t *testing.T, store storage.Store, key storage.Key, wantPath string) {
+	t.Helper()
+	if store == nil {
+		t.Fatalf("no store for %s", wantPath)
+	}
+	payload := []byte(`{"version":1,"probe":"` + string(key) + `"}`)
+	if err := store.Put(context.Background(), key, payload, storage.PutOptions{}); err != nil {
+		t.Fatalf("put %s: %v", key, err)
+	}
+	got, err := os.ReadFile(wantPath)
+	if err != nil || !bytes.Equal(got, payload) {
+		t.Fatalf("file %s = %q, %v; want %q", wantPath, got, err, payload)
+	}
+}
 
-	if got := resolveSKForecastCachePath(); got != "/var/cache/haruki/sk_forecast_cache.json" {
-		t.Fatalf("forecast fallback path = %q", got)
-	}
-	if got := resolveMySekaiHousingCompetitionCachePath(); got != "/var/cache/haruki/mysekai_housing_competition_stats.json" {
-		t.Fatalf("housing fallback path = %q", got)
-	}
+func TestResolveRenderCacheTargets(t *testing.T) {
+	t.Run("explicit paths keep their exact location", func(t *testing.T) {
+		dir := t.TempDir()
+		cfg := harukiConfig.PJSKRenderConfig{}
+		cfg.DrawingCache.StorageDir = t.TempDir()
+		cfg.SKForecast.CachePath = " " + filepath.Join(dir, "sk", "forecast.json") + " "
+		cfg.MySekaiHousingCompetition.CachePath = filepath.Join(dir, "housing", "stats.json")
+		cfg.MusicMeta.OutputDir = filepath.Join(dir, "metas")
+		var output bytes.Buffer
+		stores, err := buildRenderStores(cfg, startupTestLogger(&output))
+		if err != nil {
+			t.Fatal(err)
+		}
+		targets, err := resolveRenderCacheTargets(cfg, stores, startupTestLogger(&output))
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertCacheTargetWrites(t, targets.forecast, targets.forecastKey, filepath.Join(dir, "sk", "forecast.json"))
+		assertCacheTargetWrites(t, targets.housing, targets.housingKey, filepath.Join(dir, "housing", "stats.json"))
+		assertCacheTargetWrites(t, targets.musicMeta, "music_metas.json", filepath.Join(dir, "metas", "music_metas.json"))
+		if strings.Contains(output.String(), "disagrees with legacy path") {
+			t.Fatalf("unexpected precedence warning without a cache slot:\n%s", output.String())
+		}
+	})
 
-	harukiConfig.Cfg.PJSKRender.SKForecast.CachePath = " /tmp/forecast.json "
-	harukiConfig.Cfg.PJSKRender.MySekaiHousingCompetition.CachePath = " /tmp/housing.json "
-	if got := resolveSKForecastCachePath(); got != "/tmp/forecast.json" {
-		t.Fatalf("forecast configured path = %q", got)
-	}
-	if got := resolveMySekaiHousingCompetitionCachePath(); got != "/tmp/housing.json" {
-		t.Fatalf("housing configured path = %q", got)
-	}
+	t.Run("drawing_cache.storage_dir derivation", func(t *testing.T) {
+		cacheDir := t.TempDir()
+		cfg := harukiConfig.PJSKRenderConfig{}
+		cfg.DrawingCache.StorageDir = cacheDir
+		stores, err := buildRenderStores(cfg, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		targets, err := resolveRenderCacheTargets(cfg, stores, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertCacheTargetWrites(t, targets.forecast, targets.forecastKey, filepath.Join(cacheDir, "sk_forecast_cache.json"))
+		assertCacheTargetWrites(t, targets.housing, targets.housingKey, filepath.Join(cacheDir, "mysekai_housing_competition_stats.json"))
+		if targets.musicMeta != nil {
+			t.Fatal("music_metas must not start persisting under drawing_cache.storage_dir")
+		}
+	})
 
-	harukiConfig.Cfg.PJSKRender.SKForecast.CachePath = ""
-	harukiConfig.Cfg.PJSKRender.MySekaiHousingCompetition.CachePath = ""
-	harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir = ""
-	if resolveSKForecastCachePath() != "" || resolveMySekaiHousingCompetitionCachePath() != "" {
-		t.Fatal("empty cache configuration should yield empty paths")
-	}
+	t.Run("storage.cache slot without explicit paths", func(t *testing.T) {
+		slotRoot := t.TempDir()
+		cfg := harukiConfig.PJSKRenderConfig{}
+		cfg.Storage.Cache = storage.ProviderConfig{Scheme: "fs", Root: slotRoot}
+		stores, err := buildRenderStores(cfg, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		targets, err := resolveRenderCacheTargets(cfg, stores, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertCacheTargetWrites(t, targets.forecast, targets.forecastKey, filepath.Join(slotRoot, "sk_forecast_cache.json"))
+		assertCacheTargetWrites(t, targets.housing, targets.housingKey, filepath.Join(slotRoot, "mysekai_housing_competition_stats.json"))
+		assertCacheTargetWrites(t, targets.musicMeta, "music_metas-kr.json", filepath.Join(slotRoot, "music_metas-kr.json"))
+	})
+
+	t.Run("explicit path shadows a configured slot with one warning each", func(t *testing.T) {
+		dir := t.TempDir()
+		cfg := harukiConfig.PJSKRenderConfig{}
+		cfg.Storage.Cache = storage.ProviderConfig{Scheme: "fs", Root: t.TempDir()}
+		cfg.SKForecast.CachePath = filepath.Join(dir, "forecast.json")
+		cfg.MusicMeta.OutputDir = dir
+		var output bytes.Buffer
+		stores, err := buildRenderStores(cfg, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		targets, err := resolveRenderCacheTargets(cfg, stores, startupTestLogger(&output))
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertCacheTargetWrites(t, targets.forecast, targets.forecastKey, filepath.Join(dir, "forecast.json"))
+		if got := strings.Count(output.String(), "storage slot root disagrees with legacy path"); got != 2 {
+			t.Fatalf("precedence warnings = %d:\n%s", got, output.String())
+		}
+		if targets.housing == nil || targets.housingKey != housingCompetitionCacheKey {
+			t.Fatal("housing cache did not use the slot")
+		}
+	})
+
+	t.Run("nothing configured", func(t *testing.T) {
+		cfg := harukiConfig.PJSKRenderConfig{}
+		stores, err := buildRenderStores(cfg, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		targets, err := resolveRenderCacheTargets(cfg, stores, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if targets.forecast != nil || targets.housing != nil || targets.musicMeta != nil || targets.forecastKey != "" {
+			t.Fatalf("empty configuration persisted caches: %+v", targets)
+		}
+		if enabledStore(nil) != nil || enabledStore(storage.Disabled()) != nil {
+			t.Fatal("enabledStore kept an unusable store")
+		}
+	})
 }
 
 func TestBuildRenderStoresLegacyDerivation(t *testing.T) {

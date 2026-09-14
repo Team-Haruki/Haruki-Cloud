@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
@@ -37,7 +36,7 @@ type Loader struct {
 	loadMu    sync.Mutex
 	loadLocks map[string]*sync.Mutex
 	logger    *logger.Logger
-	outputDir string
+	store     storage.Store
 	source    string
 	baseURL   string
 }
@@ -60,10 +59,26 @@ func WithBaseURL(baseURL string) LoaderOption {
 	}
 }
 
-// WithOutputDir enables atomic persistence of fetched music_metas JSON.
+// WithOutputDir enables atomic persistence of fetched music_metas JSON in a
+// local directory ("" -> no persistence). It is WithStore over a local store.
 func WithOutputDir(dir string) LoaderOption {
 	return func(l *Loader) {
-		l.outputDir = strings.TrimSpace(dir)
+		l.store = nil
+		if strings.TrimSpace(dir) == "" {
+			return
+		}
+		if store, err := storage.NewLocalAt(dir, 0); err == nil {
+			l.store = store
+		}
+	}
+}
+
+// WithStore persists fetched music_metas JSON as one object per region
+// (music_metas.json, music_metas-en.json, ...) in store; nil disables
+// persistence, and a store that is not configured behaves the same.
+func WithStore(store storage.Store) LoaderOption {
+	return func(l *Loader) {
+		l.store = store
 	}
 }
 
@@ -146,7 +161,7 @@ func (l *Loader) load(ctx context.Context, region string) error {
 		if hasCached {
 			return err
 		}
-		if fallbackErr := l.loadPersisted(region); fallbackErr != nil {
+		if fallbackErr := l.loadPersisted(ctx, region); fallbackErr != nil {
 			return errors.Join(err, fmt.Errorf("meta: load persisted %s: %w", region, fallbackErr))
 		}
 		if l.logger != nil {
@@ -196,7 +211,7 @@ func (l *Loader) loadRemote(ctx context.Context, region, url string, existing *r
 		l.mu.Lock()
 		l.cache[region] = entry
 		l.mu.Unlock()
-		if err := l.persist(region, processed); err != nil {
+		if err := l.persist(ctx, region, processed); err != nil {
 			return fmt.Errorf("meta: persist %s: %w", region, err)
 		}
 		if l.logger != nil {
@@ -209,15 +224,15 @@ func (l *Loader) loadRemote(ctx context.Context, region, url string, existing *r
 	}
 }
 
-func (l *Loader) loadPersisted(region string) error {
-	if l == nil || strings.TrimSpace(l.outputDir) == "" {
+func (l *Loader) loadPersisted(ctx context.Context, region string) error {
+	if l == nil || l.store == nil {
 		return fmt.Errorf("persisted metadata directory is not configured")
 	}
 	filename, ok := regionFilenames[region]
 	if !ok {
 		return fmt.Errorf("unknown region %q", region)
 	}
-	payload, err := os.ReadFile(filepath.Join(filepath.Clean(l.outputDir), filename))
+	payload, err := l.store.Get(ctx, storage.Key(filename))
 	if err != nil {
 		return err
 	}
@@ -231,39 +246,19 @@ func (l *Loader) loadPersisted(region string) error {
 	return nil
 }
 
-func (l *Loader) persist(region string, data []byte) error {
-	if l == nil || strings.TrimSpace(l.outputDir) == "" {
+func (l *Loader) persist(ctx context.Context, region string, data []byte) error {
+	if l == nil || l.store == nil {
 		return nil
 	}
 	filename, ok := regionFilenames[region]
 	if !ok {
 		return fmt.Errorf("unknown region %q", region)
 	}
-	dir := filepath.Clean(l.outputDir)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return err
+	err := l.store.Put(context.WithoutCancel(ctx), storage.Key(filename), data, storage.PutOptions{ContentType: "application/json"})
+	if errors.Is(err, storage.ErrNotConfigured) {
+		return nil
 	}
-	tmp, err := os.CreateTemp(dir, "."+filename+".tmp-*")
-	if err != nil {
-		return err
-	}
-	tmpName := tmp.Name()
-	defer func() {
-		_ = os.Remove(tmpName)
-	}()
-
-	if _, err := tmp.Write(data); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Chmod(0o644); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmpName, filepath.Join(dir, filename))
+	return err
 }
 
 // Get returns a copy of the cached music_metas JSON for region.

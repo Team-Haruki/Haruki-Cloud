@@ -319,3 +319,21 @@ func TestLocalPermissionErrorsSurface(t *testing.T) {
 		}
 	}
 }
+
+func TestNewLocalAtResolvesRelativeDirectories(t *testing.T) {
+	if _, err := storage.NewLocalAt("  ", 0); err == nil {
+		t.Fatal("empty directory accepted")
+	}
+	dir := t.TempDir()
+	t.Chdir(dir)
+	store, err := storage.NewLocalAt(" rel/cache ", 0)
+	if err != nil {
+		t.Fatalf("NewLocalAt relative: %v", err)
+	}
+	if err := store.Put(context.Background(), "a.json", []byte("x"), storage.PutOptions{}); err != nil {
+		t.Fatalf("put: %v", err)
+	}
+	if got, err := os.ReadFile(filepath.Join(dir, "rel", "cache", "a.json")); err != nil || string(got) != "x" {
+		t.Fatalf("relative root file = %q, %v", got, err)
+	}
+}

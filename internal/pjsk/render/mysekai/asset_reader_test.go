@@ -80,7 +80,7 @@ func mustLocalReader(t *testing.T, root string) *assets.AssetReader {
 func TestHousingBannerSourceFromStore(t *testing.T) {
 	memory := storagetest.NewMemory()
 	memory.Seed(map[string][]byte{"jp-assets/ondemand/mysekai/banner.png": []byte("stored")})
-	cache := newHousingCompetitionBannerCache("", assets.NewAssetReader(nil, memory), urlhost.Single("https://assets.example"))
+	cache := newHousingCompetitionBannerCache(nil, assets.NewAssetReader(nil, memory), urlhost.Single("https://assets.example"))
 	cache.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return nil, errors.New("must not download a stored banner")
 	})}
@@ -91,7 +91,7 @@ func TestHousingBannerSourceFromStore(t *testing.T) {
 
 	failing := storagetest.NewMemory()
 	failing.FailGet = func(storage.Key) error { return errors.New("backend down") }
-	broken := newHousingCompetitionBannerCache("", assets.NewAssetReader(nil, failing), urlhost.Single("https://assets.example"))
+	broken := newHousingCompetitionBannerCache(nil, assets.NewAssetReader(nil, failing), urlhost.Single("https://assets.example"))
 	if _, err := broken.Bytes("asset/jp-assets/ondemand/mysekai/banner.png"); err == nil || !strings.Contains(err.Error(), "backend down") {
 		t.Fatalf("store failure = %v", err)
 	}
@@ -102,7 +102,7 @@ func TestHousingBannerHTTPFallbackRotatesHosts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cache := newHousingCompetitionBannerCache("", assets.NewAssetReader(nil, storagetest.NewMemory()), hosts)
+	cache := newHousingCompetitionBannerCache(nil, assets.NewAssetReader(nil, storagetest.NewMemory()), hosts)
 	var requested []string
 	cache.httpClient = &http.Client{Transport: housingRoundTripFunc(func(req *http.Request) (*http.Response, error) {
 		requested = append(requested, req.URL.String())
@@ -130,7 +130,7 @@ func TestHousingBannerHTTPFallbackRotatesHosts(t *testing.T) {
 		t.Fatalf("failed host was not cooled down: %+v", hosts.Snapshot())
 	}
 
-	allDown := newHousingCompetitionBannerCache("", nil, hosts)
+	allDown := newHousingCompetitionBannerCache(nil, nil, hosts)
 	allDown.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return nil, errors.New("transport")
 	})}
@@ -138,7 +138,7 @@ func TestHousingBannerHTTPFallbackRotatesHosts(t *testing.T) {
 		t.Fatalf("all hosts down = %v", err)
 	}
 
-	invalid := newHousingCompetitionBannerCache("", nil, hosts)
+	invalid := newHousingCompetitionBannerCache(nil, nil, hosts)
 	if _, _, err := invalid.fetch(context.Background(), "://bad"); err == nil {
 		t.Fatal("invalid URL must fail")
 	}

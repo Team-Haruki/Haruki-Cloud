@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/storage"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -150,7 +151,12 @@ type RemoteForecastProvider struct {
 
 type ForecastConfig struct {
 	LocalBaseURL string
-	CachePath    string
+	// CacheStore/CacheKey name the persisted forecast cache object. When
+	// CacheStore is nil, CachePath (a local file, "" -> no persistence) is
+	// used instead.
+	CacheStore storage.Store
+	CacheKey   storage.Key
+	CachePath  string
 }
 
 // ── Internal helpers ────────────────────────────────────────────────────────

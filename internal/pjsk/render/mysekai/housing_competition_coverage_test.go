@@ -22,6 +22,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/storage"
 )
 
 type housingCoverageClient struct {
@@ -474,12 +475,24 @@ func testHousingStatsPersistenceWriteAndTime(t *testing.T) {
 	if err := os.WriteFile(blockingParent, []byte("x"), 0o644); err != nil {
 		t.Fatalf("write blocking parent: %v", err)
 	}
-	if err := writeHousingCompetitionStatsCachePayload(filepath.Join(blockingParent, "cache.json"), []byte(`{}`)); err == nil {
+	blocked := newHousingCompetitionStatsCache(filepath.Join(blockingParent, "cache.json"), time.Second)
+	blocked.generation = 1
+	blocked.persistLatest(context.Background(), 1)
+	if blocked.persistedGeneration != 0 {
 		t.Fatal("cache write through a file parent should fail")
 	}
 	if !timeFromUnixMilli(0).IsZero() || timeFromUnixMilli(1000).UnixMilli() != 1000 || unixMilliOrZero(time.Time{}) != 0 || unixMilliOrZero(time.UnixMilli(1000)) != 1000 {
 		t.Fatal("cache time conversion mismatch")
 	}
+}
+
+func newHousingTestLocalStore(t *testing.T) storage.Store {
+	t.Helper()
+	store, err := storage.NewLocal(t.TempDir(), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return store
 }
 
 func TestHousingCompetitionBannerCacheIOAndURLBranches(t *testing.T) {
@@ -495,7 +508,7 @@ func testHousingBannerCacheBasicIO(t *testing.T) {
 		t.Fatal("nil banner cache behavior mismatch")
 	}
 	nilCache.markSynced("path")
-	cache := newHousingCompetitionBannerCache(t.TempDir(), nil, urlhost.Single("https://assets.example/base"))
+	cache := newHousingCompetitionBannerCache(newHousingTestLocalStore(t), nil, urlhost.Single("https://assets.example/base"))
 	if _, err := cache.Bytes(" "); err == nil {
 		t.Fatal("empty banner path should fail")
 	}
@@ -527,28 +540,28 @@ func testHousingBannerCacheBasicIO(t *testing.T) {
 
 func testHousingBannerCacheRemoteErrors(t *testing.T) {
 	t.Helper()
-	notFound := newHousingCompetitionBannerCache("", nil, urlhost.Single("https://assets.example"))
+	notFound := newHousingCompetitionBannerCache(nil, nil, urlhost.Single("https://assets.example"))
 	notFound.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusNotFound, Body: io.NopCloser(strings.NewReader("missing")), Header: make(http.Header)}, nil
 	})}
 	if _, err := notFound.BytesContext(nil, "banner.png"); err == nil {
 		t.Fatal("HTTP error should fail banner download")
 	}
-	transportError := newHousingCompetitionBannerCache("", nil, urlhost.Single("https://assets.example"))
+	transportError := newHousingCompetitionBannerCache(nil, nil, urlhost.Single("https://assets.example"))
 	transportError.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return nil, errors.New("transport")
 	})}
 	if _, err := transportError.Bytes("banner.png"); err == nil {
 		t.Fatal("transport error should fail banner download")
 	}
-	tooLarge := newHousingCompetitionBannerCache("", nil, urlhost.Single("https://assets.example"))
+	tooLarge := newHousingCompetitionBannerCache(nil, nil, urlhost.Single("https://assets.example"))
 	tooLarge.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(make([]byte, housingCompetitionBannerMaxBytes+1))), Header: make(http.Header)}, nil
 	})}
 	if _, err := tooLarge.Bytes("banner.png"); err == nil {
 		t.Fatal("oversized banner should fail")
 	}
-	withoutSource := newHousingCompetitionBannerCache("", nil, nil)
+	withoutSource := newHousingCompetitionBannerCache(nil, nil, nil)
 	if _, err := withoutSource.Bytes("banner.png"); err == nil {
 		t.Fatal("cache without a source should fail")
 	}
@@ -562,8 +575,8 @@ func testHousingBannerCacheLocalAndPathEdges(t *testing.T) {
 
 func testHousingBannerLocalSourceAndPaths(t *testing.T) {
 	t.Helper()
-	cache := newHousingCompetitionBannerCache(t.TempDir(), nil, urlhost.Single("https://assets.example/base"))
-	withoutSource := newHousingCompetitionBannerCache("", nil, nil)
+	cache := newHousingCompetitionBannerCache(newHousingTestLocalStore(t), nil, urlhost.Single("https://assets.example/base"))
+	withoutSource := newHousingCompetitionBannerCache(nil, nil, nil)
 	assetRoot := t.TempDir()
 	assetPath := filepath.Join(assetRoot, "asset", "jp-assets", "ondemand", "mysekai", "banner.png")
 	if err := os.MkdirAll(filepath.Dir(assetPath), 0o755); err != nil {
@@ -572,7 +585,7 @@ func testHousingBannerLocalSourceAndPaths(t *testing.T) {
 	if err := os.WriteFile(assetPath, []byte("local"), 0o644); err != nil {
 		t.Fatalf("write local banner: %v", err)
 	}
-	local := newHousingCompetitionBannerCache("", assets.NewAssetReader(assets.NewAssetHelper(assetRoot, nil), nil), nil)
+	local := newHousingCompetitionBannerCache(nil, assets.NewAssetReader(assets.NewAssetHelper(assetRoot, nil), nil), nil)
 	if raw, err := local.BytesContext(context.Background(), "asset/jp-assets/ondemand/mysekai/banner.png"); err != nil || string(raw) != "local" {
 		t.Fatalf("local asset banner = %q, %v", raw, err)
 	}
@@ -583,7 +596,7 @@ func testHousingBannerLocalSourceAndPaths(t *testing.T) {
 	if _, err := withoutSource.Bytes("banner.png"); err == nil {
 		t.Fatal("empty host set should fail")
 	}
-	if cache.cachePath("") != "" || (*housingCompetitionBannerCache)(nil).cachePath("x") != "" {
+	if cache.cacheKey("") != "" || (*housingCompetitionBannerCache)(nil).cacheKey("x") != "" || withoutSource.cacheKey("x") != "" {
 		t.Fatal("empty/nil cache path should be blank")
 	}
 	regular := housingCompetitionBannerCacheRelPath("asset/jp/banner.PNG")
@@ -596,25 +609,28 @@ func testHousingBannerLocalSourceAndPaths(t *testing.T) {
 
 func testHousingBannerCacheWrites(t *testing.T) {
 	t.Helper()
-	cache := newHousingCompetitionBannerCache(t.TempDir(), nil, urlhost.Single("https://assets.example/base"))
-	if err := cache.write("", []byte("x")); err != nil || cache.write(filepath.Join(t.TempDir(), "x"), nil) != nil {
-		t.Fatal("empty banner writes should be no-ops")
+	root := t.TempDir()
+	store, err := storage.NewLocal(root, 0)
+	if err != nil {
+		t.Fatal(err)
 	}
-	existing := filepath.Join(t.TempDir(), "existing")
-	if err := os.WriteFile(existing, []byte("old"), 0o644); err != nil {
-		t.Fatalf("write existing cache: %v", err)
+	cache := newHousingCompetitionBannerCache(store, nil, urlhost.Single("https://assets.example/base"))
+	cache.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader("fetched")), Header: make(http.Header)}, nil
+	})}
+	if raw, err := cache.Bytes("asset/jp-assets/banner.png"); err != nil || string(raw) != "fetched" {
+		t.Fatalf("Bytes() = %q, %v", raw, err)
 	}
-	if err := cache.write(existing, []byte("new")); err != nil {
-		t.Fatalf("write existing cache = %v", err)
+	onDisk := filepath.Join(root, housingCompetitionBannerCacheDirName, "asset", "jp-assets", "banner.png")
+	if raw, err := os.ReadFile(onDisk); err != nil || string(raw) != "fetched" {
+		t.Fatalf("banner cache file = %q, %v", raw, err)
 	}
-	if raw, _ := os.ReadFile(existing); string(raw) != "old" {
-		t.Fatalf("existing cache overwritten with %q", raw)
-	}
-	blockingParent := filepath.Join(t.TempDir(), "file")
-	if err := os.WriteFile(blockingParent, []byte("x"), 0o644); err != nil {
-		t.Fatalf("write blocking parent: %v", err)
-	}
-	if err := cache.write(filepath.Join(blockingParent, "banner"), []byte("x")); err == nil {
-		t.Fatal("banner write under file parent should fail")
+
+	cache.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
+		return nil, errors.New("source must not be read on a cache hit")
+	})}
+	cache.synced = map[string]struct{}{}
+	if raw, err := cache.Bytes("asset/jp-assets/banner.png"); err != nil || string(raw) != "fetched" {
+		t.Fatalf("cached Bytes() = %q, %v", raw, err)
 	}
 }

@@ -273,6 +273,19 @@ pjsk_render:
     host_order: []              # preferred order; empty = name sort (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOST_ORDER)
     hosts_probe_path: ""        # "" = no prober; e.g. "/" (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_PATH)
     hosts_probe_interval: "30s" # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_INTERVAL)
+    # Image cache GC (needs pg_url): phase 1 deletes expired render_cache_index rows, phase 2 deletes
+    # unreferenced garage image_cache_entries rows older than the retention window, then their
+    # recorded cdn_path objects (rows first, objects second). legacy_disk rows and infinite-TTL
+    # render rows are never collected. Enable with gc_dry_run: true, watch one cycle, then flip.
+    gc_enabled: false             # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_ENABLED)
+    gc_dry_run: true              # SELECTs only, logs counts and samples (env HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_DRY_RUN)
+    gc_interval: "1h"             # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_INTERVAL)
+    gc_batch: 500                 # rows per phase per cycle (env HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_BATCH)
+    gc_object_retention_days: 30  # keeps already-sent image links alive (env HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_OBJECT_RETENTION_DAYS)
+    legacy_redirect:
+      # true: /ic/* answers 301 to image_cache.hosts (or uri) instead of serving image_cache.dir.
+      # Keep it on for at least 30 days after the cutover (env HARUKI_PJSK_RENDER_IMAGE_CACHE_LEGACY_REDIRECT_ENABLED)
+      enabled: false
   asset_dirs:
     # DEPRECATED (E1): Cloud no longer needs a local asset root. Leave primary "" and legacy []
     # and configure storage.{assets,user_upload,static} below. A populated primary is still

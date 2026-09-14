@@ -663,3 +663,37 @@ func TestReadConfigPublicHostsBlock(t *testing.T) {
 	ad := cfg.PJSKRender.AssetDirs
 	testutil.Require(t, len(ad.AssetsBaseURLs) == 2 && ad.AssetsBaseURLs[0] == "https://assets-cn09.example", "asset hosts = %#v", ad.AssetsBaseURLs)
 }
+
+func TestImageCacheGCAndLegacyRedirectConfig(t *testing.T) {
+	cfg := &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	gc := cfg.PJSKRender.ImageCache.GC
+	testutil.Require(t, !gc.Enabled && gc.DryRun == nil && gc.DryRunEnabled() && gc.Interval == 0 && gc.Batch == 0 && gc.ObjectRetentionDays == 0,
+		"gc defaults = %+v", gc)
+	testutil.Require(t, !cfg.PJSKRender.ImageCache.LegacyRedirect.Enabled, "legacy redirect defaults on")
+
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_ENABLED", "true")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_DRY_RUN", "false")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_INTERVAL", "15m")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_BATCH", "250")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_OBJECT_RETENTION_DAYS", "45")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_LEGACY_REDIRECT_ENABLED", "true")
+	cfg = &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	gc = cfg.PJSKRender.ImageCache.GC
+	testutil.Require(t, gc.Enabled && !gc.DryRunEnabled() && gc.Interval == 15*time.Minute && gc.Batch == 250 && gc.ObjectRetentionDays == 45,
+		"gc env = %+v", gc)
+	testutil.Require(t, cfg.PJSKRender.ImageCache.LegacyRedirect.Enabled, "legacy redirect env ignored")
+
+	var decoded PJSKRenderConfig
+	err := yaml.Unmarshal([]byte("image_cache:\n  gc_enabled: true\n  gc_dry_run: true\n  gc_interval: 2h\n  gc_batch: 10\n  gc_object_retention_days: 7\n  legacy_redirect:\n    enabled: true\n"), &decoded)
+	gc = decoded.ImageCache.GC
+	testutil.Require(t, err == nil && gc.Enabled && gc.DryRunEnabled() && gc.DryRun != nil && gc.Interval == 2*time.Hour && gc.Batch == 10 && gc.ObjectRetentionDays == 7,
+		"yaml gc = %+v, %v", gc, err)
+	testutil.Require(t, decoded.ImageCache.LegacyRedirect.Enabled, "yaml legacy redirect ignored")
+
+	// The nested render_index.gc spelling (addendum C-3) must not configure GC.
+	var nested PJSKRenderConfig
+	err = yaml.Unmarshal([]byte("image_cache:\n  render_index:\n    gc:\n      enabled: true\n"), &nested)
+	testutil.Require(t, err == nil && !nested.ImageCache.GC.Enabled, "nested render_index.gc spelling enabled GC: %+v, %v", nested.ImageCache.GC, err)
+}

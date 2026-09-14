@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
@@ -16,6 +17,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/utils/logger"
 )
 
 func NewController(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot rendersnapshot.Snapshot, defaultRegion renderregion.Value) *Controller {
@@ -28,13 +30,15 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 	}
 	resolvedDefaultRegion := renderregion.WithDefault(defaultRegion)
 	controller := &Controller{
-		cardSources:   regionsource.NewRegistry[CardSource](resolvedDefaultRegion),
-		eventSources:  regionsource.NewRegistry[EventSource](resolvedDefaultRegion),
-		musicSources:  regionsource.NewRegistry[MusicSource](resolvedDefaultRegion),
-		drawing:       drawingClient,
-		assets:        assetHelper,
-		snapshot:      snapshot,
-		defaultRegion: resolvedDefaultRegion,
+		logger:                    logger.NewLoggerFromGlobal("Deck"),
+		userDataFilePathFallbacks: new(atomic.Int64),
+		cardSources:               regionsource.NewRegistry[CardSource](resolvedDefaultRegion),
+		eventSources:              regionsource.NewRegistry[EventSource](resolvedDefaultRegion),
+		musicSources:              regionsource.NewRegistry[MusicSource](resolvedDefaultRegion),
+		drawing:                   drawingClient,
+		assets:                    assetHelper,
+		snapshot:                  snapshot,
+		defaultRegion:             resolvedDefaultRegion,
 		recommendCfg: RecommendConfig{
 			Enabled:                   cfg.Enabled,
 			ServiceBaseURL:            strings.TrimSpace(cfg.ServiceBaseURL),

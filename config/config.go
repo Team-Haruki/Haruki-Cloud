@@ -451,6 +451,12 @@ func ApplyEnvOverrides(cfg *Config) error {
 	}
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_PATH", &cfg.PJSKRender.ImageCache.HostsProbePath)
 	envDuration("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_INTERVAL", &cfg.PJSKRender.ImageCache.HostsProbeInterval)
+	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_ENABLED", &cfg.PJSKRender.ImageCache.GC.Enabled)
+	envBoolPtr("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_DRY_RUN", &cfg.PJSKRender.ImageCache.GC.DryRun)
+	envDuration("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_INTERVAL", &cfg.PJSKRender.ImageCache.GC.Interval)
+	envInt("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_BATCH", &cfg.PJSKRender.ImageCache.GC.Batch)
+	envInt("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_OBJECT_RETENTION_DAYS", &cfg.PJSKRender.ImageCache.GC.ObjectRetentionDays)
+	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_LEGACY_REDIRECT_ENABLED", &cfg.PJSKRender.ImageCache.LegacyRedirect.Enabled)
 	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
 	if err := envStringSlice("HARUKI_PJSK_RENDER_ASSETS_BASE_URLS", &cfg.PJSKRender.AssetDirs.AssetsBaseURLs); err != nil {
 		return err
@@ -627,6 +633,34 @@ type ImageCacheConfig struct {
 	HostOrder          []string          `yaml:"host_order"`           // preferred order; empty = name sort
 	HostsProbePath     string            `yaml:"hosts_probe_path"`     // "" = no probing
 	HostsProbeInterval time.Duration     `yaml:"hosts_probe_interval"` // default 30s
+	// GC is the render index / garage object collector (keys gc_*, inlined).
+	GC ImageCacheGCConfig `yaml:",inline"`
+	// LegacyRedirect turns the /ic/* static route into 301s to the image hosts.
+	LegacyRedirect ImageCacheLegacyRedirectConfig `yaml:"legacy_redirect"`
+}
+
+// ImageCacheGCConfig is pjsk_render.image_cache.gc_*. Collection deletes
+// expired render_cache_index rows, then unreferenced garage
+// image_cache_entries rows past the retention window, then their objects.
+type ImageCacheGCConfig struct {
+	Enabled bool `yaml:"gc_enabled"` // default false
+	// DryRun defaults to true when unset: only the SELECTs run.
+	DryRun              *bool         `yaml:"gc_dry_run"`
+	Interval            time.Duration `yaml:"gc_interval"`              // 0 = default (1h)
+	Batch               int           `yaml:"gc_batch"`                 // 0 = default (500)
+	ObjectRetentionDays int           `yaml:"gc_object_retention_days"` // 0 = default (30)
+}
+
+// DryRunEnabled reports gc_dry_run, defaulting to true.
+func (c ImageCacheGCConfig) DryRunEnabled() bool {
+	return c.DryRun == nil || *c.DryRun
+}
+
+// ImageCacheLegacyRedirectConfig is pjsk_render.image_cache.legacy_redirect.
+type ImageCacheLegacyRedirectConfig struct {
+	// Enabled answers /ic/* with a 301 to the image hosts instead of serving
+	// image_cache.dir. Keep it on for at least 30 days after the cutover.
+	Enabled bool `yaml:"enabled"`
 }
 
 // DrawingArtifactConfig is pjsk_render.drawing_artifact: the rollout dial for

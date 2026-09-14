@@ -12,8 +12,6 @@ import (
 	trustAPI "haruki-cloud/api/trust"
 	"haruki-cloud/internal/pjsk/accountdata"
 
-	"github.com/gofiber/fiber/v3/middleware/static"
-
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -41,6 +39,7 @@ func Run(ctx context.Context) {
 	censorService := initCensorIfEnabled(ctx, mainLogger, renderRuntime)
 	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, banChecker, censorService)
 	startRenderHostProbers(ctx, renderRuntime)
+	startImageCacheGC(ctx, harukiConfig.Cfg.PJSKRender.ImageCache, renderRuntime, mainLogger)
 	if renderRuntime != nil {
 		groupGuardAPI.RegisterGroupGuardRoutes(app, renderRuntime.Toolbox)
 	}
@@ -63,10 +62,7 @@ func Run(ctx context.Context) {
 	})
 	trustAPI.RegisterTrustRoutes(app, harukiConfig.Cfg.HarukiBotDB.TrustKeysetPath)
 
-	if dir := harukiConfig.Cfg.PJSKRender.ImageCache.Dir; dir != "" {
-		app.Get("/ic/*", static.New(dir))
-		mainLogger.Info("image cache static serving enabled", "http_route", "/ic/*")
-	}
+	registerImageCacheRoute(app, harukiConfig.Cfg.PJSKRender.ImageCache, renderImageHosts(renderRuntime), mainLogger)
 
 	defer closeClients(redisClient, censorService, usersClient, chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
 	if botRouteDispatchers != nil {

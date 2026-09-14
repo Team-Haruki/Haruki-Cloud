@@ -146,6 +146,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		VLive:       vliveController,
 		Snapshots:   staticSnapshotProvider,
 		ImageCache:  newAppImageCache(initCtx, cfg, imgStore),
+		ImageIndex:  imgStore,
 		Censor:      cfg.CensorService,
 		SekaiAPI:    cfg.SekaiAPI,
 		Toolbox:     cfg.Toolbox,

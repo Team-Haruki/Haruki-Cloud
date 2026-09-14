@@ -3,11 +3,14 @@ package deck
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/logger"
 )
 
 func (c *Controller) buildAutoRecommendWithEngine(ctx context.Context, query AutoQuery) (*drawing.DeckRequest, error) {
@@ -107,7 +110,7 @@ func (c *Controller) prepareAutoRecommendExecution(ctx context.Context, query Au
 			Region:            resources.region.String(),
 			RecommendType:     resources.recType,
 			UserData:          userBytes,
-			UserDataFilePath:  c.resolveUserDataFilePath(),
+			UserDataFilePath:  c.userDataFilePathForRequest(ctx, resources.region, userBytes),
 			MusicMeta:         resources.musicMeta,
 			MusicMetaFilePath: resources.musicMetaPath,
 		},
@@ -312,4 +315,34 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 	applyRecommendStrategyDefaults(option, recType)
 	applyEventRecommendRLDowngrade(option, recType)
 	return option, nil
+}
+
+// userDataFilePathForRequest resolves the snapshot's raw file path for the
+// request and logs (C10) when that path is the only user data the request
+// carries. Behaviour is unchanged; only observability is added.
+func (c *Controller) userDataFilePathForRequest(ctx context.Context, region renderregion.Value, userBytes []byte) string {
+	path := c.resolveUserDataFilePath()
+	if len(userBytes) > 0 || strings.TrimSpace(path) == "" {
+		return path
+	}
+	var count int64
+	if c.userDataFilePathFallbacks != nil {
+		count = c.userDataFilePathFallbacks.Add(1)
+	}
+	log := c.logger
+	if log == nil {
+		log = logger.NewLoggerFromGlobal("Deck")
+	}
+	log.ErrorContext(ctx, "deck user_data_file_path fallback resolved",
+		"region", region.String(), "path_base", filepath.Base(path), "count", count)
+	return path
+}
+
+// UserDataFilePathFallbacks reports how many prepared requests carried only a
+// user_data_file_path (C10).
+func (c *Controller) UserDataFilePathFallbacks() int64 {
+	if c == nil || c.userDataFilePathFallbacks == nil {
+		return 0
+	}
+	return c.userDataFilePathFallbacks.Load()
 }

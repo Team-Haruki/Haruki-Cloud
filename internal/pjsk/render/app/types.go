@@ -182,15 +182,18 @@ type App struct {
 	PrivateDataCache   *snapshot.PrivateDataCache
 	BuiltSnapshotCache *snapshot.BuiltSnapshotCache
 	ImageCache         *imagecache.Client
-	Censor             *censor.Service
-	SekaiAPI           *sekaiapi.HarukiSekaiAPIClient
-	Toolbox            *sekaiapi.HarukiToolboxClient
-	Tracker            *sekaiapi.TrackerClient
-	Stores             storage.Set
-	ImageHosts         *urlhost.Set
-	AssetHosts         *urlhost.Set
-	AssetReader        *assets.AssetReader
-	Config             Config
+	// ImageIndex is the image cache index (image_cache.pg_url), nil when it
+	// is not configured or failed to open. Image cache GC runs on it.
+	ImageIndex  *imagecache.PGStore
+	Censor      *censor.Service
+	SekaiAPI    *sekaiapi.HarukiSekaiAPIClient
+	Toolbox     *sekaiapi.HarukiToolboxClient
+	Tracker     *sekaiapi.TrackerClient
+	Stores      storage.Set
+	ImageHosts  *urlhost.Set
+	AssetHosts  *urlhost.Set
+	AssetReader *assets.AssetReader
+	Config      Config
 
 	// initErr records a non-fatal initialisation failure (today: the image
 	// cache index) for startup to classify.

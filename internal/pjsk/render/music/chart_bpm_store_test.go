@@ -3,6 +3,8 @@ package music
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -152,4 +154,108 @@ func TestChartBPMCacheLRU(t *testing.T) {
 	if _, ok := nilCache.get("a"); ok {
 		t.Fatal("nil cache must miss")
 	}
+}
+
+func writeMusicAssetTree(t *testing.T, files map[string]string) string {
+	t.Helper()
+	root := t.TempDir()
+	for rel, body := range files {
+		full := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return root
+}
+
+// An unchanged config (asset_dirs set, storage.assets derived from Primary)
+// keeps 664281d1's strings: the jacket probe emits the absolute local path and
+// charts that exist only in a legacy root (bare layout) are still read.
+func TestDerivedAssetsSlotKeepsLegacyMusicLookups(t *testing.T) {
+	primary := writeMusicAssetTree(t, map[string]string{
+		"music/jacket/jacket_test/jacket_test.png": "png",
+		"static_images/jewel.png":                  "png",
+	})
+	legacy := writeMusicAssetTree(t, map[string]string{
+		"music/music_score/0001_01/expert.txt": "#BPM01:150\n#00008:01",
+	})
+	helper := assets.NewAssetHelper(primary, []string{legacy})
+	store, err := storage.NewLocal(primary, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := NewController(storeChartSource(), nil, helper, nil, nil)
+	after := NewController(storeChartSource(), nil, helper, nil, nil)
+	after.SetAssetReader(assets.NewAssetReader(helper, store))
+
+	wantJacket := filepath.ToSlash(filepath.Join(primary, "music/jacket/jacket_test/jacket_test.png"))
+	if got := before.resolveLocalMusicJacket("jacket_test"); got != wantJacket {
+		t.Fatalf("legacy jacket = %q, want %q", got, wantJacket)
+	}
+	if got := after.resolveLocalMusicJacket("jacket_test"); got != wantJacket {
+		t.Fatalf("derived slot jacket = %q, want the absolute path %q", got, wantJacket)
+	}
+	for name, controller := range map[string]*Controller{"legacy": before, "derived slot": after} {
+		if got := controller.resolveStaticIcon(nil, "jewel.png"); got == nil || *got != "static_images/jewel.png" {
+			t.Fatalf("%s static icon = %v", name, got)
+		}
+		bpm, err := controller.ResolveMusicBPM(Query{Query: "Song A", Region: "jp", Difficulty: "expert"})
+		if err != nil || bpm.MainBPM != 150 {
+			t.Fatalf("%s legacy-root chart = %+v, %v", name, bpm, err)
+		}
+	}
+}
+
+func TestChartScoreCandidatesDropBareLayoutWhenStoreOnly(t *testing.T) {
+	local := chartScoreCandidates("", 1, "expert", false)
+	storeOnly := chartScoreCandidates("", 1, "expert", true)
+	if len(local) != 3 || local[0] != "music/music_score/0001_01/expert.txt" {
+		t.Fatalf("local candidates = %v", local)
+	}
+	if len(storeOnly) != 2 || storeOnly[0] != "asset/"+storeChartKey || storeOnly[1] != "asset/jp-assets/ondemand/music/music_score/0001_01/expert.txt" {
+		t.Fatalf("store-only candidates = %v", storeOnly)
+	}
+}
+
+// A BPM scan over a store caches misses, so a repeated scan issues no GETs.
+func TestChartBPMScanCachesMisses(t *testing.T) {
+	memory := storagetest.NewMemory()
+	controller := newStoreChartController(memory)
+	if matches, _ := controller.FindMusicChartsByBPM(BPMQuery{Region: "jp", BPM: 120}); len(matches) != 0 {
+		t.Fatalf("first scan = %+v", matches)
+	}
+	gets := countCalls(memory, "Get")
+	if gets != 2 {
+		t.Fatalf("store-only scan GETs = %d, want the two regional candidates", gets)
+	}
+	if matches, _ := controller.FindMusicChartsByBPM(BPMQuery{Region: "jp", BPM: 120}); len(matches) != 0 {
+		t.Fatalf("second scan = %+v", matches)
+	}
+	if again := countCalls(memory, "Get"); again != gets {
+		t.Fatalf("cached miss re-read the store: %d -> %d", gets, again)
+	}
+}
+
+func TestChartBPMCacheMissEntries(t *testing.T) {
+	cache := newChartBPMCache(4, time.Hour)
+	now := time.Unix(0, 0)
+	cache.now = func() time.Time { return now }
+	cache.putMiss("gone")
+	if parsed, ok := cache.get("gone"); !ok || parsed != nil {
+		t.Fatalf("miss entry = %+v %v", parsed, ok)
+	}
+	now = now.Add(chartBPMCacheMissTTL)
+	if _, ok := cache.get("gone"); ok {
+		t.Fatal("miss entry outlived its TTL")
+	}
+	cache.putMiss("gone")
+	cache.put("gone", &parsedChartBPM{MainBPM: 9})
+	if parsed, ok := cache.get("gone"); !ok || parsed == nil || parsed.MainBPM != 9 {
+		t.Fatalf("hit must replace a miss: %+v %v", parsed, ok)
+	}
+	var nilCache *chartBPMCache
+	nilCache.putMiss("x")
 }

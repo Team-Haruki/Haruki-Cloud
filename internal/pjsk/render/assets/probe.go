@@ -9,24 +9,27 @@ func (r *AssetReader) UsesStore() bool {
 }
 
 // ProbeExisting is the existence seam of the five C1 forks (addendum B2 step 1;
-// deleted with them in T15). With a store-backed reader it answers through
-// AssetReader.Stat and returns no local path, because no Cloud-local file
-// backs the object. Otherwise it is today's helper.FirstExisting probe on the
-// caller's (request-bound) helper, falling back to the reader's own helper when
-// helper is nil; localPath is the resolved local path of the first hit.
+// deleted with them in T15). While the caller's (request-bound) helper - or the
+// reader's own helper when helper is nil - still has real local roots, it runs
+// today's helper.FirstExisting probe first and a hit returns the resolved
+// local path exactly as before. Only when the local probe misses (or no local
+// root is left, after E1) does a store-backed reader answer through
+// AssetReader.Stat; a store hit has no Cloud-local file, so localPath is "".
 func ProbeExisting(ctx context.Context, reader *AssetReader, helper *AssetHelper, paths ...string) (localPath string, ok bool) {
-	if reader.UsesStore() {
-		_, ok = reader.Stat(ctx, paths...)
-		return "", ok
-	}
-	if helper == nil && reader != nil {
+	if helper == nil && reader != nil && reader.helper != nil {
 		helper = reader.helper.WithContext(readerContext(ctx))
 	}
-	if helper == nil {
+	storeBacked := reader.UsesStore()
+	if helper != nil && (!storeBacked || helperHasLocalRoots(helper)) {
+		if resolved := helper.FirstExisting(paths...); resolved != "" {
+			return resolved, true
+		}
+	}
+	if !storeBacked {
 		return "", false
 	}
-	resolved := helper.FirstExisting(paths...)
-	return resolved, resolved != ""
+	_, ok = reader.Stat(ctx, paths...)
+	return "", ok
 }
 
 // ReaderOr returns reader, or a legacy (store-less) reader over helper when

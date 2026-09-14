@@ -2,6 +2,8 @@ package card
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
@@ -64,4 +66,39 @@ func TestResolveCardImagesThroughStoreKeepsDrawingPaths(t *testing.T) {
 
 	var nilController *Controller
 	nilController.SetAssetReader(nil)
+}
+
+// An unchanged config (asset_dirs.primary + legacy, storage.assets derived
+// from Primary) keeps 664281d1's hit strings, including a legacy-root hit.
+func TestResolveCardImagesDerivedSlotKeepsLocalHitPaths(t *testing.T) {
+	primary := t.TempDir()
+	legacyRoot := t.TempDir()
+	normal := filepath.Join(primary, "jp-assets/startapp/character/member/card_test/card_normal.png")
+	trained := filepath.Join(legacyRoot, "jp-assets/startapp/character/member/card_test/card_after_training.png")
+	for _, file := range []string{normal, trained} {
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(file, []byte("png"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want := []string{filepath.ToSlash(normal), filepath.ToSlash(trained)}
+	helper := assets.NewAssetHelper(primary, []string{legacyRoot})
+
+	legacy := NewController(storeLookupSource(), nil, nil, helper)
+	legacyResult, err := legacy.ResolveCardImages(Query{Query: "1001", Region: "jp"})
+	if err != nil || !slices.Equal(legacyResult.Paths, want) {
+		t.Fatalf("legacy hit paths = %v, %v", legacyResult, err)
+	}
+	store, err := storage.NewLocal(primary, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	derived := NewController(storeLookupSource(), nil, nil, helper)
+	derived.SetAssetReader(assets.NewAssetReader(helper, store))
+	result, err := derived.ResolveCardImages(Query{Query: "1001", Region: "jp"})
+	if err != nil || !slices.Equal(result.Paths, want) {
+		t.Fatalf("derived slot paths = %v, %v, want %v", result, err, want)
+	}
 }

@@ -20,7 +20,10 @@ const (
 // into bytes. With a store it reads object keys (ObjectKey); without one (a nil
 // or Disabled() store) it reproduces today's AssetHelper probing exactly
 // (case-insensitive per-segment resolution, multi-root, legacy roots) followed
-// by os.ReadFile.
+// by os.ReadFile. While the helper still has real local roots (a slot derived
+// from asset_dirs before E1 blanks Primary), that probing runs first and the
+// store is only consulted when it finds nothing, so an unchanged config reads
+// exactly what it read before the store existed.
 type AssetReader struct {
 	helper *AssetHelper
 	store  storage.Store
@@ -49,6 +52,15 @@ func (r *AssetReader) ReadFirst(ctx context.Context, drawingPaths ...string) ([]
 	ctx = readerContext(ctx)
 	if !r.usesStore() {
 		return r.readLegacy(ctx, drawingPaths)
+	}
+	if r.hasLocalRoots() {
+		// Local roots still exist (a legacy-derived slot before E1 blanks
+		// Primary): keep today's multi-root, case-insensitive lookup first and
+		// only fall back to the store when it finds nothing.
+		data, resolved, err := r.readLegacy(ctx, drawingPaths)
+		if !errors.Is(err, storage.ErrNotExist) {
+			return data, resolved, err
+		}
 	}
 	for _, candidate := range drawingPaths {
 		key, ok := candidateKey(candidate)
@@ -92,15 +104,10 @@ func (r *AssetReader) firstExistingLegacy(ctx context.Context, drawingPaths []st
 // object key or the absolute path of the first existing candidate.
 func (r *AssetReader) Stat(ctx context.Context, drawingPaths ...string) (string, bool) {
 	ctx = readerContext(ctx)
-	if !r.usesStore() {
-		resolved := r.firstExistingLegacy(ctx, drawingPaths)
-		if resolved == "" {
-			return "", false
+	if !r.usesStore() || r.hasLocalRoots() {
+		if resolved, ok := r.statLegacy(ctx, drawingPaths); ok || !r.usesStore() {
+			return resolved, ok
 		}
-		if _, err := os.Stat(resolved); err != nil {
-			return "", false
-		}
-		return resolved, true
 	}
 	for _, candidate := range drawingPaths {
 		key, ok := candidateKey(candidate)
@@ -123,6 +130,36 @@ func (r *AssetReader) Stat(ctx context.Context, drawingPaths ...string) (string,
 		}
 	}
 	return "", false
+}
+
+func (r *AssetReader) statLegacy(ctx context.Context, drawingPaths []string) (string, bool) {
+	resolved := r.firstExistingLegacy(ctx, drawingPaths)
+	if resolved == "" {
+		return "", false
+	}
+	if _, err := os.Stat(resolved); err != nil {
+		return "", false
+	}
+	return resolved, true
+}
+
+// hasLocalRoots reports whether the reader's helper probes a configured local
+// root. A helper built without any root falls back to "." and does not count.
+func (r *AssetReader) hasLocalRoots() bool {
+	return r != nil && helperHasLocalRoots(r.helper)
+}
+
+// StoreOnly reports whether r answers exclusively from its store: a store is
+// configured and no local asset root is left to probe first.
+func (r *AssetReader) StoreOnly() bool {
+	return r.usesStore() && !r.hasLocalRoots()
+}
+
+func helperHasLocalRoots(helper *AssetHelper) bool {
+	if helper == nil || len(helper.roots) == 0 {
+		return false
+	}
+	return len(helper.roots) > 1 || helper.roots[0] != "."
 }
 
 // Exists is a bool wrapper over Stat for one path.

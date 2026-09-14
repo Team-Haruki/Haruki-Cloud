@@ -217,8 +217,9 @@ func (c *Controller) resolveLocalMusicJacket(assetName string) string {
 
 // chartScoreCandidates lists the chart object candidates for one difficulty in
 // preference order: the bare legacy layout, then the startapp and ondemand
-// region directories.
-func chartScoreCandidates(region string, musicID int, difficulty string) []string {
+// region directories. The bare layout only exists in local asset roots, so it
+// is left out when the reader answers from its store alone (storeOnly).
+func chartScoreCandidates(region string, musicID int, difficulty string, storeOnly bool) []string {
 	if musicID <= 0 || strings.TrimSpace(difficulty) == "" {
 		return nil
 	}
@@ -227,11 +228,14 @@ func chartScoreCandidates(region string, musicID int, difficulty string) []strin
 		region = "jp"
 	}
 	relPath := path.Join("music", "music_score", fmt.Sprintf("%04d_01", musicID), diff+".txt")
-	return []string{
-		relPath,
+	regional := []string{
 		path.Join(assets.RegionAssetDirByMode(region, assets.RegionAssetStartApp), relPath),
 		path.Join(assets.RegionAssetDirByMode(region, assets.RegionAssetOnDemand), relPath),
 	}
+	if storeOnly {
+		return regional
+	}
+	return append([]string{relPath}, regional...)
 }
 
 // loadChartBPM reads and parses the chart of one difficulty through the asset
@@ -241,16 +245,18 @@ func (c *Controller) loadChartBPM(ctx context.Context, region string, musicID in
 	if c == nil {
 		return nil, false, nil
 	}
-	candidates := chartScoreCandidates(region, musicID, difficulty)
+	reader := c.reader()
+	candidates := chartScoreCandidates(region, musicID, difficulty, reader.StoreOnly())
 	if len(candidates) == 0 {
 		return nil, false, nil
 	}
 	cacheKey := strings.Join(candidates, "\x00")
 	if parsed, ok := c.chartBPM.get(cacheKey); ok {
-		return parsed, true, nil
+		return parsed, parsed != nil, nil
 	}
-	data, _, err := c.reader().ReadFirst(ctx, candidates...)
+	data, _, err := reader.ReadFirst(ctx, candidates...)
 	if errors.Is(err, storage.ErrNotExist) {
+		c.chartBPM.putMiss(cacheKey)
 		return nil, false, nil
 	}
 	if err != nil {

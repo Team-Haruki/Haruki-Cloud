@@ -54,7 +54,10 @@ type GCReport struct {
 	ObjectLeaks          int
 	RetriedObjectDeletes int
 	PendingObjectDeletes int
-	DryRun               bool
+	// SkippedLiveObjectDeletes counts object deletes dropped because a live
+	// row records the same cdn_path again (the bytes were re-stored).
+	SkippedLiveObjectDeletes int
+	DryRun                   bool
 }
 
 // GC collects the render index and its garage objects. It deletes index rows
@@ -70,7 +73,13 @@ type GC struct {
 
 	mu sync.Mutex
 	// pending holds object deletes still owed after their row was deleted.
-	pending []storage.Key
+	pending []pendingObjectDelete
+}
+
+// pendingObjectDelete is an object delete owed for a collected row.
+type pendingObjectDelete struct {
+	Hash string
+	Key  storage.Key
 }
 
 // NewGC returns nil when GC is disabled or the index is unavailable. A nil
@@ -129,8 +138,11 @@ func (g *GC) RunOnce(ctx context.Context) (GCReport, error) {
 	defer g.mu.Unlock()
 	report := GCReport{DryRun: g.cfg.DryRun}
 	now := g.now()
-	g.retryPending(ctx, &report)
-	err := errors.Join(g.collectRenderRows(ctx, now, &report), g.collectEntries(ctx, now, &report))
+	err := errors.Join(
+		g.retryPending(ctx, &report),
+		g.collectRenderRows(ctx, now, &report),
+		g.collectEntries(ctx, now, &report),
+	)
 	report.PendingObjectDeletes = len(g.pending)
 	args := []any{
 		"dry_run", report.DryRun,
@@ -138,6 +150,7 @@ func (g *GC) RunOnce(ctx context.Context) (GCReport, error) {
 		"orphan_entries", report.OrphanEntries, "deleted_entries", report.DeletedEntries,
 		"deleted_objects", report.DeletedObjects, "object_leaks", report.ObjectLeaks,
 		"retried_object_deletes", report.RetriedObjectDeletes, "pending_object_deletes", report.PendingObjectDeletes,
+		"skipped_live_object_deletes", report.SkippedLiveObjectDeletes,
 	}
 	if err != nil {
 		g.log.ErrorContext(ctx, "image cache gc cycle failed", append(args, "error", err)...)
@@ -147,20 +160,48 @@ func (g *GC) RunOnce(ctx context.Context) (GCReport, error) {
 	return report, nil
 }
 
-func (g *GC) retryPending(ctx context.Context, report *GCReport) {
+// retryPending retries owed object deletes. Object keys are content-addressed,
+// so between cycles Drawing or Cloud may have stored the same bytes again and
+// inserted a live row for the same cdn_path; such a delete is dropped, never
+// executed. When the live-row check fails nothing is deleted this cycle.
+func (g *GC) retryPending(ctx context.Context, report *GCReport) error {
 	if len(g.pending) == 0 {
-		return
+		return nil
+	}
+	live, err := g.liveRows(ctx, g.pending)
+	if err != nil {
+		return err
 	}
 	kept := g.pending[:0]
-	for _, key := range g.pending {
-		if err := g.objects.Delete(ctx, key); err != nil {
-			kept = append(kept, key)
+	for _, owed := range g.pending {
+		if _, ok := live[liveEntryKey(owed.Hash, string(owed.Key))]; ok {
+			report.SkippedLiveObjectDeletes++
+			g.log.InfoContext(ctx, "image cache gc dropped a pending object delete; a live row records it again",
+				"cdn_path", string(owed.Key))
+			continue
+		}
+		if err := g.objects.Delete(ctx, owed.Key); err != nil {
+			kept = append(kept, owed)
 			continue
 		}
 		report.RetriedObjectDeletes++
 	}
 	clear(g.pending[len(kept):])
 	g.pending = kept
+	return nil
+}
+
+func (g *GC) liveRows(ctx context.Context, owed []pendingObjectDelete) (map[string]struct{}, error) {
+	hashes := make([]string, 0, len(owed))
+	seen := make(map[string]struct{}, len(owed))
+	for _, item := range owed {
+		if _, ok := seen[item.Hash]; ok {
+			continue
+		}
+		seen[item.Hash] = struct{}{}
+		hashes = append(hashes, item.Hash)
+	}
+	return g.index.LiveEntryPaths(ctx, hashes)
 }
 
 func (g *GC) collectRenderRows(ctx context.Context, now time.Time, report *GCReport) error {
@@ -197,17 +238,18 @@ func (g *GC) collectEntries(ctx context.Context, now time.Time, report *GCReport
 	}
 	var errs []error
 	for _, entry := range entries {
-		if err := g.collectEntry(ctx, entry, report); err != nil {
+		if err := g.collectEntry(ctx, entry, cutoff, report); err != nil {
 			errs = append(errs, err)
 		}
 	}
 	return errors.Join(errs...)
 }
 
-// collectEntry deletes the row first, then the recorded cdn_path verbatim. A
-// failed object delete after the row is gone is a leak retried next cycle.
-func (g *GC) collectEntry(ctx context.Context, entry ImageEntry, report *GCReport) error {
-	deleted, err := g.index.DeleteEntries(ctx, []string{entry.Hash})
+// collectEntry deletes the row first (re-checking the orphan predicate), then
+// the recorded cdn_path verbatim unless a live row records it again. A failed
+// object delete after the row is gone is a leak retried next cycle.
+func (g *GC) collectEntry(ctx context.Context, entry ImageEntry, cutoff time.Time, report *GCReport) error {
+	deleted, err := g.index.DeleteOrphanEntry(ctx, entry.Hash, cutoff)
 	if err != nil {
 		return err
 	}
@@ -222,9 +264,22 @@ func (g *GC) collectEntry(ctx context.Context, entry ImageEntry, report *GCRepor
 			"cdn_path", entry.CDNPath, "error", err)
 		return nil
 	}
+	owed := pendingObjectDelete{Hash: entry.Hash, Key: key}
+	live, err := g.liveRows(ctx, []pendingObjectDelete{owed})
+	if err != nil {
+		report.ObjectLeaks++
+		g.addPending(ctx, owed)
+		g.log.WarnContext(ctx, "image cache gc live row check failed; retrying the object delete next cycle",
+			"cdn_path", entry.CDNPath, "error", err)
+		return nil
+	}
+	if _, ok := live[liveEntryKey(owed.Hash, string(owed.Key))]; ok {
+		report.SkippedLiveObjectDeletes++
+		return nil
+	}
 	if err := g.objects.Delete(ctx, key); err != nil {
 		report.ObjectLeaks++
-		g.addPending(ctx, key)
+		g.addPending(ctx, owed)
 		g.log.WarnContext(ctx, "image cache gc object delete failed; retrying next cycle",
 			"cdn_path", entry.CDNPath, "error", err)
 		return nil
@@ -233,14 +288,14 @@ func (g *GC) collectEntry(ctx context.Context, entry ImageEntry, report *GCRepor
 	return nil
 }
 
-func (g *GC) addPending(ctx context.Context, key storage.Key) {
+func (g *GC) addPending(ctx context.Context, owed pendingObjectDelete) {
 	if len(g.pending) >= maxGCPendingObjectDeletes {
 		dropped := g.pending[0]
 		g.pending = append(g.pending[:0], g.pending[1:]...)
 		g.log.WarnContext(ctx, "image cache gc pending object deletes full; dropping the oldest",
-			"cdn_path", string(dropped), "limit", maxGCPendingObjectDeletes)
+			"cdn_path", string(dropped.Key), "limit", maxGCPendingObjectDeletes)
 	}
-	g.pending = append(g.pending, key)
+	g.pending = append(g.pending, owed)
 }
 
 func sampleStrings(values []string) []string {

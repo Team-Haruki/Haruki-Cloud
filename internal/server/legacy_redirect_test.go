@@ -119,6 +119,20 @@ func TestLegacyImageCacheRedirectRejectsBadEscape(t *testing.T) {
 	}
 }
 
+// A literal "%25" in a key must survive: the wildcard is unescaped once, then
+// re-escaped. A double unescape would turn "%2525" into "%25" in Location.
+func TestLegacyImageCacheRedirectUnescapesOnce(t *testing.T) {
+	app := fiber.New()
+	app.Get(legacyImageCacheRoute, legacyImageCacheRedirect(urlhost.Single("https://ic.example")))
+	resp := legacyRouteGet(t, app, "/ic/pjsk/a%2525b.png")
+	if resp.StatusCode != http.StatusMovedPermanently {
+		t.Fatalf("status = %d, want 301", resp.StatusCode)
+	}
+	if got := resp.Header.Get("Location"); got != "https://ic.example/pjsk/a%2525b.png" {
+		t.Fatalf("Location = %q, want the literal %%25 preserved", got)
+	}
+}
+
 func TestLegacyImageCacheRedirectWithoutHostIs404(t *testing.T) {
 	app := fiber.New()
 	app.Get(legacyImageCacheRoute, legacyImageCacheRedirect(nil))

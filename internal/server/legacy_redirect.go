@@ -41,6 +41,9 @@ func registerImageCacheRoute(app *fiber.App, cfg harukiConfig.ImageCacheConfig, 
 
 func legacyImageCacheRedirect(hosts *urlhost.Set) fiber.Handler {
 	return func(c fiber.Ctx) error {
+		// Fiber (UnescapePath off, the default in fiber.go) hands the wildcard
+		// over still percent-escaped, so it is unescaped exactly once here.
+		// TestLegacyImageCacheRedirectUnescapesOnce pins that assumption.
 		raw, err := url.PathUnescape(c.Params("*"))
 		if err != nil {
 			return fiber.ErrNotFound

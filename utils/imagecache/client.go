@@ -19,6 +19,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"haruki-cloud/internal/core/urlhost"
@@ -30,6 +31,14 @@ import (
 )
 
 const imageStoreSharedTimeout = 30 * time.Second
+
+// entryTouchInterval rate-limits last_referenced_at bumps per hash; it only
+// needs to be far below gc_object_retention_days. entryTouchMemoCap bounds the
+// per-client memo.
+const (
+	entryTouchInterval = time.Hour
+	entryTouchMemoCap  = 4096
+)
 
 // ErrNoHosts is returned by NewClient when no public image host is configured.
 var ErrNoHosts = errors.New("imagecache: no public hosts configured")
@@ -60,6 +69,10 @@ type Client struct {
 	localRoot string
 	store     *PGStore // optional PostgreSQL deduplication store
 	flight    singleflight.Group
+
+	now       func() time.Time
+	touchMu   sync.Mutex
+	lastTouch map[string]time.Time
 }
 
 type storeFlightToken byte
@@ -84,6 +97,8 @@ func NewClient(cfg ClientConfig) (*Client, error) {
 		objects:   cfg.Objects,
 		localRoot: strings.TrimSpace(cfg.LocalRoot),
 		store:     cfg.Index,
+		now:       time.Now,
+		lastTouch: make(map[string]time.Time),
 	}, nil
 }
 
@@ -273,7 +288,46 @@ func (c *Client) lookupIndexed(ctx context.Context, hashHex string) (string, boo
 		}
 	}
 	url, urlErr := c.url(entry.CDNPath)
-	return url, urlErr == nil
+	if urlErr != nil {
+		return "", false
+	}
+	if entry.StorageBackend == BackendGarage {
+		c.touchEntry(ctx, hashHex)
+	}
+	return url, true
+}
+
+// touchEntry bumps last_referenced_at on a garage dedup hit, at most once per
+// hash per entryTouchInterval: the re-emitted URL must outlive GC's retention
+// window (addendum A6). A failure is logged and the memo is not advanced.
+func (c *Client) touchEntry(ctx context.Context, hashHex string) {
+	now := c.now()
+	c.touchMu.Lock()
+	if last, ok := c.lastTouch[hashHex]; ok && now.Sub(last) < entryTouchInterval {
+		c.touchMu.Unlock()
+		return
+	}
+	if len(c.lastTouch) >= entryTouchMemoCap {
+		for key, last := range c.lastTouch {
+			if now.Sub(last) >= entryTouchInterval {
+				delete(c.lastTouch, key)
+			}
+		}
+		if len(c.lastTouch) >= entryTouchMemoCap {
+			clear(c.lastTouch)
+		}
+	}
+	c.lastTouch[hashHex] = now
+	c.touchMu.Unlock()
+
+	if err := c.store.TouchEntry(ctx, hashHex); err != nil {
+		c.touchMu.Lock()
+		if c.lastTouch[hashHex].Equal(now) {
+			delete(c.lastTouch, hashHex)
+		}
+		c.touchMu.Unlock()
+		logger.ErrorContext(ctx, "image cache index touch failed", "error", err)
+	}
 }
 
 func (c *Client) entryFor(hashHex, group, urlPath string, size int64) ImageEntry {

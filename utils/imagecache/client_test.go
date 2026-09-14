@@ -400,6 +400,7 @@ func TestStoreHashedSkipsLocalStatForGarageRows(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(lookupWidenedSQL)).WithArgs(hash).WillReturnRows(
 		sqlmock.NewRows(widenedLookupColumns).AddRow("pjsk/api/x/"+hash+".png", "", int64(3), BackendGarage, "image/png", nil),
 	)
+	mock.ExpectExec(regexp.QuoteMeta(touchEntrySQL)).WithArgs(hash).WillReturnResult(sqlmock.NewResult(0, 1))
 	client, err := NewClient(ClientConfig{Hosts: testHosts(t), Objects: memory, LocalRoot: t.TempDir(), Index: index})
 	if err != nil {
 		t.Fatal(err)
@@ -410,6 +411,9 @@ func TestStoreHashedSkipsLocalStatForGarageRows(t *testing.T) {
 	}
 	if calls := memory.Calls(); len(calls) != 0 {
 		t.Fatalf("garage row touched the object store: %+v", calls)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
 	}
 }
 

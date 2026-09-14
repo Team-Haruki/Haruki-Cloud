@@ -36,6 +36,18 @@ func orphanRow(rows *sqlmock.Rows, hash, cdnPath string) *sqlmock.Rows {
 	return rows.AddRow(hash, "pjsk", cdnPath, "", BackendGarage, "image/png", int64(3), nil, gcRetentionCutoff(31))
 }
 
+func expectEntryDelete(mock sqlmock.Sqlmock, hash string, cutoff time.Time, affected int64) {
+	mock.ExpectExec(deleteOrphanEntrySQL).WithArgs(hash, cutoff).WillReturnResult(sqlmock.NewResult(0, affected))
+}
+
+func expectLiveRows(mock sqlmock.Sqlmock, hashes string, pairs ...string) {
+	rows := sqlmock.NewRows(liveEntryColumns)
+	for i := 0; i+1 < len(pairs); i += 2 {
+		rows.AddRow(pairs[i], pairs[i+1])
+	}
+	mock.ExpectQuery(liveEntryPathsSQL).WithArgs(hashes).WillReturnRows(rows)
+}
+
 func methodsOf(calls []storagetest.Op) string {
 	parts := make([]string, 0, len(calls))
 	for _, call := range calls {
@@ -108,8 +120,10 @@ func TestGCRunOrderRenderRowsThenEntryThenObject(t *testing.T) {
 	rows := orphanRow(sqlmock.NewRows(orphanColumns), "h1", "pjsk/api/a/h1.png")
 	mock.ExpectQuery(orphanGarageEntriesSQL).WithArgs(gcRetentionCutoff(7), 50).
 		WillReturnRows(orphanRow(rows, "h2", "pjsk/h2.png"))
-	mock.ExpectExec(deleteEntriesSQL).WithArgs(`{"h1"}`).WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(deleteEntriesSQL).WithArgs(`{"h2"}`).WillReturnResult(sqlmock.NewResult(0, 1))
+	expectEntryDelete(mock, "h1", gcRetentionCutoff(7), 1)
+	expectLiveRows(mock, `{"h1"}`)
+	expectEntryDelete(mock, "h2", gcRetentionCutoff(7), 1)
+	expectLiveRows(mock, `{"h2"}`)
 
 	var deletesSeen []string
 	objects.FailDelete = func(key storage.Key) error {
@@ -150,7 +164,8 @@ func TestGCObjectLeakIsRetriedNextCycle(t *testing.T) {
 	mock.ExpectQuery(expiredRenderKeysSQL).WillReturnRows(sqlmock.NewRows([]string{"request_key"}))
 	mock.ExpectQuery(orphanGarageEntriesSQL).WithArgs(gcRetentionCutoff(DefaultGCObjectRetentionDays), DefaultGCBatch).
 		WillReturnRows(orphanRow(sqlmock.NewRows(orphanColumns), "h1", "pjsk/api/a/h1.png"))
-	mock.ExpectExec(deleteEntriesSQL).WithArgs(`{"h1"}`).WillReturnResult(sqlmock.NewResult(0, 1))
+	expectEntryDelete(mock, "h1", gcRetentionCutoff(DefaultGCObjectRetentionDays), 1)
+	expectLiveRows(mock, `{"h1"}`)
 	objects.FailDelete = func(storage.Key) error { return errors.New("garage quorum missing") }
 
 	report, err := gc.RunOnce(context.Background())
@@ -165,6 +180,7 @@ func TestGCObjectLeakIsRetriedNextCycle(t *testing.T) {
 	}
 
 	objects.FailDelete = nil
+	expectLiveRows(mock, `{"h1"}`)
 	mock.ExpectQuery(expiredRenderKeysSQL).WillReturnRows(sqlmock.NewRows([]string{"request_key"}))
 	mock.ExpectQuery(orphanGarageEntriesSQL).WillReturnRows(sqlmock.NewRows(orphanColumns))
 	report, err = gc.RunOnce(context.Background())
@@ -183,25 +199,31 @@ func TestGCObjectLeakIsRetriedNextCycle(t *testing.T) {
 }
 
 func TestGCPendingRetryKeepsFailuresAndIsBounded(t *testing.T) {
-	gc, _, objects, buf := newTestGC(t, GCConfig{})
+	gc, mock, objects, buf := newTestGC(t, GCConfig{})
 	objects.FailDelete = func(key storage.Key) error {
 		if key == "keep" {
 			return errors.New("still down")
 		}
 		return nil
 	}
-	gc.pending = []storage.Key{"keep", "gone"}
+	gc.pending = []pendingObjectDelete{{Hash: "h", Key: "keep"}, {Hash: "h", Key: "gone"}}
+	expectLiveRows(mock, `{"h"}`)
 	var report GCReport
-	gc.retryPending(context.Background(), &report)
-	if report.RetriedObjectDeletes != 1 || len(gc.pending) != 1 || gc.pending[0] != "keep" {
+	if err := gc.retryPending(context.Background(), &report); err != nil {
+		t.Fatal(err)
+	}
+	if report.RetriedObjectDeletes != 1 || len(gc.pending) != 1 || gc.pending[0].Key != "keep" {
 		t.Fatalf("retry = %+v pending %v", report, gc.pending)
 	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
 
-	gc.pending = make([]storage.Key, maxGCPendingObjectDeletes)
-	gc.pending[0] = "oldest"
-	gc.pending[1] = "second"
-	gc.addPending(context.Background(), "newest")
-	if len(gc.pending) != maxGCPendingObjectDeletes || gc.pending[0] != "second" || gc.pending[len(gc.pending)-1] != "newest" {
+	gc.pending = make([]pendingObjectDelete, maxGCPendingObjectDeletes)
+	gc.pending[0] = pendingObjectDelete{Key: "oldest"}
+	gc.pending[1] = pendingObjectDelete{Key: "second"}
+	gc.addPending(context.Background(), pendingObjectDelete{Key: "newest"})
+	if len(gc.pending) != maxGCPendingObjectDeletes || gc.pending[0].Key != "second" || gc.pending[len(gc.pending)-1].Key != "newest" {
 		t.Fatalf("bounded pending: len=%d first=%q last=%q", len(gc.pending), gc.pending[0], gc.pending[len(gc.pending)-1])
 	}
 	if !strings.Contains(buf.String(), "dropping the oldest") {
@@ -216,12 +238,14 @@ func TestGCEntryDeleteEdgeCases(t *testing.T) {
 	rows = orphanRow(rows, "referenced", "pjsk/api/a/referenced.png")
 	mock.ExpectQuery(expiredRenderKeysSQL).WillReturnRows(sqlmock.NewRows([]string{"request_key"}))
 	mock.ExpectQuery(orphanGarageEntriesSQL).WillReturnRows(rows)
-	// Another collector already deleted the row: no object delete.
-	mock.ExpectExec(deleteEntriesSQL).WithArgs(`{"gone"}`).WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectExec(deleteEntriesSQL).WithArgs(`{"bad"}`).WillReturnResult(sqlmock.NewResult(0, 1))
+	// Another collector already deleted the row, or it was re-referenced since
+	// the SELECT (the guarded delete matches nothing): no object delete.
+	cutoff := gcRetentionCutoff(DefaultGCObjectRetentionDays)
+	expectEntryDelete(mock, "gone", cutoff, 0)
+	expectEntryDelete(mock, "bad", cutoff, 1)
 	// The FK (no cascade) refuses a still-referenced row: the object stays.
 	fkErr := errors.New("violates foreign key constraint")
-	mock.ExpectExec(deleteEntriesSQL).WithArgs(`{"referenced"}`).WillReturnError(fkErr)
+	mock.ExpectExec(deleteOrphanEntrySQL).WithArgs("referenced", cutoff).WillReturnError(fkErr)
 
 	report, err := gc.RunOnce(context.Background())
 	if !errors.Is(err, fkErr) {
@@ -277,6 +301,15 @@ func TestGCQueriesExcludeLegacyInfiniteAndReferencedRows(t *testing.T) {
 			t.Fatalf("phase 2 predicate missing %q", want)
 		}
 	}
+	for _, want := range []string{
+		"e.storage_backend = 'garage'",
+		"e.last_referenced_at < $2",
+		"NOT EXISTS (SELECT 1 FROM render_cache_index r WHERE r.content_hash = e.hash)",
+	} {
+		if !strings.Contains(deleteOrphanEntrySQL, want) {
+			t.Fatalf("guarded delete missing %q", want)
+		}
+	}
 	where := orphanGarageEntriesSQL[strings.Index(orphanGarageEntriesSQL, "WHERE"):]
 	if strings.Contains(where, "expires_at") {
 		t.Fatalf("phase 2 must not consult entries.expires_at: %s", where)
@@ -312,4 +345,93 @@ func TestGCLoopRunsOnTickAndStopsWithContext(t *testing.T) {
 	stopped, stop := context.WithCancel(context.Background())
 	stop()
 	gc.Start(stopped)
+}
+
+// Object keys are content-addressed: while a delete is pending, Drawing or
+// Cloud can store the same bytes again under the same key and insert a live
+// row. The retry must then drop the delete instead of breaking that row.
+func TestGCPendingDeleteSkipsReinsertedRow(t *testing.T) {
+	gc, mock, objects, buf := newTestGC(t, GCConfig{})
+	objects.Seed(map[string][]byte{"pjsk/api/a/h1.png": []byte("1"), "pjsk/api/b/h2.png": []byte("2")})
+	cutoff := gcRetentionCutoff(DefaultGCObjectRetentionDays)
+	mock.ExpectQuery(expiredRenderKeysSQL).WillReturnRows(sqlmock.NewRows([]string{"request_key"}))
+	rows := orphanRow(sqlmock.NewRows(orphanColumns), "h1", "pjsk/api/a/h1.png")
+	mock.ExpectQuery(orphanGarageEntriesSQL).WillReturnRows(orphanRow(rows, "h2", "pjsk/api/b/h2.png"))
+	expectEntryDelete(mock, "h1", cutoff, 1)
+	expectLiveRows(mock, `{"h1"}`)
+	expectEntryDelete(mock, "h2", cutoff, 1)
+	expectLiveRows(mock, `{"h2"}`)
+	objects.FailDelete = func(storage.Key) error { return errors.New("garage down") }
+	if report, err := gc.RunOnce(context.Background()); err != nil || report.PendingObjectDeletes != 2 {
+		t.Fatalf("first cycle = (%+v, %v)", report, err)
+	}
+
+	// h1 was re-stored at the same cdn_path; h2's hash is live only under a
+	// different path (a Cloud row), so its old object is still garbage.
+	objects.FailDelete = nil
+	expectLiveRows(mock, `{"h1","h2"}`, "h1", "pjsk/api/a/h1.png", "h2", "pjsk/h2.png")
+	mock.ExpectQuery(expiredRenderKeysSQL).WillReturnRows(sqlmock.NewRows([]string{"request_key"}))
+	mock.ExpectQuery(orphanGarageEntriesSQL).WillReturnRows(sqlmock.NewRows(orphanColumns))
+	report, err := gc.RunOnce(context.Background())
+	if err != nil {
+		t.Fatalf("second cycle error = %v", err)
+	}
+	if report.SkippedLiveObjectDeletes != 1 || report.RetriedObjectDeletes != 1 || report.PendingObjectDeletes != 0 {
+		t.Fatalf("second report = %+v", report)
+	}
+	if got, err := objects.Get(context.Background(), "pjsk/api/a/h1.png"); err != nil || string(got) != "1" {
+		t.Fatalf("live object deleted: %q, %v", got, err)
+	}
+	if _, err := objects.Stat(context.Background(), "pjsk/api/b/h2.png"); !errors.Is(err, storage.ErrNotExist) {
+		t.Fatalf("orphan object kept: %v", err)
+	}
+	if !strings.Contains(buf.String(), "skipped_live_object_deletes=1") {
+		t.Fatalf("summary missing skip count:\n%s", buf.String())
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestGCLiveRowChecks(t *testing.T) {
+	gc, mock, objects, _ := newTestGC(t, GCConfig{})
+	objects.Seed(map[string][]byte{"pjsk/api/a/h1.png": []byte("1"), "pjsk/api/a/h2.png": []byte("2")})
+	cutoff := gcRetentionCutoff(DefaultGCObjectRetentionDays)
+	checkErr := errors.New("live check failed")
+	mock.ExpectQuery(expiredRenderKeysSQL).WillReturnRows(sqlmock.NewRows([]string{"request_key"}))
+	rows := orphanRow(sqlmock.NewRows(orphanColumns), "h1", "pjsk/api/a/h1.png")
+	mock.ExpectQuery(orphanGarageEntriesSQL).WillReturnRows(orphanRow(rows, "h2", "pjsk/api/a/h2.png"))
+	// h1: re-inserted between the row delete and the object delete.
+	expectEntryDelete(mock, "h1", cutoff, 1)
+	expectLiveRows(mock, `{"h1"}`, "h1", "pjsk/api/a/h1.png")
+	// h2: the check fails, so the delete is owed instead of executed.
+	expectEntryDelete(mock, "h2", cutoff, 1)
+	mock.ExpectQuery(liveEntryPathsSQL).WithArgs(`{"h2"}`).WillReturnError(checkErr)
+	report, err := gc.RunOnce(context.Background())
+	if err != nil {
+		t.Fatalf("RunOnce() error = %v", err)
+	}
+	if report.SkippedLiveObjectDeletes != 1 || report.ObjectLeaks != 1 || report.PendingObjectDeletes != 1 || report.DeletedObjects != 0 {
+		t.Fatalf("report = %+v", report)
+	}
+	for _, call := range objects.Calls() {
+		if call.Method == "Delete" {
+			t.Fatalf("object deleted despite live row / failed check: %s", methodsOf(objects.Calls()))
+		}
+	}
+
+	// A failing check on retry keeps every pending delete and deletes nothing.
+	mock.ExpectQuery(liveEntryPathsSQL).WithArgs(`{"h2"}`).WillReturnError(checkErr)
+	mock.ExpectQuery(expiredRenderKeysSQL).WillReturnRows(sqlmock.NewRows([]string{"request_key"}))
+	mock.ExpectQuery(orphanGarageEntriesSQL).WillReturnRows(sqlmock.NewRows(orphanColumns))
+	report, err = gc.RunOnce(context.Background())
+	if !errors.Is(err, checkErr) || report.PendingObjectDeletes != 1 || report.RetriedObjectDeletes != 0 {
+		t.Fatalf("retry cycle = (%+v, %v)", report, err)
+	}
+	if _, err := objects.Stat(context.Background(), "pjsk/api/a/h2.png"); err != nil {
+		t.Fatalf("object deleted without a live-row check: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
 }

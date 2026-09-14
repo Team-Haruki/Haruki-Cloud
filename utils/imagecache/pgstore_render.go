@@ -50,7 +50,19 @@ const (
    AND NOT EXISTS (SELECT 1 FROM render_cache_index r WHERE r.content_hash = e.hash)
  ORDER BY e.last_referenced_at LIMIT $2`
 
-	deleteEntriesSQL = `DELETE FROM image_cache_entries WHERE hash = ANY($1)`
+	// deleteOrphanEntrySQL re-applies the orphan predicate at delete time: a
+	// row re-referenced since the SELECT (a bumped last_referenced_at or a new
+	// render_cache_index row) is left alone.
+	deleteOrphanEntrySQL = `DELETE FROM image_cache_entries e
+ WHERE e.hash = $1
+   AND e.storage_backend = 'garage'
+   AND e.last_referenced_at < $2
+   AND NOT EXISTS (SELECT 1 FROM render_cache_index r WHERE r.content_hash = e.hash)`
+
+	// liveEntryPathsSQL finds rows that were re-inserted for a hash GC already
+	// collected. Object keys are content-addressed, so a re-insert of the same
+	// bytes records the same cdn_path; the lookup stays on the primary key.
+	liveEntryPathsSQL = `SELECT hash, cdn_path FROM image_cache_entries WHERE hash = ANY($1)`
 )
 
 // RenderIndexEntry is one render_cache_index row joined with its
@@ -116,10 +128,51 @@ func (s *PGStore) DeleteRender(ctx context.Context, keys []string) (int64, error
 	return s.execKeys(ctx, "delete render", deleteRenderSQL, keys)
 }
 
-// DeleteEntries deletes image_cache_entries rows by hash. A row still
-// referenced by render_cache_index makes the statement fail (no cascade).
-func (s *PGStore) DeleteEntries(ctx context.Context, hashes []string) (int64, error) {
-	return s.execKeys(ctx, "delete entries", deleteEntriesSQL, hashes)
+// DeleteOrphanEntry deletes one garage image_cache_entries row only while it
+// is still an orphan older than retentionCutoff, and returns the rows deleted.
+func (s *PGStore) DeleteOrphanEntry(ctx context.Context, hash string, retentionCutoff time.Time) (int64, error) {
+	if s == nil || hash == "" {
+		return 0, nil
+	}
+	res, err := s.db.ExecContext(ctx, deleteOrphanEntrySQL, hash, retentionCutoff)
+	if err != nil {
+		return 0, fmt.Errorf("imagecache pgstore: delete orphan entry: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("imagecache pgstore: delete orphan entry rows: %w", err)
+	}
+	return n, nil
+}
+
+// LiveEntryPaths returns the cdn_path of every image_cache_entries row whose
+// hash is in hashes, keyed by liveEntryKey(hash, cdn_path). An empty list issues no
+// statement.
+func (s *PGStore) LiveEntryPaths(ctx context.Context, hashes []string) (map[string]struct{}, error) {
+	live := make(map[string]struct{})
+	if s == nil || len(hashes) == 0 {
+		return live, nil
+	}
+	rows, err := s.db.QueryContext(ctx, liveEntryPathsSQL, pq.Array(hashes))
+	if err != nil {
+		return nil, fmt.Errorf("imagecache pgstore: live entry paths: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+	for rows.Next() {
+		var hash, cdnPath string
+		if err := rows.Scan(&hash, &cdnPath); err != nil {
+			return nil, fmt.Errorf("imagecache pgstore: live entry paths scan: %w", err)
+		}
+		live[liveEntryKey(hash, cdnPath)] = struct{}{}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("imagecache pgstore: live entry paths: %w", err)
+	}
+	return live, nil
+}
+
+func liveEntryKey(hash, cdnPath string) string {
+	return hash + "\x00" + cdnPath
 }
 
 func (s *PGStore) execKeys(ctx context.Context, op, query string, keys []string) (int64, error) {

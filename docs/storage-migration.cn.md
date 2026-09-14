@@ -38,7 +38,10 @@
 - 需要 `image_cache.pg_url` 可用；索引不可用时记录 Warn 并不启动。
 - 顺序：重试上轮遗留对象 → 阶段 1 删除过期 `render_cache_index` 行 → 阶段 2 对每个孤儿 `garage` 行**先删行、再删记录的 `cdn_path` 对象**。
 - 阶段 2 判断：`storage_backend = 'garage'`、无 `render_cache_index` 引用、`last_referenced_at < now - retention`。`image_cache_entries.expires_at` 不参与；`legacy_disk` 行与永久 TTL 的渲染行（`expires_at IS NULL`）永不回收。
+- 删除行时重新套用阶段 2 的全部条件（`hash`、`garage`、`last_referenced_at < cutoff`、无引用）：SELECT 之后被重新引用的行不会被删，也就不会删它的对象。
 - 对象删除失败计入 `object_leaks` 并在下一周期重试（内存列表上限 10 000，满时丢弃最旧并 Warn；进程重启会丢失该列表，遗留对象需按 `pjsk/api/` 前缀离线核对）。
+- 对象 key 按内容寻址：删行之后、删对象之前（含下一周期重试），Drawing 或 Cloud 可能用同样字节重新写入同一 key 并插入新行。因此每次删对象前按主键查一次 `image_cache_entries`，若已有行记录同一 `cdn_path`，放弃这次删除并计入 `skipped_live_object_deletes`；查询失败时本周期不删任何待删对象。
+- `last_referenced_at` 由写入方维护：Drawing 的 `UPSERT_CONTENT` 冲突时总是更新；Cloud 的 `StoreAndGetURL` 在 `garage` 行去重命中时更新（每个 hash 每小时最多一次），插入冲突时也总是更新（位置列仍受 `garage` 保护）。因此仍在被 Cloud 复用的 `pjsk/<sha256>.<ext>` 行不会在插入 30 天后被回收。**Drawing 的 A2 复用命中（不经过 `UPSERT_CONTENT` 的路径）也必须更新 `last_referenced_at`，否则同样会在 30 天后被回收——这是对 A2/A6 的契约补充。**
 - 日志：dry-run 每阶段一行（计数 + 最多 10 个样本），每个周期一行汇总 `image cache gc cycle`（失败时为 `image cache gc cycle failed`）。
 
 ### 3.3 `/ic/*` 重定向（R5）

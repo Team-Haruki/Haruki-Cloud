@@ -223,7 +223,7 @@ func TestRenderIndexQueryTexts(t *testing.T) {
 	if strings.Contains(where, "expires_at") || strings.Contains(where, "legacy_disk") {
 		t.Fatalf("orphan predicate must key only on last_referenced_at and references: %s", where)
 	}
-	for _, text := range []string{lookupRenderSQL, touchRenderSQL, deleteRenderSQL, expiredRenderKeysSQL, orphanGarageEntriesSQL, deleteEntriesSQL} {
+	for _, text := range []string{lookupRenderSQL, touchRenderSQL, deleteRenderSQL, expiredRenderKeysSQL, orphanGarageEntriesSQL, deleteOrphanEntrySQL, liveEntryPathsSQL} {
 		if strings.Contains(strings.ToUpper(text), "INSERT INTO RENDER_CACHE_INDEX") {
 			t.Fatalf("Cloud must not insert into render_cache_index: %s", text)
 		}
@@ -240,7 +240,6 @@ func TestPGStoreRenderKeyStatements(t *testing.T) {
 	}{
 		{"touch", touchRenderSQL, func(k []string) (int64, error) { return store.TouchRender(ctx, k) }},
 		{"delete render", deleteRenderSQL, func(k []string) (int64, error) { return store.DeleteRender(ctx, k) }},
-		{"delete entries", deleteEntriesSQL, func(k []string) (int64, error) { return store.DeleteEntries(ctx, k) }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -363,7 +362,7 @@ func TestPGStoreRenderIndexNilReceiver(t *testing.T) {
 	for _, call := range []func() (int64, error){
 		func() (int64, error) { return store.TouchRender(ctx, []string{"k"}) },
 		func() (int64, error) { return store.DeleteRender(ctx, []string{"k"}) },
-		func() (int64, error) { return store.DeleteEntries(ctx, []string{"k"}) },
+		func() (int64, error) { return store.DeleteOrphanEntry(ctx, "k", time.Now()) },
 	} {
 		if n, err := call(); n != 0 || err != nil {
 			t.Fatalf("nil store exec = (%d, %v)", n, err)
@@ -375,7 +374,87 @@ func TestPGStoreRenderIndexNilReceiver(t *testing.T) {
 	if entries, err := store.OrphanGarageEntries(ctx, time.Now(), 1); entries != nil || err != nil {
 		t.Fatalf("OrphanGarageEntries() = (%v, %v)", entries, err)
 	}
+	if live, err := store.LiveEntryPaths(ctx, []string{"k"}); len(live) != 0 || err != nil {
+		t.Fatalf("LiveEntryPaths() = (%v, %v)", live, err)
+	}
 	if !errors.Is(ErrIndexMiss, ErrIndexMiss) || ErrIndexMiss.Error() == "" {
 		t.Fatal("ErrIndexMiss")
+	}
+}
+
+func TestPGStoreDeleteOrphanEntry(t *testing.T) {
+	ctx := context.Background()
+	store, mock := newEqualMockPGStore(t, PGStoreOptions{})
+	cutoff := time.Date(2026, 8, 15, 0, 0, 0, 0, time.UTC)
+
+	if n, err := store.DeleteOrphanEntry(ctx, "", cutoff); n != 0 || err != nil {
+		t.Fatalf("empty hash = (%d, %v)", n, err)
+	}
+	mock.ExpectExec(deleteOrphanEntrySQL).WithArgs("h1", cutoff).WillReturnResult(sqlmock.NewResult(0, 1))
+	if n, err := store.DeleteOrphanEntry(ctx, "h1", cutoff); n != 1 || err != nil {
+		t.Fatalf("delete = (%d, %v)", n, err)
+	}
+	execErr := errors.New("exec failed")
+	mock.ExpectExec(deleteOrphanEntrySQL).WillReturnError(execErr)
+	if n, err := store.DeleteOrphanEntry(ctx, "h1", cutoff); n != 0 || !errors.Is(err, execErr) {
+		t.Fatalf("exec error = (%d, %v)", n, err)
+	}
+	rowsErr := errors.New("rows affected unsupported")
+	mock.ExpectExec(deleteOrphanEntrySQL).WillReturnResult(sqlmock.NewErrorResult(rowsErr))
+	if n, err := store.DeleteOrphanEntry(ctx, "h1", cutoff); n != 0 || !errors.Is(err, rowsErr) {
+		t.Fatalf("rows error = (%d, %v)", n, err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+	// The delete re-applies the whole orphan predicate.
+	for _, want := range []string{
+		"e.hash = $1",
+		"e.storage_backend = 'garage'",
+		"e.last_referenced_at < $2",
+		"NOT EXISTS (SELECT 1 FROM render_cache_index r WHERE r.content_hash = e.hash)",
+	} {
+		if !strings.Contains(deleteOrphanEntrySQL, want) {
+			t.Fatalf("guarded delete missing %q", want)
+		}
+	}
+}
+
+var liveEntryColumns = []string{"hash", "cdn_path"}
+
+func TestPGStoreLiveEntryPaths(t *testing.T) {
+	ctx := context.Background()
+	store, mock := newEqualMockPGStore(t, PGStoreOptions{})
+
+	if live, err := store.LiveEntryPaths(ctx, nil); len(live) != 0 || err != nil {
+		t.Fatalf("empty = (%v, %v)", live, err)
+	}
+	mock.ExpectQuery(liveEntryPathsSQL).WithArgs(`{"h1","h2"}`).WillReturnRows(sqlmock.NewRows(liveEntryColumns).
+		AddRow("h1", "pjsk/api/a/h1.png"))
+	live, err := store.LiveEntryPaths(ctx, []string{"h1", "h2"})
+	if err != nil || len(live) != 1 {
+		t.Fatalf("LiveEntryPaths() = (%v, %v)", live, err)
+	}
+	if _, ok := live[liveEntryKey("h1", "pjsk/api/a/h1.png")]; !ok {
+		t.Fatalf("live = %v", live)
+	}
+
+	queryErr := errors.New("query failed")
+	mock.ExpectQuery(liveEntryPathsSQL).WillReturnError(queryErr)
+	if _, err := store.LiveEntryPaths(ctx, []string{"h1"}); !errors.Is(err, queryErr) {
+		t.Fatalf("query error = %v", err)
+	}
+	mock.ExpectQuery(liveEntryPathsSQL).WillReturnRows(sqlmock.NewRows(liveEntryColumns).AddRow("h1", nil))
+	if _, err := store.LiveEntryPaths(ctx, []string{"h1"}); err == nil || !strings.Contains(err.Error(), "scan") {
+		t.Fatalf("scan error = %v", err)
+	}
+	iterErr := errors.New("iteration failed")
+	mock.ExpectQuery(liveEntryPathsSQL).WillReturnRows(sqlmock.NewRows(liveEntryColumns).
+		AddRow("h1", "p").RowError(0, iterErr))
+	if _, err := store.LiveEntryPaths(ctx, []string{"h1"}); !errors.Is(err, iterErr) {
+		t.Fatalf("rows error = %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
 	}
 }

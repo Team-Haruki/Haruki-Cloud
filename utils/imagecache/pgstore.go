@@ -71,18 +71,24 @@ const insertSQL = `
 			    file_path  = EXCLUDED.file_path,
 			    size_bytes = EXCLUDED.size_bytes`
 
-// insertWidenedSQL never rewrites a garage row: Drawing may already serve its
-// recorded cdn_path, and a Cloud write must not move it.
+// insertWidenedSQL never rewrites a garage row's location: Drawing may already
+// serve its recorded cdn_path, and a Cloud write must not move it. Every
+// conflict still bumps last_referenced_at, the GC retention input (addendum
+// A6), matching Drawing's UPSERT_CONTENT.
 const insertWidenedSQL = `
 		INSERT INTO image_cache_entries (hash, group_name, cdn_path, file_path, size_bytes, storage_backend, media_type)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (hash) DO UPDATE
-			SET cdn_path        = EXCLUDED.cdn_path,
-			    file_path       = EXCLUDED.file_path,
-			    size_bytes      = EXCLUDED.size_bytes,
-			    storage_backend = EXCLUDED.storage_backend,
-			    media_type      = EXCLUDED.media_type
-			WHERE image_cache_entries.storage_backend IS DISTINCT FROM 'garage'`
+			SET cdn_path           = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.cdn_path ELSE EXCLUDED.cdn_path END,
+			    file_path          = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.file_path ELSE EXCLUDED.file_path END,
+			    size_bytes         = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.size_bytes ELSE EXCLUDED.size_bytes END,
+			    storage_backend    = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.storage_backend ELSE EXCLUDED.storage_backend END,
+			    media_type         = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.media_type ELSE EXCLUDED.media_type END,
+			    last_referenced_at = NOW()`
+
+// touchEntrySQL marks a garage row as re-referenced so GC's retention window
+// restarts; Cloud runs it when a dedup hit re-emits the row's URL.
+const touchEntrySQL = `UPDATE image_cache_entries SET last_referenced_at = NOW() WHERE hash = $1`
 
 // ImageEntry is one image_cache_entries row.
 type ImageEntry struct {
@@ -262,6 +268,18 @@ func (s *PGStore) InsertEntry(ctx context.Context, e ImageEntry) error {
 	}
 	if err != nil {
 		return fmt.Errorf("imagecache pgstore: insert: %w", err)
+	}
+	return nil
+}
+
+// TouchEntry bumps last_referenced_at for hash. It is a no-op on the
+// un-widened schema, which has no such column.
+func (s *PGStore) TouchEntry(ctx context.Context, hash string) error {
+	if !s.Widened() || hash == "" {
+		return nil
+	}
+	if _, err := s.db.ExecContext(ctx, touchEntrySQL, hash); err != nil {
+		return fmt.Errorf("imagecache pgstore: touch entry: %w", err)
 	}
 	return nil
 }

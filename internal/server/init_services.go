@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"haruki-cloud/api"
@@ -16,6 +17,7 @@ import (
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/core/trustsign"
+	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/pjsk/accountdata"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
@@ -126,6 +128,12 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	if err != nil {
 		fatalStartup(mainLogger, "storage configuration invalid", "error", err)
 	}
+	imageHosts, assetHosts, err := buildRenderHosts(harukiConfig.Cfg.PJSKRender, mainLogger)
+	if errors.Is(err, errAssetHostsRequired) {
+		fatalStartup(mainLogger, "asset_dirs.assets_base_urls is required", "error", err)
+	} else if err != nil {
+		fatalStartup(mainLogger, "public host configuration invalid", "error", err)
+	}
 
 	runtime := renderapp.New(sekaiClient, pjskClient, renderapp.Config{
 		InitContext:             ctx,
@@ -211,7 +219,9 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			RetryWaitTime:             harukiConfig.Cfg.PJSKRender.DeckRecommend.RetryWaitTime,
 			DefaultAlgs:               harukiConfig.Cfg.PJSKRender.DeckRecommend.DefaultAlgs,
 		},
-		Stores: stores,
+		Stores:     stores,
+		ImageHosts: imageHosts,
+		AssetHosts: assetHosts,
 	})
 
 	if runtime.Drawing == nil {
@@ -231,6 +241,64 @@ func buildRenderStores(cfg harukiConfig.PJSKRenderConfig, log *harukiLogger.Logg
 		CacheDir:      cfg.DrawingCache.StorageDir,
 		ImageCacheDir: cfg.ImageCache.Dir,
 	}, storage.Backends{S3: storages3.Open}, log)
+}
+
+// errAssetHostsRequired reports an empty public asset host set after the
+// assets_base_url derivation (addendum B6 / C4): startup must fail instead of
+// silently degrading asset messages to byte responses.
+var errAssetHostsRequired = errors.New("asset_dirs.assets_base_urls (or assets_base_url) must name at least one public asset base URL")
+
+// buildRenderHosts builds the per-node image-cache host set (image_cache.hosts,
+// derived as {"default": uri} when empty) and the ordered public asset host set
+// (asset_dirs.assets_base_urls, derived as [assets_base_url] when empty). The
+// asset set is mandatory; the image set stays optional, and a legacy uri that
+// is not an absolute http(s) URL only warns because nothing selects image
+// hosts yet.
+func buildRenderHosts(cfg harukiConfig.PJSKRenderConfig, log *harukiLogger.Logger) (*urlhost.Set, *urlhost.Set, error) {
+	imageOpts := urlhost.Options{
+		Order:         cfg.ImageCache.HostOrder,
+		ProbePath:     strings.TrimSpace(cfg.ImageCache.HostsProbePath),
+		ProbeInterval: cfg.ImageCache.HostsProbeInterval,
+	}
+	imageHosts, err := urlhost.New(cfg.ImageCache.Hosts, imageOpts)
+	if err != nil {
+		return nil, nil, fmt.Errorf("image_cache.hosts: %w", err)
+	}
+	if imageHosts.Len() == 0 {
+		if uri := strings.TrimSpace(cfg.ImageCache.URI); uri != "" {
+			derived, derr := urlhost.New(map[string]string{"default": uri}, imageOpts)
+			if derr != nil {
+				log.Warn("image_cache.uri is not an absolute http(s) URL; image host set left empty", "error", derr)
+			} else {
+				imageHosts = derived
+			}
+		}
+	}
+
+	assetURLs := cfg.AssetDirs.AssetsBaseURLs
+	if len(assetURLs) == 0 && strings.TrimSpace(cfg.AssetDirs.AssetsBaseURL) != "" {
+		assetURLs = []string{cfg.AssetDirs.AssetsBaseURL}
+	}
+	assetHosts, err := urlhost.FromList(assetURLs, urlhost.Options{})
+	if err != nil {
+		return nil, nil, fmt.Errorf("asset_dirs.assets_base_urls: %w", err)
+	}
+	if assetHosts.Len() == 0 {
+		return nil, nil, errAssetHostsRequired
+	}
+	log.Info("public host sets configured", "image_hosts", imageHosts.Len(), "asset_hosts", assetHosts.Len(),
+		"image_hosts_probing", imageOpts.ProbePath != "")
+	return imageHosts, assetHosts, nil
+}
+
+// startRenderHostProbers starts the optional host probers with the run
+// context; both are no-ops unless a probe path is configured.
+func startRenderHostProbers(ctx context.Context, runtime *renderapp.App) {
+	if runtime == nil {
+		return
+	}
+	runtime.ImageHosts.Start(ctx)
+	runtime.AssetHosts.Start(ctx)
 }
 
 func resolveDeckRecommendMasterdataDir() string {

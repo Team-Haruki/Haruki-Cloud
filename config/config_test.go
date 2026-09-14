@@ -547,3 +547,61 @@ func TestReadConfigStorageBlock(t *testing.T) {
 		testutil.Require(t, storage.Validate(string(slot), *st.Provider(slot)) == nil || st.Provider(slot).IsZero(), "slot %s invalid", slot)
 	}
 }
+
+func TestApplyEnvOverridesPublicHosts(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS", "cn09=https://ic-cn09.example, cn01=https://ic-cn01.example")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOST_ORDER", "cn09,cn01")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_PATH", "/health")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_INTERVAL", "15s")
+	t.Setenv("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", "https://assets.example")
+	t.Setenv("HARUKI_PJSK_RENDER_ASSETS_BASE_URLS", "https://assets-cn09.example, https://assets-cn01.example")
+
+	cfg := &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	ic := cfg.PJSKRender.ImageCache
+	testutil.Require(t, len(ic.Hosts) == 2 && ic.Hosts["cn01"] == "https://ic-cn01.example", "hosts = %#v", ic.Hosts)
+	testutil.Require(t, len(ic.HostOrder) == 2 && ic.HostOrder[0] == "cn09", "host order = %#v", ic.HostOrder)
+	testutil.Require(t, ic.HostsProbePath == "/health" && ic.HostsProbeInterval == 15*time.Second, "probe = %q %v", ic.HostsProbePath, ic.HostsProbeInterval)
+	ad := cfg.PJSKRender.AssetDirs
+	testutil.Require(t, ad.AssetsBaseURL == "https://assets.example", "assets base url = %q", ad.AssetsBaseURL)
+	testutil.Require(t, len(ad.AssetsBaseURLs) == 2 && ad.AssetsBaseURLs[1] == "https://assets-cn01.example", "assets base urls = %#v", ad.AssetsBaseURLs)
+}
+
+func TestApplyEnvOverridesPublicHostsMalformed(t *testing.T) {
+	for _, tc := range []struct{ name, value string }{
+		{"HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS", "cn09"},
+		{"HARUKI_PJSK_RENDER_IMAGE_CACHE_HOST_ORDER", `["cn09"`},
+		{"HARUKI_PJSK_RENDER_ASSETS_BASE_URLS", `["https://a"`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv(tc.name, tc.value)
+			err := ApplyEnvOverrides(&Config{})
+			testutil.Require(t, err != nil && strings.Contains(err.Error(), tc.name), "error = %v", err)
+		})
+	}
+}
+
+func TestReadConfigPublicHostsBlock(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "haruki-cloud.yaml")
+	doc := `pjsk_render:
+  image_cache:
+    uri: https://image-cache.example
+    hosts: {cn09: "https://ic-cn09.example", cn01: "https://ic-cn01.example"}
+    host_order: [cn09, cn01]
+    hosts_probe_path: ""
+    hosts_probe_interval: 30s
+  asset_dirs:
+    assets_base_url: https://assets.example
+    assets_base_urls:
+      - https://assets-cn09.example
+      - https://assets-cn01.example
+`
+	testutil.Require(t, os.WriteFile(configPath, []byte(doc), 0o600) == nil, "write config")
+	cfg, err := ReadConfig(configPath)
+	testutil.Require(t, err == nil, "ReadConfig error = %v", err)
+	ic := cfg.PJSKRender.ImageCache
+	testutil.Require(t, ic.Hosts["cn09"] == "https://ic-cn09.example" && len(ic.HostOrder) == 2, "image cache hosts = %+v", ic)
+	testutil.Require(t, ic.HostsProbeInterval == 30*time.Second && ic.HostsProbePath == "", "probe = %+v", ic)
+	ad := cfg.PJSKRender.AssetDirs
+	testutil.Require(t, len(ad.AssetsBaseURLs) == 2 && ad.AssetsBaseURLs[0] == "https://assets-cn09.example", "asset hosts = %#v", ad.AssetsBaseURLs)
+}

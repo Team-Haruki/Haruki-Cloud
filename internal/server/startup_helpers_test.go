@@ -17,6 +17,7 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	noiseCrypto "haruki-cloud/internal/core/crypto"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/storage"
 	harukiLogger "haruki-cloud/utils/logger"
 
@@ -215,6 +216,89 @@ func TestBuildRenderStoresOpensS3Slot(t *testing.T) {
 	if !strings.Contains(out, "creds=set") || strings.Contains(out, "GKstartupkey") || strings.Contains(out, "startup-secret") {
 		t.Fatalf("startup summary must say creds=set without the credentials:\n%s", out)
 	}
+}
+
+func TestEmptyAssetHostsIsFatal(t *testing.T) {
+	var output bytes.Buffer
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.ImageCache.URI = "https://image-cache.example"
+	if _, _, err := buildRenderHosts(cfg, startupTestLogger(&output)); !errors.Is(err, errAssetHostsRequired) {
+		t.Fatalf("empty asset host set error = %v, want errAssetHostsRequired", err)
+	}
+	cfg.AssetDirs.AssetsBaseURLs = []string{" ", ""}
+	if _, _, err := buildRenderHosts(cfg, nil); !errors.Is(err, errAssetHostsRequired) {
+		t.Fatalf("blank asset host list error = %v, want errAssetHostsRequired", err)
+	}
+}
+
+func TestBuildRenderHostsLegacyDerivation(t *testing.T) {
+	var output bytes.Buffer
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.ImageCache.URI = "https://image-cache.example/"
+	cfg.AssetDirs.AssetsBaseURL = "https://assets.example"
+
+	imageHosts, assetHosts, err := buildRenderHosts(cfg, startupTestLogger(&output))
+	if err != nil {
+		t.Fatalf("buildRenderHosts error = %v", err)
+	}
+	if hosts := imageHosts.Hosts(); len(hosts) != 1 || hosts[0].Name != "default" || hosts[0].BaseURL != "https://image-cache.example" {
+		t.Fatalf("image hosts = %v", hosts)
+	}
+	if url, ok := assetHosts.URL("", "jp-assets/x.png"); !ok || url != "https://assets.example/jp-assets/x.png" {
+		t.Fatalf("asset URL = %q %v", url, ok)
+	}
+	if !strings.Contains(output.String(), "public host sets configured") {
+		t.Fatalf("missing summary line:\n%s", output.String())
+	}
+}
+
+func TestBuildRenderHostsExplicitSets(t *testing.T) {
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.ImageCache.URI = "https://legacy.example"
+	cfg.ImageCache.Hosts = map[string]string{"cn01": "https://ic-cn01.example", "cn09": "https://ic-cn09.example"}
+	cfg.ImageCache.HostOrder = []string{"cn09"}
+	cfg.AssetDirs.AssetsBaseURL = "https://legacy-assets.example"
+	cfg.AssetDirs.AssetsBaseURLs = []string{"https://assets-cn09.example", "https://assets-cn01.example"}
+
+	imageHosts, assetHosts, err := buildRenderHosts(cfg, nil)
+	if err != nil {
+		t.Fatalf("buildRenderHosts error = %v", err)
+	}
+	if imageHosts.Len() != 2 || imageHosts.Base("") != "https://ic-cn09.example" || imageHosts.Base("cn01") != "https://ic-cn01.example" {
+		t.Fatalf("image hosts = %v", imageHosts.Hosts())
+	}
+	if assetHosts.Len() != 2 || assetHosts.Base("") != "https://assets-cn09.example" {
+		t.Fatalf("asset hosts = %v", assetHosts.Hosts())
+	}
+}
+
+func TestBuildRenderHostsInvalid(t *testing.T) {
+	var output bytes.Buffer
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.AssetDirs.AssetsBaseURLs = []string{"https://assets.example"}
+	cfg.ImageCache.URI = "/ic"
+	imageHosts, _, err := buildRenderHosts(cfg, startupTestLogger(&output))
+	if err != nil || imageHosts.Len() != 0 || !strings.Contains(output.String(), "image_cache.uri") {
+		t.Fatalf("relative legacy uri: hosts=%d err=%v log=%s", imageHosts.Len(), err, output.String())
+	}
+
+	bad := cfg
+	bad.ImageCache.Hosts = map[string]string{"cn09": "not-a-url"}
+	if _, _, err := buildRenderHosts(bad, nil); err == nil || !strings.Contains(err.Error(), "image_cache.hosts") {
+		t.Fatalf("invalid image host error = %v", err)
+	}
+	bad = cfg
+	bad.AssetDirs.AssetsBaseURLs = []string{"assets.example"}
+	if _, _, err := buildRenderHosts(bad, nil); err == nil || errors.Is(err, errAssetHostsRequired) || !strings.Contains(err.Error(), "asset_dirs.assets_base_urls") {
+		t.Fatalf("invalid asset host error = %v", err)
+	}
+}
+
+func TestStartRenderHostProbers(t *testing.T) {
+	startRenderHostProbers(context.Background(), nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	startRenderHostProbers(ctx, &renderapp.App{})
 }
 
 func TestValidBotCryptographicConfiguration(t *testing.T) {

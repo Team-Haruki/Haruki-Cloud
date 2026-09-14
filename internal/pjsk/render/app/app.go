@@ -11,6 +11,7 @@ import (
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/core/urlhost"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/meta"
@@ -143,7 +144,12 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Toolbox:    cfg.Toolbox,
 		Tracker:    cfg.Tracker,
 		Stores:     cfg.Stores,
-		Config:     cfg,
+		ImageHosts: cfg.ImageHosts,
+		AssetHosts: cfg.AssetHosts,
+		// AssetReader is built next to the helper; no consumer reads through
+		// it yet.
+		AssetReader: dependencies.assetReader,
+		Config:      cfg,
 	}
 	if localMasterdataFallback {
 		runtime.startLocalMasterdataRefresh(initCtx, localMasterdataDir, cfg.LocalMasterdata.RefreshInterval)
@@ -154,6 +160,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 
 type appDependencies struct {
 	assets                  *assets.AssetHelper
+	assetReader             *assets.AssetReader
 	snapshots               snapshot.Snapshot
 	staticSnapshots         snapshot.HarukiSnapshotProvider
 	drawing                 *drawing.HarukiDrawingClient
@@ -276,6 +283,12 @@ func newAppDeckController(cardProvider deck.CardSource, eventProvider deck.Event
 func normalizeAppConfig(cfg *Config) context.Context {
 	cfg.DefaultRegion = renderregion.WithDefault(cfg.DefaultRegion)
 	cfg.Stores = cfg.Stores.Normalized()
+	if cfg.ImageHosts == nil {
+		cfg.ImageHosts = urlhost.Single(cfg.ImageCacheURI)
+	}
+	if cfg.AssetHosts == nil {
+		cfg.AssetHosts = urlhost.Single(cfg.AssetsBaseURL)
+	}
 	initCtx := cfg.InitContext
 	if initCtx == nil {
 		initCtx = context.Background()
@@ -289,11 +302,12 @@ func normalizeAppConfig(cfg *Config) context.Context {
 
 func newAppDependencies(initCtx context.Context, sekaiClient *sekaiDB.Client, cfg Config) appDependencies {
 	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
+	assetReader := assets.NewAssetReader(assetHelper, cfg.Stores.Assets)
 	snapshotService, staticSnapshotProvider := newAppSnapshotServices(initCtx, sekaiClient, assetHelper, cfg)
 	drawingClient, imageStore := newAppDrawingClient(initCtx, cfg)
 	localFallback, localDir, inventoryDir := appMasterdataDirs(cfg)
 	return appDependencies{
-		assets: assetHelper, snapshots: snapshotService, staticSnapshots: staticSnapshotProvider,
+		assets: assetHelper, assetReader: assetReader, snapshots: snapshotService, staticSnapshots: staticSnapshotProvider,
 		drawing: drawingClient, imageStore: imageStore, localMasterdataFallback: localFallback,
 		localMasterdataDir: localDir, inventoryMasterdataDir: inventoryDir,
 	}

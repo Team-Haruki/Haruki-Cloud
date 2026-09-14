@@ -246,6 +246,23 @@ pjsk_render:
     charts_uri: "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts"
     dir: ""         # local filesystem directory for cached images (env HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR)
     pg_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_imagecache sslmode=disable"
+    # Per-node public image-cache hosts, keyed by Drawing node_name (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS,
+    # "cn09=https://...,cn01=https://..." or JSON). Empty derives {"default": uri}.
+    hosts: {}
+    #   cn09: "https://ic-cn09.example.com"
+    #   cn01: "https://ic-cn01.example.com"
+    host_order: []              # preferred order; empty = name sort (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOST_ORDER)
+    hosts_probe_path: ""        # "" = no prober; e.g. "/" (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_PATH)
+    hosts_probe_interval: "30s" # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_INTERVAL)
+  asset_dirs:
+    primary: ""
+    legacy: []
+    # Public asset base URLs (REQUIRED when pjsk_render is enabled): startup fails when both
+    # assets_base_urls and the legacy single assets_base_url are empty.
+    assets_base_url: ""         # legacy single value, used as a one-element list (env HARUKI_PJSK_RENDER_ASSETS_BASE_URL)
+    assets_base_urls: []        # ordered per-node list (env HARUKI_PJSK_RENDER_ASSETS_BASE_URLS, comma-separated)
+    #  - "https://assets-cn09.example.com"
+    #  - "https://assets-cn01.example.com"
   storage:
     # Every slot is an Asset-Updater style provider block: provider (alias name), scheme (alias
     # kind; fs | s3, default fs, `local` is accepted as an alias of fs), endpoint / endpoints

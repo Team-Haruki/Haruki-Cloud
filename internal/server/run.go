@@ -40,6 +40,7 @@ func Run(ctx context.Context) {
 	renderRuntime := initPJSKRenderIfEnabled(ctx, mainLogger, sekaiClient, pjskClient)
 	censorService := initCensorIfEnabled(ctx, mainLogger, renderRuntime)
 	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, banChecker, censorService)
+	startRenderHostProbers(ctx, renderRuntime)
 	if renderRuntime != nil {
 		groupGuardAPI.RegisterGroupGuardRoutes(app, renderRuntime.Toolbox)
 	}

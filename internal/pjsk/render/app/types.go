@@ -7,6 +7,7 @@ import (
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/pjsk/accountdata"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -77,6 +78,11 @@ type Config struct {
 	// Stores holds one storage.Store per slot, built by storage.BuildSet at
 	// the composition root. Zero fields are normalised to storage.Disabled().
 	Stores storage.Set
+	// ImageHosts (image_cache.hosts, named by Drawing node) and AssetHosts
+	// (asset_dirs.assets_base_urls, ordered) select public base URLs. Nil
+	// fields derive a single-host set from ImageCacheURI / AssetsBaseURL.
+	ImageHosts *urlhost.Set
+	AssetHosts *urlhost.Set
 	// Upstream HTTP clients. Caller constructs these from its own config
 	// (see cmd/server) and passes them here so the render runtime does not
 	// depend on package-level singletons.
@@ -160,6 +166,9 @@ type App struct {
 	Toolbox            *sekaiapi.HarukiToolboxClient
 	Tracker            *sekaiapi.TrackerClient
 	Stores             storage.Set
+	ImageHosts         *urlhost.Set
+	AssetHosts         *urlhost.Set
+	AssetReader        *assets.AssetReader
 	Config             Config
 }
 

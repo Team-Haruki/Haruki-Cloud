@@ -433,7 +433,18 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR", &cfg.PJSKRender.ImageCache.Dir)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", &cfg.PJSKRender.ImageCache.ChartsURI)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
+	if err := envStringMap("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS", &cfg.PJSKRender.ImageCache.Hosts); err != nil {
+		return err
+	}
+	if err := envStringSlice("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOST_ORDER", &cfg.PJSKRender.ImageCache.HostOrder); err != nil {
+		return err
+	}
+	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_PATH", &cfg.PJSKRender.ImageCache.HostsProbePath)
+	envDuration("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_INTERVAL", &cfg.PJSKRender.ImageCache.HostsProbeInterval)
 	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
+	if err := envStringSlice("HARUKI_PJSK_RENDER_ASSETS_BASE_URLS", &cfg.PJSKRender.AssetDirs.AssetsBaseURLs); err != nil {
+		return err
+	}
 	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_OUTPUT_DIR", &cfg.PJSKRender.MusicMeta.OutputDir)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_SOURCE", &cfg.PJSKRender.MusicMeta.Source)
@@ -541,7 +552,10 @@ type SekaiRemoteSyncConfig struct {
 type AssetDirsConfig struct {
 	Primary       string   `yaml:"primary"`
 	Legacy        []string `yaml:"legacy"`
-	AssetsBaseURL string   `yaml:"assets_base_url"` // CDN/static base URL for direct asset serving (no imagecache)
+	AssetsBaseURL string   `yaml:"assets_base_url"` // legacy single public asset base URL; accepted as a one-element assets_base_urls
+	// AssetsBaseURLs is the ordered list of per-node public asset base URLs
+	// (required: an empty list after the assets_base_url derivation fails startup).
+	AssetsBaseURLs []string `yaml:"assets_base_urls"`
 }
 
 type LocalMasterdataConfig struct {
@@ -594,6 +608,12 @@ type ImageCacheConfig struct {
 	ChartsURI string `yaml:"charts_uri"`
 	Dir       string `yaml:"dir"`
 	PGURL     string `yaml:"pg_url"` // PostgreSQL DSN for deduplication store (optional)
+	// Hosts maps a Drawing node name to its public image-cache base URL; empty
+	// derives {"default": uri}.
+	Hosts              map[string]string `yaml:"hosts"`
+	HostOrder          []string          `yaml:"host_order"`           // preferred order; empty = name sort
+	HostsProbePath     string            `yaml:"hosts_probe_path"`     // "" = no probing
+	HostsProbeInterval time.Duration     `yaml:"hosts_probe_interval"` // default 30s
 }
 
 type MusicMetaConfig struct {

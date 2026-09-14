@@ -195,6 +195,8 @@ func TestConfigureSekaiRuntimeAndRenderInitialization(t *testing.T) {
 	harukiConfig.Cfg.PJSKRender.MusicMeta.RefreshInterval = time.Hour
 	harukiConfig.Cfg.PJSKRender.MusicMeta.OutputDir = t.TempDir()
 	harukiConfig.Cfg.PJSKRender.AssetDirs.Primary = t.TempDir()
+	// The public asset host set is mandatory (addendum B6).
+	harukiConfig.Cfg.PJSKRender.AssetDirs.AssetsBaseURL = "https://assets.example"
 	harukiConfig.Cfg.Sekai.DBType = "sqlite3"
 	harukiConfig.Cfg.Sekai.DBURL = sekaiDSN
 	runtime := initPJSKRenderIfEnabled(ctx, mainLogger, sekaiClient, pjskClient)

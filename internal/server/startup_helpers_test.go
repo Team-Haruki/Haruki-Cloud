@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"io"
 	"net/http/httptest"
 	"os/exec"
@@ -16,6 +17,7 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	noiseCrypto "haruki-cloud/internal/core/crypto"
+	"haruki-cloud/internal/storage"
 	harukiLogger "haruki-cloud/utils/logger"
 
 	"entgo.io/ent"
@@ -138,6 +140,80 @@ func TestResolveRuntimeCachePaths(t *testing.T) {
 	harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir = ""
 	if resolveSKForecastCachePath() != "" || resolveMySekaiHousingCompetitionCachePath() != "" {
 		t.Fatal("empty cache configuration should yield empty paths")
+	}
+}
+
+func TestBuildRenderStoresLegacyDerivation(t *testing.T) {
+	assetDir := t.TempDir()
+	cacheDir := t.TempDir()
+	var output bytes.Buffer
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.AssetDirs.Primary = assetDir
+	cfg.DrawingCache.StorageDir = cacheDir
+
+	stores, err := buildRenderStores(cfg, startupTestLogger(&output))
+	if err != nil {
+		t.Fatalf("buildRenderStores error = %v", err)
+	}
+	ctx := context.Background()
+	if err := stores.Cache.Put(ctx, "probe.json", []byte("{}"), storage.PutOptions{}); err != nil {
+		t.Fatalf("cache slot Put: %v", err)
+	}
+	if _, err := stores.Assets.Stat(ctx, "probe.json"); err == nil {
+		t.Fatal("assets slot must not share the cache root")
+	}
+	if _, err := stores.ImageCache.Get(ctx, "x"); !errors.Is(err, storage.ErrNotConfigured) {
+		t.Fatalf("image_cache slot without legacy dir should be disabled, got %v", err)
+	}
+	if got := strings.Count(output.String(), "storage slot configured"); got != 5 {
+		t.Fatalf("summary lines = %d:\n%s", got, output.String())
+	}
+}
+
+func TestBuildRenderStoresValidationFailures(t *testing.T) {
+	cases := []struct {
+		name string
+		edit func(*harukiConfig.PJSKRenderConfig)
+		want string
+	}{
+		{"relative fs root", func(c *harukiConfig.PJSKRenderConfig) { c.Storage.Cache = storage.ProviderConfig{Root: "cache"} }, "storage.cache.root"},
+		{"unsupported scheme", func(c *harukiConfig.PJSKRenderConfig) { c.Storage.Assets = storage.ProviderConfig{Scheme: "gcs"} }, "storage.assets.scheme"},
+		{"s3 without bucket", func(c *harukiConfig.PJSKRenderConfig) {
+			c.Storage.ImageCache = storage.ProviderConfig{Scheme: "s3", Endpoint: "http://garage:3900"}
+		}, "storage.image_cache.bucket"},
+		{"bad s3 option", func(c *harukiConfig.PJSKRenderConfig) {
+			c.Storage.ImageCache = storage.ProviderConfig{Scheme: "s3", Bucket: "b", Endpoint: "http://garage:3900", Options: map[string]string{"max_attempts": "many"}}
+		}, "storage.image_cache.options"},
+		{"mirror on static", func(c *harukiConfig.PJSKRenderConfig) {
+			c.Storage.Static = storage.ProviderConfig{Root: "/asset", Mirror: &storage.ProviderConfig{Root: "/b"}}
+		}, "storage.static.mirror"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := harukiConfig.PJSKRenderConfig{}
+			tc.edit(&cfg)
+			_, err := buildRenderStores(cfg, nil)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("error = %v, want containing %q", err, tc.want)
+			}
+		})
+	}
+}
+
+func TestBuildRenderStoresOpensS3Slot(t *testing.T) {
+	var output bytes.Buffer
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.Storage.ImageCache = storage.ProviderConfig{
+		Scheme: "s3", Bucket: "image-cache", Endpoints: []string{"http://127.0.0.1:1"},
+		AccessKeyID: "GKstartupkey", SecretAccessKey: "startup-secret",
+	}
+	stores, err := buildRenderStores(cfg, startupTestLogger(&output))
+	if err != nil || stores.ImageCache == nil {
+		t.Fatalf("buildRenderStores error = %v", err)
+	}
+	out := output.String()
+	if !strings.Contains(out, "creds=set") || strings.Contains(out, "GKstartupkey") || strings.Contains(out, "startup-secret") {
+		t.Fatalf("startup summary must say creds=set without the credentials:\n%s", out)
 	}
 }
 

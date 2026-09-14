@@ -23,6 +23,8 @@ import (
 	"haruki-cloud/internal/pjsk/meta"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiAPI "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/storage"
+	storages3 "haruki-cloud/internal/storage/s3"
 	"haruki-cloud/utils/censor"
 	harukiLogger "haruki-cloud/utils/logger"
 
@@ -120,6 +122,11 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	toolboxClient := sekaiAPI.NewToolboxClient(&harukiConfig.Cfg.Toolbox)
 	trackerClient := sekaiAPI.NewTrackerClient(&harukiConfig.Cfg.Tracker)
 
+	stores, err := buildRenderStores(harukiConfig.Cfg.PJSKRender, mainLogger)
+	if err != nil {
+		fatalStartup(mainLogger, "storage configuration invalid", "error", err)
+	}
+
 	runtime := renderapp.New(sekaiClient, pjskClient, renderapp.Config{
 		InitContext:             ctx,
 		SekaiAPI:                sekaiAPIClient,
@@ -204,6 +211,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			RetryWaitTime:             harukiConfig.Cfg.PJSKRender.DeckRecommend.RetryWaitTime,
 			DefaultAlgs:               harukiConfig.Cfg.PJSKRender.DeckRecommend.DefaultAlgs,
 		},
+		Stores: stores,
 	})
 
 	if runtime.Drawing == nil {
@@ -211,6 +219,18 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	}
 	mainLogger.Info("PJSK render runtime initialized", "asset_root_count", len(runtime.AssetRoots()))
 	return runtime
+}
+
+// buildRenderStores opens the five storage slots from pjsk_render.storage,
+// deriving absent slots from the legacy directory settings. Nothing reads the
+// stores yet; an invalid block still fails startup so misconfiguration is
+// caught before a consumer is migrated.
+func buildRenderStores(cfg harukiConfig.PJSKRenderConfig, log *harukiLogger.Logger) (storage.Set, error) {
+	return storage.BuildSet(cfg.Storage, storage.LegacyRoots{
+		AssetPrimary:  cfg.AssetDirs.Primary,
+		CacheDir:      cfg.DrawingCache.StorageDir,
+		ImageCacheDir: cfg.ImageCache.Dir,
+	}, storage.Backends{S3: storages3.Open}, log)
 }
 
 func resolveDeckRecommendMasterdataDir() string {

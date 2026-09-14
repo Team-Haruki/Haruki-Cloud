@@ -32,6 +32,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/internal/pjsk/render/vlive"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/censor"
 	"haruki-cloud/utils/imagecache"
 )
@@ -73,6 +74,9 @@ type Config struct {
 	ReadOnly                                 bool
 	DeckRecommend                            DeckRecommendConfig
 	Preview3D                                costume.Preview3DConfig
+	// Stores holds one storage.Store per slot, built by storage.BuildSet at
+	// the composition root. Zero fields are normalised to storage.Disabled().
+	Stores storage.Set
 	// Upstream HTTP clients. Caller constructs these from its own config
 	// (see cmd/server) and passes them here so the render runtime does not
 	// depend on package-level singletons.
@@ -155,6 +159,7 @@ type App struct {
 	SekaiAPI           *sekaiapi.HarukiSekaiAPIClient
 	Toolbox            *sekaiapi.HarukiToolboxClient
 	Tracker            *sekaiapi.TrackerClient
+	Stores             storage.Set
 	Config             Config
 }
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
 
 	"gopkg.in/yaml.v3"
@@ -114,17 +115,94 @@ func envStringMap(name string, dst *map[string]string) error {
 			key = strings.TrimSpace(key)
 			value = strings.TrimSpace(value)
 			if !ok || key == "" || value == "" {
-				return fmt.Errorf("invalid %s entry %q: expected region=base_url", name, item)
+				return fmt.Errorf("invalid %s entry %q: expected key=value", name, item)
 			}
 			parsed[key] = value
 		}
 	}
 	for key, value := range parsed {
 		if strings.TrimSpace(key) == "" || strings.TrimSpace(value) == "" {
-			return fmt.Errorf("invalid %s entry %q: region and base URL must not be empty", name, key)
+			return fmt.Errorf("invalid %s entry %q: key and value must not be empty", name, key)
 		}
 	}
 	*dst = parsed
+	return nil
+}
+
+// envBoolPtr sets *dst to the bool value of the named env var only when the
+// variable is present and valid, so an unset variable keeps a nil default.
+func envBoolPtr(name string, dst **bool) {
+	if v := os.Getenv(name); v != "" {
+		if b, err := strconv.ParseBool(v); err == nil {
+			*dst = &b
+		}
+	}
+}
+
+// Storage slot env prefixes, one per fixed slot.
+const (
+	storageEnvPrefix         = "HARUKI_PJSK_RENDER_STORAGE_"
+	storageUserUploadEnvSlot = "USER_UPLOAD"
+)
+
+// applyStorageProviderEnv overrides one provider block from
+// <prefix>_PROVIDER, _SCHEME, _ENDPOINT, _ENDPOINTS, _TLS, _BUCKET, _ROOT,
+// _PREFIX, _REGION, _ACCESS_KEY_ID, _SECRET_ACCESS_KEY, _PUBLIC_READ,
+// _PATH_STYLE, _BASE_URL and _OPTIONS.
+func applyStorageProviderEnv(prefix string, dst *storage.ProviderConfig) error {
+	envStr(prefix+"_PROVIDER", &dst.Provider)
+	envStr(prefix+"_SCHEME", &dst.Scheme)
+	envStr(prefix+"_ENDPOINT", &dst.Endpoint)
+	if err := envStringSlice(prefix+"_ENDPOINTS", &dst.Endpoints); err != nil {
+		return err
+	}
+	envBoolPtr(prefix+"_TLS", &dst.TLS)
+	envStr(prefix+"_BUCKET", &dst.Bucket)
+	envStr(prefix+"_ROOT", &dst.Root)
+	envStr(prefix+"_PREFIX", &dst.Prefix)
+	envStr(prefix+"_REGION", &dst.Region)
+	envStr(prefix+"_ACCESS_KEY_ID", &dst.AccessKeyID)
+	envStr(prefix+"_SECRET_ACCESS_KEY", &dst.SecretAccessKey)
+	envBool(prefix+"_PUBLIC_READ", &dst.PublicRead)
+	envBoolPtr(prefix+"_PATH_STYLE", &dst.PathStyle)
+	envStr(prefix+"_BASE_URL", &dst.BaseURL)
+	return envStringMap(prefix+"_OPTIONS", &dst.Options)
+}
+
+// applyStorageMirrorEnv overrides the user_upload mirror block from
+// <prefix>_MIRROR_SCHEME, _MIRROR_ROOT, _MIRROR_BUCKET, _MIRROR_ENDPOINTS and
+// _MIRROR_MODE. The mirror is created only when one of them is set.
+func applyStorageMirrorEnv(prefix string, dst *storage.ProviderConfig) error {
+	mirror := storage.ProviderConfig{}
+	if dst.Mirror != nil {
+		mirror = *dst.Mirror
+	}
+	envStr(prefix+"_MIRROR_SCHEME", &mirror.Scheme)
+	envStr(prefix+"_MIRROR_ROOT", &mirror.Root)
+	envStr(prefix+"_MIRROR_BUCKET", &mirror.Bucket)
+	if err := envStringSlice(prefix+"_MIRROR_ENDPOINTS", &mirror.Endpoints); err != nil {
+		return err
+	}
+	envStr(prefix+"_MIRROR_MODE", &dst.MirrorMode)
+	if dst.Mirror != nil || !mirror.IsZero() {
+		dst.Mirror = &mirror
+	}
+	return nil
+}
+
+func applyStorageEnvOverrides(cfg *storage.SetConfig) error {
+	for _, slot := range storage.Slots {
+		prefix := storageEnvPrefix + strings.ToUpper(string(slot))
+		provider := cfg.Provider(slot)
+		if err := applyStorageProviderEnv(prefix, provider); err != nil {
+			return err
+		}
+		if strings.HasSuffix(prefix, storageUserUploadEnvSlot) {
+			if err := applyStorageMirrorEnv(prefix, provider); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -337,6 +415,8 @@ func ApplyEnvOverrides(cfg *Config) error {
 	// PJSK Render
 	envBool("HARUKI_PJSK_RENDER_ENABLED", &cfg.PJSKRender.Enabled)
 	envStr("HARUKI_PJSK_RENDER_DRAWING_BASE_URL", &cfg.PJSKRender.DrawingBaseURL)
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_TIMEOUT", &cfg.PJSKRender.DrawingTimeout)
+	envInt("HARUKI_PJSK_RENDER_DRAWING_RETRY_COUNT", &cfg.PJSKRender.DrawingRetryCount)
 	envStr("CACHE_STORAGE_DIR", &cfg.PJSKRender.DrawingCache.StorageDir)
 	envStr("CACHE_DB_PATH", &cfg.PJSKRender.DrawingCache.DBPath)
 	envDuration("CACHE_GC_INTERVAL", &cfg.PJSKRender.DrawingCache.GCInterval)
@@ -349,6 +429,8 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envInt("HARUKI_PJSK_RENDER_DRAWING_SK_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingSKMaxConcurrency)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_SK_ACQUIRE_TIMEOUT", &cfg.PJSKRender.DrawingSKAcquireTimeout)
 	envInt("HARUKI_PJSK_RENDER_DRAWING_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingMaxConcurrency)
+	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_URI", &cfg.PJSKRender.ImageCache.URI)
+	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR", &cfg.PJSKRender.ImageCache.Dir)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", &cfg.PJSKRender.ImageCache.ChartsURI)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
 	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
@@ -389,7 +471,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_CACHE_VERSION", &cfg.PJSKRender.Preview3D.CaptureCacheVersion)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PRESET", &cfg.PJSKRender.Preview3D.CameraPreset)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PROFILE", &cfg.PJSKRender.Preview3D.CameraProfile)
-	return nil
+	return applyStorageEnvOverrides(&cfg.PJSKRender.Storage)
 }
 
 type BackendConfig struct {
@@ -578,7 +660,12 @@ type PJSKRenderConfig struct {
 	MySekaiHousingCompetition MySekaiHousingCompetitionConfig `yaml:"mysekai_housing_competition"`
 	Preview3D                 Preview3DConfig                 `yaml:"preview_3d"`
 	DeckRecommend             DeckRecommendConfig             `yaml:"deck_recommend"`
+	Storage                   StorageConfig                   `yaml:"storage"`
 }
+
+// StorageConfig is pjsk_render.storage: one Asset-Updater style provider
+// block per fixed slot (assets, user_upload, static, cache, image_cache).
+type StorageConfig = storage.SetConfig
 
 type CensorConfig struct {
 	// Text censor — Baidu AI Content Censor (TextCensor)

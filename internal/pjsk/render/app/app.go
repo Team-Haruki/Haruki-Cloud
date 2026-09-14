@@ -142,6 +142,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		SekaiAPI:   cfg.SekaiAPI,
 		Toolbox:    cfg.Toolbox,
 		Tracker:    cfg.Tracker,
+		Stores:     cfg.Stores,
 		Config:     cfg,
 	}
 	if localMasterdataFallback {
@@ -274,6 +275,7 @@ func newAppDeckController(cardProvider deck.CardSource, eventProvider deck.Event
 
 func normalizeAppConfig(cfg *Config) context.Context {
 	cfg.DefaultRegion = renderregion.WithDefault(cfg.DefaultRegion)
+	cfg.Stores = cfg.Stores.Normalized()
 	initCtx := cfg.InitContext
 	if initCtx == nil {
 		initCtx = context.Background()

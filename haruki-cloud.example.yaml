@@ -203,8 +203,8 @@ pjsk_render:
     db_path: "/data/haruki/cache/drawing/cache.db"
     gc_interval: "1h"                   # set a negative duration to disable background cleanup
     ttl: "10m"                         # endpoint rules may override this (e.g. /sk uses 10s buckets)
-  drawing_timeout: "30s"
-  drawing_retry_count: 2
+  drawing_timeout: "30s"      # env HARUKI_PJSK_RENDER_DRAWING_TIMEOUT
+  drawing_retry_count: 2      # env HARUKI_PJSK_RENDER_DRAWING_RETRY_COUNT
   music_meta:
     refresh_interval: "30m"   # how often to re-check the upstream for music_metas updates
     output_dir: ""            # optional: persist music_metas*.json into this directory after updates
@@ -242,10 +242,56 @@ pjsk_render:
     # music_meta_json is the legacy local fallback path; leave empty when music_meta loader is active
     music_meta_json: ""
   image_cache:
-    uri: ""         # CDN base URL for generic image cache, e.g. "https://image-cache.example.com"
+    uri: ""         # CDN base URL for generic image cache, e.g. "https://image-cache.example.com" (env HARUKI_PJSK_RENDER_IMAGE_CACHE_URI)
     charts_uri: "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts"
-    dir: ""         # local filesystem directory for cached images
+    dir: ""         # local filesystem directory for cached images (env HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR)
     pg_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_imagecache sslmode=disable"
+  storage:
+    # Every slot is an Asset-Updater style provider block: provider (alias name), scheme (alias
+    # kind; fs | s3, default fs, `local` is accepted as an alias of fs), endpoint / endpoints
+    # (endpoints wins when both are set), tls, bucket, root (alias prefix), region,
+    # access_key_id, secret_access_key, base_url (alias public_base_url), public_read,
+    # path_style (default true) and options (unknown keys warn and are kept).
+    # An absent slot falls back to the legacy root (asset_dirs.primary for assets / user_upload /
+    # static, drawing_cache.storage_dir for cache, image_cache.dir for image_cache) and, if that
+    # is empty too, the feature is off. fs roots must be absolute.
+    # For the `assets` and `image_cache` slots on s3, root MUST stay "": the region / group lives
+    # in the object key and Drawing writes cdn_path relative to the bucket root.
+    # Explicit per-feature paths (sk_forecast.cache_path, mysekai_housing_competition.cache_path,
+    # music_meta.output_dir, image_cache.dir) keep precedence over a slot; delete the explicit key
+    # to move that cache onto the slot.
+    # Env: HARUKI_PJSK_RENDER_STORAGE_<SLOT>_<FIELD>, e.g. HARUKI_PJSK_RENDER_STORAGE_IMAGE_CACHE_BUCKET,
+    # _ENDPOINTS (comma-separated), _OPTIONS (key=value,key=value), _ACCESS_KEY_ID, _SECRET_ACCESS_KEY;
+    # user_upload additionally _MIRROR_SCHEME/_MIRROR_ROOT/_MIRROR_BUCKET/_MIRROR_ENDPOINTS/_MIRROR_MODE.
+    # assets:      { scheme: fs, root: "/asset" }
+    # user_upload: { scheme: fs, root: "/asset" }
+    # static:      { scheme: fs, root: "/asset" }
+    # cache:       { scheme: fs, root: "/data/haruki/cache/cloud" }
+    # image_cache: { scheme: fs, root: "/data/haruki/imagecache" }
+    # Garage cutover shape:
+    # image_cache:
+    #   provider: garage
+    #   scheme: s3
+    #   endpoints: ["http://100.64.0.11:3900", "http://100.64.0.12:3900", "http://100.64.0.13:3900"]
+    #   tls: false
+    #   bucket: image-cache
+    #   root: ""                      # MUST stay "" (Drawing's cdn_path is bucket-root relative)
+    #   region: garage
+    #   access_key_id: "GK..."
+    #   secret_access_key: "..."
+    #   public_read: true
+    #   path_style: true
+    #   # typed s3 options: request_timeout (10s), dial_timeout (3s), stat_timeout (5s),
+    #   # failover_cooldown (30s), max_attempts (one per endpoint), max_object_bytes (67108864),
+    #   # proxy (none | environment)
+    #   options: { request_timeout: "10s", dial_timeout: "3s", proxy: none }
+    # profile_bg dual-write during the flip (release R6), then delete `mirror`:
+    # user_upload:
+    #   scheme: s3
+    #   bucket: user-upload
+    #   endpoints: [...]
+    #   mirror: { scheme: fs, root: "/asset" }
+    #   mirror_mode: write        # write (read-through to the mirror) | write_only
   
   local_masterdata:
     enabled: false            # legacy/dev only; production should use sekai.remote_sync instead

@@ -58,6 +58,14 @@ func (c *Controller) MergeNicknames(items map[string]int) {
 	}
 }
 
+// SetAssetReader routes the original-image existence probe through reader.
+func (c *Controller) SetAssetReader(reader *assets.AssetReader) {
+	if c == nil {
+		return
+	}
+	c.assetReader = reader
+}
+
 func (c *Controller) WithContext(ctx context.Context) *Controller {
 	if c == nil {
 		return nil

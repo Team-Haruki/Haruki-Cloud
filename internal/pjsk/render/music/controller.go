@@ -58,6 +58,19 @@ func (c *Controller) SetCustomMusicScoreClient(client customMusicScoreClient) {
 	c.customScores = client
 }
 
+// SetAssetReader routes chart reads and the jacket / static-icon existence
+// probes through reader. Without it the controller probes its AssetHelper.
+func (c *Controller) SetAssetReader(reader *assets.AssetReader) {
+	if c == nil {
+		return
+	}
+	c.assetReader = reader
+}
+
+func (c *Controller) reader() *assets.AssetReader {
+	return assets.ReaderOr(c.assetReader, c.assets)
+}
+
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, metaLoader *meta.Loader) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)
@@ -66,6 +79,7 @@ func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawin
 		sources:               regionsource.NewRegistry[DataSource](renderregion.JP),
 		drawing:               drawingClient,
 		assets:                assetHelper,
+		chartBPM:              newChartBPMCache(chartBPMCacheEntries, chartBPMCacheTTL),
 		banCharacterNicknames: cloneNicknames(defaultBanCharacterNicknames),
 		snapshot:              snapshot,
 		metaLoader:            metaLoader,

@@ -24,6 +24,14 @@ func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawin
 	return ctrl
 }
 
+// SetAssetReader routes the honor builders' existence probes through reader.
+func (c *Controller) SetAssetReader(reader *assets.AssetReader) {
+	if c == nil {
+		return
+	}
+	c.assetReader = reader
+}
+
 func (c *Controller) RegisterSource(src DataSource) {
 	c.sources.RegisterSource(src)
 }
@@ -55,7 +63,7 @@ func (c *Controller) BuildHonorRequest(query Query) (*drawing.HonorRequest, erro
 	if !ok {
 		return nil, fmt.Errorf("honor data source not configured")
 	}
-	return NewBuilder(src, c.assets).BuildHonorRequest(query)
+	return NewBuilder(src, c.assets).WithAssetReader(c.requestCtx, c.assetReader).BuildHonorRequest(query)
 }
 
 func (c *Controller) RenderHonor(query Query) ([]byte, error) {

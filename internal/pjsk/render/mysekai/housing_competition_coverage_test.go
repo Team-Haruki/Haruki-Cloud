@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -494,7 +495,7 @@ func testHousingBannerCacheBasicIO(t *testing.T) {
 		t.Fatal("nil banner cache behavior mismatch")
 	}
 	nilCache.markSynced("path")
-	cache := newHousingCompetitionBannerCache(t.TempDir(), nil, "https://assets.example/base")
+	cache := newHousingCompetitionBannerCache(t.TempDir(), nil, urlhost.Single("https://assets.example/base"))
 	if _, err := cache.Bytes(" "); err == nil {
 		t.Fatal("empty banner path should fail")
 	}
@@ -526,28 +527,28 @@ func testHousingBannerCacheBasicIO(t *testing.T) {
 
 func testHousingBannerCacheRemoteErrors(t *testing.T) {
 	t.Helper()
-	notFound := newHousingCompetitionBannerCache("", nil, "https://assets.example")
+	notFound := newHousingCompetitionBannerCache("", nil, urlhost.Single("https://assets.example"))
 	notFound.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusNotFound, Body: io.NopCloser(strings.NewReader("missing")), Header: make(http.Header)}, nil
 	})}
 	if _, err := notFound.BytesContext(nil, "banner.png"); err == nil {
 		t.Fatal("HTTP error should fail banner download")
 	}
-	transportError := newHousingCompetitionBannerCache("", nil, "https://assets.example")
+	transportError := newHousingCompetitionBannerCache("", nil, urlhost.Single("https://assets.example"))
 	transportError.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return nil, errors.New("transport")
 	})}
 	if _, err := transportError.Bytes("banner.png"); err == nil {
 		t.Fatal("transport error should fail banner download")
 	}
-	tooLarge := newHousingCompetitionBannerCache("", nil, "https://assets.example")
+	tooLarge := newHousingCompetitionBannerCache("", nil, urlhost.Single("https://assets.example"))
 	tooLarge.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(make([]byte, housingCompetitionBannerMaxBytes+1))), Header: make(http.Header)}, nil
 	})}
 	if _, err := tooLarge.Bytes("banner.png"); err == nil {
 		t.Fatal("oversized banner should fail")
 	}
-	withoutSource := newHousingCompetitionBannerCache("", nil, "")
+	withoutSource := newHousingCompetitionBannerCache("", nil, nil)
 	if _, err := withoutSource.Bytes("banner.png"); err == nil {
 		t.Fatal("cache without a source should fail")
 	}
@@ -561,8 +562,8 @@ func testHousingBannerCacheLocalAndPathEdges(t *testing.T) {
 
 func testHousingBannerLocalSourceAndPaths(t *testing.T) {
 	t.Helper()
-	cache := newHousingCompetitionBannerCache(t.TempDir(), nil, "https://assets.example/base")
-	withoutSource := newHousingCompetitionBannerCache("", nil, "")
+	cache := newHousingCompetitionBannerCache(t.TempDir(), nil, urlhost.Single("https://assets.example/base"))
+	withoutSource := newHousingCompetitionBannerCache("", nil, nil)
 	assetRoot := t.TempDir()
 	assetPath := filepath.Join(assetRoot, "asset", "jp-assets", "ondemand", "mysekai", "banner.png")
 	if err := os.MkdirAll(filepath.Dir(assetPath), 0o755); err != nil {
@@ -571,20 +572,16 @@ func testHousingBannerLocalSourceAndPaths(t *testing.T) {
 	if err := os.WriteFile(assetPath, []byte("local"), 0o644); err != nil {
 		t.Fatalf("write local banner: %v", err)
 	}
-	local := newHousingCompetitionBannerCache("", assets.NewAssetHelper(assetRoot, nil), "")
+	local := newHousingCompetitionBannerCache("", assets.NewAssetReader(assets.NewAssetHelper(assetRoot, nil), nil), nil)
 	if raw, err := local.BytesContext(context.Background(), "asset/jp-assets/ondemand/mysekai/banner.png"); err != nil || string(raw) != "local" {
 		t.Fatalf("local asset banner = %q, %v", raw, err)
 	}
 
-	if _, err := cache.sourceURL("../escape.png"); err == nil {
+	if _, err := cache.Bytes("../escape.png"); err == nil {
 		t.Fatal("traversal source path should fail")
 	}
-	invalidURL := newHousingCompetitionBannerCache("", nil, "://")
-	if _, err := invalidURL.sourceURL("banner.png"); err == nil {
-		t.Fatal("invalid base URL should fail")
-	}
-	if _, err := withoutSource.sourceURL("banner.png"); err == nil {
-		t.Fatal("empty base URL should fail")
+	if _, err := withoutSource.Bytes("banner.png"); err == nil {
+		t.Fatal("empty host set should fail")
 	}
 	if cache.cachePath("") != "" || (*housingCompetitionBannerCache)(nil).cachePath("x") != "" {
 		t.Fatal("empty/nil cache path should be blank")
@@ -599,7 +596,7 @@ func testHousingBannerLocalSourceAndPaths(t *testing.T) {
 
 func testHousingBannerCacheWrites(t *testing.T) {
 	t.Helper()
-	cache := newHousingCompetitionBannerCache(t.TempDir(), nil, "https://assets.example/base")
+	cache := newHousingCompetitionBannerCache(t.TempDir(), nil, urlhost.Single("https://assets.example/base"))
 	if err := cache.write("", []byte("x")); err != nil || cache.write(filepath.Join(t.TempDir(), "x"), nil) != nil {
 		t.Fatal("empty banner writes should be no-ops")
 	}

@@ -232,7 +232,9 @@ func (c *Controller) resolveStaticIcon(explicit *string, filename string) *strin
 
 	path := filepath.ToSlash(filepath.Join(assets.StaticImagesDir, filename))
 	if c != nil && c.assets != nil {
-		if existing := c.assets.FirstExisting(path); existing != "" {
+		// A store-backed hit has no local path; the Drawing path is already the
+		// hit-branch string there.
+		if existing, ok := assets.ProbeExisting(c.contextOrBackground(), c.assetReader, c.assets, path); ok && existing != "" {
 			path = assets.MakeRelative(c.assets.Primary(), existing)
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -24,6 +25,7 @@ type Controller struct {
 	defaultRegion             renderregion.Value
 	nicknames                 map[string]int
 	assets                    *assets.AssetHelper
+	assetReader               *assets.AssetReader
 	housingCompetitionStats   *housingCompetitionStatsCache
 	housingCompetitionBanners *housingCompetitionBannerCache
 	requestCtx                context.Context
@@ -51,10 +53,14 @@ type mysekaiMapSiteConfig struct {
 }
 
 type MasterdataOptions struct {
-	SekaiDSN                          string
-	LocalDir                          string
-	AllowFallback                     bool
-	AssetsBaseURL                     string
+	SekaiDSN      string
+	LocalDir      string
+	AllowFallback bool
+	// AssetReader reads public asset objects (nil -> local AssetHelper
+	// probing); AssetHosts is the per-node public asset host set used for the
+	// banner HTTP fallback (nil or empty -> no fallback).
+	AssetReader                       *assets.AssetReader
+	AssetHosts                        *urlhost.Set
 	HousingCompetitionStatsCachePath  string
 	HousingCompetitionRefreshInterval time.Duration
 }

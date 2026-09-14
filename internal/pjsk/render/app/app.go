@@ -55,13 +55,15 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		SekaiDSN:                          cfg.SekaiDSN,
 		LocalDir:                          localMasterdataDir,
 		AllowFallback:                     localMasterdataFallback && cfg.LocalMasterdata.AllowFallback,
-		AssetsBaseURL:                     cfg.AssetsBaseURL,
+		AssetReader:                       dependencies.assetReader,
+		AssetHosts:                        cfg.AssetHosts,
 		HousingCompetitionStatsCachePath:  cfg.MySekaiHousingCompetitionCachePath,
 		HousingCompetitionRefreshInterval: cfg.MySekaiHousingCompetitionRefreshInterval,
 	})
 	inventoryController := inventory.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, inventory.MasterdataOptions{
 		LocalDir: inventoryMasterdataDir,
 	})
+	inventoryController.SetAssetReader(dependencies.assetReader)
 	deckController := newAppDeckController(nil, nil, drawingClient, assetHelper, snapshotService, cfg)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
@@ -72,6 +74,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		sekaiClient, cfg, localMasterdataFallback, localMasterdataDir, drawingClient, assetHelper,
 		snapshotService, deckController, educationController, skController,
 	)
+	databaseControllers.setAssetReader(dependencies.assetReader)
 	deckController = databaseControllers.decks
 	musicController := databaseControllers.music
 	cardController := databaseControllers.cards
@@ -113,41 +116,39 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	skController.StartDefaultPredictWarmup()
 
 	runtime := &App{
-		Sekai:      sekaiClient,
-		PJSK:       pjskClient,
-		Drawing:    drawingClient,
-		Assets:     assetHelper,
-		MetaLoader: cfg.MetaLoader,
-		Provider:   masterProvider,
-		Providers:  providersByRegion,
-		Cards:      cardController,
-		Costumes:   costumeController,
-		Decks:      deckController,
-		Edu:        educationController,
-		Events:     eventController,
-		Gachas:     gachaController,
-		Honors:     honorController,
-		Inventory:  inventoryController,
-		Misc:       miscController,
-		MySekai:    mysekaiController,
-		Music:      musicController,
-		Aliases:    aliasService,
-		Profiles:   profileController,
-		Score:      scoreController,
-		SK:         skController,
-		Stamps:     stampController,
-		VLive:      vliveController,
-		Snapshots:  staticSnapshotProvider,
-		ImageCache: imagecache.NewWithStore(cfg.ImageCacheURI, cfg.ImageCacheDir, imgStore),
-		Censor:     cfg.CensorService,
-		SekaiAPI:   cfg.SekaiAPI,
-		Toolbox:    cfg.Toolbox,
-		Tracker:    cfg.Tracker,
-		Stores:     cfg.Stores,
-		ImageHosts: cfg.ImageHosts,
-		AssetHosts: cfg.AssetHosts,
-		// AssetReader is built next to the helper; no consumer reads through
-		// it yet.
+		Sekai:       sekaiClient,
+		PJSK:        pjskClient,
+		Drawing:     drawingClient,
+		Assets:      assetHelper,
+		MetaLoader:  cfg.MetaLoader,
+		Provider:    masterProvider,
+		Providers:   providersByRegion,
+		Cards:       cardController,
+		Costumes:    costumeController,
+		Decks:       deckController,
+		Edu:         educationController,
+		Events:      eventController,
+		Gachas:      gachaController,
+		Honors:      honorController,
+		Inventory:   inventoryController,
+		Misc:        miscController,
+		MySekai:     mysekaiController,
+		Music:       musicController,
+		Aliases:     aliasService,
+		Profiles:    profileController,
+		Score:       scoreController,
+		SK:          skController,
+		Stamps:      stampController,
+		VLive:       vliveController,
+		Snapshots:   staticSnapshotProvider,
+		ImageCache:  imagecache.NewWithStore(cfg.ImageCacheURI, cfg.ImageCacheDir, imgStore),
+		Censor:      cfg.CensorService,
+		SekaiAPI:    cfg.SekaiAPI,
+		Toolbox:     cfg.Toolbox,
+		Tracker:     cfg.Tracker,
+		Stores:      cfg.Stores,
+		ImageHosts:  cfg.ImageHosts,
+		AssetHosts:  cfg.AssetHosts,
 		AssetReader: dependencies.assetReader,
 		Config:      cfg,
 	}
@@ -193,6 +194,16 @@ func configureAppDatabaseControllers(sekaiClient *sekaiDB.Client, cfg Config, lo
 	controllers.configureDefaultProvider(sekaiClient, cfg, localFallback, localDir, drawingClient, assetHelper, snapshotService, educationController, skController)
 	controllers.configureRegionProviders(sekaiClient, cfg, localFallback, localDir, educationController, skController)
 	return controllers
+}
+
+// setAssetReader threads the shared asset reader into every controller whose
+// asset reads or existence probes go through it. The setters are nil-safe, so
+// controllers that were not built (no sekai client) are skipped.
+func (c *appDatabaseControllers) setAssetReader(reader *assets.AssetReader) {
+	c.cards.SetAssetReader(reader)
+	c.honors.SetAssetReader(reader)
+	c.music.SetAssetReader(reader)
+	c.profiles.SetAssetReader(reader)
 }
 
 func (c *appDatabaseControllers) registerProvider(source provider.MasterDataProvider) {

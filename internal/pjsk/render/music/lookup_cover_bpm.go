@@ -2,10 +2,13 @@ package music
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"math"
-	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -16,6 +19,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/storage"
 )
 
 func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {
@@ -110,11 +114,10 @@ func (c *Controller) scanOneMusicChartsByBPM(ctx context.Context, source DataSou
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		chartPath := c.resolveLocalChartPath(region.String(), musicInfo.ID, difficulty)
-		if chartPath == "" {
+		parsed, found, err := c.loadChartBPM(ctx, region.String(), musicInfo.ID, difficulty)
+		if !found {
 			continue
 		}
-		parsed, err := parseChartBPM(ctx, chartPath)
 		if err != nil {
 			if ctx.Err() != nil {
 				return nil, ctx.Err()
@@ -160,8 +163,8 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 
 	difficulties := buildBPMDifficultyCandidates(query.Difficulty)
 	var (
-		chartPath string
-		diffUsed  string
+		parsed   *parsedChartBPM
+		diffUsed string
 	)
 	finishScan := commandtrace.MeasureOperation(ctx, "music.chart_scan")
 	for _, difficulty := range difficulties {
@@ -169,22 +172,20 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 			finishScan()
 			return nil, err
 		}
-		chartPath = c.resolveLocalChartPath(region.String(), musicInfo.ID, difficulty)
-		if chartPath == "" {
+		chart, found, err := c.loadChartBPM(ctx, region.String(), musicInfo.ID, difficulty)
+		if !found {
 			continue
 		}
-		diffUsed = difficulty
+		if err != nil {
+			finishScan()
+			return nil, err
+		}
+		parsed, diffUsed = chart, difficulty
 		break
 	}
-	if chartPath == "" {
-		finishScan()
-		return nil, fmt.Errorf("当前环境没有可读取的本地谱面文件，无法查询 BPM")
-	}
-
-	parsed, err := parseChartBPM(ctx, chartPath)
 	finishScan()
-	if err != nil {
-		return nil, err
+	if parsed == nil {
+		return nil, fmt.Errorf("当前环境没有可读取的本地谱面文件，无法查询 BPM")
 	}
 
 	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
@@ -207,32 +208,60 @@ func (c *Controller) resolveLocalMusicJacket(assetName string) string {
 	if c == nil || c.assets == nil || strings.TrimSpace(assetName) == "" {
 		return ""
 	}
-	return c.assets.FirstExisting(
+	// A store-backed hit has no local path, so the builder's Drawing path stays.
+	resolved, _ := assets.ProbeExisting(c.contextOrBackground(), c.assetReader, c.assets,
 		filepath.Join("music", "jacket", assetName, assetName+".png"),
 	)
+	return resolved
 }
 
-func (c *Controller) resolveLocalChartPath(region string, musicID int, difficulty string) string {
-	if c == nil || c.assets == nil || musicID <= 0 || strings.TrimSpace(difficulty) == "" {
-		return ""
+// chartScoreCandidates lists the chart object candidates for one difficulty in
+// preference order: the bare legacy layout, then the startapp and ondemand
+// region directories.
+func chartScoreCandidates(region string, musicID int, difficulty string) []string {
+	if musicID <= 0 || strings.TrimSpace(difficulty) == "" {
+		return nil
 	}
 	diff := normalizeDifficulty(difficulty)
 	if strings.TrimSpace(region) == "" {
 		region = "jp"
 	}
+	relPath := path.Join("music", "music_score", fmt.Sprintf("%04d_01", musicID), diff+".txt")
+	return []string{
+		relPath,
+		path.Join(assets.RegionAssetDirByMode(region, assets.RegionAssetStartApp), relPath),
+		path.Join(assets.RegionAssetDirByMode(region, assets.RegionAssetOnDemand), relPath),
+	}
+}
 
-	relPaths := []string{
-		filepath.Join("music", "music_score", fmt.Sprintf("%04d_01", musicID), diff+".txt"),
+// loadChartBPM reads and parses the chart of one difficulty through the asset
+// reader. found is false when no candidate exists; err is a read or parse
+// failure of an existing chart. Parsed charts are kept in a small LRU.
+func (c *Controller) loadChartBPM(ctx context.Context, region string, musicID int, difficulty string) (*parsedChartBPM, bool, error) {
+	if c == nil {
+		return nil, false, nil
 	}
-	candidates := make([]string, 0, len(relPaths)*3)
-	for _, relPath := range relPaths {
-		candidates = append(candidates,
-			relPath,
-			filepath.Join(assets.CloudRegionAssetDirByMode(region, assets.RegionAssetStartApp), relPath),
-			filepath.Join(assets.RegionAssetDirByMode(region, assets.RegionAssetStartApp), relPath),
-		)
+	candidates := chartScoreCandidates(region, musicID, difficulty)
+	if len(candidates) == 0 {
+		return nil, false, nil
 	}
-	return c.assets.FirstExisting(candidates...)
+	cacheKey := strings.Join(candidates, "\x00")
+	if parsed, ok := c.chartBPM.get(cacheKey); ok {
+		return parsed, true, nil
+	}
+	data, _, err := c.reader().ReadFirst(ctx, candidates...)
+	if errors.Is(err, storage.ErrNotExist) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, true, fmt.Errorf("failed to open chart file: %w", err)
+	}
+	parsed, err := parseChartBPM(ctx, bytes.NewReader(data))
+	if err != nil {
+		return nil, true, err
+	}
+	c.chartBPM.put(cacheKey, parsed)
+	return parsed, true, nil
 }
 
 func (c *Controller) collectBPMSearchDifficulties(source DataSource, musicID int, preferred string) []string {
@@ -313,14 +342,14 @@ type parsedChartBPM struct {
 	Duration float64
 }
 
-func parseChartBPM(ctx context.Context, path string) (*parsedChartBPM, error) {
+func parseChartBPM(ctx context.Context, r io.Reader) (*parsedChartBPM, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	score, barCount, err := readChartScore(ctx, path)
+	score, barCount, err := readChartScore(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -342,20 +371,16 @@ func parseChartBPM(ctx context.Context, path string) (*parsedChartBPM, error) {
 	return &parsedChartBPM{MainBPM: mainBPM, Events: events, BarCount: barCount, Duration: totalDuration}, nil
 }
 
-func readChartScore(ctx context.Context, path string) (map[[2]string]string, int, error) {
+func readChartScore(ctx context.Context, r io.Reader) (map[[2]string]string, int, error) {
 	finishRead := commandtrace.MeasureOperation(ctx, "music.chart_read")
 	defer finishRead()
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to open chart file: %w", err)
+	if r == nil {
+		return nil, 0, fmt.Errorf("failed to open chart file: %w", storage.ErrNotExist)
 	}
-	defer func() {
-		_ = file.Close()
-	}()
 
 	score := make(map[[2]string]string)
 	barCount := 0
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		if err := ctx.Err(); err != nil {
 			return nil, 0, err

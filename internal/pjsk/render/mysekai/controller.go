@@ -201,6 +201,7 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot
 	region := renderregion.WithDefault(defaultRegion)
 	resolver := newMasterdataResolver(mdOpts)
 	md := resolver.Resolve(region)
+	reader := assets.ReaderOr(mdOpts.AssetReader, assetHelper)
 	return &Controller{
 		drawing:       drawingClient,
 		snapshot:      snapshot,
@@ -209,14 +210,15 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot
 		defaultRegion: region,
 		nicknames:     cloneNicknames(defaultNicknames),
 		assets:        assetHelper,
+		assetReader:   reader,
 		housingCompetitionStats: newHousingCompetitionStatsCache(
 			mdOpts.HousingCompetitionStatsCachePath,
 			mdOpts.HousingCompetitionRefreshInterval,
 		),
 		housingCompetitionBanners: newHousingCompetitionBannerCache(
 			defaultHousingCompetitionBannerCacheDir(mdOpts.HousingCompetitionStatsCachePath),
-			assetHelper,
-			mdOpts.AssetsBaseURL,
+			reader,
+			mdOpts.AssetHosts,
 		),
 	}
 }

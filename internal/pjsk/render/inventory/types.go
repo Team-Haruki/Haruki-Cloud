@@ -34,6 +34,7 @@ const (
 type Controller struct {
 	drawing       *drawing.HarukiDrawingClient
 	assets        *assets.AssetHelper
+	assetReader   *assets.AssetReader
 	snapshot      snapshot.Snapshot
 	defaultRegion renderregion.Value
 	masterdata    *masterdataStore

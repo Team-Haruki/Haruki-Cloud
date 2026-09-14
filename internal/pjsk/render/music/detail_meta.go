@@ -66,12 +66,8 @@ func (c *Controller) resolveMusicDetailBPM(region renderregion.Value, musicID in
 	}
 
 	for _, difficulty := range buildBPMDifficultyCandidates(preferredDifficulty) {
-		chartPath := c.resolveLocalChartPath(region.String(), musicID, difficulty)
-		if chartPath == "" {
-			continue
-		}
-		parsed, err := parseChartBPM(c.contextOrBackground(), chartPath)
-		if err != nil || parsed == nil || parsed.MainBPM <= 0 {
+		parsed, found, err := c.loadChartBPM(c.contextOrBackground(), region.String(), musicID, difficulty)
+		if !found || err != nil || parsed == nil || parsed.MainBPM <= 0 {
 			continue
 		}
 		bpm := int(math.Round(parsed.MainBPM))

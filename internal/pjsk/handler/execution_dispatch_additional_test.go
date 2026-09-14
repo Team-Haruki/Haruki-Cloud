@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	sekaidb "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/parser"
@@ -140,8 +141,8 @@ func newStampExecutionFixture(t *testing.T) (context.Context, *renderstamp.Contr
 	}
 	controller := renderstamp.NewController(source, nil, assets.NewAssetHelper(dir, nil))
 	app := &renderapp.App{
-		Stamps: controller,
-		Config: renderapp.Config{AssetsBaseURL: "https://cdn.example"},
+		Stamps:     controller,
+		AssetHosts: urlhost.Single("https://cdn.example"),
 	}
 	params, _ := json.Marshal(renderstamp.ListQuery{IDs: []int{1}})
 	rc := &RequestContext{Ctx: ctx, Cmd: &CommandRequest{Mode: "stamp-list", Region: "jp", Params: params}, App: app}

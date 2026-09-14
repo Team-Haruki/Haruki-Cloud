@@ -3,8 +3,10 @@
 package music
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -311,14 +313,15 @@ func TestMusicBPMValidationAndPathHelpers(t *testing.T) {
 		testutil.RequireArgs(t, !(controller.resolveLocalMusicJacket(" ") != ""), "invalid local jacket lookup was non-empty")
 	}
 	{
-		testutil.RequireArgs(t, !(nilController.resolveLocalChartPath("jp", 1, "expert") != ""), "invalid local chart lookup was non-empty")
-		testutil.RequireArgs(t, !(controller.resolveLocalChartPath("jp", 0, "expert") != ""), "invalid local chart lookup was non-empty")
-		testutil.RequireArgs(t, !(controller.resolveLocalChartPath("jp", 1, " ") != ""), "invalid local chart lookup was non-empty")
+		_, nilFound, _ := nilController.loadChartBPM(context.Background(), "jp", 1, "expert")
+		_, zeroFound, _ := controller.loadChartBPM(context.Background(), "jp", 0, "expert")
+		_, blankFound, _ := controller.loadChartBPM(context.Background(), "jp", 1, " ")
+		testutil.RequireArgs(t, !(nilFound || zeroFound || blankFound), "invalid local chart lookup was found")
 	}
 	{
 
-		got := controller.resolveLocalChartPath("", 1, "expert")
-		testutil.Require(t, !(got != ""), "missing default-region chart path = %q", got)
+		_, found, err := controller.loadChartBPM(context.Background(), "", 1, "expert")
+		testutil.Require(t, !(found || err != nil), "missing default-region chart = %v %v", found, err)
 	}
 	{
 
@@ -359,7 +362,7 @@ func TestMusicBPMValidationAndPathHelpers(t *testing.T) {
 
 func TestParseChartBPMMalformedAndDuplicateBranches(t *testing.T) {
 	{
-		_, err := parseChartBPM(nil, filepath.Join(t.TempDir(), "missing.txt"))
+		_, err := parseChartBPM(nil, nil)
 		{
 			testutil.Require(t, !(err == nil), "missing chart error = %v", err)
 			testutil.Require(t, strings.Contains(err.Error(), "open"), "missing chart error = %v", err)
@@ -369,7 +372,7 @@ func TestParseChartBPMMalformedAndDuplicateBranches(t *testing.T) {
 	canceled, cancel := context.WithCancel(context.Background())
 	cancel()
 	{
-		_, err := parseChartBPM(canceled, "missing")
+		_, err := parseChartBPM(canceled, strings.NewReader("missing"))
 		testutil.Require(t, errors.Is(err, context.Canceled), "canceled chart error = %v", err)
 	}
 
@@ -389,7 +392,7 @@ func TestParseChartBPMMalformedAndDuplicateBranches(t *testing.T) {
 	}
 	{
 
-		_, err := parseChartBPM(nil, invalidPath)
+		_, err := parseChartBPM(nil, openChartForTest(t, invalidPath))
 		{
 			testutil.Require(t, !(err == nil), "invalid BPM chart error = %v", err)
 			testutil.Require(t, strings.Contains(err.Error(), "没有可用"), "invalid BPM chart error = %v", err)
@@ -408,7 +411,7 @@ func TestParseChartBPMMalformedAndDuplicateBranches(t *testing.T) {
 		testutil.Require(t, !(err != nil), "write valid chart: %v", err)
 	}
 
-	parsed, err := parseChartBPM(nil, validPath)
+	parsed, err := parseChartBPM(nil, openChartForTest(t, validPath))
 	testutil.Require(t, !(err != nil), "parse duplicate BPM chart: %v", err)
 	{
 		testutil.Require(t, !(len(parsed.Events) != 2), "parsed duplicate BPM chart = %+v", parsed)
@@ -417,4 +420,13 @@ func TestParseChartBPMMalformedAndDuplicateBranches(t *testing.T) {
 		testutil.Require(t, !(parsed.Duration <= 0), "parsed duplicate BPM chart = %+v", parsed)
 	}
 
+}
+
+func openChartForTest(t *testing.T, path string) io.Reader {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read chart %s: %v", path, err)
+	}
+	return bytes.NewReader(data)
 }

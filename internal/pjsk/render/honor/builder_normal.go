@@ -274,10 +274,11 @@ func betterHonorLevelVisual(candidate, current *masterdata.HonorLevel, requested
 
 func (b *Builder) assetExists(rel string) bool {
 	rel = strings.TrimSpace(rel)
-	if rel == "" || b.assets == nil {
+	if rel == "" || (b.assets == nil && !b.reader.UsesStore()) {
 		return false
 	}
-	return b.assets.FirstExisting(filepath.ToSlash(rel)) != ""
+	_, ok := assets.ProbeExisting(b.ctx, b.reader, b.assets, filepath.ToSlash(rel))
+	return ok
 }
 
 func mapHonorRarity(rarity string) int {

@@ -30,6 +30,14 @@ func NewController(
 	}
 }
 
+// SetAssetReader routes the inventory asset existence probe through reader.
+func (c *Controller) SetAssetReader(reader *assets.AssetReader) {
+	if c == nil {
+		return
+	}
+	c.assetReader = reader
+}
+
 // ResetMasterdataCache invalidates all region-specific inventory masterdata.
 func (c *Controller) ResetMasterdataCache() {
 	if c == nil || c.masterdata == nil {
@@ -453,7 +461,10 @@ func (c *Controller) resolveInventoryAssetPath(region renderregion.Value, relPat
 	if c != nil && c.assets != nil {
 		for _, candidateRegion := range []string{regionKey, renderregion.JP.String()} {
 			path := assets.ResolveRegionAssetPath(c.assets, candidateRegion, relPaths...)
-			if path != "" && c.assets.FirstExisting(path) != "" {
+			if path == "" {
+				continue
+			}
+			if _, ok := assets.ProbeExisting(c.requestCtx, c.assetReader, c.assets, path); ok {
 				return path
 			}
 		}

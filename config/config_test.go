@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // ================= Profile Tests =================
@@ -565,6 +567,19 @@ func TestApplyEnvOverridesPublicHosts(t *testing.T) {
 	ad := cfg.PJSKRender.AssetDirs
 	testutil.Require(t, ad.AssetsBaseURL == "https://assets.example", "assets base url = %q", ad.AssetsBaseURL)
 	testutil.Require(t, len(ad.AssetsBaseURLs) == 2 && ad.AssetsBaseURLs[1] == "https://assets-cn01.example", "assets base urls = %#v", ad.AssetsBaseURLs)
+}
+
+func TestApplyEnvOverridesImageCacheIndex(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_MAX_OPEN", "16")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_REQUIRE_PG", "true")
+	cfg := &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	ic := cfg.PJSKRender.ImageCache
+	testutil.Require(t, ic.PGMaxOpen == 16 && ic.RenderIndex.RequirePG, "image cache index = %+v", ic)
+
+	var decoded PJSKRenderConfig
+	err := yaml.Unmarshal([]byte("image_cache:\n  pg_max_open: 4\n  render_index:\n    require_pg: true\n"), &decoded)
+	testutil.Require(t, err == nil && decoded.ImageCache.PGMaxOpen == 4 && decoded.ImageCache.RenderIndex.RequirePG, "yaml = %+v, %v", decoded.ImageCache, err)
 }
 
 func TestApplyEnvOverridesPublicHostsMalformed(t *testing.T) {

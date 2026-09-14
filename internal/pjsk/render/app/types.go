@@ -41,20 +41,24 @@ import (
 // ── Config types ────────────────────────────────────────────────────────────
 
 type Config struct {
-	InitContext              context.Context
-	DefaultRegion            renderregion.Value
-	DrawingBaseURL           string
-	DrawingTargets           []upstream.TargetConfig
-	DrawingTimeout           time.Duration
-	DrawingRetryCount        int
-	DrawingCache             drawing.RenderCacheConfig
-	DrawingSKMaxConcurrency  int
-	DrawingSKAcquireTimeout  time.Duration
-	DrawingMaxConcurrency    int
-	ImageCacheURI            string
-	ChartsBaseURL            string
-	ImageCacheDir            string
-	ImageCachePGURL          string // PostgreSQL DSN for image cache deduplication (optional)
+	InitContext             context.Context
+	DefaultRegion           renderregion.Value
+	DrawingBaseURL          string
+	DrawingTargets          []upstream.TargetConfig
+	DrawingTimeout          time.Duration
+	DrawingRetryCount       int
+	DrawingCache            drawing.RenderCacheConfig
+	DrawingSKMaxConcurrency int
+	DrawingSKAcquireTimeout time.Duration
+	DrawingMaxConcurrency   int
+	ImageCacheURI           string
+	ChartsBaseURL           string
+	ImageCacheDir           string
+	ImageCachePGURL         string // PostgreSQL DSN for image cache deduplication (optional)
+	ImageCachePGMaxOpen     int    // image cache index pool bound; <= 0 selects the default (8)
+	// ImageCacheLocalRoot is the absolute directory of the image_cache slot
+	// when it resolved to local, "" otherwise.
+	ImageCacheLocalRoot      string
 	CensorService            *censor.Service
 	AssetPrimaryDir          string
 	AssetLegacyDirs          []string
@@ -177,6 +181,19 @@ type App struct {
 	AssetHosts         *urlhost.Set
 	AssetReader        *assets.AssetReader
 	Config             Config
+
+	// initErr records a non-fatal initialisation failure (today: the image
+	// cache index) for startup to classify.
+	initErr error
+}
+
+// InitError reports the initialisation failure New recorded, or nil. A
+// zero-value App returns nil.
+func (a *App) InitError() error {
+	if a == nil {
+		return nil
+	}
+	return a.initErr
 }
 
 // ── Masterdata types ────────────────────────────────────────────────────────

@@ -246,6 +246,11 @@ pjsk_render:
     charts_uri: "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts"
     dir: ""         # local filesystem directory for cached images (env HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR)
     pg_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_imagecache sslmode=disable"
+    pg_max_open: 8              # index connection pool bound (env HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_MAX_OPEN)
+    render_index:
+      # true: an unreachable pg_url / failed schema init stops startup; false: ERROR log, dedup off
+      # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_REQUIRE_PG)
+      require_pg: false
     # Per-node public image-cache hosts, keyed by Drawing node_name (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS,
     # "cn09=https://...,cn01=https://..." or JSON). Empty derives {"default": uri}.
     hosts: {}

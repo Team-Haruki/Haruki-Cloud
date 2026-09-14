@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -35,6 +36,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/internal/pjsk/render/vlive"
+	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/imagecache"
 	"haruki-cloud/utils/logger"
 )
@@ -143,7 +145,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Stamps:      stampController,
 		VLive:       vliveController,
 		Snapshots:   staticSnapshotProvider,
-		ImageCache:  imagecache.NewWithStore(cfg.ImageCacheURI, cfg.ImageCacheDir, imgStore),
+		ImageCache:  newAppImageCache(initCtx, cfg, imgStore),
 		Censor:      cfg.CensorService,
 		SekaiAPI:    cfg.SekaiAPI,
 		Toolbox:     cfg.Toolbox,
@@ -153,6 +155,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		AssetHosts:  cfg.AssetHosts,
 		AssetReader: dependencies.assetReader,
 		Config:      cfg,
+		initErr:     dependencies.initErr,
 	}
 	if localMasterdataFallback {
 		runtime.startLocalMasterdataRefresh(initCtx, localMasterdataDir, cfg.LocalMasterdata.RefreshInterval)
@@ -168,6 +171,7 @@ type appDependencies struct {
 	staticSnapshots         snapshot.HarukiSnapshotProvider
 	drawing                 *drawing.HarukiDrawingClient
 	imageStore              *imagecache.PGStore
+	initErr                 error
 	localMasterdataFallback bool
 	localMasterdataDir      string
 	inventoryMasterdataDir  string
@@ -321,11 +325,11 @@ func newAppDependencies(initCtx context.Context, sekaiClient *sekaiDB.Client, cf
 	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
 	assetReader := assets.NewAssetReader(assetHelper, cfg.Stores.Assets)
 	snapshotService, staticSnapshotProvider := newAppSnapshotServices(initCtx, sekaiClient, assetHelper, cfg)
-	drawingClient, imageStore := newAppDrawingClient(initCtx, cfg)
+	drawingClient, imageStore, imageStoreErr := newAppDrawingClient(initCtx, cfg)
 	localFallback, localDir, inventoryDir := appMasterdataDirs(cfg)
 	return appDependencies{
 		assets: assetHelper, assetReader: assetReader, snapshots: snapshotService, staticSnapshots: staticSnapshotProvider,
-		drawing: drawingClient, imageStore: imageStore, localMasterdataFallback: localFallback,
+		drawing: drawingClient, imageStore: imageStore, initErr: imageStoreErr, localMasterdataFallback: localFallback,
 		localMasterdataDir: localDir, inventoryMasterdataDir: inventoryDir,
 	}
 }
@@ -341,18 +345,21 @@ func newAppSnapshotServices(initCtx context.Context, sekaiClient *sekaiDB.Client
 	return service, snapshot.NewStaticSnapshotProvider(service)
 }
 
-func newAppDrawingClient(initCtx context.Context, cfg Config) (*drawing.HarukiDrawingClient, *imagecache.PGStore) {
-	imageStore := openAppImageStore(initCtx, cfg.ImageCachePGURL)
+func newAppDrawingClient(initCtx context.Context, cfg Config) (*drawing.HarukiDrawingClient, *imagecache.PGStore, error) {
+	imageStore, imageStoreErr := openAppImageStore(initCtx, cfg.ImageCachePGURL, cfg.ImageCachePGMaxOpen)
 	cacheConfig := cfg.DrawingCache
 	cacheConfig.ImageCacheDir = cfg.ImageCacheDir
-	cacheConfig.ImageStore = imageStore
+	// Typed-nil guard: only a non-nil pointer reaches the config.
+	if imageStore != nil {
+		cacheConfig.ImageStore = imageStore
+	}
 	client := drawing.NewHarukiDrawingClientWithTargetsAndResources(
 		cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, appDrawingOptions(cfg)...,
 	)
 	if client != nil {
 		client.SetRenderCache(drawing.NewRenderCacheClient(cacheConfig))
 	}
-	return client, imageStore
+	return client, imageStore, imageStoreErr
 }
 
 func appDrawingOptions(cfg Config) []drawing.ClientOption {
@@ -372,19 +379,67 @@ func appDrawingOptions(cfg Config) []drawing.ClientOption {
 	return options
 }
 
-func openAppImageStore(initCtx context.Context, url string) *imagecache.PGStore {
-	if url == "" {
-		return nil
+// openAppImageStore opens the image cache index. An empty DSN disables the
+// index (nil, nil); any other failure is returned for startup to report.
+func openAppImageStore(initCtx context.Context, dsn string, maxOpen int) (*imagecache.PGStore, error) {
+	return openAppImageStoreWith(initCtx, dsn, maxOpen, imagecache.NewPGStoreWithOptions)
+}
+
+type imageStoreOpener func(dsn string, opts imagecache.PGStoreOptions) (*imagecache.PGStore, error)
+
+func openAppImageStoreWith(initCtx context.Context, dsn string, maxOpen int, open imageStoreOpener) (*imagecache.PGStore, error) {
+	if strings.TrimSpace(dsn) == "" {
+		logger.WarnContext(initCtx, "image cache index disabled: pjsk_render.image_cache.pg_url is empty")
+		return nil, nil
 	}
-	store, err := imagecache.NewPGStore(url)
+	store, err := open(dsn, imagecache.PGStoreOptions{MaxOpen: maxOpen})
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("image cache index: %w", err)
 	}
 	if err := store.Init(initCtx); err != nil {
 		_ = store.Close()
+		return nil, fmt.Errorf("image cache index schema: %w", err)
+	}
+	return store, nil
+}
+
+// newAppImageCache builds the image cache client on the image_cache slot. A
+// config without the slot falls back to a local store on ImageCacheDir, as
+// before the storage slots existed. Nothing configured at all keeps the
+// client nil silently; a half-configured client (hosts without objects or the
+// reverse) is logged at ERROR instead of being dropped silently.
+func newAppImageCache(initCtx context.Context, cfg Config, index *imagecache.PGStore) *imagecache.Client {
+	objects, localRoot := cfg.Stores.ImageCache, strings.TrimSpace(cfg.ImageCacheLocalRoot)
+	if objects == nil || objects == storage.Disabled() {
+		objects, localRoot = legacyImageCacheStore(cfg.ImageCacheDir)
+	}
+	hostsConfigured := cfg.ImageHosts.Len() > 0
+	if !hostsConfigured && objects == nil {
 		return nil
 	}
-	return store
+	client, err := imagecache.NewClient(imagecache.ClientConfig{
+		Hosts: cfg.ImageHosts, Objects: objects, LocalRoot: localRoot, Index: index,
+	})
+	if err != nil {
+		logger.ErrorContext(initCtx, "image cache client not configured", "error", err)
+		return nil
+	}
+	return client
+}
+
+func legacyImageCacheStore(dir string) (storage.Store, string) {
+	if strings.TrimSpace(dir) == "" {
+		return nil, ""
+	}
+	root, err := filepath.Abs(strings.TrimSpace(dir))
+	if err != nil {
+		return nil, ""
+	}
+	store, err := storage.NewLocal(root, 0)
+	if err != nil {
+		return nil, ""
+	}
+	return store, root
 }
 
 func appMasterdataDirs(cfg Config) (bool, string, string) {

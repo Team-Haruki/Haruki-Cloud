@@ -113,6 +113,10 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	if err != nil {
 		fatalStartup(mainLogger, "cache storage configuration invalid", "error", err)
 	}
+	imageCacheLocalRoot, err := resolveImageCacheTarget(harukiConfig.Cfg.PJSKRender, &stores, mainLogger)
+	if err != nil {
+		fatalStartup(mainLogger, "image cache storage configuration invalid", "error", err)
+	}
 
 	metaRefreshInterval := harukiConfig.Cfg.PJSKRender.MusicMeta.RefreshInterval
 	if metaRefreshInterval <= 0 {
@@ -161,13 +165,15 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			StorageDir: harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir,
 			TTL:        harukiConfig.Cfg.PJSKRender.DrawingCache.TTL,
 		},
-		ImageCacheURI:   harukiConfig.Cfg.PJSKRender.ImageCache.URI,
-		ChartsBaseURL:   harukiConfig.Cfg.PJSKRender.ImageCache.ChartsURI,
-		ImageCacheDir:   harukiConfig.Cfg.PJSKRender.ImageCache.Dir,
-		ImageCachePGURL: harukiConfig.Cfg.PJSKRender.ImageCache.PGURL,
-		AssetPrimaryDir: harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
-		AssetLegacyDirs: harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
-		AssetsBaseURL:   harukiConfig.Cfg.PJSKRender.AssetDirs.AssetsBaseURL,
+		ImageCacheURI:       harukiConfig.Cfg.PJSKRender.ImageCache.URI,
+		ChartsBaseURL:       harukiConfig.Cfg.PJSKRender.ImageCache.ChartsURI,
+		ImageCacheDir:       harukiConfig.Cfg.PJSKRender.ImageCache.Dir,
+		ImageCachePGURL:     harukiConfig.Cfg.PJSKRender.ImageCache.PGURL,
+		ImageCachePGMaxOpen: harukiConfig.Cfg.PJSKRender.ImageCache.PGMaxOpen,
+		ImageCacheLocalRoot: imageCacheLocalRoot,
+		AssetPrimaryDir:     harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
+		AssetLegacyDirs:     harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
+		AssetsBaseURL:       harukiConfig.Cfg.PJSKRender.AssetDirs.AssetsBaseURL,
 		LocalMasterdata: renderapp.LocalMasterdataConfig{
 			Enabled:         harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,
 			AllowFallback:   harukiConfig.Cfg.PJSKRender.LocalMasterdata.AllowFallback,
@@ -236,6 +242,9 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		AssetHosts: assetHosts,
 	})
 
+	if err := renderInitFailure(mainLogger, runtime, harukiConfig.Cfg.PJSKRender.ImageCache.RenderIndex.RequirePG); err != nil {
+		fatalStartup(mainLogger, "PJSK render runtime failed to initialise", "error", err)
+	}
 	if runtime.Drawing == nil {
 		mainLogger.Warn("PJSK render runtime initialized without drawing service", "build_only", true)
 	}
@@ -253,6 +262,61 @@ func buildRenderStores(cfg harukiConfig.PJSKRenderConfig, log *harukiLogger.Logg
 		CacheDir:      cfg.DrawingCache.StorageDir,
 		ImageCacheDir: cfg.ImageCache.Dir,
 	}, storage.Backends{S3: storages3.Open}, log)
+}
+
+// renderInitFailure classifies the runtime's recorded initialisation error. It
+// returns the error when startup must stop (image_cache.render_index.require_pg);
+// otherwise it logs the error at ERROR and returns nil, so the runtime starts
+// without dedup and the render index.
+func renderInitFailure(log *harukiLogger.Logger, runtime interface{ InitError() error }, requirePG bool) error {
+	if runtime == nil {
+		return nil
+	}
+	err := runtime.InitError()
+	if err == nil {
+		return nil
+	}
+	if requirePG {
+		return err
+	}
+	log.Error("image cache index unavailable; dedup and render index disabled", "error", err)
+	return nil
+}
+
+// resolveImageCacheTarget applies the image_cache.dir precedence rule to the
+// image_cache slot and returns the slot's local root ("" unless it is local).
+// An explicit image_cache.dir keeps precedence over storage.image_cache (one
+// Warn when both are set), exactly like the other explicit cache paths; delete
+// image_cache.dir to move the image cache onto the slot.
+func resolveImageCacheTarget(cfg harukiConfig.PJSKRenderConfig, stores *storage.Set, log *harukiLogger.Logger) (string, error) {
+	slotCfg := cfg.Storage.ImageCache
+	if dir := strings.TrimSpace(cfg.ImageCache.Dir); dir != "" {
+		root, err := filepath.Abs(dir)
+		if err != nil {
+			return "", fmt.Errorf("image_cache.dir: %w", err)
+		}
+		store, err := storage.NewLocal(root, 0)
+		if err != nil {
+			return "", fmt.Errorf("image_cache.dir: %w", err)
+		}
+		if !slotCfg.IsZero() {
+			log.Warn("image_cache.dir takes precedence over storage.image_cache",
+				"slot", string(storage.SlotImageCache), "slot_root", strings.TrimSpace(slotCfg.Root), "legacy_path", dir)
+		}
+		stores.ImageCache = store
+		return root, nil
+	}
+	if slotCfg.IsZero() {
+		return "", nil
+	}
+	resolved, err := storage.Resolve(slotCfg)
+	if err != nil {
+		return "", fmt.Errorf("storage.image_cache: %w", err)
+	}
+	if resolved.Scheme == storage.SchemeFS {
+		return resolved.Root, nil
+	}
+	return "", nil
 }
 
 // errAssetHostsRequired reports an empty public asset host set after the

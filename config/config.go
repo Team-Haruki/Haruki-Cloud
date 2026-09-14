@@ -433,6 +433,8 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR", &cfg.PJSKRender.ImageCache.Dir)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", &cfg.PJSKRender.ImageCache.ChartsURI)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
+	envInt("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_MAX_OPEN", &cfg.PJSKRender.ImageCache.PGMaxOpen)
+	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_REQUIRE_PG", &cfg.PJSKRender.ImageCache.RenderIndex.RequirePG)
 	if err := envStringMap("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS", &cfg.PJSKRender.ImageCache.Hosts); err != nil {
 		return err
 	}
@@ -607,13 +609,23 @@ type ImageCacheConfig struct {
 	URI       string `yaml:"uri"`
 	ChartsURI string `yaml:"charts_uri"`
 	Dir       string `yaml:"dir"`
-	PGURL     string `yaml:"pg_url"` // PostgreSQL DSN for deduplication store (optional)
+	PGURL     string `yaml:"pg_url"`      // PostgreSQL DSN for deduplication store (optional)
+	PGMaxOpen int    `yaml:"pg_max_open"` // index pool bound; 0 = default (8)
+	// RenderIndex tunes the image cache index startup policy.
+	RenderIndex ImageCacheRenderIndexConfig `yaml:"render_index"`
 	// Hosts maps a Drawing node name to its public image-cache base URL; empty
 	// derives {"default": uri}.
 	Hosts              map[string]string `yaml:"hosts"`
 	HostOrder          []string          `yaml:"host_order"`           // preferred order; empty = name sort
 	HostsProbePath     string            `yaml:"hosts_probe_path"`     // "" = no probing
 	HostsProbeInterval time.Duration     `yaml:"hosts_probe_interval"` // default 30s
+}
+
+// ImageCacheRenderIndexConfig is pjsk_render.image_cache.render_index.
+type ImageCacheRenderIndexConfig struct {
+	// RequirePG makes an unavailable image cache index fatal at startup
+	// instead of an ERROR log.
+	RequirePG bool `yaml:"require_pg"`
 }
 
 type MusicMetaConfig struct {

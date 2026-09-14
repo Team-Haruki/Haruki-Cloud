@@ -8,13 +8,14 @@ import (
 	"strings"
 )
 
-// URLForFile returns a URL only for regular files inside this client's served
-// directory. It never reads the image or consults the content-hash index.
+// URLForFile returns a URL only for regular files inside this client's local
+// image_cache root. It never reads the image or consults the content-hash
+// index, and always reports false when the slot is not local.
 func (c *Client) URLForFile(ctx context.Context, candidate string) (string, bool) {
-	if c == nil || strings.TrimSpace(candidate) == "" || ctx.Err() != nil {
+	if c == nil || c.localRoot == "" || strings.TrimSpace(candidate) == "" || ctx.Err() != nil {
 		return "", false
 	}
-	root, err := filepath.Abs(c.dir)
+	root, err := filepath.Abs(c.localRoot)
 	if err != nil {
 		return "", false
 	}
@@ -46,7 +47,7 @@ func (c *Client) URLForFile(ctx context.Context, candidate string) (string, bool
 	for i := range parts {
 		parts[i] = url.PathEscape(parts[i])
 	}
-	return c.uri + "/" + strings.Join(parts, "/"), true
+	return c.hosts.URL("", strings.Join(parts, "/"))
 }
 
 func containedRelativeFile(rel string) bool {

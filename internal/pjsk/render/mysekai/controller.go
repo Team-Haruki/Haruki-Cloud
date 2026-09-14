@@ -287,7 +287,7 @@ func (c *Controller) staticPath(relPath string) string {
 	if strings.HasPrefix(resolved, assets.StaticImagesDir+"/") {
 		return resolved
 	}
-	if relative := staticPathRelativeToRoots(c.assets, resolved); relative != "" {
+	if relative := strings.TrimPrefix(c.assets.RelativePath(resolved), "./"); relative != resolved && strings.HasPrefix(relative, assets.StaticImagesDir+"/") {
 		return relative
 	}
 
@@ -299,33 +299,6 @@ func (c *Controller) staticPath(relPath string) string {
 	}
 
 	return resolved
-}
-
-func staticPathRelativeToRoots(helper *assets.AssetHelper, resolved string) string {
-	if helper == nil {
-		return ""
-	}
-	for _, root := range helper.Roots() {
-		if relative := staticPathRelativeToRoot(root, resolved); relative != "" {
-			return relative
-		}
-	}
-	return ""
-}
-
-func staticPathRelativeToRoot(root, resolved string) string {
-	root = strings.TrimSpace(root)
-	if root == "" || strings.HasPrefix(root, "http://") || strings.HasPrefix(root, "https://") {
-		return ""
-	}
-	relative := filepath.ToSlash(strings.TrimPrefix(assets.MakeRelative(root, resolved), "./"))
-	if strings.HasPrefix(relative, assets.StaticImagesDir+"/") {
-		return relative
-	}
-	if relative == resolved || relative == "" || filepath.Base(filepath.ToSlash(root)) != assets.StaticImagesDir {
-		return ""
-	}
-	return filepath.ToSlash(filepath.Join(assets.StaticImagesDir, strings.TrimPrefix(relative, "/")))
 }
 
 // WithSnapshot returns a shallow copy of this Controller that uses the given

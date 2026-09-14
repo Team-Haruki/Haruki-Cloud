@@ -2,11 +2,13 @@ package mysekai
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"slices"
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
+	renderassets "haruki-cloud/internal/pjsk/render/assets"
 )
 
 type sonarMasterdataSource struct {
@@ -169,19 +171,27 @@ func TestDoorUpgradeFullRequestCoverage(t *testing.T) {
 	}
 }
 
-func TestStaticPathRelativeToRootBranches(t *testing.T) {
-	if staticPathRelativeToRoot(" ", "/tmp/value") != "" || staticPathRelativeToRoot("https://example.com/assets", "/tmp/value") != "" {
-		t.Fatal("non-local roots were accepted")
-	}
+func TestStaticPathRelativizesLocalRootHits(t *testing.T) {
 	root := filepath.Join(t.TempDir(), "root")
-	if got := staticPathRelativeToRoot(root, filepath.Join(root, "static_images", "icon.png")); got != "static_images/icon.png" {
+	for _, rel := range []string{"static_images/icon.png", "direct.png"} {
+		full := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+		if err := os.WriteFile(full, []byte("png"), 0o644); err != nil {
+			t.Fatalf("write: %v", err)
+		}
+	}
+	controller := &Controller{assets: renderassets.NewAssetHelper(root, nil)}
+	if got := controller.staticPath("static_images/icon.png"); got != "static_images/icon.png" {
 		t.Fatalf("root-relative static path = %q", got)
 	}
-	staticRoot := filepath.Join(t.TempDir(), "static_images")
-	if got := staticPathRelativeToRoot(staticRoot, filepath.Join(staticRoot, "icon.png")); got != "static_images/icon.png" {
-		t.Fatalf("static-root path = %q", got)
+	// A hit outside static_images never leaks the absolute local path.
+	if got := controller.staticPath("direct.png"); got != "static_images/direct.png" {
+		t.Fatalf("absolute static path = %q", got)
 	}
-	if got := staticPathRelativeToRoot(filepath.Join(t.TempDir(), "other"), "/unrelated/icon.png"); got != "" {
-		t.Fatalf("unrelated path = %q", got)
+	// No local root after E1: the Drawing-relative path is returned as is.
+	if got := (&Controller{assets: renderassets.NewAssetHelper("", nil)}).staticPath("missing.png"); got != "static_images/missing.png" {
+		t.Fatalf("rootless static path = %q", got)
 	}
 }

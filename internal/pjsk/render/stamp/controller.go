@@ -232,12 +232,9 @@ func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregio
 		if existing := c.assets.FirstExisting(candidates...); existing != "" {
 			return c.makeRelativeAsset(existing), true
 		}
-		primary := c.assets.Primary()
-		if primary != "" && primary != "." {
-			return "", false
-		}
 	}
-	// Runtime fallback when no local asset root is configured.
+	// Fallback when no local asset root holds the stamp: the Drawing side
+	// resolves the relative path against its own asset mirror (E1).
 	return filepath.ToSlash(relCandidates[0]), true
 }
 
@@ -245,13 +242,11 @@ func (c *Controller) makeRelativeAsset(target string) string {
 	if c.assets == nil {
 		return normalizeStampRelativeAsset(target)
 	}
-	for _, root := range c.assets.Roots() {
-		relative := filepath.ToSlash(strings.TrimPrefix(assets.MakeRelative(root, target), "./"))
-		if relative != target && relative != "" {
-			return normalizeStampRelativeAsset(relative)
-		}
+	relative := filepath.ToSlash(strings.TrimPrefix(c.assets.RelativePath(target), "./"))
+	if relative == "" {
+		return normalizeStampRelativeAsset(target)
 	}
-	return normalizeStampRelativeAsset(target)
+	return normalizeStampRelativeAsset(relative)
 }
 
 func normalizeStampRelativeAsset(path string) string {

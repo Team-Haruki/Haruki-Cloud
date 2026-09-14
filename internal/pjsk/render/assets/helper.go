@@ -166,6 +166,27 @@ func (h *AssetHelper) Primary() string {
 	return h.roots[0]
 }
 
+// RelativePath returns target relative to the first configured local asset
+// root that contains it, or target unchanged when no real local root does
+// (including the zero-root "." helper left after E1). It is the single place
+// that turns a local FirstExisting hit back into the Drawing-relative string,
+// so callers never depend on Primary() being a real directory.
+func (h *AssetHelper) RelativePath(target string) string {
+	if h == nil || strings.TrimSpace(target) == "" {
+		return target
+	}
+	cleanTarget := normalizeAssetRoot(target)
+	for _, root := range h.roots {
+		if root == "." || isAssetURL(root) {
+			continue
+		}
+		if relative := MakeRelative(root, target); relative != cleanTarget {
+			return relative
+		}
+	}
+	return target
+}
+
 func (h *AssetHelper) Join(parts ...string) string {
 	if len(h.roots) == 0 {
 		return ""

@@ -235,7 +235,7 @@ func (c *Controller) resolveStaticIcon(explicit *string, filename string) *strin
 		// A store-backed hit has no local path; the Drawing path is already the
 		// hit-branch string there.
 		if existing, ok := assets.ProbeExisting(c.contextOrBackground(), c.assetReader, c.assets, path); ok && existing != "" {
-			path = assets.MakeRelative(c.assets.Primary(), existing)
+			path = c.assets.RelativePath(existing)
 		}
 	}
 	return &path

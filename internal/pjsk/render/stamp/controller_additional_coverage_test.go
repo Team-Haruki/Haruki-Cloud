@@ -96,3 +96,14 @@ func TestStampProviderAdapterUsesLocalProvider(t *testing.T) {
 		t.Fatalf("mapped stamps = %+v,%v", items, err)
 	}
 }
+
+func TestMakeRelativeAssetKeepsRootTarget(t *testing.T) {
+	root := t.TempDir()
+	controller := &Controller{assets: assets.NewAssetHelper(root, nil)}
+	if got, want := controller.makeRelativeAsset(root), normalizeStampRelativeAsset(root); got != want {
+		t.Fatalf("root target = %q, want %q", got, want)
+	}
+	if got := controller.makeRelativeAsset(root + "/jp-assets/startapp/stamp/a.png"); got != "asset/jp-assets/startapp/stamp/a.png" {
+		t.Fatalf("root-relative stamp = %q", got)
+	}
+}

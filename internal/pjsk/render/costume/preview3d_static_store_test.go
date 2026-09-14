@@ -167,7 +167,7 @@ func TestResolvePreview3DStaticTarget(t *testing.T) {
 	}
 }
 
-func TestSet3DPreviewConfigPrefersStaticStoreOverPrimaryDerivation(t *testing.T) {
+func TestSet3DPreviewConfigUsesStaticStoreWithoutPrimaryDerivation(t *testing.T) {
 	assetRoot := t.TempDir()
 	controller := NewController(nil, nil, renderassets.NewAssetHelper(assetRoot, nil))
 	memory := storagetest.NewMemory()
@@ -180,7 +180,53 @@ func TestSet3DPreviewConfigPrefersStaticStoreOverPrimaryDerivation(t *testing.T)
 	}
 
 	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: "http://preview.invalid", StaticStore: storage.Disabled()})
-	if got, want := controller.preview3D.cfg.StaticOutputDir, filepath.Join(assetRoot, defaultPreview3DStaticRelativeDir); got != want {
-		t.Fatalf("disabled store derived dir = %q, want %q", got, want)
+	if got := controller.preview3D.cfg.StaticOutputDir; got != "" {
+		t.Fatalf("disabled store derived dir from the asset root: %q", got)
+	}
+	if controller.preview3D.static.store != nil {
+		t.Fatalf("disabled store enabled static publishing: %+v", controller.preview3D.static)
+	}
+}
+
+// TestPreview3DNoWritesUnderWorkingDirectory is the preview3d half of the E1
+// gate: with no asset primary root and the static slot unset, ensuring a
+// static capture publishes nothing and never touches the working directory.
+func TestPreview3DNoWritesUnderWorkingDirectory(t *testing.T) {
+	cwd := t.TempDir()
+	t.Chdir(cwd)
+	var requests atomic.Int32
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer engine.Close()
+
+	controller := NewController(nil, nil, renderassets.NewAssetHelper("", nil))
+	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL, StaticStore: storage.Disabled(), Timeout: time.Second})
+	endpoint, err := controller.preview3D.endpointForRegion("jp")
+	if err != nil {
+		t.Fatalf("endpoint: %v", err)
+	}
+	if err := controller.preview3D.ensureStaticCaptureObject(context.Background(), endpoint, "pjsk3d_cwd"); err != nil {
+		t.Fatalf("ensure = %v", err)
+	}
+	if got := requests.Load(); got != 0 {
+		t.Fatalf("engine GETs = %d, want 0", got)
+	}
+	entries, err := os.ReadDir(cwd)
+	if err != nil || len(entries) != 0 {
+		t.Fatalf("working directory entries = %v, %v", entries, err)
+	}
+}
+
+func TestSet3DPreviewConfigWarnsOnDeprecatedStaticOutputDir(t *testing.T) {
+	dir := t.TempDir()
+	controller := NewController(nil, nil, renderassets.NewAssetHelper("", nil))
+	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: "http://preview.invalid", StaticOutputDir: dir})
+	if got := controller.preview3D.cfg.StaticOutputDir; got != dir {
+		t.Fatalf("explicit static output dir = %q, want %q", got, dir)
+	}
+	if controller.preview3D.static.store == nil {
+		t.Fatal("explicit static output dir did not enable static publishing")
 	}
 }

@@ -62,32 +62,19 @@ func (c *Controller) RegisterSource(source DataSource) {
 	c.sources.RegisterSource(source)
 }
 
+// Set3DPreviewConfig installs the 3D preview service. Static captures are
+// published through cfg.StaticStore (the static slot); the asset primary root
+// is no longer used to derive an output directory (E1). An explicit
+// StaticOutputDir is deprecated but still honoured, and warns.
 func (c *Controller) Set3DPreviewConfig(cfg Preview3DConfig) {
 	if c == nil {
 		return
 	}
-	if strings.TrimSpace(cfg.StaticOutputDir) == "" && !preview3DStoreEnabled(cfg.StaticStore) {
-		cfg.StaticOutputDir = c.default3DPreviewStaticOutputDir(cfg.StaticRelativeDir)
+	if dir := strings.TrimSpace(cfg.StaticOutputDir); dir != "" {
+		costumePreview3DLogger.Warn("preview_3d.static_output_dir is deprecated; configure storage.static instead",
+			"static_store_enabled", preview3DStoreEnabled(cfg.StaticStore))
 	}
 	c.preview3D = NewPreview3DService(cfg)
-}
-
-func (c *Controller) default3DPreviewStaticOutputDir(staticRelativeDir string) string {
-	if c == nil || c.assets == nil {
-		return ""
-	}
-	root := strings.TrimSpace(c.assets.Primary())
-	if root == "" || strings.HasPrefix(strings.ToLower(root), "http://") || strings.HasPrefix(strings.ToLower(root), "https://") {
-		return ""
-	}
-	if filepath.Clean(root) == "." {
-		return ""
-	}
-	rel := strings.Trim(strings.TrimSpace(staticRelativeDir), "/")
-	if rel == "" {
-		rel = defaultPreview3DStaticRelativeDir
-	}
-	return filepath.Join(root, filepath.FromSlash(rel))
 }
 
 func (c *Controller) WithContext(ctx context.Context) *Controller {

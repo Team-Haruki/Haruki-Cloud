@@ -221,7 +221,7 @@ pjsk_render:
     engine_base_url: "http://haruki-3d-engine:8080"
     engine_base_urls: {}  # when non-empty, every requested region must have an engine URL
     static_relative_dir: "static_images/pjsk_3d_preview"
-    static_output_dir: ""
+    static_output_dir: ""   # DEPRECATED: leave "" so captures publish through storage.static
     width: 1024
     height: 1024
     scale: 1.6666667
@@ -255,6 +255,9 @@ pjsk_render:
     hosts_probe_path: ""        # "" = no prober; e.g. "/" (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_PATH)
     hosts_probe_interval: "30s" # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_INTERVAL)
   asset_dirs:
+    # DEPRECATED (E1): Cloud no longer needs a local asset root. Leave primary "" and legacy []
+    # and configure storage.{assets,user_upload,static} below. A populated primary is still
+    # honoured only as the legacy derivation root for those three slots when they are unset.
     primary: ""
     legacy: []
     # Public asset base URLs (REQUIRED when pjsk_render is enabled): startup fails when both

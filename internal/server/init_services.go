@@ -75,10 +75,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 				renderRuntime.Toolbox,
 			).WithPrivateDataCache(renderRuntime.PrivateDataCache),
 		)
-		if renderRuntime.Assets != nil {
-			bgStore := accountdata.NewLocalProfileBGStore(renderRuntime.Assets.Primary())
-			renderRuntime.Bindings.SetProfileBGStorage(bgStore)
-		}
+		renderRuntime.Bindings.SetProfileBGStorage(profileBGStorageFor(renderRuntime))
 		if censorService != nil {
 			renderRuntime.Bindings.SetCensorService(censorService)
 		}
@@ -90,6 +87,13 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 		renderRuntime.Aliases.SetReadOnly(harukiConfig.Cfg.Node.ReadOnly)
 	}
 	mainLogger.Info("Sekai runtime services configured")
+}
+
+// profileBGStorageFor builds the profile background store on the runtime's
+// user_upload slot (E1), never on the asset primary root. An unset slot is
+// Disabled and reports "profile background storage is not configured".
+func profileBGStorageFor(renderRuntime *renderapp.App) *accountdata.ProfileBGStore {
+	return accountdata.NewProfileBGStore(renderRuntime.Stores.UserUpload)
 }
 
 func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client) *renderapp.App {

@@ -226,10 +226,9 @@ func (s *Server) authorize(r *http.Request, body []byte) (int, string) {
 	if err != nil {
 		return http.StatusForbidden, "AccessDenied"
 	}
-	replay, err := http.NewRequest(r.Method, "http://"+r.Host+r.URL.RequestURI(), nil)
-	if err != nil {
-		return http.StatusBadRequest, "InvalidRequest"
-	}
+	// The replay is only signed, never sent: it reuses the incoming path,
+	// query and Host so the canonical request matches what the client signed.
+	replay := &http.Request{Method: r.Method, URL: r.URL, Host: r.Host, Header: make(http.Header)}
 	for _, name := range strings.Split(signedHeaders, ";") {
 		if name != "host" {
 			replay.Header[http.CanonicalHeaderKey(name)] = r.Header.Values(name)

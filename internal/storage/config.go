@@ -279,7 +279,9 @@ func constructProviderEndpoint(raw string, tls *bool) string {
 		return value
 	}
 	if tls != nil && !*tls {
-		return "http://" + value
+		// Plain HTTP only when the operator sets tls: false for a private
+		// (tailnet/loopback) Garage endpoint.
+		return "http://" + value // NOSONAR
 	}
 	return "https://" + value
 }

@@ -28,6 +28,7 @@ func newRemoteEngineProvider(cfg RecommendConfig) engineProvider {
 		pool:                      upstream.NewPoolWithResources(targets, cfg.SharedResources),
 		targets:                   targets,
 		masterdataRefreshInterval: refreshInterval,
+		registryURL:               strings.TrimRight(strings.TrimSpace(cfg.RegistryURL), "/"),
 		recommenders:              make(map[string]PjskDeckRecommender),
 	}
 	provider.startMasterdataRefreshLoop()
@@ -51,8 +52,8 @@ func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 	}
 
 	masterdataDir := resolveDeckRemoteMasterdataDir(p.cfg.MasterdataDir)
-	if masterdataDir == "" {
-		return nil, fmt.Errorf("deck remote engine requires local masterdata dir")
+	if masterdataDir == "" && p.registryURL == "" {
+		return nil, fmt.Errorf("deck remote engine requires local masterdata dir or registry_url")
 	}
 	if p.pool == nil || !p.pool.Enabled() || len(p.targets) == 0 {
 		return nil, fmt.Errorf("deck recommend service is not configured")
@@ -78,6 +79,7 @@ func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 		targetStates:  make(map[string]*remoteTargetState, len(p.targets)),
 		defaultAlgs:   algs,
 		masterdataDir: masterdataDir,
+		registryURL:   p.registryURL,
 		region:        region,
 		maxRetries:    maxRetries,
 		retryWaitTime: retryWait,

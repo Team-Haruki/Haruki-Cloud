@@ -266,7 +266,8 @@ func newAppDeckController(cardProvider deck.CardSource, eventProvider deck.Event
 		DisableReason: cfg.DeckRecommend.DisableReason, ServiceBaseURL: cfg.DeckRecommend.ServiceBaseURL,
 		Targets: slices.Clone(cfg.DeckRecommend.Targets), SharedResources: cfg.SharedUpstreamResources,
 		MasterdataDir: cfg.DeckRecommend.MasterdataDir, MasterdataRefreshInterval: cfg.DeckRecommend.MasterdataRefreshInterval,
-		Timeout: cfg.DeckRecommend.Timeout, MaxRetries: cfg.DeckRecommend.MaxRetries,
+		RegistryURL: cfg.DeckRecommend.RegistryURL,
+		Timeout:     cfg.DeckRecommend.Timeout, MaxRetries: cfg.DeckRecommend.MaxRetries,
 		RetryWaitTime: cfg.DeckRecommend.RetryWaitTime, DefaultAlgs: slices.Clone(cfg.DeckRecommend.DefaultAlgs),
 	}, cfg.MetaLoader)
 }
@@ -277,7 +278,7 @@ func normalizeAppConfig(cfg *Config) context.Context {
 	if initCtx == nil {
 		initCtx = context.Background()
 	}
-	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval, cfg.MusicMetaOutputDir)
+	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval, cfg.MusicMetaOutputDir, cfg.MusicMetaSource, cfg.MusicMetaBaseURL)
 	if cfg.SharedUpstreamResources == nil {
 		cfg.SharedUpstreamResources = &upstream.SharedResources{}
 	}
@@ -392,7 +393,7 @@ func shouldEnableLocalSnapshotFallback(cfg Config) bool {
 	}
 }
 
-func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refreshInterval time.Duration, outputDir string) *meta.Loader {
+func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refreshInterval time.Duration, outputDir, source, baseURL string) *meta.Loader {
 	if configured != nil {
 		return configured
 	}
@@ -405,7 +406,7 @@ func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refresh
 		refreshInterval = defaultMusicMetaRefreshInterval
 	}
 
-	loader := meta.NewLoader(logger.NewLoggerFromGlobal("PJSKMeta"), meta.WithOutputDir(outputDir))
+	loader := meta.NewLoader(logger.NewLoggerFromGlobal("PJSKMeta"), meta.WithOutputDir(outputDir), meta.WithSource(source), meta.WithBaseURL(baseURL))
 	if err := loader.LoadAll(initCtx); err != nil {
 		logger.WarnContext(initCtx, "music metadata initial load failed", "error_type", fmt.Sprintf("%T", err))
 	}

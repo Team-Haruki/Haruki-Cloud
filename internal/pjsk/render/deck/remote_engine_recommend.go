@@ -511,9 +511,8 @@ func (r *RemoteDeckRecommender) updateRemoteReadyState(ctx context.Context, exec
 	musicReady := hash != "" && hash == state.musicMetaHash
 	state.mu.Unlock()
 	if !masterReady {
-		req := map[string]any{"base_dir": r.masterdataDir, "region": region}
-		if err := r.postJSON(ctx, exec, "/update/masterdata", req, nil); err != nil {
-			return fmt.Errorf("deck remote engine: update masterdata: %w", err)
+		if err := r.updateRemoteMasterdata(ctx, exec, region); err != nil {
+			return err
 		}
 	}
 	if hash != "" && !musicReady {
@@ -528,6 +527,40 @@ func (r *RemoteDeckRecommender) updateRemoteReadyState(ctx context.Context, exec
 	}
 	state.mu.Unlock()
 	return nil
+}
+
+// updateRemoteMasterdata asks deck-service to (re)load the region. In registry
+// mode deck-service pulls the manifest itself; Cloud only passes the
+// contentHash it last saw so an already-current node short-circuits.
+func (r *RemoteDeckRecommender) updateRemoteMasterdata(ctx context.Context, exec *remoteExecution, region string) error {
+	if r.registryURL == "" {
+		req := map[string]any{"base_dir": r.masterdataDir, "region": region}
+		if err := r.postJSON(ctx, exec, "/update/masterdata", req, nil); err != nil {
+			return fmt.Errorf("deck remote engine: update masterdata: %w", err)
+		}
+		return nil
+	}
+	req := map[string]any{"region": region}
+	if hash := r.currentRegistryContentHash(); hash != "" {
+		req["content_hash"] = hash
+	}
+	var response remoteRegistryUpdateResponse
+	if err := r.postJSON(ctx, exec, "/update/masterdata/registry", req, &response); err != nil {
+		return fmt.Errorf("deck remote engine: update masterdata from registry: %w", err)
+	}
+	// A node that loaded a newer manifest than we have polled tells us the
+	// hash it holds; adopt it so the next readiness check compares equals.
+	r.adoptRegistryContentHash(response.ContentHash)
+	return nil
+}
+
+type remoteRegistryUpdateResponse struct {
+	Status      string `json:"status"`
+	Region      string `json:"region"`
+	ContentHash string `json:"contentHash"`
+	GitCommit   string `json:"gitCommit"`
+	DataVersion string `json:"dataVersion"`
+	Reloaded    bool   `json:"reloaded"`
 }
 
 func (r *RemoteDeckRecommender) updateRemoteMusicMeta(ctx context.Context, exec *remoteExecution, region string, musicMeta []byte, musicMetaPath string) error {

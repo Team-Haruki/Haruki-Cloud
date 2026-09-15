@@ -114,10 +114,14 @@ type RecommendConfig struct {
 	SharedResources           *upstream.SharedResources
 	MasterdataDir             string
 	MasterdataRefreshInterval time.Duration
-	Timeout                   time.Duration
-	MaxRetries                int
-	RetryWaitTime             time.Duration
-	DefaultAlgs               []string
+	// RegistryURL is the Haruki master registry base URL. When set,
+	// deck-service pulls master data from the registry itself and Cloud only
+	// tracks the published contentHash; MasterdataDir is then optional.
+	RegistryURL   string
+	Timeout       time.Duration
+	MaxRetries    int
+	RetryWaitTime time.Duration
+	DefaultAlgs   []string
 }
 
 type MusicMetaSource interface {
@@ -198,6 +202,7 @@ type remoteEngineProvider struct {
 	pool                      *upstream.Pool
 	targets                   []upstream.TargetConfig
 	masterdataRefreshInterval time.Duration
+	registryURL               string
 	mu                        sync.Mutex
 	recommenders              map[string]PjskDeckRecommender
 }
@@ -210,10 +215,15 @@ type RemoteDeckRecommender struct {
 	masterdataDir string
 	masterdataMu  sync.Mutex
 	masterdataSig string
-	region        string
-	maxRetries    int
-	retryWaitTime time.Duration
-	logger        *logger.Logger
+	// Registry mode: the last published contentHash seen for this region
+	// and the ETag of that manifest response (conditional polling).
+	registryURL         string
+	registryContentHash string
+	registryETag        string
+	region              string
+	maxRetries          int
+	retryWaitTime       time.Duration
+	logger              *logger.Logger
 
 	now func() time.Time
 }

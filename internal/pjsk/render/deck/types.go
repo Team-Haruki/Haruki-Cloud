@@ -78,6 +78,11 @@ type maxProfileMySekaiSource interface {
 	GetMaxProfileMysekaiFixtureBonuses() []snapshot.RawUserFixtureBonus
 }
 
+type worldBloomRankingHonorSource interface {
+	GetWorldBloomChapters(eventID int) []*masterdata.WorldBloom
+	GetWorldBloomChapterRankingHonorRewards(eventID, characterID int) ([]masterdata.EventRankingHonorReward, error)
+}
+
 type eventRankingHonorSource interface {
 	GetEventRankingHonorRewards(eventID int) ([]masterdata.EventRankingHonorReward, error)
 }
@@ -157,6 +162,7 @@ type RecommendResult struct {
 }
 
 type RecommendDeck struct {
+	SupportCards         []RecommendCard `json:"support_cards,omitempty"`
 	Cards                []RecommendCard `json:"cards"`
 	Score                int             `json:"score"`
 	LiveScore            int             `json:"live_score"`
@@ -281,15 +287,26 @@ type remoteBatchRecommendResult struct {
 	Error    string                 `json:"error,omitempty"`
 }
 
+type remoteRecommendSupportCard struct {
+	CardID        int     `json:"card_id"`
+	Bonus         float64 `json:"bonus"`
+	SkillLevel    int     `json:"skill_level"`
+	MasterRank    int     `json:"master_rank"`
+	Level         int     `json:"level"`
+	AfterTraining bool    `json:"after_training"`
+	DefaultImage  string  `json:"default_image"`
+}
+
 type remoteRecommendDeck struct {
-	Score                int                   `json:"score"`
-	LiveScore            int                   `json:"live_score"`
-	MysekaiEventPoint    int                   `json:"mysekai_event_point"`
-	TotalPower           int                   `json:"total_power"`
-	EventBonusRate       float64               `json:"event_bonus_rate"`
-	SupportDeckBonusRate float64               `json:"support_deck_bonus_rate"`
-	MultiLiveScoreUp     float64               `json:"multi_live_score_up"`
-	Cards                []remoteRecommendCard `json:"cards"`
+	SupportDeckCards     []remoteRecommendSupportCard `json:"support_deck_cards"`
+	Score                int                          `json:"score"`
+	LiveScore            int                          `json:"live_score"`
+	MysekaiEventPoint    int                          `json:"mysekai_event_point"`
+	TotalPower           int                          `json:"total_power"`
+	EventBonusRate       float64                      `json:"event_bonus_rate"`
+	SupportDeckBonusRate float64                      `json:"support_deck_bonus_rate"`
+	MultiLiveScoreUp     float64                      `json:"multi_live_score_up"`
+	Cards                []remoteRecommendCard        `json:"cards"`
 }
 
 type remoteRecommendCard struct {

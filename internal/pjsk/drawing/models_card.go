@@ -73,8 +73,9 @@ type CardBasic struct {
 }
 
 type UserCard struct {
-	Card    CardBasic `json:"card"`
-	HasCard bool      `json:"has_card"`
+	AcquiredAt int64     `json:"acquired_at,omitempty"`
+	Card       CardBasic `json:"card"`
+	HasCard    bool      `json:"has_card"`
 }
 
 type CardDistributionCharacterStat struct {
@@ -171,6 +172,7 @@ type DeckCardData struct {
 }
 
 type DeckData struct {
+	SupportCardData      []DeckCardData `json:"support_card_data,omitempty"`
 	CardData             []DeckCardData `json:"card_data"`
 	MusicTitle           *string        `json:"music_title,omitempty"`
 	MusicID              *int           `json:"music_id,omitempty"`

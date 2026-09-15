@@ -757,3 +757,22 @@ func testLocalMySekaiBranches(t *testing.T, p *LocalProvider) {
 		t.Fatal("missing mysekai object loaded")
 	}
 }
+
+func TestLocalCostumeFilterUsesCardLinks(t *testing.T) {
+	p := newLocalCoverageProvider(t)
+	for _, tt := range []struct{ card, want int }{{2, 1001}, {1, 1002}, {3, 0}, {1001, 0}} {
+		items, err := p.costumes.Filter(context.Background(), &CostumeFilter{CardID: tt.card, PartType: "body"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if tt.want == 0 {
+			if len(items) != 0 {
+				t.Fatalf("unlinked card %d returned costumes", tt.card)
+			}
+			continue
+		}
+		if len(items) != 1 || items[0].ID != tt.want {
+			t.Fatalf("card %d: %+v", tt.card, items)
+		}
+	}
+}

@@ -207,6 +207,9 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		}
 		cardInfo := b.buildCardBasic(card, region, cardBasicBuildOptions{})
 		userCard, owned := ownedCards[card.ID]
+		if normalizeCardBoxGroupBy(groupBy) == CardBoxGroupByTime && !owned {
+			continue
+		}
 		if owned {
 			cardInfo.ThumbnailInfo = b.buildBoxThumbnailInfo(card, region, &userCard, useAfterTraining)
 		} else {
@@ -214,8 +217,9 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		}
 		cardInfo.IsAfterTraining = common.BoolPtr(resolveCardBoxAfterTraining(cardInfo, userCard, useAfterTraining, owned))
 		items = append(items, drawing.UserCard{
-			Card:    cardInfo,
-			HasCard: owned,
+			Card:       cardInfo,
+			HasCard:    owned,
+			AcquiredAt: max(0, userCard.CreatedAt),
 		})
 		if _, exists := characterIconPaths[card.CharacterID]; !exists {
 			characterIconPaths[card.CharacterID] = b.BuildCharacterIconPath(card.CharacterID, stringValue(cardInfo.Unit), region)
@@ -247,6 +251,7 @@ func hasOwnedCardData(detailedProfile *drawing.DetailedProfileCardRequest) bool 
 }
 
 type ownedCardState struct {
+	CreatedAt             int64
 	CardID                int
 	Level                 int
 	MasterRank            int
@@ -264,6 +269,7 @@ func extractOwnedCards(detailedProfile *drawing.DetailedProfileCardRequest) map[
 		case map[string]any:
 			state := ownedCardState{
 				CardID:                intValue(item["cardId"], item["card_id"]),
+				CreatedAt:             int64(intValue(item["createdAt"], item["created_at"])),
 				Level:                 intValue(item["level"]),
 				MasterRank:            intValue(item["masterRank"], item["master_rank"]),
 				SpecialTrainingStatus: stringValueAny(item["specialTrainingStatus"], item["special_training_status"]),

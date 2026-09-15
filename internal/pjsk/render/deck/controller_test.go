@@ -592,7 +592,7 @@ func TestBuildDrawingRequestFromRecommendResultNormalizesDisplayRates(t *testing
 	if request.DeckData[0].EventBonusRate == nil || *request.DeckData[0].EventBonusRate != 120 {
 		t.Fatalf("unexpected normalized event bonus: %+v", request.DeckData[0].EventBonusRate)
 	}
-	if request.DeckData[0].SupportDeckBonusRate == nil || *request.DeckData[0].SupportDeckBonusRate != 10.2 {
+	if request.DeckData[0].SupportDeckBonusRate == nil || *request.DeckData[0].SupportDeckBonusRate != 10.25 {
 		t.Fatalf("unexpected normalized support bonus: %+v", request.DeckData[0].SupportDeckBonusRate)
 	}
 	if request.DeckData[0].MultiLiveScoreUp == nil || *request.DeckData[0].MultiLiveScoreUp != 233.2 {

@@ -424,6 +424,9 @@ func TestBuildListRequestFromSnapshotFiltersSpecialInventoryItems(t *testing.T) 
 			testutil.Require(t, !(err != nil), "BuildListRequestFromSnapshot() error = %v", err)
 			testutil.Require(t, !(req.TotalItems != len(tt.wantIDs)), "TotalItems = %d, want %d", req.TotalItems, len(tt.wantIDs))
 
+			if tt.filter == FilterBoost && req.Sections[0].Title != "演出能量 · 可恢复体力 40x🔥" {
+				t.Fatalf("unexpected boost title: %q", req.Sections[0].Title)
+			}
 			for _, id := range tt.wantIDs {
 				findInventoryItem(t, req.Sections, tt.sectionKey, id)
 			}

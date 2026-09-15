@@ -13,6 +13,8 @@ func normalizeCostume3DError(err error) error {
 	}
 	message := strings.TrimSpace(err.Error())
 	switch {
+	case message == "该卡牌没有服装", strings.HasPrefix(message, "颜色位顺超出范围："):
+		return onebot11.NewReplayError("%s", message)
 	case message == "3d preview service is not configured":
 		return onebot11.NewReplayError("当前 Cloud 未开启3D功能")
 	case strings.HasPrefix(message, "3d preview engine is not configured for region "):

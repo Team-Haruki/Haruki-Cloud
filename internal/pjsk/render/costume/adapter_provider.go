@@ -28,6 +28,7 @@ func (a *ProviderAdapter) GetCostumeByID(id int) (*masterdata.Costume3d, error) 
 
 func (a *ProviderAdapter) FilterCostumes(filter Filter) ([]*masterdata.Costume3d, error) {
 	return a.P.Costumes().Filter(a.Context(), &provider.CostumeFilter{
+		CardID:       filter.CardID,
 		PartType:     filter.PartType,
 		CostumeType:  filter.CostumeType,
 		CharacterID:  filter.CharacterID,

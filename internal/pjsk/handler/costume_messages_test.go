@@ -12,6 +12,8 @@ func TestNormalizeCostume3DError(t *testing.T) {
 		"3d preview service is not configured":                                                          "当前 Cloud 未开启3D功能",
 		"3d preview engine is not configured for region en":                                             "EN服暂未配置3D渲染服务",
 		"3d combo role not found; specify a matching unit or different part ids":                        "这些3D部件不属于同一个角色，请检查区服、角色组合和部件ID",
+		"该卡牌没有服装":                                                                                       "该卡牌没有服装",
+		"颜色位顺超出范围：该服装共有4种颜色":                                                                            "颜色位顺超出范围：该服装共有4种颜色",
 		"3d combo outfit not usable: outfit=934 character3d=1 color=4":                                  "该服装没有对应的角色模型或颜色版本，请检查服装ID、角色ID和颜色ID",
 		"3d combo accessory not usable: accessory=11 character3d=2 color=1":                             "该饰品不属于或不适用于这个角色模型及颜色，请检查饰品ID、角色ID和颜色ID",
 		"3d combo accessory legacy id: accessory=2003 character3d=2 ids=[2003001 2003017]":              "旧版饰品短ID已拆分为独立饰品（ID：2003001、2003017），请填写完整饰品ID；也可用 /饰品列表 角色ID 查询",

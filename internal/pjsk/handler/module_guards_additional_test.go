@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strings"
 	"testing"
 
@@ -137,95 +136,6 @@ func TestInventoryParsingAndExecutionGuards(t *testing.T) {
 }
 
 func TestCostumeRequestHelpersAndExecutionGuards(t *testing.T) {
-	for _, trigger := range []string{"/查服装", " /查头饰 ", "/查发型"} {
-		testutil.Check(t, isCostumeNameSearchTrigger(trigger), "name-search trigger %q not recognized", trigger)
-
-	}
-	testutil.RequireArgs(t, !(isCostumeNameSearchTrigger("/服装列表")), "list trigger recognized as a name search")
-
-	partTypes := map[string]string{
-		"/查头饰":         "head",
-		"/accessories": "head",
-		"/查发型":         "hair",
-		"/hairstyles":  "hair",
-		"/服装列表":        "",
-	}
-	for trigger, want := range partTypes {
-		{
-			got := costumeListPartTypeForTrigger(trigger)
-			testutil.Check(t, !(got != want), "costumeListPartTypeForTrigger(%q) = %q", trigger, got)
-		}
-
-	}
-	{
-		testutil.RequireArgs(t, !(costumeDetailPartTypeForTrigger("/costume") != "body"), "costume detail part type mismatch")
-		testutil.RequireArgs(t, !(costumeDetailPartTypeForTrigger("/查头饰") != "head"), "costume detail part type mismatch")
-	}
-
-	ctx := additionalModuleContext("miku", "/查服装", renderregion.JP)
-	detail := makeCostumeDetailCommandRequest(ctx, rendercostume.Query{Query: "miku", ID: 7})
-	{
-		testutil.Require(t, !(detail.Mode != "costume-detail"), "detail command = %+v", detail)
-		testutil.Require(t, !(detail.Query != "miku"), "detail command = %+v", detail)
-		testutil.Require(t, !(detail.Region != "jp"), "detail command = %+v", detail)
-	}
-
-	var detailQuery rendercostume.Query
-	{
-		err := json.Unmarshal(detail.Params, &detailQuery)
-		{
-			testutil.Require(t, !(err != nil), "detail params = %+v, %v", detailQuery, err)
-			testutil.Require(t, !(detailQuery.ID != 7), "detail params = %+v, %v", detailQuery, err)
-			testutil.Require(t, !(detailQuery.Region != "jp"), "detail params = %+v, %v", detailQuery, err)
-		}
-	}
-
-	list := makeCostumeListCommandRequest(ctx, "body")
-	var listQuery rendercostume.ListQuery
-	{
-		err := json.Unmarshal(list.Params, &listQuery)
-		{
-			testutil.Require(t, !(err != nil), "name list params = %+v, %v", listQuery, err)
-			testutil.Require(t, !(listQuery.Query != ""), "name list params = %+v, %v", listQuery, err)
-			testutil.Require(t, !(listQuery.Keyword != "miku"), "name list params = %+v, %v", listQuery, err)
-			testutil.Require(t, !(listQuery.PartType != "body"), "name list params = %+v, %v", listQuery, err)
-		}
-	}
-
-	ctx.TriggerCmd = "/服装列表"
-	ctx.originalTriggerCmd = "/服装列表"
-	list = makeCostumeListCommandRequest(ctx, "")
-	listQuery = rendercostume.ListQuery{}
-	{
-		err := json.Unmarshal(list.Params, &listQuery)
-		{
-			testutil.Require(t, !(err != nil), "ordinary list params = %+v, %v", listQuery, err)
-			testutil.Require(t, !(listQuery.Query != "miku"), "ordinary list params = %+v, %v", listQuery, err)
-			testutil.Require(t, !(listQuery.Keyword != ""), "ordinary list params = %+v, %v", listQuery, err)
-		}
-	}
-
-	legacy := &rendercostume.LegacyAccessoryIDError{AccessoryIDs: []int{11, 12}}
-	converted, ok := legacyAccessoryListQuery(legacy, rendercostume.Query{Region: "cn", Character3DID: 21})
-	{
-		testutil.Require(t, ok, "legacy accessory conversion = %+v, %v", converted, ok)
-		testutil.Require(t, !(converted.Region != "cn"), "legacy accessory conversion = %+v, %v", converted, ok)
-		testutil.Require(t, !(converted.PartType != "head"), "legacy accessory conversion = %+v, %v", converted, ok)
-		testutil.Require(t, !(converted.Character3DID != 21), "legacy accessory conversion = %+v, %v", converted, ok)
-		testutil.Require(t, !(len(converted.AccessoryIDs) != 2), "legacy accessory conversion = %+v, %v", converted, ok)
-	}
-
-	legacy.AccessoryIDs[0] = 99
-	testutil.RequireArgs(t, !(converted.AccessoryIDs[0] != 11), "legacy accessory IDs were not cloned")
-
-	for _, err := range []error{nil, errors.New("ordinary"), &rendercostume.LegacyAccessoryIDError{}} {
-		{
-			_, ok := legacyAccessoryListQuery(err, rendercostume.Query{})
-			testutil.Check(t, !(ok), "legacyAccessoryListQuery(%v) unexpectedly succeeded", err)
-		}
-
-	}
-
 	rc := &RequestContext{Ctx: context.Background(), App: &renderapp.App{}, Cmd: &CommandRequest{Mode: "costume-list"}}
 	{
 		_, err := executeCostume(rc)

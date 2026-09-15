@@ -440,3 +440,23 @@ func TestCardBoxHandleEmbedsSelfSelector(t *testing.T) {
 	}
 
 }
+
+func TestCardBoxTimeModeConsumesControlAndKeepsFilters(t *testing.T) {
+	h := sekaiHandlers{}.CardBoxHandle()
+	result, err := h.Handle(&PjskHandlerContext{Context: context.Background(), TriggerCmd: "/卡牌一览", ArgText: "时间 25 id"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var q card.Query
+	if err := json.Unmarshal(result.Params, &q); err != nil {
+		t.Fatal(err)
+	}
+	if result.Query != "25" || q.GroupBy != card.CardBoxGroupByTime || !q.ShowBox || !q.ShowID {
+		t.Fatalf("result=%+v q=%+v", result, q)
+	}
+	for _, args := range []string{"时间 未持有", "时间 属性"} {
+		if _, err := h.Handle(&PjskHandlerContext{Context: context.Background(), TriggerCmd: "/卡牌一览", ArgText: args}); err == nil {
+			t.Errorf("accepted incompatible %q", args)
+		}
+	}
+}

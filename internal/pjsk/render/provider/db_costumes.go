@@ -40,6 +40,20 @@ func (p *dbCostumeProvider) Filter(ctx context.Context, filter *CostumeFilter) (
 		filter = &CostumeFilter{}
 	}
 	query := p.client.Costume3D.Query().Where(costume3d.ServerRegionEQ(p.region.String()))
+	if filter.CardID > 0 {
+		links, err := p.client.Cardcostume3D.Query().Where(cardcostume3d.ServerRegionEQ(p.region.String()), cardcostume3d.CardIDEQ(int64(filter.CardID))).All(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("query card costumes: %w", err)
+		}
+		if len(links) == 0 {
+			return nil, nil
+		}
+		ids := make([]int64, 0, len(links))
+		for _, link := range links {
+			ids = append(ids, link.Costume3DID)
+		}
+		query = query.Where(costume3d.GameIDIn(ids...))
+	}
 	query = applyDBCostumeFilter(query, filter)
 	query = query.Order(
 		costume3d.ByPublishedAt(sql.OrderDesc()),

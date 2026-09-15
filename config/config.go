@@ -393,6 +393,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 
 	// Tracker
 	envStr("HARUKI_TRACKER_BASE_URL", &cfg.Tracker.BaseURL)
+	envStr("HARUKI_TRACKER_TOKEN", &cfg.Tracker.Token)
 	envStr("HARUKI_TRACKER_USER_AGENT", &cfg.Tracker.UserAgent)
 	envDuration("HARUKI_TRACKER_TIMEOUT", &cfg.Tracker.Timeout)
 	envDuration("HARUKI_TRACKER_TRACE_BATCH_WINDOW", &cfg.Tracker.TraceBatchWindow)
@@ -860,6 +861,7 @@ type SekaiAPIConfig struct {
 
 type TrackerConfig struct {
 	BaseURL                         string        `yaml:"base_url"`
+	Token                           string        `yaml:"token"`
 	UserAgent                       string        `yaml:"user_agent"`
 	Timeout                         time.Duration `yaml:"timeout"`
 	TraceBatchWindow                time.Duration `yaml:"trace_batch_window"`

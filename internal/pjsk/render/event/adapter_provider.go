@@ -65,3 +65,26 @@ func (a *ProviderAdapter) GetCharacterByID(id int) (*masterdata.Character, error
 func (a *ProviderAdapter) GetCharacterColorCode(id int) (string, bool) {
 	return a.P.Characters().GetColorCode(a.Context(), id)
 }
+
+// GetWorldBloomChapterRankingHonorRewards resolves chapter rewards, which are separate from the overall event ranking.
+func (a *ProviderAdapter) GetWorldBloomChapterRankingHonorRewards(eventID, characterID int) ([]masterdata.EventRankingHonorReward, error) {
+	ranges, err := a.P.Events().GetWorldBloomChapterRankingRewardRanges(a.Context(), eventID, characterID)
+	if err != nil {
+		return nil, err
+	}
+	var rewards []masterdata.EventRankingHonorReward
+	for _, ranking := range ranges {
+		box := a.P.Education().GetResourceBoxByPurpose(a.Context(), "world_bloom_chapter_ranking_reward", ranking.ResourceBoxID)
+		if box == nil {
+			continue
+		}
+		for _, detail := range box.Details {
+			if detail.ResourceType == "honor" && detail.ResourceID > 0 {
+				rewards = append(rewards, masterdata.EventRankingHonorReward{
+					FromRank: ranking.FromRank, ToRank: ranking.ToRank, HonorID: detail.ResourceID,
+				})
+			}
+		}
+	}
+	return rewards, nil
+}

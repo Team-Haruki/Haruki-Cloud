@@ -205,6 +205,7 @@ func buildUserCardEntries(cards []RawUserCard) []any {
 		seen[userCard.CardID] = struct{}{}
 		entry := map[string]any{
 			"cardId":                userCard.CardID,
+			"createdAt":             userCard.CreatedAt,
 			"level":                 userCard.Level,
 			"masterRank":            userCard.MasterRank,
 			"defaultImage":          userCard.DefaultImage,

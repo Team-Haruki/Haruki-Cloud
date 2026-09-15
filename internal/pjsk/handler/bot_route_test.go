@@ -110,19 +110,18 @@ func TestListBotRoutes(t *testing.T) {
 
 	}
 
-	costumeListRoute, ok := byPath["costume/list"]
-	testutil.RequireArgs(t, ok, "expected costume/list route to exist")
-
-	for _, command := range []string{"/服装列表", "/饰品列表", "/发型列表"} {
-		testutil.Require(t, contains(costumeListRoute.Commands, command), "expected costume/list commands to include %s, got %v", command, costumeListRoute.Commands)
-
+	for _, path := range []string{"costume/list", "costume/combo"} {
+		if _, ok := byPath[path]; ok {
+			t.Fatalf("obsolete costume route still registered: %s", path)
+		}
 	}
 	costumeDetailRoute, ok := byPath["costume/detail"]
 	testutil.RequireArgs(t, ok, "expected costume/detail route to exist")
-
-	for _, command := range []string{"/查服装", "/查饰品", "/查头饰"} {
-		testutil.Require(t, contains(costumeDetailRoute.Commands, command), "expected costume/detail commands to include %s, got %v", command, costumeDetailRoute.Commands)
-
+	testutil.Require(t, contains(costumeDetailRoute.Commands, "/查服装"), "missing card costume command")
+	for _, command := range []string{"/查饰品", "/查头饰", "/查衣装", "/costume", "/查发型"} {
+		if contains(costumeDetailRoute.Commands, command) {
+			t.Fatalf("obsolete command registered: %s", command)
+		}
 	}
 	{
 		_, ok := byPath["costume/body"]
@@ -139,13 +138,6 @@ func TestListBotRoutes(t *testing.T) {
 		testutil.RequireArgs(t, !(ok), "did not expect costume/hair route")
 	}
 
-	costumeComboRoute, ok := byPath["costume/combo"]
-	testutil.RequireArgs(t, ok, "expected costume/combo route to exist")
-
-	for _, command := range []string{"/组合", "/试穿", "/3d试穿"} {
-		testutil.Require(t, contains(costumeComboRoute.Commands, command), "expected costume/combo commands to include %s, got %v", command, costumeComboRoute.Commands)
-
-	}
 }
 
 func contains(items []string, target string) bool {

@@ -37,7 +37,16 @@ func convertRemoteDecks(src []remoteRecommendDeck) []RecommendDeck {
 				HasCanvasBonus:  c.HasCanvasBonus,
 			})
 		}
+		supportCards := make([]RecommendCard, 0, len(d.SupportDeckCards))
+		for _, card := range d.SupportDeckCards {
+			supportCards = append(supportCards, RecommendCard{
+				CardID: card.CardID, Level: card.Level, MasterRank: card.MasterRank,
+				DefaultImage: card.DefaultImage, SkillLevel: card.SkillLevel,
+				EventBonusRate: card.Bonus, IsAfterTraining: card.AfterTraining,
+			})
+		}
 		out = append(out, RecommendDeck{
+			SupportCards:         supportCards,
 			Cards:                cards,
 			Score:                d.Score,
 			LiveScore:            d.LiveScore,

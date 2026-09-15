@@ -17,6 +17,7 @@ type CostumeProvider interface {
 // CostumeFilter describes filtering criteria for costume queries.
 // Individual fields are optional; zero-value fields are ignored.
 type CostumeFilter struct {
+	CardID       int
 	PartType     string
 	CostumeType  string
 	CharacterID  int

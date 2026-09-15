@@ -256,12 +256,20 @@ func (c *Controller) resolveCardUnit(source CardSource, card *masterdata.Card, u
 }
 
 func (c *Controller) applyMaxProfileEventHonors(region renderregion.Value, raw *snapshot.RawUserData, query AutoQuery) {
-	if raw == nil || query.EventID == nil || (!query.MetadataWorldBloomFinale && *query.EventID != 180) {
+	if raw == nil {
 		return
 	}
 
 	_, source, ok := c.resolveEventSource(region)
 	if !ok || source == nil {
+		return
+	}
+
+	if isMaxProfileWorldBloom3Finale(source, query) {
+		c.applyMaxProfileWorldBloom3ChapterHonors(source, raw)
+		return
+	}
+	if query.EventID == nil || (!query.MetadataWorldBloomFinale && *query.EventID != 180) {
 		return
 	}
 
@@ -282,6 +290,43 @@ func (c *Controller) applyMaxProfileEventHonors(region renderregion.Value, raw *
 
 	raw.UserHonors = upsertMaxProfileUserHonor(raw.UserHonors, reward.HonorID)
 	raw.UserProfileHonors = upsertMaxProfileProfileHonor(raw.UserProfileHonors, reward.HonorID)
+}
+
+func isMaxProfileWorldBloom3Finale(source EventSource, query AutoQuery) bool {
+	if query.EventID == nil || *query.EventID <= 0 {
+		return query.WorldBloomFinaleTurn != nil && *query.WorldBloomFinaleTurn == 3
+	}
+	event, err := source.GetEventByID(*query.EventID)
+	return err == nil && event != nil && event.EventType == "world_bloom" &&
+		strings.HasPrefix(event.AssetBundleName, "event_wl_3rd_finale")
+}
+
+func (c *Controller) applyMaxProfileWorldBloom3ChapterHonors(source EventSource, raw *snapshot.RawUserData) {
+	chapters, ok := source.(worldBloomRankingHonorSource)
+	if !ok {
+		return
+	}
+	for _, event := range source.GetEvents() {
+		if event == nil || event.EventType != "world_bloom" || !strings.HasPrefix(event.AssetBundleName, "event_wl_3rd_part") {
+			continue
+		}
+		for _, chapter := range chapters.GetWorldBloomChapters(event.ID) {
+			if chapter == nil || chapter.GameCharacterID == nil || *chapter.GameCharacterID <= 0 || chapter.ChapterType == "finale" {
+				continue
+			}
+			rewards, err := chapters.GetWorldBloomChapterRankingHonorRewards(event.ID, *chapter.GameCharacterID)
+			if err != nil {
+				continue
+			}
+			// Do not substitute a lower-ranked title when this chapter's top-1000 reward is absent.
+			for _, reward := range rewards {
+				if reward.HonorID > 0 && reward.ToRank == 1000 && rewardContainsRank(reward, 1000) {
+					raw.UserHonors = upsertMaxProfileUserHonor(raw.UserHonors, reward.HonorID)
+					break
+				}
+			}
+		}
+	}
 }
 
 func pickMaxProfileRankingHonorReward(rewards []masterdata.EventRankingHonorReward, targetRank int) (masterdata.EventRankingHonorReward, bool) {

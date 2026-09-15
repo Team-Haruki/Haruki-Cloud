@@ -112,6 +112,7 @@ func isCardBoxQuery(args string) bool {
 	return hasCardBoxControlToken(lower, "box") ||
 		hasCardBoxControlToken(lower, "id") ||
 		hasCardBoxControlToken(lower, "before") ||
+		hasCardBoxControlToken(lower, "时间") ||
 		hasCardBoxUnownedToken(lower)
 }
 
@@ -125,6 +126,9 @@ func cardBoxParams(args string) map[string]any {
 	}
 	if groupBy := cardBoxGroupBy(args); groupBy != "" {
 		params["group_by"] = groupBy
+		if groupBy == card.CardBoxGroupByTime {
+			params["show_box"] = true
+		}
 	}
 	return params
 }
@@ -143,6 +147,9 @@ func newCardListParams(ctx HarrukiSekaiHandlerContext, args string, strictFilter
 }
 
 func newCardBoxParams(ctx HarrukiSekaiHandlerContext, args string, strictFilterOnly bool) (map[string]any, error) {
+	if hasCardBoxControlToken(args, "时间") && (hasCardBoxUnownedToken(args) || cardBoxGroupBy(strings.ReplaceAll(args, "时间", "")) != "") {
+		return nil, onebot11.NewReplayError("时间模式只展示已拥有卡牌，不能与属性分组或未持有同时使用")
+	}
 	params, err := newSelfQueryParamsMap(ctx)
 	if err != nil {
 		return nil, err
@@ -162,7 +169,7 @@ func cleanCardBoxArgs(args string) string {
 	kept := make([]string, 0, len(tokens))
 	for _, token := range tokens {
 		switch token {
-		case "id", "box", "before", "attr", "attrs", "attribute", "attributes", "未持有", "未拥有", "unowned", "missing", "miss":
+		case "时间", "id", "box", "before", "attr", "attrs", "attribute", "attributes", "未持有", "未拥有", "unowned", "missing", "miss":
 			continue
 		default:
 			kept = append(kept, token)
@@ -172,6 +179,9 @@ func cleanCardBoxArgs(args string) string {
 }
 
 func cardBoxGroupBy(args string) string {
+	if hasCardBoxControlToken(args, "时间") {
+		return card.CardBoxGroupByTime
+	}
 	lower := strings.ToLower(strings.TrimSpace(args))
 	if strings.Contains(args, "属性") ||
 		hasCardBoxControlToken(lower, "attr") ||
@@ -333,7 +343,7 @@ func executeCardImages(rc *RequestContext, cardCtrl *card.Controller) (onebot11.
 }
 
 func cardCatalogNeedsOwnedData(q card.Query) bool {
-	return q.ShowBox || q.UnownedOnly || strings.TrimSpace(q.Query) == ""
+	return q.ShowBox || q.UnownedOnly || q.GroupBy == card.CardBoxGroupByTime || strings.TrimSpace(q.Query) == ""
 }
 
 func prependCardSummary(image onebot11.Message, summary string) onebot11.Message {

@@ -101,6 +101,11 @@ type Controller struct {
 	recommendCfg  RecommendConfig
 	metaLoader    MusicMetaSource
 	engine        engineProvider
+	// logger and userDataFilePathFallbacks observe the C10 producer side. The
+	// counter is a pointer so per-request clones share it; a nil logger falls
+	// back to the global logger.
+	logger                    *logger.Logger
+	userDataFilePathFallbacks *atomic.Int64
 }
 
 // ── Recommender ─────────────────────────────────────────────────────────────
@@ -224,6 +229,9 @@ type RemoteDeckRecommender struct {
 	maxRetries          int
 	retryWaitTime       time.Duration
 	logger              *logger.Logger
+	// userDataFilePathFallbacks counts requests that sent user_data_file_path
+	// instead of user data bytes (C10 observation).
+	userDataFilePathFallbacks atomic.Int64
 
 	now func() time.Time
 }

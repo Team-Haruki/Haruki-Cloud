@@ -3,7 +3,12 @@ package imagecache
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"sync/atomic"
+	"time"
+
+	"haruki-cloud/utils/logger"
 
 	_ "github.com/lib/pq"
 )
@@ -37,28 +42,131 @@ DO $$ BEGIN
 	END IF;
 END $$`
 
+// Storage backend values recorded in image_cache_entries.storage_backend.
+const (
+	BackendLegacyDisk = "legacy_disk"
+	BackendGarage     = "garage"
+)
+
+// Pool defaults. Before these limits the pool was unbounded.
+const (
+	DefaultPGMaxOpen     = 8
+	defaultPGMaxIdle     = 4
+	defaultPGConnMaxLife = 30 * time.Minute
+)
+
+// widenedProbeSQL detects the widened image_cache_entries schema. The widening
+// DDL ships in a later release, so the store reads and writes both shapes.
+const widenedProbeSQL = `SELECT 1 FROM information_schema.columns WHERE table_name = 'image_cache_entries' AND column_name = 'storage_backend'`
+
+const lookupSQL = `SELECT cdn_path, COALESCE(file_path, ''), size_bytes FROM image_cache_entries WHERE hash = $1`
+
+const lookupWidenedSQL = `SELECT cdn_path, COALESCE(file_path, ''), size_bytes, storage_backend, media_type, expires_at FROM image_cache_entries WHERE hash = $1`
+
+const insertSQL = `
+		INSERT INTO image_cache_entries (hash, group_name, cdn_path, file_path, size_bytes)
+		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (hash) DO UPDATE
+			SET cdn_path   = EXCLUDED.cdn_path,
+			    file_path  = EXCLUDED.file_path,
+			    size_bytes = EXCLUDED.size_bytes`
+
+// insertWidenedSQL never rewrites a garage row's location: Drawing may already
+// serve its recorded cdn_path, and a Cloud write must not move it. Every
+// conflict still bumps last_referenced_at, the GC retention input (addendum
+// A6), matching Drawing's UPSERT_CONTENT.
+const insertWidenedSQL = `
+		INSERT INTO image_cache_entries (hash, group_name, cdn_path, file_path, size_bytes, storage_backend, media_type)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (hash) DO UPDATE
+			SET cdn_path           = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.cdn_path ELSE EXCLUDED.cdn_path END,
+			    file_path          = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.file_path ELSE EXCLUDED.file_path END,
+			    size_bytes         = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.size_bytes ELSE EXCLUDED.size_bytes END,
+			    storage_backend    = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.storage_backend ELSE EXCLUDED.storage_backend END,
+			    media_type         = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.media_type ELSE EXCLUDED.media_type END,
+			    last_referenced_at = NOW()`
+
+// touchEntrySQL marks a garage row as re-referenced so GC's retention window
+// restarts; Cloud runs it when a dedup hit re-emits the row's URL.
+const touchEntrySQL = `UPDATE image_cache_entries SET last_referenced_at = NOW() WHERE hash = $1`
+
+// ImageEntry is one image_cache_entries row.
+type ImageEntry struct {
+	Hash      string
+	GroupName string
+	CDNPath   string
+	// FilePath is "" when the column is NULL (garage rows).
+	FilePath string
+	// StorageBackend is BackendLegacyDisk or BackendGarage. On the un-widened
+	// schema, or when the column is NULL, it is inferred from FilePath.
+	StorageBackend string
+	MediaType      string
+	SizeBytes      int64
+	// ExpiresAt is zero for "never". It is not a lifetime signal for garage rows.
+	ExpiresAt time.Time
+	// LastReferencedAt is written on every re-reference and drives GC. It is
+	// only read by the render index queries; Lookup leaves it zero.
+	LastReferencedAt time.Time
+}
+
+// PGStoreOptions tunes the connection pool.
+type PGStoreOptions struct {
+	// MaxOpen bounds open connections; <= 0 selects DefaultPGMaxOpen.
+	MaxOpen int
+	// RenderIndexDDL runs the canonical render index DDL (renderIndexDDL) in
+	// Init. Off keeps Init to today's schema statements.
+	RenderIndexDDL bool
+}
+
 // PGStore is a PostgreSQL-backed metadata store for the image cache.
 // It enables deduplication across restarts and multi-instance deployments.
 // A nil PGStore is safe to use — all methods become no-ops.
 type PGStore struct {
-	db *sql.DB
+	db         *sql.DB
+	widened    atomic.Bool
+	ddlEnabled bool
 }
 
-// NewPGStore opens a PostgreSQL connection pool using the given DSN.
+// NewPGStore opens a PostgreSQL connection pool using the given DSN with the
+// default pool limits.
 func NewPGStore(dsn string) (*PGStore, error) {
+	return NewPGStoreWithOptions(dsn, PGStoreOptions{})
+}
+
+// NewPGStoreWithOptions opens a PostgreSQL connection pool using the given DSN.
+func NewPGStoreWithOptions(dsn string, opts PGStoreOptions) (*PGStore, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("imagecache pgstore: open: %w", err)
 	}
+	store := NewPGStoreFromDB(db, opts)
 	if err := db.Ping(); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("imagecache pgstore: ping: %w", err)
 	}
-	return &PGStore{db: db}, nil
+	return store, nil
 }
 
-// Init creates the image_cache_entries table if it does not exist, then runs
-// any pending schema migrations (e.g. renaming cdn_url → cdn_path).
+// NewPGStoreFromDB wraps an already opened pool (tests pass a sqlmock pool)
+// and applies the pool limits. Init must still run before use.
+func NewPGStoreFromDB(db *sql.DB, opts PGStoreOptions) *PGStore {
+	configurePool(db, opts)
+	return &PGStore{db: db, ddlEnabled: opts.RenderIndexDDL}
+}
+
+func configurePool(db *sql.DB, opts PGStoreOptions) {
+	maxOpen := opts.MaxOpen
+	if maxOpen <= 0 {
+		maxOpen = DefaultPGMaxOpen
+	}
+	db.SetMaxOpenConns(maxOpen)
+	db.SetMaxIdleConns(min(defaultPGMaxIdle, maxOpen))
+	db.SetConnMaxLifetime(defaultPGConnMaxLife)
+}
+
+// Init creates the image_cache_entries table if it does not exist, runs any
+// pending schema migrations (e.g. renaming cdn_url → cdn_path), runs the
+// render index DDL when enabled, then probes whether the widened columns exist.
 func (s *PGStore) Init(ctx context.Context) error {
 	if s == nil {
 		return nil
@@ -66,40 +174,133 @@ func (s *PGStore) Init(ctx context.Context) error {
 	if _, err := s.db.ExecContext(ctx, initSQL); err != nil {
 		return err
 	}
-	_, err := s.db.ExecContext(ctx, migrateSQL)
-	return err
+	if _, err := s.db.ExecContext(ctx, migrateSQL); err != nil {
+		return err
+	}
+	if s.ddlEnabled {
+		for i, stmt := range renderIndexDDL {
+			if _, err := s.db.ExecContext(ctx, stmt); err != nil {
+				return fmt.Errorf("imagecache pgstore: render index ddl step %d: %w", i+1, err)
+			}
+		}
+	}
+	return s.probeSchema(ctx)
 }
 
-// Lookup returns the stored relative CDN path and file path for a previously
-// stored image hash. The caller is responsible for prepending the CDN base URI.
-// Returns ("", "", false) on miss or any error.
-func (s *PGStore) Lookup(ctx context.Context, hash string) (cdnPath, filePath string, ok bool) {
+func (s *PGStore) probeSchema(ctx context.Context) error {
+	var one int
+	err := s.db.QueryRowContext(ctx, widenedProbeSQL).Scan(&one)
+	switch {
+	case err == nil:
+		s.widened.Store(true)
+	case errors.Is(err, sql.ErrNoRows):
+		s.widened.Store(false)
+	default:
+		return fmt.Errorf("imagecache pgstore: schema probe: %w", err)
+	}
+	return nil
+}
+
+// Widened reports whether Init found the widened schema.
+func (s *PGStore) Widened() bool {
+	return s != nil && s.widened.Load()
+}
+
+// Lookup returns the stored row for a previously stored image hash. A missing
+// row is (ImageEntry{}, false, nil); any other failure is returned so the
+// caller can log it instead of treating it as a silent miss. CDNPath is
+// relative: the caller prepends a public base URL.
+func (s *PGStore) Lookup(ctx context.Context, hash string) (ImageEntry, bool, error) {
 	if s == nil {
-		return "", "", false
+		return ImageEntry{}, false, nil
 	}
-	err := s.db.QueryRowContext(ctx,
-		`SELECT cdn_path, file_path FROM image_cache_entries WHERE hash = $1`, hash).Scan(&cdnPath, &filePath)
+	entry := ImageEntry{Hash: hash}
+	var err error
+	if s.Widened() {
+		var backend, mediaType sql.NullString
+		var expiresAt sql.NullTime
+		err = s.db.QueryRowContext(ctx, lookupWidenedSQL, hash).
+			Scan(&entry.CDNPath, &entry.FilePath, &entry.SizeBytes, &backend, &mediaType, &expiresAt)
+		entry.StorageBackend = backend.String
+		entry.MediaType = mediaType.String
+		if expiresAt.Valid {
+			entry.ExpiresAt = expiresAt.Time
+		}
+	} else {
+		err = s.db.QueryRowContext(ctx, lookupSQL, hash).Scan(&entry.CDNPath, &entry.FilePath, &entry.SizeBytes)
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		return ImageEntry{}, false, nil
+	}
 	if err != nil {
-		return "", "", false
+		return ImageEntry{}, false, fmt.Errorf("imagecache pgstore: lookup: %w", err)
 	}
-	return cdnPath, filePath, true
+	if entry.StorageBackend == "" {
+		entry.StorageBackend = inferBackend(entry.FilePath)
+	}
+	return entry, true, nil
 }
 
-// Insert records a new image cache entry. cdnPath must be a relative path
-// (no scheme or domain), e.g. "pjsk/profile/abc123.png".
-// If the same hash already exists, the file_path, cdn_path and size_bytes are updated in place.
+func inferBackend(filePath string) string {
+	if filePath == "" {
+		return BackendGarage
+	}
+	return BackendLegacyDisk
+}
+
+// InsertEntry records an image cache row. CDNPath must be a relative path (no
+// scheme or domain), e.g. "pjsk/abc123.png". An existing row for the same hash
+// is updated in place (on the widened schema, never a garage row).
+func (s *PGStore) InsertEntry(ctx context.Context, e ImageEntry) error {
+	if s == nil {
+		return nil
+	}
+	var err error
+	if s.Widened() {
+		backend := e.StorageBackend
+		if backend == "" {
+			backend = inferBackend(e.FilePath)
+		}
+		_, err = s.db.ExecContext(ctx, insertWidenedSQL,
+			e.Hash, e.GroupName, e.CDNPath, nullIfEmpty(e.FilePath), e.SizeBytes, backend, nullIfEmpty(e.MediaType))
+	} else {
+		_, err = s.db.ExecContext(ctx, insertSQL, e.Hash, e.GroupName, e.CDNPath, e.FilePath, e.SizeBytes)
+	}
+	if err != nil {
+		return fmt.Errorf("imagecache pgstore: insert: %w", err)
+	}
+	return nil
+}
+
+// TouchEntry bumps last_referenced_at for hash. It is a no-op on the
+// un-widened schema, which has no such column.
+func (s *PGStore) TouchEntry(ctx context.Context, hash string) error {
+	if !s.Widened() || hash == "" {
+		return nil
+	}
+	if _, err := s.db.ExecContext(ctx, touchEntrySQL, hash); err != nil {
+		return fmt.Errorf("imagecache pgstore: touch entry: %w", err)
+	}
+	return nil
+}
+
+func nullIfEmpty(value string) sql.NullString {
+	return sql.NullString{String: value, Valid: value != ""}
+}
+
+// Insert records a legacy disk row and logs a failure at ERROR. It is kept
+// for the drawing render cache's legacy write side.
 func (s *PGStore) Insert(ctx context.Context, hash, groupName, cdnPath, filePath string, sizeBytes int64) {
 	if s == nil {
 		return
 	}
-	_, _ = s.db.ExecContext(ctx, `
-		INSERT INTO image_cache_entries (hash, group_name, cdn_path, file_path, size_bytes)
-		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (hash) DO UPDATE
-			SET cdn_path   = EXCLUDED.cdn_path,
-			    file_path  = EXCLUDED.file_path,
-			    size_bytes = EXCLUDED.size_bytes`,
-		hash, groupName, cdnPath, filePath, sizeBytes)
+	err := s.InsertEntry(ctx, ImageEntry{
+		Hash: hash, GroupName: groupName, CDNPath: cdnPath, FilePath: filePath,
+		StorageBackend: BackendLegacyDisk, MediaType: mediaTypeFromPath(cdnPath), SizeBytes: sizeBytes,
+	})
+	if err != nil {
+		logger.ErrorContext(ctx, "image cache index insert failed", "error", err)
+	}
 }
 
 // Close releases the database connection pool.

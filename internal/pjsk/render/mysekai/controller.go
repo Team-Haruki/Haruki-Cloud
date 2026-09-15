@@ -11,6 +11,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/storage"
 )
 
 const mysekaiMasterdataResolveTimeout = 10 * time.Second
@@ -201,6 +202,8 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot
 	region := renderregion.WithDefault(defaultRegion)
 	resolver := newMasterdataResolver(mdOpts)
 	md := resolver.Resolve(region)
+	reader := assets.ReaderOr(mdOpts.AssetReader, assetHelper)
+	cacheStore, statsKey := housingCompetitionCacheStore(mdOpts)
 	return &Controller{
 		drawing:       drawingClient,
 		snapshot:      snapshot,
@@ -209,16 +212,33 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot
 		defaultRegion: region,
 		nicknames:     cloneNicknames(defaultNicknames),
 		assets:        assetHelper,
-		housingCompetitionStats: newHousingCompetitionStatsCache(
-			mdOpts.HousingCompetitionStatsCachePath,
+		assetReader:   reader,
+		housingCompetitionStats: newHousingCompetitionStatsCacheWithStore(
+			cacheStore,
+			statsKey,
 			mdOpts.HousingCompetitionRefreshInterval,
 		),
 		housingCompetitionBanners: newHousingCompetitionBannerCache(
-			defaultHousingCompetitionBannerCacheDir(mdOpts.HousingCompetitionStatsCachePath),
-			assetHelper,
-			mdOpts.AssetsBaseURL,
+			cacheStore,
+			reader,
+			mdOpts.AssetHosts,
 		),
 	}
+}
+
+// housingCompetitionCacheStore picks the store holding the housing stats
+// object and the banner cache: the configured store and key, else a local
+// store at the directory of HousingCompetitionStatsCachePath (so the banners
+// keep landing next to the stats file), else none.
+func housingCompetitionCacheStore(opts MasterdataOptions) (storage.Store, storage.Key) {
+	if opts.HousingCompetitionCacheStore != nil {
+		key := opts.HousingCompetitionStatsCacheKey
+		if key == "" {
+			key = DefaultHousingCompetitionStatsCacheKey
+		}
+		return opts.HousingCompetitionCacheStore, key
+	}
+	return localHousingCompetitionCacheStore(opts.HousingCompetitionStatsCachePath)
 }
 
 func (c *Controller) WithContext(ctx context.Context) *Controller {
@@ -267,7 +287,7 @@ func (c *Controller) staticPath(relPath string) string {
 	if strings.HasPrefix(resolved, assets.StaticImagesDir+"/") {
 		return resolved
 	}
-	if relative := staticPathRelativeToRoots(c.assets, resolved); relative != "" {
+	if relative := strings.TrimPrefix(c.assets.RelativePath(resolved), "./"); relative != resolved && strings.HasPrefix(relative, assets.StaticImagesDir+"/") {
 		return relative
 	}
 
@@ -279,33 +299,6 @@ func (c *Controller) staticPath(relPath string) string {
 	}
 
 	return resolved
-}
-
-func staticPathRelativeToRoots(helper *assets.AssetHelper, resolved string) string {
-	if helper == nil {
-		return ""
-	}
-	for _, root := range helper.Roots() {
-		if relative := staticPathRelativeToRoot(root, resolved); relative != "" {
-			return relative
-		}
-	}
-	return ""
-}
-
-func staticPathRelativeToRoot(root, resolved string) string {
-	root = strings.TrimSpace(root)
-	if root == "" || strings.HasPrefix(root, "http://") || strings.HasPrefix(root, "https://") {
-		return ""
-	}
-	relative := filepath.ToSlash(strings.TrimPrefix(assets.MakeRelative(root, resolved), "./"))
-	if strings.HasPrefix(relative, assets.StaticImagesDir+"/") {
-		return relative
-	}
-	if relative == resolved || relative == "" || filepath.Base(filepath.ToSlash(root)) != assets.StaticImagesDir {
-		return ""
-	}
-	return filepath.ToSlash(filepath.Join(assets.StaticImagesDir, strings.TrimPrefix(relative, "/")))
 }
 
 // WithSnapshot returns a shallow copy of this Controller that uses the given

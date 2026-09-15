@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# Profile backgrounds (user_upload/profile_bg) are no longer mirrored here: since E1 Cloud
+# writes them through the storage.user_upload slot. Stop this script's timer on the secondary
+# before storage.user_upload points at s3 (release R6, profile_bg flip to Garage).
+
 PRIMARY_SSH_HOST=${HARUKI_PRIMARY_SSH_HOST:-yamamoto.j8.network}
 PRIMARY_SSH_PORT=${HARUKI_PRIMARY_SSH_PORT:-60022}
 PRIMARY_SSH_USER=${HARUKI_PRIMARY_SSH_USER:-root}
@@ -29,8 +33,7 @@ rsync_mirror_opts=("${rsync_base_opts[@]}" --delete)
 
 mkdir -p \
   "$DRAWING_ROOT/static_images" \
-  "$DRAWING_ROOT/custom_profile/tmp-font-assets" \
-  "$ASSET_ROOT/user_upload/profile_bg"
+  "$DRAWING_ROOT/custom_profile/tmp-font-assets"
 
 echo "syncing drawing root fonts"
 rsync "${rsync_base_opts[@]}" \
@@ -61,9 +64,4 @@ for region in jp en cn tw kr; do
     "$ASSET_ROOT/${region}-assets/startapp/custom_profile/font/"
 done
 
-echo "syncing assets/user_upload/profile_bg"
-rsync "${rsync_mirror_opts[@]}" \
-  "${PRIMARY_SSH_USER}@${PRIMARY_SSH_HOST}:${PRIMARY_ASSET_ROOT}/user_upload/profile_bg/" \
-  "$ASSET_ROOT/user_upload/profile_bg/"
-
-echo "static drawing assets and profile backgrounds synced"
+echo "static drawing assets synced"

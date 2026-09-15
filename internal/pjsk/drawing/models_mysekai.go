@@ -83,16 +83,18 @@ type MysekaiMsrMapSiteInfo struct {
 }
 
 type MysekaiMsrMapHarvestPoint struct {
-	ID                *int    `json:"id,omitempty"`
-	ImagePath         string  `json:"image_path"`
-	FallbackImagePath *string `json:"fallback_image_path,omitempty"`
-	PositionX         float64 `json:"position_x"`
-	PositionZ         float64 `json:"position_z"`
-	Status            string  `json:"status,omitempty"`
-	Size              *int    `json:"size,omitempty"`
-	OffsetX           float64 `json:"offset_x,omitempty"`
-	OffsetZ           float64 `json:"offset_z,omitempty"`
-	Alpha             float64 `json:"alpha,omitempty"`
+	ID *int `json:"id,omitempty"`
+	// ImagePath is a C1 candidate list for birthday plants (see
+	// mysekaiBirthdayIconCandidates) and a single path otherwise.
+	ImagePath         AssetKey `json:"image_path"`
+	FallbackImagePath *string  `json:"fallback_image_path,omitempty"`
+	PositionX         float64  `json:"position_x"`
+	PositionZ         float64  `json:"position_z"`
+	Status            string   `json:"status,omitempty"`
+	Size              *int     `json:"size,omitempty"`
+	OffsetX           float64  `json:"offset_x,omitempty"`
+	OffsetZ           float64  `json:"offset_z,omitempty"`
+	Alpha             float64  `json:"alpha,omitempty"`
 }
 
 type MysekaiMsrMapResourceDrop struct {

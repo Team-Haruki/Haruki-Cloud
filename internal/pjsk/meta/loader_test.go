@@ -60,7 +60,7 @@ func TestLoaderPersistsRegionSpecificFilename(t *testing.T) {
 	dir := t.TempDir()
 	loader := NewLoader(nil, WithOutputDir(dir))
 
-	if err := loader.persist("tw", []byte(`[]`)); err != nil {
+	if err := loader.persist(context.Background(), "tw", []byte(`[]`)); err != nil {
 		t.Fatalf("persist tw: %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "music_metas-tc.json")); err != nil {

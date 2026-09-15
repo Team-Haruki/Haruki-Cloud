@@ -1,12 +1,15 @@
 package config
 
 import (
+	"haruki-cloud/internal/storage"
 	"haruki-cloud/internal/testutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // ================= Profile Tests =================
@@ -348,31 +351,332 @@ func TestApplyEnvOverridesSekaiRemoteSync(t *testing.T) {
 
 }
 
-func TestApplyEnvOverridesPJSKRenderChartsURI(t *testing.T) {
-	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts")
+func TestApplyEnvOverridesDrawingCache(t *testing.T) {
+	t.Setenv("CACHE_STORAGE_DIR", "/legacy/cache")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_STORAGE_DIR", "/data/drawing-cache")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_TTL", "10m")
 
 	cfg := &Config{}
 	ApplyEnvOverrides(cfg)
-	testutil.Require(t, !(cfg.PJSKRender.ImageCache.ChartsURI != "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts"), "unexpected charts uri override: %q", cfg.PJSKRender.ImageCache.ChartsURI)
+	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.StorageDir != "/data/drawing-cache"), "unexpected drawing cache storage dir: %q", cfg.PJSKRender.DrawingCache.StorageDir)
+	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.TTL != 10*time.Minute), "unexpected drawing cache ttl: %v", cfg.PJSKRender.DrawingCache.TTL)
 
 }
 
-func TestApplyEnvOverridesDrawingCache(t *testing.T) {
-	t.Setenv("CACHE_STORAGE_DIR", "/legacy/cache")
-	t.Setenv("CACHE_DB_PATH", "/legacy/cache/cache.db")
-	t.Setenv("CACHE_GC_INTERVAL", "12h")
-	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_BASE_URL", "http://haruki-cloud:6666")
-	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_STORAGE_DIR", "/data/drawing-cache")
-	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_DB_PATH", "/data/drawing-cache/cache.db")
-	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_TTL", "10m")
-	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_GC_INTERVAL", "24h")
+func TestApplyEnvOverridesPJSKRenderImageCacheAndDrawing(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_URI", "https://image-cache.example")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR", "/data/imagecache")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_TIMEOUT", "45s")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_RETRY_COUNT", "4")
 
 	cfg := &Config{}
-	ApplyEnvOverrides(cfg)
-	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.BaseURL != "http://haruki-cloud:6666"), "unexpected drawing cache base url: %q", cfg.PJSKRender.DrawingCache.BaseURL)
-	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.StorageDir != "/data/drawing-cache"), "unexpected drawing cache storage dir: %q", cfg.PJSKRender.DrawingCache.StorageDir)
-	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.DBPath != "/data/drawing-cache/cache.db"), "unexpected drawing cache db path: %q", cfg.PJSKRender.DrawingCache.DBPath)
-	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.TTL != 10*time.Minute), "unexpected drawing cache ttl: %v", cfg.PJSKRender.DrawingCache.TTL)
-	testutil.Require(t, !(cfg.PJSKRender.DrawingCache.GCInterval != 24*time.Hour), "unexpected drawing cache gc interval: %v", cfg.PJSKRender.DrawingCache.GCInterval)
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	render := cfg.PJSKRender
+	testutil.Require(t, render.ImageCache.URI == "https://image-cache.example", "image cache uri = %q", render.ImageCache.URI)
+	testutil.Require(t, render.ImageCache.Dir == "/data/imagecache", "image cache dir = %q", render.ImageCache.Dir)
+	testutil.Require(t, render.DrawingTimeout == 45*time.Second, "drawing timeout = %v", render.DrawingTimeout)
+	testutil.Require(t, render.DrawingRetryCount == 4, "drawing retry count = %d", render.DrawingRetryCount)
+}
 
+func TestApplyEnvOverridesStorageSlots(t *testing.T) {
+	for _, slot := range storage.Slots {
+		t.Run(string(slot), func(t *testing.T) {
+			prefix := "HARUKI_PJSK_RENDER_STORAGE_" + strings.ToUpper(string(slot))
+			t.Setenv(prefix+"_PROVIDER", "garage")
+			t.Setenv(prefix+"_SCHEME", "s3")
+			t.Setenv(prefix+"_ENDPOINT", "http://single:3900")
+			t.Setenv(prefix+"_ENDPOINTS", "http://a:3900, http://b:3900")
+			t.Setenv(prefix+"_TLS", "false")
+			t.Setenv(prefix+"_BUCKET", "bucket-"+string(slot))
+			t.Setenv(prefix+"_ROOT", "root")
+			t.Setenv(prefix+"_PREFIX", "prefix")
+			t.Setenv(prefix+"_REGION", "garage")
+			t.Setenv(prefix+"_ACCESS_KEY_ID", "AK")
+			t.Setenv(prefix+"_SECRET_ACCESS_KEY", "SK")
+			t.Setenv(prefix+"_PUBLIC_READ", "true")
+			t.Setenv(prefix+"_PATH_STYLE", "true")
+			t.Setenv(prefix+"_BASE_URL", "https://cdn.example")
+			t.Setenv(prefix+"_OPTIONS", "request_timeout=10s,proxy=none")
+
+			cfg := &Config{}
+			testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+			got := cfg.PJSKRender.Storage.Provider(slot)
+			testutil.Require(t, got.Provider == "garage" && got.Scheme == "s3" && got.Endpoint == "http://single:3900", "identity = %+v", got)
+			testutil.Require(t, len(got.Endpoints) == 2 && got.Endpoints[1] == "http://b:3900", "endpoints = %#v", got.Endpoints)
+			testutil.Require(t, got.TLS != nil && !*got.TLS, "tls = %v", got.TLS)
+			testutil.Require(t, got.Bucket == "bucket-"+string(slot) && got.Root == "root" && got.Prefix == "prefix" && got.Region == "garage", "location = %+v", got)
+			testutil.Require(t, got.AccessKeyID == "AK" && got.SecretAccessKey == "SK", "credentials not applied")
+			testutil.Require(t, got.PublicRead && got.PathStyle != nil && *got.PathStyle, "flags = %+v", got)
+			testutil.Require(t, got.BaseURL == "https://cdn.example", "base url = %q", got.BaseURL)
+			testutil.Require(t, got.Options["request_timeout"] == "10s" && got.Options["proxy"] == "none", "options = %#v", got.Options)
+			testutil.Require(t, got.Mirror == nil, "mirror unexpectedly created")
+			for _, other := range storage.Slots {
+				if other != slot {
+					testutil.Require(t, cfg.PJSKRender.Storage.Provider(other).IsZero(), "slot %s touched", other)
+				}
+			}
+		})
+	}
+}
+
+func TestApplyEnvOverridesStorageUserUploadMirror(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_STORAGE_USER_UPLOAD_MIRROR_SCHEME", "fs")
+	t.Setenv("HARUKI_PJSK_RENDER_STORAGE_USER_UPLOAD_MIRROR_ROOT", "/asset")
+	t.Setenv("HARUKI_PJSK_RENDER_STORAGE_USER_UPLOAD_MIRROR_BUCKET", "user-upload")
+	t.Setenv("HARUKI_PJSK_RENDER_STORAGE_USER_UPLOAD_MIRROR_ENDPOINTS", `["http://a:3900"]`)
+	t.Setenv("HARUKI_PJSK_RENDER_STORAGE_USER_UPLOAD_MIRROR_MODE", "write_only")
+
+	cfg := &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	upload := cfg.PJSKRender.Storage.UserUpload
+	testutil.Require(t, upload.Mirror != nil, "mirror not created")
+	testutil.Require(t, upload.Mirror.Scheme == "fs" && upload.Mirror.Root == "/asset" && upload.Mirror.Bucket == "user-upload", "mirror = %+v", upload.Mirror)
+	testutil.Require(t, len(upload.Mirror.Endpoints) == 1, "mirror endpoints = %#v", upload.Mirror.Endpoints)
+	testutil.Require(t, upload.MirrorMode == "write_only", "mirror mode = %q", upload.MirrorMode)
+}
+
+func TestApplyEnvOverridesStorageMirrorKeepsYAMLMirror(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_STORAGE_USER_UPLOAD_MIRROR_ROOT", "/override")
+	cfg := &Config{}
+	cfg.PJSKRender.Storage.UserUpload.Mirror = &storage.ProviderConfig{Scheme: "fs", Root: "/asset"}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	mirror := cfg.PJSKRender.Storage.UserUpload.Mirror
+	testutil.Require(t, mirror != nil && mirror.Scheme == "fs" && mirror.Root == "/override", "mirror = %+v", mirror)
+
+	cfg = &Config{}
+	t.Setenv("HARUKI_PJSK_RENDER_STORAGE_USER_UPLOAD_MIRROR_ROOT", "")
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	testutil.Require(t, cfg.PJSKRender.Storage.UserUpload.Mirror == nil, "empty env created a mirror")
+}
+
+func TestApplyEnvOverridesStorageRejectsMalformedLists(t *testing.T) {
+	for _, name := range []string{
+		"HARUKI_PJSK_RENDER_STORAGE_CACHE_ENDPOINTS",
+		"HARUKI_PJSK_RENDER_STORAGE_CACHE_OPTIONS",
+		"HARUKI_PJSK_RENDER_STORAGE_USER_UPLOAD_ENDPOINTS",
+		"HARUKI_PJSK_RENDER_STORAGE_USER_UPLOAD_MIRROR_ENDPOINTS",
+	} {
+		t.Run(name, func(t *testing.T) {
+			value := `["unterminated`
+			if strings.HasSuffix(name, "_OPTIONS") {
+				value = "missing-equals"
+			}
+			t.Setenv(name, value)
+			err := ApplyEnvOverrides(&Config{})
+			testutil.Require(t, err != nil && strings.Contains(err.Error(), name), "error = %v", err)
+		})
+	}
+}
+
+func TestEnvBoolPtr(t *testing.T) {
+	var dst *bool
+	envBoolPtr("HARUKI_TEST_BOOL_PTR_UNSET", &dst)
+	testutil.Require(t, dst == nil, "unset variable set the pointer")
+	t.Setenv("HARUKI_TEST_BOOL_PTR", "not-a-bool")
+	envBoolPtr("HARUKI_TEST_BOOL_PTR", &dst)
+	testutil.Require(t, dst == nil, "invalid variable set the pointer")
+	t.Setenv("HARUKI_TEST_BOOL_PTR", "false")
+	envBoolPtr("HARUKI_TEST_BOOL_PTR", &dst)
+	testutil.Require(t, dst != nil && !*dst, "false not applied")
+	t.Setenv("HARUKI_TEST_BOOL_PTR", "1")
+	envBoolPtr("HARUKI_TEST_BOOL_PTR", &dst)
+	testutil.Require(t, dst != nil && *dst, "true not applied")
+}
+
+func TestEnvStringMapGenericErrorText(t *testing.T) {
+	var dst map[string]string
+	t.Setenv("HARUKI_TEST_MAP", "novalue")
+	err := envStringMap("HARUKI_TEST_MAP", &dst)
+	testutil.Require(t, err != nil && strings.Contains(err.Error(), "expected key=value"), "error = %v", err)
+	testutil.Require(t, !strings.Contains(err.Error(), "region"), "error still mentions region: %v", err)
+	t.Setenv("HARUKI_TEST_MAP", `{"k":" "}`)
+	err = envStringMap("HARUKI_TEST_MAP", &dst)
+	testutil.Require(t, err != nil && strings.Contains(err.Error(), "key and value must not be empty"), "error = %v", err)
+}
+
+func TestReadConfigStorageBlock(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "haruki-cloud.yaml")
+	doc := `pjsk_render:
+  storage:
+    assets:      { scheme: fs, root: "/asset" }
+    user_upload:
+      kind: s3
+      name: garage
+      bucket: user-upload
+      endpoints: ["http://100.64.0.11:3900"]
+      endpoint: "http://ignored:3900"
+      access_key_id: "GK"
+      secret_access_key: "secret"
+      public_base_url: "https://cdn.example"
+      options: { max_attempts: 2 }
+      mirror: { scheme: local, root: "/asset" }
+      mirror_mode: write
+    cache: { scheme: fs, root: "/data/haruki/cache/cloud" }
+    image_cache:
+      scheme: s3
+      bucket: image-cache
+      endpoint: "garage:3900"
+      tls: false
+      path_style: false
+`
+	testutil.Require(t, os.WriteFile(configPath, []byte(doc), 0o600) == nil, "write config")
+	cfg, err := ReadConfig(configPath)
+	testutil.Require(t, err == nil, "ReadConfig error = %v", err)
+	st := cfg.PJSKRender.Storage
+	testutil.Require(t, st.Assets.Root == "/asset" && st.Static.IsZero(), "assets/static = %+v / %+v", st.Assets, st.Static)
+	testutil.Require(t, st.UserUpload.Scheme == "s3" && st.UserUpload.Provider == "garage" && st.UserUpload.BaseURL == "https://cdn.example", "aliases = %+v", st.UserUpload)
+	testutil.Require(t, st.UserUpload.Options["max_attempts"] == "2", "options = %#v", st.UserUpload.Options)
+	testutil.Require(t, st.UserUpload.Mirror != nil && st.UserUpload.Mirror.Root == "/asset", "mirror = %+v", st.UserUpload.Mirror)
+	testutil.Require(t, st.ImageCache.TLS != nil && !*st.ImageCache.TLS && st.ImageCache.PathStyle != nil && !*st.ImageCache.PathStyle, "image_cache = %+v", st.ImageCache)
+	for _, slot := range storage.Slots {
+		testutil.Require(t, storage.Validate(string(slot), *st.Provider(slot)) == nil || st.Provider(slot).IsZero(), "slot %s invalid", slot)
+	}
+}
+
+func TestApplyEnvOverridesPublicHosts(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS", "cn09=https://ic-cn09.example, cn01=https://ic-cn01.example")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOST_ORDER", "cn09,cn01")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_PATH", "/health")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_INTERVAL", "15s")
+	t.Setenv("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", "https://assets.example")
+	t.Setenv("HARUKI_PJSK_RENDER_ASSETS_BASE_URLS", "https://assets-cn09.example, https://assets-cn01.example")
+
+	cfg := &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	ic := cfg.PJSKRender.ImageCache
+	testutil.Require(t, len(ic.Hosts) == 2 && ic.Hosts["cn01"] == "https://ic-cn01.example", "hosts = %#v", ic.Hosts)
+	testutil.Require(t, len(ic.HostOrder) == 2 && ic.HostOrder[0] == "cn09", "host order = %#v", ic.HostOrder)
+	testutil.Require(t, ic.HostsProbePath == "/health" && ic.HostsProbeInterval == 15*time.Second, "probe = %q %v", ic.HostsProbePath, ic.HostsProbeInterval)
+	ad := cfg.PJSKRender.AssetDirs
+	testutil.Require(t, ad.AssetsBaseURL == "https://assets.example", "assets base url = %q", ad.AssetsBaseURL)
+	testutil.Require(t, len(ad.AssetsBaseURLs) == 2 && ad.AssetsBaseURLs[1] == "https://assets-cn01.example", "assets base urls = %#v", ad.AssetsBaseURLs)
+}
+
+func TestApplyEnvOverridesImageCacheIndex(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_MAX_OPEN", "16")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_REQUIRE_PG", "true")
+	cfg := &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	ic := cfg.PJSKRender.ImageCache
+	testutil.Require(t, !ic.RenderIndex.DDLEnabled && !ic.RenderIndex.LookupEnabled && ic.RenderIndex.TouchInterval == 0, "render index flags default on: %+v", ic.RenderIndex)
+	testutil.Require(t, ic.PGMaxOpen == 16 && ic.RenderIndex.RequirePG, "image cache index = %+v", ic)
+
+	var decoded PJSKRenderConfig
+	err := yaml.Unmarshal([]byte("image_cache:\n  pg_max_open: 4\n  render_index:\n    require_pg: true\n"), &decoded)
+	testutil.Require(t, err == nil && decoded.ImageCache.PGMaxOpen == 4 && decoded.ImageCache.RenderIndex.RequirePG, "yaml = %+v, %v", decoded.ImageCache, err)
+}
+
+func TestApplyEnvOverridesRenderIndexFlags(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_DDL_ENABLED", "true")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_LOOKUP_ENABLED", "true")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_TOUCH_INTERVAL", "90s")
+	cfg := &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	ri := cfg.PJSKRender.ImageCache.RenderIndex
+	testutil.Require(t, ri.DDLEnabled && ri.LookupEnabled && ri.TouchInterval == 90*time.Second, "render index env = %+v", ri)
+
+	var decoded PJSKRenderConfig
+	err := yaml.Unmarshal([]byte("image_cache:\n  render_index:\n    ddl_enabled: true\n    lookup_enabled: true\n    touch_interval: 2m\n"), &decoded)
+	ri = decoded.ImageCache.RenderIndex
+	testutil.Require(t, err == nil && ri.DDLEnabled && ri.LookupEnabled && ri.TouchInterval == 2*time.Minute, "yaml = %+v, %v", ri, err)
+}
+
+func TestDrawingArtifactConfigEnvAndYAML(t *testing.T) {
+	cfg := &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	da := cfg.PJSKRender.DrawingArtifact
+	testutil.Require(t, len(da.Endpoints) == 0 && da.FetchTimeout == 0 && da.ArtifactTimeout == 0, "drawing artifact defaults on: %+v", da)
+
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ENDPOINTS", "api/pjsk/card/box, api/pjsk/event/list")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_FETCH_TIMEOUT", "3s")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ARTIFACT_TIMEOUT", "20s")
+	cfg = &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	da = cfg.PJSKRender.DrawingArtifact
+	testutil.Require(t, len(da.Endpoints) == 2 && da.Endpoints[0] == "api/pjsk/card/box" && da.Endpoints[1] == "api/pjsk/event/list" &&
+		da.FetchTimeout == 3*time.Second && da.ArtifactTimeout == 20*time.Second, "drawing artifact env = %+v", da)
+
+	var decoded PJSKRenderConfig
+	err := yaml.Unmarshal([]byte("drawing_artifact:\n  endpoints: [\"*\"]\n  fetch_timeout: 10s\n  artifact_timeout: 15s\n"), &decoded)
+	da = decoded.DrawingArtifact
+	testutil.Require(t, err == nil && len(da.Endpoints) == 1 && da.Endpoints[0] == "*" && da.FetchTimeout == 10*time.Second && da.ArtifactTimeout == 15*time.Second, "yaml = %+v, %v", da, err)
+}
+
+func TestApplyEnvOverridesDrawingArtifactEndpointsMalformed(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ENDPOINTS", `["api/pjsk/card/box"`)
+	err := ApplyEnvOverrides(&Config{})
+	testutil.Require(t, err != nil && strings.Contains(err.Error(), "HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ENDPOINTS"), "error = %v", err)
+}
+
+func TestApplyEnvOverridesPublicHostsMalformed(t *testing.T) {
+	for _, tc := range []struct{ name, value string }{
+		{"HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS", "cn09"},
+		{"HARUKI_PJSK_RENDER_IMAGE_CACHE_HOST_ORDER", `["cn09"`},
+		{"HARUKI_PJSK_RENDER_ASSETS_BASE_URLS", `["https://a"`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv(tc.name, tc.value)
+			err := ApplyEnvOverrides(&Config{})
+			testutil.Require(t, err != nil && strings.Contains(err.Error(), tc.name), "error = %v", err)
+		})
+	}
+}
+
+func TestReadConfigPublicHostsBlock(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "haruki-cloud.yaml")
+	doc := `pjsk_render:
+  image_cache:
+    uri: https://image-cache.example
+    hosts: {cn09: "https://ic-cn09.example", cn01: "https://ic-cn01.example"}
+    host_order: [cn09, cn01]
+    hosts_probe_path: ""
+    hosts_probe_interval: 30s
+  asset_dirs:
+    assets_base_url: https://assets.example
+    assets_base_urls:
+      - https://assets-cn09.example
+      - https://assets-cn01.example
+`
+	testutil.Require(t, os.WriteFile(configPath, []byte(doc), 0o600) == nil, "write config")
+	cfg, err := ReadConfig(configPath)
+	testutil.Require(t, err == nil, "ReadConfig error = %v", err)
+	ic := cfg.PJSKRender.ImageCache
+	testutil.Require(t, ic.Hosts["cn09"] == "https://ic-cn09.example" && len(ic.HostOrder) == 2, "image cache hosts = %+v", ic)
+	testutil.Require(t, ic.HostsProbeInterval == 30*time.Second && ic.HostsProbePath == "", "probe = %+v", ic)
+	ad := cfg.PJSKRender.AssetDirs
+	testutil.Require(t, len(ad.AssetsBaseURLs) == 2 && ad.AssetsBaseURLs[0] == "https://assets-cn09.example", "asset hosts = %#v", ad.AssetsBaseURLs)
+}
+
+func TestImageCacheGCAndLegacyRedirectConfig(t *testing.T) {
+	cfg := &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	gc := cfg.PJSKRender.ImageCache.GC
+	testutil.Require(t, !gc.Enabled && gc.DryRun == nil && gc.DryRunEnabled() && gc.Interval == 0 && gc.Batch == 0 && gc.ObjectRetentionDays == 0,
+		"gc defaults = %+v", gc)
+	testutil.Require(t, !cfg.PJSKRender.ImageCache.LegacyRedirect.Enabled, "legacy redirect defaults on")
+
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_ENABLED", "true")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_DRY_RUN", "false")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_INTERVAL", "15m")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_BATCH", "250")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_OBJECT_RETENTION_DAYS", "45")
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_LEGACY_REDIRECT_ENABLED", "true")
+	cfg = &Config{}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	gc = cfg.PJSKRender.ImageCache.GC
+	testutil.Require(t, gc.Enabled && !gc.DryRunEnabled() && gc.Interval == 15*time.Minute && gc.Batch == 250 && gc.ObjectRetentionDays == 45,
+		"gc env = %+v", gc)
+	testutil.Require(t, cfg.PJSKRender.ImageCache.LegacyRedirect.Enabled, "legacy redirect env ignored")
+
+	var decoded PJSKRenderConfig
+	err := yaml.Unmarshal([]byte("image_cache:\n  gc_enabled: true\n  gc_dry_run: true\n  gc_interval: 2h\n  gc_batch: 10\n  gc_object_retention_days: 7\n  legacy_redirect:\n    enabled: true\n"), &decoded)
+	gc = decoded.ImageCache.GC
+	testutil.Require(t, err == nil && gc.Enabled && gc.DryRunEnabled() && gc.DryRun != nil && gc.Interval == 2*time.Hour && gc.Batch == 10 && gc.ObjectRetentionDays == 7,
+		"yaml gc = %+v, %v", gc, err)
+	testutil.Require(t, decoded.ImageCache.LegacyRedirect.Enabled, "yaml legacy redirect ignored")
+
+	// The nested render_index.gc spelling (addendum C-3) must not configure GC.
+	var nested PJSKRenderConfig
+	err = yaml.Unmarshal([]byte("image_cache:\n  render_index:\n    gc:\n      enabled: true\n"), &nested)
+	testutil.Require(t, err == nil && !nested.ImageCache.GC.Enabled, "nested render_index.gc spelling enabled GC: %+v, %v", nested.ImageCache.GC, err)
 }

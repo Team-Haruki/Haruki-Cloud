@@ -4,10 +4,7 @@ package drawing
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
-	"net/url"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -338,18 +335,14 @@ func testLocalRenderCacheBranches(t *testing.T) {
 
 func TestRemoteRenderCacheSmallHelpers(t *testing.T) {
 	testRemoteRenderCacheConstruction(t)
-	testRemoteRenderCachePaths(t)
-	testRemoteRenderCacheFileTypes(t)
-	testRemoteRenderCacheFileIO(t)
 }
 
 func testRemoteRenderCacheConstruction(t *testing.T) {
 	t.Helper()
 	for _, cfg := range []RenderCacheConfig{
 		{},
-		{BaseURL: "http://example.test", StorageDir: "/tmp", TTL: 0},
-		{BaseURL: "", StorageDir: "/tmp", TTL: time.Second},
-		{BaseURL: "http://example.test", StorageDir: "", TTL: time.Second},
+		{Index: &fakeRenderIndex{}, TTL: 0},
+		{TTL: time.Second},
 	} {
 		if NewRenderCacheClient(cfg) != nil {
 			t.Fatalf("invalid config produced client: %+v", cfg)
@@ -366,85 +359,6 @@ func testRemoteRenderCacheConstruction(t *testing.T) {
 	}
 	if shortRenderCacheKey(" short ") != "short" || shortRenderCacheKey("123456789012345") != "123456789012" {
 		t.Fatal("short cache key branches failed")
-	}
-}
-
-func testRemoteRenderCachePaths(t *testing.T) {
-	t.Helper()
-	var nilClient *RenderCacheClient
-	root := t.TempDir()
-	client := &RenderCacheClient{storageDir: root, imageCacheDir: filepath.Join(root, "images")}
-	path := client.defaultFilePath("api/pjsk/card/list", "user", "key")
-	if !strings.HasSuffix(path, filepath.Join("api", "pjsk", "card", "list", "user", "key.png")) {
-		t.Fatalf("unexpected default path: %q", path)
-	}
-	if rel, ok := client.imageCacheRelativePath(filepath.Join(root, "images", "a", "b.png")); !ok || rel != "a/b.png" {
-		t.Fatalf("relative image path = %q,%v", rel, ok)
-	}
-	for _, target := range []string{"", root, filepath.Join(root, "outside.png")} {
-		if target == "" {
-			client.imageCacheDir = ""
-		} else {
-			client.imageCacheDir = filepath.Join(root, "images")
-		}
-		if _, ok := client.imageCacheRelativePath(target); ok {
-			t.Fatalf("unsafe image cache path accepted: %q", target)
-		}
-	}
-	if _, ok := nilClient.imageCacheRelativePath("x"); ok {
-		t.Fatal("nil client returned relative image path")
-	}
-}
-
-func testRemoteRenderCacheFileTypes(t *testing.T) {
-	t.Helper()
-	root := t.TempDir()
-	if renderCacheFileExtFromData([]byte("plain")) != ".png" {
-		t.Fatal("plain data should use png fallback")
-	}
-	if renderCacheFileExtFromData([]byte{0xff, 0xd8, 0xff, 0xe0}) != ".jpg" {
-		t.Fatal("jpeg data was not detected")
-	}
-	if renderCacheFileExtFromData([]byte("GIF89a")) != ".gif" {
-		t.Fatal("gif data was not detected")
-	}
-	if !renderCachePathWithin(root, filepath.Join(root, "child")) || renderCachePathWithin(root, filepath.Dir(root)) {
-		t.Fatal("cache containment branches failed")
-	}
-	if _, _, err := absoluteContainedCachePath(root, filepath.Dir(root)); err == nil {
-		t.Fatal("outside absolute cache path was accepted")
-	}
-	if err := ensureRenderCacheDirectory(root, root); err != nil {
-		t.Fatalf("root cache directory rejected: %v", err)
-	}
-	if _, err := url.Parse("https://example.test"); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func testRemoteRenderCacheFileIO(t *testing.T) {
-	t.Helper()
-	root := t.TempDir()
-	client := &RenderCacheClient{storageDir: root}
-	target := filepath.Join(root, "api", "pjsk", "card", "public", "image.gif")
-	prepared, err := client.prepareCacheTarget(target)
-	if err != nil || prepared != target {
-		t.Fatalf("prepare cache target = %q, %v", prepared, err)
-	}
-	data := []byte("GIF89a-render-cache")
-	if err := writeRenderCacheFileAtomic(prepared, data); err != nil {
-		t.Fatalf("write cache file: %v", err)
-	}
-	got, err := client.readCacheFile(prepared)
-	if err != nil || string(got) != string(data) {
-		t.Fatalf("read cache file = %q, %v", got, err)
-	}
-	if preparedAgain, err := client.prepareCacheTarget(target); err != nil || preparedAgain != target {
-		t.Fatalf("prepare existing cache target = %q, %v", preparedAgain, err)
-	}
-	hash, contentPath := client.contentFilePath("api/pjsk/card", "public", "key", data)
-	if len(hash) != sha256.Size*2 || filepath.Ext(contentPath) != ".gif" {
-		t.Fatalf("content path = %q, hash=%q", contentPath, hash)
 	}
 }
 

@@ -59,7 +59,7 @@ func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *m
 
 	req.MaskImgPath = new(fmt.Sprintf("%s/honor/mask_degree_%s.png", assets.StaticImagesDir, mode))
 
-	req.FrameImgPath = new(fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), mapHonorRarity(honorInfo.HonorRarity)))
+	req.FrameImgPath = drawing.AssetPath(fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), mapHonorRarity(honorInfo.HonorRarity)))
 
 	if req.IsMainHonor {
 		bundleName := b.bondsHonorWordBundleName(honorInfo, bondsHonorWordID, cid1, cid2)

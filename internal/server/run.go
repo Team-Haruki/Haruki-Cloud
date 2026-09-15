@@ -12,11 +12,8 @@ import (
 	trustAPI "haruki-cloud/api/trust"
 	"haruki-cloud/internal/pjsk/accountdata"
 
-	"github.com/gofiber/fiber/v3/middleware/static"
-
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 	_ "modernc.org/sqlite"
 )
 
@@ -28,7 +25,6 @@ func Run(ctx context.Context) {
 	logStartupInfo(mainLogger)
 	redisClient := initRedis(ctx, mainLogger)
 	app := createFiberApp(mainLogger)
-	drawingCacheService := initDrawingCacheIfConfigured(ctx, mainLogger, app)
 	usersClient := initUsers(ctx, mainLogger)
 	banChecker := accountdata.NewBanService(usersClient)
 	banChecker.SetReadOnly(harukiConfig.Cfg.Node.ReadOnly)
@@ -40,6 +36,8 @@ func Run(ctx context.Context) {
 	renderRuntime := initPJSKRenderIfEnabled(ctx, mainLogger, sekaiClient, pjskClient)
 	censorService := initCensorIfEnabled(ctx, mainLogger, renderRuntime)
 	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, banChecker, censorService)
+	startRenderHostProbers(ctx, renderRuntime)
+	startImageCacheGC(ctx, harukiConfig.Cfg.PJSKRender.ImageCache, renderRuntime, mainLogger)
 	if renderRuntime != nil {
 		groupGuardAPI.RegisterGroupGuardRoutes(app, renderRuntime.Toolbox)
 	}
@@ -62,17 +60,11 @@ func Run(ctx context.Context) {
 	})
 	trustAPI.RegisterTrustRoutes(app, harukiConfig.Cfg.HarukiBotDB.TrustKeysetPath)
 
-	if dir := harukiConfig.Cfg.PJSKRender.ImageCache.Dir; dir != "" {
-		app.Get("/ic/*", static.New(dir))
-		mainLogger.Info("image cache static serving enabled", "http_route", "/ic/*")
-	}
+	registerImageCacheRoute(app, harukiConfig.Cfg.PJSKRender.ImageCache, renderImageHosts(renderRuntime), mainLogger)
 
 	defer closeClients(redisClient, censorService, usersClient, chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
 	if botRouteDispatchers != nil {
 		defer botRouteDispatchers.Close()
-	}
-	if drawingCacheService != nil {
-		defer func() { _ = drawingCacheService.Close() }()
 	}
 	if renderRuntime != nil {
 		defer func() { _ = renderRuntime.Close() }()

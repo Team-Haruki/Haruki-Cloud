@@ -83,11 +83,6 @@ func TestRegionAndRelativeAssetPathBranches(t *testing.T) {
 	}
 	{
 
-		got := CloudRegionAssetDirByMode("", "")
-		testutil.Require(t, !(got != "jp-assets/startapp"), "unexpected cloud region dir: %q", got)
-	}
-	{
-
 		got := RegionAssetDirs("tw")
 		testutil.Require(t, reflect.DeepEqual(got, []string{"asset/tw-assets/startapp", "asset/tw-assets/ondemand"}), "unexpected region dirs: %v", got)
 	}

@@ -26,6 +26,14 @@ func TestImageCacheNilClientAndConfiguration(t *testing.T) {
 	if err := New("https://images.example.test", t.TempDir()).Close(); err != nil {
 		t.Fatalf("client without store close: %v", err)
 	}
+	index, mock := newMockPGStore(t)
+	mock.ExpectClose()
+	if err := NewWithStore("https://images.example.test", t.TempDir(), index).Close(); err != nil {
+		t.Fatalf("client with store close: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestImageCacheStoreContextAndGroupErrors(t *testing.T) {
@@ -47,9 +55,7 @@ func TestImageCacheStoreContextAndGroupErrors(t *testing.T) {
 
 func TestImageCacheStoreReportsWriteAndDirectoryErrors(t *testing.T) {
 	client := New("https://images.example.test", t.TempDir())
-	client.write = func(context.Context, string, []byte) error {
-		return errors.New("write failed")
-	}
+	client.objects = &hookStore{Store: client.objects, putErr: errors.New("write failed")}
 	if _, err := client.StoreAndGetURL(context.Background(), []byte("image"), "write-error"); err == nil || !strings.Contains(err.Error(), "write failed") {
 		t.Fatalf("write error = %v", err)
 	}
@@ -64,46 +70,11 @@ func TestImageCacheStoreReportsWriteAndDirectoryErrors(t *testing.T) {
 	}
 }
 
-func TestImageCacheStoreUsesDefaultAtomicWriter(t *testing.T) {
+func TestImageCacheStoreUsesLocalObjectStore(t *testing.T) {
 	client := New("https://images.example.test", t.TempDir())
-	client.write = nil
 	url, err := client.StoreAndGetURL(context.Background(), []byte("image"), "default-writer")
 	if err != nil || !strings.HasPrefix(url, "https://images.example.test/default-writer/") {
 		t.Fatalf("default writer result = %q, %v", url, err)
-	}
-}
-
-type cancelOnSecondErrContext struct {
-	context.Context
-	calls int
-}
-
-func (ctx *cancelOnSecondErrContext) Err() error {
-	ctx.calls++
-	if ctx.calls > 1 {
-		return context.Canceled
-	}
-	return nil
-}
-
-func TestWriteFileAtomicallyErrorBranches(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	if err := writeFileAtomically(ctx, filepath.Join(t.TempDir(), "image.png"), []byte("image")); !errors.Is(err, context.Canceled) {
-		t.Fatalf("initial cancellation error = %v", err)
-	}
-	if err := writeFileAtomically(context.Background(), filepath.Join(t.TempDir(), "missing", "image.png"), []byte("image")); err == nil {
-		t.Fatal("write in missing directory succeeded")
-	}
-
-	dir := t.TempDir()
-	stagedCtx := &cancelOnSecondErrContext{Context: context.Background()}
-	target := filepath.Join(dir, "image.png")
-	if err := writeFileAtomically(stagedCtx, target, []byte("image")); !errors.Is(err, context.Canceled) {
-		t.Fatalf("pre-rename cancellation error = %v", err)
-	}
-	if _, err := os.Stat(target); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("canceled target exists: %v", err)
 	}
 }
 

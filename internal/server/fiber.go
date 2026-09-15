@@ -109,8 +109,6 @@ func requestBodyLimitForPath(path string) int {
 	switch path {
 	case "/internal/subscription-events/mysekai-birthday":
 		return birthdayEventRequestBodyLimit
-	case "/cache", "/cache/stats":
-		return cacheControlRequestBodyLimit
 	}
 
 	parts := strings.Split(strings.Trim(path, "/"), "/")

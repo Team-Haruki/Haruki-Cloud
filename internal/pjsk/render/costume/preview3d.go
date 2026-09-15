@@ -6,13 +6,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -20,6 +19,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
 
 	"github.com/andybalholm/brotli"
@@ -45,11 +45,14 @@ const (
 var preview3DImageIDUnsafe = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
 type Preview3DConfig struct {
-	Enabled               bool
-	EngineBaseURL         string
-	EngineBaseURLs        map[string]string
-	StaticRelativeDir     string
-	StaticOutputDir       string
+	Enabled           bool
+	EngineBaseURL     string
+	EngineBaseURLs    map[string]string
+	StaticRelativeDir string
+	StaticOutputDir   string
+	// StaticStore is the static slot. It is used when StaticOutputDir is
+	// empty; captures are keyed <StaticRelativeDir>/<id>.png.
+	StaticStore           storage.Store
 	Width                 int
 	Height                int
 	Scale                 float64
@@ -67,6 +70,7 @@ type Preview3DConfig struct {
 type Preview3DService struct {
 	cfg    Preview3DConfig
 	client *http.Client
+	static preview3DStaticTarget
 
 	registryFlight singleflight.Group
 	captureFlight  singleflight.Group
@@ -232,6 +236,7 @@ func NewPreview3DService(cfg Preview3DConfig) *Preview3DService {
 	cfg.CameraProfile = normalizePreview3DCameraProfile(cfg.CameraProfile)
 	service := &Preview3DService{
 		cfg:        cfg,
+		static:     resolvePreview3DStaticTarget(cfg),
 		captureSem: make(chan struct{}, cfg.CaptureMaxConcurrency),
 		cached:     make(map[string]*preview3DRegistry),
 		cachedAt:   make(map[string]time.Time),
@@ -293,7 +298,7 @@ func (s *Preview3DService) EnsureQueryPreviewCapture(ctx context.Context, region
 	if err := s.ensureCapture(ctx, endpoint, selection, "persistent"); err != nil {
 		return err
 	}
-	return s.ensureStaticCaptureFile(ctx, endpoint, selection.ImageID)
+	return s.ensureStaticCaptureObject(ctx, endpoint, selection.ImageID)
 }
 
 func (s *Preview3DService) CaptureTemporaryCombo(ctx context.Context, region string, query ComboQuery) ([]byte, error) {
@@ -1010,30 +1015,67 @@ func readPreview3DResponse(resp *http.Response, maxBytes int64, label string) ([
 	return data, nil
 }
 
-func (s *Preview3DService) ensureStaticCaptureFile(ctx context.Context, endpoint preview3DEndpoint, imageID string) error {
+// preview3DStaticTarget is where persistent captures are published: a store
+// plus the key prefix the capture file name is joined onto.
+type preview3DStaticTarget struct {
+	store  storage.Store
+	prefix string
+}
+
+// resolvePreview3DStaticTarget picks the static capture destination. An
+// explicit StaticOutputDir keeps precedence (captures land at
+// <dir>/<id>.png exactly as before); otherwise an enabled StaticStore is used
+// with keys under StaticRelativeDir. With neither, static publishing is off.
+func resolvePreview3DStaticTarget(cfg Preview3DConfig) preview3DStaticTarget {
+	if dir := strings.TrimSpace(cfg.StaticOutputDir); dir != "" {
+		local, err := storage.NewLocalAt(dir, preview3DCaptureMaxResponseBytes)
+		if err != nil {
+			costumePreview3DLogger.Warn("3d preview static output dir unusable", "error", err)
+			return preview3DStaticTarget{}
+		}
+		return preview3DStaticTarget{store: local}
+	}
+	if preview3DStoreEnabled(cfg.StaticStore) {
+		return preview3DStaticTarget{store: cfg.StaticStore, prefix: strings.Trim(cfg.StaticRelativeDir, "/")}
+	}
+	return preview3DStaticTarget{}
+}
+
+func preview3DStoreEnabled(store storage.Store) bool {
+	return store != nil && store != storage.Disabled()
+}
+
+func (t preview3DStaticTarget) key(imageID string) (storage.Key, error) {
+	return storage.Join(t.prefix, imageID+".png")
+}
+
+// ensureStaticCaptureObject publishes a persistent capture to the static
+// store: Stat, then a singleflight that re-Stats, GETs the capture from the
+// engine and Puts it.
+// removed when the engine uploads itself (C11)
+func (s *Preview3DService) ensureStaticCaptureObject(ctx context.Context, endpoint preview3DEndpoint, imageID string) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	staticOutputDir := strings.TrimSpace(s.cfg.StaticOutputDir)
-	if staticOutputDir == "" || strings.TrimSpace(imageID) == "" {
+	if s.static.store == nil || strings.TrimSpace(imageID) == "" {
 		return nil
 	}
-	target := filepath.Join(staticOutputDir, imageID+".png")
-	finishLookup := commandtrace.MeasureOperation(ctx, "preview3d.static_lookup")
-	if _, err := os.Stat(target); err == nil {
-		finishLookup()
-		return nil
-	} else if !os.IsNotExist(err) {
-		finishLookup()
+	key, err := s.static.key(imageID)
+	if err != nil {
 		return err
 	}
+	finishLookup := commandtrace.MeasureOperation(ctx, "preview3d.static_lookup")
+	exists, err := s.staticCaptureExists(ctx, key)
 	finishLookup()
+	if err != nil || exists {
+		return err
+	}
 
 	callerToken := new(preview3DStaticFlightToken)
-	resultCh := s.staticFlight.DoChan(target, func() (any, error) {
+	resultCh := s.staticFlight.DoChan(string(key), func() (any, error) {
 		sharedBase, cancel := s.staticCaptureSharedContext()
 		defer cancel()
 		sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
@@ -1045,17 +1087,14 @@ func (s *Preview3DService) ensureStaticCaptureFile(ctx context.Context, endpoint
 			}
 		}
 
-		// Another process or an earlier waiter may have published the target
+		// Another process or an earlier waiter may have published the object
 		// between the caller-side fast path and this shared worker.
 		finishStat := commandtrace.MeasureOperation(sharedCtx, "preview3d.static_stat")
-		if _, err := os.Stat(target); err == nil {
-			finishStat()
-			return complete(nil), nil
-		} else if !os.IsNotExist(err) {
-			finishStat()
+		exists, err := s.staticCaptureExists(sharedCtx, key)
+		finishStat()
+		if err != nil || exists {
 			return complete(err), nil
 		}
-		finishStat()
 
 		// readPreview3DResponse allocates this slice for the shared worker; it
 		// never aliases caller-owned memory or escapes to another waiter.
@@ -1063,15 +1102,8 @@ func (s *Preview3DService) ensureStaticCaptureFile(ctx context.Context, endpoint
 		if err != nil {
 			return complete(err), nil
 		}
-		finishMkdir := commandtrace.MeasureOperation(sharedCtx, "preview3d.static_mkdir")
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			finishMkdir()
-			return complete(err), nil
-		}
-		finishMkdir()
-
 		finishStore := commandtrace.MeasureOperation(sharedCtx, "preview3d.store")
-		err = writePreview3DCaptureAtomically(sharedCtx, target, data)
+		err = s.static.store.Put(sharedCtx, key, data, storage.PutOptions{ContentType: "image/png"})
 		finishStore()
 		return complete(err), nil
 	})
@@ -1098,6 +1130,18 @@ func (s *Preview3DService) ensureStaticCaptureFile(ctx context.Context, endpoint
 	}
 }
 
+func (s *Preview3DService) staticCaptureExists(ctx context.Context, key storage.Key) (bool, error) {
+	_, err := s.static.store.Stat(ctx, key)
+	switch {
+	case err == nil:
+		return true, nil
+	case errors.Is(err, storage.ErrNotExist):
+		return false, nil
+	default:
+		return false, err
+	}
+}
+
 func (s *Preview3DService) staticCaptureSharedContext() (context.Context, context.CancelFunc) {
 	timeout := s.cfg.Timeout + 30*time.Second
 	if timeout <= 0 {
@@ -1105,44 +1149,6 @@ func (s *Preview3DService) staticCaptureSharedContext() (context.Context, contex
 	}
 	shared := logger.WithContextAttrs(context.Background(), slog.Bool("shared_work", true))
 	return context.WithTimeout(shared, timeout)
-}
-
-func writePreview3DCaptureAtomically(ctx context.Context, targetPath string, data []byte) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	finishWrite := commandtrace.MeasureOperation(ctx, "preview3d.static_write")
-	tmp, err := os.CreateTemp(filepath.Dir(targetPath), "."+filepath.Base(targetPath)+".tmp-*")
-	if err != nil {
-		finishWrite()
-		return err
-	}
-	tmpName := tmp.Name()
-	defer func() {
-		_ = os.Remove(tmpName)
-	}()
-	if _, err := tmp.Write(data); err != nil {
-		_ = tmp.Close()
-		finishWrite()
-		return err
-	}
-	if err := tmp.Chmod(0o644); err != nil {
-		_ = tmp.Close()
-		finishWrite()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		finishWrite()
-		return err
-	}
-	finishWrite()
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	finishRename := commandtrace.MeasureOperation(ctx, "preview3d.static_rename")
-	err = os.Rename(tmpName, targetPath)
-	finishRename()
-	return err
 }
 
 func (s *Preview3DService) url(endpoint preview3DEndpoint, requestPath string) string {

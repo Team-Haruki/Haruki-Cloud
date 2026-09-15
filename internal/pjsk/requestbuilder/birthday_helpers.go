@@ -111,12 +111,10 @@ func loadBirthdayCards(ctx context.Context, app *renderapp.App, region renderreg
 			cardID = entity.ID
 		}
 
-		thumbPath := birthdayRelativePath(app,
-			assets.ResolveRegionAssetPath(
-				app.Assets,
-				region.String(),
-				filepath.Join("thumbnail", "chara", entity.AssetbundleName+"_normal.png"),
-			),
+		thumbPath := assets.ResolveRegionAssetPath(
+			app.Assets,
+			region.String(),
+			filepath.Join("thumbnail", "chara", entity.AssetbundleName+"_normal.png"),
 		)
 
 		cards = append(cards, drawing.CharaBirthdayCard{
@@ -137,12 +135,10 @@ func birthdayCardImagePath(app *renderapp.App, region renderregion.Value, assetB
 	if strings.TrimSpace(assetBundleName) == "" {
 		return ""
 	}
-	return birthdayRelativePath(app,
-		assets.ResolveRegionAssetPath(
-			app.Assets,
-			region.String(),
-			filepath.Join("character", "member", assetBundleName, "card_normal.png"),
-		),
+	return assets.ResolveRegionAssetPath(
+		app.Assets,
+		region.String(),
+		filepath.Join("character", "member", assetBundleName, "card_normal.png"),
 	)
 }
 
@@ -170,7 +166,7 @@ func buildBirthdayCalendar(app *renderapp.App, infos []birthdayCharacterInfo) []
 			Cid:      info.Cid,
 			Month:    info.Month,
 			Day:      info.Day,
-			IconPath: birthdayRelativePath(app, charaIconPath(app.Assets, info.Cid)),
+			IconPath: app.Assets.RelativePath(charaIconPath(app.Assets, info.Cid)),
 		})
 	}
 	return items
@@ -225,13 +221,6 @@ func buildBirthdayEventTime(start, end time.Time) drawing.BirthdayEventTime {
 		StartAt: start.UnixMilli(),
 		EndAt:   displayEnd.UnixMilli(),
 	}
-}
-
-func birthdayRelativePath(app *renderapp.App, target string) string {
-	if strings.TrimSpace(target) == "" || app == nil || app.Assets == nil {
-		return target
-	}
-	return assets.MakeRelative(app.Assets.Primary(), target)
 }
 
 func charaIconPath(helper *assets.AssetHelper, charID int) string {

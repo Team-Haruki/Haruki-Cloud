@@ -212,6 +212,10 @@ var (
 			TTL:              skRenderCacheBucketJPAndCN,
 			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "updated_at", "event_aggregate_at"),
 		},
+		"/api/pjsk/chart": {
+			Enabled: true,
+			TTL:     renderCacheTTLSevenDay,
+		},
 	}
 )
 

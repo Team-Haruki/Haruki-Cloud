@@ -57,7 +57,6 @@ Haruki-Cloud/
 │   └── groupguard/
 │
 ├── internal/
-│   ├── cache/drawingcache/ # drawing image cache (store, GC, stats, admin API)
 │   ├── cluster/            # node role / read-only mode helpers (config.Cfg.Node)
 │   ├── core/crypto/        # Noise protocol helpers
 │   ├── core/upstream/      # upstream connection pool / transport
@@ -294,7 +293,7 @@ The production compose stack is at `/data/HarukiServices/configs/` on the
 server. Config is layered; the effective value for any setting is (highest
 priority first):
 
-1. **Environment variable** (e.g. `HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI`)
+1. **Environment variable** (e.g. `HARUKI_PJSK_RENDER_IMAGE_CACHE_URI`)
    — injected via `.env` + `docker-compose.yml` `environment:` block.
 2. **`haruki-cloud.yaml`** — mounted into the container.
 

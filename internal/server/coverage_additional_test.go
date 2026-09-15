@@ -31,6 +31,10 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
+
+	// The server binary no longer registers the cgo sqlite3 driver; these
+	// startup tests still open "sqlite3" databases.
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type lockedBuffer struct {
@@ -195,6 +199,8 @@ func TestConfigureSekaiRuntimeAndRenderInitialization(t *testing.T) {
 	harukiConfig.Cfg.PJSKRender.MusicMeta.RefreshInterval = time.Hour
 	harukiConfig.Cfg.PJSKRender.MusicMeta.OutputDir = t.TempDir()
 	harukiConfig.Cfg.PJSKRender.AssetDirs.Primary = t.TempDir()
+	// The public asset host set is mandatory (addendum B6).
+	harukiConfig.Cfg.PJSKRender.AssetDirs.AssetsBaseURL = "https://assets.example"
 	harukiConfig.Cfg.Sekai.DBType = "sqlite3"
 	harukiConfig.Cfg.Sekai.DBURL = sekaiDSN
 	runtime := initPJSKRenderIfEnabled(ctx, mainLogger, sekaiClient, pjskClient)
@@ -313,32 +319,6 @@ func TestFiberAccessLogReadinessAndFailureBranches(t *testing.T) {
 	}
 	closeAccessLogFile(mainLogger)
 	harukiLogger.SetGlobalFileWriter(io.Discard)
-}
-
-func TestDrawingCacheAuthorizationAndPositiveGC(t *testing.T) {
-	preserveServerConfig(t)
-	harukiConfig.Cfg = harukiConfig.Config{}
-	harukiConfig.Cfg.HarukiBotDB.InternalAPIToken = "cache-token"
-	harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir = t.TempDir()
-	harukiConfig.Cfg.PJSKRender.DrawingCache.GCInterval = time.Hour
-	harukiConfig.Cfg.PJSKRender.DrawingCache.RequireAuth = true
-	var output bytes.Buffer
-	app := fiber.New()
-	service := initDrawingCacheIfConfigured(context.Background(), startupTestLogger(&output), app)
-	if service == nil {
-		t.Fatal("authorized drawing cache was not initialized")
-	}
-	defer service.Close()
-	unauthorized, err := app.Test(httptest.NewRequest(http.MethodGet, "/cache/stats", nil))
-	if err != nil || unauthorized.StatusCode != fiber.StatusUnauthorized {
-		t.Fatalf("unauthorized cache response = %#v, %v", unauthorized, err)
-	}
-	request := httptest.NewRequest(http.MethodGet, "/cache/stats", nil)
-	request.Header.Set(fiber.HeaderAuthorization, "Bearer cache-token")
-	authorized, err := app.Test(request)
-	if err != nil || authorized.StatusCode != fiber.StatusOK {
-		t.Fatalf("authorized cache response = %#v, %v", authorized, err)
-	}
 }
 
 func TestSekaiRemoteSyncInitialAndBackgroundBranches(t *testing.T) {

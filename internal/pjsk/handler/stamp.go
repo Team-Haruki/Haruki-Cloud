@@ -6,6 +6,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/stamp"
 	"strconv"
 	"strings"
@@ -151,7 +152,7 @@ func resolveDirectStampImage(ctx context.Context, stampCtrl *stamp.Controller, a
 	if app == nil || stampCtrl == nil {
 		return nil, false, nil
 	}
-	if strings.TrimSpace(app.Config.AssetsBaseURL) == "" {
+	if app.AssetHosts.Len() == 0 {
 		return nil, false, nil
 	}
 	if query.All || len(query.IDs) != 1 {
@@ -168,11 +169,28 @@ func resolveDirectStampImage(ctx context.Context, stampCtrl *stamp.Controller, a
 	if imagePath == "" {
 		return nil, true, fmt.Errorf("stamp %d image path is empty", query.IDs[0])
 	}
-	message, imageErr := assetImageMessage(ctx, imagePath, app, BotModulePJSK)
+	message, imageErr := assetImageMessage(ctx, directStampURLPath(query.Region, imagePath), app, BotModulePJSK)
 	if imageErr != nil {
 		return nil, false, nil
 	}
 	return message, true, nil
+}
+
+// directStampURLPath picks the asset path the direct-send URL is built from.
+// The Drawing request field keeps the controller's exact string (C2); only the
+// URL uses the fixed startapp-first candidate when that string carries no
+// "<region>-assets" segment.
+func directStampURLPath(region renderregion.Value, imagePath string) string {
+	if strings.HasPrefix(imagePath, "http://") || strings.HasPrefix(imagePath, "https://") {
+		return imagePath
+	}
+	trimmed := strings.Trim(strings.ReplaceAll(imagePath, "\\", "/"), "/")
+	for segment := range strings.SplitSeq(trimmed, "/") {
+		if len(segment) > len("-assets") && strings.HasSuffix(segment, "-assets") {
+			return imagePath
+		}
+	}
+	return assets.RegionAssetDirByMode(renderregion.WithDefault(region).String(), assets.RegionAssetStartApp) + "/" + trimmed
 }
 
 func resolveStampCharacterSelection(ctx context.Context, app *renderapp.App, query *stamp.ListQuery, rawQuery string) {

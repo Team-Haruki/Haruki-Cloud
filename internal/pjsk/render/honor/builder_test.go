@@ -106,10 +106,10 @@ func TestBuildHonorRequestNormalWorldLink(t *testing.T) {
 		t.Fatalf("unexpected group type: %#v", req.GroupType)
 	}
 	expectedHonorPath := "asset/jp-assets/ondemand/honor/honor_bg_001/degree_main.png"
-	if req.HonorImgPath == nil || *req.HonorImgPath != expectedHonorPath {
+	if req.HonorImgPath.First() != expectedHonorPath {
 		t.Fatalf("unexpected honor image path: %#v", req.HonorImgPath)
 	}
-	if req.FrameImgPath == nil || *req.FrameImgPath != "static_images/honor/frame_degree_m_1.png" {
+	if req.FrameImgPath.First() != "static_images/honor/frame_degree_m_1.png" {
 		t.Fatalf("unexpected frame image path: %#v", req.FrameImgPath)
 	}
 }
@@ -337,7 +337,7 @@ func TestBuildHonorRequestBirthdayPrefersBirthdayFramePathForMiddleRarity(t *tes
 		t.Fatalf("unexpected honor type: %#v", req.HonorType)
 	}
 	wantFrame := "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_06/frame_degree_s_2.png"
-	if req.FrameImgPath == nil || *req.FrameImgPath != wantFrame {
+	if req.FrameImgPath.First() != wantFrame {
 		t.Fatalf("expected birthday frame path, got %#v", req.FrameImgPath)
 	}
 	wantLevel := "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_06/frame_degree_level_2.png"
@@ -387,7 +387,7 @@ func TestBuildHonorRequestBirthdayLowUsesBackgroundOnly(t *testing.T) {
 	}
 }
 
-func TestBuildHonorRequestBirthdayFallsBackToStaticFrameWhenBirthdayFrameMissing(t *testing.T) {
+func TestBuildHonorRequestBirthdayOmitsLevelIconWhenBirthdayFrameMissing(t *testing.T) {
 	dir := t.TempDir()
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "startapp", "honor", "honor_bg_birthday_01_13", "degree_sub.png"))
 
@@ -418,11 +418,37 @@ func TestBuildHonorRequestBirthdayFallsBackToStaticFrameWhenBirthdayFrameMissing
 	if req.HonorType == nil || *req.HonorType != "birthday" {
 		t.Fatalf("unexpected honor type: %#v", req.HonorType)
 	}
-	if req.FrameImgPath == nil || *req.FrameImgPath != "static_images/honor/frame_degree_s_4.png" {
-		t.Fatalf("expected static fallback frame, got %#v", req.FrameImgPath)
+	// C1: the frame fork is a candidate list (named frame, then the static
+	// frame). The level icon is not a fork: Drawing fails the render on a
+	// supplied level icon that is missing and would draw it on the static
+	// frame, so Cloud omits it while the named frame is missing.
+	if req.FrameImgPath.First() != "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_13/frame_degree_s_4.png" ||
+		req.FrameImgPath.Last() != "static_images/honor/frame_degree_s_4.png" {
+		t.Fatalf("expected birthday frame then static fallback, got %#v", req.FrameImgPath)
 	}
 	if req.FrameDegreeLevelImgPath != nil {
-		t.Fatalf("expected missing birthday level frame to stay nil, got %#v", req.FrameDegreeLevelImgPath)
+		t.Fatalf("level icon must be omitted without the named frame, got %#v", *req.FrameDegreeLevelImgPath)
+	}
+
+	// The level icon alone (named frame still missing) is not enough.
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "startapp", "honor_frame", "honor_frame_birthday_01_13", "frame_degree_level_4.png"))
+	req, err = NewBuilder(source, assets.NewAssetHelper(dir, nil)).BuildHonorRequest(Query{Region: renderregion.JP, HonorID: 6861, HonorLevel: 3})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	if req.FrameDegreeLevelImgPath != nil {
+		t.Fatalf("level icon must not be drawn on the static frame, got %#v", *req.FrameDegreeLevelImgPath)
+	}
+
+	// Named frame present but level icon missing: still omitted.
+	dir2 := t.TempDir()
+	mustWriteHonorAsset(t, dir2, filepath.Join("asset", "jp-assets", "startapp", "honor_frame", "honor_frame_birthday_01_13", "frame_degree_s_4.png"))
+	req, err = NewBuilder(source, assets.NewAssetHelper(dir2, nil)).BuildHonorRequest(Query{Region: renderregion.JP, HonorID: 6861, HonorLevel: 3})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	if req.FrameDegreeLevelImgPath != nil {
+		t.Fatalf("missing level icon must be omitted, got %#v", *req.FrameDegreeLevelImgPath)
 	}
 }
 
@@ -456,7 +482,7 @@ func TestBuildHonorRequestBirthdayDerivesFrameNameFromBackgroundWhenMissing(t *t
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
 	wantFrame := "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_06/frame_degree_s_2.png"
-	if req.FrameImgPath == nil || *req.FrameImgPath != wantFrame {
+	if req.FrameImgPath.First() != wantFrame {
 		t.Fatalf("expected derived birthday frame path, got %#v", req.FrameImgPath)
 	}
 	wantLevel := "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_06/frame_degree_level_2.png"
@@ -493,7 +519,7 @@ func TestBuildHonorRequestFallsBackToLevelAssetWhenTopLevelAssetIsEmpty(t *testi
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
 	expectedHonorPath := "asset/jp-assets/ondemand/honor/honor_3009_100/degree_main.png"
-	if req.HonorImgPath == nil || *req.HonorImgPath != expectedHonorPath {
+	if req.HonorImgPath.First() != expectedHonorPath {
 		t.Fatalf("unexpected honor image path: %#v", req.HonorImgPath)
 	}
 	if req.HonorRarity == nil || *req.HonorRarity != "low" {
@@ -740,7 +766,7 @@ func TestBuildHonorRequestEventFrameFallsBackToStaticForLowRarity(t *testing.T) 
 	if err != nil {
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
-	if req.FrameImgPath == nil || *req.FrameImgPath != "static_images/honor/frame_degree_s_2.png" {
+	if req.FrameImgPath.First() != "static_images/honor/frame_degree_s_2.png" {
 		t.Fatalf("expected static fallback frame, got %#v", req.FrameImgPath)
 	}
 }
@@ -773,7 +799,7 @@ func TestBuildHonorRequestRankMatchUsesRankLiveBackground(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
-	if req.HonorImgPath == nil || *req.HonorImgPath != "asset/jp-assets/startapp/rank_live/honor/season_2025_winter/degree_sub.png" {
+	if req.HonorImgPath.First() != "asset/jp-assets/startapp/rank_live/honor/season_2025_winter/degree_sub.png" {
 		t.Fatalf("unexpected honor image path: %#v", req.HonorImgPath)
 	}
 	if req.RankImgPath == nil || *req.RankImgPath != "asset/jp-assets/startapp/rank_live/honor/common/tier_11/sub.png" {

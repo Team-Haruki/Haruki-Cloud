@@ -10,6 +10,7 @@ import (
 
 	"haruki-cloud/internal/onebot11"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/requestbuilder"
 )
 
@@ -35,26 +36,35 @@ func assetImageMessage(ctx context.Context, path string, app *renderapp.App, gro
 	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
 		return onebot11.Message{onebot11.Image(path, "")}, nil
 	}
-	// When a CDN base URL is configured, build a direct URL by extracting the
-	// "{region}-assets/..." portion of the path (e.g. "jp-assets/startapp/...").
-	if app != nil {
-		if base := strings.TrimRight(app.Config.AssetsBaseURL, "/"); base != "" {
-			rel := filepath.ToSlash(path)
-			if idx := strings.Index(rel, "-assets/"); idx > 0 {
-				start := strings.LastIndex(rel[:idx], "/") + 1
-				rel = rel[start:]
-			}
-			return onebot11.Message{onebot11.Image(base+"/"+rel, "")}, nil
-		}
-	}
 	if app == nil {
 		return nil, fmt.Errorf("image storage is not configured")
 	}
+	// With public asset hosts configured, send a direct URL built by the one
+	// Drawing-path -> URL rule instead of relaying the bytes.
+	if hosts := app.AssetHosts; hosts.Len() > 0 {
+		url, err := assets.PublicAssetURL(hosts.Base(""), path)
+		if err != nil {
+			return nil, err
+		}
+		return onebot11.Message{onebot11.Image(url, "")}, nil
+	}
 	startedAt := time.Now()
-	data, err := os.ReadFile(path)
+	data, err := readAssetBytes(ctx, app, path)
 	recordCommandStage(ctx, "asset.read", time.Since(startedAt))
 	if err != nil {
 		return nil, err
 	}
 	return imageMessage(ctx, data, app, group)
+}
+
+// readAssetBytes reads one asset through the app's AssetReader. Without a
+// store, an absolute path (a probe already resolved it on local disk) is read
+// directly, exactly as before the reader existed.
+func readAssetBytes(ctx context.Context, app *renderapp.App, path string) ([]byte, error) {
+	reader := assets.ReaderOr(app.AssetReader, app.Assets)
+	if !reader.UsesStore() && filepath.IsAbs(path) {
+		return os.ReadFile(path)
+	}
+	data, _, err := reader.ReadFirst(ctx, path)
+	return data, err
 }

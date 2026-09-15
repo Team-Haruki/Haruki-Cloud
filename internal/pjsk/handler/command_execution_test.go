@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"haruki-cloud/internal/core/urlhost"
 	json "haruki-cloud/internal/jsonutil"
 	"image"
 	"image/color"
@@ -681,7 +682,9 @@ func (s *bridgeMusicSource) GetOutsideCharacterByID(int) (string, error) { retur
 
 func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	root := t.TempDir()
-	jacketPath := filepath.Join(root, "music", "jacket", "jacket_test", "jacket_test.png")
+	// The cover is sent by its Drawing-relative region path (T15), which the
+	// handler reads through the app's asset helper.
+	jacketPath := filepath.Join(root, "jp-assets", "startapp", "music", "jacket", "jacket_test", "jacket_test.png")
 	if err := os.MkdirAll(filepath.Dir(jacketPath), 0o755); err != nil {
 		t.Fatalf("mkdir jacket: %v", err)
 	}
@@ -721,8 +724,10 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 			},
 		},
 	}
+	helper := assets.NewAssetHelper(root, nil)
 	app := &renderapp.App{
-		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
+		Assets:     helper,
+		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), helper, nil, nil),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 
@@ -757,173 +762,6 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	}
 	if listCalls != 1 {
 		t.Fatalf("expected 1 music-list render call, got %d", listCalls)
-	}
-}
-
-func TestExecuteMusicChartUsesStaticChartCachePath(t *testing.T) {
-	root := t.TempDir()
-	chartCacheDir := t.TempDir()
-
-	chartCalls := 0
-	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/api/pjsk/chart":
-			chartCalls++
-			_, _ = w.Write([]byte("png"))
-		default:
-			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
-		}
-	}))
-	defer drawingServer.Close()
-
-	source := &bridgeMusicSource{
-		musics: map[int]*masterdata.Music{
-			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
-		},
-		difficulties: map[int][]*masterdata.MusicDifficulty{
-			1: {
-				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27, TotalNoteCount: 777},
-			},
-		},
-	}
-	app := &renderapp.App{
-		Music: music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
-		Config: renderapp.Config{
-			ImageCacheURI: "https://image-cache.test",
-			ChartsBaseURL: "https://charts.test",
-			ImageCacheDir: chartCacheDir,
-		},
-	}
-
-	params, err := json.Marshal(map[string]string{
-		"difficulty": "expert",
-		"style":      "white",
-	})
-	if err != nil {
-		t.Fatalf("marshal params: %v", err)
-	}
-
-	request := &CommandRequest{
-		Module: parser.ModuleMusic,
-		Mode:   "music-chart",
-		Query:  "Song A",
-		Region: "jp",
-		Params: params,
-	}
-
-	first, err := executeMusic(NewRequestContext(context.Background(), request, app))
-	if err != nil {
-		t.Fatalf("executeMusic chart first: %v", err)
-	}
-	if len(first) != 1 || first[0].Type != onebot11.TypeImage {
-		t.Fatalf("unexpected first chart message: %+v", first)
-	}
-	imageData, ok := first[0].Data.(onebot11.ImageData)
-	if !ok {
-		t.Fatalf("unexpected image data: %#v", first[0].Data)
-	}
-	if imageData.File != "https://charts.test/white/jp/1/expert/no-skill.png" {
-		t.Fatalf("unexpected chart cache url: %q", imageData.File)
-	}
-
-	expectedPath := filepath.Join(chartCacheDir, "charts", "white", "jp", "1", "expert", "no-skill.png")
-	if _, err := os.Stat(expectedPath); err != nil {
-		t.Fatalf("expected chart cache file %s: %v", expectedPath, err)
-	}
-
-	second, err := executeMusic(NewRequestContext(context.Background(), request, app))
-	if err != nil {
-		t.Fatalf("executeMusic chart second: %v", err)
-	}
-	if len(second) != 1 || second[0].Type != onebot11.TypeImage {
-		t.Fatalf("unexpected second chart message: %+v", second)
-	}
-	if chartCalls != 1 {
-		t.Fatalf("expected 1 chart render call after cache hit, got %d", chartCalls)
-	}
-}
-
-func TestExecuteMusicChartUsesSkillSpecificStaticChartCachePath(t *testing.T) {
-	root := t.TempDir()
-	chartCacheDir := t.TempDir()
-
-	chartCalls := 0
-	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/api/pjsk/chart":
-			chartCalls++
-			_, _ = w.Write([]byte("png"))
-		default:
-			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
-		}
-	}))
-	defer drawingServer.Close()
-
-	source := &bridgeMusicSource{
-		musics: map[int]*masterdata.Music{
-			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
-		},
-		difficulties: map[int][]*masterdata.MusicDifficulty{
-			1: {
-				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27, TotalNoteCount: 777},
-			},
-		},
-	}
-	app := &renderapp.App{
-		Music: music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
-		Config: renderapp.Config{
-			ImageCacheURI: "https://image-cache.test",
-			ChartsBaseURL: "https://charts.test",
-			ImageCacheDir: chartCacheDir,
-		},
-	}
-
-	params, err := json.Marshal(map[string]any{
-		"difficulty": "expert",
-		"style":      "white",
-		"skill":      true,
-	})
-	if err != nil {
-		t.Fatalf("marshal params: %v", err)
-	}
-
-	request := &CommandRequest{
-		Module: parser.ModuleMusic,
-		Mode:   "music-chart",
-		Query:  "Song A",
-		Region: "jp",
-		Params: params,
-	}
-
-	first, err := executeMusic(NewRequestContext(context.Background(), request, app))
-	if err != nil {
-		t.Fatalf("executeMusic skill chart first: %v", err)
-	}
-	if len(first) != 1 || first[0].Type != onebot11.TypeImage {
-		t.Fatalf("unexpected first skill chart message: %+v", first)
-	}
-	imageData, ok := first[0].Data.(onebot11.ImageData)
-	if !ok {
-		t.Fatalf("unexpected image data: %#v", first[0].Data)
-	}
-	if imageData.File != "https://charts.test/white/jp/1/expert/skill.png" {
-		t.Fatalf("unexpected skill chart cache url: %q", imageData.File)
-	}
-
-	expectedPath := filepath.Join(chartCacheDir, "charts", "white", "jp", "1", "expert", "skill.png")
-	if _, err := os.Stat(expectedPath); err != nil {
-		t.Fatalf("expected skill chart cache file %s: %v", expectedPath, err)
-	}
-
-	second, err := executeMusic(NewRequestContext(context.Background(), request, app))
-	if err != nil {
-		t.Fatalf("executeMusic skill chart second: %v", err)
-	}
-	if len(second) != 1 || second[0].Type != onebot11.TypeImage {
-		t.Fatalf("unexpected second skill chart message: %+v", second)
-	}
-	if chartCalls != 1 {
-		t.Fatalf("expected 1 chart render call after skill cache hit, got %d", chartCalls)
 	}
 }
 
@@ -4852,8 +4690,10 @@ func TestExecuteCardImageReturnsAllOriginalArts(t *testing.T) {
 		}
 	}
 
+	helper := assets.NewAssetHelper(root, nil)
 	app := &renderapp.App{
-		Cards:      rendercard.NewController(&bridgeCardSource{}, &bridgeCardEventSource{}, nil, assets.NewAssetHelper(root, nil)),
+		Assets:     helper,
+		Cards:      rendercard.NewController(&bridgeCardSource{}, &bridgeCardEventSource{}, nil, helper),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 	message, err := executeCard(NewRequestContext(context.Background(), &CommandRequest{
@@ -5361,5 +5201,100 @@ func TestExecuteCardListKeepsResolvedRegionInsteadOfStaleParamRegion(t *testing.
 	}
 	if len(captured.Cards) != 1 || captured.Cards[0].CardID != 1001 {
 		t.Fatalf("unexpected rendered cards: %+v", captured.Cards)
+	}
+}
+
+func chartCommandFixture(t *testing.T, drawingClient *drawing.HarukiDrawingClient, app *renderapp.App) *RequestContext {
+	t.Helper()
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27, TotalNoteCount: 777},
+			},
+		},
+	}
+	app.Music = music.NewController(source, drawingClient, assets.NewAssetHelper(t.TempDir(), nil), nil, nil)
+	params, err := json.Marshal(map[string]any{"difficulty": "expert", "style": "white", "skill": true})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+	request := &CommandRequest{Module: parser.ModuleMusic, Mode: "music-chart", Query: "Song A", Region: "jp", Params: params}
+	return NewRequestContext(context.Background(), request, app)
+}
+
+func TestExecuteMusicChartRendersThroughRenderPath(t *testing.T) {
+	chartCalls := 0
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/chart" {
+			t.Errorf("unexpected drawing path: %s", r.URL.Path)
+		}
+		chartCalls++
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	app := &renderapp.App{ImageCache: imagecache.New("https://image-cache.test", t.TempDir())}
+	rc := chartCommandFixture(t, drawing.NewHarukiDrawingClient(drawingServer.URL), app)
+	message, err := executeMusic(rc)
+	if err != nil {
+		t.Fatalf("executeMusic chart: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TypeImage {
+		t.Fatalf("unexpected chart message: %+v", message)
+	}
+	imageData, ok := message[0].Data.(onebot11.ImageData)
+	if !ok || !strings.HasPrefix(imageData.File, "https://image-cache.test/pjsk/") {
+		t.Fatalf("chart bytes must be stored through the image cache, got %#v", message[0].Data)
+	}
+	if chartCalls != 1 {
+		t.Fatalf("chart render calls = %d, want 1", chartCalls)
+	}
+}
+
+func TestExecuteMusicChartServesRenderIndexHit(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("index hit reached Drawing: %s", r.URL.Path)
+	}))
+	defer drawingServer.Close()
+
+	client := drawing.NewHarukiDrawingClient(drawingServer.URL)
+	cache := drawing.NewRenderCacheClient(drawing.RenderCacheConfig{TTL: time.Hour, Index: handlerFakeIndex{entry: imagecache.RenderIndexEntry{
+		ContentHash: strings.Repeat("d", 64),
+		Entry:       imagecache.ImageEntry{CDNPath: "pjsk/api/pjsk/chart/d.png", StorageBackend: imagecache.BackendGarage},
+	}}})
+	defer func() { _ = cache.Close() }()
+	client.SetRenderCache(cache)
+
+	app := &renderapp.App{ImageHosts: urlhost.Single("https://ic.example")}
+	rc := chartCommandFixture(t, client, app)
+	message, err := executeMusic(rc)
+	if err != nil {
+		t.Fatalf("executeMusic chart: %v", err)
+	}
+	imageData, ok := message[0].Data.(onebot11.ImageData)
+	if len(message) != 1 || !ok || imageData.File != "https://ic.example/pjsk/api/pjsk/chart/d.png" {
+		t.Fatalf("unexpected chart message: %+v", message)
+	}
+}
+
+func TestRenderMusicChartMessageErrorBranches(t *testing.T) {
+	if _, err := renderMusicChartMessage(nil, nil, music.ChartQuery{}); err == nil || !strings.Contains(err.Error(), "not configured") {
+		t.Fatalf("unconfigured renderer err = %v", err)
+	}
+
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "drawing down", http.StatusInternalServerError)
+	}))
+	defer drawingServer.Close()
+	rc := chartCommandFixture(t, drawing.NewHarukiDrawingClient(drawingServer.URL), &renderapp.App{})
+
+	if _, err := renderMusicChartMessage(rc, rc.App.Music, music.ChartQuery{Query: "no such song", Region: "jp"}); err == nil {
+		t.Fatal("unknown chart query rendered")
+	}
+	if _, err := renderMusicChartMessage(rc, rc.App.Music, music.ChartQuery{Query: "Song A", Region: "jp", Difficulty: "expert"}); err == nil {
+		t.Fatal("drawing failure did not surface")
 	}
 }

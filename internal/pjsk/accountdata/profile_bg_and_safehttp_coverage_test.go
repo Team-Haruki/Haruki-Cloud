@@ -49,7 +49,7 @@ func TestLocalProfileBGStoreValidationDownloadAndDeleteBranches(t *testing.T) {
 
 func testLocalProfileBGStoreConstruction(t *testing.T, ctx context.Context) {
 	t.Helper()
-	var nilStore *LocalProfileBGStore
+	var nilStore *ProfileBGStore
 	if NewLocalProfileBGStore(" ") != nil || NewLocalProfileBGStoreWithClient(" ", http.DefaultClient) != nil {
 		t.Fatal("blank profile background root should be rejected")
 	}
@@ -141,12 +141,13 @@ func testLocalProfileBGStoragePathErrors(t *testing.T, ctx context.Context) {
 
 func testLocalProfileBGDeleteAndPathValidation(t *testing.T, ctx context.Context) {
 	t.Helper()
-	store := NewLocalProfileBGStore(t.TempDir())
-	testLocalProfileBGDeleteBranches(t, ctx, store)
-	testLocalProfileBGAbsolutePathValidation(t, store)
+	root := t.TempDir()
+	store := NewLocalProfileBGStore(root)
+	testLocalProfileBGDeleteBranches(t, ctx, store, root)
+	testProfileBGKeyValidation(t)
 }
 
-func testLocalProfileBGDeleteBranches(t *testing.T, ctx context.Context, store *LocalProfileBGStore) {
+func testLocalProfileBGDeleteBranches(t *testing.T, ctx context.Context, store *ProfileBGStore, root string) {
 	t.Helper()
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
@@ -164,19 +165,8 @@ func testLocalProfileBGDeleteBranches(t *testing.T, ctx context.Context, store *
 	if err := store.DeleteProfileBackground(ctx, &drawing.ProfileBgSettings{ImgPath: &missing}); err != nil {
 		t.Fatalf("missing profile background delete = %v", err)
 	}
-	directory := filepath.Join(store.rootDir, DefaultProfileBGRelativeDir, "jp", "nonempty")
-	if err := os.MkdirAll(directory, 0o755); err != nil {
-		t.Fatalf("create nonempty directory: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(directory, "child"), []byte("x"), 0o644); err != nil {
-		t.Fatalf("write directory child: %v", err)
-	}
-	directoryRel := filepath.ToSlash(filepath.Join(DefaultProfileBGRelativeDir, "jp", "nonempty"))
-	if err := store.DeleteProfileBackground(ctx, &drawing.ProfileBgSettings{ImgPath: &directoryRel}); err == nil {
-		t.Fatal("deleting a nonempty directory as a background should fail")
-	}
 	fileRel := filepath.ToSlash(filepath.Join(DefaultProfileBGRelativeDir, "jp", "delete.jpg"))
-	fileAbs := filepath.Join(store.rootDir, filepath.FromSlash(fileRel))
+	fileAbs := filepath.Join(root, filepath.FromSlash(fileRel))
 	if err := os.MkdirAll(filepath.Dir(fileAbs), 0o755); err != nil {
 		t.Fatalf("create delete directory: %v", err)
 	}
@@ -186,23 +176,25 @@ func testLocalProfileBGDeleteBranches(t *testing.T, ctx context.Context, store *
 	if err := store.DeleteProfileBackground(nil, &drawing.ProfileBgSettings{ImgPath: &fileRel}); err != nil {
 		t.Fatalf("delete profile background: %v", err)
 	}
+	if _, err := os.Stat(fileAbs); !os.IsNotExist(err) {
+		t.Fatalf("deleted background still present: %v", err)
+	}
 }
 
-func testLocalProfileBGAbsolutePathValidation(t *testing.T, store *LocalProfileBGStore) {
+func testProfileBGKeyValidation(t *testing.T) {
 	t.Helper()
-	for _, relative := range []string{"", ".", "../x", "/absolute.jpg"} {
-		if _, err := store.absolutePath(relative); err == nil {
-			t.Fatalf("absolutePath(%q) should fail", relative)
+	for _, relative := range []string{"", ".", "../x", "/absolute.jpg", "a/../../x"} {
+		if _, err := profileBGKey(relative); err == nil {
+			t.Fatalf("profileBGKey(%q) should fail", relative)
 		}
 	}
-	if got, err := store.absolutePath("user_upload/profile_bg/jp/good.jpg"); err != nil || !strings.HasPrefix(got, filepath.Clean(store.rootDir)+string(filepath.Separator)) {
-		t.Fatalf("safe absolute path = %q, %v", got, err)
+	if got, err := profileBGKey(" user_upload/profile_bg/jp/./good.jpg "); err != nil || got != "user_upload/profile_bg/jp/good.jpg" {
+		t.Fatalf("safe key = %q, %v", got, err)
 	}
 }
 
-func TestProfileBGImageEncodingCleanupAndSafeHTTPBranches(t *testing.T) {
+func TestProfileBGImageEncodingAndSafeHTTPBranches(t *testing.T) {
 	testProfileBGImageEncoding(t)
-	testProfileBGOrphanCleanup(t)
 	testProfileBGSafeDial(t)
 	testProfileBGSafeHTTPRedirects(t)
 }
@@ -231,45 +223,6 @@ func testProfileBGImageEncoding(t *testing.T) {
 	}
 	if got := profileBGContext(nil); got == nil || got.Err() != nil {
 		t.Fatal("nil profile background context should become a live context")
-	}
-}
-
-func testProfileBGOrphanCleanup(t *testing.T) {
-	t.Helper()
-	var nilStore *LocalProfileBGStore
-	if deleted, err := nilStore.CleanupOrphanedFiles(context.Background(), nil); err != nil || deleted != 0 {
-		t.Fatalf("nil cleanup = %d, %v", deleted, err)
-	}
-	root := t.TempDir()
-	store := NewLocalProfileBGStore(root)
-	if deleted, err := store.CleanupOrphanedFiles(context.Background(), nil); err != nil || deleted != 0 {
-		t.Fatalf("cleanup missing directory = %d, %v", deleted, err)
-	}
-	activeRel := filepath.ToSlash(filepath.Join(DefaultProfileBGRelativeDir, "jp", "active.jpg"))
-	orphanRel := filepath.ToSlash(filepath.Join(DefaultProfileBGRelativeDir, "jp", "orphan.jpg"))
-	for _, rel := range []string{activeRel, orphanRel} {
-		path := filepath.Join(root, filepath.FromSlash(rel))
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			t.Fatalf("create cleanup directory: %v", err)
-		}
-		if err := os.WriteFile(path, []byte("x"), 0o644); err != nil {
-			t.Fatalf("write cleanup file: %v", err)
-		}
-	}
-	deleted, err := store.CleanupOrphanedFiles(context.Background(), map[string]bool{activeRel: true})
-	if err != nil || deleted != 1 {
-		t.Fatalf("cleanup orphan = %d, %v", deleted, err)
-	}
-	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(activeRel))); err != nil {
-		t.Fatalf("active background was removed: %v", err)
-	}
-	badRoot := filepath.Join(t.TempDir(), "file-root")
-	if err := os.WriteFile(badRoot, []byte("x"), 0o644); err != nil {
-		t.Fatalf("write bad cleanup root: %v", err)
-	}
-	badStore := &LocalProfileBGStore{rootDir: badRoot, relativeDir: DefaultProfileBGRelativeDir}
-	if deleted, err := badStore.CleanupOrphanedFiles(context.Background(), nil); err != nil || deleted != 0 {
-		t.Fatalf("cleanup below a file root should skip the walk error: %d, %v", deleted, err)
 	}
 }
 

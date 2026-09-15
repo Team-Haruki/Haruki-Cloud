@@ -41,6 +41,10 @@ func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 	}, nil
 }
 
+// resolveCardOriginalImagePaths returns the Drawing-relative original image
+// paths. It no longer probes existence to swap in an absolute local path (C1,
+// T15): the handler resolves each path through AssetReader.ReadFirst or
+// assets.PublicAssetURL, which both accept the relative form.
 func resolveCardOriginalImagePaths(helper *assets.AssetHelper, region renderregion.Value, card *masterdata.Card) []string {
 	if card == nil || strings.TrimSpace(card.AssetBundleName) == "" {
 		return nil
@@ -68,13 +72,6 @@ func resolveCardOriginalImagePaths(helper *assets.AssetHelper, region renderregi
 		path := common.ResolveCardMemberImagePath(helper, region, card.AssetBundleName, item.fileName)
 		if strings.TrimSpace(path) == "" {
 			continue
-		}
-		// Resolve to absolute path when the file exists locally so that callers
-		// using os.ReadFile (card-image mode, no CDN) receive a usable path.
-		if helper != nil {
-			if resolved := helper.FirstExisting(path); resolved != "" {
-				path = resolved
-			}
 		}
 		if _, ok := seen[path]; ok {
 			continue

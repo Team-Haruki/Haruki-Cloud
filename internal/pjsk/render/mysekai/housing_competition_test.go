@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -238,7 +239,7 @@ func TestHousingCompetitionBannerCacheFallsBackToAssetsBaseURL(t *testing.T) {
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
 		LocalDir:                         root,
 		AllowFallback:                    true,
-		AssetsBaseURL:                    server.URL,
+		AssetHosts:                       urlhost.Single(server.URL),
 		HousingCompetitionStatsCachePath: cachePath,
 	})
 	result, err := controller.BuildHousingCompetitionLine(context.Background(), api, HousingCompetitionLineQuery{

@@ -324,7 +324,8 @@ func TestResolveMusicCoverAndBPM(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ResolveMusicCover() error = %v", err)
 	}
-	if filepath.Clean(cover.JacketPath) != filepath.Clean(jacketPath) {
+	// C1 (T15): the Drawing-relative path, not the absolute bare-layout hit.
+	if cover.JacketPath != "asset/jp-assets/startapp/music/jacket/jacket_test/jacket_test.png" {
 		t.Fatalf("unexpected jacket path: %q", cover.JacketPath)
 	}
 

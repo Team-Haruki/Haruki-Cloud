@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
@@ -181,17 +180,17 @@ func TestControllerCoverageLifecycleAndContext(t *testing.T) {
 	if nilController.WithContext(context.Background()) != nil {
 		t.Fatal("nil controller must stay nil when contextualized")
 	}
-	if got := nilController.default3DPreviewStaticOutputDir("x"); got != "" {
-		t.Fatalf("nil controller returned an output directory: %q", got)
-	}
 
 	ctx := context.WithValue(context.Background(), controllerCoverageContextKey{}, "request")
 	source := &controllerCoverageSource{region: renderregion.JP}
 	assetRoot := t.TempDir()
 	controller := NewController(source, drawing.NewHarukiDrawingClient("http://drawing.invalid"), renderassets.NewAssetHelper(assetRoot, nil))
 	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: "http://preview.invalid", StaticRelativeDir: "custom/previews"})
-	if got, want := controller.preview3D.cfg.StaticOutputDir, filepath.Join(assetRoot, "custom", "previews"); got != want {
-		t.Fatalf("default static output dir = %q, want %q", got, want)
+	if got := controller.preview3D.cfg.StaticOutputDir; got != "" {
+		t.Fatalf("static output dir derived from the asset root %q: %q", assetRoot, got)
+	}
+	if controller.preview3D.static.store != nil {
+		t.Fatalf("static target enabled without a static store: %+v", controller.preview3D.static)
 	}
 
 	clone := controller.WithContext(ctx)
@@ -213,19 +212,6 @@ func TestControllerCoverageLifecycleAndContext(t *testing.T) {
 		t.Fatal("WithContext dropped a non-contextual source")
 	}
 
-	if got := (&Controller{}).default3DPreviewStaticOutputDir("x"); got != "" {
-		t.Fatalf("controller without assets returned %q", got)
-	}
-	for _, root := range []string{"", ".", "https://assets.example", "HTTP://assets.example"} {
-		candidate := NewController(source, nil, renderassets.NewAssetHelper(root, nil))
-		if got := candidate.default3DPreviewStaticOutputDir(""); got != "" {
-			t.Fatalf("non-local asset root %q returned output dir %q", root, got)
-		}
-	}
-	defaultDirController := NewController(source, nil, renderassets.NewAssetHelper(assetRoot, nil))
-	if got, want := defaultDirController.default3DPreviewStaticOutputDir(""), filepath.Join(assetRoot, filepath.FromSlash(defaultPreview3DStaticRelativeDir)); got != want {
-		t.Fatalf("default output dir = %q, want %q", got, want)
-	}
 }
 
 func TestControllerCoverageRenderCostumeList(t *testing.T) {

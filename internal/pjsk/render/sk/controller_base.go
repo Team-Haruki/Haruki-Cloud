@@ -21,10 +21,17 @@ func NewControllerWithConfig(drawingClient *drawing.HarukiDrawingClient, forecas
 		drawing:       drawingClient,
 		drawingBase:   drawingClient,
 		forecast:      forecast,
-		forecastCache: newForecastDataCacheWithPath(forecast, forecastConfig.CachePath),
+		forecastCache: newForecastCacheForConfig(forecast, forecastConfig),
 		events:        regionsource.NewRegistry[EventSource](renderregion.JP),
 		assets:        renderassets.NewAssetHelper("", nil),
 	}
+}
+
+func newForecastCacheForConfig(provider ForecastProvider, cfg ForecastConfig) *forecastDataCache {
+	if cfg.CacheStore != nil {
+		return newForecastDataCacheWithStore(provider, cfg.CacheStore, cfg.CacheKey)
+	}
+	return newForecastDataCacheWithPath(provider, cfg.CachePath)
 }
 
 func (c *Controller) SetTrackerIntegration(tracker TrackerSource, events EventSource, assetHelper *renderassets.AssetHelper) {

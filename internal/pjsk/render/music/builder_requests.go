@@ -234,7 +234,6 @@ func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Mus
 
 	stylePath := chartstyle.CSSPath(query.Style)
 
-	assetBase := b.assets.Primary()
 	return &drawing.GenerateMusicChartRequest{
 		MusicID:              music.ID,
 		Title:                b.buildDisplayMusicTitle(music, region),
@@ -242,8 +241,8 @@ func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Mus
 		Difficulty:           diff,
 		PlayLevel:            playLevel,
 		Skill:                query.Skill,
-		JacketPath:           assets.MakeRelative(assetBase, jacketPath),
-		SusPath:              assets.MakeRelative(assetBase, susPath),
+		JacketPath:           jacketPath,
+		SusPath:              susPath,
 		StylePath:            &stylePath,
 		NoteHost:             assets.StaticImagesDir + "/chart_asset/notes",
 		TargetSegmentSeconds: float64Ptr(6.0),

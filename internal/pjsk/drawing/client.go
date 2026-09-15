@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
@@ -64,12 +65,13 @@ func newHarukiDrawingClient(strict bool, legacyBaseURL string, targets []upstrea
 		SetResponseBodyLimit(drawingMaxResponseBytes).
 		SetTransport(upstream.NewTunedTransport(upstream.TunedTransportConfig{}))
 	drawingClient := &HarukiDrawingClient{
-		client:     client,
-		baseURL:    baseURL,
-		pool:       upstream.NewPoolWithResources(resolvedTargets, shared),
-		limiter:    newDrawingLimiter(LimiterConfig{}),
-		logger:     newLogger,
-		localCache: newLocalRenderCache(0),
+		client:            client,
+		baseURL:           baseURL,
+		pool:              upstream.NewPoolWithResources(resolvedTargets, shared),
+		limiter:           newDrawingLimiter(LimiterConfig{}),
+		logger:            newLogger,
+		localCache:        newLocalRenderCache(0),
+		directiveRejected: new(atomic.Int64),
 	}
 	for _, option := range options {
 		if option != nil {
@@ -84,6 +86,15 @@ func (c *HarukiDrawingClient) SetRenderCache(cache *RenderCacheClient) {
 		return
 	}
 	c.cache = cache
+}
+
+// DirectiveRejectedCount reports drawing_directive_rejected: Drawing 400s
+// that name a malformed artifact directive.
+func (c *HarukiDrawingClient) DirectiveRejectedCount() int64 {
+	if c == nil || c.directiveRejected == nil {
+		return 0
+	}
+	return c.directiveRejected.Load()
 }
 
 func (c *HarukiDrawingClient) WithContext(ctx context.Context) *HarukiDrawingClient {
@@ -128,6 +139,7 @@ func (c *HarukiDrawingClient) renderWithCacheRequestAndPrepare(endpoint string, 
 	if c != nil {
 		requestCtx = c.requestCtx
 	}
+	requestCtx = c.withArtifactMode(requestCtx, endpoint)
 	now := time.Now()
 	finishCachePrepare := commandtrace.MeasureOperation(requestCtx, "drawing.prepare_cache")
 	preparedCache := prepareDrawingRequestBody(endpoint, cacheRequest, now, requestCtx)
@@ -223,6 +235,10 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 	request := c.client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(encodedBody)
+	directive := c.activeDirective()
+	if directive != nil {
+		directive.apply(request)
+	}
 	if requestCtx != nil {
 		request.SetContext(requestCtx)
 	}
@@ -256,6 +272,7 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 			"response_bytes", len(resp.Body()),
 			"upstream_detail", detail,
 		)
+		c.noteDirectiveRejection(endpoint, directive, resp)
 		if insufficientData {
 			return nil, fmt.Errorf("drawing request failed with status %d: %w", resp.StatusCode(), ErrDrawingDataInsufficient)
 		}
@@ -271,7 +288,87 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 		"duration_ms", commandtrace.Milliseconds(elapsed),
 		"response_bytes", len(resp.Body()),
 	)
-	return resp.Body(), nil
+	return c.successBody(directive, resp)
+}
+
+// successBody branches a 200 on the directive: a degraded write and plain
+// image bytes return bytes, a JSON artifact_ref lands on the outcome and
+// returns (nil, nil). Without a directive the body is returned as today.
+func (c *HarukiDrawingClient) successBody(d *renderDirective, resp *resty.Response) ([]byte, error) {
+	node := resp.Header().Get(headerNode)
+	contentType := resp.Header().Get("Content-Type")
+	switch {
+	case d != nil && resp.Header().Get(headerArtifactDegraded) == "1":
+		d.outcome.Degraded = true
+		d.outcome.Node = node
+		d.outcome.ContentType = contentType
+		return resp.Body(), nil
+	case d != nil && d.Artifact && strings.HasPrefix(strings.ToLower(strings.TrimSpace(contentType)), "application/json"):
+		ref, err := parseArtifactRef(resp.Body())
+		if err != nil {
+			return nil, errDrawingBadArtifact(err)
+		}
+		if ref.NodeName == "" {
+			ref.NodeName = node
+		}
+		d.outcome.Ref = ref
+		d.outcome.Node = ref.NodeName
+		d.outcome.ContentType = contentType
+		return nil, nil
+	default:
+		if d != nil {
+			d.outcome.Node = node
+			d.outcome.ContentType = contentType
+		}
+		return resp.Body(), nil
+	}
+}
+
+// noteDirectiveRejection logs a Drawing 400 that names a malformed directive
+// (X-Haruki-Directive-Error or the body code) at ERROR and counts it. The
+// request still fails as a render error.
+func (c *HarukiDrawingClient) noteDirectiveRejection(endpoint string, d *renderDirective, resp *resty.Response) {
+	if resp.StatusCode() != http.StatusBadRequest {
+		return
+	}
+	header := strings.TrimSpace(resp.Header().Get(headerDirectiveError))
+	code := ""
+	if header == "" && d == nil {
+		return
+	}
+	body := resp.Body()
+	if len(body) > drawingErrorClassificationBytes {
+		body = body[:drawingErrorClassificationBytes]
+	}
+	var payload struct {
+		Header string `json:"header"`
+		Code   string `json:"code"`
+	}
+	if err := json.Unmarshal(body, &payload); err == nil {
+		code = strings.TrimSpace(payload.Code)
+		if header == "" && strings.HasPrefix(strings.ToLower(strings.TrimSpace(payload.Header)), "x-haruki-") {
+			header = strings.TrimSpace(payload.Header)
+		}
+	}
+	if header == "" {
+		return
+	}
+	if c.directiveRejected != nil {
+		c.directiveRejected.Add(1)
+	}
+	apiPath, key := "", ""
+	if d != nil {
+		apiPath, key = d.APIPath, shortRenderCacheKey(d.Key)
+	}
+	c.logger.ErrorContext(c.requestCtx, "drawing rejected the render cache directive",
+		"upstream", "drawing",
+		"upstream_path", endpoint,
+		"api_path", apiPath,
+		"directive_header", header,
+		"directive_code", code,
+		"cache_key", key,
+		"metric", "drawing_directive_rejected",
+	)
 }
 
 func drawingResponseErrorDetail(body []byte) string {
@@ -320,17 +417,6 @@ func drawingResponseIndicatesInsufficientData(body []byte) bool {
 		}
 	}
 	return false
-}
-
-func (c *HarukiDrawingClient) post(endpoint string, body any) ([]byte, error) {
-	var requestCtx context.Context
-	if c != nil {
-		requestCtx = c.requestCtx
-	}
-	finishPrepare := commandtrace.MeasureOperation(requestCtx, "drawing.prepare_render")
-	requestBody := prepareDrawingRequestBody(endpoint, body, time.Now(), requestCtx)
-	finishPrepare()
-	return c.postPrepared(endpoint, requestBody)
 }
 
 func (c *HarukiDrawingClient) cachedPost(endpoint string, body any) ([]byte, error) {
@@ -465,7 +551,7 @@ func (c *HarukiDrawingClient) GenerateInventoryList(req *InventoryListRequest) (
 // =========================== Event API ===========================
 
 func (c *HarukiDrawingClient) GenerateEventDetail(req *EventDetailRequest) ([]byte, error) {
-	return c.post("/api/pjsk/event/detail", req)
+	return c.postUncached("/api/pjsk/event/detail", req)
 }
 
 func (c *HarukiDrawingClient) GenerateEventRecord(req *EventRecordRequest) ([]byte, error) {
@@ -511,7 +597,7 @@ func (c *HarukiDrawingClient) GenerateCharacterBirthday(req *CharaBirthdayReques
 func (c *HarukiDrawingClient) GenerateAliasList(req *AliasListRequest) ([]byte, error) {
 	// Alias-list watermarks include request DT, so we intentionally bypass the
 	// render cache here to avoid serving stale timestamps.
-	return c.post("/api/pjsk/misc/alias-list", req)
+	return c.postUncached("/api/pjsk/misc/alias-list", req)
 }
 
 func (c *HarukiDrawingClient) GenerateCommandHelp(req *CommandHelpRenderRequest) ([]byte, error) {
@@ -664,4 +750,8 @@ func (c *HarukiDrawingClient) GenerateDetailMusicRewardsImage(req *DetailMusicRe
 
 func (c *HarukiDrawingClient) GeneratePlayProgressImage(req *PlayProgressRequest) (ImageResult, error) {
 	return c.cachedPostImage("/api/pjsk/music/progress", req)
+}
+
+func (c *HarukiDrawingClient) GenerateMusicChartImage(req *GenerateMusicChartRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/chart", req)
 }

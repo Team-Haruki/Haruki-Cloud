@@ -3,12 +3,11 @@ package sk
 import (
 	"context"
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"sort"
 	"time"
 
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/storage"
 )
 
 const forecastCachePersistenceVersion = 1
@@ -25,10 +24,10 @@ type persistedForecastDataCacheEntry struct {
 }
 
 func (c *forecastDataCache) loadPersisted() {
-	if c == nil || c.persistencePath == "" {
+	if c == nil || c.store == nil {
 		return
 	}
-	data, err := os.ReadFile(c.persistencePath)
+	data, err := c.store.Get(context.Background(), c.storeKey)
 	if err != nil || len(data) == 0 {
 		return
 	}
@@ -96,7 +95,7 @@ func (c *forecastDataCache) snapshotForPersistenceLocked() persistedForecastData
 }
 
 func (c *forecastDataCache) persistLatest(ctx context.Context, requestedGeneration uint64) {
-	if c == nil || c.persistencePath == "" {
+	if c == nil || c.store == nil {
 		return
 	}
 	finishWait := commandtrace.MeasureOperation(ctx, "forecast_cache.persist_wait")
@@ -122,36 +121,11 @@ func (c *forecastDataCache) persistLatest(ctx context.Context, requestedGenerati
 		return
 	}
 	finishPersist := commandtrace.MeasureOperation(ctx, "forecast_cache.persist")
-	err = writeForecastCachePayload(c.persistencePath, payload)
+	// Persistence outlives the refresh that triggered it, as the old file
+	// write did: a cancelled caller must not drop the snapshot.
+	err = c.store.Put(context.WithoutCancel(ctx), c.storeKey, payload, storage.PutOptions{ContentType: "application/json"})
 	finishPersist()
 	if err == nil {
 		c.persistedGeneration = generation
 	}
-}
-
-func writeForecastCachePayload(path string, payload []byte) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	tmp, err := os.CreateTemp(filepath.Dir(path), "."+filepath.Base(path)+".tmp-*")
-	if err != nil {
-		return err
-	}
-	tmpPath := tmp.Name()
-	defer os.Remove(tmpPath)
-	if err := tmp.Chmod(0o644); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if _, err := tmp.Write(payload); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(tmpPath, path); err != nil {
-		return err
-	}
-	return nil
 }

@@ -11,6 +11,7 @@ import (
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/core/urlhost"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/meta"
@@ -34,6 +35,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/internal/pjsk/render/vlive"
+	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/imagecache"
 	"haruki-cloud/utils/logger"
 )
@@ -54,8 +56,11 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		SekaiDSN:                          cfg.SekaiDSN,
 		LocalDir:                          localMasterdataDir,
 		AllowFallback:                     localMasterdataFallback && cfg.LocalMasterdata.AllowFallback,
-		AssetsBaseURL:                     cfg.AssetsBaseURL,
+		AssetReader:                       dependencies.assetReader,
+		AssetHosts:                        cfg.AssetHosts,
 		HousingCompetitionStatsCachePath:  cfg.MySekaiHousingCompetitionCachePath,
+		HousingCompetitionCacheStore:      cfg.MySekaiHousingCompetitionCacheStore,
+		HousingCompetitionStatsCacheKey:   cfg.MySekaiHousingCompetitionCacheKey,
 		HousingCompetitionRefreshInterval: cfg.MySekaiHousingCompetitionRefreshInterval,
 	})
 	inventoryController := inventory.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, inventory.MasterdataOptions{
@@ -71,6 +76,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		sekaiClient, cfg, localMasterdataFallback, localMasterdataDir, drawingClient, assetHelper,
 		snapshotService, deckController, educationController, skController,
 	)
+	databaseControllers.setAssetReader(dependencies.assetReader)
 	deckController = databaseControllers.decks
 	musicController := databaseControllers.music
 	cardController := databaseControllers.cards
@@ -112,37 +118,43 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	skController.StartDefaultPredictWarmup()
 
 	runtime := &App{
-		Sekai:      sekaiClient,
-		PJSK:       pjskClient,
-		Drawing:    drawingClient,
-		Assets:     assetHelper,
-		MetaLoader: cfg.MetaLoader,
-		Provider:   masterProvider,
-		Providers:  providersByRegion,
-		Cards:      cardController,
-		Costumes:   costumeController,
-		Decks:      deckController,
-		Edu:        educationController,
-		Events:     eventController,
-		Gachas:     gachaController,
-		Honors:     honorController,
-		Inventory:  inventoryController,
-		Misc:       miscController,
-		MySekai:    mysekaiController,
-		Music:      musicController,
-		Aliases:    aliasService,
-		Profiles:   profileController,
-		Score:      scoreController,
-		SK:         skController,
-		Stamps:     stampController,
-		VLive:      vliveController,
-		Snapshots:  staticSnapshotProvider,
-		ImageCache: imagecache.NewWithStore(cfg.ImageCacheURI, cfg.ImageCacheDir, imgStore),
-		Censor:     cfg.CensorService,
-		SekaiAPI:   cfg.SekaiAPI,
-		Toolbox:    cfg.Toolbox,
-		Tracker:    cfg.Tracker,
-		Config:     cfg,
+		Sekai:       sekaiClient,
+		PJSK:        pjskClient,
+		Drawing:     drawingClient,
+		Assets:      assetHelper,
+		MetaLoader:  cfg.MetaLoader,
+		Provider:    masterProvider,
+		Providers:   providersByRegion,
+		Cards:       cardController,
+		Costumes:    costumeController,
+		Decks:       deckController,
+		Edu:         educationController,
+		Events:      eventController,
+		Gachas:      gachaController,
+		Honors:      honorController,
+		Inventory:   inventoryController,
+		Misc:        miscController,
+		MySekai:     mysekaiController,
+		Music:       musicController,
+		Aliases:     aliasService,
+		Profiles:    profileController,
+		Score:       scoreController,
+		SK:          skController,
+		Stamps:      stampController,
+		VLive:       vliveController,
+		Snapshots:   staticSnapshotProvider,
+		ImageCache:  newAppImageCache(initCtx, cfg, imgStore),
+		ImageIndex:  imgStore,
+		Censor:      cfg.CensorService,
+		SekaiAPI:    cfg.SekaiAPI,
+		Toolbox:     cfg.Toolbox,
+		Tracker:     cfg.Tracker,
+		Stores:      cfg.Stores,
+		ImageHosts:  cfg.ImageHosts,
+		AssetHosts:  cfg.AssetHosts,
+		AssetReader: dependencies.assetReader,
+		Config:      cfg,
+		initErr:     dependencies.initErr,
 	}
 	if localMasterdataFallback {
 		runtime.startLocalMasterdataRefresh(initCtx, localMasterdataDir, cfg.LocalMasterdata.RefreshInterval)
@@ -153,10 +165,12 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 
 type appDependencies struct {
 	assets                  *assets.AssetHelper
+	assetReader             *assets.AssetReader
 	snapshots               snapshot.Snapshot
 	staticSnapshots         snapshot.HarukiSnapshotProvider
 	drawing                 *drawing.HarukiDrawingClient
 	imageStore              *imagecache.PGStore
+	initErr                 error
 	localMasterdataFallback bool
 	localMasterdataDir      string
 	inventoryMasterdataDir  string
@@ -187,6 +201,17 @@ func configureAppDatabaseControllers(sekaiClient *sekaiDB.Client, cfg Config, lo
 	return controllers
 }
 
+// setAssetReader threads the shared asset reader into every controller whose
+// asset reads or remaining existence checks go through it. The setters are
+// nil-safe, so controllers that were not built (no sekai client) are skipped.
+// Honor and profile keep the reader for the honor overlays Drawing does not yet
+// tolerate as missing (pending contract item C1-overlays).
+func (c *appDatabaseControllers) setAssetReader(reader *assets.AssetReader) {
+	c.honors.SetAssetReader(reader)
+	c.music.SetAssetReader(reader)
+	c.profiles.SetAssetReader(reader)
+}
+
 func (c *appDatabaseControllers) registerProvider(source provider.MasterDataProvider) {
 	if source == nil {
 		return
@@ -213,7 +238,11 @@ func (c *appDatabaseControllers) configureDefaultProvider(sekaiClient *sekaiDB.C
 	c.decks.RegisterMusicSource(musicAdapter)
 	c.cards = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)
 	c.costumes = costume.NewController(costumeAdapter, drawingClient, assetHelper)
-	c.costumes.Set3DPreviewConfig(cfg.Preview3D)
+	preview3D := cfg.Preview3D
+	if preview3D.StaticStore == nil {
+		preview3D.StaticStore = cfg.Stores.Static
+	}
+	c.costumes.Set3DPreviewConfig(preview3D)
 	educationController.RegisterSource(education.NewProviderAdapter(c.provider))
 	c.events = event.NewController(eventAdapter, drawingClient, assetHelper)
 	c.gachas = gacha.NewController(gacha.NewProviderAdapter(c.provider), drawingClient, assetHelper)
@@ -274,11 +303,18 @@ func newAppDeckController(cardProvider deck.CardSource, eventProvider deck.Event
 
 func normalizeAppConfig(cfg *Config) context.Context {
 	cfg.DefaultRegion = renderregion.WithDefault(cfg.DefaultRegion)
+	cfg.Stores = cfg.Stores.Normalized()
+	if cfg.ImageHosts == nil {
+		cfg.ImageHosts = urlhost.Single("")
+	}
+	if cfg.AssetHosts == nil {
+		cfg.AssetHosts = urlhost.Single("")
+	}
 	initCtx := cfg.InitContext
 	if initCtx == nil {
 		initCtx = context.Background()
 	}
-	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval, cfg.MusicMetaOutputDir, cfg.MusicMetaSource, cfg.MusicMetaBaseURL)
+	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval, musicMetaPersistence(cfg), cfg.MusicMetaSource, cfg.MusicMetaBaseURL)
 	if cfg.SharedUpstreamResources == nil {
 		cfg.SharedUpstreamResources = &upstream.SharedResources{}
 	}
@@ -287,12 +323,13 @@ func normalizeAppConfig(cfg *Config) context.Context {
 
 func newAppDependencies(initCtx context.Context, sekaiClient *sekaiDB.Client, cfg Config) appDependencies {
 	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
+	assetReader := assets.NewAssetReader(assetHelper, cfg.Stores.Assets)
 	snapshotService, staticSnapshotProvider := newAppSnapshotServices(initCtx, sekaiClient, assetHelper, cfg)
-	drawingClient, imageStore := newAppDrawingClient(initCtx, cfg)
+	drawingClient, imageStore, imageStoreErr := newAppDrawingClient(initCtx, cfg)
 	localFallback, localDir, inventoryDir := appMasterdataDirs(cfg)
 	return appDependencies{
-		assets: assetHelper, snapshots: snapshotService, staticSnapshots: staticSnapshotProvider,
-		drawing: drawingClient, imageStore: imageStore, localMasterdataFallback: localFallback,
+		assets: assetHelper, assetReader: assetReader, snapshots: snapshotService, staticSnapshots: staticSnapshotProvider,
+		drawing: drawingClient, imageStore: imageStore, initErr: imageStoreErr, localMasterdataFallback: localFallback,
 		localMasterdataDir: localDir, inventoryMasterdataDir: inventoryDir,
 	}
 }
@@ -308,18 +345,39 @@ func newAppSnapshotServices(initCtx context.Context, sekaiClient *sekaiDB.Client
 	return service, snapshot.NewStaticSnapshotProvider(service)
 }
 
-func newAppDrawingClient(initCtx context.Context, cfg Config) (*drawing.HarukiDrawingClient, *imagecache.PGStore) {
-	imageStore := openAppImageStore(initCtx, cfg.ImageCachePGURL)
+func newAppDrawingClient(initCtx context.Context, cfg Config) (*drawing.HarukiDrawingClient, *imagecache.PGStore, error) {
+	imageStore, imageStoreErr := openAppImageStore(initCtx, cfg.ImageCachePGURL, imagecache.PGStoreOptions{
+		MaxOpen: cfg.ImageCachePGMaxOpen, RenderIndexDDL: cfg.ImageCacheRenderIndexDDL,
+	})
 	cacheConfig := cfg.DrawingCache
-	cacheConfig.ImageCacheDir = cfg.ImageCacheDir
-	cacheConfig.ImageStore = imageStore
+	configureRenderIndex(initCtx, &cacheConfig, imageStore, cfg)
 	client := drawing.NewHarukiDrawingClientWithTargetsAndResources(
 		cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, appDrawingOptions(cfg)...,
 	)
 	if client != nil {
 		client.SetRenderCache(drawing.NewRenderCacheClient(cacheConfig))
 	}
-	return client, imageStore
+	return client, imageStore, imageStoreErr
+}
+
+// configureRenderIndex switches the render cache to index mode when
+// render_index.lookup_enabled is set and the index is open. The index is
+// assigned only from a non-nil pointer.
+func configureRenderIndex(initCtx context.Context, cacheConfig *drawing.RenderCacheConfig, imageStore *imagecache.PGStore, cfg Config) {
+	if !cfg.ImageCacheRenderIndexLookup {
+		return
+	}
+	if imageStore == nil {
+		logger.WarnContext(initCtx, "render index lookups disabled: the image cache index is not available")
+		return
+	}
+	cacheConfig.Index = imageStore
+	if cfg.Stores.ImageCache != storage.Disabled() {
+		cacheConfig.Artifacts = cfg.Stores.ImageCache
+	}
+	cacheConfig.Hosts = cfg.ImageHosts
+	cacheConfig.TouchInterval = cfg.ImageCacheRenderIndexTouchInterval
+	cacheConfig.FetchTimeout = cfg.DrawingArtifact.FetchTimeout
 }
 
 func appDrawingOptions(cfg Config) []drawing.ClientOption {
@@ -330,6 +388,9 @@ func appDrawingOptions(cfg Config) []drawing.ClientOption {
 	if cfg.DrawingRetryCount > 0 {
 		options = append(options, drawing.WithRetryCount(cfg.DrawingRetryCount))
 	}
+	if len(cfg.DrawingArtifact.Endpoints) > 0 {
+		options = append(options, drawing.WithArtifactConfig(appArtifactConfig(cfg)))
+	}
 	if cfg.DrawingSKMaxConcurrency > 0 || cfg.DrawingSKAcquireTimeout > 0 || cfg.DrawingMaxConcurrency > 0 {
 		options = append(options, drawing.WithLimiter(drawing.LimiterConfig{
 			SKMaxConcurrency: cfg.DrawingSKMaxConcurrency, SKAcquireTimeout: cfg.DrawingSKAcquireTimeout,
@@ -339,19 +400,63 @@ func appDrawingOptions(cfg Config) []drawing.ClientOption {
 	return options
 }
 
-func openAppImageStore(initCtx context.Context, url string) *imagecache.PGStore {
-	if url == "" {
-		return nil
+// appArtifactConfig fills the artifact read-back dependencies from the
+// image_cache slot and the per-node image hosts.
+func appArtifactConfig(cfg Config) drawing.ArtifactConfig {
+	artifact := cfg.DrawingArtifact
+	if artifact.Objects == nil {
+		artifact.Objects = cfg.Stores.ImageCache
 	}
-	store, err := imagecache.NewPGStore(url)
+	if artifact.Hosts == nil {
+		artifact.Hosts = cfg.ImageHosts
+	}
+	return artifact
+}
+
+// openAppImageStore opens the image cache index. An empty DSN disables the
+// index (nil, nil); any other failure is returned for startup to report.
+func openAppImageStore(initCtx context.Context, dsn string, opts imagecache.PGStoreOptions) (*imagecache.PGStore, error) {
+	return openAppImageStoreWith(initCtx, dsn, opts, imagecache.NewPGStoreWithOptions)
+}
+
+type imageStoreOpener func(dsn string, opts imagecache.PGStoreOptions) (*imagecache.PGStore, error)
+
+func openAppImageStoreWith(initCtx context.Context, dsn string, opts imagecache.PGStoreOptions, open imageStoreOpener) (*imagecache.PGStore, error) {
+	if strings.TrimSpace(dsn) == "" {
+		logger.WarnContext(initCtx, "image cache index disabled: pjsk_render.image_cache.pg_url is empty")
+		return nil, nil
+	}
+	store, err := open(dsn, opts)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("image cache index: %w", err)
 	}
 	if err := store.Init(initCtx); err != nil {
 		_ = store.Close()
+		return nil, fmt.Errorf("image cache index schema: %w", err)
+	}
+	return store, nil
+}
+
+// newAppImageCache builds the image cache client on the image_cache slot.
+// Nothing configured at all keeps the client nil silently; a half-configured client (hosts without objects or the
+// reverse) is logged at ERROR instead of being dropped silently.
+func newAppImageCache(initCtx context.Context, cfg Config, index *imagecache.PGStore) *imagecache.Client {
+	objects, localRoot := cfg.Stores.ImageCache, strings.TrimSpace(cfg.ImageCacheLocalRoot)
+	if objects == storage.Disabled() {
+		objects, localRoot = nil, ""
+	}
+	hostsConfigured := cfg.ImageHosts.Len() > 0
+	if !hostsConfigured && objects == nil {
 		return nil
 	}
-	return store
+	client, err := imagecache.NewClient(imagecache.ClientConfig{
+		Hosts: cfg.ImageHosts, Objects: objects, LocalRoot: localRoot, Index: index,
+	})
+	if err != nil {
+		logger.ErrorContext(initCtx, "image cache client not configured", "error", err)
+		return nil
+	}
+	return client
 }
 
 func appMasterdataDirs(cfg Config) (bool, string, string) {
@@ -393,7 +498,16 @@ func shouldEnableLocalSnapshotFallback(cfg Config) bool {
 	}
 }
 
-func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refreshInterval time.Duration, outputDir, source, baseURL string) *meta.Loader {
+// musicMetaPersistence selects the loader persistence option: the store when
+// set, else the local output directory.
+func musicMetaPersistence(cfg *Config) meta.LoaderOption {
+	if cfg.MusicMetaStore != nil {
+		return meta.WithStore(cfg.MusicMetaStore)
+	}
+	return meta.WithOutputDir(cfg.MusicMetaOutputDir)
+}
+
+func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refreshInterval time.Duration, persistence meta.LoaderOption, source, baseURL string) *meta.Loader {
 	if configured != nil {
 		return configured
 	}
@@ -406,7 +520,7 @@ func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refresh
 		refreshInterval = defaultMusicMetaRefreshInterval
 	}
 
-	loader := meta.NewLoader(logger.NewLoggerFromGlobal("PJSKMeta"), meta.WithOutputDir(outputDir), meta.WithSource(source), meta.WithBaseURL(baseURL))
+	loader := meta.NewLoader(logger.NewLoggerFromGlobal("PJSKMeta"), persistence, meta.WithSource(source), meta.WithBaseURL(baseURL))
 	if err := loader.LoadAll(initCtx); err != nil {
 		logger.WarnContext(initCtx, "music metadata initial load failed", "error_type", fmt.Sprintf("%T", err))
 	}
@@ -426,6 +540,9 @@ func (a *App) Close() error {
 		return nil
 	}
 	var err error
+	if a.Drawing != nil {
+		err = errors.Join(err, a.Drawing.Close())
+	}
 	if a.ImageCache != nil {
 		err = errors.Join(err, a.ImageCache.Close())
 	}

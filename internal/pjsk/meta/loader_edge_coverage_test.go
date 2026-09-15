@@ -11,7 +11,7 @@ import (
 
 func TestLoaderConfigurationAndCacheGuards(t *testing.T) {
 	loader := NewLoader(nil, nil, WithOutputDir("  "+t.TempDir()+"  "))
-	if loader.outputDir == "" {
+	if loader.store == nil {
 		t.Fatal("trimmed output directory was not configured")
 	}
 	if err := loader.load(context.Background(), "unknown"); err == nil {
@@ -32,20 +32,20 @@ func TestLoaderConfigurationAndCacheGuards(t *testing.T) {
 }
 
 func TestLoaderPersistenceGuardEdges(t *testing.T) {
-	if err := (*Loader)(nil).persist("jp", []byte("[]")); err != nil {
+	if err := (*Loader)(nil).persist(context.Background(), "jp", []byte("[]")); err != nil {
 		t.Fatalf("nil loader persist = %v", err)
 	}
-	if err := NewLoader(nil).persist("jp", []byte("[]")); err != nil {
+	if err := NewLoader(nil).persist(context.Background(), "jp", []byte("[]")); err != nil {
 		t.Fatalf("disabled persist = %v", err)
 	}
 	loader := NewLoader(nil, WithOutputDir(t.TempDir()))
-	if err := loader.persist("unknown", []byte("[]")); err == nil {
+	if err := loader.persist(context.Background(), "unknown", []byte("[]")); err == nil {
 		t.Fatal("unknown persist region unexpectedly succeeded")
 	}
-	if err := NewLoader(nil).loadPersisted("jp"); err == nil {
+	if err := NewLoader(nil).loadPersisted(context.Background(), "jp"); err == nil {
 		t.Fatal("unconfigured persisted load unexpectedly succeeded")
 	}
-	if err := loader.loadPersisted("unknown"); err == nil {
+	if err := loader.loadPersisted(context.Background(), "unknown"); err == nil {
 		t.Fatal("unknown persisted region unexpectedly loaded")
 	}
 }
@@ -56,7 +56,7 @@ func TestLoaderRejectsMalformedPersistedPayload(t *testing.T) {
 		t.Fatal(err)
 	}
 	loader := NewLoader(nil, WithOutputDir(dir))
-	if err := loader.loadPersisted("jp"); err == nil {
+	if err := loader.loadPersisted(context.Background(), "jp"); err == nil {
 		t.Fatal("malformed persisted payload unexpectedly loaded")
 	}
 }

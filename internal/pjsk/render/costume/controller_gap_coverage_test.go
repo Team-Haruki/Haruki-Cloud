@@ -5,7 +5,6 @@ package costume
 import (
 	"context"
 	"errors"
-	"path/filepath"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/drawing"
@@ -23,26 +22,19 @@ func TestCostumeControllerConstructionGapBranches(t *testing.T) {
 	var nilController *Controller
 	nilController.RegisterSource(nil)
 	nilController.Set3DPreviewConfig(Preview3DConfig{})
-	if nilController.default3DPreviewStaticOutputDir("ignored") != "" {
-		t.Fatal("nil controller resolved a preview output directory")
-	}
 	if nilController.WithContext(context.Background()) != nil {
 		t.Fatal("nil controller produced a contextual clone")
 	}
 
-	for _, primary := range []string{"", ".", "https://assets.example.test"} {
+	for _, primary := range []string{"", ".", "https://assets.example.test", t.TempDir()} {
 		candidate := &Controller{assets: renderassets.NewAssetHelper(primary, nil)}
-		if got := candidate.default3DPreviewStaticOutputDir("preview"); got != "" {
+		candidate.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: "http://preview.invalid"})
+		if got := candidate.preview3D.cfg.StaticOutputDir; got != "" {
 			t.Fatalf("primary %q produced output directory %q", primary, got)
 		}
-	}
-	root := t.TempDir()
-	local := &Controller{assets: renderassets.NewAssetHelper(root, nil)}
-	if got, want := local.default3DPreviewStaticOutputDir(""), filepath.Join(root, defaultPreview3DStaticRelativeDir); got != want {
-		t.Fatalf("default output directory = %q, want %q", got, want)
-	}
-	if got, want := local.default3DPreviewStaticOutputDir("custom/path"), filepath.Join(root, "custom", "path"); got != want {
-		t.Fatalf("custom output directory = %q, want %q", got, want)
+		if candidate.preview3D.static.store != nil {
+			t.Fatalf("primary %q enabled static publishing: %+v", primary, candidate.preview3D.static)
+		}
 	}
 
 	nonContextual := NewController(denseListTestSource{}, nil, nil)

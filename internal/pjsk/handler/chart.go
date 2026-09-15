@@ -2,7 +2,10 @@ package handler
 
 import (
 	"errors"
+	"fmt"
+	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	"strings"
 )
 
@@ -35,4 +38,24 @@ func (sekaiHandlers) ChartHandle() HarukiSekaiCommandHandler {
 			return makeCommandRequest(ctx, parser.ModuleMusic, "music-chart"), nil
 		},
 	}, executeMusic)
+}
+
+// renderMusicChartMessage renders a chart through the normal render path: the
+// render cache and, for allow-listed endpoints, the Drawing artifact directive.
+func renderMusicChartMessage(rc *RequestContext, musicCtrl *rendermusic.Controller, query rendermusic.ChartQuery) (onebot11.Message, error) {
+	if rc == nil || musicCtrl == nil {
+		return nil, fmt.Errorf("music chart renderer is not configured")
+	}
+	payload, err := musicCtrl.BuildMusicChartRequest(query)
+	if err != nil {
+		if ids := rendermusic.ExtractAmbiguousMusicIDs(err); len(ids) > 1 {
+			return renderAmbiguousMusicIDsMessages(rc, musicCtrl, query.Region, err, ids)
+		}
+		return nil, err
+	}
+	image, err := musicCtrl.RenderMusicChartRequestImage(payload)
+	if err != nil {
+		return nil, err
+	}
+	return rc.RenderedImageMessage(image)
 }

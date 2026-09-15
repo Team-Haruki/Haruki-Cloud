@@ -6,10 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -376,138 +372,6 @@ func TestResolveRenderCacheRuleUsesCostumeTTLs(t *testing.T) {
 	}
 }
 
-func TestRenderCacheClientRejectsUntrustedSelfSignedHTTPS(t *testing.T) {
-	storageDir := t.TempDir()
-	cacheKey := strings.Repeat("a", 64)
-	cachePath := filepath.Join(storageDir, "cached.png")
-	if err := os.WriteFile(cachePath, []byte("cached-image"), 0o644); err != nil {
-		t.Fatalf("write cache file: %v", err)
-	}
-
-	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/cache" {
-			t.Fatalf("unexpected path: %s", r.URL.Path)
-		}
-		if got := r.URL.Query().Get("key"); got != cacheKey {
-			t.Fatalf("unexpected key: %s", got)
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = fmt.Fprintf(w, `{"key":%q,"file_path":%q}`, cacheKey, cachePath)
-	}))
-	defer server.Close()
-
-	client := NewRenderCacheClient(RenderCacheConfig{
-		BaseURL:    server.URL,
-		StorageDir: storageDir,
-		TTL:        time.Minute,
-	})
-	if client == nil {
-		t.Fatal("expected render cache client")
-	}
-
-	if _, ok := client.lookup(cacheKey, "api/pjsk/profile"); ok {
-		t.Fatal("cache lookup accepted an untrusted self-signed HTTPS certificate")
-	}
-}
-
-func TestRenderCacheClientLimitsCacheAPIResponses(t *testing.T) {
-	client := NewRenderCacheClient(RenderCacheConfig{
-		BaseURL:    "http://127.0.0.1:1",
-		StorageDir: t.TempDir(),
-		TTL:        time.Minute,
-	})
-	if client == nil {
-		t.Fatal("expected render cache client")
-	}
-	if got := client.http.ResponseBodyLimit; got != renderCacheAPIResponseMaxBytes {
-		t.Fatalf("response body limit = %d, want %d", got, renderCacheAPIResponseMaxBytes)
-	}
-}
-
-func TestRenderCacheClientRejectsCacheFilesOutsideStorage(t *testing.T) {
-	storageDir := t.TempDir()
-	outsideDir := t.TempDir()
-	outsidePath := filepath.Join(outsideDir, "outside.png")
-	if err := os.WriteFile(outsidePath, []byte("outside"), 0o644); err != nil {
-		t.Fatalf("write outside file: %v", err)
-	}
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = fmt.Fprintf(w, `{"file_path":%q}`, outsidePath)
-	}))
-	defer server.Close()
-
-	client := NewRenderCacheClient(RenderCacheConfig{BaseURL: server.URL, StorageDir: storageDir, TTL: time.Minute})
-	if _, ok := client.lookup("outside", "api/pjsk/profile"); ok {
-		t.Fatal("cache lookup accepted a file outside its storage directory")
-	}
-}
-
-func TestRenderCacheClientRejectsCacheFileSymlinkEscape(t *testing.T) {
-	storageDir := t.TempDir()
-	outsidePath := filepath.Join(t.TempDir(), "outside.png")
-	if err := os.WriteFile(outsidePath, []byte("outside"), 0o644); err != nil {
-		t.Fatalf("write outside file: %v", err)
-	}
-	linkPath := filepath.Join(storageDir, "linked.png")
-	if err := os.Symlink(outsidePath, linkPath); err != nil {
-		t.Fatalf("create symlink: %v", err)
-	}
-
-	client := NewRenderCacheClient(RenderCacheConfig{
-		BaseURL:    "http://127.0.0.1:1",
-		StorageDir: storageDir,
-		TTL:        time.Minute,
-	})
-	if _, err := client.readCacheFile(linkPath); err == nil {
-		t.Fatal("cache read accepted a symlink escaping its storage directory")
-	}
-}
-
-func TestRenderCacheClientRejectsOversizedCacheFile(t *testing.T) {
-	storageDir := t.TempDir()
-	cachePath := filepath.Join(storageDir, "oversized.png")
-	file, err := os.Create(cachePath)
-	if err != nil {
-		t.Fatalf("create cache file: %v", err)
-	}
-	if err := file.Truncate(drawingMaxResponseBytes + 1); err != nil {
-		_ = file.Close()
-		t.Fatalf("truncate cache file: %v", err)
-	}
-	if err := file.Close(); err != nil {
-		t.Fatalf("close cache file: %v", err)
-	}
-
-	client := NewRenderCacheClient(RenderCacheConfig{
-		BaseURL:    "http://127.0.0.1:1",
-		StorageDir: storageDir,
-		TTL:        time.Minute,
-	})
-	if _, err := client.readCacheFile(cachePath); err == nil {
-		t.Fatal("cache read accepted an oversized file")
-	}
-}
-
-func TestRenderCacheClientRejectsSymlinkedStoreDirectory(t *testing.T) {
-	storageDir := t.TempDir()
-	outsideDir := t.TempDir()
-	if err := os.Symlink(outsideDir, filepath.Join(storageDir, "api")); err != nil {
-		t.Fatalf("create directory symlink: %v", err)
-	}
-
-	client := NewRenderCacheClient(RenderCacheConfig{
-		BaseURL:    "http://127.0.0.1:1",
-		StorageDir: storageDir,
-		TTL:        time.Minute,
-	})
-	target := client.defaultFilePath("api/pjsk/profile", "public", "key")
-	if _, err := client.prepareCacheTarget(target); err == nil {
-		t.Fatal("cache store accepted a symlinked directory component")
-	}
-}
-
 func TestRenderCachePathComponentsAreNormalized(t *testing.T) {
 	if got := normalizeRenderCacheAPIPath("api/pjsk/../profile"); got != "" {
 		t.Fatalf("unsafe API path normalized to %q", got)
@@ -520,30 +384,8 @@ func TestRenderCachePathComponentsAreNormalized(t *testing.T) {
 }
 
 func TestRenderCacheClientRemoteMissUsesSingleflight(t *testing.T) {
-	storageDir := t.TempDir()
 	var renderCalls int32
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.Method == http.MethodGet && r.URL.Path == "/cache":
-			http.Error(w, `{"error":"miss"}`, http.StatusNotFound)
-		case r.Method == http.MethodPost && r.URL.Path == "/cache":
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"ok":true}`))
-		default:
-			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
-		}
-	}))
-	defer server.Close()
-
-	client := NewRenderCacheClient(RenderCacheConfig{
-		BaseURL:    server.URL,
-		StorageDir: storageDir,
-		TTL:        time.Minute,
-	})
-	if client == nil {
-		t.Fatal("expected render cache client")
-	}
+	client := newIndexClient(t, &fakeRenderIndex{})
 
 	endpoint := "/api/pjsk/sk/query"
 	request := map[string]any{
@@ -568,7 +410,6 @@ func TestRenderCacheClientRemoteMissUsesSingleflight(t *testing.T) {
 		}(i)
 	}
 	wg.Wait()
-	client.waitForPendingStores()
 
 	if got := atomic.LoadInt32(&renderCalls); got != 1 {
 		t.Fatalf("render called %d times, want 1", got)
@@ -588,11 +429,7 @@ func TestRenderCacheClientRemoteMissUsesSingleflight(t *testing.T) {
 }
 
 func TestRenderCacheClientSharedFlightMergesOperationsIntoEveryWaiter(t *testing.T) {
-	storageDir := t.TempDir()
-	server := httptest.NewServer(renderCacheMissStoreHandler(t))
-	defer server.Close()
-
-	client := NewRenderCacheClient(RenderCacheConfig{BaseURL: server.URL, StorageDir: storageDir, TTL: time.Minute})
+	client := newIndexClient(t, &fakeRenderIndex{})
 	request := map[string]any{"region": "jp", "ranks": []any{1, 2, 3}}
 	started := make(chan struct{})
 	release := make(chan struct{})
@@ -625,7 +462,6 @@ func TestRenderCacheClientSharedFlightMergesOperationsIntoEveryWaiter(t *testing
 	} {
 		assertRenderCacheTestResult(t, name, completed)
 	}
-	client.waitForPendingStores()
 	for name, trace := range map[string]*commandtrace.Trace{
 		"leader":   leaderTrace,
 		"follower": followerTrace,
@@ -642,21 +478,6 @@ type renderCacheTestResult struct {
 	err  error
 }
 
-func renderCacheMissStoreHandler(t *testing.T) http.Handler {
-	t.Helper()
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.Method == http.MethodGet && r.URL.Path == "/cache":
-			http.NotFound(w, r)
-		case r.Method == http.MethodPost && r.URL.Path == "/cache":
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"ok":true}`))
-		default:
-			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
-		}
-	})
-}
-
 func assertRenderCacheTestResult(t *testing.T, name string, completed <-chan renderCacheTestResult) {
 	t.Helper()
 	got := <-completed
@@ -668,16 +489,15 @@ func assertRenderCacheTestResult(t *testing.T, name string, completed <-chan ren
 func assertSharedRenderFlightTrace(t *testing.T, name string, trace *commandtrace.Trace) {
 	t.Helper()
 	for _, operation := range []string{
-		"drawing.cache_lookup",
-		"drawing.cache_lookup_http",
+		"drawing.cache_lookup_pg",
 		"drawing.render",
 	} {
 		if count := drawingTraceOperationCount(trace, operation); count != 1 {
 			t.Fatalf("%s %s count = %d, operations=%+v", name, operation, count, trace.Snapshot().Operations)
 		}
 	}
-	// The store runs write-behind after the flight returns, so store-side
-	// operations must no longer appear on any waiter's critical path.
+	// Cloud no longer persists rendered bytes, so no store-side operation may
+	// appear on any waiter's path.
 	for _, operation := range []string{
 		"drawing.cache_store",
 		"drawing.cache_hash",
@@ -700,84 +520,6 @@ func drawingTraceOperationCount(trace *commandtrace.Trace, name string) int {
 		}
 	}
 	return 0
-}
-
-func TestRenderCacheClientStoresRenderedImageUnderRequestKeyDir(t *testing.T) {
-	storageDir := t.TempDir()
-	var registeredPath string
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.Method == http.MethodGet && r.URL.Path == "/cache":
-			http.Error(w, `{"error":"miss"}`, http.StatusNotFound)
-		case r.Method == http.MethodPost && r.URL.Path == "/cache":
-			registeredPath = r.FormValue("file_path")
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"ok":true}`))
-		default:
-			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
-		}
-	}))
-	defer server.Close()
-
-	client := NewRenderCacheClient(RenderCacheConfig{
-		BaseURL:    server.URL,
-		StorageDir: storageDir,
-		TTL:        time.Minute,
-	})
-	if client == nil {
-		t.Fatal("expected render cache client")
-	}
-
-	image := []byte{0xff, 0xd8, 0xff, 0xdb, 0x00, 0x43, 0x00}
-	data, err := client.Render("/api/pjsk/profile", map[string]any{"id": "123"}, func() ([]byte, error) {
-		return image, nil
-	})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-	if string(data) != string(image) {
-		t.Fatalf("unexpected image bytes")
-	}
-	client.waitForPendingStores()
-	if !strings.HasPrefix(registeredPath, filepath.Join(storageDir, "api", "pjsk", "profile", "public")+string(os.PathSeparator)) {
-		t.Fatalf("registered path %q should keep request-scoped directory", registeredPath)
-	}
-	if filepath.Ext(registeredPath) != ".jpg" {
-		t.Fatalf("registered path ext = %q, want .jpg", filepath.Ext(registeredPath))
-	}
-	if _, err := os.Stat(registeredPath); err != nil {
-		t.Fatalf("expected shared image file to exist: %v", err)
-	}
-}
-
-func TestRenderCacheClientKeepsExistingContentFileWhenRegisterFails(t *testing.T) {
-	storageDir := t.TempDir()
-	image := []byte{0xff, 0xd8, 0xff, 0xdb, 0x00, 0x43, 0x00}
-
-	client := NewRenderCacheClient(RenderCacheConfig{
-		BaseURL:    "http://127.0.0.1:1",
-		StorageDir: storageDir,
-		TTL:        time.Minute,
-	})
-	if client == nil {
-		t.Fatal("expected render cache client")
-	}
-	_, targetPath := client.contentFilePath("api/pjsk/profile", "public", strings.Repeat("c", 64), image)
-	if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
-	if err := os.WriteFile(targetPath, image, 0o644); err != nil {
-		t.Fatalf("write existing content file: %v", err)
-	}
-
-	err := client.store(strings.Repeat("c", 64), "api/pjsk/profile", "public", image, time.Minute, false)
-	if err == nil {
-		t.Fatal("expected register failure")
-	}
-	if _, statErr := os.Stat(targetPath); statErr != nil {
-		t.Fatalf("existing content file should remain after register failure: %v", statErr)
-	}
 }
 
 func TestBuildRenderCachePolicyAliasListIsInfiniteAndIgnoresDT(t *testing.T) {

@@ -223,7 +223,6 @@ func (c *Controller) buildCustomMusicChartRequest(query ChartQuery, source DataS
 
 	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
 	stylePath := chartstyle.CSSPath(query.Style)
-	assetBase := builder.assets.Primary()
 	req := &drawing.GenerateMusicChartRequest{
 		MusicID:              customChartCacheID(entry),
 		Title:                title,
@@ -231,7 +230,7 @@ func (c *Controller) buildCustomMusicChartRequest(query ChartQuery, source DataS
 		Difficulty:           diff,
 		PlayLevel:            playLevel,
 		Skill:                query.Skill,
-		JacketPath:           assets.MakeRelative(assetBase, jacketPath),
+		JacketPath:           jacketPath,
 		ChartJSON:            &chartJSON,
 		StylePath:            &stylePath,
 		NoteHost:             assets.StaticImagesDir + "/chart_asset/notes",

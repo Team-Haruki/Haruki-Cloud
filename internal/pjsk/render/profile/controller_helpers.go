@@ -186,7 +186,7 @@ func (c *Controller) buildPCards(source DataSource, userCards []snapshot.RawUser
 }
 
 func (c *Controller) buildHonors(source DataSource, region renderregion.Value, profileHonors []snapshot.RawUserProfileHonor, userHonors []snapshot.RawUserHonor, musicCounts []drawing.MusicClearCount) []drawing.HonorRequest {
-	builder := renderhonor.NewBuilder(source, c.assets)
+	builder := renderhonor.NewBuilder(source, c.assets).WithAssetReader(c.requestCtx, c.assetReader)
 	fcApLevels := buildHonorFcApLevels(musicCounts)
 	requests := buildSelectedProfileHonors(builder, region, profileHonors, fcApLevels)
 	if len(requests) > 0 {

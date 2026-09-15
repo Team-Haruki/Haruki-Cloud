@@ -7,6 +7,7 @@ import (
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/pjsk/accountdata"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -32,6 +33,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/internal/pjsk/render/vlive"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/censor"
 	"haruki-cloud/utils/imagecache"
 )
@@ -39,40 +41,65 @@ import (
 // ── Config types ────────────────────────────────────────────────────────────
 
 type Config struct {
-	InitContext                              context.Context
-	DefaultRegion                            renderregion.Value
-	DrawingBaseURL                           string
-	DrawingTargets                           []upstream.TargetConfig
-	DrawingTimeout                           time.Duration
-	DrawingRetryCount                        int
-	DrawingCache                             drawing.RenderCacheConfig
-	DrawingSKMaxConcurrency                  int
-	DrawingSKAcquireTimeout                  time.Duration
-	DrawingMaxConcurrency                    int
-	ImageCacheURI                            string
-	ChartsBaseURL                            string
-	ImageCacheDir                            string
-	ImageCachePGURL                          string // PostgreSQL DSN for image cache deduplication (optional)
-	CensorService                            *censor.Service
-	AssetPrimaryDir                          string
-	AssetLegacyDirs                          []string
-	AssetsBaseURL                            string // CDN base URL for direct asset serving; skips imagecache for region assets
-	LocalMasterdata                          LocalMasterdataConfig
-	SekaiDBType                              string
-	SekaiDSN                                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
-	UserSnapshot                             UserSnapshotConfig
-	MusicMetaRefreshInterval                 time.Duration
-	MusicMetaOutputDir                       string
-	MusicMetaSource                          string
-	MusicMetaBaseURL                         string
-	MetaLoader                               *meta.Loader
-	SharedUpstreamResources                  *upstream.SharedResources
-	SKForecast                               sk.ForecastConfig
-	MySekaiHousingCompetitionCachePath       string
+	InitContext             context.Context
+	DefaultRegion           renderregion.Value
+	DrawingBaseURL          string
+	DrawingTargets          []upstream.TargetConfig
+	DrawingTimeout          time.Duration
+	DrawingRetryCount       int
+	DrawingCache            drawing.RenderCacheConfig
+	DrawingSKMaxConcurrency int
+	DrawingSKAcquireTimeout time.Duration
+	DrawingMaxConcurrency   int
+	// DrawingArtifact enables Drawing artifact mode; nil Objects/Hosts are
+	// filled from Stores.ImageCache / ImageHosts.
+	DrawingArtifact     drawing.ArtifactConfig
+	ImageCachePGURL     string // PostgreSQL DSN for image cache deduplication (optional)
+	ImageCachePGMaxOpen int    // image cache index pool bound; <= 0 selects the default (8)
+	// ImageCacheRenderIndexDDL runs the render index DDL at index Init.
+	ImageCacheRenderIndexDDL bool
+	// ImageCacheRenderIndexLookup serves render cache hits from the render
+	// index (needs the index DSN); ImageCacheRenderIndexTouchInterval is its
+	// per-key sliding-TTL throttle (0 = default 60s).
+	ImageCacheRenderIndexLookup        bool
+	ImageCacheRenderIndexTouchInterval time.Duration
+	// ImageCacheLocalRoot is the absolute directory of the image_cache slot
+	// when it resolved to local, "" otherwise.
+	ImageCacheLocalRoot      string
+	CensorService            *censor.Service
+	AssetPrimaryDir          string
+	AssetLegacyDirs          []string
+	LocalMasterdata          LocalMasterdataConfig
+	SekaiDBType              string
+	SekaiDSN                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
+	UserSnapshot             UserSnapshotConfig
+	MusicMetaRefreshInterval time.Duration
+	MusicMetaOutputDir       string
+	// MusicMetaStore, when non-nil, replaces MusicMetaOutputDir for the
+	// loader New builds when MetaLoader is nil.
+	MusicMetaStore                     storage.Store
+	MusicMetaSource                    string
+	MusicMetaBaseURL                   string
+	MetaLoader                         *meta.Loader
+	SharedUpstreamResources            *upstream.SharedResources
+	SKForecast                         sk.ForecastConfig
+	MySekaiHousingCompetitionCachePath string
+	// MySekaiHousingCompetitionCacheStore/Key name the housing stats object
+	// (and hold the banner cache); nil falls back to the path above.
+	MySekaiHousingCompetitionCacheStore      storage.Store
+	MySekaiHousingCompetitionCacheKey        storage.Key
 	MySekaiHousingCompetitionRefreshInterval time.Duration
 	ReadOnly                                 bool
 	DeckRecommend                            DeckRecommendConfig
 	Preview3D                                costume.Preview3DConfig
+	// Stores holds one storage.Store per slot, built by storage.BuildSet at
+	// the composition root. Zero fields are normalised to storage.Disabled().
+	Stores storage.Set
+	// ImageHosts (image_cache.hosts, named by Drawing node) and AssetHosts
+	// (asset_dirs.assets_base_urls, ordered) select public base URLs. Nil
+	// fields derive a single-host set from ImageCacheURI / AssetsBaseURL.
+	ImageHosts *urlhost.Set
+	AssetHosts *urlhost.Set
 	// Upstream HTTP clients. Caller constructs these from its own config
 	// (see cmd/server) and passes them here so the render runtime does not
 	// depend on package-level singletons.
@@ -151,11 +178,31 @@ type App struct {
 	PrivateDataCache   *snapshot.PrivateDataCache
 	BuiltSnapshotCache *snapshot.BuiltSnapshotCache
 	ImageCache         *imagecache.Client
-	Censor             *censor.Service
-	SekaiAPI           *sekaiapi.HarukiSekaiAPIClient
-	Toolbox            *sekaiapi.HarukiToolboxClient
-	Tracker            *sekaiapi.TrackerClient
-	Config             Config
+	// ImageIndex is the image cache index (image_cache.pg_url), nil when it
+	// is not configured or failed to open. Image cache GC runs on it.
+	ImageIndex  *imagecache.PGStore
+	Censor      *censor.Service
+	SekaiAPI    *sekaiapi.HarukiSekaiAPIClient
+	Toolbox     *sekaiapi.HarukiToolboxClient
+	Tracker     *sekaiapi.TrackerClient
+	Stores      storage.Set
+	ImageHosts  *urlhost.Set
+	AssetHosts  *urlhost.Set
+	AssetReader *assets.AssetReader
+	Config      Config
+
+	// initErr records a non-fatal initialisation failure (today: the image
+	// cache index) for startup to classify.
+	initErr error
+}
+
+// InitError reports the initialisation failure New recorded, or nil. A
+// zero-value App returns nil.
+func (a *App) InitError() error {
+	if a == nil {
+		return nil
+	}
+	return a.initErr
 }
 
 // ── Masterdata types ────────────────────────────────────────────────────────

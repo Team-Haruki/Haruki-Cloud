@@ -54,6 +54,14 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	return &clone
 }
 
+// SetAssetReader routes the honor existence probes through reader.
+func (c *Controller) SetAssetReader(reader *assets.AssetReader) {
+	if c == nil {
+		return
+	}
+	c.assetReader = reader
+}
+
 func (c *Controller) SetCensor(svc *censor.Service) {
 	if c == nil {
 		return

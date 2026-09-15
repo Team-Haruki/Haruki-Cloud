@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
 
 	"gopkg.in/yaml.v3"
@@ -114,17 +115,94 @@ func envStringMap(name string, dst *map[string]string) error {
 			key = strings.TrimSpace(key)
 			value = strings.TrimSpace(value)
 			if !ok || key == "" || value == "" {
-				return fmt.Errorf("invalid %s entry %q: expected region=base_url", name, item)
+				return fmt.Errorf("invalid %s entry %q: expected key=value", name, item)
 			}
 			parsed[key] = value
 		}
 	}
 	for key, value := range parsed {
 		if strings.TrimSpace(key) == "" || strings.TrimSpace(value) == "" {
-			return fmt.Errorf("invalid %s entry %q: region and base URL must not be empty", name, key)
+			return fmt.Errorf("invalid %s entry %q: key and value must not be empty", name, key)
 		}
 	}
 	*dst = parsed
+	return nil
+}
+
+// envBoolPtr sets *dst to the bool value of the named env var only when the
+// variable is present and valid, so an unset variable keeps a nil default.
+func envBoolPtr(name string, dst **bool) {
+	if v := os.Getenv(name); v != "" {
+		if b, err := strconv.ParseBool(v); err == nil {
+			*dst = &b
+		}
+	}
+}
+
+// Storage slot env prefixes, one per fixed slot.
+const (
+	storageEnvPrefix         = "HARUKI_PJSK_RENDER_STORAGE_"
+	storageUserUploadEnvSlot = "USER_UPLOAD"
+)
+
+// applyStorageProviderEnv overrides one provider block from
+// <prefix>_PROVIDER, _SCHEME, _ENDPOINT, _ENDPOINTS, _TLS, _BUCKET, _ROOT,
+// _PREFIX, _REGION, _ACCESS_KEY_ID, _SECRET_ACCESS_KEY, _PUBLIC_READ,
+// _PATH_STYLE, _BASE_URL and _OPTIONS.
+func applyStorageProviderEnv(prefix string, dst *storage.ProviderConfig) error {
+	envStr(prefix+"_PROVIDER", &dst.Provider)
+	envStr(prefix+"_SCHEME", &dst.Scheme)
+	envStr(prefix+"_ENDPOINT", &dst.Endpoint)
+	if err := envStringSlice(prefix+"_ENDPOINTS", &dst.Endpoints); err != nil {
+		return err
+	}
+	envBoolPtr(prefix+"_TLS", &dst.TLS)
+	envStr(prefix+"_BUCKET", &dst.Bucket)
+	envStr(prefix+"_ROOT", &dst.Root)
+	envStr(prefix+"_PREFIX", &dst.Prefix)
+	envStr(prefix+"_REGION", &dst.Region)
+	envStr(prefix+"_ACCESS_KEY_ID", &dst.AccessKeyID)
+	envStr(prefix+"_SECRET_ACCESS_KEY", &dst.SecretAccessKey)
+	envBool(prefix+"_PUBLIC_READ", &dst.PublicRead)
+	envBoolPtr(prefix+"_PATH_STYLE", &dst.PathStyle)
+	envStr(prefix+"_BASE_URL", &dst.BaseURL)
+	return envStringMap(prefix+"_OPTIONS", &dst.Options)
+}
+
+// applyStorageMirrorEnv overrides the user_upload mirror block from
+// <prefix>_MIRROR_SCHEME, _MIRROR_ROOT, _MIRROR_BUCKET, _MIRROR_ENDPOINTS and
+// _MIRROR_MODE. The mirror is created only when one of them is set.
+func applyStorageMirrorEnv(prefix string, dst *storage.ProviderConfig) error {
+	mirror := storage.ProviderConfig{}
+	if dst.Mirror != nil {
+		mirror = *dst.Mirror
+	}
+	envStr(prefix+"_MIRROR_SCHEME", &mirror.Scheme)
+	envStr(prefix+"_MIRROR_ROOT", &mirror.Root)
+	envStr(prefix+"_MIRROR_BUCKET", &mirror.Bucket)
+	if err := envStringSlice(prefix+"_MIRROR_ENDPOINTS", &mirror.Endpoints); err != nil {
+		return err
+	}
+	envStr(prefix+"_MIRROR_MODE", &dst.MirrorMode)
+	if dst.Mirror != nil || !mirror.IsZero() {
+		dst.Mirror = &mirror
+	}
+	return nil
+}
+
+func applyStorageEnvOverrides(cfg *storage.SetConfig) error {
+	for _, slot := range storage.Slots {
+		prefix := storageEnvPrefix + strings.ToUpper(string(slot))
+		provider := cfg.Provider(slot)
+		if err := applyStorageProviderEnv(prefix, provider); err != nil {
+			return err
+		}
+		if strings.HasSuffix(prefix, storageUserUploadEnvSlot) {
+			if err := applyStorageMirrorEnv(prefix, provider); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -338,21 +416,45 @@ func ApplyEnvOverrides(cfg *Config) error {
 	// PJSK Render
 	envBool("HARUKI_PJSK_RENDER_ENABLED", &cfg.PJSKRender.Enabled)
 	envStr("HARUKI_PJSK_RENDER_DRAWING_BASE_URL", &cfg.PJSKRender.DrawingBaseURL)
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_TIMEOUT", &cfg.PJSKRender.DrawingTimeout)
+	envInt("HARUKI_PJSK_RENDER_DRAWING_RETRY_COUNT", &cfg.PJSKRender.DrawingRetryCount)
 	envStr("CACHE_STORAGE_DIR", &cfg.PJSKRender.DrawingCache.StorageDir)
-	envStr("CACHE_DB_PATH", &cfg.PJSKRender.DrawingCache.DBPath)
-	envDuration("CACHE_GC_INTERVAL", &cfg.PJSKRender.DrawingCache.GCInterval)
-	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_BASE_URL", &cfg.PJSKRender.DrawingCache.BaseURL)
 	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_STORAGE_DIR", &cfg.PJSKRender.DrawingCache.StorageDir)
-	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_DB_PATH", &cfg.PJSKRender.DrawingCache.DBPath)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_TTL", &cfg.PJSKRender.DrawingCache.TTL)
-	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_GC_INTERVAL", &cfg.PJSKRender.DrawingCache.GCInterval)
-	envBool("HARUKI_PJSK_RENDER_DRAWING_CACHE_REQUIRE_AUTH", &cfg.PJSKRender.DrawingCache.RequireAuth)
 	envInt("HARUKI_PJSK_RENDER_DRAWING_SK_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingSKMaxConcurrency)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_SK_ACQUIRE_TIMEOUT", &cfg.PJSKRender.DrawingSKAcquireTimeout)
 	envInt("HARUKI_PJSK_RENDER_DRAWING_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingMaxConcurrency)
-	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", &cfg.PJSKRender.ImageCache.ChartsURI)
+	if err := envStringSlice("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ENDPOINTS", &cfg.PJSKRender.DrawingArtifact.Endpoints); err != nil {
+		return err
+	}
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_FETCH_TIMEOUT", &cfg.PJSKRender.DrawingArtifact.FetchTimeout)
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ARTIFACT_TIMEOUT", &cfg.PJSKRender.DrawingArtifact.ArtifactTimeout)
+	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_URI", &cfg.PJSKRender.ImageCache.URI)
+	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR", &cfg.PJSKRender.ImageCache.Dir)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
+	envInt("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_MAX_OPEN", &cfg.PJSKRender.ImageCache.PGMaxOpen)
+	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_REQUIRE_PG", &cfg.PJSKRender.ImageCache.RenderIndex.RequirePG)
+	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_DDL_ENABLED", &cfg.PJSKRender.ImageCache.RenderIndex.DDLEnabled)
+	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_LOOKUP_ENABLED", &cfg.PJSKRender.ImageCache.RenderIndex.LookupEnabled)
+	envDuration("HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_TOUCH_INTERVAL", &cfg.PJSKRender.ImageCache.RenderIndex.TouchInterval)
+	if err := envStringMap("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS", &cfg.PJSKRender.ImageCache.Hosts); err != nil {
+		return err
+	}
+	if err := envStringSlice("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOST_ORDER", &cfg.PJSKRender.ImageCache.HostOrder); err != nil {
+		return err
+	}
+	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_PATH", &cfg.PJSKRender.ImageCache.HostsProbePath)
+	envDuration("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_INTERVAL", &cfg.PJSKRender.ImageCache.HostsProbeInterval)
+	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_ENABLED", &cfg.PJSKRender.ImageCache.GC.Enabled)
+	envBoolPtr("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_DRY_RUN", &cfg.PJSKRender.ImageCache.GC.DryRun)
+	envDuration("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_INTERVAL", &cfg.PJSKRender.ImageCache.GC.Interval)
+	envInt("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_BATCH", &cfg.PJSKRender.ImageCache.GC.Batch)
+	envInt("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_OBJECT_RETENTION_DAYS", &cfg.PJSKRender.ImageCache.GC.ObjectRetentionDays)
+	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_LEGACY_REDIRECT_ENABLED", &cfg.PJSKRender.ImageCache.LegacyRedirect.Enabled)
 	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
+	if err := envStringSlice("HARUKI_PJSK_RENDER_ASSETS_BASE_URLS", &cfg.PJSKRender.AssetDirs.AssetsBaseURLs); err != nil {
+		return err
+	}
 	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_OUTPUT_DIR", &cfg.PJSKRender.MusicMeta.OutputDir)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_SOURCE", &cfg.PJSKRender.MusicMeta.Source)
@@ -390,7 +492,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_CACHE_VERSION", &cfg.PJSKRender.Preview3D.CaptureCacheVersion)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PRESET", &cfg.PJSKRender.Preview3D.CameraPreset)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PROFILE", &cfg.PJSKRender.Preview3D.CameraProfile)
-	return nil
+	return applyStorageEnvOverrides(&cfg.PJSKRender.Storage)
 }
 
 type BackendConfig struct {
@@ -460,7 +562,10 @@ type SekaiRemoteSyncConfig struct {
 type AssetDirsConfig struct {
 	Primary       string   `yaml:"primary"`
 	Legacy        []string `yaml:"legacy"`
-	AssetsBaseURL string   `yaml:"assets_base_url"` // CDN/static base URL for direct asset serving (no imagecache)
+	AssetsBaseURL string   `yaml:"assets_base_url"` // legacy single public asset base URL; accepted as a one-element assets_base_urls
+	// AssetsBaseURLs is the ordered list of per-node public asset base URLs
+	// (required: an empty list after the assets_base_url derivation fails startup).
+	AssetsBaseURLs []string `yaml:"assets_base_urls"`
 }
 
 type LocalMasterdataConfig struct {
@@ -494,25 +599,83 @@ type DeckRecommendConfig struct {
 	DefaultAlgs               []string                `yaml:"default_algs"`
 }
 
+// RenderCacheConfig is pjsk_render.drawing_cache. The SQLite /cache service
+// and its keys (base_url, db_path, gc_interval, require_auth) are gone; TTL is
+// the render cache fallback TTL and StorageDir only seeds the legacy
+// derivation of the cache storage slot.
 type RenderCacheConfig struct {
-	BaseURL    string        `yaml:"base_url"`
 	StorageDir string        `yaml:"storage_dir"`
 	TTL        time.Duration `yaml:"ttl"`
-	DBPath     string        `yaml:"db_path"`
-	GCInterval time.Duration `yaml:"gc_interval"`
-	// RequireAuth, when true, gates the /cache and /cache/stats routes behind the
-	// internal API authorization (VerifyAPIAuthorization). Defaults to false to
-	// preserve current behavior; enable ONLY after remote consumers (e.g. the
-	// cache-proxy / secondary nodes) are updated to send the internal token,
-	// otherwise they will get 401.
-	RequireAuth bool `yaml:"require_auth"`
 }
 
 type ImageCacheConfig struct {
 	URI       string `yaml:"uri"`
-	ChartsURI string `yaml:"charts_uri"`
 	Dir       string `yaml:"dir"`
-	PGURL     string `yaml:"pg_url"` // PostgreSQL DSN for deduplication store (optional)
+	PGURL     string `yaml:"pg_url"`      // PostgreSQL DSN for deduplication store (optional)
+	PGMaxOpen int    `yaml:"pg_max_open"` // index pool bound; 0 = default (8)
+	// RenderIndex tunes the image cache index startup policy.
+	RenderIndex ImageCacheRenderIndexConfig `yaml:"render_index"`
+	// Hosts maps a Drawing node name to its public image-cache base URL; empty
+	// derives {"default": uri}.
+	Hosts              map[string]string `yaml:"hosts"`
+	HostOrder          []string          `yaml:"host_order"`           // preferred order; empty = name sort
+	HostsProbePath     string            `yaml:"hosts_probe_path"`     // "" = no probing
+	HostsProbeInterval time.Duration     `yaml:"hosts_probe_interval"` // default 30s
+	// GC is the render index / garage object collector (keys gc_*, inlined).
+	GC ImageCacheGCConfig `yaml:",inline"`
+	// LegacyRedirect turns the /ic/* static route into 301s to the image hosts.
+	LegacyRedirect ImageCacheLegacyRedirectConfig `yaml:"legacy_redirect"`
+}
+
+// ImageCacheGCConfig is pjsk_render.image_cache.gc_*. Collection deletes
+// expired render_cache_index rows, then unreferenced garage
+// image_cache_entries rows past the retention window, then their objects.
+type ImageCacheGCConfig struct {
+	Enabled bool `yaml:"gc_enabled"` // default false
+	// DryRun defaults to true when unset: only the SELECTs run.
+	DryRun              *bool         `yaml:"gc_dry_run"`
+	Interval            time.Duration `yaml:"gc_interval"`              // 0 = default (1h)
+	Batch               int           `yaml:"gc_batch"`                 // 0 = default (500)
+	ObjectRetentionDays int           `yaml:"gc_object_retention_days"` // 0 = default (30)
+}
+
+// DryRunEnabled reports gc_dry_run, defaulting to true.
+func (c ImageCacheGCConfig) DryRunEnabled() bool {
+	return c.DryRun == nil || *c.DryRun
+}
+
+// ImageCacheLegacyRedirectConfig is pjsk_render.image_cache.legacy_redirect.
+type ImageCacheLegacyRedirectConfig struct {
+	// Enabled answers /ic/* with a 301 to the image hosts instead of serving
+	// image_cache.dir. Keep it on for at least 30 days after the cutover.
+	Enabled bool `yaml:"enabled"`
+}
+
+// DrawingArtifactConfig is pjsk_render.drawing_artifact: the rollout dial for
+// Drawing artifact mode (C13 directive headers, ArtifactRef responses).
+type DrawingArtifactConfig struct {
+	// Endpoints lists normalised api paths ("api/pjsk/card/box"); ["*"]
+	// enables every image endpoint. Empty = artifact mode off.
+	Endpoints []string `yaml:"endpoints"`
+	// FetchTimeout bounds reading a ref's bytes back; 0 = default (10s).
+	FetchTimeout time.Duration `yaml:"fetch_timeout"`
+	// ArtifactTimeout extends the render budget for Drawing's upload; 0 = default (15s).
+	ArtifactTimeout time.Duration `yaml:"artifact_timeout"`
+}
+
+// ImageCacheRenderIndexConfig is pjsk_render.image_cache.render_index.
+type ImageCacheRenderIndexConfig struct {
+	// RequirePG makes an unavailable image cache index fatal at startup
+	// instead of an ERROR log.
+	RequirePG bool `yaml:"require_pg"`
+	// DDLEnabled runs the render index DDL (widen image_cache_entries, create
+	// render_cache_index) at startup. The ALTERs take a brief ACCESS EXCLUSIVE
+	// lock, so schedule the first enabled start off-peak.
+	DDLEnabled bool `yaml:"ddl_enabled"`
+	// LookupEnabled makes the render cache read the render index.
+	LookupEnabled bool `yaml:"lookup_enabled"`
+	// TouchInterval is the per-key sliding-TTL throttle; 0 = default (60s).
+	TouchInterval time.Duration `yaml:"touch_interval"`
 }
 
 type MusicMetaConfig struct {
@@ -570,6 +733,7 @@ type PJSKRenderConfig struct {
 	DrawingSKMaxConcurrency   int                             `yaml:"drawing_sk_max_concurrency"`
 	DrawingSKAcquireTimeout   time.Duration                   `yaml:"drawing_sk_acquire_timeout"`
 	DrawingMaxConcurrency     int                             `yaml:"drawing_max_concurrency"`
+	DrawingArtifact           DrawingArtifactConfig           `yaml:"drawing_artifact"`
 	ImageCache                ImageCacheConfig                `yaml:"image_cache"`
 	AssetDirs                 AssetDirsConfig                 `yaml:"asset_dirs"`
 	LocalMasterdata           LocalMasterdataConfig           `yaml:"local_masterdata"`
@@ -579,7 +743,12 @@ type PJSKRenderConfig struct {
 	MySekaiHousingCompetition MySekaiHousingCompetitionConfig `yaml:"mysekai_housing_competition"`
 	Preview3D                 Preview3DConfig                 `yaml:"preview_3d"`
 	DeckRecommend             DeckRecommendConfig             `yaml:"deck_recommend"`
+	Storage                   StorageConfig                   `yaml:"storage"`
 }
+
+// StorageConfig is pjsk_render.storage: one Asset-Updater style provider
+// block per fixed slot (assets, user_upload, static, cache, image_cache).
+type StorageConfig = storage.SetConfig
 
 type CensorConfig struct {
 	// Text censor — Baidu AI Content Censor (TextCensor)

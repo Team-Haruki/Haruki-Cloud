@@ -88,17 +88,17 @@ func TestInventoryCategoryAndAssetHelperBranches(t *testing.T) {
 		{resource: "unknown", id: 1},
 	} {
 		got := controller.inventoryIconPath(renderregion.JP, tc.resource, tc.id)
-		if (got != "") != tc.wantPath {
+		if (len(got) != 0) != tc.wantPath {
 			t.Errorf("inventoryIconPath(%q, %d) = %q", tc.resource, tc.id, got)
 		}
 	}
 	for _, resource := range []string{"event_item", "gacha_ticket", "gacha_ceil_item", "mysekai_material"} {
-		if got := controller.inventoryIconByAssetName(renderregion.JP, resource, "asset_name"); got == "" {
+		if got := controller.inventoryIconByAssetName(renderregion.JP, resource, "asset_name"); len(got) == 0 {
 			t.Errorf("inventoryIconByAssetName(%q) is empty", resource)
 		}
 	}
-	if controller.inventoryIconByAssetName(renderregion.JP, "event_item", " ") != "" ||
-		controller.inventoryIconByAssetName(renderregion.JP, "unknown", "asset") != "" {
+	if controller.inventoryIconByAssetName(renderregion.JP, "event_item", " ") != nil ||
+		controller.inventoryIconByAssetName(renderregion.JP, "unknown", "asset") != nil {
 		t.Fatal("invalid asset name or resource returned a path")
 	}
 }

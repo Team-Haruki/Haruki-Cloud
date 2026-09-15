@@ -5,10 +5,12 @@ import (
 	"sync"
 	"time"
 
+	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/storage"
 
 	"golang.org/x/sync/singleflight"
 )
@@ -24,6 +26,7 @@ type Controller struct {
 	defaultRegion             renderregion.Value
 	nicknames                 map[string]int
 	assets                    *assets.AssetHelper
+	assetReader               *assets.AssetReader
 	housingCompetitionStats   *housingCompetitionStatsCache
 	housingCompetitionBanners *housingCompetitionBannerCache
 	requestCtx                context.Context
@@ -51,13 +54,26 @@ type mysekaiMapSiteConfig struct {
 }
 
 type MasterdataOptions struct {
-	SekaiDSN                          string
-	LocalDir                          string
-	AllowFallback                     bool
-	AssetsBaseURL                     string
+	SekaiDSN      string
+	LocalDir      string
+	AllowFallback bool
+	// AssetReader reads public asset objects (nil -> local AssetHelper
+	// probing); AssetHosts is the per-node public asset host set used for the
+	// banner HTTP fallback (nil or empty -> no fallback).
+	AssetReader *assets.AssetReader
+	AssetHosts  *urlhost.Set
+	// HousingCompetitionCacheStore holds the stats object (at
+	// HousingCompetitionStatsCacheKey, "" -> DefaultHousingCompetitionStatsCacheKey)
+	// and the banner cache. When nil, HousingCompetitionStatsCachePath (a
+	// local file, "" -> no persistence) is used instead.
+	HousingCompetitionCacheStore      storage.Store
+	HousingCompetitionStatsCacheKey   storage.Key
 	HousingCompetitionStatsCachePath  string
 	HousingCompetitionRefreshInterval time.Duration
 }
+
+// DefaultHousingCompetitionStatsCacheKey is the stats object key on the cache slot.
+const DefaultHousingCompetitionStatsCacheKey storage.Key = "mysekai_housing_competition_stats.json"
 
 type SnapshotStatus struct {
 	Expired       bool

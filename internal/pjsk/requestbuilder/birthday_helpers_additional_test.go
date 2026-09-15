@@ -81,15 +81,11 @@ func TestBirthdayDateRegionAndPathHelpers(t *testing.T) {
 
 	event = buildBirthdayEventTime(now, now.Add(2*time.Hour))
 	testutil.Require(t, !(event.EndAt != now.Add(119*time.Minute).UnixMilli()), "normal event end = %d", event.EndAt)
-	{
-		testutil.RequireArgs(t, !(birthdayRelativePath(nil, "/absolute/path") != "/absolute/path"), "nil birthday relative path changed")
-		testutil.RequireArgs(t, !(birthdayRelativePath(&renderapp.App{}, "") != ""), "nil birthday relative path changed")
-	}
-
-	helper := assets.NewAssetHelper(t.TempDir(), nil)
+	root := t.TempDir()
+	helper := assets.NewAssetHelper(root, nil)
 	app := &renderapp.App{Assets: helper}
 	{
-		got := birthdayRelativePath(app, helper.Primary()+"/static_images/test.png")
+		got := app.Assets.RelativePath(root + "/static_images/test.png")
 		testutil.Require(t, !(got != "static_images/test.png"), "relative asset path = %q", got)
 	}
 	{

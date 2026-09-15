@@ -6,8 +6,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"io"
-	"net/http/httptest"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -16,6 +17,8 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	noiseCrypto "haruki-cloud/internal/core/crypto"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/storage"
 	harukiLogger "haruki-cloud/utils/logger"
 
 	"entgo.io/ent"
@@ -113,32 +116,280 @@ func TestDisabledDatabaseInitializers(t *testing.T) {
 	}
 }
 
-func TestResolveRuntimeCachePaths(t *testing.T) {
-	preserveServerConfig(t)
-	harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir = "/var/cache/haruki"
+func assertCacheTargetWrites(t *testing.T, store storage.Store, key storage.Key, wantPath string) {
+	t.Helper()
+	if store == nil {
+		t.Fatalf("no store for %s", wantPath)
+	}
+	payload := []byte(`{"version":1,"probe":"` + string(key) + `"}`)
+	if err := store.Put(context.Background(), key, payload, storage.PutOptions{}); err != nil {
+		t.Fatalf("put %s: %v", key, err)
+	}
+	got, err := os.ReadFile(wantPath)
+	if err != nil || !bytes.Equal(got, payload) {
+		t.Fatalf("file %s = %q, %v; want %q", wantPath, got, err, payload)
+	}
+}
 
-	if got := resolveSKForecastCachePath(); got != "/var/cache/haruki/sk_forecast_cache.json" {
-		t.Fatalf("forecast fallback path = %q", got)
+func TestResolveRenderCacheTargets(t *testing.T) {
+	t.Run("explicit paths keep their exact location", func(t *testing.T) {
+		dir := t.TempDir()
+		cfg := harukiConfig.PJSKRenderConfig{}
+		cfg.DrawingCache.StorageDir = t.TempDir()
+		cfg.SKForecast.CachePath = " " + filepath.Join(dir, "sk", "forecast.json") + " "
+		cfg.MySekaiHousingCompetition.CachePath = filepath.Join(dir, "housing", "stats.json")
+		cfg.MusicMeta.OutputDir = filepath.Join(dir, "metas")
+		var output bytes.Buffer
+		stores, err := buildRenderStores(cfg, startupTestLogger(&output))
+		if err != nil {
+			t.Fatal(err)
+		}
+		targets, err := resolveRenderCacheTargets(cfg, stores, startupTestLogger(&output))
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertCacheTargetWrites(t, targets.forecast, targets.forecastKey, filepath.Join(dir, "sk", "forecast.json"))
+		assertCacheTargetWrites(t, targets.housing, targets.housingKey, filepath.Join(dir, "housing", "stats.json"))
+		assertCacheTargetWrites(t, targets.musicMeta, "music_metas.json", filepath.Join(dir, "metas", "music_metas.json"))
+		if strings.Contains(output.String(), "disagrees with legacy path") {
+			t.Fatalf("unexpected precedence warning without a cache slot:\n%s", output.String())
+		}
+	})
+
+	t.Run("drawing_cache.storage_dir derivation", func(t *testing.T) {
+		cacheDir := t.TempDir()
+		cfg := harukiConfig.PJSKRenderConfig{}
+		cfg.DrawingCache.StorageDir = cacheDir
+		stores, err := buildRenderStores(cfg, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		targets, err := resolveRenderCacheTargets(cfg, stores, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertCacheTargetWrites(t, targets.forecast, targets.forecastKey, filepath.Join(cacheDir, "sk_forecast_cache.json"))
+		assertCacheTargetWrites(t, targets.housing, targets.housingKey, filepath.Join(cacheDir, "mysekai_housing_competition_stats.json"))
+		if targets.musicMeta != nil {
+			t.Fatal("music_metas must not start persisting under drawing_cache.storage_dir")
+		}
+	})
+
+	t.Run("storage.cache slot without explicit paths", func(t *testing.T) {
+		slotRoot := t.TempDir()
+		cfg := harukiConfig.PJSKRenderConfig{}
+		cfg.Storage.Cache = storage.ProviderConfig{Scheme: "fs", Root: slotRoot}
+		stores, err := buildRenderStores(cfg, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		targets, err := resolveRenderCacheTargets(cfg, stores, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertCacheTargetWrites(t, targets.forecast, targets.forecastKey, filepath.Join(slotRoot, "sk_forecast_cache.json"))
+		assertCacheTargetWrites(t, targets.housing, targets.housingKey, filepath.Join(slotRoot, "mysekai_housing_competition_stats.json"))
+		assertCacheTargetWrites(t, targets.musicMeta, "music_metas-kr.json", filepath.Join(slotRoot, "music_metas-kr.json"))
+	})
+
+	t.Run("explicit path shadows a configured slot with one warning each", func(t *testing.T) {
+		dir := t.TempDir()
+		cfg := harukiConfig.PJSKRenderConfig{}
+		cfg.Storage.Cache = storage.ProviderConfig{Scheme: "fs", Root: t.TempDir()}
+		cfg.SKForecast.CachePath = filepath.Join(dir, "forecast.json")
+		cfg.MusicMeta.OutputDir = dir
+		var output bytes.Buffer
+		stores, err := buildRenderStores(cfg, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		targets, err := resolveRenderCacheTargets(cfg, stores, startupTestLogger(&output))
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertCacheTargetWrites(t, targets.forecast, targets.forecastKey, filepath.Join(dir, "forecast.json"))
+		if got := strings.Count(output.String(), "storage slot root disagrees with legacy path"); got != 2 {
+			t.Fatalf("precedence warnings = %d:\n%s", got, output.String())
+		}
+		if targets.housing == nil || targets.housingKey != housingCompetitionCacheKey {
+			t.Fatal("housing cache did not use the slot")
+		}
+	})
+
+	t.Run("nothing configured", func(t *testing.T) {
+		cfg := harukiConfig.PJSKRenderConfig{}
+		stores, err := buildRenderStores(cfg, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		targets, err := resolveRenderCacheTargets(cfg, stores, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if targets.forecast != nil || targets.housing != nil || targets.musicMeta != nil || targets.forecastKey != "" {
+			t.Fatalf("empty configuration persisted caches: %+v", targets)
+		}
+		if enabledStore(nil) != nil || enabledStore(storage.Disabled()) != nil {
+			t.Fatal("enabledStore kept an unusable store")
+		}
+	})
+}
+
+func TestBuildRenderStoresLegacyDerivation(t *testing.T) {
+	assetDir := t.TempDir()
+	cacheDir := t.TempDir()
+	var output bytes.Buffer
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.AssetDirs.Primary = assetDir
+	cfg.DrawingCache.StorageDir = cacheDir
+
+	stores, err := buildRenderStores(cfg, startupTestLogger(&output))
+	if err != nil {
+		t.Fatalf("buildRenderStores error = %v", err)
 	}
-	if got := resolveMySekaiHousingCompetitionCachePath(); got != "/var/cache/haruki/mysekai_housing_competition_stats.json" {
-		t.Fatalf("housing fallback path = %q", got)
+	ctx := context.Background()
+	if err := stores.Cache.Put(ctx, "probe.json", []byte("{}"), storage.PutOptions{}); err != nil {
+		t.Fatalf("cache slot Put: %v", err)
+	}
+	if _, err := stores.Assets.Stat(ctx, "probe.json"); err == nil {
+		t.Fatal("assets slot must not share the cache root")
+	}
+	if _, err := stores.ImageCache.Get(ctx, "x"); !errors.Is(err, storage.ErrNotConfigured) {
+		t.Fatalf("image_cache slot without legacy dir should be disabled, got %v", err)
+	}
+	if got := strings.Count(output.String(), "storage slot configured"); got != 5 {
+		t.Fatalf("summary lines = %d:\n%s", got, output.String())
+	}
+}
+
+func TestBuildRenderStoresValidationFailures(t *testing.T) {
+	cases := []struct {
+		name string
+		edit func(*harukiConfig.PJSKRenderConfig)
+		want string
+	}{
+		{"relative fs root", func(c *harukiConfig.PJSKRenderConfig) { c.Storage.Cache = storage.ProviderConfig{Root: "cache"} }, "storage.cache.root"},
+		{"unsupported scheme", func(c *harukiConfig.PJSKRenderConfig) { c.Storage.Assets = storage.ProviderConfig{Scheme: "gcs"} }, "storage.assets.scheme"},
+		{"s3 without bucket", func(c *harukiConfig.PJSKRenderConfig) {
+			c.Storage.ImageCache = storage.ProviderConfig{Scheme: "s3", Endpoint: "http://garage:3900"}
+		}, "storage.image_cache.bucket"},
+		{"bad s3 option", func(c *harukiConfig.PJSKRenderConfig) {
+			c.Storage.ImageCache = storage.ProviderConfig{Scheme: "s3", Bucket: "b", Endpoint: "http://garage:3900", Options: map[string]string{"max_attempts": "many"}}
+		}, "storage.image_cache.options"},
+		{"mirror on static", func(c *harukiConfig.PJSKRenderConfig) {
+			c.Storage.Static = storage.ProviderConfig{Root: "/asset", Mirror: &storage.ProviderConfig{Root: "/b"}}
+		}, "storage.static.mirror"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := harukiConfig.PJSKRenderConfig{}
+			tc.edit(&cfg)
+			_, err := buildRenderStores(cfg, nil)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("error = %v, want containing %q", err, tc.want)
+			}
+		})
+	}
+}
+
+func TestBuildRenderStoresOpensS3Slot(t *testing.T) {
+	var output bytes.Buffer
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.Storage.ImageCache = storage.ProviderConfig{
+		Scheme: "s3", Bucket: "image-cache", Endpoints: []string{"http://127.0.0.1:1"},
+		AccessKeyID: "GKstartupkey", SecretAccessKey: "startup-secret",
+	}
+	stores, err := buildRenderStores(cfg, startupTestLogger(&output))
+	if err != nil || stores.ImageCache == nil {
+		t.Fatalf("buildRenderStores error = %v", err)
+	}
+	out := output.String()
+	if !strings.Contains(out, "creds=set") || strings.Contains(out, "GKstartupkey") || strings.Contains(out, "startup-secret") {
+		t.Fatalf("startup summary must say creds=set without the credentials:\n%s", out)
+	}
+}
+
+func TestEmptyAssetHostsIsFatal(t *testing.T) {
+	var output bytes.Buffer
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.ImageCache.URI = "https://image-cache.example"
+	if _, _, err := buildRenderHosts(cfg, startupTestLogger(&output)); !errors.Is(err, errAssetHostsRequired) {
+		t.Fatalf("empty asset host set error = %v, want errAssetHostsRequired", err)
+	}
+	cfg.AssetDirs.AssetsBaseURLs = []string{" ", ""}
+	if _, _, err := buildRenderHosts(cfg, nil); !errors.Is(err, errAssetHostsRequired) {
+		t.Fatalf("blank asset host list error = %v, want errAssetHostsRequired", err)
+	}
+}
+
+func TestBuildRenderHostsLegacyDerivation(t *testing.T) {
+	var output bytes.Buffer
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.ImageCache.URI = "https://image-cache.example/"
+	cfg.AssetDirs.AssetsBaseURL = "https://assets.example"
+
+	imageHosts, assetHosts, err := buildRenderHosts(cfg, startupTestLogger(&output))
+	if err != nil {
+		t.Fatalf("buildRenderHosts error = %v", err)
+	}
+	if hosts := imageHosts.Hosts(); len(hosts) != 1 || hosts[0].Name != "default" || hosts[0].BaseURL != "https://image-cache.example" {
+		t.Fatalf("image hosts = %v", hosts)
+	}
+	if url, ok := assetHosts.URL("", "jp-assets/x.png"); !ok || url != "https://assets.example/jp-assets/x.png" {
+		t.Fatalf("asset URL = %q %v", url, ok)
+	}
+	if !strings.Contains(output.String(), "public host sets configured") {
+		t.Fatalf("missing summary line:\n%s", output.String())
+	}
+}
+
+func TestBuildRenderHostsExplicitSets(t *testing.T) {
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.ImageCache.URI = "https://legacy.example"
+	cfg.ImageCache.Hosts = map[string]string{"cn01": "https://ic-cn01.example", "cn09": "https://ic-cn09.example"}
+	cfg.ImageCache.HostOrder = []string{"cn09"}
+	cfg.AssetDirs.AssetsBaseURL = "https://legacy-assets.example"
+	cfg.AssetDirs.AssetsBaseURLs = []string{"https://assets-cn09.example", "https://assets-cn01.example"}
+
+	imageHosts, assetHosts, err := buildRenderHosts(cfg, nil)
+	if err != nil {
+		t.Fatalf("buildRenderHosts error = %v", err)
+	}
+	if imageHosts.Len() != 2 || imageHosts.Base("") != "https://ic-cn09.example" || imageHosts.Base("cn01") != "https://ic-cn01.example" {
+		t.Fatalf("image hosts = %v", imageHosts.Hosts())
+	}
+	if assetHosts.Len() != 2 || assetHosts.Base("") != "https://assets-cn09.example" {
+		t.Fatalf("asset hosts = %v", assetHosts.Hosts())
+	}
+}
+
+func TestBuildRenderHostsInvalid(t *testing.T) {
+	var output bytes.Buffer
+	cfg := harukiConfig.PJSKRenderConfig{}
+	cfg.AssetDirs.AssetsBaseURLs = []string{"https://assets.example"}
+	cfg.ImageCache.URI = "/ic"
+	imageHosts, _, err := buildRenderHosts(cfg, startupTestLogger(&output))
+	if err != nil || imageHosts.Len() != 0 || !strings.Contains(output.String(), "image_cache.uri") {
+		t.Fatalf("relative legacy uri: hosts=%d err=%v log=%s", imageHosts.Len(), err, output.String())
 	}
 
-	harukiConfig.Cfg.PJSKRender.SKForecast.CachePath = " /tmp/forecast.json "
-	harukiConfig.Cfg.PJSKRender.MySekaiHousingCompetition.CachePath = " /tmp/housing.json "
-	if got := resolveSKForecastCachePath(); got != "/tmp/forecast.json" {
-		t.Fatalf("forecast configured path = %q", got)
+	bad := cfg
+	bad.ImageCache.Hosts = map[string]string{"cn09": "not-a-url"}
+	if _, _, err := buildRenderHosts(bad, nil); err == nil || !strings.Contains(err.Error(), "image_cache.hosts") {
+		t.Fatalf("invalid image host error = %v", err)
 	}
-	if got := resolveMySekaiHousingCompetitionCachePath(); got != "/tmp/housing.json" {
-		t.Fatalf("housing configured path = %q", got)
+	bad = cfg
+	bad.AssetDirs.AssetsBaseURLs = []string{"assets.example"}
+	if _, _, err := buildRenderHosts(bad, nil); err == nil || errors.Is(err, errAssetHostsRequired) || !strings.Contains(err.Error(), "asset_dirs.assets_base_urls") {
+		t.Fatalf("invalid asset host error = %v", err)
 	}
+}
 
-	harukiConfig.Cfg.PJSKRender.SKForecast.CachePath = ""
-	harukiConfig.Cfg.PJSKRender.MySekaiHousingCompetition.CachePath = ""
-	harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir = ""
-	if resolveSKForecastCachePath() != "" || resolveMySekaiHousingCompetitionCachePath() != "" {
-		t.Fatal("empty cache configuration should yield empty paths")
-	}
+func TestStartRenderHostProbers(t *testing.T) {
+	startRenderHostProbers(context.Background(), nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	startRenderHostProbers(ctx, &renderapp.App{})
 }
 
 func TestValidBotCryptographicConfiguration(t *testing.T) {
@@ -180,36 +431,6 @@ func TestValidBotCryptographicConfiguration(t *testing.T) {
 	ring = initNoiseKeyRing(logger)
 	if ring.Len() != 1 || ring.Primary().ID != "next" {
 		t.Fatalf("noise_keys-only ring = len %d primary %q", ring.Len(), ring.Primary().ID)
-	}
-}
-
-func TestDrawingCacheInitializationBranches(t *testing.T) {
-	preserveServerConfig(t)
-	var output bytes.Buffer
-	logger := startupTestLogger(&output)
-
-	if service := initDrawingCacheIfConfigured(context.Background(), logger, fiber.New()); service != nil {
-		t.Fatal("empty drawing cache configuration returned a service")
-	}
-
-	storageDir := t.TempDir()
-	harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir = storageDir
-	harukiConfig.Cfg.PJSKRender.DrawingCache.GCInterval = -1
-	app := fiber.New()
-	service := initDrawingCacheIfConfigured(context.Background(), logger, app)
-	if service == nil {
-		t.Fatal("configured drawing cache did not initialize")
-	}
-	t.Cleanup(func() { _ = service.Close() })
-	if got := service.Config().DBPath; got != filepath.Join(storageDir, "cache.db") {
-		t.Fatalf("drawing cache database path = %q", got)
-	}
-	response, err := app.Test(httptest.NewRequest("GET", "/cache/stats", nil))
-	if err != nil {
-		t.Fatalf("query cache stats: %v", err)
-	}
-	if response.StatusCode != 200 {
-		t.Fatalf("cache stats status = %d", response.StatusCode)
 	}
 }
 

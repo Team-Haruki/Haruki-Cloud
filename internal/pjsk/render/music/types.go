@@ -53,6 +53,8 @@ type Controller struct {
 	sources               *regionsource.Registry[DataSource]
 	drawing               *drawing.HarukiDrawingClient
 	assets                *assets.AssetHelper
+	assetReader           *assets.AssetReader
+	chartBPM              *chartBPMCache
 	banCharacterNicknames map[string]int
 	aliases               musicAliasResolver
 	snapshot              snapshot.Snapshot

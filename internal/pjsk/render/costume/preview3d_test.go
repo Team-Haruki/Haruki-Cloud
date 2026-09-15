@@ -2051,7 +2051,7 @@ func TestReadPreview3DResponseLimitsUnknownLengthBody(t *testing.T) {
 	}
 }
 
-func TestEnsureStaticCaptureFileSharesDownloadAndSurvivesLeaderCancellation(t *testing.T) {
+func TestEnsureStaticCaptureObjectSharesDownloadAndSurvivesLeaderCancellation(t *testing.T) {
 	const imageID = "pjsk3d_static_shared"
 	const png = "shared-png-response"
 	requestStarted := make(chan struct{})
@@ -2107,7 +2107,7 @@ func assertCanceledStaticCaptureLeader(t *testing.T, service *Preview3DService, 
 	leaderCtx, cancelLeader := context.WithCancel(context.Background())
 	leaderDone := make(chan error, 1)
 	go func() {
-		leaderDone <- service.ensureStaticCaptureFile(leaderCtx, endpoint, imageID)
+		leaderDone <- service.ensureStaticCaptureObject(leaderCtx, endpoint, imageID)
 	}()
 	<-requestStarted
 	cancelLeader()
@@ -2124,7 +2124,7 @@ func runStaticCaptureFollowers(t *testing.T, service *Preview3DService, endpoint
 		ctx, trace := commandtrace.WithTrace(context.Background())
 		traces[index] = trace
 		go func(ctx context.Context) {
-			followers <- service.ensureStaticCaptureFile(ctx, endpoint, imageID)
+			followers <- service.ensureStaticCaptureObject(ctx, endpoint, imageID)
 		}(ctx)
 	}
 	// Both followers now join the still-running target-key flight. The HTTP
@@ -2161,9 +2161,6 @@ func assertSharedStaticCaptureTraces(t *testing.T, traces []*commandtrace.Trace)
 		for _, operation := range []string{
 			"preview3d.static_stat",
 			"preview3d.fetch_http",
-			"preview3d.static_mkdir",
-			"preview3d.static_write",
-			"preview3d.static_rename",
 			"preview3d.store",
 		} {
 			if count := preview3DTraceOperationCount(trace, operation); count != 1 {

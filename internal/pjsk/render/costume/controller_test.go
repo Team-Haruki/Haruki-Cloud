@@ -18,6 +18,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/storage"
 )
 
 type denseListTestSource struct {
@@ -559,9 +560,15 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 		makeDenseListTestCostumeWithColor(33011, "head", 20, 1),
 		makeDenseListTestCostumeWithColor(33021, "hair", 20, 1),
 	}}, drawing.NewHarukiDrawingClient(drawingServer.URL), renderassets.NewAssetHelper(assetRoot, nil))
+	// Static captures go through the static slot, not a Primary-derived dir (E1).
+	staticStore, err := storage.NewLocalAt(assetRoot, 0)
+	if err != nil {
+		t.Fatalf("static store: %v", err)
+	}
 	controller.Set3DPreviewConfig(Preview3DConfig{
 		Enabled:             true,
 		EngineBaseURL:       engine.URL,
+		StaticStore:         staticStore,
 		StaticRelativeDir:   "static_images/pjsk_3d_preview",
 		Width:               700,
 		Height:              500,

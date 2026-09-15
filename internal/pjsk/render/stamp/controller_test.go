@@ -281,10 +281,35 @@ func TestControllerBuildStampListRequestFailsWhenNoMatch(t *testing.T) {
 	source := newTestStampSource(renderregion.JP)
 	source.stamps = []masterdata.Stamp{{ID: 1, AssetBundleName: "missing"}}
 
-	controller := NewController(source, nil, assets.NewAssetHelper("/tmp/non-existent-stamp-root", nil))
-	_, err := controller.BuildStampListRequest(ListQuery{Region: renderregion.JP})
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
+	_, err := controller.BuildStampListRequest(ListQuery{Region: renderregion.JP, IDs: []int{2}})
 	if err == nil {
-		t.Fatal("expected error when no assets matched")
+		t.Fatal("expected error when no stamp matched the query")
+	}
+}
+
+// TestStampResolvesWithoutPrimaryRoot pins E1: a stamp that no local root
+// holds is no longer dropped because a real primary root is configured; it
+// resolves to the Drawing-relative fallback in both the rootless and the
+// populated-root deployment.
+func TestStampResolvesWithoutPrimaryRoot(t *testing.T) {
+	for name, helper := range map[string]*assets.AssetHelper{
+		"no primary":      assets.NewAssetHelper("", nil),
+		"missing on root": assets.NewAssetHelper("/tmp/non-existent-stamp-root", nil),
+	} {
+		t.Run(name, func(t *testing.T) {
+			source := newTestStampSource(renderregion.JP)
+			source.stamps = []masterdata.Stamp{{ID: 1, AssetBundleName: "remote_stamp"}}
+			controller := NewController(source, nil, helper)
+			req, err := controller.BuildStampListRequest(ListQuery{Region: renderregion.JP})
+			if err != nil {
+				t.Fatalf("BuildStampListRequest failed: %v", err)
+			}
+			want := "stamp/remote_stamp/remote_stamp.png"
+			if len(req.Stamps) != 1 || req.Stamps[0].ImagePath != want {
+				t.Fatalf("stamps = %+v, want image path %q", req.Stamps, want)
+			}
+		})
 	}
 }
 

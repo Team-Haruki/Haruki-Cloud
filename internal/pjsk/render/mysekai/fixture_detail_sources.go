@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -98,29 +99,19 @@ func (c *Controller) loadLocalMasterdataObject(region renderregion.Value, filena
 }
 
 func (c *Controller) loadLocalAssetObject(region renderregion.Value, relPath string, target any) bool {
-	if c == nil || c.assets == nil {
+	if c == nil || c.assetReader == nil {
 		return false
 	}
 	regionName := strings.ToLower(strings.TrimSpace(renderregion.WithDefault(region).String()))
 	if regionName == "" {
 		return false
 	}
-	candidates := []string{
-		filepath.ToSlash(filepath.Join(renderassets.RegionAssetDirByMode(regionName, renderassets.RegionAssetOnDemand), relPath)),
-		filepath.ToSlash(filepath.Join(regionName+"-assets", renderassets.RegionAssetOnDemand, relPath)),
+	candidate := path.Join(regionName+"-assets", renderassets.RegionAssetOnDemand, relPath)
+	data, _, err := c.assetReader.ReadFirst(c.requestCtx, candidate)
+	if err != nil {
+		return false
 	}
-	for _, candidate := range candidates {
-		resolved := c.assets.FirstExisting(candidate)
-		if strings.TrimSpace(resolved) == "" {
-			continue
-		}
-		data, err := os.ReadFile(filepath.Clean(resolved))
-		if err != nil {
-			continue
-		}
-		return decodeJSONUseNumber(data, target) == nil
-	}
-	return false
+	return decodeJSONUseNumber(data, target) == nil
 }
 
 func (c *Controller) localMasterdataDirs(region renderregion.Value) []string {

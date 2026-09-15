@@ -230,12 +230,9 @@ func (c *Controller) resolveStaticIcon(explicit *string, filename string) *strin
 		}
 	}
 
+	// static_images fields are not C1 candidate sets: the fixed relative path
+	// is sent and Drawing resolves it against its own static root (T15).
 	path := filepath.ToSlash(filepath.Join(assets.StaticImagesDir, filename))
-	if c != nil && c.assets != nil {
-		if existing := c.assets.FirstExisting(path); existing != "" {
-			path = assets.MakeRelative(c.assets.Primary(), existing)
-		}
-	}
 	return &path
 }
 

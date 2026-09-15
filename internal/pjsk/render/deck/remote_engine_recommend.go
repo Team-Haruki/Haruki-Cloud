@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -419,6 +420,7 @@ func (r *RemoteDeckRecommender) doRecommendLegacyOption(ctx context.Context, exe
 	if len(req.UserData) > 0 {
 		payload["user_data_str"] = string(req.UserData)
 	} else if path := strings.TrimSpace(req.UserDataFilePath); path != "" {
+		r.logUserDataFilePathFallback(ctx, exec, req.Region, path)
 		payload["user_data_file_path"] = path
 	} else {
 		return nil, fmt.Errorf("deck remote engine: no user data available")
@@ -649,4 +651,32 @@ func (r *RemoteDeckRecommender) invalidate(state *remoteTargetState, kind remote
 		state.masterdataReady = false
 		state.musicMetaHash = ""
 	}
+}
+
+// logUserDataFilePathFallback records one use of the user_data_file_path
+// branch. C10: the branch assumes deck-service shares Cloud's filesystem, which
+// it never can after the Phase-2 split. Observe one cycle with zero
+// occurrences, then delete the branch, RecommendRequest.UserDataFilePath,
+// Controller.resolveUserDataFilePath and LocalFileConfig's PersistRawFile.
+func (r *RemoteDeckRecommender) logUserDataFilePathFallback(ctx context.Context, exec *remoteExecution, region, path string) {
+	count := r.userDataFilePathFallbacks.Add(1)
+	log := r.logger
+	if log == nil {
+		log = logger.NewLoggerFromGlobal("DeckRemote")
+	}
+	target := ""
+	if exec != nil && exec.state != nil {
+		target = exec.state.target.Name
+	}
+	log.ErrorContext(ctx, "deck user_data_file_path fallback used",
+		"region", region, "path_base", filepath.Base(path), "target", target, "count", count)
+}
+
+// UserDataFilePathFallbacks reports how many requests used the
+// user_data_file_path branch (C10).
+func (r *RemoteDeckRecommender) UserDataFilePathFallbacks() int64 {
+	if r == nil {
+		return 0
+	}
+	return r.userDataFilePathFallbacks.Load()
 }

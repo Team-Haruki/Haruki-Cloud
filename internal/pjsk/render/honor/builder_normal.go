@@ -21,9 +21,8 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 		return assets.ResolveRegionAssetPath(b.assets, region.String(), relPaths...)
 	}
 
-	honorImgPath := b.normalHonorImagePath(visual, resolveGameAsset)
-	req.HonorImgPath = &honorImgPath
-	b.setNormalHonorRankImage(req, visual, honorImgPath, resolveGameAsset)
+	req.HonorImgPath = normalHonorImagePath(visual, resolveGameAsset)
+	b.setNormalHonorRankImage(req, visual, resolveGameAsset)
 	b.setNormalHonorFrame(req, visual, resolveGameAsset)
 	b.setNormalHonorProgress(req, visual, honorID, honorLevel, fcOrApLevelOverride, resolveGameAsset)
 	setNormalHonorLevelIcons(req, visual.groupType)
@@ -97,31 +96,28 @@ func (b *Builder) resolveNormalHonorVisual(req *drawing.HonorRequest, honorID, h
 	}, honorLevel, nil
 }
 
-func (b *Builder) normalHonorImagePath(visual normalHonorVisual, resolveGameAsset func(...string) string) string {
-	var honorImgPath string
+// normalHonorImagePath emits the C1 candidate list for honor_img_path. Event
+// honors list the degree image, the derived background bundle's degree image
+// and the rank fallback in today's preference order; Drawing takes the first
+// existing. Every other group sends its one path.
+func normalHonorImagePath(visual normalHonorVisual, resolveGameAsset func(...string) string) drawing.AssetKey {
+	var primary string
 	switch {
 	case visual.groupType == "rank_match":
-		honorImgPath = resolveGameAsset(fmt.Sprintf("rank_live/honor/%s/degree_%s.png", visual.bgAssetName, visual.mode))
+		primary = resolveGameAsset(fmt.Sprintf("rank_live/honor/%s/degree_%s.png", visual.bgAssetName, visual.mode))
 	case visual.group.BackgroundAssetBundleName != nil && *visual.group.BackgroundAssetBundleName != "":
-		honorImgPath = resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", *visual.group.BackgroundAssetBundleName, visual.mode))
+		primary = resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", *visual.group.BackgroundAssetBundleName, visual.mode))
 	default:
-		honorImgPath = resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", visual.assetName, visual.mode))
+		primary = resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", visual.assetName, visual.mode))
 	}
-	if visual.eventType() && !b.assetExists(honorImgPath) {
-		if derived := deriveHonorBackgroundAssetName(visual.assetName); derived != "" {
-			candidate := resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", derived, visual.mode))
-			if b.assetExists(candidate) {
-				honorImgPath = candidate
-			}
-		}
+	if !visual.eventType() {
+		return drawing.AssetPath(primary)
 	}
-	if visual.eventType() && !b.assetExists(honorImgPath) {
-		fallback := normalHonorFallbackPath(visual, resolveGameAsset)
-		if b.assetExists(fallback) {
-			honorImgPath = fallback
-		}
+	var derivedPath string
+	if derived := deriveHonorBackgroundAssetName(visual.assetName); derived != "" {
+		derivedPath = resolveGameAsset(fmt.Sprintf("honor/%s/degree_%s.png", derived, visual.mode))
 	}
-	return honorImgPath
+	return drawing.AssetCandidates(primary, derivedPath, normalHonorFallbackPath(visual, resolveGameAsset))
 }
 
 func (v normalHonorVisual) eventType() bool {
@@ -135,7 +131,12 @@ func normalHonorFallbackPath(visual normalHonorVisual, resolveGameAsset func(...
 	return resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", visual.assetName, visual.mode))
 }
 
-func (b *Builder) setNormalHonorRankImage(req *drawing.HonorRequest, visual normalHonorVisual, honorImgPath string, resolveGameAsset func(...string) string) {
+// setNormalHonorRankImage sets rank_img_path. Drawing ignores a supplied rank
+// image that does not exist, so sekai_echo no longer probes for it (C1).
+// Event honors still suppress the overlay when the rank fallback is the
+// background Drawing will resolve, so the same image is never pasted twice
+// (Drawing has no "overlay equals background" rule; pending contract item C1-overlays).
+func (b *Builder) setNormalHonorRankImage(req *drawing.HonorRequest, visual normalHonorVisual, resolveGameAsset func(...string) string) {
 	if visual.assetName == "" {
 		return
 	}
@@ -143,16 +144,29 @@ func (b *Builder) setNormalHonorRankImage(req *drawing.HonorRequest, visual norm
 	case "rank_match":
 		req.RankImgPath = new(resolveGameAsset(fmt.Sprintf("rank_live/honor/%s/%s.png", visual.assetName, visual.mode)))
 	case "sekai_echo":
-		rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", visual.assetName, visual.mode))
-		if b.assetExists(rankCandidate) {
-			req.RankImgPath = &rankCandidate
-		}
+		req.RankImgPath = new(resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", visual.assetName, visual.mode)))
 	case "event", "wl_event":
 		rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", visual.assetName, visual.mode))
-		if rankCandidate != honorImgPath {
+		if !b.rankFallbackIsBackground(req.HonorImgPath, rankCandidate) {
 			req.RankImgPath = &rankCandidate
 		}
 	}
+}
+
+// rankFallbackIsBackground reports whether Drawing will resolve the event
+// honor background to rankCandidate: it is the last candidate, every earlier
+// candidate is missing and the rank image itself exists. This reproduces the
+// pre-C1 rule "no overlay when the background already is the rank image".
+func (b *Builder) rankFallbackIsBackground(candidates drawing.AssetKey, rankCandidate string) bool {
+	if len(candidates) < 2 || candidates.Last() != rankCandidate {
+		return false
+	}
+	for _, candidate := range candidates[:len(candidates)-1] {
+		if b.assetExists(candidate) {
+			return false
+		}
+	}
+	return b.assetExists(rankCandidate)
 }
 
 func normalHonorType(groupType, frameName, bgAssetName, assetName string) string {
@@ -174,7 +188,7 @@ func (b *Builder) setNormalHonorFrame(req *drawing.HonorRequest, visual normalHo
 	staticFramePath := fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(visual.mode[0]), visual.rarityRank)
 	frameName := resolvedNormalHonorFrameName(visual)
 	if frameName == "" {
-		req.FrameImgPath = &staticFramePath
+		req.FrameImgPath = drawing.AssetPath(staticFramePath)
 		return
 	}
 	b.setNamedNormalHonorFrame(req, visual, frameName, staticFramePath, resolveGameAsset)
@@ -193,6 +207,12 @@ func resolvedNormalHonorFrameName(visual normalHonorVisual) string {
 	return ""
 }
 
+// setNamedNormalHonorFrame emits the frame as a C1 candidate list: the named
+// frame first and the static frame last when the rarity allows a named frame.
+// The birthday level icon is not a candidate fork: Drawing fails the render
+// when a supplied frame_degree_level_img_path is missing and draws it on
+// whichever frame resolved, so Cloud sends it only when both the named frame
+// and the level icon exist (pending contract item C1-overlays).
 func (b *Builder) setNamedNormalHonorFrame(req *drawing.HonorRequest, visual normalHonorVisual, frameName, staticFramePath string, resolveGameAsset func(...string) string) {
 	isBirthdayFrame := strings.HasPrefix(frameName, "honor_frame_birthday")
 	startRare := 2
@@ -200,12 +220,12 @@ func (b *Builder) setNamedNormalHonorFrame(req *drawing.HonorRequest, visual nor
 		startRare = 3
 	}
 	framePath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_%s_%d.png", frameName, string(visual.mode[0]), visual.rarityRank))
-	if b.assetExists(framePath) && (isBirthdayFrame || visual.rarityRank >= startRare) {
-		req.FrameImgPath = &framePath
-	} else {
-		req.FrameImgPath = &staticFramePath
+	if !isBirthdayFrame && visual.rarityRank < startRare {
+		req.FrameImgPath = drawing.AssetPath(staticFramePath)
+		return
 	}
-	if !isBirthdayFrame || *req.FrameImgPath != framePath {
+	req.FrameImgPath = drawing.AssetCandidates(framePath, staticFramePath)
+	if !isBirthdayFrame || !b.assetExists(framePath) {
 		return
 	}
 	levelPath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_level_%d.png", frameName, visual.rarityRank))
@@ -214,6 +234,9 @@ func (b *Builder) setNamedNormalHonorFrame(req *drawing.HonorRequest, visual nor
 	}
 }
 
+// setNormalHonorProgress sets the fc_ap / event progress fields. scroll.png is
+// an optional overlay Drawing does not tolerate as missing, so it is sent only
+// when it exists (pending contract item C1-overlays).
 func (b *Builder) setNormalHonorProgress(req *drawing.HonorRequest, visual normalHonorVisual, honorID, honorLevel int, fcOrApLevelOverride *int, resolveGameAsset func(...string) string) {
 	_, hasScore := diffScoreMap[honorID]
 	if !hasScore && !visual.eventType() {
@@ -222,8 +245,7 @@ func (b *Builder) setNormalHonorProgress(req *drawing.HonorRequest, visual norma
 	if hasScore {
 		req.GroupType = new("fc_ap")
 	}
-	scrollPath := resolveGameAsset(fmt.Sprintf("honor/%s/scroll.png", visual.assetName))
-	if b.assetExists(scrollPath) {
+	if scrollPath := resolveGameAsset(fmt.Sprintf("honor/%s/scroll.png", visual.assetName)); b.assetExists(scrollPath) {
 		req.ScrollImgPath = &scrollPath
 	}
 	if fcOrApLevelOverride != nil {
@@ -272,12 +294,16 @@ func betterHonorLevelVisual(candidate, current *masterdata.HonorLevel, requested
 	return requestedLevel > 0 && candidate.Level <= requestedLevel && (current == nil || candidate.Level > current.Level)
 }
 
+// assetExists is the existence check kept for the honor overlays that are not
+// C1 candidate forks (pending contract item C1-overlays). It goes through AssetReader so it keeps
+// working when the local asset roots are gone (E1).
 func (b *Builder) assetExists(rel string) bool {
 	rel = strings.TrimSpace(rel)
-	if rel == "" || b.assets == nil {
+	if rel == "" || (b.assets == nil && !b.reader.UsesStore()) {
 		return false
 	}
-	return b.assets.FirstExisting(filepath.ToSlash(rel)) != ""
+	_, ok := assets.ProbeExisting(b.ctx, b.reader, b.assets, filepath.ToSlash(rel))
+	return ok
 }
 
 func mapHonorRarity(rarity string) int {

@@ -198,14 +198,19 @@ pjsk_render:
   #   - name: "vm101"
   #     base_url: "http://INTERNAL_IP_3:28000"
   #     concurrency: 8
+  # Render cache: hits come from the PostgreSQL render index (image_cache.render_index.lookup_enabled);
+  # the SQLite /cache service and its base_url/db_path/gc_interval/require_auth keys were removed.
   drawing_cache:
-    base_url: "http://127.0.0.1:6666"  # Cloud exposes Haruki-Cache-compatible /cache routes
-    storage_dir: "/data/haruki/cache/drawing"
-    db_path: "/data/haruki/cache/drawing/cache.db"
-    gc_interval: "1h"                   # set a negative duration to disable background cleanup
+    storage_dir: "/data/haruki/cache/drawing"  # only seeds the legacy derivation of storage.cache
     ttl: "10m"                         # endpoint rules may override this (e.g. /sk uses 10s buckets)
-  drawing_timeout: "30s"
-  drawing_retry_count: 2
+  drawing_timeout: "30s"      # env HARUKI_PJSK_RENDER_DRAWING_TIMEOUT
+  drawing_retry_count: 2      # env HARUKI_PJSK_RENDER_DRAWING_RETRY_COUNT
+  # Drawing artifact mode (C13 directive headers; Drawing uploads the image and answers an ArtifactRef).
+  # Rollout dial: enable one api path, watch, widen. Empty = off (byte responses exactly as before).
+  drawing_artifact:
+    endpoints: []             # e.g. ["api/pjsk/card/box"]; ["*"] = all (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ENDPOINTS, comma-separated)
+    fetch_timeout: "10s"      # reading a ref's bytes back (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_FETCH_TIMEOUT)
+    artifact_timeout: "15s"   # added to drawing_timeout for encode + upload (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ARTIFACT_TIMEOUT)
   music_meta:
     refresh_interval: "30m"   # how often to re-check the upstream for music_metas updates
     output_dir: ""            # optional: persist music_metas*.json into this directory after updates
@@ -222,7 +227,7 @@ pjsk_render:
     engine_base_url: "http://haruki-3d-engine:8080"
     engine_base_urls: {}  # when non-empty, every requested region must have an engine URL
     static_relative_dir: "static_images/pjsk_3d_preview"
-    static_output_dir: ""
+    static_output_dir: ""   # DEPRECATED: leave "" so captures publish through storage.static
     width: 1024
     height: 1024
     scale: 1.6666667
@@ -243,10 +248,101 @@ pjsk_render:
     # music_meta_json is the legacy local fallback path; leave empty when music_meta loader is active
     music_meta_json: ""
   image_cache:
-    uri: ""         # CDN base URL for generic image cache, e.g. "https://image-cache.example.com"
-    charts_uri: "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts"
-    dir: ""         # local filesystem directory for cached images
+    uri: ""         # CDN base URL for generic image cache, e.g. "https://image-cache.example.com" (env HARUKI_PJSK_RENDER_IMAGE_CACHE_URI)
+    dir: ""         # local filesystem directory for cached images (env HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR)
     pg_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_imagecache sslmode=disable"
+    pg_max_open: 8              # index connection pool bound (env HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_MAX_OPEN)
+    render_index:
+      # true: an unreachable pg_url / failed schema init stops startup; false: ERROR log, dedup off
+      # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_REQUIRE_PG)
+      require_pg: false
+      # true: run the render index DDL at startup (widen image_cache_entries, create render_cache_index).
+      # The ALTERs take a brief ACCESS EXCLUSIVE lock: enable for an off-peak restart.
+      # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_DDL_ENABLED)
+      ddl_enabled: false
+      # true: the render cache reads render_cache_index (needs the DDL and an upgraded Drawing)
+      # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_LOOKUP_ENABLED)
+      lookup_enabled: false
+      touch_interval: "60s"     # per-key sliding-TTL throttle (env HARUKI_PJSK_RENDER_IMAGE_CACHE_RENDER_INDEX_TOUCH_INTERVAL)
+    # Per-node public image-cache hosts, keyed by Drawing node_name (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS,
+    # "cn09=https://...,cn01=https://..." or JSON). Empty derives {"default": uri}.
+    hosts: {}
+    #   cn09: "https://ic-cn09.example.com"
+    #   cn01: "https://ic-cn01.example.com"
+    host_order: []              # preferred order; empty = name sort (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOST_ORDER)
+    hosts_probe_path: ""        # "" = no prober; e.g. "/" (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_PATH)
+    hosts_probe_interval: "30s" # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_INTERVAL)
+    # Image cache GC (needs pg_url): phase 1 deletes expired render_cache_index rows, phase 2 deletes
+    # unreferenced garage image_cache_entries rows older than the retention window, then their
+    # recorded cdn_path objects (rows first, objects second). legacy_disk rows and infinite-TTL
+    # render rows are never collected. Enable with gc_dry_run: true, watch one cycle, then flip.
+    gc_enabled: false             # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_ENABLED)
+    gc_dry_run: true              # SELECTs only, logs counts and samples (env HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_DRY_RUN)
+    gc_interval: "1h"             # (env HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_INTERVAL)
+    gc_batch: 500                 # rows per phase per cycle (env HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_BATCH)
+    gc_object_retention_days: 30  # keeps already-sent image links alive (env HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_OBJECT_RETENTION_DAYS)
+    legacy_redirect:
+      # true: /ic/* answers 301 to image_cache.hosts (or uri) instead of serving image_cache.dir.
+      # Keep it on for at least 30 days after the cutover (env HARUKI_PJSK_RENDER_IMAGE_CACHE_LEGACY_REDIRECT_ENABLED)
+      enabled: false
+  asset_dirs:
+    # DEPRECATED (E1): Cloud no longer needs a local asset root. Leave primary "" and legacy []
+    # and configure storage.{assets,user_upload,static} below. A populated primary is still
+    # honoured only as the legacy derivation root for those three slots when they are unset.
+    primary: ""
+    legacy: []
+    # Public asset base URLs (REQUIRED when pjsk_render is enabled): startup fails when both
+    # assets_base_urls and the legacy single assets_base_url are empty.
+    assets_base_url: ""         # legacy single value, used as a one-element list (env HARUKI_PJSK_RENDER_ASSETS_BASE_URL)
+    assets_base_urls: []        # ordered per-node list (env HARUKI_PJSK_RENDER_ASSETS_BASE_URLS, comma-separated)
+    #  - "https://assets-cn09.example.com"
+    #  - "https://assets-cn01.example.com"
+  storage:
+    # Every slot is an Asset-Updater style provider block: provider (alias name), scheme (alias
+    # kind; fs | s3, default fs, `local` is accepted as an alias of fs), endpoint / endpoints
+    # (endpoints wins when both are set), tls, bucket, root (alias prefix), region,
+    # access_key_id, secret_access_key, base_url (alias public_base_url), public_read,
+    # path_style (default true) and options (unknown keys warn and are kept).
+    # An absent slot falls back to the legacy root (asset_dirs.primary for assets / user_upload /
+    # static, drawing_cache.storage_dir for cache, image_cache.dir for image_cache) and, if that
+    # is empty too, the feature is off. fs roots must be absolute.
+    # For the `assets` and `image_cache` slots on s3, root MUST stay "": the region / group lives
+    # in the object key and Drawing writes cdn_path relative to the bucket root.
+    # Explicit per-feature paths (sk_forecast.cache_path, mysekai_housing_competition.cache_path,
+    # music_meta.output_dir, image_cache.dir) keep precedence over a slot; delete the explicit key
+    # to move that cache onto the slot.
+    # Env: HARUKI_PJSK_RENDER_STORAGE_<SLOT>_<FIELD>, e.g. HARUKI_PJSK_RENDER_STORAGE_IMAGE_CACHE_BUCKET,
+    # _ENDPOINTS (comma-separated), _OPTIONS (key=value,key=value), _ACCESS_KEY_ID, _SECRET_ACCESS_KEY;
+    # user_upload additionally _MIRROR_SCHEME/_MIRROR_ROOT/_MIRROR_BUCKET/_MIRROR_ENDPOINTS/_MIRROR_MODE.
+    # assets:      { scheme: fs, root: "/asset" }
+    # user_upload: { scheme: fs, root: "/asset" }
+    # static:      { scheme: fs, root: "/asset" }
+    # cache:       { scheme: fs, root: "/data/haruki/cache/cloud" }
+    # image_cache: { scheme: fs, root: "/data/haruki/imagecache" }
+    # Garage cutover shape:
+    # image_cache:
+    #   provider: garage
+    #   scheme: s3
+    #   endpoints: ["http://100.64.0.11:3900", "http://100.64.0.12:3900", "http://100.64.0.13:3900"]
+    #   tls: false
+    #   bucket: image-cache
+    #   root: ""                      # MUST stay "" (Drawing's cdn_path is bucket-root relative)
+    #   region: garage
+    #   access_key_id: "GK..."
+    #   secret_access_key: "..."
+    #   public_read: true
+    #   path_style: true
+    #   # typed s3 options: request_timeout (10s), dial_timeout (3s), stat_timeout (5s),
+    #   # failover_cooldown (30s), max_attempts (one per endpoint), max_object_bytes (67108864),
+    #   # proxy (none | environment)
+    #   options: { request_timeout: "10s", dial_timeout: "3s", proxy: none }
+    # profile_bg dual-write during the flip (release R6), then delete `mirror`:
+    # user_upload:
+    #   scheme: s3
+    #   bucket: user-upload
+    #   endpoints: [...]
+    #   mirror: { scheme: fs, root: "/asset" }
+    #   mirror_mode: write        # write (read-through to the mirror) | write_only
   
   local_masterdata:
     enabled: false            # legacy/dev only; production should use sekai.remote_sync instead

@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -51,10 +52,15 @@ const (
 	// as unavailable for NegativeTTL and answered by HEAD instead.
 	storeProbeMaxListEntries = 20_000
 	// storeProbeBulkMinChildren is the sub-directory count from which a
-	// directory is listed recursively once (storeProbeBulkMaxObjects, about
-	// 10 pages) to index every child at once, e.g. music/jacket/<n>/<n>.png.
+	// directory is listed recursively once, in the background and under its
+	// own timeout (storeProbeBulkMaxObjects, about 10 pages), to index every
+	// child at once, e.g. music/jacket/<n>/<n>.png.
 	storeProbeBulkMinChildren = 64
 	storeProbeBulkMaxObjects  = 10_000
+	storeProbeBulkTimeout     = 10 * time.Second
+	// storeProbeMaxDirEntries bounds cached directory indexes by count; the
+	// name budget (assetDirectoryMaxNames) bounds their memory.
+	storeProbeMaxDirEntries = 65_536
 	// The circuit breaker opens after storeProbeBreakerThreshold consecutive
 	// store failures and lets one probe through after
 	// storeProbeBreakerCooldown.
@@ -108,6 +114,10 @@ type storeProbe struct {
 	dirFlights singleflight.Group
 	breaker    storeBreaker
 
+	bulkMu      sync.Mutex
+	bulkRunning map[string]struct{}
+	bulkWait    sync.WaitGroup
+
 	lastLogNano atomic.Int64
 	suppressed  atomic.Uint64
 }
@@ -129,8 +139,9 @@ func newStoreProbe(store storage.Store, cfg StoreProbeConfig, log *logger.Logger
 		bulkMinChildren: storeProbeBulkMinChildren,
 		bulkMaxObjects:  storeProbeBulkMaxObjects,
 		keys:            newProbeCache[storeProbeResult](assetResolutionMaxEntries, 0),
-		dirs:            newProbeCache[*storeDirIndex](assetDirectoryMaxEntries, assetDirectoryMaxNames),
+		dirs:            newProbeCache[*storeDirIndex](storeProbeMaxDirEntries, assetDirectoryMaxNames),
 		breaker:         storeBreaker{threshold: storeProbeBreakerThreshold, cooldown: storeProbeBreakerCooldown},
+		bulkRunning:     make(map[string]struct{}),
 	}
 }
 
@@ -172,7 +183,7 @@ func (p *storeProbe) resolve(ctx context.Context, key storage.Key) (resolved sto
 }
 
 func flightKey(name string, generation uint64) string {
-	return name + "\x00" + string(rune(generation&0x7fffffff))
+	return name + "\x00" + strconv.FormatUint(generation, 10)
 }
 
 func (p *storeProbe) resolveUncached(key storage.Key, generation uint64) storeProbeResult {
@@ -245,7 +256,9 @@ func (p *storeProbe) stat(ctx context.Context, key storage.Key) storeProbeResult
 }
 
 // call runs one store round trip under the circuit breaker and cfg.Timeout.
-// A missing object or a capped listing is a healthy answer.
+// A missing object or a capped listing is a healthy answer; a call cut short
+// because the caller's own context ended (shutdown, warm-up cancelled) says
+// nothing about the store and is not counted.
 func (p *storeProbe) call(ctx context.Context, op string, fn func(context.Context) error) error {
 	if !p.breaker.allow(p.now()) {
 		return errStoreProbeOpen
@@ -257,6 +270,10 @@ func (p *storeProbe) call(ctx context.Context, op string, fn func(context.Contex
 	commandtrace.RecordOperation(ctx, op, time.Since(startedAt))
 	if err == nil || errors.Is(err, storage.ErrNotExist) || errors.Is(err, errStoreListCapped) {
 		p.breaker.success()
+		return err
+	}
+	if ctx.Err() != nil {
+		p.breaker.release()
 		return err
 	}
 	if p.breaker.failure(p.now()) {
@@ -280,12 +297,7 @@ func (p *storeProbe) dirIndex(ctx context.Context, parent string, staleBefore ti
 			return cached, nil
 		}
 		if staleBefore.IsZero() {
-			if err := p.bulkList(ctx, parent, generation); err != nil {
-				return nil, err
-			}
-			if cached, ok := p.dirs.lookup(parent, p.now()); ok {
-				return cached, nil
-			}
+			p.startBulkList(parent, generation)
 		}
 		index := p.listDir(ctx, parent)
 		if index.err != nil {
@@ -337,92 +349,141 @@ func (p *storeProbe) listDir(ctx context.Context, parent string) *storeDirIndex 
 	}
 }
 
-// bulkList indexes every child directory of parent's parent at once when
-// that directory is wide (music/jacket/<name>/<name>.png has hundreds of
-// one-file children): one bounded recursive List replaces one ListDir per
-// child. A listing over the object cap is abandoned and not retried for
-// ListingTTL. The root is never listed recursively.
-func (p *storeProbe) bulkList(ctx context.Context, parent string, generation uint64) error {
-	grand, ok := parentDir(parent)
+func bulkMarker(grand string) string {
+	return "bulk\x00" + grand
+}
+
+// bulkCandidate returns the directory containing dir when it is wide
+// (bulkMinChildren sub-directories), already listed, not yet bulk-listed
+// and the breaker is closed. The root is never listed recursively.
+func (p *storeProbe) bulkCandidate(dir string) (string, bool) {
+	grand, ok := parentDir(dir)
 	if !ok || grand == "" {
-		return nil
+		return "", false
 	}
 	now := p.now()
+	if p.breaker.blocked(now) {
+		return "", false
+	}
 	grandIndex, ok := p.dirs.lookup(grand, now)
 	if !ok || grandIndex.unavailable || len(grandIndex.dirs.exact) < p.bulkMinChildren {
-		return nil
+		return "", false
 	}
-	marker := "bulk\x00" + grand
-	if _, done := p.dirs.lookup(marker, now); done {
-		return nil
+	if _, done := p.dirs.lookup(bulkMarker(grand), now); done {
+		return "", false
 	}
-	_, err, _ := p.dirFlights.Do(flightKey(marker, generation), func() (any, error) {
-		if _, done := p.dirs.lookup(marker, p.now()); done {
-			return nil, nil
-		}
-		children, complete, err := p.listRecursive(ctx, grand)
-		if err != nil {
-			return nil, err
-		}
-		listedAt := p.now()
-		if complete {
-			for name := range grandIndex.dirs.exact {
-				if _, ok := children[name]; !ok {
-					children[name] = &storeDirIndex{}
-				}
+	return grand, true
+}
+
+// startBulkList indexes every child directory of parent's parent in the
+// background when that directory is wide (music/jacket/<name>/<name>.png
+// has hundreds of one-file children): one bounded recursive List replaces
+// one ListDir per child for every later sibling, while the request that
+// noticed the directory proceeds with its own listing. At most one bulk
+// listing per directory runs at a time.
+func (p *storeProbe) startBulkList(parent string, generation uint64) {
+	grand, ok := p.bulkCandidate(parent)
+	if !ok {
+		return
+	}
+	p.bulkWait.Add(1)
+	go func() {
+		defer p.bulkWait.Done()
+		p.runBulkList(context.Background(), grand, generation)
+	}()
+}
+
+func (p *storeProbe) runBulkList(ctx context.Context, grand string, generation uint64) {
+	p.bulkMu.Lock()
+	if _, running := p.bulkRunning[grand]; running {
+		p.bulkMu.Unlock()
+		return
+	}
+	p.bulkRunning[grand] = struct{}{}
+	p.bulkMu.Unlock()
+	defer func() {
+		p.bulkMu.Lock()
+		delete(p.bulkRunning, grand)
+		p.bulkMu.Unlock()
+	}()
+	if _, done := p.dirs.lookup(bulkMarker(grand), p.now()); done {
+		return
+	}
+	grandIndex, ok := p.dirs.lookup(grand, p.now())
+	if !ok {
+		return
+	}
+	children, complete, err := p.listRecursive(ctx, grand)
+	if err != nil && ctx.Err() != nil {
+		return
+	}
+	listedAt := p.now()
+	if complete {
+		for name := range grandIndex.dirs.exact {
+			if _, ok := children[name]; !ok {
+				children[name] = &storeDirIndex{}
 			}
-			for name, index := range children {
-				index.listedAt = listedAt
-				p.rememberDir(grand+name+"/", index, generation)
-			}
 		}
-		p.dirs.store(marker, &storeDirIndex{listedAt: listedAt, unavailable: !complete}, 1, listedAt.Add(p.cfg.ListingTTL), generation)
-		return nil, nil
-	})
-	return err
+		for name, index := range children {
+			index.listedAt = listedAt
+			p.rememberDir(grand+name+"/", index, generation)
+		}
+	}
+	// A subtree over the object cap stays over it: do not try again before
+	// PositiveTTL. A failed listing is retried after NegativeTTL.
+	ttl := p.cfg.ListingTTL
+	switch {
+	case err != nil:
+		ttl = p.cfg.NegativeTTL
+	case !complete:
+		ttl = p.cfg.PositiveTTL
+	}
+	p.dirs.store(bulkMarker(grand), &storeDirIndex{listedAt: listedAt, unavailable: !complete}, 1, listedAt.Add(ttl), generation)
 }
 
 // listRecursive lists every object under grand (a directory prefix) and
-// groups them into per-child indexes. complete is false when the object cap
-// was hit; a failed listing is returned as an error only for an open circuit
-// and otherwise reported as incomplete.
+// groups them into per-child indexes. It runs under storeProbeBulkTimeout and
+// outside the circuit breaker: a slow or failed bulk listing costs nothing
+// but itself. complete is false when the object cap was hit.
 func (p *storeProbe) listRecursive(ctx context.Context, grand string) (map[string]*storeDirIndex, bool, error) {
 	children := make(map[string]*storeDirIndex)
 	objects := 0
-	err := p.call(ctx, "asset.store_list_bulk", func(ctx context.Context) error {
-		return p.store.List(ctx, storage.Key(grand), func(object storage.Object) error {
-			if objects >= p.bulkMaxObjects {
-				return errStoreListCapped
-			}
-			objects++
-			rel := strings.TrimPrefix(string(object.Key), grand)
-			child, rest, nested := strings.Cut(rel, "/")
-			if !nested || child == "" || rest == "" {
-				return nil
-			}
-			index := children[child]
-			if index == nil {
-				index = &storeDirIndex{}
-				children[child] = index
-			}
-			if name, _, deeper := strings.Cut(rest, "/"); deeper {
-				index.add(storage.DirEntry{Name: name, Dir: true})
-			} else {
-				index.add(storage.DirEntry{Name: rest})
-			}
+	callCtx, cancel := context.WithTimeout(ctx, storeProbeBulkTimeout)
+	defer cancel()
+	startedAt := time.Now()
+	err := p.store.List(callCtx, storage.Key(grand), func(object storage.Object) error {
+		if objects >= p.bulkMaxObjects {
+			return errStoreListCapped
+		}
+		objects++
+		rel := strings.TrimPrefix(string(object.Key), grand)
+		child, rest, nested := strings.Cut(rel, "/")
+		if !nested || child == "" || rest == "" {
 			return nil
-		})
+		}
+		index := children[child]
+		if index == nil {
+			index = &storeDirIndex{}
+			children[child] = index
+		}
+		if name, _, deeper := strings.Cut(rest, "/"); deeper {
+			index.add(storage.DirEntry{Name: name, Dir: true})
+		} else {
+			index.add(storage.DirEntry{Name: rest})
+		}
+		return nil
 	})
+	commandtrace.RecordOperation(ctx, "asset.store_list_bulk", time.Since(startedAt))
 	switch {
 	case err == nil:
 		return children, true, nil
-	case errors.Is(err, errStoreProbeOpen):
-		return nil, false, err
 	case errors.Is(err, errStoreListCapped):
 		return nil, false, nil
 	default:
-		p.logError(storage.Key(grand), err)
-		return nil, false, nil
+		if ctx.Err() == nil {
+			p.logError(storage.Key(grand), err)
+		}
+		return nil, false, err
 	}
 }
 
@@ -439,9 +500,9 @@ func parentDir(dir string) (string, bool) {
 	return "", true
 }
 
-// warm lists cfg.WarmPrefixes and the directories above them, and triggers
-// the bulk listing of a wide prefix, so the first renders after a restart
-// find their listings cached.
+// warm lists cfg.WarmPrefixes and the directories above them, and runs the
+// bulk listing of a wide prefix synchronously, so the first renders after a
+// restart find their listings cached.
 func (p *storeProbe) warm(ctx context.Context) {
 	for _, raw := range p.cfg.WarmPrefixes {
 		prefix, err := storage.CleanDirPrefix(raw)
@@ -458,11 +519,13 @@ func (p *storeProbe) warm(ctx context.Context) {
 			}
 		}
 		index, err := p.dirIndex(ctx, parent, time.Time{})
-		if err != nil || index.unavailable || len(index.dirs.exact) < p.bulkMinChildren {
+		if err != nil || index.unavailable {
 			continue
 		}
 		for name := range index.dirs.exact {
-			_, _ = p.dirIndex(ctx, parent+name+"/", time.Time{})
+			if grand, ok := p.bulkCandidate(parent + name + "/"); ok {
+				p.runBulkList(ctx, grand, p.dirs.currentGeneration())
+			}
 			break
 		}
 	}
@@ -539,6 +602,14 @@ func (b *storeBreaker) allow(now time.Time) bool {
 	}
 	b.probing = true
 	return true
+}
+
+// release gives back the half-open slot after a call that ended for a
+// reason unrelated to the store.
+func (b *storeBreaker) release() {
+	b.mu.Lock()
+	b.probing = false
+	b.mu.Unlock()
 }
 
 func (b *storeBreaker) success() {

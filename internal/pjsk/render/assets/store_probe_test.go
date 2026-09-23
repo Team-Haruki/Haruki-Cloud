@@ -182,9 +182,11 @@ func TestStoreProbeBulkListsWideDirectoriesOnce(t *testing.T) {
 	if got := ResolveRegionAssetPath(helper, "jp", filepath.Join("music", "jacket", "jacket_s_000", "jacket_s_000.png")); got != "asset/jp-assets/startapp/music/jacket/jacket_s_000/jacket_s_000.png" {
 		t.Fatalf("first jacket = %q", got)
 	}
-	// root, jp-assets/, startapp/, music/, music/jacket/ by ListDir, then one
-	// recursive List of music/jacket/ instead of a ListDir per jacket.
-	if lists, bulk := countCalls(memory, "ListDir"), countCalls(memory, "List"); lists != 5 || bulk != 1 {
+	// root, jp-assets/, startapp/, music/, music/jacket/ and jacket_s_000/ by
+	// ListDir on the request path; the recursive List of music/jacket/ runs in
+	// the background and replaces a ListDir per jacket for every later sibling.
+	helper.store.bulkWait.Wait()
+	if lists, bulk := countCalls(memory, "ListDir"), countCalls(memory, "List"); lists != 6 || bulk != 1 {
 		t.Fatalf("ListDir=%d List=%d after the first jacket", lists, bulk)
 	}
 	for i := 1; i < 100; i++ {
@@ -196,16 +198,16 @@ func TestStoreProbeBulkListsWideDirectoriesOnce(t *testing.T) {
 	if got := ResolveRegionAssetPath(helper, "jp", filepath.Join("music", "jacket", "jacket_special", "jacket_special.png")); got != "asset/jp-assets/startapp/music/jacket/Jacket_Special/Jacket_Special.png" {
 		t.Fatalf("bulk-indexed case correction = %q", got)
 	}
-	if got := requestCount(memory); got != 6 {
-		t.Fatalf("100 jackets cost %d store calls, want 6: %+v", got, memory.Calls())
+	if got := requestCount(memory); got != 7 {
+		t.Fatalf("100 jackets cost %d store calls, want 7: %+v", got, memory.Calls())
 	}
 	// Nested directories seen by the bulk listing are indexed as sub-dirs;
 	// their own contents are listed on demand.
 	if got := ResolveRegionAssetPath(helper, "jp", filepath.Join("music", "jacket", "jacket_s_000", "EXTRA", "nested.png")); got != "asset/jp-assets/startapp/music/jacket/jacket_s_000/extra/nested.png" {
 		t.Fatalf("nested = %q", got)
 	}
-	if got := requestCount(memory); got != 7 {
-		t.Fatalf("nested lookup cost %d store calls, want 7", got)
+	if got := requestCount(memory); got != 8 {
+		t.Fatalf("nested lookup cost %d store calls, want 8", got)
 	}
 }
 
@@ -220,19 +222,101 @@ func TestStoreProbeBulkListingOverCapFallsBackToPerDirectoryListings(t *testing.
 	memory.Seed(seed)
 	helper := storeOnlyHelper(t, memory, StoreProbeConfig{})
 	helper.store.bulkMaxObjects = 50
+	now := time.Now()
+	helper.store.now = func() time.Time { return now }
 
 	rel := filepath.Join("honor", "h001", "F1.png")
 	if got := ResolveRegionAssetPath(helper, "jp", rel); got != "asset/jp-assets/startapp/honor/h001/f1.png" {
 		t.Fatalf("got %q", got)
 	}
-	// root, jp-assets/, startapp/, honor/ by ListDir, one abandoned bulk
-	// listing of honor/, then the honor directory h001/ itself.
+	// root, jp-assets/, startapp/, honor/ and h001/ by ListDir on the request
+	// path; the abandoned bulk listing of honor/ ran in the background.
+	helper.store.bulkWait.Wait()
 	if bulk, lists := countCalls(memory, "List"), countCalls(memory, "ListDir"); bulk != 1 || lists != 5 {
 		t.Fatalf("List=%d ListDir=%d", bulk, lists)
 	}
 	ResolveRegionAssetPath(helper, "jp", filepath.Join("honor", "h002", "f0.png"))
+	helper.store.bulkWait.Wait()
 	if bulk, lists := countCalls(memory, "List"), countCalls(memory, "ListDir"); bulk != 1 || lists != 6 {
-		t.Fatalf("the failed bulk listing must not be retried: List=%d ListDir=%d", bulk, lists)
+		t.Fatalf("the capped bulk listing must not be retried: List=%d ListDir=%d", bulk, lists)
+	}
+	// A capped subtree is remembered past listing_ttl, up to positive_ttl.
+	now = now.Add(DefaultStoreProbeListingTTL + time.Minute)
+	if _, ok := helper.store.dirs.lookup(bulkMarker("jp-assets/startapp/honor/"), now); !ok {
+		t.Fatal("capped bulk marker must survive listing_ttl")
+	}
+	now = now.Add(DefaultStoreProbePositiveTTL)
+	if _, ok := helper.store.dirs.lookup(bulkMarker("jp-assets/startapp/honor/"), now); ok {
+		t.Fatal("capped bulk marker must expire after positive_ttl")
+	}
+	if helper.store.breaker.failures != 0 {
+		t.Fatal("a capped bulk listing is not a store failure")
+	}
+}
+
+func TestStoreProbeBulkListingFailureDoesNotTripTheBreaker(t *testing.T) {
+	memory := storagetest.NewMemory()
+	seed := map[string][]byte{}
+	for i := range 70 {
+		seed[fmt.Sprintf("jp-assets/startapp/honor/h%03d/f.png", i)] = []byte("x")
+	}
+	memory.Seed(seed)
+	memory.FailList = func(storage.Key) error { return errors.New("bulk down") }
+	memory.FailListDir = func(storage.Key) error { return nil } // only the recursive List fails
+	helper := storeOnlyHelper(t, memory, StoreProbeConfig{})
+	now := time.Now()
+	helper.store.now = func() time.Time { return now }
+
+	if got := ResolveRegionAssetPath(helper, "jp", filepath.Join("honor", "h001", "f.png")); got != "asset/jp-assets/startapp/honor/h001/f.png" {
+		t.Fatalf("got %q", got)
+	}
+	helper.store.bulkWait.Wait()
+	if countCalls(memory, "List") != 1 || helper.store.breaker.failures != 0 || helper.store.breaker.blocked(now) {
+		t.Fatalf("bulk failure must not count toward the breaker: List=%d failures=%d", countCalls(memory, "List"), helper.store.breaker.failures)
+	}
+	// Retried after negative_ttl, not before.
+	ResolveRegionAssetPath(helper, "jp", filepath.Join("honor", "h002", "f.png"))
+	helper.store.bulkWait.Wait()
+	if countCalls(memory, "List") != 1 {
+		t.Fatal("failed bulk listing retried inside negative_ttl")
+	}
+	now = now.Add(DefaultStoreProbeNegativeTTL + time.Second)
+	ResolveRegionAssetPath(helper, "jp", filepath.Join("honor", "h003", "f.png"))
+	helper.store.bulkWait.Wait()
+	if countCalls(memory, "List") != 2 {
+		t.Fatal("failed bulk listing must be retried after negative_ttl")
+	}
+	if helper.store.breaker.blocked(now) {
+		t.Fatal("breaker must stay closed")
+	}
+}
+
+func TestStoreProbeCancelledCallerContextIsNotAStoreFailure(t *testing.T) {
+	store := &blockingStore{Store: storagetest.NewMemory()}
+	helper := storeOnlyHelper(t, store, StoreProbeConfig{Timeout: time.Second})
+	for range 5 {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		if result := helper.store.stat(ctx, "jp-assets/startapp/x.png"); result.err == nil {
+			t.Fatal("cancelled call must report its error")
+		}
+	}
+	if helper.store.breaker.failures != 0 || helper.store.breaker.blocked(time.Now()) {
+		t.Fatalf("shutdown cancellation counted as %d store failures", helper.store.breaker.failures)
+	}
+	// The half-open slot is given back after a cancelled probe.
+	helper.store.breaker.openUntil = time.Now().Add(-time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	helper.store.stat(ctx, "jp-assets/startapp/x.png")
+	if !helper.store.breaker.allow(time.Now()) {
+		t.Fatal("cancelled half-open probe must release the slot")
+	}
+}
+
+func TestFlightKeyDistinguishesEveryGeneration(t *testing.T) {
+	if flightKey("a", 0xD800) == flightKey("a", 0xD801) || flightKey("a", 1) == flightKey("a", 1<<40) {
+		t.Fatal("flight keys must be unique per generation")
 	}
 }
 

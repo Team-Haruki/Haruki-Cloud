@@ -191,6 +191,10 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			Dir:             harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
 			RefreshInterval: harukiConfig.Cfg.PJSKRender.LocalMasterdata.RefreshInterval,
 		},
+		MasterdataRegistry: renderapp.MasterdataRegistryConfig{
+			URL:          harukiConfig.Cfg.PJSKRender.MasterdataRegistry.URL,
+			PollInterval: harukiConfig.Cfg.PJSKRender.MasterdataRegistry.PollInterval,
+		},
 		SekaiDBType: harukiConfig.Cfg.Sekai.DBType,
 		SekaiDSN:    harukiConfig.Cfg.Sekai.DBURL,
 		UserSnapshot: renderapp.UserSnapshotConfig{

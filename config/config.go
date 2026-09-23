@@ -480,6 +480,8 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_FALLBACK", &cfg.PJSKRender.LocalMasterdata.AllowFallback)
 	envDuration("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_REFRESH_INTERVAL", &cfg.PJSKRender.LocalMasterdata.RefreshInterval)
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", &cfg.PJSKRender.LocalMasterdata.AllowLeaks)
+	envStr("HARUKI_PJSK_RENDER_MASTERDATA_REGISTRY_URL", &cfg.PJSKRender.MasterdataRegistry.URL)
+	envDuration("HARUKI_PJSK_RENDER_MASTERDATA_REGISTRY_POLL_INTERVAL", &cfg.PJSKRender.MasterdataRegistry.PollInterval)
 	envBool("HARUKI_PJSK_RENDER_3D_PREVIEW_ENABLED", &cfg.PJSKRender.Preview3D.Enabled)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URL", &cfg.PJSKRender.Preview3D.EngineBaseURL)
 	if err := envStringMap("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URLS", &cfg.PJSKRender.Preview3D.EngineBaseURLs); err != nil {
@@ -592,6 +594,13 @@ type LocalMasterdataConfig struct {
 	AllowLeaks      bool          `yaml:"allow_leaks"`    // legacy/dev only; when true, unopened event/worldbloom deck queries may fall back to local masterdata
 	Dir             string        `yaml:"dir"`
 	RefreshInterval time.Duration `yaml:"refresh_interval"`
+}
+
+// MasterdataRegistryConfig is pjsk_render.masterdata_registry: the master
+// registry Cloud polls to reset DB-backed masterdata caches after an ingest.
+type MasterdataRegistryConfig struct {
+	URL          string        `yaml:"url"`           // registry base URL; empty derives from deck_recommend.registry_url, then music_meta.base_url when music_meta.source=registry
+	PollInterval time.Duration `yaml:"poll_interval"` // how often /v1/master/{region}/current is polled; 0 = default 3m, negative disables
 }
 
 type UserSnapshotConfig struct {
@@ -755,6 +764,7 @@ type PJSKRenderConfig struct {
 	ImageCache                ImageCacheConfig                `yaml:"image_cache"`
 	AssetDirs                 AssetDirsConfig                 `yaml:"asset_dirs"`
 	LocalMasterdata           LocalMasterdataConfig           `yaml:"local_masterdata"`
+	MasterdataRegistry        MasterdataRegistryConfig        `yaml:"masterdata_registry"`
 	UserSnapshot              UserSnapshotConfig              `yaml:"user_snapshot"`
 	MusicMeta                 MusicMetaConfig                 `yaml:"music_meta"`
 	SKForecast                SKForecastConfig                `yaml:"sk_forecast"`

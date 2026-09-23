@@ -159,6 +159,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	if localMasterdataFallback {
 		runtime.startLocalMasterdataRefresh(initCtx, localMasterdataDir, cfg.LocalMasterdata.RefreshInterval)
 	}
+	runtime.startRegistryMasterdataRefresh(initCtx, cfg)
 	mysekaiController.StartHousingCompetitionStatsRefresh(initCtx, cfg.SekaiAPI, cfg.DefaultRegion.String())
 	return runtime
 }

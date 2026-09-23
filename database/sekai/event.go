@@ -55,6 +55,8 @@ type Event struct {
 	EventPointAssetbundleName string `json:"event_point_assetbundle_name,omitempty"`
 	// StandbyScreenDisplayStartAt holds the value of the "standby_screen_display_start_at" field.
 	StandbyScreenDisplayStartAt int64 `json:"standby_screen_display_start_at,omitempty"`
+	// EventBreakTimeID holds the value of the "event_break_time_id" field.
+	EventBreakTimeID int64 `json:"event_break_time_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -69,7 +71,7 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case event.FieldIsCountLeaderCharacterPlay:
 			values[i] = new(sql.NullBool)
-		case event.FieldID, event.FieldGameID, event.FieldEventOnlyComponentDisplayStartAt, event.FieldStartAt, event.FieldAggregateAt, event.FieldRankingAnnounceAt, event.FieldDistributionStartAt, event.FieldEventOnlyComponentDisplayEndAt, event.FieldClosedAt, event.FieldDistributionEndAt, event.FieldVirtualLiveID, event.FieldStandbyScreenDisplayStartAt:
+		case event.FieldID, event.FieldGameID, event.FieldEventOnlyComponentDisplayStartAt, event.FieldStartAt, event.FieldAggregateAt, event.FieldRankingAnnounceAt, event.FieldDistributionStartAt, event.FieldEventOnlyComponentDisplayEndAt, event.FieldClosedAt, event.FieldDistributionEndAt, event.FieldVirtualLiveID, event.FieldStandbyScreenDisplayStartAt, event.FieldEventBreakTimeID:
 			values[i] = new(sql.NullInt64)
 		case event.FieldEventType, event.FieldName, event.FieldAssetbundleName, event.FieldBgmAssetbundleName, event.FieldUnit, event.FieldEventPointAssetbundleName, event.FieldServerRegion:
 			values[i] = new(sql.NullString)
@@ -210,6 +212,12 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.StandbyScreenDisplayStartAt = value.Int64
 			}
+		case event.FieldEventBreakTimeID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field event_break_time_id", values[i])
+			} else if value.Valid {
+				_m.EventBreakTimeID = value.Int64
+			}
 		case event.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field server_region", values[i])
@@ -308,6 +316,9 @@ func (_m *Event) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("standby_screen_display_start_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.StandbyScreenDisplayStartAt))
+	builder.WriteString(", ")
+	builder.WriteString("event_break_time_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.EventBreakTimeID))
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

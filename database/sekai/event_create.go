@@ -278,6 +278,20 @@ func (_c *EventCreate) SetNillableStandbyScreenDisplayStartAt(v *int64) *EventCr
 	return _c
 }
 
+// SetEventBreakTimeID sets the "event_break_time_id" field.
+func (_c *EventCreate) SetEventBreakTimeID(v int64) *EventCreate {
+	_c.mutation.SetEventBreakTimeID(v)
+	return _c
+}
+
+// SetNillableEventBreakTimeID sets the "event_break_time_id" field if the given value is not nil.
+func (_c *EventCreate) SetNillableEventBreakTimeID(v *int64) *EventCreate {
+	if v != nil {
+		_c.SetEventBreakTimeID(*v)
+	}
+	return _c
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_c *EventCreate) SetServerRegion(v string) *EventCreate {
 	_c.mutation.SetServerRegion(v)
@@ -422,6 +436,10 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.StandbyScreenDisplayStartAt(); ok {
 		_spec.SetField(event.FieldStandbyScreenDisplayStartAt, field.TypeInt64, value)
 		_node.StandbyScreenDisplayStartAt = value
+	}
+	if value, ok := _c.mutation.EventBreakTimeID(); ok {
+		_spec.SetField(event.FieldEventBreakTimeID, field.TypeInt64, value)
+		_node.EventBreakTimeID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(event.FieldServerRegion, field.TypeString, value)

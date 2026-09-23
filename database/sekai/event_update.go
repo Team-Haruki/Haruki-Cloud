@@ -484,6 +484,33 @@ func (_u *EventUpdate) ClearStandbyScreenDisplayStartAt() *EventUpdate {
 	return _u
 }
 
+// SetEventBreakTimeID sets the "event_break_time_id" field.
+func (_u *EventUpdate) SetEventBreakTimeID(v int64) *EventUpdate {
+	_u.mutation.ResetEventBreakTimeID()
+	_u.mutation.SetEventBreakTimeID(v)
+	return _u
+}
+
+// SetNillableEventBreakTimeID sets the "event_break_time_id" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableEventBreakTimeID(v *int64) *EventUpdate {
+	if v != nil {
+		_u.SetEventBreakTimeID(*v)
+	}
+	return _u
+}
+
+// AddEventBreakTimeID adds value to the "event_break_time_id" field.
+func (_u *EventUpdate) AddEventBreakTimeID(v int64) *EventUpdate {
+	_u.mutation.AddEventBreakTimeID(v)
+	return _u
+}
+
+// ClearEventBreakTimeID clears the value of the "event_break_time_id" field.
+func (_u *EventUpdate) ClearEventBreakTimeID() *EventUpdate {
+	_u.mutation.ClearEventBreakTimeID()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *EventUpdate) SetServerRegion(v string) *EventUpdate {
 	_u.mutation.SetServerRegion(v)
@@ -690,6 +717,15 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.StandbyScreenDisplayStartAtCleared() {
 		_spec.ClearField(event.FieldStandbyScreenDisplayStartAt, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.EventBreakTimeID(); ok {
+		_spec.SetField(event.FieldEventBreakTimeID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedEventBreakTimeID(); ok {
+		_spec.AddField(event.FieldEventBreakTimeID, field.TypeInt64, value)
+	}
+	if _u.mutation.EventBreakTimeIDCleared() {
+		_spec.ClearField(event.FieldEventBreakTimeID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(event.FieldServerRegion, field.TypeString, value)
@@ -1169,6 +1205,33 @@ func (_u *EventUpdateOne) ClearStandbyScreenDisplayStartAt() *EventUpdateOne {
 	return _u
 }
 
+// SetEventBreakTimeID sets the "event_break_time_id" field.
+func (_u *EventUpdateOne) SetEventBreakTimeID(v int64) *EventUpdateOne {
+	_u.mutation.ResetEventBreakTimeID()
+	_u.mutation.SetEventBreakTimeID(v)
+	return _u
+}
+
+// SetNillableEventBreakTimeID sets the "event_break_time_id" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableEventBreakTimeID(v *int64) *EventUpdateOne {
+	if v != nil {
+		_u.SetEventBreakTimeID(*v)
+	}
+	return _u
+}
+
+// AddEventBreakTimeID adds value to the "event_break_time_id" field.
+func (_u *EventUpdateOne) AddEventBreakTimeID(v int64) *EventUpdateOne {
+	_u.mutation.AddEventBreakTimeID(v)
+	return _u
+}
+
+// ClearEventBreakTimeID clears the value of the "event_break_time_id" field.
+func (_u *EventUpdateOne) ClearEventBreakTimeID() *EventUpdateOne {
+	_u.mutation.ClearEventBreakTimeID()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *EventUpdateOne) SetServerRegion(v string) *EventUpdateOne {
 	_u.mutation.SetServerRegion(v)
@@ -1405,6 +1468,15 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 	}
 	if _u.mutation.StandbyScreenDisplayStartAtCleared() {
 		_spec.ClearField(event.FieldStandbyScreenDisplayStartAt, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.EventBreakTimeID(); ok {
+		_spec.SetField(event.FieldEventBreakTimeID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedEventBreakTimeID(); ok {
+		_spec.AddField(event.FieldEventBreakTimeID, field.TypeInt64, value)
+	}
+	if _u.mutation.EventBreakTimeIDCleared() {
+		_spec.ClearField(event.FieldEventBreakTimeID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(event.FieldServerRegion, field.TypeString, value)

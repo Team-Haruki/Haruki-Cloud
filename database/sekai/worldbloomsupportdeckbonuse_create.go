@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/worldbloomsupportdeckbonuse"
@@ -30,6 +31,24 @@ func (_c *WorldbloomsupportdeckbonuseCreate) SetNillableCardRarityType(v *string
 	if v != nil {
 		_c.SetCardRarityType(*v)
 	}
+	return _c
+}
+
+// SetWorldBloomSupportDeckCharacterBonuses sets the "world_bloom_support_deck_character_bonuses" field.
+func (_c *WorldbloomsupportdeckbonuseCreate) SetWorldBloomSupportDeckCharacterBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseCreate {
+	_c.mutation.SetWorldBloomSupportDeckCharacterBonuses(v)
+	return _c
+}
+
+// SetWorldBloomSupportDeckMasterRankBonuses sets the "world_bloom_support_deck_master_rank_bonuses" field.
+func (_c *WorldbloomsupportdeckbonuseCreate) SetWorldBloomSupportDeckMasterRankBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseCreate {
+	_c.mutation.SetWorldBloomSupportDeckMasterRankBonuses(v)
+	return _c
+}
+
+// SetWorldBloomSupportDeckSkillLevelBonuses sets the "world_bloom_support_deck_skill_level_bonuses" field.
+func (_c *WorldbloomsupportdeckbonuseCreate) SetWorldBloomSupportDeckSkillLevelBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseCreate {
+	_c.mutation.SetWorldBloomSupportDeckSkillLevelBonuses(v)
 	return _c
 }
 
@@ -105,6 +124,18 @@ func (_c *WorldbloomsupportdeckbonuseCreate) createSpec() (*Worldbloomsupportdec
 	if value, ok := _c.mutation.CardRarityType(); ok {
 		_spec.SetField(worldbloomsupportdeckbonuse.FieldCardRarityType, field.TypeString, value)
 		_node.CardRarityType = value
+	}
+	if value, ok := _c.mutation.WorldBloomSupportDeckCharacterBonuses(); ok {
+		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, field.TypeJSON, value)
+		_node.WorldBloomSupportDeckCharacterBonuses = value
+	}
+	if value, ok := _c.mutation.WorldBloomSupportDeckMasterRankBonuses(); ok {
+		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, field.TypeJSON, value)
+		_node.WorldBloomSupportDeckMasterRankBonuses = value
+	}
+	if value, ok := _c.mutation.WorldBloomSupportDeckSkillLevelBonuses(); ok {
+		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, field.TypeJSON, value)
+		_node.WorldBloomSupportDeckSkillLevelBonuses = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(worldbloomsupportdeckbonuse.FieldServerRegion, field.TypeString, value)

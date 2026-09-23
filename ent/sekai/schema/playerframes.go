@@ -20,6 +20,7 @@ func (Playerframe) Fields() []ent.Field {
 		field.Int64("player_frame_group_id").Optional(),
 		field.String("description").Optional(),
 		field.Int64("game_character_id").Optional(),
+		field.Int64("parts_count").Optional(),
 		field.String("server_region"),
 	}
 }

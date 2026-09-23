@@ -61,6 +61,12 @@ const (
 	FieldGachaFreebieGroupID = "gacha_freebie_group_id"
 	// FieldDailySpinLimit holds the string denoting the daily_spin_limit field in the database.
 	FieldDailySpinLimit = "daily_spin_limit"
+	// FieldIsSelectCharacter holds the string denoting the is_select_character field in the database.
+	FieldIsSelectCharacter = "is_select_character"
+	// FieldGachaCharacterBonusGroupID holds the string denoting the gacha_character_bonus_group_id field in the database.
+	FieldGachaCharacterBonusGroupID = "gacha_character_bonus_group_id"
+	// FieldRateChoiceGachaWishGroupID holds the string denoting the rate_choice_gacha_wish_group_id field in the database.
+	FieldRateChoiceGachaWishGroupID = "rate_choice_gacha_wish_group_id"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the gacha in the database.
@@ -95,6 +101,9 @@ var Columns = []string{
 	FieldGachaBonusItemReceivableRewardGroupID,
 	FieldGachaFreebieGroupID,
 	FieldDailySpinLimit,
+	FieldIsSelectCharacter,
+	FieldGachaCharacterBonusGroupID,
+	FieldRateChoiceGachaWishGroupID,
 	FieldServerRegion,
 }
 
@@ -209,6 +218,21 @@ func ByGachaFreebieGroupID(opts ...sql.OrderTermOption) OrderOption {
 // ByDailySpinLimit orders the results by the daily_spin_limit field.
 func ByDailySpinLimit(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDailySpinLimit, opts...).ToFunc()
+}
+
+// ByIsSelectCharacter orders the results by the is_select_character field.
+func ByIsSelectCharacter(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsSelectCharacter, opts...).ToFunc()
+}
+
+// ByGachaCharacterBonusGroupID orders the results by the gacha_character_bonus_group_id field.
+func ByGachaCharacterBonusGroupID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGachaCharacterBonusGroupID, opts...).ToFunc()
+}
+
+// ByRateChoiceGachaWishGroupID orders the results by the rate_choice_gacha_wish_group_id field.
+func ByRateChoiceGachaWishGroupID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRateChoiceGachaWishGroupID, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

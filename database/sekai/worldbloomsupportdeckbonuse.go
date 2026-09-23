@@ -3,6 +3,7 @@
 package sekai
 
 import (
+	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/sekai/worldbloomsupportdeckbonuse"
 	"strings"
@@ -18,6 +19,12 @@ type Worldbloomsupportdeckbonuse struct {
 	ID int `json:"id,omitempty"`
 	// CardRarityType holds the value of the "card_rarity_type" field.
 	CardRarityType string `json:"card_rarity_type,omitempty"`
+	// WorldBloomSupportDeckCharacterBonuses holds the value of the "world_bloom_support_deck_character_bonuses" field.
+	WorldBloomSupportDeckCharacterBonuses json.RawMessage `json:"world_bloom_support_deck_character_bonuses,omitempty"`
+	// WorldBloomSupportDeckMasterRankBonuses holds the value of the "world_bloom_support_deck_master_rank_bonuses" field.
+	WorldBloomSupportDeckMasterRankBonuses json.RawMessage `json:"world_bloom_support_deck_master_rank_bonuses,omitempty"`
+	// WorldBloomSupportDeckSkillLevelBonuses holds the value of the "world_bloom_support_deck_skill_level_bonuses" field.
+	WorldBloomSupportDeckSkillLevelBonuses json.RawMessage `json:"world_bloom_support_deck_skill_level_bonuses,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -28,6 +35,8 @@ func (*Worldbloomsupportdeckbonuse) scanValues(columns []string) ([]any, error) 
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses:
+			values[i] = new([]byte)
 		case worldbloomsupportdeckbonuse.FieldID:
 			values[i] = new(sql.NullInt64)
 		case worldbloomsupportdeckbonuse.FieldCardRarityType, worldbloomsupportdeckbonuse.FieldServerRegion:
@@ -58,6 +67,30 @@ func (_m *Worldbloomsupportdeckbonuse) assignValues(columns []string, values []a
 				return fmt.Errorf("unexpected type %T for field card_rarity_type", values[i])
 			} else if value.Valid {
 				_m.CardRarityType = value.String
+			}
+		case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field world_bloom_support_deck_character_bonuses", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.WorldBloomSupportDeckCharacterBonuses); err != nil {
+					return fmt.Errorf("unmarshal field world_bloom_support_deck_character_bonuses: %w", err)
+				}
+			}
+		case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field world_bloom_support_deck_master_rank_bonuses", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.WorldBloomSupportDeckMasterRankBonuses); err != nil {
+					return fmt.Errorf("unmarshal field world_bloom_support_deck_master_rank_bonuses: %w", err)
+				}
+			}
+		case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field world_bloom_support_deck_skill_level_bonuses", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.WorldBloomSupportDeckSkillLevelBonuses); err != nil {
+					return fmt.Errorf("unmarshal field world_bloom_support_deck_skill_level_bonuses: %w", err)
+				}
 			}
 		case worldbloomsupportdeckbonuse.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -103,6 +136,15 @@ func (_m *Worldbloomsupportdeckbonuse) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("card_rarity_type=")
 	builder.WriteString(_m.CardRarityType)
+	builder.WriteString(", ")
+	builder.WriteString("world_bloom_support_deck_character_bonuses=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorldBloomSupportDeckCharacterBonuses))
+	builder.WriteString(", ")
+	builder.WriteString("world_bloom_support_deck_master_rank_bonuses=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorldBloomSupportDeckMasterRankBonuses))
+	builder.WriteString(", ")
+	builder.WriteString("world_bloom_support_deck_skill_level_bonuses=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorldBloomSupportDeckSkillLevelBonuses))
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

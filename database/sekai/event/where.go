@@ -143,6 +143,11 @@ func StandbyScreenDisplayStartAt(v int64) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldStandbyScreenDisplayStartAt, v))
 }
 
+// EventBreakTimeID applies equality check predicate on the "event_break_time_id" field. It's identical to EventBreakTimeIDEQ.
+func EventBreakTimeID(v int64) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldEventBreakTimeID, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldServerRegion, v))
@@ -1176,6 +1181,56 @@ func StandbyScreenDisplayStartAtIsNil() predicate.Event {
 // StandbyScreenDisplayStartAtNotNil applies the NotNil predicate on the "standby_screen_display_start_at" field.
 func StandbyScreenDisplayStartAtNotNil() predicate.Event {
 	return predicate.Event(sql.FieldNotNull(FieldStandbyScreenDisplayStartAt))
+}
+
+// EventBreakTimeIDEQ applies the EQ predicate on the "event_break_time_id" field.
+func EventBreakTimeIDEQ(v int64) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldEventBreakTimeID, v))
+}
+
+// EventBreakTimeIDNEQ applies the NEQ predicate on the "event_break_time_id" field.
+func EventBreakTimeIDNEQ(v int64) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldEventBreakTimeID, v))
+}
+
+// EventBreakTimeIDIn applies the In predicate on the "event_break_time_id" field.
+func EventBreakTimeIDIn(vs ...int64) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldEventBreakTimeID, vs...))
+}
+
+// EventBreakTimeIDNotIn applies the NotIn predicate on the "event_break_time_id" field.
+func EventBreakTimeIDNotIn(vs ...int64) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldEventBreakTimeID, vs...))
+}
+
+// EventBreakTimeIDGT applies the GT predicate on the "event_break_time_id" field.
+func EventBreakTimeIDGT(v int64) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldEventBreakTimeID, v))
+}
+
+// EventBreakTimeIDGTE applies the GTE predicate on the "event_break_time_id" field.
+func EventBreakTimeIDGTE(v int64) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldEventBreakTimeID, v))
+}
+
+// EventBreakTimeIDLT applies the LT predicate on the "event_break_time_id" field.
+func EventBreakTimeIDLT(v int64) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldEventBreakTimeID, v))
+}
+
+// EventBreakTimeIDLTE applies the LTE predicate on the "event_break_time_id" field.
+func EventBreakTimeIDLTE(v int64) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldEventBreakTimeID, v))
+}
+
+// EventBreakTimeIDIsNil applies the IsNil predicate on the "event_break_time_id" field.
+func EventBreakTimeIDIsNil() predicate.Event {
+	return predicate.Event(sql.FieldIsNull(FieldEventBreakTimeID))
+}
+
+// EventBreakTimeIDNotNil applies the NotNil predicate on the "event_break_time_id" field.
+func EventBreakTimeIDNotNil() predicate.Event {
+	return predicate.Event(sql.FieldNotNull(FieldEventBreakTimeID))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

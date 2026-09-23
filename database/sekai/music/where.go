@@ -153,6 +153,16 @@ func MusicCollaborationID(v int64) predicate.Music {
 	return predicate.Music(sql.FieldEQ(FieldMusicCollaborationID, v))
 }
 
+// SecForMusicScoreMaker applies equality check predicate on the "sec_for_music_score_maker" field. It's identical to SecForMusicScoreMakerEQ.
+func SecForMusicScoreMaker(v int64) predicate.Music {
+	return predicate.Music(sql.FieldEQ(FieldSecForMusicScoreMaker, v))
+}
+
+// IsAvailableForMusicScoreMaker applies equality check predicate on the "is_available_for_music_score_maker" field. It's identical to IsAvailableForMusicScoreMakerEQ.
+func IsAvailableForMusicScoreMaker(v bool) predicate.Music {
+	return predicate.Music(sql.FieldEQ(FieldIsAvailableForMusicScoreMaker, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Music {
 	return predicate.Music(sql.FieldEQ(FieldServerRegion, v))
@@ -1291,6 +1301,76 @@ func InfosIsNil() predicate.Music {
 // InfosNotNil applies the NotNil predicate on the "infos" field.
 func InfosNotNil() predicate.Music {
 	return predicate.Music(sql.FieldNotNull(FieldInfos))
+}
+
+// SecForMusicScoreMakerEQ applies the EQ predicate on the "sec_for_music_score_maker" field.
+func SecForMusicScoreMakerEQ(v int64) predicate.Music {
+	return predicate.Music(sql.FieldEQ(FieldSecForMusicScoreMaker, v))
+}
+
+// SecForMusicScoreMakerNEQ applies the NEQ predicate on the "sec_for_music_score_maker" field.
+func SecForMusicScoreMakerNEQ(v int64) predicate.Music {
+	return predicate.Music(sql.FieldNEQ(FieldSecForMusicScoreMaker, v))
+}
+
+// SecForMusicScoreMakerIn applies the In predicate on the "sec_for_music_score_maker" field.
+func SecForMusicScoreMakerIn(vs ...int64) predicate.Music {
+	return predicate.Music(sql.FieldIn(FieldSecForMusicScoreMaker, vs...))
+}
+
+// SecForMusicScoreMakerNotIn applies the NotIn predicate on the "sec_for_music_score_maker" field.
+func SecForMusicScoreMakerNotIn(vs ...int64) predicate.Music {
+	return predicate.Music(sql.FieldNotIn(FieldSecForMusicScoreMaker, vs...))
+}
+
+// SecForMusicScoreMakerGT applies the GT predicate on the "sec_for_music_score_maker" field.
+func SecForMusicScoreMakerGT(v int64) predicate.Music {
+	return predicate.Music(sql.FieldGT(FieldSecForMusicScoreMaker, v))
+}
+
+// SecForMusicScoreMakerGTE applies the GTE predicate on the "sec_for_music_score_maker" field.
+func SecForMusicScoreMakerGTE(v int64) predicate.Music {
+	return predicate.Music(sql.FieldGTE(FieldSecForMusicScoreMaker, v))
+}
+
+// SecForMusicScoreMakerLT applies the LT predicate on the "sec_for_music_score_maker" field.
+func SecForMusicScoreMakerLT(v int64) predicate.Music {
+	return predicate.Music(sql.FieldLT(FieldSecForMusicScoreMaker, v))
+}
+
+// SecForMusicScoreMakerLTE applies the LTE predicate on the "sec_for_music_score_maker" field.
+func SecForMusicScoreMakerLTE(v int64) predicate.Music {
+	return predicate.Music(sql.FieldLTE(FieldSecForMusicScoreMaker, v))
+}
+
+// SecForMusicScoreMakerIsNil applies the IsNil predicate on the "sec_for_music_score_maker" field.
+func SecForMusicScoreMakerIsNil() predicate.Music {
+	return predicate.Music(sql.FieldIsNull(FieldSecForMusicScoreMaker))
+}
+
+// SecForMusicScoreMakerNotNil applies the NotNil predicate on the "sec_for_music_score_maker" field.
+func SecForMusicScoreMakerNotNil() predicate.Music {
+	return predicate.Music(sql.FieldNotNull(FieldSecForMusicScoreMaker))
+}
+
+// IsAvailableForMusicScoreMakerEQ applies the EQ predicate on the "is_available_for_music_score_maker" field.
+func IsAvailableForMusicScoreMakerEQ(v bool) predicate.Music {
+	return predicate.Music(sql.FieldEQ(FieldIsAvailableForMusicScoreMaker, v))
+}
+
+// IsAvailableForMusicScoreMakerNEQ applies the NEQ predicate on the "is_available_for_music_score_maker" field.
+func IsAvailableForMusicScoreMakerNEQ(v bool) predicate.Music {
+	return predicate.Music(sql.FieldNEQ(FieldIsAvailableForMusicScoreMaker, v))
+}
+
+// IsAvailableForMusicScoreMakerIsNil applies the IsNil predicate on the "is_available_for_music_score_maker" field.
+func IsAvailableForMusicScoreMakerIsNil() predicate.Music {
+	return predicate.Music(sql.FieldIsNull(FieldIsAvailableForMusicScoreMaker))
+}
+
+// IsAvailableForMusicScoreMakerNotNil applies the NotNil predicate on the "is_available_for_music_score_maker" field.
+func IsAvailableForMusicScoreMakerNotNil() predicate.Music {
+	return predicate.Music(sql.FieldNotNull(FieldIsAvailableForMusicScoreMaker))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

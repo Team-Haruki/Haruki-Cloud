@@ -75,6 +75,34 @@ func (_c *PlayerframegroupCreate) SetNillableAssetbundleName(v *string) *Playerf
 	return _c
 }
 
+// SetPlayerFrameType sets the "player_frame_type" field.
+func (_c *PlayerframegroupCreate) SetPlayerFrameType(v string) *PlayerframegroupCreate {
+	_c.mutation.SetPlayerFrameType(v)
+	return _c
+}
+
+// SetNillablePlayerFrameType sets the "player_frame_type" field if the given value is not nil.
+func (_c *PlayerframegroupCreate) SetNillablePlayerFrameType(v *string) *PlayerframegroupCreate {
+	if v != nil {
+		_c.SetPlayerFrameType(*v)
+	}
+	return _c
+}
+
+// SetEditCount sets the "edit_count" field.
+func (_c *PlayerframegroupCreate) SetEditCount(v int64) *PlayerframegroupCreate {
+	_c.mutation.SetEditCount(v)
+	return _c
+}
+
+// SetNillableEditCount sets the "edit_count" field if the given value is not nil.
+func (_c *PlayerframegroupCreate) SetNillableEditCount(v *int64) *PlayerframegroupCreate {
+	if v != nil {
+		_c.SetEditCount(*v)
+	}
+	return _c
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_c *PlayerframegroupCreate) SetServerRegion(v string) *PlayerframegroupCreate {
 	_c.mutation.SetServerRegion(v)
@@ -159,6 +187,14 @@ func (_c *PlayerframegroupCreate) createSpec() (*Playerframegroup, *sqlgraph.Cre
 	if value, ok := _c.mutation.AssetbundleName(); ok {
 		_spec.SetField(playerframegroup.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
+	}
+	if value, ok := _c.mutation.PlayerFrameType(); ok {
+		_spec.SetField(playerframegroup.FieldPlayerFrameType, field.TypeString, value)
+		_node.PlayerFrameType = value
+	}
+	if value, ok := _c.mutation.EditCount(); ok {
+		_spec.SetField(playerframegroup.FieldEditCount, field.TypeInt64, value)
+		_node.EditCount = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(playerframegroup.FieldServerRegion, field.TypeString, value)

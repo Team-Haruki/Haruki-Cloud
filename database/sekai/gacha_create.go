@@ -322,6 +322,48 @@ func (_c *GachaCreate) SetNillableDailySpinLimit(v *int64) *GachaCreate {
 	return _c
 }
 
+// SetIsSelectCharacter sets the "is_select_character" field.
+func (_c *GachaCreate) SetIsSelectCharacter(v bool) *GachaCreate {
+	_c.mutation.SetIsSelectCharacter(v)
+	return _c
+}
+
+// SetNillableIsSelectCharacter sets the "is_select_character" field if the given value is not nil.
+func (_c *GachaCreate) SetNillableIsSelectCharacter(v *bool) *GachaCreate {
+	if v != nil {
+		_c.SetIsSelectCharacter(*v)
+	}
+	return _c
+}
+
+// SetGachaCharacterBonusGroupID sets the "gacha_character_bonus_group_id" field.
+func (_c *GachaCreate) SetGachaCharacterBonusGroupID(v int64) *GachaCreate {
+	_c.mutation.SetGachaCharacterBonusGroupID(v)
+	return _c
+}
+
+// SetNillableGachaCharacterBonusGroupID sets the "gacha_character_bonus_group_id" field if the given value is not nil.
+func (_c *GachaCreate) SetNillableGachaCharacterBonusGroupID(v *int64) *GachaCreate {
+	if v != nil {
+		_c.SetGachaCharacterBonusGroupID(*v)
+	}
+	return _c
+}
+
+// SetRateChoiceGachaWishGroupID sets the "rate_choice_gacha_wish_group_id" field.
+func (_c *GachaCreate) SetRateChoiceGachaWishGroupID(v int64) *GachaCreate {
+	_c.mutation.SetRateChoiceGachaWishGroupID(v)
+	return _c
+}
+
+// SetNillableRateChoiceGachaWishGroupID sets the "rate_choice_gacha_wish_group_id" field if the given value is not nil.
+func (_c *GachaCreate) SetNillableRateChoiceGachaWishGroupID(v *int64) *GachaCreate {
+	if v != nil {
+		_c.SetRateChoiceGachaWishGroupID(*v)
+	}
+	return _c
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_c *GachaCreate) SetServerRegion(v string) *GachaCreate {
 	_c.mutation.SetServerRegion(v)
@@ -490,6 +532,18 @@ func (_c *GachaCreate) createSpec() (*Gacha, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DailySpinLimit(); ok {
 		_spec.SetField(gacha.FieldDailySpinLimit, field.TypeInt64, value)
 		_node.DailySpinLimit = value
+	}
+	if value, ok := _c.mutation.IsSelectCharacter(); ok {
+		_spec.SetField(gacha.FieldIsSelectCharacter, field.TypeBool, value)
+		_node.IsSelectCharacter = value
+	}
+	if value, ok := _c.mutation.GachaCharacterBonusGroupID(); ok {
+		_spec.SetField(gacha.FieldGachaCharacterBonusGroupID, field.TypeInt64, value)
+		_node.GachaCharacterBonusGroupID = value
+	}
+	if value, ok := _c.mutation.RateChoiceGachaWishGroupID(); ok {
+		_spec.SetField(gacha.FieldRateChoiceGachaWishGroupID, field.TypeInt64, value)
+		_node.RateChoiceGachaWishGroupID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(gacha.FieldServerRegion, field.TypeString, value)

@@ -121,6 +121,53 @@ func (_u *PlayerframegroupUpdate) ClearAssetbundleName() *PlayerframegroupUpdate
 	return _u
 }
 
+// SetPlayerFrameType sets the "player_frame_type" field.
+func (_u *PlayerframegroupUpdate) SetPlayerFrameType(v string) *PlayerframegroupUpdate {
+	_u.mutation.SetPlayerFrameType(v)
+	return _u
+}
+
+// SetNillablePlayerFrameType sets the "player_frame_type" field if the given value is not nil.
+func (_u *PlayerframegroupUpdate) SetNillablePlayerFrameType(v *string) *PlayerframegroupUpdate {
+	if v != nil {
+		_u.SetPlayerFrameType(*v)
+	}
+	return _u
+}
+
+// ClearPlayerFrameType clears the value of the "player_frame_type" field.
+func (_u *PlayerframegroupUpdate) ClearPlayerFrameType() *PlayerframegroupUpdate {
+	_u.mutation.ClearPlayerFrameType()
+	return _u
+}
+
+// SetEditCount sets the "edit_count" field.
+func (_u *PlayerframegroupUpdate) SetEditCount(v int64) *PlayerframegroupUpdate {
+	_u.mutation.ResetEditCount()
+	_u.mutation.SetEditCount(v)
+	return _u
+}
+
+// SetNillableEditCount sets the "edit_count" field if the given value is not nil.
+func (_u *PlayerframegroupUpdate) SetNillableEditCount(v *int64) *PlayerframegroupUpdate {
+	if v != nil {
+		_u.SetEditCount(*v)
+	}
+	return _u
+}
+
+// AddEditCount adds value to the "edit_count" field.
+func (_u *PlayerframegroupUpdate) AddEditCount(v int64) *PlayerframegroupUpdate {
+	_u.mutation.AddEditCount(v)
+	return _u
+}
+
+// ClearEditCount clears the value of the "edit_count" field.
+func (_u *PlayerframegroupUpdate) ClearEditCount() *PlayerframegroupUpdate {
+	_u.mutation.ClearEditCount()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *PlayerframegroupUpdate) SetServerRegion(v string) *PlayerframegroupUpdate {
 	_u.mutation.SetServerRegion(v)
@@ -205,6 +252,21 @@ func (_u *PlayerframegroupUpdate) sqlSave(ctx context.Context) (_node int, err e
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(playerframegroup.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.PlayerFrameType(); ok {
+		_spec.SetField(playerframegroup.FieldPlayerFrameType, field.TypeString, value)
+	}
+	if _u.mutation.PlayerFrameTypeCleared() {
+		_spec.ClearField(playerframegroup.FieldPlayerFrameType, field.TypeString)
+	}
+	if value, ok := _u.mutation.EditCount(); ok {
+		_spec.SetField(playerframegroup.FieldEditCount, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedEditCount(); ok {
+		_spec.AddField(playerframegroup.FieldEditCount, field.TypeInt64, value)
+	}
+	if _u.mutation.EditCountCleared() {
+		_spec.ClearField(playerframegroup.FieldEditCount, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(playerframegroup.FieldServerRegion, field.TypeString, value)
@@ -323,6 +385,53 @@ func (_u *PlayerframegroupUpdateOne) ClearAssetbundleName() *PlayerframegroupUpd
 	return _u
 }
 
+// SetPlayerFrameType sets the "player_frame_type" field.
+func (_u *PlayerframegroupUpdateOne) SetPlayerFrameType(v string) *PlayerframegroupUpdateOne {
+	_u.mutation.SetPlayerFrameType(v)
+	return _u
+}
+
+// SetNillablePlayerFrameType sets the "player_frame_type" field if the given value is not nil.
+func (_u *PlayerframegroupUpdateOne) SetNillablePlayerFrameType(v *string) *PlayerframegroupUpdateOne {
+	if v != nil {
+		_u.SetPlayerFrameType(*v)
+	}
+	return _u
+}
+
+// ClearPlayerFrameType clears the value of the "player_frame_type" field.
+func (_u *PlayerframegroupUpdateOne) ClearPlayerFrameType() *PlayerframegroupUpdateOne {
+	_u.mutation.ClearPlayerFrameType()
+	return _u
+}
+
+// SetEditCount sets the "edit_count" field.
+func (_u *PlayerframegroupUpdateOne) SetEditCount(v int64) *PlayerframegroupUpdateOne {
+	_u.mutation.ResetEditCount()
+	_u.mutation.SetEditCount(v)
+	return _u
+}
+
+// SetNillableEditCount sets the "edit_count" field if the given value is not nil.
+func (_u *PlayerframegroupUpdateOne) SetNillableEditCount(v *int64) *PlayerframegroupUpdateOne {
+	if v != nil {
+		_u.SetEditCount(*v)
+	}
+	return _u
+}
+
+// AddEditCount adds value to the "edit_count" field.
+func (_u *PlayerframegroupUpdateOne) AddEditCount(v int64) *PlayerframegroupUpdateOne {
+	_u.mutation.AddEditCount(v)
+	return _u
+}
+
+// ClearEditCount clears the value of the "edit_count" field.
+func (_u *PlayerframegroupUpdateOne) ClearEditCount() *PlayerframegroupUpdateOne {
+	_u.mutation.ClearEditCount()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *PlayerframegroupUpdateOne) SetServerRegion(v string) *PlayerframegroupUpdateOne {
 	_u.mutation.SetServerRegion(v)
@@ -437,6 +546,21 @@ func (_u *PlayerframegroupUpdateOne) sqlSave(ctx context.Context) (_node *Player
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(playerframegroup.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.PlayerFrameType(); ok {
+		_spec.SetField(playerframegroup.FieldPlayerFrameType, field.TypeString, value)
+	}
+	if _u.mutation.PlayerFrameTypeCleared() {
+		_spec.ClearField(playerframegroup.FieldPlayerFrameType, field.TypeString)
+	}
+	if value, ok := _u.mutation.EditCount(); ok {
+		_spec.SetField(playerframegroup.FieldEditCount, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedEditCount(); ok {
+		_spec.AddField(playerframegroup.FieldEditCount, field.TypeInt64, value)
+	}
+	if _u.mutation.EditCountCleared() {
+		_spec.ClearField(playerframegroup.FieldEditCount, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(playerframegroup.FieldServerRegion, field.TypeString, value)

@@ -61,6 +61,10 @@ type Music struct {
 	MusicCollaborationID int64 `json:"music_collaboration_id,omitempty"`
 	// Infos holds the value of the "infos" field.
 	Infos json.RawMessage `json:"infos,omitempty"`
+	// SecForMusicScoreMaker holds the value of the "sec_for_music_score_maker" field.
+	SecForMusicScoreMaker int64 `json:"sec_for_music_score_maker,omitempty"`
+	// IsAvailableForMusicScoreMaker holds the value of the "is_available_for_music_score_maker" field.
+	IsAvailableForMusicScoreMaker bool `json:"is_available_for_music_score_maker,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -73,11 +77,11 @@ func (*Music) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case music.FieldCategories, music.FieldInfos:
 			values[i] = new([]byte)
-		case music.FieldIsNewlyWrittenMusic, music.FieldIsFullLength:
+		case music.FieldIsNewlyWrittenMusic, music.FieldIsFullLength, music.FieldIsAvailableForMusicScoreMaker:
 			values[i] = new(sql.NullBool)
 		case music.FieldFillerSec:
 			values[i] = new(sql.NullFloat64)
-		case music.FieldID, music.FieldGameID, music.FieldSeq, music.FieldReleaseConditionID, music.FieldCreatorArtistID, music.FieldDancerCount, music.FieldSelfDancerPosition, music.FieldPublishedAt, music.FieldReleasedAt, music.FieldLiveStageID, music.FieldMusicCollaborationID:
+		case music.FieldID, music.FieldGameID, music.FieldSeq, music.FieldReleaseConditionID, music.FieldCreatorArtistID, music.FieldDancerCount, music.FieldSelfDancerPosition, music.FieldPublishedAt, music.FieldReleasedAt, music.FieldLiveStageID, music.FieldMusicCollaborationID, music.FieldSecForMusicScoreMaker:
 			values[i] = new(sql.NullInt64)
 		case music.FieldTitle, music.FieldPronunciation, music.FieldLyricist, music.FieldComposer, music.FieldArranger, music.FieldAssetbundleName, music.FieldLiveTalkBackgroundAssetbundleName, music.FieldServerRegion:
 			values[i] = new(sql.NullString)
@@ -238,6 +242,18 @@ func (_m *Music) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field infos: %w", err)
 				}
 			}
+		case music.FieldSecForMusicScoreMaker:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field sec_for_music_score_maker", values[i])
+			} else if value.Valid {
+				_m.SecForMusicScoreMaker = value.Int64
+			}
+		case music.FieldIsAvailableForMusicScoreMaker:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_available_for_music_score_maker", values[i])
+			} else if value.Valid {
+				_m.IsAvailableForMusicScoreMaker = value.Bool
+			}
 		case music.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field server_region", values[i])
@@ -345,6 +361,12 @@ func (_m *Music) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("infos=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Infos))
+	builder.WriteString(", ")
+	builder.WriteString("sec_for_music_score_maker=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SecForMusicScoreMaker))
+	builder.WriteString(", ")
+	builder.WriteString("is_available_for_music_score_maker=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsAvailableForMusicScoreMaker))
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

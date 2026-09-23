@@ -26,6 +26,8 @@ type Playerframe struct {
 	Description string `json:"description,omitempty"`
 	// GameCharacterID holds the value of the "game_character_id" field.
 	GameCharacterID int64 `json:"game_character_id,omitempty"`
+	// PartsCount holds the value of the "parts_count" field.
+	PartsCount int64 `json:"parts_count,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -36,7 +38,7 @@ func (*Playerframe) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case playerframe.FieldID, playerframe.FieldGameID, playerframe.FieldSeq, playerframe.FieldPlayerFrameGroupID, playerframe.FieldGameCharacterID:
+		case playerframe.FieldID, playerframe.FieldGameID, playerframe.FieldSeq, playerframe.FieldPlayerFrameGroupID, playerframe.FieldGameCharacterID, playerframe.FieldPartsCount:
 			values[i] = new(sql.NullInt64)
 		case playerframe.FieldDescription, playerframe.FieldServerRegion:
 			values[i] = new(sql.NullString)
@@ -90,6 +92,12 @@ func (_m *Playerframe) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field game_character_id", values[i])
 			} else if value.Valid {
 				_m.GameCharacterID = value.Int64
+			}
+		case playerframe.FieldPartsCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field parts_count", values[i])
+			} else if value.Valid {
+				_m.PartsCount = value.Int64
 			}
 		case playerframe.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -147,6 +155,9 @@ func (_m *Playerframe) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("game_character_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.GameCharacterID))
+	builder.WriteString(", ")
+	builder.WriteString("parts_count=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PartsCount))
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

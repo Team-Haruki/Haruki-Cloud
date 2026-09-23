@@ -55,6 +55,10 @@ const (
 	FieldMusicCollaborationID = "music_collaboration_id"
 	// FieldInfos holds the string denoting the infos field in the database.
 	FieldInfos = "infos"
+	// FieldSecForMusicScoreMaker holds the string denoting the sec_for_music_score_maker field in the database.
+	FieldSecForMusicScoreMaker = "sec_for_music_score_maker"
+	// FieldIsAvailableForMusicScoreMaker holds the string denoting the is_available_for_music_score_maker field in the database.
+	FieldIsAvailableForMusicScoreMaker = "is_available_for_music_score_maker"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the music in the database.
@@ -86,6 +90,8 @@ var Columns = []string{
 	FieldIsFullLength,
 	FieldMusicCollaborationID,
 	FieldInfos,
+	FieldSecForMusicScoreMaker,
+	FieldIsAvailableForMusicScoreMaker,
 	FieldServerRegion,
 }
 
@@ -205,6 +211,16 @@ func ByIsFullLength(opts ...sql.OrderTermOption) OrderOption {
 // ByMusicCollaborationID orders the results by the music_collaboration_id field.
 func ByMusicCollaborationID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMusicCollaborationID, opts...).ToFunc()
+}
+
+// BySecForMusicScoreMaker orders the results by the sec_for_music_score_maker field.
+func BySecForMusicScoreMaker(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSecForMusicScoreMaker, opts...).ToFunc()
+}
+
+// ByIsAvailableForMusicScoreMaker orders the results by the is_available_for_music_score_maker field.
+func ByIsAvailableForMusicScoreMaker(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsAvailableForMusicScoreMaker, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

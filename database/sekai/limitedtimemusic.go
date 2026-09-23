@@ -24,6 +24,8 @@ type Limitedtimemusic struct {
 	StartAt int64 `json:"start_at,omitempty"`
 	// EndAt holds the value of the "end_at" field.
 	EndAt int64 `json:"end_at,omitempty"`
+	// CollaborationModeID holds the value of the "collaboration_mode_id" field.
+	CollaborationModeID int64 `json:"collaboration_mode_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -34,7 +36,7 @@ func (*Limitedtimemusic) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case limitedtimemusic.FieldID, limitedtimemusic.FieldGameID, limitedtimemusic.FieldMusicID, limitedtimemusic.FieldStartAt, limitedtimemusic.FieldEndAt:
+		case limitedtimemusic.FieldID, limitedtimemusic.FieldGameID, limitedtimemusic.FieldMusicID, limitedtimemusic.FieldStartAt, limitedtimemusic.FieldEndAt, limitedtimemusic.FieldCollaborationModeID:
 			values[i] = new(sql.NullInt64)
 		case limitedtimemusic.FieldServerRegion:
 			values[i] = new(sql.NullString)
@@ -82,6 +84,12 @@ func (_m *Limitedtimemusic) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field end_at", values[i])
 			} else if value.Valid {
 				_m.EndAt = value.Int64
+			}
+		case limitedtimemusic.FieldCollaborationModeID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field collaboration_mode_id", values[i])
+			} else if value.Valid {
+				_m.CollaborationModeID = value.Int64
 			}
 		case limitedtimemusic.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -136,6 +144,9 @@ func (_m *Limitedtimemusic) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("end_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.EndAt))
+	builder.WriteString(", ")
+	builder.WriteString("collaboration_mode_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CollaborationModeID))
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

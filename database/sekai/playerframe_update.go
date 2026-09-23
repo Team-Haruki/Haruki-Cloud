@@ -155,6 +155,33 @@ func (_u *PlayerframeUpdate) ClearGameCharacterID() *PlayerframeUpdate {
 	return _u
 }
 
+// SetPartsCount sets the "parts_count" field.
+func (_u *PlayerframeUpdate) SetPartsCount(v int64) *PlayerframeUpdate {
+	_u.mutation.ResetPartsCount()
+	_u.mutation.SetPartsCount(v)
+	return _u
+}
+
+// SetNillablePartsCount sets the "parts_count" field if the given value is not nil.
+func (_u *PlayerframeUpdate) SetNillablePartsCount(v *int64) *PlayerframeUpdate {
+	if v != nil {
+		_u.SetPartsCount(*v)
+	}
+	return _u
+}
+
+// AddPartsCount adds value to the "parts_count" field.
+func (_u *PlayerframeUpdate) AddPartsCount(v int64) *PlayerframeUpdate {
+	_u.mutation.AddPartsCount(v)
+	return _u
+}
+
+// ClearPartsCount clears the value of the "parts_count" field.
+func (_u *PlayerframeUpdate) ClearPartsCount() *PlayerframeUpdate {
+	_u.mutation.ClearPartsCount()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *PlayerframeUpdate) SetServerRegion(v string) *PlayerframeUpdate {
 	_u.mutation.SetServerRegion(v)
@@ -251,6 +278,15 @@ func (_u *PlayerframeUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.GameCharacterIDCleared() {
 		_spec.ClearField(playerframe.FieldGameCharacterID, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.PartsCount(); ok {
+		_spec.SetField(playerframe.FieldPartsCount, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedPartsCount(); ok {
+		_spec.AddField(playerframe.FieldPartsCount, field.TypeInt64, value)
+	}
+	if _u.mutation.PartsCountCleared() {
+		_spec.ClearField(playerframe.FieldPartsCount, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(playerframe.FieldServerRegion, field.TypeString, value)
@@ -403,6 +439,33 @@ func (_u *PlayerframeUpdateOne) ClearGameCharacterID() *PlayerframeUpdateOne {
 	return _u
 }
 
+// SetPartsCount sets the "parts_count" field.
+func (_u *PlayerframeUpdateOne) SetPartsCount(v int64) *PlayerframeUpdateOne {
+	_u.mutation.ResetPartsCount()
+	_u.mutation.SetPartsCount(v)
+	return _u
+}
+
+// SetNillablePartsCount sets the "parts_count" field if the given value is not nil.
+func (_u *PlayerframeUpdateOne) SetNillablePartsCount(v *int64) *PlayerframeUpdateOne {
+	if v != nil {
+		_u.SetPartsCount(*v)
+	}
+	return _u
+}
+
+// AddPartsCount adds value to the "parts_count" field.
+func (_u *PlayerframeUpdateOne) AddPartsCount(v int64) *PlayerframeUpdateOne {
+	_u.mutation.AddPartsCount(v)
+	return _u
+}
+
+// ClearPartsCount clears the value of the "parts_count" field.
+func (_u *PlayerframeUpdateOne) ClearPartsCount() *PlayerframeUpdateOne {
+	_u.mutation.ClearPartsCount()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *PlayerframeUpdateOne) SetServerRegion(v string) *PlayerframeUpdateOne {
 	_u.mutation.SetServerRegion(v)
@@ -529,6 +592,15 @@ func (_u *PlayerframeUpdateOne) sqlSave(ctx context.Context) (_node *Playerframe
 	}
 	if _u.mutation.GameCharacterIDCleared() {
 		_spec.ClearField(playerframe.FieldGameCharacterID, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.PartsCount(); ok {
+		_spec.SetField(playerframe.FieldPartsCount, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedPartsCount(); ok {
+		_spec.AddField(playerframe.FieldPartsCount, field.TypeInt64, value)
+	}
+	if _u.mutation.PartsCountCleared() {
+		_spec.ClearField(playerframe.FieldPartsCount, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(playerframe.FieldServerRegion, field.TypeString, value)

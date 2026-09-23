@@ -625,6 +625,313 @@ var (
 			},
 		},
 	}
+	// CustomprofilecharactericonresourcesColumns holds the columns for the "customprofilecharactericonresources" table.
+	CustomprofilecharactericonresourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "custom_profile_resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_type", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_val", Type: field.TypeString, Nullable: true},
+		{Name: "file_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofilecharactericonresourcesTable holds the schema information for the "customprofilecharactericonresources" table.
+	CustomprofilecharactericonresourcesTable = &schema.Table{
+		Name:       "customprofilecharactericonresources",
+		Columns:    CustomprofilecharactericonresourcesColumns,
+		PrimaryKey: []*schema.Column{CustomprofilecharactericonresourcesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofilecharactericonresource_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofilecharactericonresourcesColumns[2], CustomprofilecharactericonresourcesColumns[9]},
+			},
+		},
+	}
+	// CustomprofilecollectionresourcesColumns holds the columns for the "customprofilecollectionresources" table.
+	CustomprofilecollectionresourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "custom_profile_resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_type", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_val", Type: field.TypeString, Nullable: true},
+		{Name: "file_name", Type: field.TypeString, Nullable: true},
+		{Name: "custom_profile_resource_collection_type", Type: field.TypeString, Nullable: true},
+		{Name: "group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofilecollectionresourcesTable holds the schema information for the "customprofilecollectionresources" table.
+	CustomprofilecollectionresourcesTable = &schema.Table{
+		Name:       "customprofilecollectionresources",
+		Columns:    CustomprofilecollectionresourcesColumns,
+		PrimaryKey: []*schema.Column{CustomprofilecollectionresourcesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofilecollectionresource_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofilecollectionresourcesColumns[2], CustomprofilecollectionresourcesColumns[11]},
+			},
+		},
+	}
+	// CustomprofileetcresourcesColumns holds the columns for the "customprofileetcresources" table.
+	CustomprofileetcresourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "custom_profile_resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_type", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_val", Type: field.TypeString, Nullable: true},
+		{Name: "file_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofileetcresourcesTable holds the schema information for the "customprofileetcresources" table.
+	CustomprofileetcresourcesTable = &schema.Table{
+		Name:       "customprofileetcresources",
+		Columns:    CustomprofileetcresourcesColumns,
+		PrimaryKey: []*schema.Column{CustomprofileetcresourcesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofileetcresource_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofileetcresourcesColumns[2], CustomprofileetcresourcesColumns[9]},
+			},
+		},
+	}
+	// CustomprofilegeneralbackgroundresourcesColumns holds the columns for the "customprofilegeneralbackgroundresources" table.
+	CustomprofilegeneralbackgroundresourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "custom_profile_resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_type", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_val", Type: field.TypeString, Nullable: true},
+		{Name: "file_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofilegeneralbackgroundresourcesTable holds the schema information for the "customprofilegeneralbackgroundresources" table.
+	CustomprofilegeneralbackgroundresourcesTable = &schema.Table{
+		Name:       "customprofilegeneralbackgroundresources",
+		Columns:    CustomprofilegeneralbackgroundresourcesColumns,
+		PrimaryKey: []*schema.Column{CustomprofilegeneralbackgroundresourcesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofilegeneralbackgroundresource_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofilegeneralbackgroundresourcesColumns[2], CustomprofilegeneralbackgroundresourcesColumns[9]},
+			},
+		},
+	}
+	// CustomprofilematerialresourcesColumns holds the columns for the "customprofilematerialresources" table.
+	CustomprofilematerialresourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "custom_profile_resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_type", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_val", Type: field.TypeString, Nullable: true},
+		{Name: "file_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofilematerialresourcesTable holds the schema information for the "customprofilematerialresources" table.
+	CustomprofilematerialresourcesTable = &schema.Table{
+		Name:       "customprofilematerialresources",
+		Columns:    CustomprofilematerialresourcesColumns,
+		PrimaryKey: []*schema.Column{CustomprofilematerialresourcesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofilematerialresource_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofilematerialresourcesColumns[2], CustomprofilematerialresourcesColumns[9]},
+			},
+		},
+	}
+	// CustomprofilememberstandingpictureresourcesColumns holds the columns for the "customprofilememberstandingpictureresources" table.
+	CustomprofilememberstandingpictureresourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "custom_profile_resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_type", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_val", Type: field.TypeString, Nullable: true},
+		{Name: "file_name", Type: field.TypeString, Nullable: true},
+		{Name: "character_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofilememberstandingpictureresourcesTable holds the schema information for the "customprofilememberstandingpictureresources" table.
+	CustomprofilememberstandingpictureresourcesTable = &schema.Table{
+		Name:       "customprofilememberstandingpictureresources",
+		Columns:    CustomprofilememberstandingpictureresourcesColumns,
+		PrimaryKey: []*schema.Column{CustomprofilememberstandingpictureresourcesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofilememberstandingpictureresource_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofilememberstandingpictureresourcesColumns[2], CustomprofilememberstandingpictureresourcesColumns[10]},
+			},
+		},
+	}
+	// CustomprofileplayerinforesourcesColumns holds the columns for the "customprofileplayerinforesources" table.
+	CustomprofileplayerinforesourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "custom_profile_resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_type", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_val", Type: field.TypeString, Nullable: true},
+		{Name: "file_name", Type: field.TypeString, Nullable: true},
+		{Name: "group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofileplayerinforesourcesTable holds the schema information for the "customprofileplayerinforesources" table.
+	CustomprofileplayerinforesourcesTable = &schema.Table{
+		Name:       "customprofileplayerinforesources",
+		Columns:    CustomprofileplayerinforesourcesColumns,
+		PrimaryKey: []*schema.Column{CustomprofileplayerinforesourcesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofileplayerinforesource_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofileplayerinforesourcesColumns[2], CustomprofileplayerinforesourcesColumns[10]},
+			},
+		},
+	}
+	// CustomprofileshaperesourcesColumns holds the columns for the "customprofileshaperesources" table.
+	CustomprofileshaperesourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "custom_profile_resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_type", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_val", Type: field.TypeString, Nullable: true},
+		{Name: "file_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofileshaperesourcesTable holds the schema information for the "customprofileshaperesources" table.
+	CustomprofileshaperesourcesTable = &schema.Table{
+		Name:       "customprofileshaperesources",
+		Columns:    CustomprofileshaperesourcesColumns,
+		PrimaryKey: []*schema.Column{CustomprofileshaperesourcesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofileshaperesource_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofileshaperesourcesColumns[2], CustomprofileshaperesourcesColumns[9]},
+			},
+		},
+	}
+	// CustomprofilestorybackgroundresourcesColumns holds the columns for the "customprofilestorybackgroundresources" table.
+	CustomprofilestorybackgroundresourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "custom_profile_resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_type", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_val", Type: field.TypeString, Nullable: true},
+		{Name: "file_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofilestorybackgroundresourcesTable holds the schema information for the "customprofilestorybackgroundresources" table.
+	CustomprofilestorybackgroundresourcesTable = &schema.Table{
+		Name:       "customprofilestorybackgroundresources",
+		Columns:    CustomprofilestorybackgroundresourcesColumns,
+		PrimaryKey: []*schema.Column{CustomprofilestorybackgroundresourcesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofilestorybackgroundresource_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofilestorybackgroundresourcesColumns[2], CustomprofilestorybackgroundresourcesColumns[9]},
+			},
+		},
+	}
+	// CustomprofiletextcolorsColumns holds the columns for the "customprofiletextcolors" table.
+	CustomprofiletextcolorsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "color_code", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofiletextcolorsTable holds the schema information for the "customprofiletextcolors" table.
+	CustomprofiletextcolorsTable = &schema.Table{
+		Name:       "customprofiletextcolors",
+		Columns:    CustomprofiletextcolorsColumns,
+		PrimaryKey: []*schema.Column{CustomprofiletextcolorsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofiletextcolor_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofiletextcolorsColumns[1], CustomprofiletextcolorsColumns[4]},
+			},
+		},
+	}
+	// CustomprofiletextfontsColumns holds the columns for the "customprofiletextfonts" table.
+	CustomprofiletextfontsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "font_name", Type: field.TypeString, Nullable: true},
+		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofiletextfontsTable holds the schema information for the "customprofiletextfonts" table.
+	CustomprofiletextfontsTable = &schema.Table{
+		Name:       "customprofiletextfonts",
+		Columns:    CustomprofiletextfontsColumns,
+		PrimaryKey: []*schema.Column{CustomprofiletextfontsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofiletextfont_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofiletextfontsColumns[1], CustomprofiletextfontsColumns[5]},
+			},
+		},
+	}
+	// CustomprofileuserinterfaceiconresourcesColumns holds the columns for the "customprofileuserinterfaceiconresources" table.
+	CustomprofileuserinterfaceiconresourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "custom_profile_resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "pronunciation", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_type", Type: field.TypeString, Nullable: true},
+		{Name: "resource_load_val", Type: field.TypeString, Nullable: true},
+		{Name: "file_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustomprofileuserinterfaceiconresourcesTable holds the schema information for the "customprofileuserinterfaceiconresources" table.
+	CustomprofileuserinterfaceiconresourcesTable = &schema.Table{
+		Name:       "customprofileuserinterfaceiconresources",
+		Columns:    CustomprofileuserinterfaceiconresourcesColumns,
+		PrimaryKey: []*schema.Column{CustomprofileuserinterfaceiconresourcesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "customprofileuserinterfaceiconresource_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustomprofileuserinterfaceiconresourcesColumns[2], CustomprofileuserinterfaceiconresourcesColumns[9]},
+			},
+		},
+	}
 	// EventsColumns holds the columns for the "events" table.
 	EventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -647,6 +954,7 @@ var (
 		{Name: "event_ranking_reward_ranges", Type: field.TypeJSON, Nullable: true},
 		{Name: "event_point_assetbundle_name", Type: field.TypeString, Nullable: true},
 		{Name: "standby_screen_display_start_at", Type: field.TypeInt64, Nullable: true},
+		{Name: "event_break_time_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// EventsTable holds the schema information for the "events" table.
@@ -658,7 +966,7 @@ var (
 			{
 				Name:    "event_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{EventsColumns[1], EventsColumns[20]},
+				Columns: []*schema.Column{EventsColumns[1], EventsColumns[21]},
 			},
 		},
 	}
@@ -876,6 +1184,9 @@ var (
 		{Name: "gacha_bonus_item_receivable_reward_group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "gacha_freebie_group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "daily_spin_limit", Type: field.TypeInt64, Nullable: true},
+		{Name: "is_select_character", Type: field.TypeBool, Nullable: true},
+		{Name: "gacha_character_bonus_group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "rate_choice_gacha_wish_group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// GachasTable holds the schema information for the "gachas" table.
@@ -887,7 +1198,7 @@ var (
 			{
 				Name:    "gacha_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{GachasColumns[1], GachasColumns[26]},
+				Columns: []*schema.Column{GachasColumns[1], GachasColumns[29]},
 			},
 		},
 	}
@@ -1078,6 +1389,7 @@ var (
 		{Name: "music_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "start_at", Type: field.TypeInt64, Nullable: true},
 		{Name: "end_at", Type: field.TypeInt64, Nullable: true},
+		{Name: "collaboration_mode_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// LimitedtimemusicsTable holds the schema information for the "limitedtimemusics" table.
@@ -1089,7 +1401,7 @@ var (
 			{
 				Name:    "limitedtimemusic_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{LimitedtimemusicsColumns[1], LimitedtimemusicsColumns[5]},
+				Columns: []*schema.Column{LimitedtimemusicsColumns[1], LimitedtimemusicsColumns[6]},
 			},
 		},
 	}
@@ -1170,6 +1482,8 @@ var (
 		{Name: "is_full_length", Type: field.TypeBool, Nullable: true},
 		{Name: "music_collaboration_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "infos", Type: field.TypeJSON, Nullable: true},
+		{Name: "sec_for_music_score_maker", Type: field.TypeInt64, Nullable: true},
+		{Name: "is_available_for_music_score_maker", Type: field.TypeBool, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// MusicsTable holds the schema information for the "musics" table.
@@ -1181,7 +1495,7 @@ var (
 			{
 				Name:    "music_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{MusicsColumns[1], MusicsColumns[23]},
+				Columns: []*schema.Column{MusicsColumns[1], MusicsColumns[25]},
 			},
 		},
 	}
@@ -1203,6 +1517,29 @@ var (
 				Name:    "musicartist_game_id_server_region",
 				Unique:  true,
 				Columns: []*schema.Column{MusicartistsColumns[1], MusicartistsColumns[4]},
+			},
+		},
+	}
+	// MusiccategoriesColumns holds the columns for the "musiccategories" table.
+	MusiccategoriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "music_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "music_category_name", Type: field.TypeString, Nullable: true},
+		{Name: "music_asset_variant_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "published_at", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MusiccategoriesTable holds the schema information for the "musiccategories" table.
+	MusiccategoriesTable = &schema.Table{
+		Name:       "musiccategories",
+		Columns:    MusiccategoriesColumns,
+		PrimaryKey: []*schema.Column{MusiccategoriesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "musiccategorie_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MusiccategoriesColumns[1], MusiccategoriesColumns[6]},
 			},
 		},
 	}
@@ -1844,6 +2181,7 @@ var (
 		{Name: "aggregate_at", Type: field.TypeInt64, Nullable: true},
 		{Name: "background_image_assetbundle_file_name", Type: field.TypeString, Nullable: true},
 		{Name: "back_number_accent_color_code", Type: field.TypeString, Nullable: true},
+		{Name: "mysekai_housing_competition_review_rank_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// MysekaihousingcompetitionsTable holds the schema information for the "mysekaihousingcompetitions" table.
@@ -1855,7 +2193,7 @@ var (
 			{
 				Name:    "mysekaihousingcompetition_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{MysekaihousingcompetitionsColumns[1], MysekaihousingcompetitionsColumns[10]},
+				Columns: []*schema.Column{MysekaihousingcompetitionsColumns[1], MysekaihousingcompetitionsColumns[11]},
 			},
 		},
 	}
@@ -2136,6 +2474,41 @@ var (
 		Columns:    NgwordsColumns,
 		PrimaryKey: []*schema.Column{NgwordsColumns[0]},
 	}
+	// OmikujisColumns holds the columns for the "omikujis" table.
+	OmikujisColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "omikuji_group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "unit", Type: field.TypeString, Nullable: true},
+		{Name: "fortune_type", Type: field.TypeString, Nullable: true},
+		{Name: "summary", Type: field.TypeString, Nullable: true},
+		{Name: "title1", Type: field.TypeString, Nullable: true},
+		{Name: "description1", Type: field.TypeString, Nullable: true},
+		{Name: "title2", Type: field.TypeString, Nullable: true},
+		{Name: "description2", Type: field.TypeString, Nullable: true},
+		{Name: "title3", Type: field.TypeString, Nullable: true},
+		{Name: "description3", Type: field.TypeString, Nullable: true},
+		{Name: "unit_assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "fortune_assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "omikuji_cover_assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "unit_file_path", Type: field.TypeString, Nullable: true},
+		{Name: "fortune_file_path", Type: field.TypeString, Nullable: true},
+		{Name: "omikuji_cover_file_path", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// OmikujisTable holds the schema information for the "omikujis" table.
+	OmikujisTable = &schema.Table{
+		Name:       "omikujis",
+		Columns:    OmikujisColumns,
+		PrimaryKey: []*schema.Column{OmikujisColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "omikuji_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{OmikujisColumns[1], OmikujisColumns[18]},
+			},
+		},
+	}
 	// OutsidecharactersColumns holds the columns for the "outsidecharacters" table.
 	OutsidecharactersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -2165,6 +2538,7 @@ var (
 		{Name: "player_frame_group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "game_character_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "parts_count", Type: field.TypeInt64, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// PlayerframesTable holds the schema information for the "playerframes" table.
@@ -2176,7 +2550,7 @@ var (
 			{
 				Name:    "playerframe_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{PlayerframesColumns[1], PlayerframesColumns[6]},
+				Columns: []*schema.Column{PlayerframesColumns[1], PlayerframesColumns[7]},
 			},
 		},
 	}
@@ -2187,6 +2561,8 @@ var (
 		{Name: "seq", Type: field.TypeInt64, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "player_frame_type", Type: field.TypeString, Nullable: true},
+		{Name: "edit_count", Type: field.TypeInt64, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// PlayerframegroupsTable holds the schema information for the "playerframegroups" table.
@@ -2198,7 +2574,7 @@ var (
 			{
 				Name:    "playerframegroup_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{PlayerframegroupsColumns[1], PlayerframegroupsColumns[5]},
+				Columns: []*schema.Column{PlayerframegroupsColumns[1], PlayerframegroupsColumns[7]},
 			},
 		},
 	}
@@ -2376,6 +2752,29 @@ var (
 			},
 		},
 	}
+	// UnitstoryepisodegroupsColumns holds the columns for the "unitstoryepisodegroups" table.
+	UnitstoryepisodegroupsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "unit", Type: field.TypeString, Nullable: true},
+		{Name: "unit_episode_category", Type: field.TypeString, Nullable: true},
+		{Name: "outline", Type: field.TypeString, Nullable: true},
+		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// UnitstoryepisodegroupsTable holds the schema information for the "unitstoryepisodegroups" table.
+	UnitstoryepisodegroupsTable = &schema.Table{
+		Name:       "unitstoryepisodegroups",
+		Columns:    UnitstoryepisodegroupsColumns,
+		PrimaryKey: []*schema.Column{UnitstoryepisodegroupsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "unitstoryepisodegroup_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{UnitstoryepisodegroupsColumns[1], UnitstoryepisodegroupsColumns[6]},
+			},
+		},
+	}
 	// VirtuallivesColumns holds the columns for the "virtuallives" table.
 	VirtuallivesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -2495,6 +2894,9 @@ var (
 	WorldbloomsupportdeckbonusesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "card_rarity_type", Type: field.TypeString, Nullable: true},
+		{Name: "world_bloom_support_deck_character_bonuses", Type: field.TypeJSON, Nullable: true},
+		{Name: "world_bloom_support_deck_master_rank_bonuses", Type: field.TypeJSON, Nullable: true},
+		{Name: "world_bloom_support_deck_skill_level_bonuses", Type: field.TypeJSON, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// WorldbloomsupportdeckbonusesTable holds the schema information for the "worldbloomsupportdeckbonuses" table.
@@ -2506,7 +2908,7 @@ var (
 			{
 				Name:    "worldbloomsupportdeckbonuse_card_rarity_type_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{WorldbloomsupportdeckbonusesColumns[1], WorldbloomsupportdeckbonusesColumns[2]},
+				Columns: []*schema.Column{WorldbloomsupportdeckbonusesColumns[1], WorldbloomsupportdeckbonusesColumns[5]},
 			},
 		},
 	}
@@ -2559,6 +2961,18 @@ var (
 		CheerfulcarnivalteamsTable,
 		Costume3dsTable,
 		CustommusicscoretagsTable,
+		CustomprofilecharactericonresourcesTable,
+		CustomprofilecollectionresourcesTable,
+		CustomprofileetcresourcesTable,
+		CustomprofilegeneralbackgroundresourcesTable,
+		CustomprofilematerialresourcesTable,
+		CustomprofilememberstandingpictureresourcesTable,
+		CustomprofileplayerinforesourcesTable,
+		CustomprofileshaperesourcesTable,
+		CustomprofilestorybackgroundresourcesTable,
+		CustomprofiletextcolorsTable,
+		CustomprofiletextfontsTable,
+		CustomprofileuserinterfaceiconresourcesTable,
 		EventsTable,
 		EventcardsTable,
 		EventdeckbonusesTable,
@@ -2581,6 +2995,7 @@ var (
 		MaterialsTable,
 		MusicsTable,
 		MusicartistsTable,
+		MusiccategoriesTable,
 		MusicdifficultiesTable,
 		MusictagsTable,
 		MusicvocalsTable,
@@ -2620,6 +3035,7 @@ var (
 		MysekaisitelayoutsTable,
 		MysekaisitelevelsTable,
 		NgwordsTable,
+		OmikujisTable,
 		OutsidecharactersTable,
 		PlayerframesTable,
 		PlayerframegroupsTable,
@@ -2630,6 +3046,7 @@ var (
 		SkillsTable,
 		SkillpracticeticketsTable,
 		StampsTable,
+		UnitstoryepisodegroupsTable,
 		VirtuallivesTable,
 		WorldbloomsTable,
 		WorldbloomchapterrankingrewardrangesTable,
@@ -2712,6 +3129,42 @@ func init() {
 	CustommusicscoretagsTable.Annotation = &entsql.Annotation{
 		Table: "custommusicscoretags",
 	}
+	CustomprofilecharactericonresourcesTable.Annotation = &entsql.Annotation{
+		Table: "customprofilecharactericonresources",
+	}
+	CustomprofilecollectionresourcesTable.Annotation = &entsql.Annotation{
+		Table: "customprofilecollectionresources",
+	}
+	CustomprofileetcresourcesTable.Annotation = &entsql.Annotation{
+		Table: "customprofileetcresources",
+	}
+	CustomprofilegeneralbackgroundresourcesTable.Annotation = &entsql.Annotation{
+		Table: "customprofilegeneralbackgroundresources",
+	}
+	CustomprofilematerialresourcesTable.Annotation = &entsql.Annotation{
+		Table: "customprofilematerialresources",
+	}
+	CustomprofilememberstandingpictureresourcesTable.Annotation = &entsql.Annotation{
+		Table: "customprofilememberstandingpictureresources",
+	}
+	CustomprofileplayerinforesourcesTable.Annotation = &entsql.Annotation{
+		Table: "customprofileplayerinforesources",
+	}
+	CustomprofileshaperesourcesTable.Annotation = &entsql.Annotation{
+		Table: "customprofileshaperesources",
+	}
+	CustomprofilestorybackgroundresourcesTable.Annotation = &entsql.Annotation{
+		Table: "customprofilestorybackgroundresources",
+	}
+	CustomprofiletextcolorsTable.Annotation = &entsql.Annotation{
+		Table: "customprofiletextcolors",
+	}
+	CustomprofiletextfontsTable.Annotation = &entsql.Annotation{
+		Table: "customprofiletextfonts",
+	}
+	CustomprofileuserinterfaceiconresourcesTable.Annotation = &entsql.Annotation{
+		Table: "customprofileuserinterfaceiconresources",
+	}
 	EventsTable.Annotation = &entsql.Annotation{
 		Table: "events",
 	}
@@ -2777,6 +3230,9 @@ func init() {
 	}
 	MusicartistsTable.Annotation = &entsql.Annotation{
 		Table: "musicartists",
+	}
+	MusiccategoriesTable.Annotation = &entsql.Annotation{
+		Table: "musiccategories",
 	}
 	MusicdifficultiesTable.Annotation = &entsql.Annotation{
 		Table: "musicdifficulties",
@@ -2895,6 +3351,9 @@ func init() {
 	NgwordsTable.Annotation = &entsql.Annotation{
 		Table: "ngwords",
 	}
+	OmikujisTable.Annotation = &entsql.Annotation{
+		Table: "omikujis",
+	}
 	OutsidecharactersTable.Annotation = &entsql.Annotation{
 		Table: "outsidecharacters",
 	}
@@ -2924,6 +3383,9 @@ func init() {
 	}
 	StampsTable.Annotation = &entsql.Annotation{
 		Table: "stamps",
+	}
+	UnitstoryepisodegroupsTable.Annotation = &entsql.Annotation{
+		Table: "unitstoryepisodegroups",
 	}
 	VirtuallivesTable.Annotation = &entsql.Annotation{
 		Table: "virtuallives",

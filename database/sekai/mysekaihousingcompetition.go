@@ -34,6 +34,8 @@ type Mysekaihousingcompetition struct {
 	BackgroundImageAssetbundleFileName string `json:"background_image_assetbundle_file_name,omitempty"`
 	// BackNumberAccentColorCode holds the value of the "back_number_accent_color_code" field.
 	BackNumberAccentColorCode string `json:"back_number_accent_color_code,omitempty"`
+	// MysekaiHousingCompetitionReviewRankID holds the value of the "mysekai_housing_competition_review_rank_id" field.
+	MysekaiHousingCompetitionReviewRankID int64 `json:"mysekai_housing_competition_review_rank_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -44,7 +46,7 @@ func (*Mysekaihousingcompetition) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mysekaihousingcompetition.FieldID, mysekaihousingcompetition.FieldGameID, mysekaihousingcompetition.FieldSubmitStartAt, mysekaihousingcompetition.FieldReviewStartAt, mysekaihousingcompetition.FieldSubmitEndAt, mysekaihousingcompetition.FieldAggregateAt:
+		case mysekaihousingcompetition.FieldID, mysekaihousingcompetition.FieldGameID, mysekaihousingcompetition.FieldSubmitStartAt, mysekaihousingcompetition.FieldReviewStartAt, mysekaihousingcompetition.FieldSubmitEndAt, mysekaihousingcompetition.FieldAggregateAt, mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID:
 			values[i] = new(sql.NullInt64)
 		case mysekaihousingcompetition.FieldName, mysekaihousingcompetition.FieldDescription, mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName, mysekaihousingcompetition.FieldBackNumberAccentColorCode, mysekaihousingcompetition.FieldServerRegion:
 			values[i] = new(sql.NullString)
@@ -123,6 +125,12 @@ func (_m *Mysekaihousingcompetition) assignValues(columns []string, values []any
 			} else if value.Valid {
 				_m.BackNumberAccentColorCode = value.String
 			}
+		case mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field mysekai_housing_competition_review_rank_id", values[i])
+			} else if value.Valid {
+				_m.MysekaiHousingCompetitionReviewRankID = value.Int64
+			}
 		case mysekaihousingcompetition.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field server_region", values[i])
@@ -191,6 +199,9 @@ func (_m *Mysekaihousingcompetition) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("back_number_accent_color_code=")
 	builder.WriteString(_m.BackNumberAccentColorCode)
+	builder.WriteString(", ")
+	builder.WriteString("mysekai_housing_competition_review_rank_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiHousingCompetitionReviewRankID))
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

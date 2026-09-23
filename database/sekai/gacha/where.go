@@ -148,6 +148,21 @@ func DailySpinLimit(v int64) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldDailySpinLimit, v))
 }
 
+// IsSelectCharacter applies equality check predicate on the "is_select_character" field. It's identical to IsSelectCharacterEQ.
+func IsSelectCharacter(v bool) predicate.Gacha {
+	return predicate.Gacha(sql.FieldEQ(FieldIsSelectCharacter, v))
+}
+
+// GachaCharacterBonusGroupID applies equality check predicate on the "gacha_character_bonus_group_id" field. It's identical to GachaCharacterBonusGroupIDEQ.
+func GachaCharacterBonusGroupID(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldEQ(FieldGachaCharacterBonusGroupID, v))
+}
+
+// RateChoiceGachaWishGroupID applies equality check predicate on the "rate_choice_gacha_wish_group_id" field. It's identical to RateChoiceGachaWishGroupIDEQ.
+func RateChoiceGachaWishGroupID(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldEQ(FieldRateChoiceGachaWishGroupID, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Gacha {
 	return predicate.Gacha(sql.FieldEQ(FieldServerRegion, v))
@@ -1206,6 +1221,126 @@ func DailySpinLimitIsNil() predicate.Gacha {
 // DailySpinLimitNotNil applies the NotNil predicate on the "daily_spin_limit" field.
 func DailySpinLimitNotNil() predicate.Gacha {
 	return predicate.Gacha(sql.FieldNotNull(FieldDailySpinLimit))
+}
+
+// IsSelectCharacterEQ applies the EQ predicate on the "is_select_character" field.
+func IsSelectCharacterEQ(v bool) predicate.Gacha {
+	return predicate.Gacha(sql.FieldEQ(FieldIsSelectCharacter, v))
+}
+
+// IsSelectCharacterNEQ applies the NEQ predicate on the "is_select_character" field.
+func IsSelectCharacterNEQ(v bool) predicate.Gacha {
+	return predicate.Gacha(sql.FieldNEQ(FieldIsSelectCharacter, v))
+}
+
+// IsSelectCharacterIsNil applies the IsNil predicate on the "is_select_character" field.
+func IsSelectCharacterIsNil() predicate.Gacha {
+	return predicate.Gacha(sql.FieldIsNull(FieldIsSelectCharacter))
+}
+
+// IsSelectCharacterNotNil applies the NotNil predicate on the "is_select_character" field.
+func IsSelectCharacterNotNil() predicate.Gacha {
+	return predicate.Gacha(sql.FieldNotNull(FieldIsSelectCharacter))
+}
+
+// GachaCharacterBonusGroupIDEQ applies the EQ predicate on the "gacha_character_bonus_group_id" field.
+func GachaCharacterBonusGroupIDEQ(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldEQ(FieldGachaCharacterBonusGroupID, v))
+}
+
+// GachaCharacterBonusGroupIDNEQ applies the NEQ predicate on the "gacha_character_bonus_group_id" field.
+func GachaCharacterBonusGroupIDNEQ(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldNEQ(FieldGachaCharacterBonusGroupID, v))
+}
+
+// GachaCharacterBonusGroupIDIn applies the In predicate on the "gacha_character_bonus_group_id" field.
+func GachaCharacterBonusGroupIDIn(vs ...int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldIn(FieldGachaCharacterBonusGroupID, vs...))
+}
+
+// GachaCharacterBonusGroupIDNotIn applies the NotIn predicate on the "gacha_character_bonus_group_id" field.
+func GachaCharacterBonusGroupIDNotIn(vs ...int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldNotIn(FieldGachaCharacterBonusGroupID, vs...))
+}
+
+// GachaCharacterBonusGroupIDGT applies the GT predicate on the "gacha_character_bonus_group_id" field.
+func GachaCharacterBonusGroupIDGT(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldGT(FieldGachaCharacterBonusGroupID, v))
+}
+
+// GachaCharacterBonusGroupIDGTE applies the GTE predicate on the "gacha_character_bonus_group_id" field.
+func GachaCharacterBonusGroupIDGTE(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldGTE(FieldGachaCharacterBonusGroupID, v))
+}
+
+// GachaCharacterBonusGroupIDLT applies the LT predicate on the "gacha_character_bonus_group_id" field.
+func GachaCharacterBonusGroupIDLT(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldLT(FieldGachaCharacterBonusGroupID, v))
+}
+
+// GachaCharacterBonusGroupIDLTE applies the LTE predicate on the "gacha_character_bonus_group_id" field.
+func GachaCharacterBonusGroupIDLTE(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldLTE(FieldGachaCharacterBonusGroupID, v))
+}
+
+// GachaCharacterBonusGroupIDIsNil applies the IsNil predicate on the "gacha_character_bonus_group_id" field.
+func GachaCharacterBonusGroupIDIsNil() predicate.Gacha {
+	return predicate.Gacha(sql.FieldIsNull(FieldGachaCharacterBonusGroupID))
+}
+
+// GachaCharacterBonusGroupIDNotNil applies the NotNil predicate on the "gacha_character_bonus_group_id" field.
+func GachaCharacterBonusGroupIDNotNil() predicate.Gacha {
+	return predicate.Gacha(sql.FieldNotNull(FieldGachaCharacterBonusGroupID))
+}
+
+// RateChoiceGachaWishGroupIDEQ applies the EQ predicate on the "rate_choice_gacha_wish_group_id" field.
+func RateChoiceGachaWishGroupIDEQ(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldEQ(FieldRateChoiceGachaWishGroupID, v))
+}
+
+// RateChoiceGachaWishGroupIDNEQ applies the NEQ predicate on the "rate_choice_gacha_wish_group_id" field.
+func RateChoiceGachaWishGroupIDNEQ(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldNEQ(FieldRateChoiceGachaWishGroupID, v))
+}
+
+// RateChoiceGachaWishGroupIDIn applies the In predicate on the "rate_choice_gacha_wish_group_id" field.
+func RateChoiceGachaWishGroupIDIn(vs ...int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldIn(FieldRateChoiceGachaWishGroupID, vs...))
+}
+
+// RateChoiceGachaWishGroupIDNotIn applies the NotIn predicate on the "rate_choice_gacha_wish_group_id" field.
+func RateChoiceGachaWishGroupIDNotIn(vs ...int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldNotIn(FieldRateChoiceGachaWishGroupID, vs...))
+}
+
+// RateChoiceGachaWishGroupIDGT applies the GT predicate on the "rate_choice_gacha_wish_group_id" field.
+func RateChoiceGachaWishGroupIDGT(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldGT(FieldRateChoiceGachaWishGroupID, v))
+}
+
+// RateChoiceGachaWishGroupIDGTE applies the GTE predicate on the "rate_choice_gacha_wish_group_id" field.
+func RateChoiceGachaWishGroupIDGTE(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldGTE(FieldRateChoiceGachaWishGroupID, v))
+}
+
+// RateChoiceGachaWishGroupIDLT applies the LT predicate on the "rate_choice_gacha_wish_group_id" field.
+func RateChoiceGachaWishGroupIDLT(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldLT(FieldRateChoiceGachaWishGroupID, v))
+}
+
+// RateChoiceGachaWishGroupIDLTE applies the LTE predicate on the "rate_choice_gacha_wish_group_id" field.
+func RateChoiceGachaWishGroupIDLTE(v int64) predicate.Gacha {
+	return predicate.Gacha(sql.FieldLTE(FieldRateChoiceGachaWishGroupID, v))
+}
+
+// RateChoiceGachaWishGroupIDIsNil applies the IsNil predicate on the "rate_choice_gacha_wish_group_id" field.
+func RateChoiceGachaWishGroupIDIsNil() predicate.Gacha {
+	return predicate.Gacha(sql.FieldIsNull(FieldRateChoiceGachaWishGroupID))
+}
+
+// RateChoiceGachaWishGroupIDNotNil applies the NotNil predicate on the "rate_choice_gacha_wish_group_id" field.
+func RateChoiceGachaWishGroupIDNotNil() predicate.Gacha {
+	return predicate.Gacha(sql.FieldNotNull(FieldRateChoiceGachaWishGroupID))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

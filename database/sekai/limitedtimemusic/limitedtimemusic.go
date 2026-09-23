@@ -19,6 +19,8 @@ const (
 	FieldStartAt = "start_at"
 	// FieldEndAt holds the string denoting the end_at field in the database.
 	FieldEndAt = "end_at"
+	// FieldCollaborationModeID holds the string denoting the collaboration_mode_id field in the database.
+	FieldCollaborationModeID = "collaboration_mode_id"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the limitedtimemusic in the database.
@@ -32,6 +34,7 @@ var Columns = []string{
 	FieldMusicID,
 	FieldStartAt,
 	FieldEndAt,
+	FieldCollaborationModeID,
 	FieldServerRegion,
 }
 
@@ -71,6 +74,11 @@ func ByStartAt(opts ...sql.OrderTermOption) OrderOption {
 // ByEndAt orders the results by the end_at field.
 func ByEndAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEndAt, opts...).ToFunc()
+}
+
+// ByCollaborationModeID orders the results by the collaboration_mode_id field.
+func ByCollaborationModeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCollaborationModeID, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

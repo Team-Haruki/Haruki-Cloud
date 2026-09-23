@@ -312,6 +312,34 @@ func (_c *MusicCreate) SetInfos(v json.RawMessage) *MusicCreate {
 	return _c
 }
 
+// SetSecForMusicScoreMaker sets the "sec_for_music_score_maker" field.
+func (_c *MusicCreate) SetSecForMusicScoreMaker(v int64) *MusicCreate {
+	_c.mutation.SetSecForMusicScoreMaker(v)
+	return _c
+}
+
+// SetNillableSecForMusicScoreMaker sets the "sec_for_music_score_maker" field if the given value is not nil.
+func (_c *MusicCreate) SetNillableSecForMusicScoreMaker(v *int64) *MusicCreate {
+	if v != nil {
+		_c.SetSecForMusicScoreMaker(*v)
+	}
+	return _c
+}
+
+// SetIsAvailableForMusicScoreMaker sets the "is_available_for_music_score_maker" field.
+func (_c *MusicCreate) SetIsAvailableForMusicScoreMaker(v bool) *MusicCreate {
+	_c.mutation.SetIsAvailableForMusicScoreMaker(v)
+	return _c
+}
+
+// SetNillableIsAvailableForMusicScoreMaker sets the "is_available_for_music_score_maker" field if the given value is not nil.
+func (_c *MusicCreate) SetNillableIsAvailableForMusicScoreMaker(v *bool) *MusicCreate {
+	if v != nil {
+		_c.SetIsAvailableForMusicScoreMaker(*v)
+	}
+	return _c
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_c *MusicCreate) SetServerRegion(v string) *MusicCreate {
 	_c.mutation.SetServerRegion(v)
@@ -468,6 +496,14 @@ func (_c *MusicCreate) createSpec() (*Music, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Infos(); ok {
 		_spec.SetField(music.FieldInfos, field.TypeJSON, value)
 		_node.Infos = value
+	}
+	if value, ok := _c.mutation.SecForMusicScoreMaker(); ok {
+		_spec.SetField(music.FieldSecForMusicScoreMaker, field.TypeInt64, value)
+		_node.SecForMusicScoreMaker = value
+	}
+	if value, ok := _c.mutation.IsAvailableForMusicScoreMaker(); ok {
+		_spec.SetField(music.FieldIsAvailableForMusicScoreMaker, field.TypeBool, value)
+		_node.IsAvailableForMusicScoreMaker = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(music.FieldServerRegion, field.TypeString, value)

@@ -145,6 +145,20 @@ func (_c *MysekaihousingcompetitionCreate) SetNillableBackNumberAccentColorCode(
 	return _c
 }
 
+// SetMysekaiHousingCompetitionReviewRankID sets the "mysekai_housing_competition_review_rank_id" field.
+func (_c *MysekaihousingcompetitionCreate) SetMysekaiHousingCompetitionReviewRankID(v int64) *MysekaihousingcompetitionCreate {
+	_c.mutation.SetMysekaiHousingCompetitionReviewRankID(v)
+	return _c
+}
+
+// SetNillableMysekaiHousingCompetitionReviewRankID sets the "mysekai_housing_competition_review_rank_id" field if the given value is not nil.
+func (_c *MysekaihousingcompetitionCreate) SetNillableMysekaiHousingCompetitionReviewRankID(v *int64) *MysekaihousingcompetitionCreate {
+	if v != nil {
+		_c.SetMysekaiHousingCompetitionReviewRankID(*v)
+	}
+	return _c
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_c *MysekaihousingcompetitionCreate) SetServerRegion(v string) *MysekaihousingcompetitionCreate {
 	_c.mutation.SetServerRegion(v)
@@ -249,6 +263,10 @@ func (_c *MysekaihousingcompetitionCreate) createSpec() (*Mysekaihousingcompetit
 	if value, ok := _c.mutation.BackNumberAccentColorCode(); ok {
 		_spec.SetField(mysekaihousingcompetition.FieldBackNumberAccentColorCode, field.TypeString, value)
 		_node.BackNumberAccentColorCode = value
+	}
+	if value, ok := _c.mutation.MysekaiHousingCompetitionReviewRankID(); ok {
+		_spec.SetField(mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID, field.TypeInt64, value)
+		_node.MysekaiHousingCompetitionReviewRankID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaihousingcompetition.FieldServerRegion, field.TypeString, value)

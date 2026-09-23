@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/database/sekai/areaitemlevel"
 	"haruki-cloud/database/sekai/bond"
 	"haruki-cloud/database/sekai/bondshonor"
+	"haruki-cloud/database/sekai/bondshonorword"
 	"haruki-cloud/database/sekai/boostitem"
 	"haruki-cloud/database/sekai/card"
 	"haruki-cloud/database/sekai/cardcostume3d"
@@ -21,6 +22,9 @@ import (
 	"haruki-cloud/database/sekai/challengelivehighscorereward"
 	"haruki-cloud/database/sekai/character2d"
 	"haruki-cloud/database/sekai/characterarchivemysekaicharactertalkgroup"
+	"haruki-cloud/database/sekai/charactermissionv2"
+	"haruki-cloud/database/sekai/charactermissionv2areaitem"
+	"haruki-cloud/database/sekai/charactermissionv2exjson"
 	"haruki-cloud/database/sekai/charactermissionv2parametergroup"
 	"haruki-cloud/database/sekai/characterrank"
 	"haruki-cloud/database/sekai/cheerfulcarnivalteam"
@@ -45,6 +49,7 @@ import (
 	"haruki-cloud/database/sekai/level"
 	"haruki-cloud/database/sekai/limitedtimemusic"
 	"haruki-cloud/database/sekai/masterlesson"
+	"haruki-cloud/database/sekai/material"
 	"haruki-cloud/database/sekai/music"
 	"haruki-cloud/database/sekai/musicartist"
 	"haruki-cloud/database/sekai/musicdifficultie"
@@ -89,12 +94,16 @@ import (
 	"haruki-cloud/database/sekai/outsidecharacter"
 	"haruki-cloud/database/sekai/playerframe"
 	"haruki-cloud/database/sekai/playerframegroup"
+	"haruki-cloud/database/sekai/practiceticket"
+	"haruki-cloud/database/sekai/resourceboxdetail"
 	"haruki-cloud/database/sekai/resourceboxe"
 	"haruki-cloud/database/sekai/shopitem"
 	"haruki-cloud/database/sekai/skill"
+	"haruki-cloud/database/sekai/skillpracticeticket"
 	"haruki-cloud/database/sekai/stamp"
 	"haruki-cloud/database/sekai/virtuallive"
 	"haruki-cloud/database/sekai/worldbloom"
+	"haruki-cloud/database/sekai/worldbloomchapterrankingrewardrange"
 	"haruki-cloud/database/sekai/worldbloomdifferentattributebonuse"
 	"haruki-cloud/database/sekai/worldbloomsupportdeckbonuse"
 	"haruki-cloud/database/sekai/worldbloomsupportdeckuniteventlimitedbonuse"
@@ -169,6 +178,7 @@ func checkColumn(t, c string) error {
 			areaitemlevel.Table:                areaitemlevel.ValidColumn,
 			bond.Table:                         bond.ValidColumn,
 			bondshonor.Table:                   bondshonor.ValidColumn,
+			bondshonorword.Table:               bondshonorword.ValidColumn,
 			boostitem.Table:                    boostitem.ValidColumn,
 			card.Table:                         card.ValidColumn,
 			cardcostume3d.Table:                cardcostume3d.ValidColumn,
@@ -179,6 +189,9 @@ func checkColumn(t, c string) error {
 			challengelivehighscorereward.Table: challengelivehighscorereward.ValidColumn,
 			character2d.Table:                  character2d.ValidColumn,
 			characterarchivemysekaicharactertalkgroup.Table: characterarchivemysekaicharactertalkgroup.ValidColumn,
+			charactermissionv2.Table:                        charactermissionv2.ValidColumn,
+			charactermissionv2areaitem.Table:                charactermissionv2areaitem.ValidColumn,
+			charactermissionv2exjson.Table:                  charactermissionv2exjson.ValidColumn,
 			charactermissionv2parametergroup.Table:          charactermissionv2parametergroup.ValidColumn,
 			characterrank.Table:                             characterrank.ValidColumn,
 			cheerfulcarnivalteam.Table:                      cheerfulcarnivalteam.ValidColumn,
@@ -203,6 +216,7 @@ func checkColumn(t, c string) error {
 			level.Table:                                     level.ValidColumn,
 			limitedtimemusic.Table:                          limitedtimemusic.ValidColumn,
 			masterlesson.Table:                              masterlesson.ValidColumn,
+			material.Table:                                  material.ValidColumn,
 			music.Table:                                     music.ValidColumn,
 			musicartist.Table:                               musicartist.ValidColumn,
 			musicdifficultie.Table:                          musicdifficultie.ValidColumn,
@@ -247,12 +261,16 @@ func checkColumn(t, c string) error {
 			outsidecharacter.Table:                                     outsidecharacter.ValidColumn,
 			playerframe.Table:                                          playerframe.ValidColumn,
 			playerframegroup.Table:                                     playerframegroup.ValidColumn,
+			practiceticket.Table:                                       practiceticket.ValidColumn,
+			resourceboxdetail.Table:                                    resourceboxdetail.ValidColumn,
 			resourceboxe.Table:                                         resourceboxe.ValidColumn,
 			shopitem.Table:                                             shopitem.ValidColumn,
 			skill.Table:                                                skill.ValidColumn,
+			skillpracticeticket.Table:                                  skillpracticeticket.ValidColumn,
 			stamp.Table:                                                stamp.ValidColumn,
 			virtuallive.Table:                                          virtuallive.ValidColumn,
 			worldbloom.Table:                                           worldbloom.ValidColumn,
+			worldbloomchapterrankingrewardrange.Table:                  worldbloomchapterrankingrewardrange.ValidColumn,
 			worldbloomdifferentattributebonuse.Table:                   worldbloomdifferentattributebonuse.ValidColumn,
 			worldbloomsupportdeckbonuse.Table:                          worldbloomsupportdeckbonuse.ValidColumn,
 			worldbloomsupportdeckuniteventlimitedbonuse.Table:          worldbloomsupportdeckuniteventlimitedbonuse.ValidColumn,

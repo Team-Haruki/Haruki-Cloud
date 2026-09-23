@@ -147,6 +147,30 @@ var (
 			},
 		},
 	}
+	// BondshonorwordsColumns holds the columns for the "bondshonorwords" table.
+	BondshonorwordsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "bonds_group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// BondshonorwordsTable holds the schema information for the "bondshonorwords" table.
+	BondshonorwordsTable = &schema.Table{
+		Name:       "bondshonorwords",
+		Columns:    BondshonorwordsColumns,
+		PrimaryKey: []*schema.Column{BondshonorwordsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "bondshonorword_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{BondshonorwordsColumns[1], BondshonorwordsColumns[7]},
+			},
+		},
+	}
 	// BoostitemsColumns holds the columns for the "boostitems" table.
 	BoostitemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -400,6 +424,76 @@ var (
 				Name:    "characterarchivemysekaicharactertalkgroup_game_id_server_region",
 				Unique:  true,
 				Columns: []*schema.Column{CharacterarchivemysekaicharactertalkgroupsColumns[1], CharacterarchivemysekaicharactertalkgroupsColumns[4]},
+			},
+		},
+	}
+	// Charactermissionv2sColumns holds the columns for the "charactermissionv2s" table.
+	Charactermissionv2sColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "character_mission_type", Type: field.TypeString, Nullable: true},
+		{Name: "character_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "parameter_group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "sentence", Type: field.TypeString, Nullable: true},
+		{Name: "progress_sentence", Type: field.TypeString, Nullable: true},
+		{Name: "is_achievement_mission", Type: field.TypeBool, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// Charactermissionv2sTable holds the schema information for the "charactermissionv2s" table.
+	Charactermissionv2sTable = &schema.Table{
+		Name:       "charactermissionv2s",
+		Columns:    Charactermissionv2sColumns,
+		PrimaryKey: []*schema.Column{Charactermissionv2sColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "charactermissionv2_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{Charactermissionv2sColumns[1], Charactermissionv2sColumns[8]},
+			},
+		},
+	}
+	// Charactermissionv2areaitemsColumns holds the columns for the "charactermissionv2areaitems" table.
+	Charactermissionv2areaitemsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "character_mission_type", Type: field.TypeString, Nullable: true},
+		{Name: "area_item_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "character_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "unit", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// Charactermissionv2areaitemsTable holds the schema information for the "charactermissionv2areaitems" table.
+	Charactermissionv2areaitemsTable = &schema.Table{
+		Name:       "charactermissionv2areaitems",
+		Columns:    Charactermissionv2areaitemsColumns,
+		PrimaryKey: []*schema.Column{Charactermissionv2areaitemsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "charactermissionv2areaitem_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{Charactermissionv2areaitemsColumns[1], Charactermissionv2areaitemsColumns[6]},
+			},
+		},
+	}
+	// Charactermissionv2exjsonsColumns holds the columns for the "charactermissionv2exjsons" table.
+	Charactermissionv2exjsonsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "character_mission_ex_type", Type: field.TypeString, Nullable: true},
+		{Name: "character_mission_type", Type: field.TypeString, Nullable: true},
+		{Name: "resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// Charactermissionv2exjsonsTable holds the schema information for the "charactermissionv2exjsons" table.
+	Charactermissionv2exjsonsTable = &schema.Table{
+		Name:       "charactermissionv2exjsons",
+		Columns:    Charactermissionv2exjsonsColumns,
+		PrimaryKey: []*schema.Column{Charactermissionv2exjsonsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "charactermissionv2exjson_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{Charactermissionv2exjsonsColumns[1], Charactermissionv2exjsonsColumns[5]},
 			},
 		},
 	}
@@ -1022,6 +1116,32 @@ var (
 				Name:    "masterlesson_card_rarity_type_master_rank_server_region",
 				Unique:  true,
 				Columns: []*schema.Column{MasterlessonsColumns[1], MasterlessonsColumns[2], MasterlessonsColumns[9]},
+			},
+		},
+	}
+	// MaterialsColumns holds the columns for the "materials" table.
+	MaterialsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "flavor_text", Type: field.TypeString, Nullable: true},
+		{Name: "can_use", Type: field.TypeBool, Nullable: true},
+		{Name: "material_type", Type: field.TypeString, Nullable: true},
+		{Name: "flavor_text2", Type: field.TypeString, Nullable: true},
+		{Name: "change_flavor_text_at", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MaterialsTable holds the schema information for the "materials" table.
+	MaterialsTable = &schema.Table{
+		Name:       "materials",
+		Columns:    MaterialsColumns,
+		PrimaryKey: []*schema.Column{MaterialsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "material_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MaterialsColumns[1], MaterialsColumns[9]},
 			},
 		},
 	}
@@ -2082,6 +2202,53 @@ var (
 			},
 		},
 	}
+	// PracticeticketsColumns holds the columns for the "practicetickets" table.
+	PracticeticketsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "exp", Type: field.TypeInt64, Nullable: true},
+		{Name: "flavor_text", Type: field.TypeString, Nullable: true},
+		{Name: "character_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// PracticeticketsTable holds the schema information for the "practicetickets" table.
+	PracticeticketsTable = &schema.Table{
+		Name:       "practicetickets",
+		Columns:    PracticeticketsColumns,
+		PrimaryKey: []*schema.Column{PracticeticketsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "practiceticket_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{PracticeticketsColumns[1], PracticeticketsColumns[6]},
+			},
+		},
+	}
+	// ResourceboxdetailsColumns holds the columns for the "resourceboxdetails" table.
+	ResourceboxdetailsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "resource_box_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "resource_quantity", Type: field.TypeInt64, Nullable: true},
+		{Name: "resource_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "resource_box_purpose", Type: field.TypeString, Nullable: true},
+		{Name: "resource_level", Type: field.TypeInt64, Nullable: true},
+		{Name: "resource_type", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// ResourceboxdetailsTable holds the schema information for the "resourceboxdetails" table.
+	ResourceboxdetailsTable = &schema.Table{
+		Name:       "resourceboxdetails",
+		Columns:    ResourceboxdetailsColumns,
+		PrimaryKey: []*schema.Column{ResourceboxdetailsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "resourceboxdetail_server_region_purpose_box_id",
+				Unique:  false,
+				Columns: []*schema.Column{ResourceboxdetailsColumns[7], ResourceboxdetailsColumns[4], ResourceboxdetailsColumns[1], ResourceboxdetailsColumns[0]},
+			},
+		},
+	}
 	// ResourceboxesColumns holds the columns for the "resourceboxes" table.
 	ResourceboxesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -2153,6 +2320,29 @@ var (
 				Name:    "skill_game_id_server_region",
 				Unique:  true,
 				Columns: []*schema.Column{SkillsColumns[1], SkillsColumns[7]},
+			},
+		},
+	}
+	// SkillpracticeticketsColumns holds the columns for the "skillpracticetickets" table.
+	SkillpracticeticketsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "exp", Type: field.TypeInt64, Nullable: true},
+		{Name: "flavor_text", Type: field.TypeString, Nullable: true},
+		{Name: "character_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// SkillpracticeticketsTable holds the schema information for the "skillpracticetickets" table.
+	SkillpracticeticketsTable = &schema.Table{
+		Name:       "skillpracticetickets",
+		Columns:    SkillpracticeticketsColumns,
+		PrimaryKey: []*schema.Column{SkillpracticeticketsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "skillpracticeticket_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{SkillpracticeticketsColumns[1], SkillpracticeticketsColumns[6]},
 			},
 		},
 	}
@@ -2256,6 +2446,31 @@ var (
 			},
 		},
 	}
+	// WorldbloomchapterrankingrewardrangesColumns holds the columns for the "worldbloomchapterrankingrewardranges" table.
+	WorldbloomchapterrankingrewardrangesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "event_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "game_character_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "from_rank", Type: field.TypeInt64, Nullable: true},
+		{Name: "to_rank", Type: field.TypeInt64, Nullable: true},
+		{Name: "is_to_rank_border", Type: field.TypeBool, Nullable: true},
+		{Name: "resource_box_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// WorldbloomchapterrankingrewardrangesTable holds the schema information for the "worldbloomchapterrankingrewardranges" table.
+	WorldbloomchapterrankingrewardrangesTable = &schema.Table{
+		Name:       "worldbloomchapterrankingrewardranges",
+		Columns:    WorldbloomchapterrankingrewardrangesColumns,
+		PrimaryKey: []*schema.Column{WorldbloomchapterrankingrewardrangesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "worldbloomchapterrankingrewardrange_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{WorldbloomchapterrankingrewardrangesColumns[1], WorldbloomchapterrankingrewardrangesColumns[8]},
+			},
+		},
+	}
 	// WorldbloomdifferentattributebonusesColumns holds the columns for the "worldbloomdifferentattributebonuses" table.
 	WorldbloomdifferentattributebonusesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -2325,6 +2540,7 @@ var (
 		AreaitemlevelsTable,
 		BondsTable,
 		BondshonorsTable,
+		BondshonorwordsTable,
 		BoostitemsTable,
 		CardsTable,
 		Cardcostume3dsTable,
@@ -2335,6 +2551,9 @@ var (
 		ChallengelivehighscorerewardsTable,
 		Character2dsTable,
 		CharacterarchivemysekaicharactertalkgroupsTable,
+		Charactermissionv2sTable,
+		Charactermissionv2areaitemsTable,
+		Charactermissionv2exjsonsTable,
 		Charactermissionv2parametergroupsTable,
 		CharacterranksTable,
 		CheerfulcarnivalteamsTable,
@@ -2359,6 +2578,7 @@ var (
 		LevelsTable,
 		LimitedtimemusicsTable,
 		MasterlessonsTable,
+		MaterialsTable,
 		MusicsTable,
 		MusicartistsTable,
 		MusicdifficultiesTable,
@@ -2403,12 +2623,16 @@ var (
 		OutsidecharactersTable,
 		PlayerframesTable,
 		PlayerframegroupsTable,
+		PracticeticketsTable,
+		ResourceboxdetailsTable,
 		ResourceboxesTable,
 		ShopitemsTable,
 		SkillsTable,
+		SkillpracticeticketsTable,
 		StampsTable,
 		VirtuallivesTable,
 		WorldbloomsTable,
+		WorldbloomchapterrankingrewardrangesTable,
 		WorldbloomdifferentattributebonusesTable,
 		WorldbloomsupportdeckbonusesTable,
 		WorldbloomsupportdeckuniteventlimitedbonusesTable,
@@ -2430,6 +2654,9 @@ func init() {
 	}
 	BondshonorsTable.Annotation = &entsql.Annotation{
 		Table: "bondshonors",
+	}
+	BondshonorwordsTable.Annotation = &entsql.Annotation{
+		Table: "bondshonorwords",
 	}
 	BoostitemsTable.Annotation = &entsql.Annotation{
 		Table: "boostitems",
@@ -2460,6 +2687,15 @@ func init() {
 	}
 	CharacterarchivemysekaicharactertalkgroupsTable.Annotation = &entsql.Annotation{
 		Table: "characterarchivemysekaicharactertalkgroups",
+	}
+	Charactermissionv2sTable.Annotation = &entsql.Annotation{
+		Table: "charactermissionv2s",
+	}
+	Charactermissionv2areaitemsTable.Annotation = &entsql.Annotation{
+		Table: "charactermissionv2areaitems",
+	}
+	Charactermissionv2exjsonsTable.Annotation = &entsql.Annotation{
+		Table: "charactermissionv2exjsons",
 	}
 	Charactermissionv2parametergroupsTable.Annotation = &entsql.Annotation{
 		Table: "charactermissionv2parametergroups",
@@ -2532,6 +2768,9 @@ func init() {
 	}
 	MasterlessonsTable.Annotation = &entsql.Annotation{
 		Table: "masterlessons",
+	}
+	MaterialsTable.Annotation = &entsql.Annotation{
+		Table: "materials",
 	}
 	MusicsTable.Annotation = &entsql.Annotation{
 		Table: "musics",
@@ -2665,6 +2904,12 @@ func init() {
 	PlayerframegroupsTable.Annotation = &entsql.Annotation{
 		Table: "playerframegroups",
 	}
+	PracticeticketsTable.Annotation = &entsql.Annotation{
+		Table: "practicetickets",
+	}
+	ResourceboxdetailsTable.Annotation = &entsql.Annotation{
+		Table: "resourceboxdetails",
+	}
 	ResourceboxesTable.Annotation = &entsql.Annotation{
 		Table: "resourceboxes",
 	}
@@ -2674,6 +2919,9 @@ func init() {
 	SkillsTable.Annotation = &entsql.Annotation{
 		Table: "skills",
 	}
+	SkillpracticeticketsTable.Annotation = &entsql.Annotation{
+		Table: "skillpracticetickets",
+	}
 	StampsTable.Annotation = &entsql.Annotation{
 		Table: "stamps",
 	}
@@ -2682,6 +2930,9 @@ func init() {
 	}
 	WorldbloomsTable.Annotation = &entsql.Annotation{
 		Table: "worldblooms",
+	}
+	WorldbloomchapterrankingrewardrangesTable.Annotation = &entsql.Annotation{
+		Table: "worldbloomchapterrankingrewardranges",
 	}
 	WorldbloomdifferentattributebonusesTable.Annotation = &entsql.Annotation{
 		Table: "worldbloomdifferentattributebonuses",

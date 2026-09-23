@@ -16,6 +16,7 @@ import (
 	"haruki-cloud/database/sekai/areaitemlevel"
 	"haruki-cloud/database/sekai/bond"
 	"haruki-cloud/database/sekai/bondshonor"
+	"haruki-cloud/database/sekai/bondshonorword"
 	"haruki-cloud/database/sekai/boostitem"
 	"haruki-cloud/database/sekai/card"
 	"haruki-cloud/database/sekai/cardcostume3d"
@@ -26,6 +27,9 @@ import (
 	"haruki-cloud/database/sekai/challengelivehighscorereward"
 	"haruki-cloud/database/sekai/character2d"
 	"haruki-cloud/database/sekai/characterarchivemysekaicharactertalkgroup"
+	"haruki-cloud/database/sekai/charactermissionv2"
+	"haruki-cloud/database/sekai/charactermissionv2areaitem"
+	"haruki-cloud/database/sekai/charactermissionv2exjson"
 	"haruki-cloud/database/sekai/charactermissionv2parametergroup"
 	"haruki-cloud/database/sekai/characterrank"
 	"haruki-cloud/database/sekai/cheerfulcarnivalteam"
@@ -50,6 +54,7 @@ import (
 	"haruki-cloud/database/sekai/level"
 	"haruki-cloud/database/sekai/limitedtimemusic"
 	"haruki-cloud/database/sekai/masterlesson"
+	"haruki-cloud/database/sekai/material"
 	"haruki-cloud/database/sekai/music"
 	"haruki-cloud/database/sekai/musicartist"
 	"haruki-cloud/database/sekai/musicdifficultie"
@@ -94,12 +99,16 @@ import (
 	"haruki-cloud/database/sekai/outsidecharacter"
 	"haruki-cloud/database/sekai/playerframe"
 	"haruki-cloud/database/sekai/playerframegroup"
+	"haruki-cloud/database/sekai/practiceticket"
+	"haruki-cloud/database/sekai/resourceboxdetail"
 	"haruki-cloud/database/sekai/resourceboxe"
 	"haruki-cloud/database/sekai/shopitem"
 	"haruki-cloud/database/sekai/skill"
+	"haruki-cloud/database/sekai/skillpracticeticket"
 	"haruki-cloud/database/sekai/stamp"
 	"haruki-cloud/database/sekai/virtuallive"
 	"haruki-cloud/database/sekai/worldbloom"
+	"haruki-cloud/database/sekai/worldbloomchapterrankingrewardrange"
 	"haruki-cloud/database/sekai/worldbloomdifferentattributebonuse"
 	"haruki-cloud/database/sekai/worldbloomsupportdeckbonuse"
 	"haruki-cloud/database/sekai/worldbloomsupportdeckuniteventlimitedbonuse"
@@ -124,6 +133,8 @@ type Client struct {
 	Bond *BondClient
 	// Bondshonor is the client for interacting with the Bondshonor builders.
 	Bondshonor *BondshonorClient
+	// Bondshonorword is the client for interacting with the Bondshonorword builders.
+	Bondshonorword *BondshonorwordClient
 	// Boostitem is the client for interacting with the Boostitem builders.
 	Boostitem *BoostitemClient
 	// Card is the client for interacting with the Card builders.
@@ -144,6 +155,12 @@ type Client struct {
 	Character2D *Character2DClient
 	// Characterarchivemysekaicharactertalkgroup is the client for interacting with the Characterarchivemysekaicharactertalkgroup builders.
 	Characterarchivemysekaicharactertalkgroup *CharacterarchivemysekaicharactertalkgroupClient
+	// Charactermissionv2 is the client for interacting with the Charactermissionv2 builders.
+	Charactermissionv2 *Charactermissionv2Client
+	// Charactermissionv2Areaitem is the client for interacting with the Charactermissionv2Areaitem builders.
+	Charactermissionv2Areaitem *Charactermissionv2AreaitemClient
+	// Charactermissionv2Exjson is the client for interacting with the Charactermissionv2Exjson builders.
+	Charactermissionv2Exjson *Charactermissionv2ExjsonClient
 	// Charactermissionv2Parametergroup is the client for interacting with the Charactermissionv2Parametergroup builders.
 	Charactermissionv2Parametergroup *Charactermissionv2ParametergroupClient
 	// Characterrank is the client for interacting with the Characterrank builders.
@@ -192,6 +209,8 @@ type Client struct {
 	Limitedtimemusic *LimitedtimemusicClient
 	// Masterlesson is the client for interacting with the Masterlesson builders.
 	Masterlesson *MasterlessonClient
+	// Material is the client for interacting with the Material builders.
+	Material *MaterialClient
 	// Music is the client for interacting with the Music builders.
 	Music *MusicClient
 	// MusicArtist is the client for interacting with the MusicArtist builders.
@@ -280,18 +299,26 @@ type Client struct {
 	Playerframe *PlayerframeClient
 	// Playerframegroup is the client for interacting with the Playerframegroup builders.
 	Playerframegroup *PlayerframegroupClient
+	// Practiceticket is the client for interacting with the Practiceticket builders.
+	Practiceticket *PracticeticketClient
+	// Resourceboxdetail is the client for interacting with the Resourceboxdetail builders.
+	Resourceboxdetail *ResourceboxdetailClient
 	// Resourceboxe is the client for interacting with the Resourceboxe builders.
 	Resourceboxe *ResourceboxeClient
 	// Shopitem is the client for interacting with the Shopitem builders.
 	Shopitem *ShopitemClient
 	// Skill is the client for interacting with the Skill builders.
 	Skill *SkillClient
+	// Skillpracticeticket is the client for interacting with the Skillpracticeticket builders.
+	Skillpracticeticket *SkillpracticeticketClient
 	// Stamp is the client for interacting with the Stamp builders.
 	Stamp *StampClient
 	// Virtuallive is the client for interacting with the Virtuallive builders.
 	Virtuallive *VirtualliveClient
 	// Worldbloom is the client for interacting with the Worldbloom builders.
 	Worldbloom *WorldbloomClient
+	// Worldbloomchapterrankingrewardrange is the client for interacting with the Worldbloomchapterrankingrewardrange builders.
+	Worldbloomchapterrankingrewardrange *WorldbloomchapterrankingrewardrangeClient
 	// Worldbloomdifferentattributebonuse is the client for interacting with the Worldbloomdifferentattributebonuse builders.
 	Worldbloomdifferentattributebonuse *WorldbloomdifferentattributebonuseClient
 	// Worldbloomsupportdeckbonuse is the client for interacting with the Worldbloomsupportdeckbonuse builders.
@@ -314,6 +341,7 @@ func (c *Client) init() {
 	c.Areaitemlevel = NewAreaitemlevelClient(c.config)
 	c.Bond = NewBondClient(c.config)
 	c.Bondshonor = NewBondshonorClient(c.config)
+	c.Bondshonorword = NewBondshonorwordClient(c.config)
 	c.Boostitem = NewBoostitemClient(c.config)
 	c.Card = NewCardClient(c.config)
 	c.Cardcostume3D = NewCardcostume3DClient(c.config)
@@ -324,6 +352,9 @@ func (c *Client) init() {
 	c.Challengelivehighscorereward = NewChallengelivehighscorerewardClient(c.config)
 	c.Character2D = NewCharacter2DClient(c.config)
 	c.Characterarchivemysekaicharactertalkgroup = NewCharacterarchivemysekaicharactertalkgroupClient(c.config)
+	c.Charactermissionv2 = NewCharactermissionv2Client(c.config)
+	c.Charactermissionv2Areaitem = NewCharactermissionv2AreaitemClient(c.config)
+	c.Charactermissionv2Exjson = NewCharactermissionv2ExjsonClient(c.config)
 	c.Charactermissionv2Parametergroup = NewCharactermissionv2ParametergroupClient(c.config)
 	c.Characterrank = NewCharacterrankClient(c.config)
 	c.Cheerfulcarnivalteam = NewCheerfulcarnivalteamClient(c.config)
@@ -348,6 +379,7 @@ func (c *Client) init() {
 	c.Level = NewLevelClient(c.config)
 	c.Limitedtimemusic = NewLimitedtimemusicClient(c.config)
 	c.Masterlesson = NewMasterlessonClient(c.config)
+	c.Material = NewMaterialClient(c.config)
 	c.Music = NewMusicClient(c.config)
 	c.MusicArtist = NewMusicArtistClient(c.config)
 	c.Musicdifficultie = NewMusicdifficultieClient(c.config)
@@ -392,12 +424,16 @@ func (c *Client) init() {
 	c.Outsidecharacter = NewOutsidecharacterClient(c.config)
 	c.Playerframe = NewPlayerframeClient(c.config)
 	c.Playerframegroup = NewPlayerframegroupClient(c.config)
+	c.Practiceticket = NewPracticeticketClient(c.config)
+	c.Resourceboxdetail = NewResourceboxdetailClient(c.config)
 	c.Resourceboxe = NewResourceboxeClient(c.config)
 	c.Shopitem = NewShopitemClient(c.config)
 	c.Skill = NewSkillClient(c.config)
+	c.Skillpracticeticket = NewSkillpracticeticketClient(c.config)
 	c.Stamp = NewStampClient(c.config)
 	c.Virtuallive = NewVirtualliveClient(c.config)
 	c.Worldbloom = NewWorldbloomClient(c.config)
+	c.Worldbloomchapterrankingrewardrange = NewWorldbloomchapterrankingrewardrangeClient(c.config)
 	c.Worldbloomdifferentattributebonuse = NewWorldbloomdifferentattributebonuseClient(c.config)
 	c.Worldbloomsupportdeckbonuse = NewWorldbloomsupportdeckbonuseClient(c.config)
 	c.Worldbloomsupportdeckuniteventlimitedbonuse = NewWorldbloomsupportdeckuniteventlimitedbonuseClient(c.config)
@@ -498,6 +534,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Areaitemlevel:                NewAreaitemlevelClient(cfg),
 		Bond:                         NewBondClient(cfg),
 		Bondshonor:                   NewBondshonorClient(cfg),
+		Bondshonorword:               NewBondshonorwordClient(cfg),
 		Boostitem:                    NewBoostitemClient(cfg),
 		Card:                         NewCardClient(cfg),
 		Cardcostume3D:                NewCardcostume3DClient(cfg),
@@ -508,6 +545,9 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Challengelivehighscorereward: NewChallengelivehighscorerewardClient(cfg),
 		Character2D:                  NewCharacter2DClient(cfg),
 		Characterarchivemysekaicharactertalkgroup: NewCharacterarchivemysekaicharactertalkgroupClient(cfg),
+		Charactermissionv2:                        NewCharactermissionv2Client(cfg),
+		Charactermissionv2Areaitem:                NewCharactermissionv2AreaitemClient(cfg),
+		Charactermissionv2Exjson:                  NewCharactermissionv2ExjsonClient(cfg),
 		Charactermissionv2Parametergroup:          NewCharactermissionv2ParametergroupClient(cfg),
 		Characterrank:                             NewCharacterrankClient(cfg),
 		Cheerfulcarnivalteam:                      NewCheerfulcarnivalteamClient(cfg),
@@ -532,6 +572,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Level:                                     NewLevelClient(cfg),
 		Limitedtimemusic:                          NewLimitedtimemusicClient(cfg),
 		Masterlesson:                              NewMasterlessonClient(cfg),
+		Material:                                  NewMaterialClient(cfg),
 		Music:                                     NewMusicClient(cfg),
 		MusicArtist:                               NewMusicArtistClient(cfg),
 		Musicdifficultie:                          NewMusicdifficultieClient(cfg),
@@ -576,12 +617,16 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Outsidecharacter:                                  NewOutsidecharacterClient(cfg),
 		Playerframe:                                       NewPlayerframeClient(cfg),
 		Playerframegroup:                                  NewPlayerframegroupClient(cfg),
+		Practiceticket:                                    NewPracticeticketClient(cfg),
+		Resourceboxdetail:                                 NewResourceboxdetailClient(cfg),
 		Resourceboxe:                                      NewResourceboxeClient(cfg),
 		Shopitem:                                          NewShopitemClient(cfg),
 		Skill:                                             NewSkillClient(cfg),
+		Skillpracticeticket:                               NewSkillpracticeticketClient(cfg),
 		Stamp:                                             NewStampClient(cfg),
 		Virtuallive:                                       NewVirtualliveClient(cfg),
 		Worldbloom:                                        NewWorldbloomClient(cfg),
+		Worldbloomchapterrankingrewardrange:               NewWorldbloomchapterrankingrewardrangeClient(cfg),
 		Worldbloomdifferentattributebonuse:                NewWorldbloomdifferentattributebonuseClient(cfg),
 		Worldbloomsupportdeckbonuse:                       NewWorldbloomsupportdeckbonuseClient(cfg),
 		Worldbloomsupportdeckuniteventlimitedbonuse:       NewWorldbloomsupportdeckuniteventlimitedbonuseClient(cfg),
@@ -609,6 +654,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Areaitemlevel:                NewAreaitemlevelClient(cfg),
 		Bond:                         NewBondClient(cfg),
 		Bondshonor:                   NewBondshonorClient(cfg),
+		Bondshonorword:               NewBondshonorwordClient(cfg),
 		Boostitem:                    NewBoostitemClient(cfg),
 		Card:                         NewCardClient(cfg),
 		Cardcostume3D:                NewCardcostume3DClient(cfg),
@@ -619,6 +665,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Challengelivehighscorereward: NewChallengelivehighscorerewardClient(cfg),
 		Character2D:                  NewCharacter2DClient(cfg),
 		Characterarchivemysekaicharactertalkgroup: NewCharacterarchivemysekaicharactertalkgroupClient(cfg),
+		Charactermissionv2:                        NewCharactermissionv2Client(cfg),
+		Charactermissionv2Areaitem:                NewCharactermissionv2AreaitemClient(cfg),
+		Charactermissionv2Exjson:                  NewCharactermissionv2ExjsonClient(cfg),
 		Charactermissionv2Parametergroup:          NewCharactermissionv2ParametergroupClient(cfg),
 		Characterrank:                             NewCharacterrankClient(cfg),
 		Cheerfulcarnivalteam:                      NewCheerfulcarnivalteamClient(cfg),
@@ -643,6 +692,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Level:                                     NewLevelClient(cfg),
 		Limitedtimemusic:                          NewLimitedtimemusicClient(cfg),
 		Masterlesson:                              NewMasterlessonClient(cfg),
+		Material:                                  NewMaterialClient(cfg),
 		Music:                                     NewMusicClient(cfg),
 		MusicArtist:                               NewMusicArtistClient(cfg),
 		Musicdifficultie:                          NewMusicdifficultieClient(cfg),
@@ -687,12 +737,16 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Outsidecharacter:                                  NewOutsidecharacterClient(cfg),
 		Playerframe:                                       NewPlayerframeClient(cfg),
 		Playerframegroup:                                  NewPlayerframegroupClient(cfg),
+		Practiceticket:                                    NewPracticeticketClient(cfg),
+		Resourceboxdetail:                                 NewResourceboxdetailClient(cfg),
 		Resourceboxe:                                      NewResourceboxeClient(cfg),
 		Shopitem:                                          NewShopitemClient(cfg),
 		Skill:                                             NewSkillClient(cfg),
+		Skillpracticeticket:                               NewSkillpracticeticketClient(cfg),
 		Stamp:                                             NewStampClient(cfg),
 		Virtuallive:                                       NewVirtualliveClient(cfg),
 		Worldbloom:                                        NewWorldbloomClient(cfg),
+		Worldbloomchapterrankingrewardrange:               NewWorldbloomchapterrankingrewardrangeClient(cfg),
 		Worldbloomdifferentattributebonuse:                NewWorldbloomdifferentattributebonuseClient(cfg),
 		Worldbloomsupportdeckbonuse:                       NewWorldbloomsupportdeckbonuseClient(cfg),
 		Worldbloomsupportdeckuniteventlimitedbonuse:       NewWorldbloomsupportdeckuniteventlimitedbonuseClient(cfg),
@@ -725,17 +779,18 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Area, c.Areaitem, c.Areaitemlevel, c.Bond, c.Bondshonor, c.Boostitem, c.Card,
-		c.Cardcostume3D, c.Cardepisode, c.Cardmysekaicanvasbonuse, c.Cardraritie,
-		c.Cardsupplie, c.Challengelivehighscorereward, c.Character2D,
-		c.Characterarchivemysekaicharactertalkgroup,
+		c.Area, c.Areaitem, c.Areaitemlevel, c.Bond, c.Bondshonor, c.Bondshonorword,
+		c.Boostitem, c.Card, c.Cardcostume3D, c.Cardepisode, c.Cardmysekaicanvasbonuse,
+		c.Cardraritie, c.Cardsupplie, c.Challengelivehighscorereward, c.Character2D,
+		c.Characterarchivemysekaicharactertalkgroup, c.Charactermissionv2,
+		c.Charactermissionv2Areaitem, c.Charactermissionv2Exjson,
 		c.Charactermissionv2Parametergroup, c.Characterrank, c.Cheerfulcarnivalteam,
 		c.Costume3D, c.Custommusicscoretag, c.Event, c.Eventcard, c.Eventdeckbonuse,
 		c.Eventexchangesummarie, c.Eventitem, c.Eventmusic, c.Eventraritybonusrate,
 		c.Eventstorie, c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket,
 		c.Gamecharacter, c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level,
-		c.Limitedtimemusic, c.Masterlesson, c.Music, c.MusicArtist, c.Musicdifficultie,
-		c.Musictag, c.Musicvocal, c.Mysekaiblueprint,
+		c.Limitedtimemusic, c.Masterlesson, c.Material, c.Music, c.MusicArtist,
+		c.Musicdifficultie, c.Musictag, c.Musicvocal, c.Mysekaiblueprint,
 		c.Mysekaiblueprintmysekaimaterialcost, c.Mysekaicharactertalk,
 		c.Mysekaicharactertalkcondition, c.Mysekaicharactertalkconditiongroup,
 		c.Mysekaicharactertalkfixturecommon,
@@ -751,9 +806,11 @@ func (c *Client) Use(hooks ...Hook) {
 		c.Mysekaimusicrecordcategorie, c.Mysekaiphenomenabackgroundcolor,
 		c.Mysekaiphenomenon, c.Mysekairankrelease, c.Mysekaisiteharvestfixture,
 		c.Mysekaisitelayout, c.Mysekaisitelevel, c.Ngword, c.Outsidecharacter,
-		c.Playerframe, c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill,
-		c.Stamp, c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
-		c.Worldbloomsupportdeckbonuse, c.Worldbloomsupportdeckuniteventlimitedbonuse,
+		c.Playerframe, c.Playerframegroup, c.Practiceticket, c.Resourceboxdetail,
+		c.Resourceboxe, c.Shopitem, c.Skill, c.Skillpracticeticket, c.Stamp,
+		c.Virtuallive, c.Worldbloom, c.Worldbloomchapterrankingrewardrange,
+		c.Worldbloomdifferentattributebonuse, c.Worldbloomsupportdeckbonuse,
+		c.Worldbloomsupportdeckuniteventlimitedbonuse,
 	} {
 		n.Use(hooks...)
 	}
@@ -763,17 +820,18 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Area, c.Areaitem, c.Areaitemlevel, c.Bond, c.Bondshonor, c.Boostitem, c.Card,
-		c.Cardcostume3D, c.Cardepisode, c.Cardmysekaicanvasbonuse, c.Cardraritie,
-		c.Cardsupplie, c.Challengelivehighscorereward, c.Character2D,
-		c.Characterarchivemysekaicharactertalkgroup,
+		c.Area, c.Areaitem, c.Areaitemlevel, c.Bond, c.Bondshonor, c.Bondshonorword,
+		c.Boostitem, c.Card, c.Cardcostume3D, c.Cardepisode, c.Cardmysekaicanvasbonuse,
+		c.Cardraritie, c.Cardsupplie, c.Challengelivehighscorereward, c.Character2D,
+		c.Characterarchivemysekaicharactertalkgroup, c.Charactermissionv2,
+		c.Charactermissionv2Areaitem, c.Charactermissionv2Exjson,
 		c.Charactermissionv2Parametergroup, c.Characterrank, c.Cheerfulcarnivalteam,
 		c.Costume3D, c.Custommusicscoretag, c.Event, c.Eventcard, c.Eventdeckbonuse,
 		c.Eventexchangesummarie, c.Eventitem, c.Eventmusic, c.Eventraritybonusrate,
 		c.Eventstorie, c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket,
 		c.Gamecharacter, c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level,
-		c.Limitedtimemusic, c.Masterlesson, c.Music, c.MusicArtist, c.Musicdifficultie,
-		c.Musictag, c.Musicvocal, c.Mysekaiblueprint,
+		c.Limitedtimemusic, c.Masterlesson, c.Material, c.Music, c.MusicArtist,
+		c.Musicdifficultie, c.Musictag, c.Musicvocal, c.Mysekaiblueprint,
 		c.Mysekaiblueprintmysekaimaterialcost, c.Mysekaicharactertalk,
 		c.Mysekaicharactertalkcondition, c.Mysekaicharactertalkconditiongroup,
 		c.Mysekaicharactertalkfixturecommon,
@@ -789,9 +847,11 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.Mysekaimusicrecordcategorie, c.Mysekaiphenomenabackgroundcolor,
 		c.Mysekaiphenomenon, c.Mysekairankrelease, c.Mysekaisiteharvestfixture,
 		c.Mysekaisitelayout, c.Mysekaisitelevel, c.Ngword, c.Outsidecharacter,
-		c.Playerframe, c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill,
-		c.Stamp, c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
-		c.Worldbloomsupportdeckbonuse, c.Worldbloomsupportdeckuniteventlimitedbonuse,
+		c.Playerframe, c.Playerframegroup, c.Practiceticket, c.Resourceboxdetail,
+		c.Resourceboxe, c.Shopitem, c.Skill, c.Skillpracticeticket, c.Stamp,
+		c.Virtuallive, c.Worldbloom, c.Worldbloomchapterrankingrewardrange,
+		c.Worldbloomdifferentattributebonuse, c.Worldbloomsupportdeckbonuse,
+		c.Worldbloomsupportdeckuniteventlimitedbonuse,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -810,6 +870,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Bond.mutate(ctx, m)
 	case *BondshonorMutation:
 		return c.Bondshonor.mutate(ctx, m)
+	case *BondshonorwordMutation:
+		return c.Bondshonorword.mutate(ctx, m)
 	case *BoostitemMutation:
 		return c.Boostitem.mutate(ctx, m)
 	case *CardMutation:
@@ -830,6 +892,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Character2D.mutate(ctx, m)
 	case *CharacterarchivemysekaicharactertalkgroupMutation:
 		return c.Characterarchivemysekaicharactertalkgroup.mutate(ctx, m)
+	case *Charactermissionv2Mutation:
+		return c.Charactermissionv2.mutate(ctx, m)
+	case *Charactermissionv2AreaitemMutation:
+		return c.Charactermissionv2Areaitem.mutate(ctx, m)
+	case *Charactermissionv2ExjsonMutation:
+		return c.Charactermissionv2Exjson.mutate(ctx, m)
 	case *Charactermissionv2ParametergroupMutation:
 		return c.Charactermissionv2Parametergroup.mutate(ctx, m)
 	case *CharacterrankMutation:
@@ -878,6 +946,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Limitedtimemusic.mutate(ctx, m)
 	case *MasterlessonMutation:
 		return c.Masterlesson.mutate(ctx, m)
+	case *MaterialMutation:
+		return c.Material.mutate(ctx, m)
 	case *MusicMutation:
 		return c.Music.mutate(ctx, m)
 	case *MusicArtistMutation:
@@ -966,18 +1036,26 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Playerframe.mutate(ctx, m)
 	case *PlayerframegroupMutation:
 		return c.Playerframegroup.mutate(ctx, m)
+	case *PracticeticketMutation:
+		return c.Practiceticket.mutate(ctx, m)
+	case *ResourceboxdetailMutation:
+		return c.Resourceboxdetail.mutate(ctx, m)
 	case *ResourceboxeMutation:
 		return c.Resourceboxe.mutate(ctx, m)
 	case *ShopitemMutation:
 		return c.Shopitem.mutate(ctx, m)
 	case *SkillMutation:
 		return c.Skill.mutate(ctx, m)
+	case *SkillpracticeticketMutation:
+		return c.Skillpracticeticket.mutate(ctx, m)
 	case *StampMutation:
 		return c.Stamp.mutate(ctx, m)
 	case *VirtualliveMutation:
 		return c.Virtuallive.mutate(ctx, m)
 	case *WorldbloomMutation:
 		return c.Worldbloom.mutate(ctx, m)
+	case *WorldbloomchapterrankingrewardrangeMutation:
+		return c.Worldbloomchapterrankingrewardrange.mutate(ctx, m)
 	case *WorldbloomdifferentattributebonuseMutation:
 		return c.Worldbloomdifferentattributebonuse.mutate(ctx, m)
 	case *WorldbloomsupportdeckbonuseMutation:
@@ -1651,6 +1729,139 @@ func (c *BondshonorClient) mutate(ctx context.Context, m *BondshonorMutation) (V
 		return (&BondshonorDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("sekai: unknown Bondshonor mutation op: %q", m.Op())
+	}
+}
+
+// BondshonorwordClient is a client for the Bondshonorword schema.
+type BondshonorwordClient struct {
+	config
+}
+
+// NewBondshonorwordClient returns a client for the Bondshonorword from the given config.
+func NewBondshonorwordClient(c config) *BondshonorwordClient {
+	return &BondshonorwordClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `bondshonorword.Hooks(f(g(h())))`.
+func (c *BondshonorwordClient) Use(hooks ...Hook) {
+	c.hooks.Bondshonorword = append(c.hooks.Bondshonorword, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `bondshonorword.Intercept(f(g(h())))`.
+func (c *BondshonorwordClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Bondshonorword = append(c.inters.Bondshonorword, interceptors...)
+}
+
+// Create returns a builder for creating a Bondshonorword entity.
+func (c *BondshonorwordClient) Create() *BondshonorwordCreate {
+	mutation := newBondshonorwordMutation(c.config, OpCreate)
+	return &BondshonorwordCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Bondshonorword entities.
+func (c *BondshonorwordClient) CreateBulk(builders ...*BondshonorwordCreate) *BondshonorwordCreateBulk {
+	return &BondshonorwordCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BondshonorwordClient) MapCreateBulk(slice any, setFunc func(*BondshonorwordCreate, int)) *BondshonorwordCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BondshonorwordCreateBulk{err: fmt.Errorf("calling to BondshonorwordClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BondshonorwordCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BondshonorwordCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Bondshonorword.
+func (c *BondshonorwordClient) Update() *BondshonorwordUpdate {
+	mutation := newBondshonorwordMutation(c.config, OpUpdate)
+	return &BondshonorwordUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BondshonorwordClient) UpdateOne(_m *Bondshonorword) *BondshonorwordUpdateOne {
+	mutation := newBondshonorwordMutation(c.config, OpUpdateOne, withBondshonorword(_m))
+	return &BondshonorwordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BondshonorwordClient) UpdateOneID(id int) *BondshonorwordUpdateOne {
+	mutation := newBondshonorwordMutation(c.config, OpUpdateOne, withBondshonorwordID(id))
+	return &BondshonorwordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Bondshonorword.
+func (c *BondshonorwordClient) Delete() *BondshonorwordDelete {
+	mutation := newBondshonorwordMutation(c.config, OpDelete)
+	return &BondshonorwordDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BondshonorwordClient) DeleteOne(_m *Bondshonorword) *BondshonorwordDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BondshonorwordClient) DeleteOneID(id int) *BondshonorwordDeleteOne {
+	builder := c.Delete().Where(bondshonorword.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BondshonorwordDeleteOne{builder}
+}
+
+// Query returns a query builder for Bondshonorword.
+func (c *BondshonorwordClient) Query() *BondshonorwordQuery {
+	return &BondshonorwordQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBondshonorword},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Bondshonorword entity by its id.
+func (c *BondshonorwordClient) Get(ctx context.Context, id int) (*Bondshonorword, error) {
+	return c.Query().Where(bondshonorword.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BondshonorwordClient) GetX(ctx context.Context, id int) *Bondshonorword {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *BondshonorwordClient) Hooks() []Hook {
+	return c.hooks.Bondshonorword
+}
+
+// Interceptors returns the client interceptors.
+func (c *BondshonorwordClient) Interceptors() []Interceptor {
+	return c.inters.Bondshonorword
+}
+
+func (c *BondshonorwordClient) mutate(ctx context.Context, m *BondshonorwordMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BondshonorwordCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BondshonorwordUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BondshonorwordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BondshonorwordDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Bondshonorword mutation op: %q", m.Op())
 	}
 }
 
@@ -2981,6 +3192,405 @@ func (c *CharacterarchivemysekaicharactertalkgroupClient) mutate(ctx context.Con
 		return (&CharacterarchivemysekaicharactertalkgroupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("sekai: unknown Characterarchivemysekaicharactertalkgroup mutation op: %q", m.Op())
+	}
+}
+
+// Charactermissionv2Client is a client for the Charactermissionv2 schema.
+type Charactermissionv2Client struct {
+	config
+}
+
+// NewCharactermissionv2Client returns a client for the Charactermissionv2 from the given config.
+func NewCharactermissionv2Client(c config) *Charactermissionv2Client {
+	return &Charactermissionv2Client{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `charactermissionv2.Hooks(f(g(h())))`.
+func (c *Charactermissionv2Client) Use(hooks ...Hook) {
+	c.hooks.Charactermissionv2 = append(c.hooks.Charactermissionv2, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `charactermissionv2.Intercept(f(g(h())))`.
+func (c *Charactermissionv2Client) Intercept(interceptors ...Interceptor) {
+	c.inters.Charactermissionv2 = append(c.inters.Charactermissionv2, interceptors...)
+}
+
+// Create returns a builder for creating a Charactermissionv2 entity.
+func (c *Charactermissionv2Client) Create() *Charactermissionv2Create {
+	mutation := newCharactermissionv2Mutation(c.config, OpCreate)
+	return &Charactermissionv2Create{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Charactermissionv2 entities.
+func (c *Charactermissionv2Client) CreateBulk(builders ...*Charactermissionv2Create) *Charactermissionv2CreateBulk {
+	return &Charactermissionv2CreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *Charactermissionv2Client) MapCreateBulk(slice any, setFunc func(*Charactermissionv2Create, int)) *Charactermissionv2CreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &Charactermissionv2CreateBulk{err: fmt.Errorf("calling to Charactermissionv2Client.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*Charactermissionv2Create, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &Charactermissionv2CreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Charactermissionv2.
+func (c *Charactermissionv2Client) Update() *Charactermissionv2Update {
+	mutation := newCharactermissionv2Mutation(c.config, OpUpdate)
+	return &Charactermissionv2Update{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *Charactermissionv2Client) UpdateOne(_m *Charactermissionv2) *Charactermissionv2UpdateOne {
+	mutation := newCharactermissionv2Mutation(c.config, OpUpdateOne, withCharactermissionv2(_m))
+	return &Charactermissionv2UpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *Charactermissionv2Client) UpdateOneID(id int) *Charactermissionv2UpdateOne {
+	mutation := newCharactermissionv2Mutation(c.config, OpUpdateOne, withCharactermissionv2ID(id))
+	return &Charactermissionv2UpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Charactermissionv2.
+func (c *Charactermissionv2Client) Delete() *Charactermissionv2Delete {
+	mutation := newCharactermissionv2Mutation(c.config, OpDelete)
+	return &Charactermissionv2Delete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *Charactermissionv2Client) DeleteOne(_m *Charactermissionv2) *Charactermissionv2DeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *Charactermissionv2Client) DeleteOneID(id int) *Charactermissionv2DeleteOne {
+	builder := c.Delete().Where(charactermissionv2.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &Charactermissionv2DeleteOne{builder}
+}
+
+// Query returns a query builder for Charactermissionv2.
+func (c *Charactermissionv2Client) Query() *Charactermissionv2Query {
+	return &Charactermissionv2Query{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCharactermissionv2},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Charactermissionv2 entity by its id.
+func (c *Charactermissionv2Client) Get(ctx context.Context, id int) (*Charactermissionv2, error) {
+	return c.Query().Where(charactermissionv2.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *Charactermissionv2Client) GetX(ctx context.Context, id int) *Charactermissionv2 {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *Charactermissionv2Client) Hooks() []Hook {
+	return c.hooks.Charactermissionv2
+}
+
+// Interceptors returns the client interceptors.
+func (c *Charactermissionv2Client) Interceptors() []Interceptor {
+	return c.inters.Charactermissionv2
+}
+
+func (c *Charactermissionv2Client) mutate(ctx context.Context, m *Charactermissionv2Mutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&Charactermissionv2Create{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&Charactermissionv2Update{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&Charactermissionv2UpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&Charactermissionv2Delete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Charactermissionv2 mutation op: %q", m.Op())
+	}
+}
+
+// Charactermissionv2AreaitemClient is a client for the Charactermissionv2Areaitem schema.
+type Charactermissionv2AreaitemClient struct {
+	config
+}
+
+// NewCharactermissionv2AreaitemClient returns a client for the Charactermissionv2Areaitem from the given config.
+func NewCharactermissionv2AreaitemClient(c config) *Charactermissionv2AreaitemClient {
+	return &Charactermissionv2AreaitemClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `charactermissionv2areaitem.Hooks(f(g(h())))`.
+func (c *Charactermissionv2AreaitemClient) Use(hooks ...Hook) {
+	c.hooks.Charactermissionv2Areaitem = append(c.hooks.Charactermissionv2Areaitem, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `charactermissionv2areaitem.Intercept(f(g(h())))`.
+func (c *Charactermissionv2AreaitemClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Charactermissionv2Areaitem = append(c.inters.Charactermissionv2Areaitem, interceptors...)
+}
+
+// Create returns a builder for creating a Charactermissionv2Areaitem entity.
+func (c *Charactermissionv2AreaitemClient) Create() *Charactermissionv2AreaitemCreate {
+	mutation := newCharactermissionv2AreaitemMutation(c.config, OpCreate)
+	return &Charactermissionv2AreaitemCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Charactermissionv2Areaitem entities.
+func (c *Charactermissionv2AreaitemClient) CreateBulk(builders ...*Charactermissionv2AreaitemCreate) *Charactermissionv2AreaitemCreateBulk {
+	return &Charactermissionv2AreaitemCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *Charactermissionv2AreaitemClient) MapCreateBulk(slice any, setFunc func(*Charactermissionv2AreaitemCreate, int)) *Charactermissionv2AreaitemCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &Charactermissionv2AreaitemCreateBulk{err: fmt.Errorf("calling to Charactermissionv2AreaitemClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*Charactermissionv2AreaitemCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &Charactermissionv2AreaitemCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Charactermissionv2Areaitem.
+func (c *Charactermissionv2AreaitemClient) Update() *Charactermissionv2AreaitemUpdate {
+	mutation := newCharactermissionv2AreaitemMutation(c.config, OpUpdate)
+	return &Charactermissionv2AreaitemUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *Charactermissionv2AreaitemClient) UpdateOne(_m *Charactermissionv2Areaitem) *Charactermissionv2AreaitemUpdateOne {
+	mutation := newCharactermissionv2AreaitemMutation(c.config, OpUpdateOne, withCharactermissionv2Areaitem(_m))
+	return &Charactermissionv2AreaitemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *Charactermissionv2AreaitemClient) UpdateOneID(id int) *Charactermissionv2AreaitemUpdateOne {
+	mutation := newCharactermissionv2AreaitemMutation(c.config, OpUpdateOne, withCharactermissionv2AreaitemID(id))
+	return &Charactermissionv2AreaitemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Charactermissionv2Areaitem.
+func (c *Charactermissionv2AreaitemClient) Delete() *Charactermissionv2AreaitemDelete {
+	mutation := newCharactermissionv2AreaitemMutation(c.config, OpDelete)
+	return &Charactermissionv2AreaitemDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *Charactermissionv2AreaitemClient) DeleteOne(_m *Charactermissionv2Areaitem) *Charactermissionv2AreaitemDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *Charactermissionv2AreaitemClient) DeleteOneID(id int) *Charactermissionv2AreaitemDeleteOne {
+	builder := c.Delete().Where(charactermissionv2areaitem.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &Charactermissionv2AreaitemDeleteOne{builder}
+}
+
+// Query returns a query builder for Charactermissionv2Areaitem.
+func (c *Charactermissionv2AreaitemClient) Query() *Charactermissionv2AreaitemQuery {
+	return &Charactermissionv2AreaitemQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCharactermissionv2Areaitem},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Charactermissionv2Areaitem entity by its id.
+func (c *Charactermissionv2AreaitemClient) Get(ctx context.Context, id int) (*Charactermissionv2Areaitem, error) {
+	return c.Query().Where(charactermissionv2areaitem.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *Charactermissionv2AreaitemClient) GetX(ctx context.Context, id int) *Charactermissionv2Areaitem {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *Charactermissionv2AreaitemClient) Hooks() []Hook {
+	return c.hooks.Charactermissionv2Areaitem
+}
+
+// Interceptors returns the client interceptors.
+func (c *Charactermissionv2AreaitemClient) Interceptors() []Interceptor {
+	return c.inters.Charactermissionv2Areaitem
+}
+
+func (c *Charactermissionv2AreaitemClient) mutate(ctx context.Context, m *Charactermissionv2AreaitemMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&Charactermissionv2AreaitemCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&Charactermissionv2AreaitemUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&Charactermissionv2AreaitemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&Charactermissionv2AreaitemDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Charactermissionv2Areaitem mutation op: %q", m.Op())
+	}
+}
+
+// Charactermissionv2ExjsonClient is a client for the Charactermissionv2Exjson schema.
+type Charactermissionv2ExjsonClient struct {
+	config
+}
+
+// NewCharactermissionv2ExjsonClient returns a client for the Charactermissionv2Exjson from the given config.
+func NewCharactermissionv2ExjsonClient(c config) *Charactermissionv2ExjsonClient {
+	return &Charactermissionv2ExjsonClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `charactermissionv2exjson.Hooks(f(g(h())))`.
+func (c *Charactermissionv2ExjsonClient) Use(hooks ...Hook) {
+	c.hooks.Charactermissionv2Exjson = append(c.hooks.Charactermissionv2Exjson, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `charactermissionv2exjson.Intercept(f(g(h())))`.
+func (c *Charactermissionv2ExjsonClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Charactermissionv2Exjson = append(c.inters.Charactermissionv2Exjson, interceptors...)
+}
+
+// Create returns a builder for creating a Charactermissionv2Exjson entity.
+func (c *Charactermissionv2ExjsonClient) Create() *Charactermissionv2ExjsonCreate {
+	mutation := newCharactermissionv2ExjsonMutation(c.config, OpCreate)
+	return &Charactermissionv2ExjsonCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Charactermissionv2Exjson entities.
+func (c *Charactermissionv2ExjsonClient) CreateBulk(builders ...*Charactermissionv2ExjsonCreate) *Charactermissionv2ExjsonCreateBulk {
+	return &Charactermissionv2ExjsonCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *Charactermissionv2ExjsonClient) MapCreateBulk(slice any, setFunc func(*Charactermissionv2ExjsonCreate, int)) *Charactermissionv2ExjsonCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &Charactermissionv2ExjsonCreateBulk{err: fmt.Errorf("calling to Charactermissionv2ExjsonClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*Charactermissionv2ExjsonCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &Charactermissionv2ExjsonCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Charactermissionv2Exjson.
+func (c *Charactermissionv2ExjsonClient) Update() *Charactermissionv2ExjsonUpdate {
+	mutation := newCharactermissionv2ExjsonMutation(c.config, OpUpdate)
+	return &Charactermissionv2ExjsonUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *Charactermissionv2ExjsonClient) UpdateOne(_m *Charactermissionv2Exjson) *Charactermissionv2ExjsonUpdateOne {
+	mutation := newCharactermissionv2ExjsonMutation(c.config, OpUpdateOne, withCharactermissionv2Exjson(_m))
+	return &Charactermissionv2ExjsonUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *Charactermissionv2ExjsonClient) UpdateOneID(id int) *Charactermissionv2ExjsonUpdateOne {
+	mutation := newCharactermissionv2ExjsonMutation(c.config, OpUpdateOne, withCharactermissionv2ExjsonID(id))
+	return &Charactermissionv2ExjsonUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Charactermissionv2Exjson.
+func (c *Charactermissionv2ExjsonClient) Delete() *Charactermissionv2ExjsonDelete {
+	mutation := newCharactermissionv2ExjsonMutation(c.config, OpDelete)
+	return &Charactermissionv2ExjsonDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *Charactermissionv2ExjsonClient) DeleteOne(_m *Charactermissionv2Exjson) *Charactermissionv2ExjsonDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *Charactermissionv2ExjsonClient) DeleteOneID(id int) *Charactermissionv2ExjsonDeleteOne {
+	builder := c.Delete().Where(charactermissionv2exjson.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &Charactermissionv2ExjsonDeleteOne{builder}
+}
+
+// Query returns a query builder for Charactermissionv2Exjson.
+func (c *Charactermissionv2ExjsonClient) Query() *Charactermissionv2ExjsonQuery {
+	return &Charactermissionv2ExjsonQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCharactermissionv2Exjson},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Charactermissionv2Exjson entity by its id.
+func (c *Charactermissionv2ExjsonClient) Get(ctx context.Context, id int) (*Charactermissionv2Exjson, error) {
+	return c.Query().Where(charactermissionv2exjson.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *Charactermissionv2ExjsonClient) GetX(ctx context.Context, id int) *Charactermissionv2Exjson {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *Charactermissionv2ExjsonClient) Hooks() []Hook {
+	return c.hooks.Charactermissionv2Exjson
+}
+
+// Interceptors returns the client interceptors.
+func (c *Charactermissionv2ExjsonClient) Interceptors() []Interceptor {
+	return c.inters.Charactermissionv2Exjson
+}
+
+func (c *Charactermissionv2ExjsonClient) mutate(ctx context.Context, m *Charactermissionv2ExjsonMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&Charactermissionv2ExjsonCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&Charactermissionv2ExjsonUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&Charactermissionv2ExjsonUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&Charactermissionv2ExjsonDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Charactermissionv2Exjson mutation op: %q", m.Op())
 	}
 }
 
@@ -6173,6 +6783,139 @@ func (c *MasterlessonClient) mutate(ctx context.Context, m *MasterlessonMutation
 		return (&MasterlessonDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("sekai: unknown Masterlesson mutation op: %q", m.Op())
+	}
+}
+
+// MaterialClient is a client for the Material schema.
+type MaterialClient struct {
+	config
+}
+
+// NewMaterialClient returns a client for the Material from the given config.
+func NewMaterialClient(c config) *MaterialClient {
+	return &MaterialClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `material.Hooks(f(g(h())))`.
+func (c *MaterialClient) Use(hooks ...Hook) {
+	c.hooks.Material = append(c.hooks.Material, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `material.Intercept(f(g(h())))`.
+func (c *MaterialClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Material = append(c.inters.Material, interceptors...)
+}
+
+// Create returns a builder for creating a Material entity.
+func (c *MaterialClient) Create() *MaterialCreate {
+	mutation := newMaterialMutation(c.config, OpCreate)
+	return &MaterialCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Material entities.
+func (c *MaterialClient) CreateBulk(builders ...*MaterialCreate) *MaterialCreateBulk {
+	return &MaterialCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MaterialClient) MapCreateBulk(slice any, setFunc func(*MaterialCreate, int)) *MaterialCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MaterialCreateBulk{err: fmt.Errorf("calling to MaterialClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MaterialCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MaterialCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Material.
+func (c *MaterialClient) Update() *MaterialUpdate {
+	mutation := newMaterialMutation(c.config, OpUpdate)
+	return &MaterialUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MaterialClient) UpdateOne(_m *Material) *MaterialUpdateOne {
+	mutation := newMaterialMutation(c.config, OpUpdateOne, withMaterial(_m))
+	return &MaterialUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MaterialClient) UpdateOneID(id int) *MaterialUpdateOne {
+	mutation := newMaterialMutation(c.config, OpUpdateOne, withMaterialID(id))
+	return &MaterialUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Material.
+func (c *MaterialClient) Delete() *MaterialDelete {
+	mutation := newMaterialMutation(c.config, OpDelete)
+	return &MaterialDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MaterialClient) DeleteOne(_m *Material) *MaterialDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MaterialClient) DeleteOneID(id int) *MaterialDeleteOne {
+	builder := c.Delete().Where(material.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MaterialDeleteOne{builder}
+}
+
+// Query returns a query builder for Material.
+func (c *MaterialClient) Query() *MaterialQuery {
+	return &MaterialQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMaterial},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Material entity by its id.
+func (c *MaterialClient) Get(ctx context.Context, id int) (*Material, error) {
+	return c.Query().Where(material.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MaterialClient) GetX(ctx context.Context, id int) *Material {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MaterialClient) Hooks() []Hook {
+	return c.hooks.Material
+}
+
+// Interceptors returns the client interceptors.
+func (c *MaterialClient) Interceptors() []Interceptor {
+	return c.inters.Material
+}
+
+func (c *MaterialClient) mutate(ctx context.Context, m *MaterialMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MaterialCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MaterialUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MaterialUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MaterialDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Material mutation op: %q", m.Op())
 	}
 }
 
@@ -12028,6 +12771,272 @@ func (c *PlayerframegroupClient) mutate(ctx context.Context, m *Playerframegroup
 	}
 }
 
+// PracticeticketClient is a client for the Practiceticket schema.
+type PracticeticketClient struct {
+	config
+}
+
+// NewPracticeticketClient returns a client for the Practiceticket from the given config.
+func NewPracticeticketClient(c config) *PracticeticketClient {
+	return &PracticeticketClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `practiceticket.Hooks(f(g(h())))`.
+func (c *PracticeticketClient) Use(hooks ...Hook) {
+	c.hooks.Practiceticket = append(c.hooks.Practiceticket, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `practiceticket.Intercept(f(g(h())))`.
+func (c *PracticeticketClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Practiceticket = append(c.inters.Practiceticket, interceptors...)
+}
+
+// Create returns a builder for creating a Practiceticket entity.
+func (c *PracticeticketClient) Create() *PracticeticketCreate {
+	mutation := newPracticeticketMutation(c.config, OpCreate)
+	return &PracticeticketCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Practiceticket entities.
+func (c *PracticeticketClient) CreateBulk(builders ...*PracticeticketCreate) *PracticeticketCreateBulk {
+	return &PracticeticketCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PracticeticketClient) MapCreateBulk(slice any, setFunc func(*PracticeticketCreate, int)) *PracticeticketCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PracticeticketCreateBulk{err: fmt.Errorf("calling to PracticeticketClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PracticeticketCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PracticeticketCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Practiceticket.
+func (c *PracticeticketClient) Update() *PracticeticketUpdate {
+	mutation := newPracticeticketMutation(c.config, OpUpdate)
+	return &PracticeticketUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PracticeticketClient) UpdateOne(_m *Practiceticket) *PracticeticketUpdateOne {
+	mutation := newPracticeticketMutation(c.config, OpUpdateOne, withPracticeticket(_m))
+	return &PracticeticketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PracticeticketClient) UpdateOneID(id int) *PracticeticketUpdateOne {
+	mutation := newPracticeticketMutation(c.config, OpUpdateOne, withPracticeticketID(id))
+	return &PracticeticketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Practiceticket.
+func (c *PracticeticketClient) Delete() *PracticeticketDelete {
+	mutation := newPracticeticketMutation(c.config, OpDelete)
+	return &PracticeticketDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PracticeticketClient) DeleteOne(_m *Practiceticket) *PracticeticketDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PracticeticketClient) DeleteOneID(id int) *PracticeticketDeleteOne {
+	builder := c.Delete().Where(practiceticket.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PracticeticketDeleteOne{builder}
+}
+
+// Query returns a query builder for Practiceticket.
+func (c *PracticeticketClient) Query() *PracticeticketQuery {
+	return &PracticeticketQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePracticeticket},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Practiceticket entity by its id.
+func (c *PracticeticketClient) Get(ctx context.Context, id int) (*Practiceticket, error) {
+	return c.Query().Where(practiceticket.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PracticeticketClient) GetX(ctx context.Context, id int) *Practiceticket {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PracticeticketClient) Hooks() []Hook {
+	return c.hooks.Practiceticket
+}
+
+// Interceptors returns the client interceptors.
+func (c *PracticeticketClient) Interceptors() []Interceptor {
+	return c.inters.Practiceticket
+}
+
+func (c *PracticeticketClient) mutate(ctx context.Context, m *PracticeticketMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PracticeticketCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PracticeticketUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PracticeticketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PracticeticketDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Practiceticket mutation op: %q", m.Op())
+	}
+}
+
+// ResourceboxdetailClient is a client for the Resourceboxdetail schema.
+type ResourceboxdetailClient struct {
+	config
+}
+
+// NewResourceboxdetailClient returns a client for the Resourceboxdetail from the given config.
+func NewResourceboxdetailClient(c config) *ResourceboxdetailClient {
+	return &ResourceboxdetailClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `resourceboxdetail.Hooks(f(g(h())))`.
+func (c *ResourceboxdetailClient) Use(hooks ...Hook) {
+	c.hooks.Resourceboxdetail = append(c.hooks.Resourceboxdetail, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `resourceboxdetail.Intercept(f(g(h())))`.
+func (c *ResourceboxdetailClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Resourceboxdetail = append(c.inters.Resourceboxdetail, interceptors...)
+}
+
+// Create returns a builder for creating a Resourceboxdetail entity.
+func (c *ResourceboxdetailClient) Create() *ResourceboxdetailCreate {
+	mutation := newResourceboxdetailMutation(c.config, OpCreate)
+	return &ResourceboxdetailCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Resourceboxdetail entities.
+func (c *ResourceboxdetailClient) CreateBulk(builders ...*ResourceboxdetailCreate) *ResourceboxdetailCreateBulk {
+	return &ResourceboxdetailCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ResourceboxdetailClient) MapCreateBulk(slice any, setFunc func(*ResourceboxdetailCreate, int)) *ResourceboxdetailCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ResourceboxdetailCreateBulk{err: fmt.Errorf("calling to ResourceboxdetailClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ResourceboxdetailCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ResourceboxdetailCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Resourceboxdetail.
+func (c *ResourceboxdetailClient) Update() *ResourceboxdetailUpdate {
+	mutation := newResourceboxdetailMutation(c.config, OpUpdate)
+	return &ResourceboxdetailUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ResourceboxdetailClient) UpdateOne(_m *Resourceboxdetail) *ResourceboxdetailUpdateOne {
+	mutation := newResourceboxdetailMutation(c.config, OpUpdateOne, withResourceboxdetail(_m))
+	return &ResourceboxdetailUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ResourceboxdetailClient) UpdateOneID(id int) *ResourceboxdetailUpdateOne {
+	mutation := newResourceboxdetailMutation(c.config, OpUpdateOne, withResourceboxdetailID(id))
+	return &ResourceboxdetailUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Resourceboxdetail.
+func (c *ResourceboxdetailClient) Delete() *ResourceboxdetailDelete {
+	mutation := newResourceboxdetailMutation(c.config, OpDelete)
+	return &ResourceboxdetailDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ResourceboxdetailClient) DeleteOne(_m *Resourceboxdetail) *ResourceboxdetailDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ResourceboxdetailClient) DeleteOneID(id int) *ResourceboxdetailDeleteOne {
+	builder := c.Delete().Where(resourceboxdetail.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ResourceboxdetailDeleteOne{builder}
+}
+
+// Query returns a query builder for Resourceboxdetail.
+func (c *ResourceboxdetailClient) Query() *ResourceboxdetailQuery {
+	return &ResourceboxdetailQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeResourceboxdetail},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Resourceboxdetail entity by its id.
+func (c *ResourceboxdetailClient) Get(ctx context.Context, id int) (*Resourceboxdetail, error) {
+	return c.Query().Where(resourceboxdetail.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ResourceboxdetailClient) GetX(ctx context.Context, id int) *Resourceboxdetail {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ResourceboxdetailClient) Hooks() []Hook {
+	return c.hooks.Resourceboxdetail
+}
+
+// Interceptors returns the client interceptors.
+func (c *ResourceboxdetailClient) Interceptors() []Interceptor {
+	return c.inters.Resourceboxdetail
+}
+
+func (c *ResourceboxdetailClient) mutate(ctx context.Context, m *ResourceboxdetailMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ResourceboxdetailCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ResourceboxdetailUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ResourceboxdetailUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ResourceboxdetailDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Resourceboxdetail mutation op: %q", m.Op())
+	}
+}
+
 // ResourceboxeClient is a client for the Resourceboxe schema.
 type ResourceboxeClient struct {
 	config
@@ -12427,6 +13436,139 @@ func (c *SkillClient) mutate(ctx context.Context, m *SkillMutation) (Value, erro
 	}
 }
 
+// SkillpracticeticketClient is a client for the Skillpracticeticket schema.
+type SkillpracticeticketClient struct {
+	config
+}
+
+// NewSkillpracticeticketClient returns a client for the Skillpracticeticket from the given config.
+func NewSkillpracticeticketClient(c config) *SkillpracticeticketClient {
+	return &SkillpracticeticketClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `skillpracticeticket.Hooks(f(g(h())))`.
+func (c *SkillpracticeticketClient) Use(hooks ...Hook) {
+	c.hooks.Skillpracticeticket = append(c.hooks.Skillpracticeticket, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `skillpracticeticket.Intercept(f(g(h())))`.
+func (c *SkillpracticeticketClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Skillpracticeticket = append(c.inters.Skillpracticeticket, interceptors...)
+}
+
+// Create returns a builder for creating a Skillpracticeticket entity.
+func (c *SkillpracticeticketClient) Create() *SkillpracticeticketCreate {
+	mutation := newSkillpracticeticketMutation(c.config, OpCreate)
+	return &SkillpracticeticketCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Skillpracticeticket entities.
+func (c *SkillpracticeticketClient) CreateBulk(builders ...*SkillpracticeticketCreate) *SkillpracticeticketCreateBulk {
+	return &SkillpracticeticketCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SkillpracticeticketClient) MapCreateBulk(slice any, setFunc func(*SkillpracticeticketCreate, int)) *SkillpracticeticketCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SkillpracticeticketCreateBulk{err: fmt.Errorf("calling to SkillpracticeticketClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SkillpracticeticketCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SkillpracticeticketCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Skillpracticeticket.
+func (c *SkillpracticeticketClient) Update() *SkillpracticeticketUpdate {
+	mutation := newSkillpracticeticketMutation(c.config, OpUpdate)
+	return &SkillpracticeticketUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SkillpracticeticketClient) UpdateOne(_m *Skillpracticeticket) *SkillpracticeticketUpdateOne {
+	mutation := newSkillpracticeticketMutation(c.config, OpUpdateOne, withSkillpracticeticket(_m))
+	return &SkillpracticeticketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SkillpracticeticketClient) UpdateOneID(id int) *SkillpracticeticketUpdateOne {
+	mutation := newSkillpracticeticketMutation(c.config, OpUpdateOne, withSkillpracticeticketID(id))
+	return &SkillpracticeticketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Skillpracticeticket.
+func (c *SkillpracticeticketClient) Delete() *SkillpracticeticketDelete {
+	mutation := newSkillpracticeticketMutation(c.config, OpDelete)
+	return &SkillpracticeticketDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SkillpracticeticketClient) DeleteOne(_m *Skillpracticeticket) *SkillpracticeticketDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SkillpracticeticketClient) DeleteOneID(id int) *SkillpracticeticketDeleteOne {
+	builder := c.Delete().Where(skillpracticeticket.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SkillpracticeticketDeleteOne{builder}
+}
+
+// Query returns a query builder for Skillpracticeticket.
+func (c *SkillpracticeticketClient) Query() *SkillpracticeticketQuery {
+	return &SkillpracticeticketQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSkillpracticeticket},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Skillpracticeticket entity by its id.
+func (c *SkillpracticeticketClient) Get(ctx context.Context, id int) (*Skillpracticeticket, error) {
+	return c.Query().Where(skillpracticeticket.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SkillpracticeticketClient) GetX(ctx context.Context, id int) *Skillpracticeticket {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SkillpracticeticketClient) Hooks() []Hook {
+	return c.hooks.Skillpracticeticket
+}
+
+// Interceptors returns the client interceptors.
+func (c *SkillpracticeticketClient) Interceptors() []Interceptor {
+	return c.inters.Skillpracticeticket
+}
+
+func (c *SkillpracticeticketClient) mutate(ctx context.Context, m *SkillpracticeticketMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SkillpracticeticketCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SkillpracticeticketUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SkillpracticeticketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SkillpracticeticketDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Skillpracticeticket mutation op: %q", m.Op())
+	}
+}
+
 // StampClient is a client for the Stamp schema.
 type StampClient struct {
 	config
@@ -12823,6 +13965,139 @@ func (c *WorldbloomClient) mutate(ctx context.Context, m *WorldbloomMutation) (V
 		return (&WorldbloomDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("sekai: unknown Worldbloom mutation op: %q", m.Op())
+	}
+}
+
+// WorldbloomchapterrankingrewardrangeClient is a client for the Worldbloomchapterrankingrewardrange schema.
+type WorldbloomchapterrankingrewardrangeClient struct {
+	config
+}
+
+// NewWorldbloomchapterrankingrewardrangeClient returns a client for the Worldbloomchapterrankingrewardrange from the given config.
+func NewWorldbloomchapterrankingrewardrangeClient(c config) *WorldbloomchapterrankingrewardrangeClient {
+	return &WorldbloomchapterrankingrewardrangeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `worldbloomchapterrankingrewardrange.Hooks(f(g(h())))`.
+func (c *WorldbloomchapterrankingrewardrangeClient) Use(hooks ...Hook) {
+	c.hooks.Worldbloomchapterrankingrewardrange = append(c.hooks.Worldbloomchapterrankingrewardrange, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `worldbloomchapterrankingrewardrange.Intercept(f(g(h())))`.
+func (c *WorldbloomchapterrankingrewardrangeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Worldbloomchapterrankingrewardrange = append(c.inters.Worldbloomchapterrankingrewardrange, interceptors...)
+}
+
+// Create returns a builder for creating a Worldbloomchapterrankingrewardrange entity.
+func (c *WorldbloomchapterrankingrewardrangeClient) Create() *WorldbloomchapterrankingrewardrangeCreate {
+	mutation := newWorldbloomchapterrankingrewardrangeMutation(c.config, OpCreate)
+	return &WorldbloomchapterrankingrewardrangeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Worldbloomchapterrankingrewardrange entities.
+func (c *WorldbloomchapterrankingrewardrangeClient) CreateBulk(builders ...*WorldbloomchapterrankingrewardrangeCreate) *WorldbloomchapterrankingrewardrangeCreateBulk {
+	return &WorldbloomchapterrankingrewardrangeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorldbloomchapterrankingrewardrangeClient) MapCreateBulk(slice any, setFunc func(*WorldbloomchapterrankingrewardrangeCreate, int)) *WorldbloomchapterrankingrewardrangeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorldbloomchapterrankingrewardrangeCreateBulk{err: fmt.Errorf("calling to WorldbloomchapterrankingrewardrangeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorldbloomchapterrankingrewardrangeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorldbloomchapterrankingrewardrangeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Worldbloomchapterrankingrewardrange.
+func (c *WorldbloomchapterrankingrewardrangeClient) Update() *WorldbloomchapterrankingrewardrangeUpdate {
+	mutation := newWorldbloomchapterrankingrewardrangeMutation(c.config, OpUpdate)
+	return &WorldbloomchapterrankingrewardrangeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorldbloomchapterrankingrewardrangeClient) UpdateOne(_m *Worldbloomchapterrankingrewardrange) *WorldbloomchapterrankingrewardrangeUpdateOne {
+	mutation := newWorldbloomchapterrankingrewardrangeMutation(c.config, OpUpdateOne, withWorldbloomchapterrankingrewardrange(_m))
+	return &WorldbloomchapterrankingrewardrangeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorldbloomchapterrankingrewardrangeClient) UpdateOneID(id int) *WorldbloomchapterrankingrewardrangeUpdateOne {
+	mutation := newWorldbloomchapterrankingrewardrangeMutation(c.config, OpUpdateOne, withWorldbloomchapterrankingrewardrangeID(id))
+	return &WorldbloomchapterrankingrewardrangeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Worldbloomchapterrankingrewardrange.
+func (c *WorldbloomchapterrankingrewardrangeClient) Delete() *WorldbloomchapterrankingrewardrangeDelete {
+	mutation := newWorldbloomchapterrankingrewardrangeMutation(c.config, OpDelete)
+	return &WorldbloomchapterrankingrewardrangeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorldbloomchapterrankingrewardrangeClient) DeleteOne(_m *Worldbloomchapterrankingrewardrange) *WorldbloomchapterrankingrewardrangeDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorldbloomchapterrankingrewardrangeClient) DeleteOneID(id int) *WorldbloomchapterrankingrewardrangeDeleteOne {
+	builder := c.Delete().Where(worldbloomchapterrankingrewardrange.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorldbloomchapterrankingrewardrangeDeleteOne{builder}
+}
+
+// Query returns a query builder for Worldbloomchapterrankingrewardrange.
+func (c *WorldbloomchapterrankingrewardrangeClient) Query() *WorldbloomchapterrankingrewardrangeQuery {
+	return &WorldbloomchapterrankingrewardrangeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorldbloomchapterrankingrewardrange},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Worldbloomchapterrankingrewardrange entity by its id.
+func (c *WorldbloomchapterrankingrewardrangeClient) Get(ctx context.Context, id int) (*Worldbloomchapterrankingrewardrange, error) {
+	return c.Query().Where(worldbloomchapterrankingrewardrange.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorldbloomchapterrankingrewardrangeClient) GetX(ctx context.Context, id int) *Worldbloomchapterrankingrewardrange {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *WorldbloomchapterrankingrewardrangeClient) Hooks() []Hook {
+	return c.hooks.Worldbloomchapterrankingrewardrange
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorldbloomchapterrankingrewardrangeClient) Interceptors() []Interceptor {
+	return c.inters.Worldbloomchapterrankingrewardrange
+}
+
+func (c *WorldbloomchapterrankingrewardrangeClient) mutate(ctx context.Context, m *WorldbloomchapterrankingrewardrangeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorldbloomchapterrankingrewardrangeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorldbloomchapterrankingrewardrangeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorldbloomchapterrankingrewardrangeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorldbloomchapterrankingrewardrangeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Worldbloomchapterrankingrewardrange mutation op: %q", m.Op())
 	}
 }
 
@@ -13228,18 +14503,20 @@ func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) mutate(ctx context.C
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Area, Areaitem, Areaitemlevel, Bond, Bondshonor, Boostitem, Card, Cardcostume3D,
-		Cardepisode, Cardmysekaicanvasbonuse, Cardraritie, Cardsupplie,
-		Challengelivehighscorereward, Character2D,
-		Characterarchivemysekaicharactertalkgroup, Charactermissionv2Parametergroup,
-		Characterrank, Cheerfulcarnivalteam, Costume3D, Custommusicscoretag, Event,
-		Eventcard, Eventdeckbonuse, Eventexchangesummarie, Eventitem, Eventmusic,
-		Eventraritybonusrate, Eventstorie, Eventstoryunit, Gacha, Gachaceilitem,
-		Gachaticket, Gamecharacter, Gamecharacterunit, Honor, Honorgroup, Level,
-		Limitedtimemusic, Masterlesson, Music, MusicArtist, Musicdifficultie, Musictag,
-		Musicvocal, Mysekaiblueprint, Mysekaiblueprintmysekaimaterialcost,
-		Mysekaicharactertalk, Mysekaicharactertalkcondition,
-		Mysekaicharactertalkconditiongroup, Mysekaicharactertalkfixturecommon,
+		Area, Areaitem, Areaitemlevel, Bond, Bondshonor, Bondshonorword, Boostitem,
+		Card, Cardcostume3D, Cardepisode, Cardmysekaicanvasbonuse, Cardraritie,
+		Cardsupplie, Challengelivehighscorereward, Character2D,
+		Characterarchivemysekaicharactertalkgroup, Charactermissionv2,
+		Charactermissionv2Areaitem, Charactermissionv2Exjson,
+		Charactermissionv2Parametergroup, Characterrank, Cheerfulcarnivalteam,
+		Costume3D, Custommusicscoretag, Event, Eventcard, Eventdeckbonuse,
+		Eventexchangesummarie, Eventitem, Eventmusic, Eventraritybonusrate,
+		Eventstorie, Eventstoryunit, Gacha, Gachaceilitem, Gachaticket, Gamecharacter,
+		Gamecharacterunit, Honor, Honorgroup, Level, Limitedtimemusic, Masterlesson,
+		Material, Music, MusicArtist, Musicdifficultie, Musictag, Musicvocal,
+		Mysekaiblueprint, Mysekaiblueprintmysekaimaterialcost, Mysekaicharactertalk,
+		Mysekaicharactertalkcondition, Mysekaicharactertalkconditiongroup,
+		Mysekaicharactertalkfixturecommon,
 		Mysekaicharactertalkfixturecommonmysekaifixturegroup, Mysekaicustomfixture,
 		Mysekaifixture, Mysekaifixturegamecharactergroup,
 		Mysekaifixturegamecharactergroupperformancebonuse, Mysekaifixturemaingenre,
@@ -13252,23 +14529,27 @@ type (
 		Mysekaimusicrecordcategorie, Mysekaiphenomenabackgroundcolor,
 		Mysekaiphenomenon, Mysekairankrelease, Mysekaisiteharvestfixture,
 		Mysekaisitelayout, Mysekaisitelevel, Ngword, Outsidecharacter, Playerframe,
-		Playerframegroup, Resourceboxe, Shopitem, Skill, Stamp, Virtuallive,
-		Worldbloom, Worldbloomdifferentattributebonuse, Worldbloomsupportdeckbonuse,
+		Playerframegroup, Practiceticket, Resourceboxdetail, Resourceboxe, Shopitem,
+		Skill, Skillpracticeticket, Stamp, Virtuallive, Worldbloom,
+		Worldbloomchapterrankingrewardrange, Worldbloomdifferentattributebonuse,
+		Worldbloomsupportdeckbonuse,
 		Worldbloomsupportdeckuniteventlimitedbonuse []ent.Hook
 	}
 	inters struct {
-		Area, Areaitem, Areaitemlevel, Bond, Bondshonor, Boostitem, Card, Cardcostume3D,
-		Cardepisode, Cardmysekaicanvasbonuse, Cardraritie, Cardsupplie,
-		Challengelivehighscorereward, Character2D,
-		Characterarchivemysekaicharactertalkgroup, Charactermissionv2Parametergroup,
-		Characterrank, Cheerfulcarnivalteam, Costume3D, Custommusicscoretag, Event,
-		Eventcard, Eventdeckbonuse, Eventexchangesummarie, Eventitem, Eventmusic,
-		Eventraritybonusrate, Eventstorie, Eventstoryunit, Gacha, Gachaceilitem,
-		Gachaticket, Gamecharacter, Gamecharacterunit, Honor, Honorgroup, Level,
-		Limitedtimemusic, Masterlesson, Music, MusicArtist, Musicdifficultie, Musictag,
-		Musicvocal, Mysekaiblueprint, Mysekaiblueprintmysekaimaterialcost,
-		Mysekaicharactertalk, Mysekaicharactertalkcondition,
-		Mysekaicharactertalkconditiongroup, Mysekaicharactertalkfixturecommon,
+		Area, Areaitem, Areaitemlevel, Bond, Bondshonor, Bondshonorword, Boostitem,
+		Card, Cardcostume3D, Cardepisode, Cardmysekaicanvasbonuse, Cardraritie,
+		Cardsupplie, Challengelivehighscorereward, Character2D,
+		Characterarchivemysekaicharactertalkgroup, Charactermissionv2,
+		Charactermissionv2Areaitem, Charactermissionv2Exjson,
+		Charactermissionv2Parametergroup, Characterrank, Cheerfulcarnivalteam,
+		Costume3D, Custommusicscoretag, Event, Eventcard, Eventdeckbonuse,
+		Eventexchangesummarie, Eventitem, Eventmusic, Eventraritybonusrate,
+		Eventstorie, Eventstoryunit, Gacha, Gachaceilitem, Gachaticket, Gamecharacter,
+		Gamecharacterunit, Honor, Honorgroup, Level, Limitedtimemusic, Masterlesson,
+		Material, Music, MusicArtist, Musicdifficultie, Musictag, Musicvocal,
+		Mysekaiblueprint, Mysekaiblueprintmysekaimaterialcost, Mysekaicharactertalk,
+		Mysekaicharactertalkcondition, Mysekaicharactertalkconditiongroup,
+		Mysekaicharactertalkfixturecommon,
 		Mysekaicharactertalkfixturecommonmysekaifixturegroup, Mysekaicustomfixture,
 		Mysekaifixture, Mysekaifixturegamecharactergroup,
 		Mysekaifixturegamecharactergroupperformancebonuse, Mysekaifixturemaingenre,
@@ -13281,8 +14562,10 @@ type (
 		Mysekaimusicrecordcategorie, Mysekaiphenomenabackgroundcolor,
 		Mysekaiphenomenon, Mysekairankrelease, Mysekaisiteharvestfixture,
 		Mysekaisitelayout, Mysekaisitelevel, Ngword, Outsidecharacter, Playerframe,
-		Playerframegroup, Resourceboxe, Shopitem, Skill, Stamp, Virtuallive,
-		Worldbloom, Worldbloomdifferentattributebonuse, Worldbloomsupportdeckbonuse,
+		Playerframegroup, Practiceticket, Resourceboxdetail, Resourceboxe, Shopitem,
+		Skill, Skillpracticeticket, Stamp, Virtuallive, Worldbloom,
+		Worldbloomchapterrankingrewardrange, Worldbloomdifferentattributebonuse,
+		Worldbloomsupportdeckbonuse,
 		Worldbloomsupportdeckuniteventlimitedbonuse []ent.Interceptor
 	}
 )

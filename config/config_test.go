@@ -363,6 +363,22 @@ func TestApplyEnvOverridesDrawingCache(t *testing.T) {
 
 }
 
+func TestApplyEnvOverridesPJSKRenderAssetProbe(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_ASSET_PROBE_POSITIVE_TTL", "2h")
+	t.Setenv("HARUKI_PJSK_RENDER_ASSET_PROBE_NEGATIVE_TTL", "3m")
+	t.Setenv("HARUKI_PJSK_RENDER_ASSET_PROBE_TIMEOUT", "1500ms")
+	t.Setenv("HARUKI_PJSK_RENDER_ASSET_PROBE_LISTING_TTL", "45m")
+	t.Setenv("HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_PREFIXES", "jp-assets/startapp/thumbnail/chara,jp-assets/startapp/music/jacket")
+
+	cfg := &Config{}
+	ApplyEnvOverrides(cfg)
+	testutil.Require(t, cfg.PJSKRender.AssetProbe.ListingTTL == 45*time.Minute, "unexpected asset probe listing ttl: %v", cfg.PJSKRender.AssetProbe.ListingTTL)
+	testutil.Require(t, len(cfg.PJSKRender.AssetProbe.WarmPrefixes) == 2 && cfg.PJSKRender.AssetProbe.WarmPrefixes[1] == "jp-assets/startapp/music/jacket", "unexpected asset probe warm prefixes: %v", cfg.PJSKRender.AssetProbe.WarmPrefixes)
+	testutil.Require(t, cfg.PJSKRender.AssetProbe.PositiveTTL == 2*time.Hour, "unexpected asset probe positive ttl: %v", cfg.PJSKRender.AssetProbe.PositiveTTL)
+	testutil.Require(t, cfg.PJSKRender.AssetProbe.NegativeTTL == 3*time.Minute, "unexpected asset probe negative ttl: %v", cfg.PJSKRender.AssetProbe.NegativeTTL)
+	testutil.Require(t, cfg.PJSKRender.AssetProbe.Timeout == 1500*time.Millisecond, "unexpected asset probe timeout: %v", cfg.PJSKRender.AssetProbe.Timeout)
+}
+
 func TestApplyEnvOverridesPJSKRenderImageCacheAndDrawing(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_URI", "https://image-cache.example")
 	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_DIR", "/data/imagecache")

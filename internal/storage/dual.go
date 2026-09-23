@@ -85,6 +85,10 @@ func (d *dualStore) List(ctx context.Context, prefix Key, fn func(Object) error)
 	return d.primary.List(ctx, prefix, fn)
 }
 
+func (d *dualStore) ListDir(ctx context.Context, prefix Key, fn func(DirEntry) error) error {
+	return d.primary.ListDir(ctx, prefix, fn)
+}
+
 func (d *dualStore) readThrough(err error) bool {
 	return d.mode == DualWrite && errors.Is(err, ErrNotExist)
 }

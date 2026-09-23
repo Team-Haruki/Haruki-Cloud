@@ -53,6 +53,19 @@ func CleanPrefix(raw string) (Key, error) {
 	return key, nil
 }
 
+// CleanDirPrefix normalises a ListDir prefix: "" (or "/", "./") is the root;
+// anything else becomes a cleaned key with exactly one trailing "/".
+func CleanDirPrefix(raw string) (Key, error) {
+	prefix, err := CleanPrefix(raw)
+	if err != nil || prefix == "" {
+		return prefix, err
+	}
+	if !strings.HasSuffix(string(prefix), "/") {
+		prefix += "/"
+	}
+	return prefix, nil
+}
+
 func trimKeyLead(value string) string {
 	for {
 		switch {

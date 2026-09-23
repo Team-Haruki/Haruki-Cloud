@@ -220,6 +220,56 @@ func (s *localStore) List(ctx context.Context, prefix Key, fn func(Object) error
 	return walkErr
 }
 
+func (s *localStore) ListDir(ctx context.Context, prefix Key, fn func(DirEntry) error) error {
+	dir, err := CleanDirPrefix(string(prefix))
+	if err != nil {
+		return err
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	base := s.root
+	if dir != "" {
+		base = filepath.Join(s.root, filepath.FromSlash(strings.TrimSuffix(string(dir), "/")))
+	}
+	entries, err := os.ReadDir(base)
+	if err != nil {
+		if isLocalNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	for _, entry := range entries {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		name := entry.Name()
+		if isLocalTempName(name) {
+			continue
+		}
+		mode := entry.Type()
+		switch {
+		case mode.IsDir():
+			if err := fn(DirEntry{Name: name, Dir: true}); err != nil {
+				return err
+			}
+		case mode.IsRegular():
+			info, err := entry.Info()
+			if err != nil {
+				if isLocalNotExist(err) {
+					continue
+				}
+				return err
+			}
+			object := Object{Key: dir + Key(name), Size: info.Size(), ModTime: info.ModTime()}
+			if err := fn(DirEntry{Name: name, Object: object}); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (s *localStore) listObject(current string, entry fs.DirEntry, prefix Key) (Object, bool, error) {
 	rel, err := filepath.Rel(s.root, current)
 	if err != nil {

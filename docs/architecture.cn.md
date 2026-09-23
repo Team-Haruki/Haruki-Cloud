@@ -3,7 +3,7 @@
 > 最后更新：2026-09-14（v2.1）
 >
 > 2026-09-14 补充（Phase-2 存储抽象）：
-> 1. 新增 `internal/storage`（`Store` 接口：`Get/Put/Stat/Delete/List`，`fs` 与 `s3` 两个后端，
+> 1. 新增 `internal/storage`（`Store` 接口：`Get/Put/Stat/Delete/List/ListDir`，`fs` 与 `s3` 两个后端，
 >    五个固定槽位 `assets` / `user_upload` / `static` / `cache` / `image_cache`）与
 >    `internal/core/urlhost`（按 Drawing 节点选择公开 image-cache / assets 主机）。
 > 2. 渲染缓存索引迁往 PostgreSQL（`image_cache_entries` + `render_cache_index`）；Drawing 以
@@ -188,6 +188,7 @@ pjsk_render:               # 渲染引擎配置
     timeout: 30
   asset_dirs: {}           # 公开素材主机 assets_base_urls（必填）；primary 已弃用（E1）
   storage: {}              # 五个存储槽位（fs / s3），缺省时从旧目录派生
+  asset_probe: {}          # 无本地素材根时按 assets 槽位选路径（startapp/ondemand、大小写）；positive_ttl 6h / listing_ttl 30m / negative_ttl 5m / timeout 3s / warm_prefixes []
   image_cache: {}          # pg_url、hosts、render_index.*、gc_*、legacy_redirect
   drawing_artifact: {}     # Artifact 模式放量白名单
   local_masterdata: {}     # legacy/dev 本地 Masterdata fallback；生产默认关闭
@@ -594,7 +595,7 @@ internal/pjsk/render/
 ├── provider/             # 大型 Masterdata 数据 Provider（DB/local 双源）
 ├── releasecheck/         # 资源版本检查
 ├── common/               # 共享工具（卡图缩略图）
-├── assets/               # 素材管理
+├── assets/               # 素材管理：路径选择先探本地根，无本地根（或全部未命中）时按 assets 槽位的目录列举（缓存 listing_ttl、宽目录一次递归列举）判存在并纠正大小写，HEAD 仅作无法列举目录的兜底；连续 3 次失败后熔断 30s
 │
 │   ── 功能模块（其中 vlive 为文本模块） ──
 ├── card/                 # 卡片（detail, list, box）

@@ -343,6 +343,20 @@ pjsk_render:
     #   endpoints: [...]
     #   mirror: { scheme: fs, root: "/asset" }
     #   mirror_mode: write        # write (read-through to the mirror) | write_only
+  asset_probe:
+    # Store-backed asset path choice (startapp vs ondemand, exact key casing) against
+    # storage.assets when asset_dirs.primary is "" (a node without a local asset tree).
+    # With a local root the disk is still probed first; the store only answers local misses.
+    # Existence comes from cached directory listings (one ListObjectsV2 per directory answers
+    # every sibling; wide directories such as music/jacket are listed recursively once), HEAD is
+    # only the fallback for directories that cannot be listed. Outcomes are cached in a bounded
+    # in-process LRU; after 3 consecutive store failures the store is skipped for 30s (circuit
+    # breaker) and the first candidate path is returned. Zero values keep the defaults.
+    positive_ttl: "6h"            # resolved keys (env HARUKI_PJSK_RENDER_ASSET_PROBE_POSITIVE_TTL)
+    listing_ttl: "30m"            # directory listings (env HARUKI_PJSK_RENDER_ASSET_PROBE_LISTING_TTL)
+    negative_ttl: "5m"            # misses; a miss in a listing older than this re-lists it once, so hourly asset updates surface within negative_ttl (env HARUKI_PJSK_RENDER_ASSET_PROBE_NEGATIVE_TTL)
+    timeout: "3s"                 # one HEAD or one listing; the slot's stat_timeout / request_timeout still apply per attempt (env HARUKI_PJSK_RENDER_ASSET_PROBE_TIMEOUT)
+    warm_prefixes: []             # directories listed in the background at startup, e.g. jp-assets/startapp/thumbnail/chara (env HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_PREFIXES, comma-separated)
   
   local_masterdata:
     enabled: false            # legacy/dev only; production should use sekai.remote_sync instead

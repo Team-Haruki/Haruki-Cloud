@@ -36,6 +36,7 @@ import (
 	usersDB "haruki-cloud/database/users"
 
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	rendercostume "haruki-cloud/internal/pjsk/render/costume"
 )
 
@@ -176,6 +177,13 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		ImageCacheLocalRoot:                imageCacheLocalRoot,
 		AssetPrimaryDir:                    harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
 		AssetLegacyDirs:                    harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
+		AssetProbe: renderassets.StoreProbeConfig{
+			PositiveTTL:  harukiConfig.Cfg.PJSKRender.AssetProbe.PositiveTTL,
+			NegativeTTL:  harukiConfig.Cfg.PJSKRender.AssetProbe.NegativeTTL,
+			ListingTTL:   harukiConfig.Cfg.PJSKRender.AssetProbe.ListingTTL,
+			Timeout:      harukiConfig.Cfg.PJSKRender.AssetProbe.Timeout,
+			WarmPrefixes: harukiConfig.Cfg.PJSKRender.AssetProbe.WarmPrefixes,
+		},
 		LocalMasterdata: renderapp.LocalMasterdataConfig{
 			Enabled:         harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,
 			AllowFallback:   harukiConfig.Cfg.PJSKRender.LocalMasterdata.AllowFallback,

@@ -491,7 +491,7 @@ func (c *client) List(ctx context.Context, prefix storage.Key, fn func(storage.O
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		page, err := c.listPage(ctx, cleaned, fullPrefix, token)
+		page, err := c.listPage(ctx, cleaned, fullPrefix, token, "")
 		if err != nil {
 			return err
 		}
@@ -508,8 +508,41 @@ func (c *client) List(ctx context.Context, prefix storage.Key, fn func(storage.O
 	}
 }
 
-func (c *client) listPage(ctx context.Context, prefix storage.Key, fullPrefix, token string) (listBucketResult, error) {
+// ListDir is ListObjectsV2 with delimiter "/": objects directly under the
+// prefix arrive as Contents, sub-prefixes as CommonPrefixes.
+func (c *client) ListDir(ctx context.Context, prefix storage.Key, fn func(storage.DirEntry) error) error {
+	cleaned, err := storage.CleanDirPrefix(string(prefix))
+	if err != nil {
+		return err
+	}
+	fullPrefix := c.rootPrefix + string(cleaned)
+	token := ""
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		page, err := c.listPage(ctx, cleaned, fullPrefix, token, "/")
+		if err != nil {
+			return err
+		}
+		if err := c.emitDir(ctx, fullPrefix, page, fn); err != nil {
+			return err
+		}
+		if !page.IsTruncated {
+			return nil
+		}
+		if page.NextContinuationToken == "" {
+			return fmt.Errorf("s3: listdir %q: truncated page without continuation token", cleaned)
+		}
+		token = page.NextContinuationToken
+	}
+}
+
+func (c *client) listPage(ctx context.Context, prefix storage.Key, fullPrefix, token, delimiter string) (listBucketResult, error) {
 	query := "list-type=2&max-keys=" + strconv.Itoa(c.pageSize) + "&prefix=" + encodeQueryComponent(fullPrefix)
+	if delimiter != "" {
+		query += "&delimiter=" + encodeQueryComponent(delimiter)
+	}
 	if token != "" {
 		query += "&continuation-token=" + encodeQueryComponent(token)
 	}
@@ -551,6 +584,51 @@ func (c *client) emit(ctx context.Context, entries []listEntry, fn func(storage.
 			ETag:    trimETag(entry.ETag),
 		}
 		if err := fn(object); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// emitDir hands one delimiter page to fn. Objects whose name still contains
+// a "/" (a server ignoring the delimiter), the prefix marker itself and keys
+// not in CleanKey form are skipped.
+func (c *client) emitDir(ctx context.Context, fullPrefix string, page listBucketResult, fn func(storage.DirEntry) error) error {
+	for _, entry := range page.Contents {
+		name, ok := strings.CutPrefix(entry.Key, fullPrefix)
+		if !ok || name == "" || strings.Contains(name, "/") {
+			continue
+		}
+		rel := strings.TrimPrefix(entry.Key, c.rootPrefix)
+		if cleaned, err := storage.CleanKey(rel); err != nil || string(cleaned) != rel {
+			continue
+		}
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		object := storage.Object{
+			Key:     storage.Key(rel),
+			Size:    entry.Size,
+			ModTime: parseListTime(entry.LastModified),
+			ETag:    trimETag(entry.ETag),
+		}
+		if err := fn(storage.DirEntry{Name: name, Object: object}); err != nil {
+			return err
+		}
+	}
+	for _, common := range page.CommonPrefixes {
+		rel, ok := strings.CutPrefix(common.Prefix, fullPrefix)
+		if !ok {
+			continue
+		}
+		name := strings.TrimSuffix(rel, "/")
+		if name == "" || strings.Contains(name, "/") {
+			continue
+		}
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if err := fn(storage.DirEntry{Name: name, Dir: true}); err != nil {
 			return err
 		}
 	}

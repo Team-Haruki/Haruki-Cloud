@@ -19,6 +19,7 @@ func TestDisabledReturnsNotConfigured(t *testing.T) {
 		statErr,
 		store.Delete(ctx, "a"),
 		store.List(ctx, "", func(Object) error { t.Fatal("List must not visit"); return nil }),
+		store.ListDir(ctx, "", func(DirEntry) error { t.Fatal("ListDir must not visit"); return nil }),
 	}
 	for i, err := range errs {
 		if !errors.Is(err, ErrNotConfigured) || !errors.Is(err, fs.ErrNotExist) {

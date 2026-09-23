@@ -65,10 +65,13 @@ type Config struct {
 	ImageCacheRenderIndexTouchInterval time.Duration
 	// ImageCacheLocalRoot is the absolute directory of the image_cache slot
 	// when it resolved to local, "" otherwise.
-	ImageCacheLocalRoot      string
-	CensorService            *censor.Service
-	AssetPrimaryDir          string
-	AssetLegacyDirs          []string
+	ImageCacheLocalRoot string
+	CensorService       *censor.Service
+	AssetPrimaryDir     string
+	AssetLegacyDirs     []string
+	// AssetProbe tunes the store-backed path probe the asset helper runs
+	// against Stores.Assets when no local root answers.
+	AssetProbe               assets.StoreProbeConfig
 	LocalMasterdata          LocalMasterdataConfig
 	SekaiDBType              string
 	SekaiDSN                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files

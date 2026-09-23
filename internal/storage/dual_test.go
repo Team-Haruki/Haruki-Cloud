@@ -158,6 +158,16 @@ func TestDualListUsesPrimaryOnly(t *testing.T) {
 	if len(keys) != 1 || keys[0] != "p/1" || len(mirror.Calls()) != 0 {
 		t.Fatalf("keys = %v, mirror calls = %v", keys, mirror.Calls())
 	}
+	var names []string
+	if err := store.ListDir(context.Background(), "p/", func(entry storage.DirEntry) error {
+		names = append(names, entry.Name)
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if len(names) != 1 || names[0] != "1" || len(mirror.Calls()) != 0 {
+		t.Fatalf("ListDir names = %v, mirror calls = %v", names, mirror.Calls())
+	}
 }
 
 func TestDualNilStoresAreDisabled(t *testing.T) {

@@ -296,6 +296,150 @@ func (f CustommusicscoretagFunc) Mutate(ctx context.Context, m sekai.Mutation) (
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustommusicscoretagMutation", m)
 }
 
+// The CustomprofilecharactericonresourceFunc type is an adapter to allow the use of ordinary
+// function as Customprofilecharactericonresource mutator.
+type CustomprofilecharactericonresourceFunc func(context.Context, *sekai.CustomprofilecharactericonresourceMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofilecharactericonresourceFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofilecharactericonresourceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofilecharactericonresourceMutation", m)
+}
+
+// The CustomprofilecollectionresourceFunc type is an adapter to allow the use of ordinary
+// function as Customprofilecollectionresource mutator.
+type CustomprofilecollectionresourceFunc func(context.Context, *sekai.CustomprofilecollectionresourceMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofilecollectionresourceFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofilecollectionresourceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofilecollectionresourceMutation", m)
+}
+
+// The CustomprofileetcresourceFunc type is an adapter to allow the use of ordinary
+// function as Customprofileetcresource mutator.
+type CustomprofileetcresourceFunc func(context.Context, *sekai.CustomprofileetcresourceMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofileetcresourceFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofileetcresourceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofileetcresourceMutation", m)
+}
+
+// The CustomprofilegeneralbackgroundresourceFunc type is an adapter to allow the use of ordinary
+// function as Customprofilegeneralbackgroundresource mutator.
+type CustomprofilegeneralbackgroundresourceFunc func(context.Context, *sekai.CustomprofilegeneralbackgroundresourceMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofilegeneralbackgroundresourceFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofilegeneralbackgroundresourceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofilegeneralbackgroundresourceMutation", m)
+}
+
+// The CustomprofilematerialresourceFunc type is an adapter to allow the use of ordinary
+// function as Customprofilematerialresource mutator.
+type CustomprofilematerialresourceFunc func(context.Context, *sekai.CustomprofilematerialresourceMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofilematerialresourceFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofilematerialresourceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofilematerialresourceMutation", m)
+}
+
+// The CustomprofilememberstandingpictureresourceFunc type is an adapter to allow the use of ordinary
+// function as Customprofilememberstandingpictureresource mutator.
+type CustomprofilememberstandingpictureresourceFunc func(context.Context, *sekai.CustomprofilememberstandingpictureresourceMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofilememberstandingpictureresourceFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofilememberstandingpictureresourceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofilememberstandingpictureresourceMutation", m)
+}
+
+// The CustomprofileplayerinforesourceFunc type is an adapter to allow the use of ordinary
+// function as Customprofileplayerinforesource mutator.
+type CustomprofileplayerinforesourceFunc func(context.Context, *sekai.CustomprofileplayerinforesourceMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofileplayerinforesourceFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofileplayerinforesourceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofileplayerinforesourceMutation", m)
+}
+
+// The CustomprofileshaperesourceFunc type is an adapter to allow the use of ordinary
+// function as Customprofileshaperesource mutator.
+type CustomprofileshaperesourceFunc func(context.Context, *sekai.CustomprofileshaperesourceMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofileshaperesourceFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofileshaperesourceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofileshaperesourceMutation", m)
+}
+
+// The CustomprofilestorybackgroundresourceFunc type is an adapter to allow the use of ordinary
+// function as Customprofilestorybackgroundresource mutator.
+type CustomprofilestorybackgroundresourceFunc func(context.Context, *sekai.CustomprofilestorybackgroundresourceMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofilestorybackgroundresourceFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofilestorybackgroundresourceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofilestorybackgroundresourceMutation", m)
+}
+
+// The CustomprofiletextcolorFunc type is an adapter to allow the use of ordinary
+// function as Customprofiletextcolor mutator.
+type CustomprofiletextcolorFunc func(context.Context, *sekai.CustomprofiletextcolorMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofiletextcolorFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofiletextcolorMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofiletextcolorMutation", m)
+}
+
+// The CustomprofiletextfontFunc type is an adapter to allow the use of ordinary
+// function as Customprofiletextfont mutator.
+type CustomprofiletextfontFunc func(context.Context, *sekai.CustomprofiletextfontMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofiletextfontFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofiletextfontMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofiletextfontMutation", m)
+}
+
+// The CustomprofileuserinterfaceiconresourceFunc type is an adapter to allow the use of ordinary
+// function as Customprofileuserinterfaceiconresource mutator.
+type CustomprofileuserinterfaceiconresourceFunc func(context.Context, *sekai.CustomprofileuserinterfaceiconresourceMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomprofileuserinterfaceiconresourceFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.CustomprofileuserinterfaceiconresourceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.CustomprofileuserinterfaceiconresourceMutation", m)
+}
+
 // The EventFunc type is an adapter to allow the use of ordinary
 // function as Event mutator.
 type EventFunc func(context.Context, *sekai.EventMutation) (sekai.Value, error)
@@ -558,6 +702,18 @@ func (f MusicArtistFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Va
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.MusicArtistMutation", m)
+}
+
+// The MusiccategorieFunc type is an adapter to allow the use of ordinary
+// function as Musiccategorie mutator.
+type MusiccategorieFunc func(context.Context, *sekai.MusiccategorieMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MusiccategorieFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.MusiccategorieMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.MusiccategorieMutation", m)
 }
 
 // The MusicdifficultieFunc type is an adapter to allow the use of ordinary
@@ -1028,6 +1184,18 @@ func (f NgwordFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.NgwordMutation", m)
 }
 
+// The OmikujiFunc type is an adapter to allow the use of ordinary
+// function as Omikuji mutator.
+type OmikujiFunc func(context.Context, *sekai.OmikujiMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f OmikujiFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.OmikujiMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.OmikujiMutation", m)
+}
+
 // The OutsidecharacterFunc type is an adapter to allow the use of ordinary
 // function as Outsidecharacter mutator.
 type OutsidecharacterFunc func(context.Context, *sekai.OutsidecharacterMutation) (sekai.Value, error)
@@ -1146,6 +1314,18 @@ func (f StampFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, e
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.StampMutation", m)
+}
+
+// The UnitstoryepisodegroupFunc type is an adapter to allow the use of ordinary
+// function as Unitstoryepisodegroup mutator.
+type UnitstoryepisodegroupFunc func(context.Context, *sekai.UnitstoryepisodegroupMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f UnitstoryepisodegroupFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.UnitstoryepisodegroupMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.UnitstoryepisodegroupMutation", m)
 }
 
 // The VirtualliveFunc type is an adapter to allow the use of ordinary

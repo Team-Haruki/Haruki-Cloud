@@ -60,6 +60,30 @@ type Tx struct {
 	Costume3D *Costume3DClient
 	// Custommusicscoretag is the client for interacting with the Custommusicscoretag builders.
 	Custommusicscoretag *CustommusicscoretagClient
+	// Customprofilecharactericonresource is the client for interacting with the Customprofilecharactericonresource builders.
+	Customprofilecharactericonresource *CustomprofilecharactericonresourceClient
+	// Customprofilecollectionresource is the client for interacting with the Customprofilecollectionresource builders.
+	Customprofilecollectionresource *CustomprofilecollectionresourceClient
+	// Customprofileetcresource is the client for interacting with the Customprofileetcresource builders.
+	Customprofileetcresource *CustomprofileetcresourceClient
+	// Customprofilegeneralbackgroundresource is the client for interacting with the Customprofilegeneralbackgroundresource builders.
+	Customprofilegeneralbackgroundresource *CustomprofilegeneralbackgroundresourceClient
+	// Customprofilematerialresource is the client for interacting with the Customprofilematerialresource builders.
+	Customprofilematerialresource *CustomprofilematerialresourceClient
+	// Customprofilememberstandingpictureresource is the client for interacting with the Customprofilememberstandingpictureresource builders.
+	Customprofilememberstandingpictureresource *CustomprofilememberstandingpictureresourceClient
+	// Customprofileplayerinforesource is the client for interacting with the Customprofileplayerinforesource builders.
+	Customprofileplayerinforesource *CustomprofileplayerinforesourceClient
+	// Customprofileshaperesource is the client for interacting with the Customprofileshaperesource builders.
+	Customprofileshaperesource *CustomprofileshaperesourceClient
+	// Customprofilestorybackgroundresource is the client for interacting with the Customprofilestorybackgroundresource builders.
+	Customprofilestorybackgroundresource *CustomprofilestorybackgroundresourceClient
+	// Customprofiletextcolor is the client for interacting with the Customprofiletextcolor builders.
+	Customprofiletextcolor *CustomprofiletextcolorClient
+	// Customprofiletextfont is the client for interacting with the Customprofiletextfont builders.
+	Customprofiletextfont *CustomprofiletextfontClient
+	// Customprofileuserinterfaceiconresource is the client for interacting with the Customprofileuserinterfaceiconresource builders.
+	Customprofileuserinterfaceiconresource *CustomprofileuserinterfaceiconresourceClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
 	// Eventcard is the client for interacting with the Eventcard builders.
@@ -104,6 +128,8 @@ type Tx struct {
 	Music *MusicClient
 	// MusicArtist is the client for interacting with the MusicArtist builders.
 	MusicArtist *MusicArtistClient
+	// Musiccategorie is the client for interacting with the Musiccategorie builders.
+	Musiccategorie *MusiccategorieClient
 	// Musicdifficultie is the client for interacting with the Musicdifficultie builders.
 	Musicdifficultie *MusicdifficultieClient
 	// Musictag is the client for interacting with the Musictag builders.
@@ -182,6 +208,8 @@ type Tx struct {
 	Mysekaisitelevel *MysekaisitelevelClient
 	// Ngword is the client for interacting with the Ngword builders.
 	Ngword *NgwordClient
+	// Omikuji is the client for interacting with the Omikuji builders.
+	Omikuji *OmikujiClient
 	// Outsidecharacter is the client for interacting with the Outsidecharacter builders.
 	Outsidecharacter *OutsidecharacterClient
 	// Playerframe is the client for interacting with the Playerframe builders.
@@ -202,6 +230,8 @@ type Tx struct {
 	Skillpracticeticket *SkillpracticeticketClient
 	// Stamp is the client for interacting with the Stamp builders.
 	Stamp *StampClient
+	// Unitstoryepisodegroup is the client for interacting with the Unitstoryepisodegroup builders.
+	Unitstoryepisodegroup *UnitstoryepisodegroupClient
 	// Virtuallive is the client for interacting with the Virtuallive builders.
 	Virtuallive *VirtualliveClient
 	// Worldbloom is the client for interacting with the Worldbloom builders.
@@ -369,6 +399,18 @@ func (tx *Tx) init() {
 	tx.Cheerfulcarnivalteam = NewCheerfulcarnivalteamClient(tx.config)
 	tx.Costume3D = NewCostume3DClient(tx.config)
 	tx.Custommusicscoretag = NewCustommusicscoretagClient(tx.config)
+	tx.Customprofilecharactericonresource = NewCustomprofilecharactericonresourceClient(tx.config)
+	tx.Customprofilecollectionresource = NewCustomprofilecollectionresourceClient(tx.config)
+	tx.Customprofileetcresource = NewCustomprofileetcresourceClient(tx.config)
+	tx.Customprofilegeneralbackgroundresource = NewCustomprofilegeneralbackgroundresourceClient(tx.config)
+	tx.Customprofilematerialresource = NewCustomprofilematerialresourceClient(tx.config)
+	tx.Customprofilememberstandingpictureresource = NewCustomprofilememberstandingpictureresourceClient(tx.config)
+	tx.Customprofileplayerinforesource = NewCustomprofileplayerinforesourceClient(tx.config)
+	tx.Customprofileshaperesource = NewCustomprofileshaperesourceClient(tx.config)
+	tx.Customprofilestorybackgroundresource = NewCustomprofilestorybackgroundresourceClient(tx.config)
+	tx.Customprofiletextcolor = NewCustomprofiletextcolorClient(tx.config)
+	tx.Customprofiletextfont = NewCustomprofiletextfontClient(tx.config)
+	tx.Customprofileuserinterfaceiconresource = NewCustomprofileuserinterfaceiconresourceClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
 	tx.Eventcard = NewEventcardClient(tx.config)
 	tx.Eventdeckbonuse = NewEventdeckbonuseClient(tx.config)
@@ -391,6 +433,7 @@ func (tx *Tx) init() {
 	tx.Material = NewMaterialClient(tx.config)
 	tx.Music = NewMusicClient(tx.config)
 	tx.MusicArtist = NewMusicArtistClient(tx.config)
+	tx.Musiccategorie = NewMusiccategorieClient(tx.config)
 	tx.Musicdifficultie = NewMusicdifficultieClient(tx.config)
 	tx.Musictag = NewMusictagClient(tx.config)
 	tx.Musicvocal = NewMusicvocalClient(tx.config)
@@ -430,6 +473,7 @@ func (tx *Tx) init() {
 	tx.Mysekaisitelayout = NewMysekaisitelayoutClient(tx.config)
 	tx.Mysekaisitelevel = NewMysekaisitelevelClient(tx.config)
 	tx.Ngword = NewNgwordClient(tx.config)
+	tx.Omikuji = NewOmikujiClient(tx.config)
 	tx.Outsidecharacter = NewOutsidecharacterClient(tx.config)
 	tx.Playerframe = NewPlayerframeClient(tx.config)
 	tx.Playerframegroup = NewPlayerframegroupClient(tx.config)
@@ -440,6 +484,7 @@ func (tx *Tx) init() {
 	tx.Skill = NewSkillClient(tx.config)
 	tx.Skillpracticeticket = NewSkillpracticeticketClient(tx.config)
 	tx.Stamp = NewStampClient(tx.config)
+	tx.Unitstoryepisodegroup = NewUnitstoryepisodegroupClient(tx.config)
 	tx.Virtuallive = NewVirtualliveClient(tx.config)
 	tx.Worldbloom = NewWorldbloomClient(tx.config)
 	tx.Worldbloomchapterrankingrewardrange = NewWorldbloomchapterrankingrewardrangeClient(tx.config)

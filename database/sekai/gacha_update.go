@@ -622,6 +622,80 @@ func (_u *GachaUpdate) ClearDailySpinLimit() *GachaUpdate {
 	return _u
 }
 
+// SetIsSelectCharacter sets the "is_select_character" field.
+func (_u *GachaUpdate) SetIsSelectCharacter(v bool) *GachaUpdate {
+	_u.mutation.SetIsSelectCharacter(v)
+	return _u
+}
+
+// SetNillableIsSelectCharacter sets the "is_select_character" field if the given value is not nil.
+func (_u *GachaUpdate) SetNillableIsSelectCharacter(v *bool) *GachaUpdate {
+	if v != nil {
+		_u.SetIsSelectCharacter(*v)
+	}
+	return _u
+}
+
+// ClearIsSelectCharacter clears the value of the "is_select_character" field.
+func (_u *GachaUpdate) ClearIsSelectCharacter() *GachaUpdate {
+	_u.mutation.ClearIsSelectCharacter()
+	return _u
+}
+
+// SetGachaCharacterBonusGroupID sets the "gacha_character_bonus_group_id" field.
+func (_u *GachaUpdate) SetGachaCharacterBonusGroupID(v int64) *GachaUpdate {
+	_u.mutation.ResetGachaCharacterBonusGroupID()
+	_u.mutation.SetGachaCharacterBonusGroupID(v)
+	return _u
+}
+
+// SetNillableGachaCharacterBonusGroupID sets the "gacha_character_bonus_group_id" field if the given value is not nil.
+func (_u *GachaUpdate) SetNillableGachaCharacterBonusGroupID(v *int64) *GachaUpdate {
+	if v != nil {
+		_u.SetGachaCharacterBonusGroupID(*v)
+	}
+	return _u
+}
+
+// AddGachaCharacterBonusGroupID adds value to the "gacha_character_bonus_group_id" field.
+func (_u *GachaUpdate) AddGachaCharacterBonusGroupID(v int64) *GachaUpdate {
+	_u.mutation.AddGachaCharacterBonusGroupID(v)
+	return _u
+}
+
+// ClearGachaCharacterBonusGroupID clears the value of the "gacha_character_bonus_group_id" field.
+func (_u *GachaUpdate) ClearGachaCharacterBonusGroupID() *GachaUpdate {
+	_u.mutation.ClearGachaCharacterBonusGroupID()
+	return _u
+}
+
+// SetRateChoiceGachaWishGroupID sets the "rate_choice_gacha_wish_group_id" field.
+func (_u *GachaUpdate) SetRateChoiceGachaWishGroupID(v int64) *GachaUpdate {
+	_u.mutation.ResetRateChoiceGachaWishGroupID()
+	_u.mutation.SetRateChoiceGachaWishGroupID(v)
+	return _u
+}
+
+// SetNillableRateChoiceGachaWishGroupID sets the "rate_choice_gacha_wish_group_id" field if the given value is not nil.
+func (_u *GachaUpdate) SetNillableRateChoiceGachaWishGroupID(v *int64) *GachaUpdate {
+	if v != nil {
+		_u.SetRateChoiceGachaWishGroupID(*v)
+	}
+	return _u
+}
+
+// AddRateChoiceGachaWishGroupID adds value to the "rate_choice_gacha_wish_group_id" field.
+func (_u *GachaUpdate) AddRateChoiceGachaWishGroupID(v int64) *GachaUpdate {
+	_u.mutation.AddRateChoiceGachaWishGroupID(v)
+	return _u
+}
+
+// ClearRateChoiceGachaWishGroupID clears the value of the "rate_choice_gacha_wish_group_id" field.
+func (_u *GachaUpdate) ClearRateChoiceGachaWishGroupID() *GachaUpdate {
+	_u.mutation.ClearRateChoiceGachaWishGroupID()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *GachaUpdate) SetServerRegion(v string) *GachaUpdate {
 	_u.mutation.SetServerRegion(v)
@@ -901,6 +975,30 @@ func (_u *GachaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.DailySpinLimitCleared() {
 		_spec.ClearField(gacha.FieldDailySpinLimit, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.IsSelectCharacter(); ok {
+		_spec.SetField(gacha.FieldIsSelectCharacter, field.TypeBool, value)
+	}
+	if _u.mutation.IsSelectCharacterCleared() {
+		_spec.ClearField(gacha.FieldIsSelectCharacter, field.TypeBool)
+	}
+	if value, ok := _u.mutation.GachaCharacterBonusGroupID(); ok {
+		_spec.SetField(gacha.FieldGachaCharacterBonusGroupID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedGachaCharacterBonusGroupID(); ok {
+		_spec.AddField(gacha.FieldGachaCharacterBonusGroupID, field.TypeInt64, value)
+	}
+	if _u.mutation.GachaCharacterBonusGroupIDCleared() {
+		_spec.ClearField(gacha.FieldGachaCharacterBonusGroupID, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.RateChoiceGachaWishGroupID(); ok {
+		_spec.SetField(gacha.FieldRateChoiceGachaWishGroupID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedRateChoiceGachaWishGroupID(); ok {
+		_spec.AddField(gacha.FieldRateChoiceGachaWishGroupID, field.TypeInt64, value)
+	}
+	if _u.mutation.RateChoiceGachaWishGroupIDCleared() {
+		_spec.ClearField(gacha.FieldRateChoiceGachaWishGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(gacha.FieldServerRegion, field.TypeString, value)
@@ -1518,6 +1616,80 @@ func (_u *GachaUpdateOne) ClearDailySpinLimit() *GachaUpdateOne {
 	return _u
 }
 
+// SetIsSelectCharacter sets the "is_select_character" field.
+func (_u *GachaUpdateOne) SetIsSelectCharacter(v bool) *GachaUpdateOne {
+	_u.mutation.SetIsSelectCharacter(v)
+	return _u
+}
+
+// SetNillableIsSelectCharacter sets the "is_select_character" field if the given value is not nil.
+func (_u *GachaUpdateOne) SetNillableIsSelectCharacter(v *bool) *GachaUpdateOne {
+	if v != nil {
+		_u.SetIsSelectCharacter(*v)
+	}
+	return _u
+}
+
+// ClearIsSelectCharacter clears the value of the "is_select_character" field.
+func (_u *GachaUpdateOne) ClearIsSelectCharacter() *GachaUpdateOne {
+	_u.mutation.ClearIsSelectCharacter()
+	return _u
+}
+
+// SetGachaCharacterBonusGroupID sets the "gacha_character_bonus_group_id" field.
+func (_u *GachaUpdateOne) SetGachaCharacterBonusGroupID(v int64) *GachaUpdateOne {
+	_u.mutation.ResetGachaCharacterBonusGroupID()
+	_u.mutation.SetGachaCharacterBonusGroupID(v)
+	return _u
+}
+
+// SetNillableGachaCharacterBonusGroupID sets the "gacha_character_bonus_group_id" field if the given value is not nil.
+func (_u *GachaUpdateOne) SetNillableGachaCharacterBonusGroupID(v *int64) *GachaUpdateOne {
+	if v != nil {
+		_u.SetGachaCharacterBonusGroupID(*v)
+	}
+	return _u
+}
+
+// AddGachaCharacterBonusGroupID adds value to the "gacha_character_bonus_group_id" field.
+func (_u *GachaUpdateOne) AddGachaCharacterBonusGroupID(v int64) *GachaUpdateOne {
+	_u.mutation.AddGachaCharacterBonusGroupID(v)
+	return _u
+}
+
+// ClearGachaCharacterBonusGroupID clears the value of the "gacha_character_bonus_group_id" field.
+func (_u *GachaUpdateOne) ClearGachaCharacterBonusGroupID() *GachaUpdateOne {
+	_u.mutation.ClearGachaCharacterBonusGroupID()
+	return _u
+}
+
+// SetRateChoiceGachaWishGroupID sets the "rate_choice_gacha_wish_group_id" field.
+func (_u *GachaUpdateOne) SetRateChoiceGachaWishGroupID(v int64) *GachaUpdateOne {
+	_u.mutation.ResetRateChoiceGachaWishGroupID()
+	_u.mutation.SetRateChoiceGachaWishGroupID(v)
+	return _u
+}
+
+// SetNillableRateChoiceGachaWishGroupID sets the "rate_choice_gacha_wish_group_id" field if the given value is not nil.
+func (_u *GachaUpdateOne) SetNillableRateChoiceGachaWishGroupID(v *int64) *GachaUpdateOne {
+	if v != nil {
+		_u.SetRateChoiceGachaWishGroupID(*v)
+	}
+	return _u
+}
+
+// AddRateChoiceGachaWishGroupID adds value to the "rate_choice_gacha_wish_group_id" field.
+func (_u *GachaUpdateOne) AddRateChoiceGachaWishGroupID(v int64) *GachaUpdateOne {
+	_u.mutation.AddRateChoiceGachaWishGroupID(v)
+	return _u
+}
+
+// ClearRateChoiceGachaWishGroupID clears the value of the "rate_choice_gacha_wish_group_id" field.
+func (_u *GachaUpdateOne) ClearRateChoiceGachaWishGroupID() *GachaUpdateOne {
+	_u.mutation.ClearRateChoiceGachaWishGroupID()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *GachaUpdateOne) SetServerRegion(v string) *GachaUpdateOne {
 	_u.mutation.SetServerRegion(v)
@@ -1827,6 +1999,30 @@ func (_u *GachaUpdateOne) sqlSave(ctx context.Context) (_node *Gacha, err error)
 	}
 	if _u.mutation.DailySpinLimitCleared() {
 		_spec.ClearField(gacha.FieldDailySpinLimit, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.IsSelectCharacter(); ok {
+		_spec.SetField(gacha.FieldIsSelectCharacter, field.TypeBool, value)
+	}
+	if _u.mutation.IsSelectCharacterCleared() {
+		_spec.ClearField(gacha.FieldIsSelectCharacter, field.TypeBool)
+	}
+	if value, ok := _u.mutation.GachaCharacterBonusGroupID(); ok {
+		_spec.SetField(gacha.FieldGachaCharacterBonusGroupID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedGachaCharacterBonusGroupID(); ok {
+		_spec.AddField(gacha.FieldGachaCharacterBonusGroupID, field.TypeInt64, value)
+	}
+	if _u.mutation.GachaCharacterBonusGroupIDCleared() {
+		_spec.ClearField(gacha.FieldGachaCharacterBonusGroupID, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.RateChoiceGachaWishGroupID(); ok {
+		_spec.SetField(gacha.FieldRateChoiceGachaWishGroupID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedRateChoiceGachaWishGroupID(); ok {
+		_spec.AddField(gacha.FieldRateChoiceGachaWishGroupID, field.TypeInt64, value)
+	}
+	if _u.mutation.RateChoiceGachaWishGroupIDCleared() {
+		_spec.ClearField(gacha.FieldRateChoiceGachaWishGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(gacha.FieldServerRegion, field.TypeString, value)

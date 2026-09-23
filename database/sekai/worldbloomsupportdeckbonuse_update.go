@@ -4,6 +4,7 @@ package sekai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"haruki-cloud/database/sekai/predicate"
@@ -11,6 +12,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -44,6 +46,60 @@ func (_u *WorldbloomsupportdeckbonuseUpdate) SetNillableCardRarityType(v *string
 // ClearCardRarityType clears the value of the "card_rarity_type" field.
 func (_u *WorldbloomsupportdeckbonuseUpdate) ClearCardRarityType() *WorldbloomsupportdeckbonuseUpdate {
 	_u.mutation.ClearCardRarityType()
+	return _u
+}
+
+// SetWorldBloomSupportDeckCharacterBonuses sets the "world_bloom_support_deck_character_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdate) SetWorldBloomSupportDeckCharacterBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdate {
+	_u.mutation.SetWorldBloomSupportDeckCharacterBonuses(v)
+	return _u
+}
+
+// AppendWorldBloomSupportDeckCharacterBonuses appends value to the "world_bloom_support_deck_character_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdate) AppendWorldBloomSupportDeckCharacterBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdate {
+	_u.mutation.AppendWorldBloomSupportDeckCharacterBonuses(v)
+	return _u
+}
+
+// ClearWorldBloomSupportDeckCharacterBonuses clears the value of the "world_bloom_support_deck_character_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdate) ClearWorldBloomSupportDeckCharacterBonuses() *WorldbloomsupportdeckbonuseUpdate {
+	_u.mutation.ClearWorldBloomSupportDeckCharacterBonuses()
+	return _u
+}
+
+// SetWorldBloomSupportDeckMasterRankBonuses sets the "world_bloom_support_deck_master_rank_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdate) SetWorldBloomSupportDeckMasterRankBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdate {
+	_u.mutation.SetWorldBloomSupportDeckMasterRankBonuses(v)
+	return _u
+}
+
+// AppendWorldBloomSupportDeckMasterRankBonuses appends value to the "world_bloom_support_deck_master_rank_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdate) AppendWorldBloomSupportDeckMasterRankBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdate {
+	_u.mutation.AppendWorldBloomSupportDeckMasterRankBonuses(v)
+	return _u
+}
+
+// ClearWorldBloomSupportDeckMasterRankBonuses clears the value of the "world_bloom_support_deck_master_rank_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdate) ClearWorldBloomSupportDeckMasterRankBonuses() *WorldbloomsupportdeckbonuseUpdate {
+	_u.mutation.ClearWorldBloomSupportDeckMasterRankBonuses()
+	return _u
+}
+
+// SetWorldBloomSupportDeckSkillLevelBonuses sets the "world_bloom_support_deck_skill_level_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdate) SetWorldBloomSupportDeckSkillLevelBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdate {
+	_u.mutation.SetWorldBloomSupportDeckSkillLevelBonuses(v)
+	return _u
+}
+
+// AppendWorldBloomSupportDeckSkillLevelBonuses appends value to the "world_bloom_support_deck_skill_level_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdate) AppendWorldBloomSupportDeckSkillLevelBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdate {
+	_u.mutation.AppendWorldBloomSupportDeckSkillLevelBonuses(v)
+	return _u
+}
+
+// ClearWorldBloomSupportDeckSkillLevelBonuses clears the value of the "world_bloom_support_deck_skill_level_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdate) ClearWorldBloomSupportDeckSkillLevelBonuses() *WorldbloomsupportdeckbonuseUpdate {
+	_u.mutation.ClearWorldBloomSupportDeckSkillLevelBonuses()
 	return _u
 }
 
@@ -108,6 +164,39 @@ func (_u *WorldbloomsupportdeckbonuseUpdate) sqlSave(ctx context.Context) (_node
 	if _u.mutation.CardRarityTypeCleared() {
 		_spec.ClearField(worldbloomsupportdeckbonuse.FieldCardRarityType, field.TypeString)
 	}
+	if value, ok := _u.mutation.WorldBloomSupportDeckCharacterBonuses(); ok {
+		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckCharacterBonuses(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, value)
+		})
+	}
+	if _u.mutation.WorldBloomSupportDeckCharacterBonusesCleared() {
+		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.WorldBloomSupportDeckMasterRankBonuses(); ok {
+		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckMasterRankBonuses(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, value)
+		})
+	}
+	if _u.mutation.WorldBloomSupportDeckMasterRankBonusesCleared() {
+		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.WorldBloomSupportDeckSkillLevelBonuses(); ok {
+		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckSkillLevelBonuses(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, value)
+		})
+	}
+	if _u.mutation.WorldBloomSupportDeckSkillLevelBonusesCleared() {
+		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, field.TypeJSON)
+	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(worldbloomsupportdeckbonuse.FieldServerRegion, field.TypeString, value)
 	}
@@ -148,6 +237,60 @@ func (_u *WorldbloomsupportdeckbonuseUpdateOne) SetNillableCardRarityType(v *str
 // ClearCardRarityType clears the value of the "card_rarity_type" field.
 func (_u *WorldbloomsupportdeckbonuseUpdateOne) ClearCardRarityType() *WorldbloomsupportdeckbonuseUpdateOne {
 	_u.mutation.ClearCardRarityType()
+	return _u
+}
+
+// SetWorldBloomSupportDeckCharacterBonuses sets the "world_bloom_support_deck_character_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdateOne) SetWorldBloomSupportDeckCharacterBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdateOne {
+	_u.mutation.SetWorldBloomSupportDeckCharacterBonuses(v)
+	return _u
+}
+
+// AppendWorldBloomSupportDeckCharacterBonuses appends value to the "world_bloom_support_deck_character_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdateOne) AppendWorldBloomSupportDeckCharacterBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdateOne {
+	_u.mutation.AppendWorldBloomSupportDeckCharacterBonuses(v)
+	return _u
+}
+
+// ClearWorldBloomSupportDeckCharacterBonuses clears the value of the "world_bloom_support_deck_character_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdateOne) ClearWorldBloomSupportDeckCharacterBonuses() *WorldbloomsupportdeckbonuseUpdateOne {
+	_u.mutation.ClearWorldBloomSupportDeckCharacterBonuses()
+	return _u
+}
+
+// SetWorldBloomSupportDeckMasterRankBonuses sets the "world_bloom_support_deck_master_rank_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdateOne) SetWorldBloomSupportDeckMasterRankBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdateOne {
+	_u.mutation.SetWorldBloomSupportDeckMasterRankBonuses(v)
+	return _u
+}
+
+// AppendWorldBloomSupportDeckMasterRankBonuses appends value to the "world_bloom_support_deck_master_rank_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdateOne) AppendWorldBloomSupportDeckMasterRankBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdateOne {
+	_u.mutation.AppendWorldBloomSupportDeckMasterRankBonuses(v)
+	return _u
+}
+
+// ClearWorldBloomSupportDeckMasterRankBonuses clears the value of the "world_bloom_support_deck_master_rank_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdateOne) ClearWorldBloomSupportDeckMasterRankBonuses() *WorldbloomsupportdeckbonuseUpdateOne {
+	_u.mutation.ClearWorldBloomSupportDeckMasterRankBonuses()
+	return _u
+}
+
+// SetWorldBloomSupportDeckSkillLevelBonuses sets the "world_bloom_support_deck_skill_level_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdateOne) SetWorldBloomSupportDeckSkillLevelBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdateOne {
+	_u.mutation.SetWorldBloomSupportDeckSkillLevelBonuses(v)
+	return _u
+}
+
+// AppendWorldBloomSupportDeckSkillLevelBonuses appends value to the "world_bloom_support_deck_skill_level_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdateOne) AppendWorldBloomSupportDeckSkillLevelBonuses(v json.RawMessage) *WorldbloomsupportdeckbonuseUpdateOne {
+	_u.mutation.AppendWorldBloomSupportDeckSkillLevelBonuses(v)
+	return _u
+}
+
+// ClearWorldBloomSupportDeckSkillLevelBonuses clears the value of the "world_bloom_support_deck_skill_level_bonuses" field.
+func (_u *WorldbloomsupportdeckbonuseUpdateOne) ClearWorldBloomSupportDeckSkillLevelBonuses() *WorldbloomsupportdeckbonuseUpdateOne {
+	_u.mutation.ClearWorldBloomSupportDeckSkillLevelBonuses()
 	return _u
 }
 
@@ -241,6 +384,39 @@ func (_u *WorldbloomsupportdeckbonuseUpdateOne) sqlSave(ctx context.Context) (_n
 	}
 	if _u.mutation.CardRarityTypeCleared() {
 		_spec.ClearField(worldbloomsupportdeckbonuse.FieldCardRarityType, field.TypeString)
+	}
+	if value, ok := _u.mutation.WorldBloomSupportDeckCharacterBonuses(); ok {
+		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckCharacterBonuses(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, value)
+		})
+	}
+	if _u.mutation.WorldBloomSupportDeckCharacterBonusesCleared() {
+		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.WorldBloomSupportDeckMasterRankBonuses(); ok {
+		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckMasterRankBonuses(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, value)
+		})
+	}
+	if _u.mutation.WorldBloomSupportDeckMasterRankBonusesCleared() {
+		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.WorldBloomSupportDeckSkillLevelBonuses(); ok {
+		_spec.SetField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedWorldBloomSupportDeckSkillLevelBonuses(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, value)
+		})
+	}
+	if _u.mutation.WorldBloomSupportDeckSkillLevelBonusesCleared() {
+		_spec.ClearField(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(worldbloomsupportdeckbonuse.FieldServerRegion, field.TypeString, value)

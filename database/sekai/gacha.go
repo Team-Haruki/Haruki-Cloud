@@ -67,6 +67,12 @@ type Gacha struct {
 	GachaFreebieGroupID int64 `json:"gacha_freebie_group_id,omitempty"`
 	// DailySpinLimit holds the value of the "daily_spin_limit" field.
 	DailySpinLimit int64 `json:"daily_spin_limit,omitempty"`
+	// IsSelectCharacter holds the value of the "is_select_character" field.
+	IsSelectCharacter bool `json:"is_select_character,omitempty"`
+	// GachaCharacterBonusGroupID holds the value of the "gacha_character_bonus_group_id" field.
+	GachaCharacterBonusGroupID int64 `json:"gacha_character_bonus_group_id,omitempty"`
+	// RateChoiceGachaWishGroupID holds the value of the "rate_choice_gacha_wish_group_id" field.
+	RateChoiceGachaWishGroupID int64 `json:"rate_choice_gacha_wish_group_id,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -79,9 +85,9 @@ func (*Gacha) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case gacha.FieldGachaCardRarityRates, gacha.FieldGachaDetails, gacha.FieldGachaBehaviors, gacha.FieldGachaPickups, gacha.FieldGachaPickupCostumes, gacha.FieldGachaInformation:
 			values[i] = new([]byte)
-		case gacha.FieldIsShowPeriod:
+		case gacha.FieldIsShowPeriod, gacha.FieldIsSelectCharacter:
 			values[i] = new(sql.NullBool)
-		case gacha.FieldID, gacha.FieldGameID, gacha.FieldSeq, gacha.FieldGachaCardRarityRateGroupID, gacha.FieldStartAt, gacha.FieldEndAt, gacha.FieldGachaCeilItemID, gacha.FieldWishSelectCount, gacha.FieldWishFixedSelectCount, gacha.FieldWishLimitedSelectCount, gacha.FieldDrawableGachaHour, gacha.FieldGachaBonusID, gacha.FieldSpinLimit, gacha.FieldGachaBonusItemReceivableRewardGroupID, gacha.FieldGachaFreebieGroupID, gacha.FieldDailySpinLimit:
+		case gacha.FieldID, gacha.FieldGameID, gacha.FieldSeq, gacha.FieldGachaCardRarityRateGroupID, gacha.FieldStartAt, gacha.FieldEndAt, gacha.FieldGachaCeilItemID, gacha.FieldWishSelectCount, gacha.FieldWishFixedSelectCount, gacha.FieldWishLimitedSelectCount, gacha.FieldDrawableGachaHour, gacha.FieldGachaBonusID, gacha.FieldSpinLimit, gacha.FieldGachaBonusItemReceivableRewardGroupID, gacha.FieldGachaFreebieGroupID, gacha.FieldDailySpinLimit, gacha.FieldGachaCharacterBonusGroupID, gacha.FieldRateChoiceGachaWishGroupID:
 			values[i] = new(sql.NullInt64)
 		case gacha.FieldGachaType, gacha.FieldName, gacha.FieldAssetbundleName, gacha.FieldServerRegion:
 			values[i] = new(sql.NullString)
@@ -268,6 +274,24 @@ func (_m *Gacha) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.DailySpinLimit = value.Int64
 			}
+		case gacha.FieldIsSelectCharacter:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_select_character", values[i])
+			} else if value.Valid {
+				_m.IsSelectCharacter = value.Bool
+			}
+		case gacha.FieldGachaCharacterBonusGroupID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field gacha_character_bonus_group_id", values[i])
+			} else if value.Valid {
+				_m.GachaCharacterBonusGroupID = value.Int64
+			}
+		case gacha.FieldRateChoiceGachaWishGroupID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field rate_choice_gacha_wish_group_id", values[i])
+			} else if value.Valid {
+				_m.RateChoiceGachaWishGroupID = value.Int64
+			}
 		case gacha.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field server_region", values[i])
@@ -384,6 +408,15 @@ func (_m *Gacha) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("daily_spin_limit=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DailySpinLimit))
+	builder.WriteString(", ")
+	builder.WriteString("is_select_character=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsSelectCharacter))
+	builder.WriteString(", ")
+	builder.WriteString("gacha_character_bonus_group_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.GachaCharacterBonusGroupID))
+	builder.WriteString(", ")
+	builder.WriteString("rate_choice_gacha_wish_group_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RateChoiceGachaWishGroupID))
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

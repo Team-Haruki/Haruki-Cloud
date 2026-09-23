@@ -13,6 +13,12 @@ const (
 	FieldID = "id"
 	// FieldCardRarityType holds the string denoting the card_rarity_type field in the database.
 	FieldCardRarityType = "card_rarity_type"
+	// FieldWorldBloomSupportDeckCharacterBonuses holds the string denoting the world_bloom_support_deck_character_bonuses field in the database.
+	FieldWorldBloomSupportDeckCharacterBonuses = "world_bloom_support_deck_character_bonuses"
+	// FieldWorldBloomSupportDeckMasterRankBonuses holds the string denoting the world_bloom_support_deck_master_rank_bonuses field in the database.
+	FieldWorldBloomSupportDeckMasterRankBonuses = "world_bloom_support_deck_master_rank_bonuses"
+	// FieldWorldBloomSupportDeckSkillLevelBonuses holds the string denoting the world_bloom_support_deck_skill_level_bonuses field in the database.
+	FieldWorldBloomSupportDeckSkillLevelBonuses = "world_bloom_support_deck_skill_level_bonuses"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the worldbloomsupportdeckbonuse in the database.
@@ -23,6 +29,9 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldCardRarityType,
+	FieldWorldBloomSupportDeckCharacterBonuses,
+	FieldWorldBloomSupportDeckMasterRankBonuses,
+	FieldWorldBloomSupportDeckSkillLevelBonuses,
 	FieldServerRegion,
 }
 

@@ -21,7 +21,7 @@ func TestCustomProfileMasterCacheInvalidatesAndOwnsRows(t *testing.T) {
 		t.Fatal(err)
 	}
 	app := &renderapp.App{Config: renderapp.Config{
-		LocalMasterdata: renderapp.LocalMasterdataConfig{Dir: dir},
+		LocalMasterdata: renderapp.LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: dir},
 	}}
 	ctx, trace := commandtrace.WithTrace(context.Background())
 	ids := map[int]struct{}{1: {}}
@@ -71,7 +71,7 @@ func TestCustomProfileMasterCacheCoalescesConcurrentLoads(t *testing.T) {
 		t.Fatal(err)
 	}
 	app := &renderapp.App{Config: renderapp.Config{
-		LocalMasterdata: renderapp.LocalMasterdataConfig{Dir: dir},
+		LocalMasterdata: renderapp.LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: dir},
 	}}
 	ids := map[int]struct{}{1: {}}
 
@@ -128,7 +128,7 @@ func BenchmarkCustomProfileMasterCacheWarm(b *testing.B) {
 		b.Fatal(err)
 	}
 	app := &renderapp.App{Config: renderapp.Config{
-		LocalMasterdata: renderapp.LocalMasterdataConfig{Dir: dir},
+		LocalMasterdata: renderapp.LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: dir},
 	}}
 	ids := map[int]struct{}{1: {}}
 	if _, err := loadCustomProfileMasterTable(context.Background(), app, renderregion.JP, "test.json", ids); err != nil {

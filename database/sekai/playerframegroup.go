@@ -24,6 +24,10 @@ type Playerframegroup struct {
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
+	// PlayerFrameType holds the value of the "player_frame_type" field.
+	PlayerFrameType string `json:"player_frame_type,omitempty"`
+	// EditCount holds the value of the "edit_count" field.
+	EditCount int64 `json:"edit_count,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -34,9 +38,9 @@ func (*Playerframegroup) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case playerframegroup.FieldID, playerframegroup.FieldGameID, playerframegroup.FieldSeq:
+		case playerframegroup.FieldID, playerframegroup.FieldGameID, playerframegroup.FieldSeq, playerframegroup.FieldEditCount:
 			values[i] = new(sql.NullInt64)
-		case playerframegroup.FieldName, playerframegroup.FieldAssetbundleName, playerframegroup.FieldServerRegion:
+		case playerframegroup.FieldName, playerframegroup.FieldAssetbundleName, playerframegroup.FieldPlayerFrameType, playerframegroup.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -82,6 +86,18 @@ func (_m *Playerframegroup) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field assetbundle_name", values[i])
 			} else if value.Valid {
 				_m.AssetbundleName = value.String
+			}
+		case playerframegroup.FieldPlayerFrameType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field player_frame_type", values[i])
+			} else if value.Valid {
+				_m.PlayerFrameType = value.String
+			}
+		case playerframegroup.FieldEditCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field edit_count", values[i])
+			} else if value.Valid {
+				_m.EditCount = value.Int64
 			}
 		case playerframegroup.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -136,6 +152,12 @@ func (_m *Playerframegroup) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
 	builder.WriteString(_m.AssetbundleName)
+	builder.WriteString(", ")
+	builder.WriteString("player_frame_type=")
+	builder.WriteString(_m.PlayerFrameType)
+	builder.WriteString(", ")
+	builder.WriteString("edit_count=")
+	builder.WriteString(fmt.Sprintf("%v", _m.EditCount))
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

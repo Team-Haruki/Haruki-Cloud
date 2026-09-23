@@ -64,6 +64,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		HousingCompetitionRefreshInterval: cfg.MySekaiHousingCompetitionRefreshInterval,
 	})
 	inventoryController := inventory.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, inventory.MasterdataOptions{
+		Sekai:    sekaiClient,
 		LocalDir: inventoryMasterdataDir,
 	})
 	deckController := newAppDeckController(nil, nil, drawingClient, assetHelper, snapshotService, cfg)
@@ -464,17 +465,16 @@ func newAppImageCache(initCtx context.Context, cfg Config, index *imagecache.PGS
 	return client
 }
 
+// appMasterdataDirs resolves the local masterdata root. Every local reader,
+// the inventory tables included, is gated by the fallback flag: without it
+// the directories stay blank and the database is the only source.
 func appMasterdataDirs(cfg Config) (bool, string, string) {
 	localFallback := shouldEnableLocalMasterdataFallback(cfg)
 	localDir := ""
 	if localFallback {
 		localDir = resolveRenderProviderMasterdataDir(cfg)
 	}
-	inventoryDir := localDir
-	if inventoryDir == "" && strings.TrimSpace(cfg.LocalMasterdata.Dir) != "" {
-		inventoryDir = resolveRenderProviderMasterdataDirFromWD(cfg, currentWorkingDir())
-	}
-	return localFallback, localDir, inventoryDir
+	return localFallback, localDir, localDir
 }
 
 func shouldEnableLocalMasterdataFallback(cfg Config) bool {
@@ -531,6 +531,16 @@ func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refresh
 	}
 	loader.StartBackgroundRefresh(initCtx, refreshInterval)
 	return loader
+}
+
+// LocalMasterdataFallbackEnabled reports whether readers may fall back to
+// the local masterdata directory (pjsk_render.local_masterdata enabled with
+// allow_fallback or allow_leaks and a directory).
+func (a *App) LocalMasterdataFallbackEnabled() bool {
+	if a == nil {
+		return false
+	}
+	return shouldEnableLocalMasterdataFallback(a.Config)
 }
 
 func (a *App) AssetRoots() []string {

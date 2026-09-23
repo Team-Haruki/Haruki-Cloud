@@ -542,6 +542,53 @@ func (_u *MusicUpdate) ClearInfos() *MusicUpdate {
 	return _u
 }
 
+// SetSecForMusicScoreMaker sets the "sec_for_music_score_maker" field.
+func (_u *MusicUpdate) SetSecForMusicScoreMaker(v int64) *MusicUpdate {
+	_u.mutation.ResetSecForMusicScoreMaker()
+	_u.mutation.SetSecForMusicScoreMaker(v)
+	return _u
+}
+
+// SetNillableSecForMusicScoreMaker sets the "sec_for_music_score_maker" field if the given value is not nil.
+func (_u *MusicUpdate) SetNillableSecForMusicScoreMaker(v *int64) *MusicUpdate {
+	if v != nil {
+		_u.SetSecForMusicScoreMaker(*v)
+	}
+	return _u
+}
+
+// AddSecForMusicScoreMaker adds value to the "sec_for_music_score_maker" field.
+func (_u *MusicUpdate) AddSecForMusicScoreMaker(v int64) *MusicUpdate {
+	_u.mutation.AddSecForMusicScoreMaker(v)
+	return _u
+}
+
+// ClearSecForMusicScoreMaker clears the value of the "sec_for_music_score_maker" field.
+func (_u *MusicUpdate) ClearSecForMusicScoreMaker() *MusicUpdate {
+	_u.mutation.ClearSecForMusicScoreMaker()
+	return _u
+}
+
+// SetIsAvailableForMusicScoreMaker sets the "is_available_for_music_score_maker" field.
+func (_u *MusicUpdate) SetIsAvailableForMusicScoreMaker(v bool) *MusicUpdate {
+	_u.mutation.SetIsAvailableForMusicScoreMaker(v)
+	return _u
+}
+
+// SetNillableIsAvailableForMusicScoreMaker sets the "is_available_for_music_score_maker" field if the given value is not nil.
+func (_u *MusicUpdate) SetNillableIsAvailableForMusicScoreMaker(v *bool) *MusicUpdate {
+	if v != nil {
+		_u.SetIsAvailableForMusicScoreMaker(*v)
+	}
+	return _u
+}
+
+// ClearIsAvailableForMusicScoreMaker clears the value of the "is_available_for_music_score_maker" field.
+func (_u *MusicUpdate) ClearIsAvailableForMusicScoreMaker() *MusicUpdate {
+	_u.mutation.ClearIsAvailableForMusicScoreMaker()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *MusicUpdate) SetServerRegion(v string) *MusicUpdate {
 	_u.mutation.SetServerRegion(v)
@@ -771,6 +818,21 @@ func (_u *MusicUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.InfosCleared() {
 		_spec.ClearField(music.FieldInfos, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.SecForMusicScoreMaker(); ok {
+		_spec.SetField(music.FieldSecForMusicScoreMaker, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedSecForMusicScoreMaker(); ok {
+		_spec.AddField(music.FieldSecForMusicScoreMaker, field.TypeInt64, value)
+	}
+	if _u.mutation.SecForMusicScoreMakerCleared() {
+		_spec.ClearField(music.FieldSecForMusicScoreMaker, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.IsAvailableForMusicScoreMaker(); ok {
+		_spec.SetField(music.FieldIsAvailableForMusicScoreMaker, field.TypeBool, value)
+	}
+	if _u.mutation.IsAvailableForMusicScoreMakerCleared() {
+		_spec.ClearField(music.FieldIsAvailableForMusicScoreMaker, field.TypeBool)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(music.FieldServerRegion, field.TypeString, value)
@@ -1308,6 +1370,53 @@ func (_u *MusicUpdateOne) ClearInfos() *MusicUpdateOne {
 	return _u
 }
 
+// SetSecForMusicScoreMaker sets the "sec_for_music_score_maker" field.
+func (_u *MusicUpdateOne) SetSecForMusicScoreMaker(v int64) *MusicUpdateOne {
+	_u.mutation.ResetSecForMusicScoreMaker()
+	_u.mutation.SetSecForMusicScoreMaker(v)
+	return _u
+}
+
+// SetNillableSecForMusicScoreMaker sets the "sec_for_music_score_maker" field if the given value is not nil.
+func (_u *MusicUpdateOne) SetNillableSecForMusicScoreMaker(v *int64) *MusicUpdateOne {
+	if v != nil {
+		_u.SetSecForMusicScoreMaker(*v)
+	}
+	return _u
+}
+
+// AddSecForMusicScoreMaker adds value to the "sec_for_music_score_maker" field.
+func (_u *MusicUpdateOne) AddSecForMusicScoreMaker(v int64) *MusicUpdateOne {
+	_u.mutation.AddSecForMusicScoreMaker(v)
+	return _u
+}
+
+// ClearSecForMusicScoreMaker clears the value of the "sec_for_music_score_maker" field.
+func (_u *MusicUpdateOne) ClearSecForMusicScoreMaker() *MusicUpdateOne {
+	_u.mutation.ClearSecForMusicScoreMaker()
+	return _u
+}
+
+// SetIsAvailableForMusicScoreMaker sets the "is_available_for_music_score_maker" field.
+func (_u *MusicUpdateOne) SetIsAvailableForMusicScoreMaker(v bool) *MusicUpdateOne {
+	_u.mutation.SetIsAvailableForMusicScoreMaker(v)
+	return _u
+}
+
+// SetNillableIsAvailableForMusicScoreMaker sets the "is_available_for_music_score_maker" field if the given value is not nil.
+func (_u *MusicUpdateOne) SetNillableIsAvailableForMusicScoreMaker(v *bool) *MusicUpdateOne {
+	if v != nil {
+		_u.SetIsAvailableForMusicScoreMaker(*v)
+	}
+	return _u
+}
+
+// ClearIsAvailableForMusicScoreMaker clears the value of the "is_available_for_music_score_maker" field.
+func (_u *MusicUpdateOne) ClearIsAvailableForMusicScoreMaker() *MusicUpdateOne {
+	_u.mutation.ClearIsAvailableForMusicScoreMaker()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *MusicUpdateOne) SetServerRegion(v string) *MusicUpdateOne {
 	_u.mutation.SetServerRegion(v)
@@ -1567,6 +1676,21 @@ func (_u *MusicUpdateOne) sqlSave(ctx context.Context) (_node *Music, err error)
 	}
 	if _u.mutation.InfosCleared() {
 		_spec.ClearField(music.FieldInfos, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.SecForMusicScoreMaker(); ok {
+		_spec.SetField(music.FieldSecForMusicScoreMaker, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedSecForMusicScoreMaker(); ok {
+		_spec.AddField(music.FieldSecForMusicScoreMaker, field.TypeInt64, value)
+	}
+	if _u.mutation.SecForMusicScoreMakerCleared() {
+		_spec.ClearField(music.FieldSecForMusicScoreMaker, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.IsAvailableForMusicScoreMaker(); ok {
+		_spec.SetField(music.FieldIsAvailableForMusicScoreMaker, field.TypeBool, value)
+	}
+	if _u.mutation.IsAvailableForMusicScoreMakerCleared() {
+		_spec.ClearField(music.FieldIsAvailableForMusicScoreMaker, field.TypeBool)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(music.FieldServerRegion, field.TypeString, value)

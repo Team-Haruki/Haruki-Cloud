@@ -78,6 +78,42 @@ type Costume3D func(*sql.Selector)
 // Custommusicscoretag is the predicate function for custommusicscoretag builders.
 type Custommusicscoretag func(*sql.Selector)
 
+// Customprofilecharactericonresource is the predicate function for customprofilecharactericonresource builders.
+type Customprofilecharactericonresource func(*sql.Selector)
+
+// Customprofilecollectionresource is the predicate function for customprofilecollectionresource builders.
+type Customprofilecollectionresource func(*sql.Selector)
+
+// Customprofileetcresource is the predicate function for customprofileetcresource builders.
+type Customprofileetcresource func(*sql.Selector)
+
+// Customprofilegeneralbackgroundresource is the predicate function for customprofilegeneralbackgroundresource builders.
+type Customprofilegeneralbackgroundresource func(*sql.Selector)
+
+// Customprofilematerialresource is the predicate function for customprofilematerialresource builders.
+type Customprofilematerialresource func(*sql.Selector)
+
+// Customprofilememberstandingpictureresource is the predicate function for customprofilememberstandingpictureresource builders.
+type Customprofilememberstandingpictureresource func(*sql.Selector)
+
+// Customprofileplayerinforesource is the predicate function for customprofileplayerinforesource builders.
+type Customprofileplayerinforesource func(*sql.Selector)
+
+// Customprofileshaperesource is the predicate function for customprofileshaperesource builders.
+type Customprofileshaperesource func(*sql.Selector)
+
+// Customprofilestorybackgroundresource is the predicate function for customprofilestorybackgroundresource builders.
+type Customprofilestorybackgroundresource func(*sql.Selector)
+
+// Customprofiletextcolor is the predicate function for customprofiletextcolor builders.
+type Customprofiletextcolor func(*sql.Selector)
+
+// Customprofiletextfont is the predicate function for customprofiletextfont builders.
+type Customprofiletextfont func(*sql.Selector)
+
+// Customprofileuserinterfaceiconresource is the predicate function for customprofileuserinterfaceiconresource builders.
+type Customprofileuserinterfaceiconresource func(*sql.Selector)
+
 // Event is the predicate function for event builders.
 type Event func(*sql.Selector)
 
@@ -143,6 +179,9 @@ type Music func(*sql.Selector)
 
 // MusicArtist is the predicate function for musicartist builders.
 type MusicArtist func(*sql.Selector)
+
+// Musiccategorie is the predicate function for musiccategorie builders.
+type Musiccategorie func(*sql.Selector)
 
 // Musicdifficultie is the predicate function for musicdifficultie builders.
 type Musicdifficultie func(*sql.Selector)
@@ -261,6 +300,9 @@ type Mysekaisitelevel func(*sql.Selector)
 // Ngword is the predicate function for ngword builders.
 type Ngword func(*sql.Selector)
 
+// Omikuji is the predicate function for omikuji builders.
+type Omikuji func(*sql.Selector)
+
 // Outsidecharacter is the predicate function for outsidecharacter builders.
 type Outsidecharacter func(*sql.Selector)
 
@@ -290,6 +332,9 @@ type Skillpracticeticket func(*sql.Selector)
 
 // Stamp is the predicate function for stamp builders.
 type Stamp func(*sql.Selector)
+
+// Unitstoryepisodegroup is the predicate function for unitstoryepisodegroup builders.
+type Unitstoryepisodegroup func(*sql.Selector)
 
 // Virtuallive is the predicate function for virtuallive builders.
 type Virtuallive func(*sql.Selector)

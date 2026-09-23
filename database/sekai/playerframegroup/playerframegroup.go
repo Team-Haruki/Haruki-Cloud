@@ -19,6 +19,10 @@ const (
 	FieldName = "name"
 	// FieldAssetbundleName holds the string denoting the assetbundle_name field in the database.
 	FieldAssetbundleName = "assetbundle_name"
+	// FieldPlayerFrameType holds the string denoting the player_frame_type field in the database.
+	FieldPlayerFrameType = "player_frame_type"
+	// FieldEditCount holds the string denoting the edit_count field in the database.
+	FieldEditCount = "edit_count"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the playerframegroup in the database.
@@ -32,6 +36,8 @@ var Columns = []string{
 	FieldSeq,
 	FieldName,
 	FieldAssetbundleName,
+	FieldPlayerFrameType,
+	FieldEditCount,
 	FieldServerRegion,
 }
 
@@ -71,6 +77,16 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByAssetbundleName orders the results by the assetbundle_name field.
 func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
+}
+
+// ByPlayerFrameType orders the results by the player_frame_type field.
+func ByPlayerFrameType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPlayerFrameType, opts...).ToFunc()
+}
+
+// ByEditCount orders the results by the edit_count field.
+func ByEditCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEditCount, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

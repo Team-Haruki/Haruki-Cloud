@@ -135,6 +135,33 @@ func (_u *LimitedtimemusicUpdate) ClearEndAt() *LimitedtimemusicUpdate {
 	return _u
 }
 
+// SetCollaborationModeID sets the "collaboration_mode_id" field.
+func (_u *LimitedtimemusicUpdate) SetCollaborationModeID(v int64) *LimitedtimemusicUpdate {
+	_u.mutation.ResetCollaborationModeID()
+	_u.mutation.SetCollaborationModeID(v)
+	return _u
+}
+
+// SetNillableCollaborationModeID sets the "collaboration_mode_id" field if the given value is not nil.
+func (_u *LimitedtimemusicUpdate) SetNillableCollaborationModeID(v *int64) *LimitedtimemusicUpdate {
+	if v != nil {
+		_u.SetCollaborationModeID(*v)
+	}
+	return _u
+}
+
+// AddCollaborationModeID adds value to the "collaboration_mode_id" field.
+func (_u *LimitedtimemusicUpdate) AddCollaborationModeID(v int64) *LimitedtimemusicUpdate {
+	_u.mutation.AddCollaborationModeID(v)
+	return _u
+}
+
+// ClearCollaborationModeID clears the value of the "collaboration_mode_id" field.
+func (_u *LimitedtimemusicUpdate) ClearCollaborationModeID() *LimitedtimemusicUpdate {
+	_u.mutation.ClearCollaborationModeID()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *LimitedtimemusicUpdate) SetServerRegion(v string) *LimitedtimemusicUpdate {
 	_u.mutation.SetServerRegion(v)
@@ -225,6 +252,15 @@ func (_u *LimitedtimemusicUpdate) sqlSave(ctx context.Context) (_node int, err e
 	}
 	if _u.mutation.EndAtCleared() {
 		_spec.ClearField(limitedtimemusic.FieldEndAt, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.CollaborationModeID(); ok {
+		_spec.SetField(limitedtimemusic.FieldCollaborationModeID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedCollaborationModeID(); ok {
+		_spec.AddField(limitedtimemusic.FieldCollaborationModeID, field.TypeInt64, value)
+	}
+	if _u.mutation.CollaborationModeIDCleared() {
+		_spec.ClearField(limitedtimemusic.FieldCollaborationModeID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(limitedtimemusic.FieldServerRegion, field.TypeString, value)
@@ -357,6 +393,33 @@ func (_u *LimitedtimemusicUpdateOne) ClearEndAt() *LimitedtimemusicUpdateOne {
 	return _u
 }
 
+// SetCollaborationModeID sets the "collaboration_mode_id" field.
+func (_u *LimitedtimemusicUpdateOne) SetCollaborationModeID(v int64) *LimitedtimemusicUpdateOne {
+	_u.mutation.ResetCollaborationModeID()
+	_u.mutation.SetCollaborationModeID(v)
+	return _u
+}
+
+// SetNillableCollaborationModeID sets the "collaboration_mode_id" field if the given value is not nil.
+func (_u *LimitedtimemusicUpdateOne) SetNillableCollaborationModeID(v *int64) *LimitedtimemusicUpdateOne {
+	if v != nil {
+		_u.SetCollaborationModeID(*v)
+	}
+	return _u
+}
+
+// AddCollaborationModeID adds value to the "collaboration_mode_id" field.
+func (_u *LimitedtimemusicUpdateOne) AddCollaborationModeID(v int64) *LimitedtimemusicUpdateOne {
+	_u.mutation.AddCollaborationModeID(v)
+	return _u
+}
+
+// ClearCollaborationModeID clears the value of the "collaboration_mode_id" field.
+func (_u *LimitedtimemusicUpdateOne) ClearCollaborationModeID() *LimitedtimemusicUpdateOne {
+	_u.mutation.ClearCollaborationModeID()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *LimitedtimemusicUpdateOne) SetServerRegion(v string) *LimitedtimemusicUpdateOne {
 	_u.mutation.SetServerRegion(v)
@@ -477,6 +540,15 @@ func (_u *LimitedtimemusicUpdateOne) sqlSave(ctx context.Context) (_node *Limite
 	}
 	if _u.mutation.EndAtCleared() {
 		_spec.ClearField(limitedtimemusic.FieldEndAt, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.CollaborationModeID(); ok {
+		_spec.SetField(limitedtimemusic.FieldCollaborationModeID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedCollaborationModeID(); ok {
+		_spec.AddField(limitedtimemusic.FieldCollaborationModeID, field.TypeInt64, value)
+	}
+	if _u.mutation.CollaborationModeIDCleared() {
+		_spec.ClearField(limitedtimemusic.FieldCollaborationModeID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(limitedtimemusic.FieldServerRegion, field.TypeString, value)

@@ -49,6 +49,8 @@ const (
 	FieldEventPointAssetbundleName = "event_point_assetbundle_name"
 	// FieldStandbyScreenDisplayStartAt holds the string denoting the standby_screen_display_start_at field in the database.
 	FieldStandbyScreenDisplayStartAt = "standby_screen_display_start_at"
+	// FieldEventBreakTimeID holds the string denoting the event_break_time_id field in the database.
+	FieldEventBreakTimeID = "event_break_time_id"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the event in the database.
@@ -77,6 +79,7 @@ var Columns = []string{
 	FieldEventRankingRewardRanges,
 	FieldEventPointAssetbundleName,
 	FieldStandbyScreenDisplayStartAt,
+	FieldEventBreakTimeID,
 	FieldServerRegion,
 }
 
@@ -186,6 +189,11 @@ func ByEventPointAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 // ByStandbyScreenDisplayStartAt orders the results by the standby_screen_display_start_at field.
 func ByStandbyScreenDisplayStartAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStandbyScreenDisplayStartAt, opts...).ToFunc()
+}
+
+// ByEventBreakTimeID orders the results by the event_break_time_id field.
+func ByEventBreakTimeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEventBreakTimeID, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

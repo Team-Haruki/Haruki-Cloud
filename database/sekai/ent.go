@@ -30,6 +30,18 @@ import (
 	"haruki-cloud/database/sekai/cheerfulcarnivalteam"
 	"haruki-cloud/database/sekai/costume3d"
 	"haruki-cloud/database/sekai/custommusicscoretag"
+	"haruki-cloud/database/sekai/customprofilecharactericonresource"
+	"haruki-cloud/database/sekai/customprofilecollectionresource"
+	"haruki-cloud/database/sekai/customprofileetcresource"
+	"haruki-cloud/database/sekai/customprofilegeneralbackgroundresource"
+	"haruki-cloud/database/sekai/customprofilematerialresource"
+	"haruki-cloud/database/sekai/customprofilememberstandingpictureresource"
+	"haruki-cloud/database/sekai/customprofileplayerinforesource"
+	"haruki-cloud/database/sekai/customprofileshaperesource"
+	"haruki-cloud/database/sekai/customprofilestorybackgroundresource"
+	"haruki-cloud/database/sekai/customprofiletextcolor"
+	"haruki-cloud/database/sekai/customprofiletextfont"
+	"haruki-cloud/database/sekai/customprofileuserinterfaceiconresource"
 	"haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
@@ -52,6 +64,7 @@ import (
 	"haruki-cloud/database/sekai/material"
 	"haruki-cloud/database/sekai/music"
 	"haruki-cloud/database/sekai/musicartist"
+	"haruki-cloud/database/sekai/musiccategorie"
 	"haruki-cloud/database/sekai/musicdifficultie"
 	"haruki-cloud/database/sekai/musictag"
 	"haruki-cloud/database/sekai/musicvocal"
@@ -91,6 +104,7 @@ import (
 	"haruki-cloud/database/sekai/mysekaisitelayout"
 	"haruki-cloud/database/sekai/mysekaisitelevel"
 	"haruki-cloud/database/sekai/ngword"
+	"haruki-cloud/database/sekai/omikuji"
 	"haruki-cloud/database/sekai/outsidecharacter"
 	"haruki-cloud/database/sekai/playerframe"
 	"haruki-cloud/database/sekai/playerframegroup"
@@ -101,6 +115,7 @@ import (
 	"haruki-cloud/database/sekai/skill"
 	"haruki-cloud/database/sekai/skillpracticeticket"
 	"haruki-cloud/database/sekai/stamp"
+	"haruki-cloud/database/sekai/unitstoryepisodegroup"
 	"haruki-cloud/database/sekai/virtuallive"
 	"haruki-cloud/database/sekai/worldbloom"
 	"haruki-cloud/database/sekai/worldbloomchapterrankingrewardrange"
@@ -188,46 +203,59 @@ func checkColumn(t, c string) error {
 			cardsupplie.Table:                  cardsupplie.ValidColumn,
 			challengelivehighscorereward.Table: challengelivehighscorereward.ValidColumn,
 			character2d.Table:                  character2d.ValidColumn,
-			characterarchivemysekaicharactertalkgroup.Table: characterarchivemysekaicharactertalkgroup.ValidColumn,
-			charactermissionv2.Table:                        charactermissionv2.ValidColumn,
-			charactermissionv2areaitem.Table:                charactermissionv2areaitem.ValidColumn,
-			charactermissionv2exjson.Table:                  charactermissionv2exjson.ValidColumn,
-			charactermissionv2parametergroup.Table:          charactermissionv2parametergroup.ValidColumn,
-			characterrank.Table:                             characterrank.ValidColumn,
-			cheerfulcarnivalteam.Table:                      cheerfulcarnivalteam.ValidColumn,
-			costume3d.Table:                                 costume3d.ValidColumn,
-			custommusicscoretag.Table:                       custommusicscoretag.ValidColumn,
-			event.Table:                                     event.ValidColumn,
-			eventcard.Table:                                 eventcard.ValidColumn,
-			eventdeckbonuse.Table:                           eventdeckbonuse.ValidColumn,
-			eventexchangesummarie.Table:                     eventexchangesummarie.ValidColumn,
-			eventitem.Table:                                 eventitem.ValidColumn,
-			eventmusic.Table:                                eventmusic.ValidColumn,
-			eventraritybonusrate.Table:                      eventraritybonusrate.ValidColumn,
-			eventstorie.Table:                               eventstorie.ValidColumn,
-			eventstoryunit.Table:                            eventstoryunit.ValidColumn,
-			gacha.Table:                                     gacha.ValidColumn,
-			gachaceilitem.Table:                             gachaceilitem.ValidColumn,
-			gachaticket.Table:                               gachaticket.ValidColumn,
-			gamecharacter.Table:                             gamecharacter.ValidColumn,
-			gamecharacterunit.Table:                         gamecharacterunit.ValidColumn,
-			honor.Table:                                     honor.ValidColumn,
-			honorgroup.Table:                                honorgroup.ValidColumn,
-			level.Table:                                     level.ValidColumn,
-			limitedtimemusic.Table:                          limitedtimemusic.ValidColumn,
-			masterlesson.Table:                              masterlesson.ValidColumn,
-			material.Table:                                  material.ValidColumn,
-			music.Table:                                     music.ValidColumn,
-			musicartist.Table:                               musicartist.ValidColumn,
-			musicdifficultie.Table:                          musicdifficultie.ValidColumn,
-			musictag.Table:                                  musictag.ValidColumn,
-			musicvocal.Table:                                musicvocal.ValidColumn,
-			mysekaiblueprint.Table:                          mysekaiblueprint.ValidColumn,
-			mysekaiblueprintmysekaimaterialcost.Table:       mysekaiblueprintmysekaimaterialcost.ValidColumn,
-			mysekaicharactertalk.Table:                      mysekaicharactertalk.ValidColumn,
-			mysekaicharactertalkcondition.Table:             mysekaicharactertalkcondition.ValidColumn,
-			mysekaicharactertalkconditiongroup.Table:        mysekaicharactertalkconditiongroup.ValidColumn,
-			mysekaicharactertalkfixturecommon.Table:         mysekaicharactertalkfixturecommon.ValidColumn,
+			characterarchivemysekaicharactertalkgroup.Table:  characterarchivemysekaicharactertalkgroup.ValidColumn,
+			charactermissionv2.Table:                         charactermissionv2.ValidColumn,
+			charactermissionv2areaitem.Table:                 charactermissionv2areaitem.ValidColumn,
+			charactermissionv2exjson.Table:                   charactermissionv2exjson.ValidColumn,
+			charactermissionv2parametergroup.Table:           charactermissionv2parametergroup.ValidColumn,
+			characterrank.Table:                              characterrank.ValidColumn,
+			cheerfulcarnivalteam.Table:                       cheerfulcarnivalteam.ValidColumn,
+			costume3d.Table:                                  costume3d.ValidColumn,
+			custommusicscoretag.Table:                        custommusicscoretag.ValidColumn,
+			customprofilecharactericonresource.Table:         customprofilecharactericonresource.ValidColumn,
+			customprofilecollectionresource.Table:            customprofilecollectionresource.ValidColumn,
+			customprofileetcresource.Table:                   customprofileetcresource.ValidColumn,
+			customprofilegeneralbackgroundresource.Table:     customprofilegeneralbackgroundresource.ValidColumn,
+			customprofilematerialresource.Table:              customprofilematerialresource.ValidColumn,
+			customprofilememberstandingpictureresource.Table: customprofilememberstandingpictureresource.ValidColumn,
+			customprofileplayerinforesource.Table:            customprofileplayerinforesource.ValidColumn,
+			customprofileshaperesource.Table:                 customprofileshaperesource.ValidColumn,
+			customprofilestorybackgroundresource.Table:       customprofilestorybackgroundresource.ValidColumn,
+			customprofiletextcolor.Table:                     customprofiletextcolor.ValidColumn,
+			customprofiletextfont.Table:                      customprofiletextfont.ValidColumn,
+			customprofileuserinterfaceiconresource.Table:     customprofileuserinterfaceiconresource.ValidColumn,
+			event.Table:                 event.ValidColumn,
+			eventcard.Table:             eventcard.ValidColumn,
+			eventdeckbonuse.Table:       eventdeckbonuse.ValidColumn,
+			eventexchangesummarie.Table: eventexchangesummarie.ValidColumn,
+			eventitem.Table:             eventitem.ValidColumn,
+			eventmusic.Table:            eventmusic.ValidColumn,
+			eventraritybonusrate.Table:  eventraritybonusrate.ValidColumn,
+			eventstorie.Table:           eventstorie.ValidColumn,
+			eventstoryunit.Table:        eventstoryunit.ValidColumn,
+			gacha.Table:                 gacha.ValidColumn,
+			gachaceilitem.Table:         gachaceilitem.ValidColumn,
+			gachaticket.Table:           gachaticket.ValidColumn,
+			gamecharacter.Table:         gamecharacter.ValidColumn,
+			gamecharacterunit.Table:     gamecharacterunit.ValidColumn,
+			honor.Table:                 honor.ValidColumn,
+			honorgroup.Table:            honorgroup.ValidColumn,
+			level.Table:                 level.ValidColumn,
+			limitedtimemusic.Table:      limitedtimemusic.ValidColumn,
+			masterlesson.Table:          masterlesson.ValidColumn,
+			material.Table:              material.ValidColumn,
+			music.Table:                 music.ValidColumn,
+			musicartist.Table:           musicartist.ValidColumn,
+			musiccategorie.Table:        musiccategorie.ValidColumn,
+			musicdifficultie.Table:      musicdifficultie.ValidColumn,
+			musictag.Table:              musictag.ValidColumn,
+			musicvocal.Table:            musicvocal.ValidColumn,
+			mysekaiblueprint.Table:      mysekaiblueprint.ValidColumn,
+			mysekaiblueprintmysekaimaterialcost.Table:                  mysekaiblueprintmysekaimaterialcost.ValidColumn,
+			mysekaicharactertalk.Table:                                 mysekaicharactertalk.ValidColumn,
+			mysekaicharactertalkcondition.Table:                        mysekaicharactertalkcondition.ValidColumn,
+			mysekaicharactertalkconditiongroup.Table:                   mysekaicharactertalkconditiongroup.ValidColumn,
+			mysekaicharactertalkfixturecommon.Table:                    mysekaicharactertalkfixturecommon.ValidColumn,
 			mysekaicharactertalkfixturecommonmysekaifixturegroup.Table: mysekaicharactertalkfixturecommonmysekaifixturegroup.ValidColumn,
 			mysekaicustomfixture.Table:                                 mysekaicustomfixture.ValidColumn,
 			mysekaifixture.Table:                                       mysekaifixture.ValidColumn,
@@ -258,6 +286,7 @@ func checkColumn(t, c string) error {
 			mysekaisitelayout.Table:                                    mysekaisitelayout.ValidColumn,
 			mysekaisitelevel.Table:                                     mysekaisitelevel.ValidColumn,
 			ngword.Table:                                               ngword.ValidColumn,
+			omikuji.Table:                                              omikuji.ValidColumn,
 			outsidecharacter.Table:                                     outsidecharacter.ValidColumn,
 			playerframe.Table:                                          playerframe.ValidColumn,
 			playerframegroup.Table:                                     playerframegroup.ValidColumn,
@@ -268,6 +297,7 @@ func checkColumn(t, c string) error {
 			skill.Table:                                                skill.ValidColumn,
 			skillpracticeticket.Table:                                  skillpracticeticket.ValidColumn,
 			stamp.Table:                                                stamp.ValidColumn,
+			unitstoryepisodegroup.Table:                                unitstoryepisodegroup.ValidColumn,
 			virtuallive.Table:                                          virtuallive.ValidColumn,
 			worldbloom.Table:                                           worldbloom.ValidColumn,
 			worldbloomchapterrankingrewardrange.Table:                  worldbloomchapterrankingrewardrange.ValidColumn,

@@ -98,6 +98,11 @@ func BackNumberAccentColorCode(v string) predicate.Mysekaihousingcompetition {
 	return predicate.Mysekaihousingcompetition(sql.FieldEQ(FieldBackNumberAccentColorCode, v))
 }
 
+// MysekaiHousingCompetitionReviewRankID applies equality check predicate on the "mysekai_housing_competition_review_rank_id" field. It's identical to MysekaiHousingCompetitionReviewRankIDEQ.
+func MysekaiHousingCompetitionReviewRankID(v int64) predicate.Mysekaihousingcompetition {
+	return predicate.Mysekaihousingcompetition(sql.FieldEQ(FieldMysekaiHousingCompetitionReviewRankID, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Mysekaihousingcompetition {
 	return predicate.Mysekaihousingcompetition(sql.FieldEQ(FieldServerRegion, v))
@@ -651,6 +656,56 @@ func BackNumberAccentColorCodeEqualFold(v string) predicate.Mysekaihousingcompet
 // BackNumberAccentColorCodeContainsFold applies the ContainsFold predicate on the "back_number_accent_color_code" field.
 func BackNumberAccentColorCodeContainsFold(v string) predicate.Mysekaihousingcompetition {
 	return predicate.Mysekaihousingcompetition(sql.FieldContainsFold(FieldBackNumberAccentColorCode, v))
+}
+
+// MysekaiHousingCompetitionReviewRankIDEQ applies the EQ predicate on the "mysekai_housing_competition_review_rank_id" field.
+func MysekaiHousingCompetitionReviewRankIDEQ(v int64) predicate.Mysekaihousingcompetition {
+	return predicate.Mysekaihousingcompetition(sql.FieldEQ(FieldMysekaiHousingCompetitionReviewRankID, v))
+}
+
+// MysekaiHousingCompetitionReviewRankIDNEQ applies the NEQ predicate on the "mysekai_housing_competition_review_rank_id" field.
+func MysekaiHousingCompetitionReviewRankIDNEQ(v int64) predicate.Mysekaihousingcompetition {
+	return predicate.Mysekaihousingcompetition(sql.FieldNEQ(FieldMysekaiHousingCompetitionReviewRankID, v))
+}
+
+// MysekaiHousingCompetitionReviewRankIDIn applies the In predicate on the "mysekai_housing_competition_review_rank_id" field.
+func MysekaiHousingCompetitionReviewRankIDIn(vs ...int64) predicate.Mysekaihousingcompetition {
+	return predicate.Mysekaihousingcompetition(sql.FieldIn(FieldMysekaiHousingCompetitionReviewRankID, vs...))
+}
+
+// MysekaiHousingCompetitionReviewRankIDNotIn applies the NotIn predicate on the "mysekai_housing_competition_review_rank_id" field.
+func MysekaiHousingCompetitionReviewRankIDNotIn(vs ...int64) predicate.Mysekaihousingcompetition {
+	return predicate.Mysekaihousingcompetition(sql.FieldNotIn(FieldMysekaiHousingCompetitionReviewRankID, vs...))
+}
+
+// MysekaiHousingCompetitionReviewRankIDGT applies the GT predicate on the "mysekai_housing_competition_review_rank_id" field.
+func MysekaiHousingCompetitionReviewRankIDGT(v int64) predicate.Mysekaihousingcompetition {
+	return predicate.Mysekaihousingcompetition(sql.FieldGT(FieldMysekaiHousingCompetitionReviewRankID, v))
+}
+
+// MysekaiHousingCompetitionReviewRankIDGTE applies the GTE predicate on the "mysekai_housing_competition_review_rank_id" field.
+func MysekaiHousingCompetitionReviewRankIDGTE(v int64) predicate.Mysekaihousingcompetition {
+	return predicate.Mysekaihousingcompetition(sql.FieldGTE(FieldMysekaiHousingCompetitionReviewRankID, v))
+}
+
+// MysekaiHousingCompetitionReviewRankIDLT applies the LT predicate on the "mysekai_housing_competition_review_rank_id" field.
+func MysekaiHousingCompetitionReviewRankIDLT(v int64) predicate.Mysekaihousingcompetition {
+	return predicate.Mysekaihousingcompetition(sql.FieldLT(FieldMysekaiHousingCompetitionReviewRankID, v))
+}
+
+// MysekaiHousingCompetitionReviewRankIDLTE applies the LTE predicate on the "mysekai_housing_competition_review_rank_id" field.
+func MysekaiHousingCompetitionReviewRankIDLTE(v int64) predicate.Mysekaihousingcompetition {
+	return predicate.Mysekaihousingcompetition(sql.FieldLTE(FieldMysekaiHousingCompetitionReviewRankID, v))
+}
+
+// MysekaiHousingCompetitionReviewRankIDIsNil applies the IsNil predicate on the "mysekai_housing_competition_review_rank_id" field.
+func MysekaiHousingCompetitionReviewRankIDIsNil() predicate.Mysekaihousingcompetition {
+	return predicate.Mysekaihousingcompetition(sql.FieldIsNull(FieldMysekaiHousingCompetitionReviewRankID))
+}
+
+// MysekaiHousingCompetitionReviewRankIDNotNil applies the NotNil predicate on the "mysekai_housing_competition_review_rank_id" field.
+func MysekaiHousingCompetitionReviewRankIDNotNil() predicate.Mysekaihousingcompetition {
+	return predicate.Mysekaihousingcompetition(sql.FieldNotNull(FieldMysekaiHousingCompetitionReviewRankID))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

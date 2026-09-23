@@ -29,6 +29,8 @@ const (
 	FieldBackgroundImageAssetbundleFileName = "background_image_assetbundle_file_name"
 	// FieldBackNumberAccentColorCode holds the string denoting the back_number_accent_color_code field in the database.
 	FieldBackNumberAccentColorCode = "back_number_accent_color_code"
+	// FieldMysekaiHousingCompetitionReviewRankID holds the string denoting the mysekai_housing_competition_review_rank_id field in the database.
+	FieldMysekaiHousingCompetitionReviewRankID = "mysekai_housing_competition_review_rank_id"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the mysekaihousingcompetition in the database.
@@ -47,6 +49,7 @@ var Columns = []string{
 	FieldAggregateAt,
 	FieldBackgroundImageAssetbundleFileName,
 	FieldBackNumberAccentColorCode,
+	FieldMysekaiHousingCompetitionReviewRankID,
 	FieldServerRegion,
 }
 
@@ -111,6 +114,11 @@ func ByBackgroundImageAssetbundleFileName(opts ...sql.OrderTermOption) OrderOpti
 // ByBackNumberAccentColorCode orders the results by the back_number_accent_color_code field.
 func ByBackNumberAccentColorCode(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBackNumberAccentColorCode, opts...).ToFunc()
+}
+
+// ByMysekaiHousingCompetitionReviewRankID orders the results by the mysekai_housing_competition_review_rank_id field.
+func ByMysekaiHousingCompetitionReviewRankID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiHousingCompetitionReviewRankID, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

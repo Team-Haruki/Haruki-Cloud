@@ -175,23 +175,34 @@ func (r *masterdataResolver) build(ctx context.Context, region renderregion.Valu
 		return nil
 	}
 
+	var primary masterdataSource
 	if r.dsn != "" {
 		if store := newDBMasterdataStore(ctx, r.dsn, region.String()); store != nil && store.Configured() {
-			return store
+			primary = store
 		}
 	}
 
+	var fallback masterdataSource
 	if r.allowFallback {
 		regionDir := ""
 		if r.localDir != "" {
 			regionDir = filepath.Join(r.localDir, region.String())
 		}
 		if store := newLocalMasterdataStore(regionDir, r.localDir); store != nil && store.Configured() {
-			return store
+			fallback = store
 		}
 	}
 
-	return nil
+	switch {
+	case primary != nil && fallback != nil:
+		return newLayeredMasterdataSource(primary, fallback)
+	case primary != nil:
+		return primary
+	case fallback != nil:
+		return fallback
+	default:
+		return nil
+	}
 }
 
 // NewController creates a mysekai Controller. If SekaiDSN is non-empty the

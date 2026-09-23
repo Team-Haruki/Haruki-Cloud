@@ -73,6 +73,11 @@ func EndAt(v int64) predicate.Limitedtimemusic {
 	return predicate.Limitedtimemusic(sql.FieldEQ(FieldEndAt, v))
 }
 
+// CollaborationModeID applies equality check predicate on the "collaboration_mode_id" field. It's identical to CollaborationModeIDEQ.
+func CollaborationModeID(v int64) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldEQ(FieldCollaborationModeID, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Limitedtimemusic {
 	return predicate.Limitedtimemusic(sql.FieldEQ(FieldServerRegion, v))
@@ -276,6 +281,56 @@ func EndAtIsNil() predicate.Limitedtimemusic {
 // EndAtNotNil applies the NotNil predicate on the "end_at" field.
 func EndAtNotNil() predicate.Limitedtimemusic {
 	return predicate.Limitedtimemusic(sql.FieldNotNull(FieldEndAt))
+}
+
+// CollaborationModeIDEQ applies the EQ predicate on the "collaboration_mode_id" field.
+func CollaborationModeIDEQ(v int64) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldEQ(FieldCollaborationModeID, v))
+}
+
+// CollaborationModeIDNEQ applies the NEQ predicate on the "collaboration_mode_id" field.
+func CollaborationModeIDNEQ(v int64) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNEQ(FieldCollaborationModeID, v))
+}
+
+// CollaborationModeIDIn applies the In predicate on the "collaboration_mode_id" field.
+func CollaborationModeIDIn(vs ...int64) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldIn(FieldCollaborationModeID, vs...))
+}
+
+// CollaborationModeIDNotIn applies the NotIn predicate on the "collaboration_mode_id" field.
+func CollaborationModeIDNotIn(vs ...int64) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNotIn(FieldCollaborationModeID, vs...))
+}
+
+// CollaborationModeIDGT applies the GT predicate on the "collaboration_mode_id" field.
+func CollaborationModeIDGT(v int64) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldGT(FieldCollaborationModeID, v))
+}
+
+// CollaborationModeIDGTE applies the GTE predicate on the "collaboration_mode_id" field.
+func CollaborationModeIDGTE(v int64) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldGTE(FieldCollaborationModeID, v))
+}
+
+// CollaborationModeIDLT applies the LT predicate on the "collaboration_mode_id" field.
+func CollaborationModeIDLT(v int64) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldLT(FieldCollaborationModeID, v))
+}
+
+// CollaborationModeIDLTE applies the LTE predicate on the "collaboration_mode_id" field.
+func CollaborationModeIDLTE(v int64) predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldLTE(FieldCollaborationModeID, v))
+}
+
+// CollaborationModeIDIsNil applies the IsNil predicate on the "collaboration_mode_id" field.
+func CollaborationModeIDIsNil() predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldIsNull(FieldCollaborationModeID))
+}
+
+// CollaborationModeIDNotNil applies the NotNil predicate on the "collaboration_mode_id" field.
+func CollaborationModeIDNotNil() predicate.Limitedtimemusic {
+	return predicate.Limitedtimemusic(sql.FieldNotNull(FieldCollaborationModeID))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

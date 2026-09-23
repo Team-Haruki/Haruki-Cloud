@@ -73,6 +73,16 @@ func AssetbundleName(v string) predicate.Playerframegroup {
 	return predicate.Playerframegroup(sql.FieldEQ(FieldAssetbundleName, v))
 }
 
+// PlayerFrameType applies equality check predicate on the "player_frame_type" field. It's identical to PlayerFrameTypeEQ.
+func PlayerFrameType(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldEQ(FieldPlayerFrameType, v))
+}
+
+// EditCount applies equality check predicate on the "edit_count" field. It's identical to EditCountEQ.
+func EditCount(v int64) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldEQ(FieldEditCount, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Playerframegroup {
 	return predicate.Playerframegroup(sql.FieldEQ(FieldServerRegion, v))
@@ -326,6 +336,131 @@ func AssetbundleNameEqualFold(v string) predicate.Playerframegroup {
 // AssetbundleNameContainsFold applies the ContainsFold predicate on the "assetbundle_name" field.
 func AssetbundleNameContainsFold(v string) predicate.Playerframegroup {
 	return predicate.Playerframegroup(sql.FieldContainsFold(FieldAssetbundleName, v))
+}
+
+// PlayerFrameTypeEQ applies the EQ predicate on the "player_frame_type" field.
+func PlayerFrameTypeEQ(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldEQ(FieldPlayerFrameType, v))
+}
+
+// PlayerFrameTypeNEQ applies the NEQ predicate on the "player_frame_type" field.
+func PlayerFrameTypeNEQ(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldNEQ(FieldPlayerFrameType, v))
+}
+
+// PlayerFrameTypeIn applies the In predicate on the "player_frame_type" field.
+func PlayerFrameTypeIn(vs ...string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldIn(FieldPlayerFrameType, vs...))
+}
+
+// PlayerFrameTypeNotIn applies the NotIn predicate on the "player_frame_type" field.
+func PlayerFrameTypeNotIn(vs ...string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldNotIn(FieldPlayerFrameType, vs...))
+}
+
+// PlayerFrameTypeGT applies the GT predicate on the "player_frame_type" field.
+func PlayerFrameTypeGT(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldGT(FieldPlayerFrameType, v))
+}
+
+// PlayerFrameTypeGTE applies the GTE predicate on the "player_frame_type" field.
+func PlayerFrameTypeGTE(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldGTE(FieldPlayerFrameType, v))
+}
+
+// PlayerFrameTypeLT applies the LT predicate on the "player_frame_type" field.
+func PlayerFrameTypeLT(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldLT(FieldPlayerFrameType, v))
+}
+
+// PlayerFrameTypeLTE applies the LTE predicate on the "player_frame_type" field.
+func PlayerFrameTypeLTE(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldLTE(FieldPlayerFrameType, v))
+}
+
+// PlayerFrameTypeContains applies the Contains predicate on the "player_frame_type" field.
+func PlayerFrameTypeContains(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldContains(FieldPlayerFrameType, v))
+}
+
+// PlayerFrameTypeHasPrefix applies the HasPrefix predicate on the "player_frame_type" field.
+func PlayerFrameTypeHasPrefix(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldHasPrefix(FieldPlayerFrameType, v))
+}
+
+// PlayerFrameTypeHasSuffix applies the HasSuffix predicate on the "player_frame_type" field.
+func PlayerFrameTypeHasSuffix(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldHasSuffix(FieldPlayerFrameType, v))
+}
+
+// PlayerFrameTypeIsNil applies the IsNil predicate on the "player_frame_type" field.
+func PlayerFrameTypeIsNil() predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldIsNull(FieldPlayerFrameType))
+}
+
+// PlayerFrameTypeNotNil applies the NotNil predicate on the "player_frame_type" field.
+func PlayerFrameTypeNotNil() predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldNotNull(FieldPlayerFrameType))
+}
+
+// PlayerFrameTypeEqualFold applies the EqualFold predicate on the "player_frame_type" field.
+func PlayerFrameTypeEqualFold(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldEqualFold(FieldPlayerFrameType, v))
+}
+
+// PlayerFrameTypeContainsFold applies the ContainsFold predicate on the "player_frame_type" field.
+func PlayerFrameTypeContainsFold(v string) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldContainsFold(FieldPlayerFrameType, v))
+}
+
+// EditCountEQ applies the EQ predicate on the "edit_count" field.
+func EditCountEQ(v int64) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldEQ(FieldEditCount, v))
+}
+
+// EditCountNEQ applies the NEQ predicate on the "edit_count" field.
+func EditCountNEQ(v int64) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldNEQ(FieldEditCount, v))
+}
+
+// EditCountIn applies the In predicate on the "edit_count" field.
+func EditCountIn(vs ...int64) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldIn(FieldEditCount, vs...))
+}
+
+// EditCountNotIn applies the NotIn predicate on the "edit_count" field.
+func EditCountNotIn(vs ...int64) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldNotIn(FieldEditCount, vs...))
+}
+
+// EditCountGT applies the GT predicate on the "edit_count" field.
+func EditCountGT(v int64) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldGT(FieldEditCount, v))
+}
+
+// EditCountGTE applies the GTE predicate on the "edit_count" field.
+func EditCountGTE(v int64) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldGTE(FieldEditCount, v))
+}
+
+// EditCountLT applies the LT predicate on the "edit_count" field.
+func EditCountLT(v int64) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldLT(FieldEditCount, v))
+}
+
+// EditCountLTE applies the LTE predicate on the "edit_count" field.
+func EditCountLTE(v int64) predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldLTE(FieldEditCount, v))
+}
+
+// EditCountIsNil applies the IsNil predicate on the "edit_count" field.
+func EditCountIsNil() predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldIsNull(FieldEditCount))
+}
+
+// EditCountNotNil applies the NotNil predicate on the "edit_count" field.
+func EditCountNotNil() predicate.Playerframegroup {
+	return predicate.Playerframegroup(sql.FieldNotNull(FieldEditCount))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

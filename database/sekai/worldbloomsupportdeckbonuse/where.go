@@ -138,6 +138,36 @@ func CardRarityTypeContainsFold(v string) predicate.Worldbloomsupportdeckbonuse 
 	return predicate.Worldbloomsupportdeckbonuse(sql.FieldContainsFold(FieldCardRarityType, v))
 }
 
+// WorldBloomSupportDeckCharacterBonusesIsNil applies the IsNil predicate on the "world_bloom_support_deck_character_bonuses" field.
+func WorldBloomSupportDeckCharacterBonusesIsNil() predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldIsNull(FieldWorldBloomSupportDeckCharacterBonuses))
+}
+
+// WorldBloomSupportDeckCharacterBonusesNotNil applies the NotNil predicate on the "world_bloom_support_deck_character_bonuses" field.
+func WorldBloomSupportDeckCharacterBonusesNotNil() predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldNotNull(FieldWorldBloomSupportDeckCharacterBonuses))
+}
+
+// WorldBloomSupportDeckMasterRankBonusesIsNil applies the IsNil predicate on the "world_bloom_support_deck_master_rank_bonuses" field.
+func WorldBloomSupportDeckMasterRankBonusesIsNil() predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldIsNull(FieldWorldBloomSupportDeckMasterRankBonuses))
+}
+
+// WorldBloomSupportDeckMasterRankBonusesNotNil applies the NotNil predicate on the "world_bloom_support_deck_master_rank_bonuses" field.
+func WorldBloomSupportDeckMasterRankBonusesNotNil() predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldNotNull(FieldWorldBloomSupportDeckMasterRankBonuses))
+}
+
+// WorldBloomSupportDeckSkillLevelBonusesIsNil applies the IsNil predicate on the "world_bloom_support_deck_skill_level_bonuses" field.
+func WorldBloomSupportDeckSkillLevelBonusesIsNil() predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldIsNull(FieldWorldBloomSupportDeckSkillLevelBonuses))
+}
+
+// WorldBloomSupportDeckSkillLevelBonusesNotNil applies the NotNil predicate on the "world_bloom_support_deck_skill_level_bonuses" field.
+func WorldBloomSupportDeckSkillLevelBonusesNotNil() predicate.Worldbloomsupportdeckbonuse {
+	return predicate.Worldbloomsupportdeckbonuse(sql.FieldNotNull(FieldWorldBloomSupportDeckSkillLevelBonuses))
+}
+
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
 func ServerRegionEQ(v string) predicate.Worldbloomsupportdeckbonuse {
 	return predicate.Worldbloomsupportdeckbonuse(sql.FieldEQ(FieldServerRegion, v))

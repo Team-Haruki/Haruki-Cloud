@@ -19,6 +19,8 @@ func (Playerframegroup) Fields() []ent.Field {
 		field.Int64("seq").Optional(),
 		field.String("name").Optional(),
 		field.String("assetbundle_name").Optional(),
+		field.String("player_frame_type").Optional(),
+		field.Int64("edit_count").Optional(),
 		field.String("server_region"),
 	}
 }

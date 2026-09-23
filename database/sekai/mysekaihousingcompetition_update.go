@@ -242,6 +242,33 @@ func (_u *MysekaihousingcompetitionUpdate) ClearBackNumberAccentColorCode() *Mys
 	return _u
 }
 
+// SetMysekaiHousingCompetitionReviewRankID sets the "mysekai_housing_competition_review_rank_id" field.
+func (_u *MysekaihousingcompetitionUpdate) SetMysekaiHousingCompetitionReviewRankID(v int64) *MysekaihousingcompetitionUpdate {
+	_u.mutation.ResetMysekaiHousingCompetitionReviewRankID()
+	_u.mutation.SetMysekaiHousingCompetitionReviewRankID(v)
+	return _u
+}
+
+// SetNillableMysekaiHousingCompetitionReviewRankID sets the "mysekai_housing_competition_review_rank_id" field if the given value is not nil.
+func (_u *MysekaihousingcompetitionUpdate) SetNillableMysekaiHousingCompetitionReviewRankID(v *int64) *MysekaihousingcompetitionUpdate {
+	if v != nil {
+		_u.SetMysekaiHousingCompetitionReviewRankID(*v)
+	}
+	return _u
+}
+
+// AddMysekaiHousingCompetitionReviewRankID adds value to the "mysekai_housing_competition_review_rank_id" field.
+func (_u *MysekaihousingcompetitionUpdate) AddMysekaiHousingCompetitionReviewRankID(v int64) *MysekaihousingcompetitionUpdate {
+	_u.mutation.AddMysekaiHousingCompetitionReviewRankID(v)
+	return _u
+}
+
+// ClearMysekaiHousingCompetitionReviewRankID clears the value of the "mysekai_housing_competition_review_rank_id" field.
+func (_u *MysekaihousingcompetitionUpdate) ClearMysekaiHousingCompetitionReviewRankID() *MysekaihousingcompetitionUpdate {
+	_u.mutation.ClearMysekaiHousingCompetitionReviewRankID()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *MysekaihousingcompetitionUpdate) SetServerRegion(v string) *MysekaihousingcompetitionUpdate {
 	_u.mutation.SetServerRegion(v)
@@ -365,6 +392,15 @@ func (_u *MysekaihousingcompetitionUpdate) sqlSave(ctx context.Context) (_node i
 	}
 	if _u.mutation.BackNumberAccentColorCodeCleared() {
 		_spec.ClearField(mysekaihousingcompetition.FieldBackNumberAccentColorCode, field.TypeString)
+	}
+	if value, ok := _u.mutation.MysekaiHousingCompetitionReviewRankID(); ok {
+		_spec.SetField(mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedMysekaiHousingCompetitionReviewRankID(); ok {
+		_spec.AddField(mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID, field.TypeInt64, value)
+	}
+	if _u.mutation.MysekaiHousingCompetitionReviewRankIDCleared() {
+		_spec.ClearField(mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaihousingcompetition.FieldServerRegion, field.TypeString, value)
@@ -604,6 +640,33 @@ func (_u *MysekaihousingcompetitionUpdateOne) ClearBackNumberAccentColorCode() *
 	return _u
 }
 
+// SetMysekaiHousingCompetitionReviewRankID sets the "mysekai_housing_competition_review_rank_id" field.
+func (_u *MysekaihousingcompetitionUpdateOne) SetMysekaiHousingCompetitionReviewRankID(v int64) *MysekaihousingcompetitionUpdateOne {
+	_u.mutation.ResetMysekaiHousingCompetitionReviewRankID()
+	_u.mutation.SetMysekaiHousingCompetitionReviewRankID(v)
+	return _u
+}
+
+// SetNillableMysekaiHousingCompetitionReviewRankID sets the "mysekai_housing_competition_review_rank_id" field if the given value is not nil.
+func (_u *MysekaihousingcompetitionUpdateOne) SetNillableMysekaiHousingCompetitionReviewRankID(v *int64) *MysekaihousingcompetitionUpdateOne {
+	if v != nil {
+		_u.SetMysekaiHousingCompetitionReviewRankID(*v)
+	}
+	return _u
+}
+
+// AddMysekaiHousingCompetitionReviewRankID adds value to the "mysekai_housing_competition_review_rank_id" field.
+func (_u *MysekaihousingcompetitionUpdateOne) AddMysekaiHousingCompetitionReviewRankID(v int64) *MysekaihousingcompetitionUpdateOne {
+	_u.mutation.AddMysekaiHousingCompetitionReviewRankID(v)
+	return _u
+}
+
+// ClearMysekaiHousingCompetitionReviewRankID clears the value of the "mysekai_housing_competition_review_rank_id" field.
+func (_u *MysekaihousingcompetitionUpdateOne) ClearMysekaiHousingCompetitionReviewRankID() *MysekaihousingcompetitionUpdateOne {
+	_u.mutation.ClearMysekaiHousingCompetitionReviewRankID()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *MysekaihousingcompetitionUpdateOne) SetServerRegion(v string) *MysekaihousingcompetitionUpdateOne {
 	_u.mutation.SetServerRegion(v)
@@ -757,6 +820,15 @@ func (_u *MysekaihousingcompetitionUpdateOne) sqlSave(ctx context.Context) (_nod
 	}
 	if _u.mutation.BackNumberAccentColorCodeCleared() {
 		_spec.ClearField(mysekaihousingcompetition.FieldBackNumberAccentColorCode, field.TypeString)
+	}
+	if value, ok := _u.mutation.MysekaiHousingCompetitionReviewRankID(); ok {
+		_spec.SetField(mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedMysekaiHousingCompetitionReviewRankID(); ok {
+		_spec.AddField(mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID, field.TypeInt64, value)
+	}
+	if _u.mutation.MysekaiHousingCompetitionReviewRankIDCleared() {
+		_spec.ClearField(mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaihousingcompetition.FieldServerRegion, field.TypeString, value)

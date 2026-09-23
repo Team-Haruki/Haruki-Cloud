@@ -31,6 +31,18 @@ import (
 	"haruki-cloud/database/sekai/cheerfulcarnivalteam"
 	"haruki-cloud/database/sekai/costume3d"
 	"haruki-cloud/database/sekai/custommusicscoretag"
+	"haruki-cloud/database/sekai/customprofilecharactericonresource"
+	"haruki-cloud/database/sekai/customprofilecollectionresource"
+	"haruki-cloud/database/sekai/customprofileetcresource"
+	"haruki-cloud/database/sekai/customprofilegeneralbackgroundresource"
+	"haruki-cloud/database/sekai/customprofilematerialresource"
+	"haruki-cloud/database/sekai/customprofilememberstandingpictureresource"
+	"haruki-cloud/database/sekai/customprofileplayerinforesource"
+	"haruki-cloud/database/sekai/customprofileshaperesource"
+	"haruki-cloud/database/sekai/customprofilestorybackgroundresource"
+	"haruki-cloud/database/sekai/customprofiletextcolor"
+	"haruki-cloud/database/sekai/customprofiletextfont"
+	"haruki-cloud/database/sekai/customprofileuserinterfaceiconresource"
 	"haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
@@ -53,6 +65,7 @@ import (
 	"haruki-cloud/database/sekai/material"
 	"haruki-cloud/database/sekai/music"
 	"haruki-cloud/database/sekai/musicartist"
+	"haruki-cloud/database/sekai/musiccategorie"
 	"haruki-cloud/database/sekai/musicdifficultie"
 	"haruki-cloud/database/sekai/musictag"
 	"haruki-cloud/database/sekai/musicvocal"
@@ -92,6 +105,7 @@ import (
 	"haruki-cloud/database/sekai/mysekaisitelayout"
 	"haruki-cloud/database/sekai/mysekaisitelevel"
 	"haruki-cloud/database/sekai/ngword"
+	"haruki-cloud/database/sekai/omikuji"
 	"haruki-cloud/database/sekai/outsidecharacter"
 	"haruki-cloud/database/sekai/playerframe"
 	"haruki-cloud/database/sekai/playerframegroup"
@@ -103,6 +117,7 @@ import (
 	"haruki-cloud/database/sekai/skill"
 	"haruki-cloud/database/sekai/skillpracticeticket"
 	"haruki-cloud/database/sekai/stamp"
+	"haruki-cloud/database/sekai/unitstoryepisodegroup"
 	"haruki-cloud/database/sekai/virtuallive"
 	"haruki-cloud/database/sekai/worldbloom"
 	"haruki-cloud/database/sekai/worldbloomchapterrankingrewardrange"
@@ -148,6 +163,18 @@ const (
 	TypeCheerfulcarnivalteam                                 = "Cheerfulcarnivalteam"
 	TypeCostume3D                                            = "Costume3D"
 	TypeCustommusicscoretag                                  = "Custommusicscoretag"
+	TypeCustomprofilecharactericonresource                   = "Customprofilecharactericonresource"
+	TypeCustomprofilecollectionresource                      = "Customprofilecollectionresource"
+	TypeCustomprofileetcresource                             = "Customprofileetcresource"
+	TypeCustomprofilegeneralbackgroundresource               = "Customprofilegeneralbackgroundresource"
+	TypeCustomprofilematerialresource                        = "Customprofilematerialresource"
+	TypeCustomprofilememberstandingpictureresource           = "Customprofilememberstandingpictureresource"
+	TypeCustomprofileplayerinforesource                      = "Customprofileplayerinforesource"
+	TypeCustomprofileshaperesource                           = "Customprofileshaperesource"
+	TypeCustomprofilestorybackgroundresource                 = "Customprofilestorybackgroundresource"
+	TypeCustomprofiletextcolor                               = "Customprofiletextcolor"
+	TypeCustomprofiletextfont                                = "Customprofiletextfont"
+	TypeCustomprofileuserinterfaceiconresource               = "Customprofileuserinterfaceiconresource"
 	TypeEvent                                                = "Event"
 	TypeEventcard                                            = "Eventcard"
 	TypeEventdeckbonuse                                      = "Eventdeckbonuse"
@@ -170,6 +197,7 @@ const (
 	TypeMaterial                                             = "Material"
 	TypeMusic                                                = "Music"
 	TypeMusicArtist                                          = "MusicArtist"
+	TypeMusiccategorie                                       = "Musiccategorie"
 	TypeMusicdifficultie                                     = "Musicdifficultie"
 	TypeMusictag                                             = "Musictag"
 	TypeMusicvocal                                           = "Musicvocal"
@@ -209,6 +237,7 @@ const (
 	TypeMysekaisitelayout                                    = "Mysekaisitelayout"
 	TypeMysekaisitelevel                                     = "Mysekaisitelevel"
 	TypeNgword                                               = "Ngword"
+	TypeOmikuji                                              = "Omikuji"
 	TypeOutsidecharacter                                     = "Outsidecharacter"
 	TypePlayerframe                                          = "Playerframe"
 	TypePlayerframegroup                                     = "Playerframegroup"
@@ -219,6 +248,7 @@ const (
 	TypeSkill                                                = "Skill"
 	TypeSkillpracticeticket                                  = "Skillpracticeticket"
 	TypeStamp                                                = "Stamp"
+	TypeUnitstoryepisodegroup                                = "Unitstoryepisodegroup"
 	TypeVirtuallive                                          = "Virtuallive"
 	TypeWorldbloom                                           = "Worldbloom"
 	TypeWorldbloomchapterrankingrewardrange                  = "Worldbloomchapterrankingrewardrange"
@@ -25163,6 +25193,11517 @@ func (m *CustommusicscoretagMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Custommusicscoretag edge %s", name)
 }
 
+// CustomprofilecharactericonresourceMutation represents an operation that mutates the Customprofilecharactericonresource nodes in the graph.
+type CustomprofilecharactericonresourceMutation struct {
+	config
+	op                           Op
+	typ                          string
+	id                           *int
+	custom_profile_resource_type *string
+	game_id                      *int64
+	addgame_id                   *int64
+	seq                          *int64
+	addseq                       *int64
+	name                         *string
+	pronunciation                *string
+	resource_load_type           *string
+	resource_load_val            *string
+	file_name                    *string
+	server_region                *string
+	clearedFields                map[string]struct{}
+	done                         bool
+	oldValue                     func(context.Context) (*Customprofilecharactericonresource, error)
+	predicates                   []predicate.Customprofilecharactericonresource
+}
+
+var _ ent.Mutation = (*CustomprofilecharactericonresourceMutation)(nil)
+
+// customprofilecharactericonresourceOption allows management of the mutation configuration using functional options.
+type customprofilecharactericonresourceOption func(*CustomprofilecharactericonresourceMutation)
+
+// newCustomprofilecharactericonresourceMutation creates new mutation for the Customprofilecharactericonresource entity.
+func newCustomprofilecharactericonresourceMutation(c config, op Op, opts ...customprofilecharactericonresourceOption) *CustomprofilecharactericonresourceMutation {
+	m := &CustomprofilecharactericonresourceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofilecharactericonresource,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofilecharactericonresourceID sets the ID field of the mutation.
+func withCustomprofilecharactericonresourceID(id int) customprofilecharactericonresourceOption {
+	return func(m *CustomprofilecharactericonresourceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofilecharactericonresource
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofilecharactericonresource, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofilecharactericonresource.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofilecharactericonresource sets the old Customprofilecharactericonresource of the mutation.
+func withCustomprofilecharactericonresource(node *Customprofilecharactericonresource) customprofilecharactericonresourceOption {
+	return func(m *CustomprofilecharactericonresourceMutation) {
+		m.oldValue = func(context.Context) (*Customprofilecharactericonresource, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofilecharactericonresourceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofilecharactericonresourceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofilecharactericonresourceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofilecharactericonresourceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofilecharactericonresource.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCustomProfileResourceType sets the "custom_profile_resource_type" field.
+func (m *CustomprofilecharactericonresourceMutation) SetCustomProfileResourceType(s string) {
+	m.custom_profile_resource_type = &s
+}
+
+// CustomProfileResourceType returns the value of the "custom_profile_resource_type" field in the mutation.
+func (m *CustomprofilecharactericonresourceMutation) CustomProfileResourceType() (r string, exists bool) {
+	v := m.custom_profile_resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomProfileResourceType returns the old "custom_profile_resource_type" field's value of the Customprofilecharactericonresource entity.
+// If the Customprofilecharactericonresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecharactericonresourceMutation) OldCustomProfileResourceType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomProfileResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomProfileResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomProfileResourceType: %w", err)
+	}
+	return oldValue.CustomProfileResourceType, nil
+}
+
+// ClearCustomProfileResourceType clears the value of the "custom_profile_resource_type" field.
+func (m *CustomprofilecharactericonresourceMutation) ClearCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	m.clearedFields[customprofilecharactericonresource.FieldCustomProfileResourceType] = struct{}{}
+}
+
+// CustomProfileResourceTypeCleared returns if the "custom_profile_resource_type" field was cleared in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) CustomProfileResourceTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilecharactericonresource.FieldCustomProfileResourceType]
+	return ok
+}
+
+// ResetCustomProfileResourceType resets all changes to the "custom_profile_resource_type" field.
+func (m *CustomprofilecharactericonresourceMutation) ResetCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	delete(m.clearedFields, customprofilecharactericonresource.FieldCustomProfileResourceType)
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofilecharactericonresourceMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofilecharactericonresourceMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofilecharactericonresource entity.
+// If the Customprofilecharactericonresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecharactericonresourceMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofilecharactericonresourceMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofilecharactericonresourceMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofilecharactericonresource.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofilecharactericonresource.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofilecharactericonresourceMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofilecharactericonresource.FieldGameID)
+}
+
+// SetSeq sets the "seq" field.
+func (m *CustomprofilecharactericonresourceMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *CustomprofilecharactericonresourceMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Customprofilecharactericonresource entity.
+// If the Customprofilecharactericonresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecharactericonresourceMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *CustomprofilecharactericonresourceMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSeq clears the value of the "seq" field.
+func (m *CustomprofilecharactericonresourceMutation) ClearSeq() {
+	m.seq = nil
+	m.addseq = nil
+	m.clearedFields[customprofilecharactericonresource.FieldSeq] = struct{}{}
+}
+
+// SeqCleared returns if the "seq" field was cleared in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) SeqCleared() bool {
+	_, ok := m.clearedFields[customprofilecharactericonresource.FieldSeq]
+	return ok
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *CustomprofilecharactericonresourceMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+	delete(m.clearedFields, customprofilecharactericonresource.FieldSeq)
+}
+
+// SetName sets the "name" field.
+func (m *CustomprofilecharactericonresourceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomprofilecharactericonresourceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Customprofilecharactericonresource entity.
+// If the Customprofilecharactericonresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecharactericonresourceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *CustomprofilecharactericonresourceMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[customprofilecharactericonresource.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) NameCleared() bool {
+	_, ok := m.clearedFields[customprofilecharactericonresource.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomprofilecharactericonresourceMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, customprofilecharactericonresource.FieldName)
+}
+
+// SetPronunciation sets the "pronunciation" field.
+func (m *CustomprofilecharactericonresourceMutation) SetPronunciation(s string) {
+	m.pronunciation = &s
+}
+
+// Pronunciation returns the value of the "pronunciation" field in the mutation.
+func (m *CustomprofilecharactericonresourceMutation) Pronunciation() (r string, exists bool) {
+	v := m.pronunciation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPronunciation returns the old "pronunciation" field's value of the Customprofilecharactericonresource entity.
+// If the Customprofilecharactericonresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecharactericonresourceMutation) OldPronunciation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPronunciation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPronunciation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPronunciation: %w", err)
+	}
+	return oldValue.Pronunciation, nil
+}
+
+// ClearPronunciation clears the value of the "pronunciation" field.
+func (m *CustomprofilecharactericonresourceMutation) ClearPronunciation() {
+	m.pronunciation = nil
+	m.clearedFields[customprofilecharactericonresource.FieldPronunciation] = struct{}{}
+}
+
+// PronunciationCleared returns if the "pronunciation" field was cleared in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) PronunciationCleared() bool {
+	_, ok := m.clearedFields[customprofilecharactericonresource.FieldPronunciation]
+	return ok
+}
+
+// ResetPronunciation resets all changes to the "pronunciation" field.
+func (m *CustomprofilecharactericonresourceMutation) ResetPronunciation() {
+	m.pronunciation = nil
+	delete(m.clearedFields, customprofilecharactericonresource.FieldPronunciation)
+}
+
+// SetResourceLoadType sets the "resource_load_type" field.
+func (m *CustomprofilecharactericonresourceMutation) SetResourceLoadType(s string) {
+	m.resource_load_type = &s
+}
+
+// ResourceLoadType returns the value of the "resource_load_type" field in the mutation.
+func (m *CustomprofilecharactericonresourceMutation) ResourceLoadType() (r string, exists bool) {
+	v := m.resource_load_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadType returns the old "resource_load_type" field's value of the Customprofilecharactericonresource entity.
+// If the Customprofilecharactericonresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecharactericonresourceMutation) OldResourceLoadType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadType: %w", err)
+	}
+	return oldValue.ResourceLoadType, nil
+}
+
+// ClearResourceLoadType clears the value of the "resource_load_type" field.
+func (m *CustomprofilecharactericonresourceMutation) ClearResourceLoadType() {
+	m.resource_load_type = nil
+	m.clearedFields[customprofilecharactericonresource.FieldResourceLoadType] = struct{}{}
+}
+
+// ResourceLoadTypeCleared returns if the "resource_load_type" field was cleared in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) ResourceLoadTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilecharactericonresource.FieldResourceLoadType]
+	return ok
+}
+
+// ResetResourceLoadType resets all changes to the "resource_load_type" field.
+func (m *CustomprofilecharactericonresourceMutation) ResetResourceLoadType() {
+	m.resource_load_type = nil
+	delete(m.clearedFields, customprofilecharactericonresource.FieldResourceLoadType)
+}
+
+// SetResourceLoadVal sets the "resource_load_val" field.
+func (m *CustomprofilecharactericonresourceMutation) SetResourceLoadVal(s string) {
+	m.resource_load_val = &s
+}
+
+// ResourceLoadVal returns the value of the "resource_load_val" field in the mutation.
+func (m *CustomprofilecharactericonresourceMutation) ResourceLoadVal() (r string, exists bool) {
+	v := m.resource_load_val
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadVal returns the old "resource_load_val" field's value of the Customprofilecharactericonresource entity.
+// If the Customprofilecharactericonresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecharactericonresourceMutation) OldResourceLoadVal(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadVal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadVal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadVal: %w", err)
+	}
+	return oldValue.ResourceLoadVal, nil
+}
+
+// ClearResourceLoadVal clears the value of the "resource_load_val" field.
+func (m *CustomprofilecharactericonresourceMutation) ClearResourceLoadVal() {
+	m.resource_load_val = nil
+	m.clearedFields[customprofilecharactericonresource.FieldResourceLoadVal] = struct{}{}
+}
+
+// ResourceLoadValCleared returns if the "resource_load_val" field was cleared in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) ResourceLoadValCleared() bool {
+	_, ok := m.clearedFields[customprofilecharactericonresource.FieldResourceLoadVal]
+	return ok
+}
+
+// ResetResourceLoadVal resets all changes to the "resource_load_val" field.
+func (m *CustomprofilecharactericonresourceMutation) ResetResourceLoadVal() {
+	m.resource_load_val = nil
+	delete(m.clearedFields, customprofilecharactericonresource.FieldResourceLoadVal)
+}
+
+// SetFileName sets the "file_name" field.
+func (m *CustomprofilecharactericonresourceMutation) SetFileName(s string) {
+	m.file_name = &s
+}
+
+// FileName returns the value of the "file_name" field in the mutation.
+func (m *CustomprofilecharactericonresourceMutation) FileName() (r string, exists bool) {
+	v := m.file_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFileName returns the old "file_name" field's value of the Customprofilecharactericonresource entity.
+// If the Customprofilecharactericonresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecharactericonresourceMutation) OldFileName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFileName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFileName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFileName: %w", err)
+	}
+	return oldValue.FileName, nil
+}
+
+// ClearFileName clears the value of the "file_name" field.
+func (m *CustomprofilecharactericonresourceMutation) ClearFileName() {
+	m.file_name = nil
+	m.clearedFields[customprofilecharactericonresource.FieldFileName] = struct{}{}
+}
+
+// FileNameCleared returns if the "file_name" field was cleared in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) FileNameCleared() bool {
+	_, ok := m.clearedFields[customprofilecharactericonresource.FieldFileName]
+	return ok
+}
+
+// ResetFileName resets all changes to the "file_name" field.
+func (m *CustomprofilecharactericonresourceMutation) ResetFileName() {
+	m.file_name = nil
+	delete(m.clearedFields, customprofilecharactericonresource.FieldFileName)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofilecharactericonresourceMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofilecharactericonresourceMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofilecharactericonresource entity.
+// If the Customprofilecharactericonresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecharactericonresourceMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofilecharactericonresourceMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofilecharactericonresourceMutation builder.
+func (m *CustomprofilecharactericonresourceMutation) Where(ps ...predicate.Customprofilecharactericonresource) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofilecharactericonresourceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofilecharactericonresourceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofilecharactericonresource, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofilecharactericonresourceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofilecharactericonresourceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofilecharactericonresource).
+func (m *CustomprofilecharactericonresourceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofilecharactericonresourceMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.custom_profile_resource_type != nil {
+		fields = append(fields, customprofilecharactericonresource.FieldCustomProfileResourceType)
+	}
+	if m.game_id != nil {
+		fields = append(fields, customprofilecharactericonresource.FieldGameID)
+	}
+	if m.seq != nil {
+		fields = append(fields, customprofilecharactericonresource.FieldSeq)
+	}
+	if m.name != nil {
+		fields = append(fields, customprofilecharactericonresource.FieldName)
+	}
+	if m.pronunciation != nil {
+		fields = append(fields, customprofilecharactericonresource.FieldPronunciation)
+	}
+	if m.resource_load_type != nil {
+		fields = append(fields, customprofilecharactericonresource.FieldResourceLoadType)
+	}
+	if m.resource_load_val != nil {
+		fields = append(fields, customprofilecharactericonresource.FieldResourceLoadVal)
+	}
+	if m.file_name != nil {
+		fields = append(fields, customprofilecharactericonresource.FieldFileName)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofilecharactericonresource.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofilecharactericonresourceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilecharactericonresource.FieldCustomProfileResourceType:
+		return m.CustomProfileResourceType()
+	case customprofilecharactericonresource.FieldGameID:
+		return m.GameID()
+	case customprofilecharactericonresource.FieldSeq:
+		return m.Seq()
+	case customprofilecharactericonresource.FieldName:
+		return m.Name()
+	case customprofilecharactericonresource.FieldPronunciation:
+		return m.Pronunciation()
+	case customprofilecharactericonresource.FieldResourceLoadType:
+		return m.ResourceLoadType()
+	case customprofilecharactericonresource.FieldResourceLoadVal:
+		return m.ResourceLoadVal()
+	case customprofilecharactericonresource.FieldFileName:
+		return m.FileName()
+	case customprofilecharactericonresource.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofilecharactericonresourceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofilecharactericonresource.FieldCustomProfileResourceType:
+		return m.OldCustomProfileResourceType(ctx)
+	case customprofilecharactericonresource.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofilecharactericonresource.FieldSeq:
+		return m.OldSeq(ctx)
+	case customprofilecharactericonresource.FieldName:
+		return m.OldName(ctx)
+	case customprofilecharactericonresource.FieldPronunciation:
+		return m.OldPronunciation(ctx)
+	case customprofilecharactericonresource.FieldResourceLoadType:
+		return m.OldResourceLoadType(ctx)
+	case customprofilecharactericonresource.FieldResourceLoadVal:
+		return m.OldResourceLoadVal(ctx)
+	case customprofilecharactericonresource.FieldFileName:
+		return m.OldFileName(ctx)
+	case customprofilecharactericonresource.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofilecharactericonresource field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilecharactericonresourceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofilecharactericonresource.FieldCustomProfileResourceType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomProfileResourceType(v)
+		return nil
+	case customprofilecharactericonresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofilecharactericonresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case customprofilecharactericonresource.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customprofilecharactericonresource.FieldPronunciation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPronunciation(v)
+		return nil
+	case customprofilecharactericonresource.FieldResourceLoadType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadType(v)
+		return nil
+	case customprofilecharactericonresource.FieldResourceLoadVal:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadVal(v)
+		return nil
+	case customprofilecharactericonresource.FieldFileName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFileName(v)
+		return nil
+	case customprofilecharactericonresource.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilecharactericonresource field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofilecharactericonresourceMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofilecharactericonresource.FieldGameID)
+	}
+	if m.addseq != nil {
+		fields = append(fields, customprofilecharactericonresource.FieldSeq)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofilecharactericonresourceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilecharactericonresource.FieldGameID:
+		return m.AddedGameID()
+	case customprofilecharactericonresource.FieldSeq:
+		return m.AddedSeq()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilecharactericonresourceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofilecharactericonresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case customprofilecharactericonresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilecharactericonresource numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofilecharactericonresourceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofilecharactericonresource.FieldCustomProfileResourceType) {
+		fields = append(fields, customprofilecharactericonresource.FieldCustomProfileResourceType)
+	}
+	if m.FieldCleared(customprofilecharactericonresource.FieldGameID) {
+		fields = append(fields, customprofilecharactericonresource.FieldGameID)
+	}
+	if m.FieldCleared(customprofilecharactericonresource.FieldSeq) {
+		fields = append(fields, customprofilecharactericonresource.FieldSeq)
+	}
+	if m.FieldCleared(customprofilecharactericonresource.FieldName) {
+		fields = append(fields, customprofilecharactericonresource.FieldName)
+	}
+	if m.FieldCleared(customprofilecharactericonresource.FieldPronunciation) {
+		fields = append(fields, customprofilecharactericonresource.FieldPronunciation)
+	}
+	if m.FieldCleared(customprofilecharactericonresource.FieldResourceLoadType) {
+		fields = append(fields, customprofilecharactericonresource.FieldResourceLoadType)
+	}
+	if m.FieldCleared(customprofilecharactericonresource.FieldResourceLoadVal) {
+		fields = append(fields, customprofilecharactericonresource.FieldResourceLoadVal)
+	}
+	if m.FieldCleared(customprofilecharactericonresource.FieldFileName) {
+		fields = append(fields, customprofilecharactericonresource.FieldFileName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofilecharactericonresourceMutation) ClearField(name string) error {
+	switch name {
+	case customprofilecharactericonresource.FieldCustomProfileResourceType:
+		m.ClearCustomProfileResourceType()
+		return nil
+	case customprofilecharactericonresource.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofilecharactericonresource.FieldSeq:
+		m.ClearSeq()
+		return nil
+	case customprofilecharactericonresource.FieldName:
+		m.ClearName()
+		return nil
+	case customprofilecharactericonresource.FieldPronunciation:
+		m.ClearPronunciation()
+		return nil
+	case customprofilecharactericonresource.FieldResourceLoadType:
+		m.ClearResourceLoadType()
+		return nil
+	case customprofilecharactericonresource.FieldResourceLoadVal:
+		m.ClearResourceLoadVal()
+		return nil
+	case customprofilecharactericonresource.FieldFileName:
+		m.ClearFileName()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilecharactericonresource nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofilecharactericonresourceMutation) ResetField(name string) error {
+	switch name {
+	case customprofilecharactericonresource.FieldCustomProfileResourceType:
+		m.ResetCustomProfileResourceType()
+		return nil
+	case customprofilecharactericonresource.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofilecharactericonresource.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case customprofilecharactericonresource.FieldName:
+		m.ResetName()
+		return nil
+	case customprofilecharactericonresource.FieldPronunciation:
+		m.ResetPronunciation()
+		return nil
+	case customprofilecharactericonresource.FieldResourceLoadType:
+		m.ResetResourceLoadType()
+		return nil
+	case customprofilecharactericonresource.FieldResourceLoadVal:
+		m.ResetResourceLoadVal()
+		return nil
+	case customprofilecharactericonresource.FieldFileName:
+		m.ResetFileName()
+		return nil
+	case customprofilecharactericonresource.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilecharactericonresource field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofilecharactericonresourceMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofilecharactericonresourceMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilecharactericonresource unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofilecharactericonresourceMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilecharactericonresource edge %s", name)
+}
+
+// CustomprofilecollectionresourceMutation represents an operation that mutates the Customprofilecollectionresource nodes in the graph.
+type CustomprofilecollectionresourceMutation struct {
+	config
+	op                                      Op
+	typ                                     string
+	id                                      *int
+	custom_profile_resource_type            *string
+	game_id                                 *int64
+	addgame_id                              *int64
+	seq                                     *int64
+	addseq                                  *int64
+	name                                    *string
+	pronunciation                           *string
+	resource_load_type                      *string
+	resource_load_val                       *string
+	file_name                               *string
+	custom_profile_resource_collection_type *string
+	group_id                                *int64
+	addgroup_id                             *int64
+	server_region                           *string
+	clearedFields                           map[string]struct{}
+	done                                    bool
+	oldValue                                func(context.Context) (*Customprofilecollectionresource, error)
+	predicates                              []predicate.Customprofilecollectionresource
+}
+
+var _ ent.Mutation = (*CustomprofilecollectionresourceMutation)(nil)
+
+// customprofilecollectionresourceOption allows management of the mutation configuration using functional options.
+type customprofilecollectionresourceOption func(*CustomprofilecollectionresourceMutation)
+
+// newCustomprofilecollectionresourceMutation creates new mutation for the Customprofilecollectionresource entity.
+func newCustomprofilecollectionresourceMutation(c config, op Op, opts ...customprofilecollectionresourceOption) *CustomprofilecollectionresourceMutation {
+	m := &CustomprofilecollectionresourceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofilecollectionresource,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofilecollectionresourceID sets the ID field of the mutation.
+func withCustomprofilecollectionresourceID(id int) customprofilecollectionresourceOption {
+	return func(m *CustomprofilecollectionresourceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofilecollectionresource
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofilecollectionresource, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofilecollectionresource.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofilecollectionresource sets the old Customprofilecollectionresource of the mutation.
+func withCustomprofilecollectionresource(node *Customprofilecollectionresource) customprofilecollectionresourceOption {
+	return func(m *CustomprofilecollectionresourceMutation) {
+		m.oldValue = func(context.Context) (*Customprofilecollectionresource, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofilecollectionresourceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofilecollectionresourceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofilecollectionresourceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofilecollectionresourceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofilecollectionresource.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCustomProfileResourceType sets the "custom_profile_resource_type" field.
+func (m *CustomprofilecollectionresourceMutation) SetCustomProfileResourceType(s string) {
+	m.custom_profile_resource_type = &s
+}
+
+// CustomProfileResourceType returns the value of the "custom_profile_resource_type" field in the mutation.
+func (m *CustomprofilecollectionresourceMutation) CustomProfileResourceType() (r string, exists bool) {
+	v := m.custom_profile_resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomProfileResourceType returns the old "custom_profile_resource_type" field's value of the Customprofilecollectionresource entity.
+// If the Customprofilecollectionresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecollectionresourceMutation) OldCustomProfileResourceType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomProfileResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomProfileResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomProfileResourceType: %w", err)
+	}
+	return oldValue.CustomProfileResourceType, nil
+}
+
+// ClearCustomProfileResourceType clears the value of the "custom_profile_resource_type" field.
+func (m *CustomprofilecollectionresourceMutation) ClearCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	m.clearedFields[customprofilecollectionresource.FieldCustomProfileResourceType] = struct{}{}
+}
+
+// CustomProfileResourceTypeCleared returns if the "custom_profile_resource_type" field was cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) CustomProfileResourceTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilecollectionresource.FieldCustomProfileResourceType]
+	return ok
+}
+
+// ResetCustomProfileResourceType resets all changes to the "custom_profile_resource_type" field.
+func (m *CustomprofilecollectionresourceMutation) ResetCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	delete(m.clearedFields, customprofilecollectionresource.FieldCustomProfileResourceType)
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofilecollectionresourceMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofilecollectionresourceMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofilecollectionresource entity.
+// If the Customprofilecollectionresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecollectionresourceMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofilecollectionresourceMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofilecollectionresourceMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofilecollectionresourceMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofilecollectionresource.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofilecollectionresource.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofilecollectionresourceMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofilecollectionresource.FieldGameID)
+}
+
+// SetSeq sets the "seq" field.
+func (m *CustomprofilecollectionresourceMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *CustomprofilecollectionresourceMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Customprofilecollectionresource entity.
+// If the Customprofilecollectionresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecollectionresourceMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *CustomprofilecollectionresourceMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *CustomprofilecollectionresourceMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSeq clears the value of the "seq" field.
+func (m *CustomprofilecollectionresourceMutation) ClearSeq() {
+	m.seq = nil
+	m.addseq = nil
+	m.clearedFields[customprofilecollectionresource.FieldSeq] = struct{}{}
+}
+
+// SeqCleared returns if the "seq" field was cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) SeqCleared() bool {
+	_, ok := m.clearedFields[customprofilecollectionresource.FieldSeq]
+	return ok
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *CustomprofilecollectionresourceMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+	delete(m.clearedFields, customprofilecollectionresource.FieldSeq)
+}
+
+// SetName sets the "name" field.
+func (m *CustomprofilecollectionresourceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomprofilecollectionresourceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Customprofilecollectionresource entity.
+// If the Customprofilecollectionresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecollectionresourceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *CustomprofilecollectionresourceMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[customprofilecollectionresource.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) NameCleared() bool {
+	_, ok := m.clearedFields[customprofilecollectionresource.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomprofilecollectionresourceMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, customprofilecollectionresource.FieldName)
+}
+
+// SetPronunciation sets the "pronunciation" field.
+func (m *CustomprofilecollectionresourceMutation) SetPronunciation(s string) {
+	m.pronunciation = &s
+}
+
+// Pronunciation returns the value of the "pronunciation" field in the mutation.
+func (m *CustomprofilecollectionresourceMutation) Pronunciation() (r string, exists bool) {
+	v := m.pronunciation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPronunciation returns the old "pronunciation" field's value of the Customprofilecollectionresource entity.
+// If the Customprofilecollectionresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecollectionresourceMutation) OldPronunciation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPronunciation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPronunciation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPronunciation: %w", err)
+	}
+	return oldValue.Pronunciation, nil
+}
+
+// ClearPronunciation clears the value of the "pronunciation" field.
+func (m *CustomprofilecollectionresourceMutation) ClearPronunciation() {
+	m.pronunciation = nil
+	m.clearedFields[customprofilecollectionresource.FieldPronunciation] = struct{}{}
+}
+
+// PronunciationCleared returns if the "pronunciation" field was cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) PronunciationCleared() bool {
+	_, ok := m.clearedFields[customprofilecollectionresource.FieldPronunciation]
+	return ok
+}
+
+// ResetPronunciation resets all changes to the "pronunciation" field.
+func (m *CustomprofilecollectionresourceMutation) ResetPronunciation() {
+	m.pronunciation = nil
+	delete(m.clearedFields, customprofilecollectionresource.FieldPronunciation)
+}
+
+// SetResourceLoadType sets the "resource_load_type" field.
+func (m *CustomprofilecollectionresourceMutation) SetResourceLoadType(s string) {
+	m.resource_load_type = &s
+}
+
+// ResourceLoadType returns the value of the "resource_load_type" field in the mutation.
+func (m *CustomprofilecollectionresourceMutation) ResourceLoadType() (r string, exists bool) {
+	v := m.resource_load_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadType returns the old "resource_load_type" field's value of the Customprofilecollectionresource entity.
+// If the Customprofilecollectionresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecollectionresourceMutation) OldResourceLoadType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadType: %w", err)
+	}
+	return oldValue.ResourceLoadType, nil
+}
+
+// ClearResourceLoadType clears the value of the "resource_load_type" field.
+func (m *CustomprofilecollectionresourceMutation) ClearResourceLoadType() {
+	m.resource_load_type = nil
+	m.clearedFields[customprofilecollectionresource.FieldResourceLoadType] = struct{}{}
+}
+
+// ResourceLoadTypeCleared returns if the "resource_load_type" field was cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) ResourceLoadTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilecollectionresource.FieldResourceLoadType]
+	return ok
+}
+
+// ResetResourceLoadType resets all changes to the "resource_load_type" field.
+func (m *CustomprofilecollectionresourceMutation) ResetResourceLoadType() {
+	m.resource_load_type = nil
+	delete(m.clearedFields, customprofilecollectionresource.FieldResourceLoadType)
+}
+
+// SetResourceLoadVal sets the "resource_load_val" field.
+func (m *CustomprofilecollectionresourceMutation) SetResourceLoadVal(s string) {
+	m.resource_load_val = &s
+}
+
+// ResourceLoadVal returns the value of the "resource_load_val" field in the mutation.
+func (m *CustomprofilecollectionresourceMutation) ResourceLoadVal() (r string, exists bool) {
+	v := m.resource_load_val
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadVal returns the old "resource_load_val" field's value of the Customprofilecollectionresource entity.
+// If the Customprofilecollectionresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecollectionresourceMutation) OldResourceLoadVal(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadVal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadVal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadVal: %w", err)
+	}
+	return oldValue.ResourceLoadVal, nil
+}
+
+// ClearResourceLoadVal clears the value of the "resource_load_val" field.
+func (m *CustomprofilecollectionresourceMutation) ClearResourceLoadVal() {
+	m.resource_load_val = nil
+	m.clearedFields[customprofilecollectionresource.FieldResourceLoadVal] = struct{}{}
+}
+
+// ResourceLoadValCleared returns if the "resource_load_val" field was cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) ResourceLoadValCleared() bool {
+	_, ok := m.clearedFields[customprofilecollectionresource.FieldResourceLoadVal]
+	return ok
+}
+
+// ResetResourceLoadVal resets all changes to the "resource_load_val" field.
+func (m *CustomprofilecollectionresourceMutation) ResetResourceLoadVal() {
+	m.resource_load_val = nil
+	delete(m.clearedFields, customprofilecollectionresource.FieldResourceLoadVal)
+}
+
+// SetFileName sets the "file_name" field.
+func (m *CustomprofilecollectionresourceMutation) SetFileName(s string) {
+	m.file_name = &s
+}
+
+// FileName returns the value of the "file_name" field in the mutation.
+func (m *CustomprofilecollectionresourceMutation) FileName() (r string, exists bool) {
+	v := m.file_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFileName returns the old "file_name" field's value of the Customprofilecollectionresource entity.
+// If the Customprofilecollectionresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecollectionresourceMutation) OldFileName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFileName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFileName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFileName: %w", err)
+	}
+	return oldValue.FileName, nil
+}
+
+// ClearFileName clears the value of the "file_name" field.
+func (m *CustomprofilecollectionresourceMutation) ClearFileName() {
+	m.file_name = nil
+	m.clearedFields[customprofilecollectionresource.FieldFileName] = struct{}{}
+}
+
+// FileNameCleared returns if the "file_name" field was cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) FileNameCleared() bool {
+	_, ok := m.clearedFields[customprofilecollectionresource.FieldFileName]
+	return ok
+}
+
+// ResetFileName resets all changes to the "file_name" field.
+func (m *CustomprofilecollectionresourceMutation) ResetFileName() {
+	m.file_name = nil
+	delete(m.clearedFields, customprofilecollectionresource.FieldFileName)
+}
+
+// SetCustomProfileResourceCollectionType sets the "custom_profile_resource_collection_type" field.
+func (m *CustomprofilecollectionresourceMutation) SetCustomProfileResourceCollectionType(s string) {
+	m.custom_profile_resource_collection_type = &s
+}
+
+// CustomProfileResourceCollectionType returns the value of the "custom_profile_resource_collection_type" field in the mutation.
+func (m *CustomprofilecollectionresourceMutation) CustomProfileResourceCollectionType() (r string, exists bool) {
+	v := m.custom_profile_resource_collection_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomProfileResourceCollectionType returns the old "custom_profile_resource_collection_type" field's value of the Customprofilecollectionresource entity.
+// If the Customprofilecollectionresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecollectionresourceMutation) OldCustomProfileResourceCollectionType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomProfileResourceCollectionType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomProfileResourceCollectionType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomProfileResourceCollectionType: %w", err)
+	}
+	return oldValue.CustomProfileResourceCollectionType, nil
+}
+
+// ClearCustomProfileResourceCollectionType clears the value of the "custom_profile_resource_collection_type" field.
+func (m *CustomprofilecollectionresourceMutation) ClearCustomProfileResourceCollectionType() {
+	m.custom_profile_resource_collection_type = nil
+	m.clearedFields[customprofilecollectionresource.FieldCustomProfileResourceCollectionType] = struct{}{}
+}
+
+// CustomProfileResourceCollectionTypeCleared returns if the "custom_profile_resource_collection_type" field was cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) CustomProfileResourceCollectionTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilecollectionresource.FieldCustomProfileResourceCollectionType]
+	return ok
+}
+
+// ResetCustomProfileResourceCollectionType resets all changes to the "custom_profile_resource_collection_type" field.
+func (m *CustomprofilecollectionresourceMutation) ResetCustomProfileResourceCollectionType() {
+	m.custom_profile_resource_collection_type = nil
+	delete(m.clearedFields, customprofilecollectionresource.FieldCustomProfileResourceCollectionType)
+}
+
+// SetGroupID sets the "group_id" field.
+func (m *CustomprofilecollectionresourceMutation) SetGroupID(i int64) {
+	m.group_id = &i
+	m.addgroup_id = nil
+}
+
+// GroupID returns the value of the "group_id" field in the mutation.
+func (m *CustomprofilecollectionresourceMutation) GroupID() (r int64, exists bool) {
+	v := m.group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGroupID returns the old "group_id" field's value of the Customprofilecollectionresource entity.
+// If the Customprofilecollectionresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecollectionresourceMutation) OldGroupID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGroupID: %w", err)
+	}
+	return oldValue.GroupID, nil
+}
+
+// AddGroupID adds i to the "group_id" field.
+func (m *CustomprofilecollectionresourceMutation) AddGroupID(i int64) {
+	if m.addgroup_id != nil {
+		*m.addgroup_id += i
+	} else {
+		m.addgroup_id = &i
+	}
+}
+
+// AddedGroupID returns the value that was added to the "group_id" field in this mutation.
+func (m *CustomprofilecollectionresourceMutation) AddedGroupID() (r int64, exists bool) {
+	v := m.addgroup_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGroupID clears the value of the "group_id" field.
+func (m *CustomprofilecollectionresourceMutation) ClearGroupID() {
+	m.group_id = nil
+	m.addgroup_id = nil
+	m.clearedFields[customprofilecollectionresource.FieldGroupID] = struct{}{}
+}
+
+// GroupIDCleared returns if the "group_id" field was cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) GroupIDCleared() bool {
+	_, ok := m.clearedFields[customprofilecollectionresource.FieldGroupID]
+	return ok
+}
+
+// ResetGroupID resets all changes to the "group_id" field.
+func (m *CustomprofilecollectionresourceMutation) ResetGroupID() {
+	m.group_id = nil
+	m.addgroup_id = nil
+	delete(m.clearedFields, customprofilecollectionresource.FieldGroupID)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofilecollectionresourceMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofilecollectionresourceMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofilecollectionresource entity.
+// If the Customprofilecollectionresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilecollectionresourceMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofilecollectionresourceMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofilecollectionresourceMutation builder.
+func (m *CustomprofilecollectionresourceMutation) Where(ps ...predicate.Customprofilecollectionresource) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofilecollectionresourceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofilecollectionresourceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofilecollectionresource, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofilecollectionresourceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofilecollectionresourceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofilecollectionresource).
+func (m *CustomprofilecollectionresourceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofilecollectionresourceMutation) Fields() []string {
+	fields := make([]string, 0, 11)
+	if m.custom_profile_resource_type != nil {
+		fields = append(fields, customprofilecollectionresource.FieldCustomProfileResourceType)
+	}
+	if m.game_id != nil {
+		fields = append(fields, customprofilecollectionresource.FieldGameID)
+	}
+	if m.seq != nil {
+		fields = append(fields, customprofilecollectionresource.FieldSeq)
+	}
+	if m.name != nil {
+		fields = append(fields, customprofilecollectionresource.FieldName)
+	}
+	if m.pronunciation != nil {
+		fields = append(fields, customprofilecollectionresource.FieldPronunciation)
+	}
+	if m.resource_load_type != nil {
+		fields = append(fields, customprofilecollectionresource.FieldResourceLoadType)
+	}
+	if m.resource_load_val != nil {
+		fields = append(fields, customprofilecollectionresource.FieldResourceLoadVal)
+	}
+	if m.file_name != nil {
+		fields = append(fields, customprofilecollectionresource.FieldFileName)
+	}
+	if m.custom_profile_resource_collection_type != nil {
+		fields = append(fields, customprofilecollectionresource.FieldCustomProfileResourceCollectionType)
+	}
+	if m.group_id != nil {
+		fields = append(fields, customprofilecollectionresource.FieldGroupID)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofilecollectionresource.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofilecollectionresourceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilecollectionresource.FieldCustomProfileResourceType:
+		return m.CustomProfileResourceType()
+	case customprofilecollectionresource.FieldGameID:
+		return m.GameID()
+	case customprofilecollectionresource.FieldSeq:
+		return m.Seq()
+	case customprofilecollectionresource.FieldName:
+		return m.Name()
+	case customprofilecollectionresource.FieldPronunciation:
+		return m.Pronunciation()
+	case customprofilecollectionresource.FieldResourceLoadType:
+		return m.ResourceLoadType()
+	case customprofilecollectionresource.FieldResourceLoadVal:
+		return m.ResourceLoadVal()
+	case customprofilecollectionresource.FieldFileName:
+		return m.FileName()
+	case customprofilecollectionresource.FieldCustomProfileResourceCollectionType:
+		return m.CustomProfileResourceCollectionType()
+	case customprofilecollectionresource.FieldGroupID:
+		return m.GroupID()
+	case customprofilecollectionresource.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofilecollectionresourceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofilecollectionresource.FieldCustomProfileResourceType:
+		return m.OldCustomProfileResourceType(ctx)
+	case customprofilecollectionresource.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofilecollectionresource.FieldSeq:
+		return m.OldSeq(ctx)
+	case customprofilecollectionresource.FieldName:
+		return m.OldName(ctx)
+	case customprofilecollectionresource.FieldPronunciation:
+		return m.OldPronunciation(ctx)
+	case customprofilecollectionresource.FieldResourceLoadType:
+		return m.OldResourceLoadType(ctx)
+	case customprofilecollectionresource.FieldResourceLoadVal:
+		return m.OldResourceLoadVal(ctx)
+	case customprofilecollectionresource.FieldFileName:
+		return m.OldFileName(ctx)
+	case customprofilecollectionresource.FieldCustomProfileResourceCollectionType:
+		return m.OldCustomProfileResourceCollectionType(ctx)
+	case customprofilecollectionresource.FieldGroupID:
+		return m.OldGroupID(ctx)
+	case customprofilecollectionresource.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofilecollectionresource field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilecollectionresourceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofilecollectionresource.FieldCustomProfileResourceType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomProfileResourceType(v)
+		return nil
+	case customprofilecollectionresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofilecollectionresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case customprofilecollectionresource.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customprofilecollectionresource.FieldPronunciation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPronunciation(v)
+		return nil
+	case customprofilecollectionresource.FieldResourceLoadType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadType(v)
+		return nil
+	case customprofilecollectionresource.FieldResourceLoadVal:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadVal(v)
+		return nil
+	case customprofilecollectionresource.FieldFileName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFileName(v)
+		return nil
+	case customprofilecollectionresource.FieldCustomProfileResourceCollectionType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomProfileResourceCollectionType(v)
+		return nil
+	case customprofilecollectionresource.FieldGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGroupID(v)
+		return nil
+	case customprofilecollectionresource.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilecollectionresource field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofilecollectionresourceMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofilecollectionresource.FieldGameID)
+	}
+	if m.addseq != nil {
+		fields = append(fields, customprofilecollectionresource.FieldSeq)
+	}
+	if m.addgroup_id != nil {
+		fields = append(fields, customprofilecollectionresource.FieldGroupID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofilecollectionresourceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilecollectionresource.FieldGameID:
+		return m.AddedGameID()
+	case customprofilecollectionresource.FieldSeq:
+		return m.AddedSeq()
+	case customprofilecollectionresource.FieldGroupID:
+		return m.AddedGroupID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilecollectionresourceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofilecollectionresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case customprofilecollectionresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	case customprofilecollectionresource.FieldGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGroupID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilecollectionresource numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofilecollectionresourceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofilecollectionresource.FieldCustomProfileResourceType) {
+		fields = append(fields, customprofilecollectionresource.FieldCustomProfileResourceType)
+	}
+	if m.FieldCleared(customprofilecollectionresource.FieldGameID) {
+		fields = append(fields, customprofilecollectionresource.FieldGameID)
+	}
+	if m.FieldCleared(customprofilecollectionresource.FieldSeq) {
+		fields = append(fields, customprofilecollectionresource.FieldSeq)
+	}
+	if m.FieldCleared(customprofilecollectionresource.FieldName) {
+		fields = append(fields, customprofilecollectionresource.FieldName)
+	}
+	if m.FieldCleared(customprofilecollectionresource.FieldPronunciation) {
+		fields = append(fields, customprofilecollectionresource.FieldPronunciation)
+	}
+	if m.FieldCleared(customprofilecollectionresource.FieldResourceLoadType) {
+		fields = append(fields, customprofilecollectionresource.FieldResourceLoadType)
+	}
+	if m.FieldCleared(customprofilecollectionresource.FieldResourceLoadVal) {
+		fields = append(fields, customprofilecollectionresource.FieldResourceLoadVal)
+	}
+	if m.FieldCleared(customprofilecollectionresource.FieldFileName) {
+		fields = append(fields, customprofilecollectionresource.FieldFileName)
+	}
+	if m.FieldCleared(customprofilecollectionresource.FieldCustomProfileResourceCollectionType) {
+		fields = append(fields, customprofilecollectionresource.FieldCustomProfileResourceCollectionType)
+	}
+	if m.FieldCleared(customprofilecollectionresource.FieldGroupID) {
+		fields = append(fields, customprofilecollectionresource.FieldGroupID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofilecollectionresourceMutation) ClearField(name string) error {
+	switch name {
+	case customprofilecollectionresource.FieldCustomProfileResourceType:
+		m.ClearCustomProfileResourceType()
+		return nil
+	case customprofilecollectionresource.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofilecollectionresource.FieldSeq:
+		m.ClearSeq()
+		return nil
+	case customprofilecollectionresource.FieldName:
+		m.ClearName()
+		return nil
+	case customprofilecollectionresource.FieldPronunciation:
+		m.ClearPronunciation()
+		return nil
+	case customprofilecollectionresource.FieldResourceLoadType:
+		m.ClearResourceLoadType()
+		return nil
+	case customprofilecollectionresource.FieldResourceLoadVal:
+		m.ClearResourceLoadVal()
+		return nil
+	case customprofilecollectionresource.FieldFileName:
+		m.ClearFileName()
+		return nil
+	case customprofilecollectionresource.FieldCustomProfileResourceCollectionType:
+		m.ClearCustomProfileResourceCollectionType()
+		return nil
+	case customprofilecollectionresource.FieldGroupID:
+		m.ClearGroupID()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilecollectionresource nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofilecollectionresourceMutation) ResetField(name string) error {
+	switch name {
+	case customprofilecollectionresource.FieldCustomProfileResourceType:
+		m.ResetCustomProfileResourceType()
+		return nil
+	case customprofilecollectionresource.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofilecollectionresource.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case customprofilecollectionresource.FieldName:
+		m.ResetName()
+		return nil
+	case customprofilecollectionresource.FieldPronunciation:
+		m.ResetPronunciation()
+		return nil
+	case customprofilecollectionresource.FieldResourceLoadType:
+		m.ResetResourceLoadType()
+		return nil
+	case customprofilecollectionresource.FieldResourceLoadVal:
+		m.ResetResourceLoadVal()
+		return nil
+	case customprofilecollectionresource.FieldFileName:
+		m.ResetFileName()
+		return nil
+	case customprofilecollectionresource.FieldCustomProfileResourceCollectionType:
+		m.ResetCustomProfileResourceCollectionType()
+		return nil
+	case customprofilecollectionresource.FieldGroupID:
+		m.ResetGroupID()
+		return nil
+	case customprofilecollectionresource.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilecollectionresource field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofilecollectionresourceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofilecollectionresourceMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofilecollectionresourceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofilecollectionresourceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofilecollectionresourceMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofilecollectionresourceMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilecollectionresource unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofilecollectionresourceMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilecollectionresource edge %s", name)
+}
+
+// CustomprofileetcresourceMutation represents an operation that mutates the Customprofileetcresource nodes in the graph.
+type CustomprofileetcresourceMutation struct {
+	config
+	op                           Op
+	typ                          string
+	id                           *int
+	custom_profile_resource_type *string
+	game_id                      *int64
+	addgame_id                   *int64
+	seq                          *int64
+	addseq                       *int64
+	name                         *string
+	pronunciation                *string
+	resource_load_type           *string
+	resource_load_val            *string
+	file_name                    *string
+	server_region                *string
+	clearedFields                map[string]struct{}
+	done                         bool
+	oldValue                     func(context.Context) (*Customprofileetcresource, error)
+	predicates                   []predicate.Customprofileetcresource
+}
+
+var _ ent.Mutation = (*CustomprofileetcresourceMutation)(nil)
+
+// customprofileetcresourceOption allows management of the mutation configuration using functional options.
+type customprofileetcresourceOption func(*CustomprofileetcresourceMutation)
+
+// newCustomprofileetcresourceMutation creates new mutation for the Customprofileetcresource entity.
+func newCustomprofileetcresourceMutation(c config, op Op, opts ...customprofileetcresourceOption) *CustomprofileetcresourceMutation {
+	m := &CustomprofileetcresourceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofileetcresource,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofileetcresourceID sets the ID field of the mutation.
+func withCustomprofileetcresourceID(id int) customprofileetcresourceOption {
+	return func(m *CustomprofileetcresourceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofileetcresource
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofileetcresource, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofileetcresource.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofileetcresource sets the old Customprofileetcresource of the mutation.
+func withCustomprofileetcresource(node *Customprofileetcresource) customprofileetcresourceOption {
+	return func(m *CustomprofileetcresourceMutation) {
+		m.oldValue = func(context.Context) (*Customprofileetcresource, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofileetcresourceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofileetcresourceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofileetcresourceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofileetcresourceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofileetcresource.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCustomProfileResourceType sets the "custom_profile_resource_type" field.
+func (m *CustomprofileetcresourceMutation) SetCustomProfileResourceType(s string) {
+	m.custom_profile_resource_type = &s
+}
+
+// CustomProfileResourceType returns the value of the "custom_profile_resource_type" field in the mutation.
+func (m *CustomprofileetcresourceMutation) CustomProfileResourceType() (r string, exists bool) {
+	v := m.custom_profile_resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomProfileResourceType returns the old "custom_profile_resource_type" field's value of the Customprofileetcresource entity.
+// If the Customprofileetcresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileetcresourceMutation) OldCustomProfileResourceType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomProfileResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomProfileResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomProfileResourceType: %w", err)
+	}
+	return oldValue.CustomProfileResourceType, nil
+}
+
+// ClearCustomProfileResourceType clears the value of the "custom_profile_resource_type" field.
+func (m *CustomprofileetcresourceMutation) ClearCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	m.clearedFields[customprofileetcresource.FieldCustomProfileResourceType] = struct{}{}
+}
+
+// CustomProfileResourceTypeCleared returns if the "custom_profile_resource_type" field was cleared in this mutation.
+func (m *CustomprofileetcresourceMutation) CustomProfileResourceTypeCleared() bool {
+	_, ok := m.clearedFields[customprofileetcresource.FieldCustomProfileResourceType]
+	return ok
+}
+
+// ResetCustomProfileResourceType resets all changes to the "custom_profile_resource_type" field.
+func (m *CustomprofileetcresourceMutation) ResetCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	delete(m.clearedFields, customprofileetcresource.FieldCustomProfileResourceType)
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofileetcresourceMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofileetcresourceMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofileetcresource entity.
+// If the Customprofileetcresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileetcresourceMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofileetcresourceMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofileetcresourceMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofileetcresourceMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofileetcresource.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofileetcresourceMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofileetcresource.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofileetcresourceMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofileetcresource.FieldGameID)
+}
+
+// SetSeq sets the "seq" field.
+func (m *CustomprofileetcresourceMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *CustomprofileetcresourceMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Customprofileetcresource entity.
+// If the Customprofileetcresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileetcresourceMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *CustomprofileetcresourceMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *CustomprofileetcresourceMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSeq clears the value of the "seq" field.
+func (m *CustomprofileetcresourceMutation) ClearSeq() {
+	m.seq = nil
+	m.addseq = nil
+	m.clearedFields[customprofileetcresource.FieldSeq] = struct{}{}
+}
+
+// SeqCleared returns if the "seq" field was cleared in this mutation.
+func (m *CustomprofileetcresourceMutation) SeqCleared() bool {
+	_, ok := m.clearedFields[customprofileetcresource.FieldSeq]
+	return ok
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *CustomprofileetcresourceMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+	delete(m.clearedFields, customprofileetcresource.FieldSeq)
+}
+
+// SetName sets the "name" field.
+func (m *CustomprofileetcresourceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomprofileetcresourceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Customprofileetcresource entity.
+// If the Customprofileetcresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileetcresourceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *CustomprofileetcresourceMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[customprofileetcresource.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *CustomprofileetcresourceMutation) NameCleared() bool {
+	_, ok := m.clearedFields[customprofileetcresource.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomprofileetcresourceMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, customprofileetcresource.FieldName)
+}
+
+// SetPronunciation sets the "pronunciation" field.
+func (m *CustomprofileetcresourceMutation) SetPronunciation(s string) {
+	m.pronunciation = &s
+}
+
+// Pronunciation returns the value of the "pronunciation" field in the mutation.
+func (m *CustomprofileetcresourceMutation) Pronunciation() (r string, exists bool) {
+	v := m.pronunciation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPronunciation returns the old "pronunciation" field's value of the Customprofileetcresource entity.
+// If the Customprofileetcresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileetcresourceMutation) OldPronunciation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPronunciation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPronunciation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPronunciation: %w", err)
+	}
+	return oldValue.Pronunciation, nil
+}
+
+// ClearPronunciation clears the value of the "pronunciation" field.
+func (m *CustomprofileetcresourceMutation) ClearPronunciation() {
+	m.pronunciation = nil
+	m.clearedFields[customprofileetcresource.FieldPronunciation] = struct{}{}
+}
+
+// PronunciationCleared returns if the "pronunciation" field was cleared in this mutation.
+func (m *CustomprofileetcresourceMutation) PronunciationCleared() bool {
+	_, ok := m.clearedFields[customprofileetcresource.FieldPronunciation]
+	return ok
+}
+
+// ResetPronunciation resets all changes to the "pronunciation" field.
+func (m *CustomprofileetcresourceMutation) ResetPronunciation() {
+	m.pronunciation = nil
+	delete(m.clearedFields, customprofileetcresource.FieldPronunciation)
+}
+
+// SetResourceLoadType sets the "resource_load_type" field.
+func (m *CustomprofileetcresourceMutation) SetResourceLoadType(s string) {
+	m.resource_load_type = &s
+}
+
+// ResourceLoadType returns the value of the "resource_load_type" field in the mutation.
+func (m *CustomprofileetcresourceMutation) ResourceLoadType() (r string, exists bool) {
+	v := m.resource_load_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadType returns the old "resource_load_type" field's value of the Customprofileetcresource entity.
+// If the Customprofileetcresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileetcresourceMutation) OldResourceLoadType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadType: %w", err)
+	}
+	return oldValue.ResourceLoadType, nil
+}
+
+// ClearResourceLoadType clears the value of the "resource_load_type" field.
+func (m *CustomprofileetcresourceMutation) ClearResourceLoadType() {
+	m.resource_load_type = nil
+	m.clearedFields[customprofileetcresource.FieldResourceLoadType] = struct{}{}
+}
+
+// ResourceLoadTypeCleared returns if the "resource_load_type" field was cleared in this mutation.
+func (m *CustomprofileetcresourceMutation) ResourceLoadTypeCleared() bool {
+	_, ok := m.clearedFields[customprofileetcresource.FieldResourceLoadType]
+	return ok
+}
+
+// ResetResourceLoadType resets all changes to the "resource_load_type" field.
+func (m *CustomprofileetcresourceMutation) ResetResourceLoadType() {
+	m.resource_load_type = nil
+	delete(m.clearedFields, customprofileetcresource.FieldResourceLoadType)
+}
+
+// SetResourceLoadVal sets the "resource_load_val" field.
+func (m *CustomprofileetcresourceMutation) SetResourceLoadVal(s string) {
+	m.resource_load_val = &s
+}
+
+// ResourceLoadVal returns the value of the "resource_load_val" field in the mutation.
+func (m *CustomprofileetcresourceMutation) ResourceLoadVal() (r string, exists bool) {
+	v := m.resource_load_val
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadVal returns the old "resource_load_val" field's value of the Customprofileetcresource entity.
+// If the Customprofileetcresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileetcresourceMutation) OldResourceLoadVal(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadVal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadVal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadVal: %w", err)
+	}
+	return oldValue.ResourceLoadVal, nil
+}
+
+// ClearResourceLoadVal clears the value of the "resource_load_val" field.
+func (m *CustomprofileetcresourceMutation) ClearResourceLoadVal() {
+	m.resource_load_val = nil
+	m.clearedFields[customprofileetcresource.FieldResourceLoadVal] = struct{}{}
+}
+
+// ResourceLoadValCleared returns if the "resource_load_val" field was cleared in this mutation.
+func (m *CustomprofileetcresourceMutation) ResourceLoadValCleared() bool {
+	_, ok := m.clearedFields[customprofileetcresource.FieldResourceLoadVal]
+	return ok
+}
+
+// ResetResourceLoadVal resets all changes to the "resource_load_val" field.
+func (m *CustomprofileetcresourceMutation) ResetResourceLoadVal() {
+	m.resource_load_val = nil
+	delete(m.clearedFields, customprofileetcresource.FieldResourceLoadVal)
+}
+
+// SetFileName sets the "file_name" field.
+func (m *CustomprofileetcresourceMutation) SetFileName(s string) {
+	m.file_name = &s
+}
+
+// FileName returns the value of the "file_name" field in the mutation.
+func (m *CustomprofileetcresourceMutation) FileName() (r string, exists bool) {
+	v := m.file_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFileName returns the old "file_name" field's value of the Customprofileetcresource entity.
+// If the Customprofileetcresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileetcresourceMutation) OldFileName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFileName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFileName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFileName: %w", err)
+	}
+	return oldValue.FileName, nil
+}
+
+// ClearFileName clears the value of the "file_name" field.
+func (m *CustomprofileetcresourceMutation) ClearFileName() {
+	m.file_name = nil
+	m.clearedFields[customprofileetcresource.FieldFileName] = struct{}{}
+}
+
+// FileNameCleared returns if the "file_name" field was cleared in this mutation.
+func (m *CustomprofileetcresourceMutation) FileNameCleared() bool {
+	_, ok := m.clearedFields[customprofileetcresource.FieldFileName]
+	return ok
+}
+
+// ResetFileName resets all changes to the "file_name" field.
+func (m *CustomprofileetcresourceMutation) ResetFileName() {
+	m.file_name = nil
+	delete(m.clearedFields, customprofileetcresource.FieldFileName)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofileetcresourceMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofileetcresourceMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofileetcresource entity.
+// If the Customprofileetcresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileetcresourceMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofileetcresourceMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofileetcresourceMutation builder.
+func (m *CustomprofileetcresourceMutation) Where(ps ...predicate.Customprofileetcresource) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofileetcresourceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofileetcresourceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofileetcresource, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofileetcresourceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofileetcresourceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofileetcresource).
+func (m *CustomprofileetcresourceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofileetcresourceMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.custom_profile_resource_type != nil {
+		fields = append(fields, customprofileetcresource.FieldCustomProfileResourceType)
+	}
+	if m.game_id != nil {
+		fields = append(fields, customprofileetcresource.FieldGameID)
+	}
+	if m.seq != nil {
+		fields = append(fields, customprofileetcresource.FieldSeq)
+	}
+	if m.name != nil {
+		fields = append(fields, customprofileetcresource.FieldName)
+	}
+	if m.pronunciation != nil {
+		fields = append(fields, customprofileetcresource.FieldPronunciation)
+	}
+	if m.resource_load_type != nil {
+		fields = append(fields, customprofileetcresource.FieldResourceLoadType)
+	}
+	if m.resource_load_val != nil {
+		fields = append(fields, customprofileetcresource.FieldResourceLoadVal)
+	}
+	if m.file_name != nil {
+		fields = append(fields, customprofileetcresource.FieldFileName)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofileetcresource.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofileetcresourceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofileetcresource.FieldCustomProfileResourceType:
+		return m.CustomProfileResourceType()
+	case customprofileetcresource.FieldGameID:
+		return m.GameID()
+	case customprofileetcresource.FieldSeq:
+		return m.Seq()
+	case customprofileetcresource.FieldName:
+		return m.Name()
+	case customprofileetcresource.FieldPronunciation:
+		return m.Pronunciation()
+	case customprofileetcresource.FieldResourceLoadType:
+		return m.ResourceLoadType()
+	case customprofileetcresource.FieldResourceLoadVal:
+		return m.ResourceLoadVal()
+	case customprofileetcresource.FieldFileName:
+		return m.FileName()
+	case customprofileetcresource.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofileetcresourceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofileetcresource.FieldCustomProfileResourceType:
+		return m.OldCustomProfileResourceType(ctx)
+	case customprofileetcresource.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofileetcresource.FieldSeq:
+		return m.OldSeq(ctx)
+	case customprofileetcresource.FieldName:
+		return m.OldName(ctx)
+	case customprofileetcresource.FieldPronunciation:
+		return m.OldPronunciation(ctx)
+	case customprofileetcresource.FieldResourceLoadType:
+		return m.OldResourceLoadType(ctx)
+	case customprofileetcresource.FieldResourceLoadVal:
+		return m.OldResourceLoadVal(ctx)
+	case customprofileetcresource.FieldFileName:
+		return m.OldFileName(ctx)
+	case customprofileetcresource.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofileetcresource field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofileetcresourceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofileetcresource.FieldCustomProfileResourceType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomProfileResourceType(v)
+		return nil
+	case customprofileetcresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofileetcresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case customprofileetcresource.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customprofileetcresource.FieldPronunciation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPronunciation(v)
+		return nil
+	case customprofileetcresource.FieldResourceLoadType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadType(v)
+		return nil
+	case customprofileetcresource.FieldResourceLoadVal:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadVal(v)
+		return nil
+	case customprofileetcresource.FieldFileName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFileName(v)
+		return nil
+	case customprofileetcresource.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileetcresource field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofileetcresourceMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofileetcresource.FieldGameID)
+	}
+	if m.addseq != nil {
+		fields = append(fields, customprofileetcresource.FieldSeq)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofileetcresourceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofileetcresource.FieldGameID:
+		return m.AddedGameID()
+	case customprofileetcresource.FieldSeq:
+		return m.AddedSeq()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofileetcresourceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofileetcresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case customprofileetcresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileetcresource numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofileetcresourceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofileetcresource.FieldCustomProfileResourceType) {
+		fields = append(fields, customprofileetcresource.FieldCustomProfileResourceType)
+	}
+	if m.FieldCleared(customprofileetcresource.FieldGameID) {
+		fields = append(fields, customprofileetcresource.FieldGameID)
+	}
+	if m.FieldCleared(customprofileetcresource.FieldSeq) {
+		fields = append(fields, customprofileetcresource.FieldSeq)
+	}
+	if m.FieldCleared(customprofileetcresource.FieldName) {
+		fields = append(fields, customprofileetcresource.FieldName)
+	}
+	if m.FieldCleared(customprofileetcresource.FieldPronunciation) {
+		fields = append(fields, customprofileetcresource.FieldPronunciation)
+	}
+	if m.FieldCleared(customprofileetcresource.FieldResourceLoadType) {
+		fields = append(fields, customprofileetcresource.FieldResourceLoadType)
+	}
+	if m.FieldCleared(customprofileetcresource.FieldResourceLoadVal) {
+		fields = append(fields, customprofileetcresource.FieldResourceLoadVal)
+	}
+	if m.FieldCleared(customprofileetcresource.FieldFileName) {
+		fields = append(fields, customprofileetcresource.FieldFileName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofileetcresourceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofileetcresourceMutation) ClearField(name string) error {
+	switch name {
+	case customprofileetcresource.FieldCustomProfileResourceType:
+		m.ClearCustomProfileResourceType()
+		return nil
+	case customprofileetcresource.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofileetcresource.FieldSeq:
+		m.ClearSeq()
+		return nil
+	case customprofileetcresource.FieldName:
+		m.ClearName()
+		return nil
+	case customprofileetcresource.FieldPronunciation:
+		m.ClearPronunciation()
+		return nil
+	case customprofileetcresource.FieldResourceLoadType:
+		m.ClearResourceLoadType()
+		return nil
+	case customprofileetcresource.FieldResourceLoadVal:
+		m.ClearResourceLoadVal()
+		return nil
+	case customprofileetcresource.FieldFileName:
+		m.ClearFileName()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileetcresource nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofileetcresourceMutation) ResetField(name string) error {
+	switch name {
+	case customprofileetcresource.FieldCustomProfileResourceType:
+		m.ResetCustomProfileResourceType()
+		return nil
+	case customprofileetcresource.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofileetcresource.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case customprofileetcresource.FieldName:
+		m.ResetName()
+		return nil
+	case customprofileetcresource.FieldPronunciation:
+		m.ResetPronunciation()
+		return nil
+	case customprofileetcresource.FieldResourceLoadType:
+		m.ResetResourceLoadType()
+		return nil
+	case customprofileetcresource.FieldResourceLoadVal:
+		m.ResetResourceLoadVal()
+		return nil
+	case customprofileetcresource.FieldFileName:
+		m.ResetFileName()
+		return nil
+	case customprofileetcresource.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileetcresource field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofileetcresourceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofileetcresourceMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofileetcresourceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofileetcresourceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofileetcresourceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofileetcresourceMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofileetcresourceMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofileetcresource unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofileetcresourceMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofileetcresource edge %s", name)
+}
+
+// CustomprofilegeneralbackgroundresourceMutation represents an operation that mutates the Customprofilegeneralbackgroundresource nodes in the graph.
+type CustomprofilegeneralbackgroundresourceMutation struct {
+	config
+	op                           Op
+	typ                          string
+	id                           *int
+	custom_profile_resource_type *string
+	game_id                      *int64
+	addgame_id                   *int64
+	seq                          *int64
+	addseq                       *int64
+	name                         *string
+	pronunciation                *string
+	resource_load_type           *string
+	resource_load_val            *string
+	file_name                    *string
+	server_region                *string
+	clearedFields                map[string]struct{}
+	done                         bool
+	oldValue                     func(context.Context) (*Customprofilegeneralbackgroundresource, error)
+	predicates                   []predicate.Customprofilegeneralbackgroundresource
+}
+
+var _ ent.Mutation = (*CustomprofilegeneralbackgroundresourceMutation)(nil)
+
+// customprofilegeneralbackgroundresourceOption allows management of the mutation configuration using functional options.
+type customprofilegeneralbackgroundresourceOption func(*CustomprofilegeneralbackgroundresourceMutation)
+
+// newCustomprofilegeneralbackgroundresourceMutation creates new mutation for the Customprofilegeneralbackgroundresource entity.
+func newCustomprofilegeneralbackgroundresourceMutation(c config, op Op, opts ...customprofilegeneralbackgroundresourceOption) *CustomprofilegeneralbackgroundresourceMutation {
+	m := &CustomprofilegeneralbackgroundresourceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofilegeneralbackgroundresource,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofilegeneralbackgroundresourceID sets the ID field of the mutation.
+func withCustomprofilegeneralbackgroundresourceID(id int) customprofilegeneralbackgroundresourceOption {
+	return func(m *CustomprofilegeneralbackgroundresourceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofilegeneralbackgroundresource
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofilegeneralbackgroundresource, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofilegeneralbackgroundresource.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofilegeneralbackgroundresource sets the old Customprofilegeneralbackgroundresource of the mutation.
+func withCustomprofilegeneralbackgroundresource(node *Customprofilegeneralbackgroundresource) customprofilegeneralbackgroundresourceOption {
+	return func(m *CustomprofilegeneralbackgroundresourceMutation) {
+		m.oldValue = func(context.Context) (*Customprofilegeneralbackgroundresource, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofilegeneralbackgroundresourceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofilegeneralbackgroundresourceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofilegeneralbackgroundresource.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCustomProfileResourceType sets the "custom_profile_resource_type" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SetCustomProfileResourceType(s string) {
+	m.custom_profile_resource_type = &s
+}
+
+// CustomProfileResourceType returns the value of the "custom_profile_resource_type" field in the mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) CustomProfileResourceType() (r string, exists bool) {
+	v := m.custom_profile_resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomProfileResourceType returns the old "custom_profile_resource_type" field's value of the Customprofilegeneralbackgroundresource entity.
+// If the Customprofilegeneralbackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilegeneralbackgroundresourceMutation) OldCustomProfileResourceType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomProfileResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomProfileResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomProfileResourceType: %w", err)
+	}
+	return oldValue.CustomProfileResourceType, nil
+}
+
+// ClearCustomProfileResourceType clears the value of the "custom_profile_resource_type" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	m.clearedFields[customprofilegeneralbackgroundresource.FieldCustomProfileResourceType] = struct{}{}
+}
+
+// CustomProfileResourceTypeCleared returns if the "custom_profile_resource_type" field was cleared in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) CustomProfileResourceTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilegeneralbackgroundresource.FieldCustomProfileResourceType]
+	return ok
+}
+
+// ResetCustomProfileResourceType resets all changes to the "custom_profile_resource_type" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResetCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	delete(m.clearedFields, customprofilegeneralbackgroundresource.FieldCustomProfileResourceType)
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofilegeneralbackgroundresource entity.
+// If the Customprofilegeneralbackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilegeneralbackgroundresourceMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofilegeneralbackgroundresource.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofilegeneralbackgroundresource.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofilegeneralbackgroundresource.FieldGameID)
+}
+
+// SetSeq sets the "seq" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Customprofilegeneralbackgroundresource entity.
+// If the Customprofilegeneralbackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilegeneralbackgroundresourceMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSeq clears the value of the "seq" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearSeq() {
+	m.seq = nil
+	m.addseq = nil
+	m.clearedFields[customprofilegeneralbackgroundresource.FieldSeq] = struct{}{}
+}
+
+// SeqCleared returns if the "seq" field was cleared in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SeqCleared() bool {
+	_, ok := m.clearedFields[customprofilegeneralbackgroundresource.FieldSeq]
+	return ok
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+	delete(m.clearedFields, customprofilegeneralbackgroundresource.FieldSeq)
+}
+
+// SetName sets the "name" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Customprofilegeneralbackgroundresource entity.
+// If the Customprofilegeneralbackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilegeneralbackgroundresourceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[customprofilegeneralbackgroundresource.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) NameCleared() bool {
+	_, ok := m.clearedFields[customprofilegeneralbackgroundresource.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, customprofilegeneralbackgroundresource.FieldName)
+}
+
+// SetPronunciation sets the "pronunciation" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SetPronunciation(s string) {
+	m.pronunciation = &s
+}
+
+// Pronunciation returns the value of the "pronunciation" field in the mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) Pronunciation() (r string, exists bool) {
+	v := m.pronunciation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPronunciation returns the old "pronunciation" field's value of the Customprofilegeneralbackgroundresource entity.
+// If the Customprofilegeneralbackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilegeneralbackgroundresourceMutation) OldPronunciation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPronunciation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPronunciation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPronunciation: %w", err)
+	}
+	return oldValue.Pronunciation, nil
+}
+
+// ClearPronunciation clears the value of the "pronunciation" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearPronunciation() {
+	m.pronunciation = nil
+	m.clearedFields[customprofilegeneralbackgroundresource.FieldPronunciation] = struct{}{}
+}
+
+// PronunciationCleared returns if the "pronunciation" field was cleared in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) PronunciationCleared() bool {
+	_, ok := m.clearedFields[customprofilegeneralbackgroundresource.FieldPronunciation]
+	return ok
+}
+
+// ResetPronunciation resets all changes to the "pronunciation" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResetPronunciation() {
+	m.pronunciation = nil
+	delete(m.clearedFields, customprofilegeneralbackgroundresource.FieldPronunciation)
+}
+
+// SetResourceLoadType sets the "resource_load_type" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SetResourceLoadType(s string) {
+	m.resource_load_type = &s
+}
+
+// ResourceLoadType returns the value of the "resource_load_type" field in the mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResourceLoadType() (r string, exists bool) {
+	v := m.resource_load_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadType returns the old "resource_load_type" field's value of the Customprofilegeneralbackgroundresource entity.
+// If the Customprofilegeneralbackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilegeneralbackgroundresourceMutation) OldResourceLoadType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadType: %w", err)
+	}
+	return oldValue.ResourceLoadType, nil
+}
+
+// ClearResourceLoadType clears the value of the "resource_load_type" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearResourceLoadType() {
+	m.resource_load_type = nil
+	m.clearedFields[customprofilegeneralbackgroundresource.FieldResourceLoadType] = struct{}{}
+}
+
+// ResourceLoadTypeCleared returns if the "resource_load_type" field was cleared in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResourceLoadTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilegeneralbackgroundresource.FieldResourceLoadType]
+	return ok
+}
+
+// ResetResourceLoadType resets all changes to the "resource_load_type" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResetResourceLoadType() {
+	m.resource_load_type = nil
+	delete(m.clearedFields, customprofilegeneralbackgroundresource.FieldResourceLoadType)
+}
+
+// SetResourceLoadVal sets the "resource_load_val" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SetResourceLoadVal(s string) {
+	m.resource_load_val = &s
+}
+
+// ResourceLoadVal returns the value of the "resource_load_val" field in the mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResourceLoadVal() (r string, exists bool) {
+	v := m.resource_load_val
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadVal returns the old "resource_load_val" field's value of the Customprofilegeneralbackgroundresource entity.
+// If the Customprofilegeneralbackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilegeneralbackgroundresourceMutation) OldResourceLoadVal(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadVal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadVal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadVal: %w", err)
+	}
+	return oldValue.ResourceLoadVal, nil
+}
+
+// ClearResourceLoadVal clears the value of the "resource_load_val" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearResourceLoadVal() {
+	m.resource_load_val = nil
+	m.clearedFields[customprofilegeneralbackgroundresource.FieldResourceLoadVal] = struct{}{}
+}
+
+// ResourceLoadValCleared returns if the "resource_load_val" field was cleared in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResourceLoadValCleared() bool {
+	_, ok := m.clearedFields[customprofilegeneralbackgroundresource.FieldResourceLoadVal]
+	return ok
+}
+
+// ResetResourceLoadVal resets all changes to the "resource_load_val" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResetResourceLoadVal() {
+	m.resource_load_val = nil
+	delete(m.clearedFields, customprofilegeneralbackgroundresource.FieldResourceLoadVal)
+}
+
+// SetFileName sets the "file_name" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SetFileName(s string) {
+	m.file_name = &s
+}
+
+// FileName returns the value of the "file_name" field in the mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) FileName() (r string, exists bool) {
+	v := m.file_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFileName returns the old "file_name" field's value of the Customprofilegeneralbackgroundresource entity.
+// If the Customprofilegeneralbackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilegeneralbackgroundresourceMutation) OldFileName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFileName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFileName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFileName: %w", err)
+	}
+	return oldValue.FileName, nil
+}
+
+// ClearFileName clears the value of the "file_name" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearFileName() {
+	m.file_name = nil
+	m.clearedFields[customprofilegeneralbackgroundresource.FieldFileName] = struct{}{}
+}
+
+// FileNameCleared returns if the "file_name" field was cleared in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) FileNameCleared() bool {
+	_, ok := m.clearedFields[customprofilegeneralbackgroundresource.FieldFileName]
+	return ok
+}
+
+// ResetFileName resets all changes to the "file_name" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResetFileName() {
+	m.file_name = nil
+	delete(m.clearedFields, customprofilegeneralbackgroundresource.FieldFileName)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofilegeneralbackgroundresource entity.
+// If the Customprofilegeneralbackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilegeneralbackgroundresourceMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofilegeneralbackgroundresourceMutation builder.
+func (m *CustomprofilegeneralbackgroundresourceMutation) Where(ps ...predicate.Customprofilegeneralbackgroundresource) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofilegeneralbackgroundresourceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofilegeneralbackgroundresourceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofilegeneralbackgroundresource, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofilegeneralbackgroundresourceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofilegeneralbackgroundresource).
+func (m *CustomprofilegeneralbackgroundresourceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofilegeneralbackgroundresourceMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.custom_profile_resource_type != nil {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldCustomProfileResourceType)
+	}
+	if m.game_id != nil {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldGameID)
+	}
+	if m.seq != nil {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldSeq)
+	}
+	if m.name != nil {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldName)
+	}
+	if m.pronunciation != nil {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldPronunciation)
+	}
+	if m.resource_load_type != nil {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldResourceLoadType)
+	}
+	if m.resource_load_val != nil {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldResourceLoadVal)
+	}
+	if m.file_name != nil {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldFileName)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofilegeneralbackgroundresourceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilegeneralbackgroundresource.FieldCustomProfileResourceType:
+		return m.CustomProfileResourceType()
+	case customprofilegeneralbackgroundresource.FieldGameID:
+		return m.GameID()
+	case customprofilegeneralbackgroundresource.FieldSeq:
+		return m.Seq()
+	case customprofilegeneralbackgroundresource.FieldName:
+		return m.Name()
+	case customprofilegeneralbackgroundresource.FieldPronunciation:
+		return m.Pronunciation()
+	case customprofilegeneralbackgroundresource.FieldResourceLoadType:
+		return m.ResourceLoadType()
+	case customprofilegeneralbackgroundresource.FieldResourceLoadVal:
+		return m.ResourceLoadVal()
+	case customprofilegeneralbackgroundresource.FieldFileName:
+		return m.FileName()
+	case customprofilegeneralbackgroundresource.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofilegeneralbackgroundresourceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofilegeneralbackgroundresource.FieldCustomProfileResourceType:
+		return m.OldCustomProfileResourceType(ctx)
+	case customprofilegeneralbackgroundresource.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofilegeneralbackgroundresource.FieldSeq:
+		return m.OldSeq(ctx)
+	case customprofilegeneralbackgroundresource.FieldName:
+		return m.OldName(ctx)
+	case customprofilegeneralbackgroundresource.FieldPronunciation:
+		return m.OldPronunciation(ctx)
+	case customprofilegeneralbackgroundresource.FieldResourceLoadType:
+		return m.OldResourceLoadType(ctx)
+	case customprofilegeneralbackgroundresource.FieldResourceLoadVal:
+		return m.OldResourceLoadVal(ctx)
+	case customprofilegeneralbackgroundresource.FieldFileName:
+		return m.OldFileName(ctx)
+	case customprofilegeneralbackgroundresource.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofilegeneralbackgroundresource field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilegeneralbackgroundresourceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofilegeneralbackgroundresource.FieldCustomProfileResourceType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomProfileResourceType(v)
+		return nil
+	case customprofilegeneralbackgroundresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofilegeneralbackgroundresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case customprofilegeneralbackgroundresource.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customprofilegeneralbackgroundresource.FieldPronunciation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPronunciation(v)
+		return nil
+	case customprofilegeneralbackgroundresource.FieldResourceLoadType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadType(v)
+		return nil
+	case customprofilegeneralbackgroundresource.FieldResourceLoadVal:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadVal(v)
+		return nil
+	case customprofilegeneralbackgroundresource.FieldFileName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFileName(v)
+		return nil
+	case customprofilegeneralbackgroundresource.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilegeneralbackgroundresource field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldGameID)
+	}
+	if m.addseq != nil {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldSeq)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofilegeneralbackgroundresourceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilegeneralbackgroundresource.FieldGameID:
+		return m.AddedGameID()
+	case customprofilegeneralbackgroundresource.FieldSeq:
+		return m.AddedSeq()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilegeneralbackgroundresourceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofilegeneralbackgroundresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case customprofilegeneralbackgroundresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilegeneralbackgroundresource numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofilegeneralbackgroundresource.FieldCustomProfileResourceType) {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldCustomProfileResourceType)
+	}
+	if m.FieldCleared(customprofilegeneralbackgroundresource.FieldGameID) {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldGameID)
+	}
+	if m.FieldCleared(customprofilegeneralbackgroundresource.FieldSeq) {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldSeq)
+	}
+	if m.FieldCleared(customprofilegeneralbackgroundresource.FieldName) {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldName)
+	}
+	if m.FieldCleared(customprofilegeneralbackgroundresource.FieldPronunciation) {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldPronunciation)
+	}
+	if m.FieldCleared(customprofilegeneralbackgroundresource.FieldResourceLoadType) {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldResourceLoadType)
+	}
+	if m.FieldCleared(customprofilegeneralbackgroundresource.FieldResourceLoadVal) {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldResourceLoadVal)
+	}
+	if m.FieldCleared(customprofilegeneralbackgroundresource.FieldFileName) {
+		fields = append(fields, customprofilegeneralbackgroundresource.FieldFileName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearField(name string) error {
+	switch name {
+	case customprofilegeneralbackgroundresource.FieldCustomProfileResourceType:
+		m.ClearCustomProfileResourceType()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldSeq:
+		m.ClearSeq()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldName:
+		m.ClearName()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldPronunciation:
+		m.ClearPronunciation()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldResourceLoadType:
+		m.ClearResourceLoadType()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldResourceLoadVal:
+		m.ClearResourceLoadVal()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldFileName:
+		m.ClearFileName()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilegeneralbackgroundresource nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResetField(name string) error {
+	switch name {
+	case customprofilegeneralbackgroundresource.FieldCustomProfileResourceType:
+		m.ResetCustomProfileResourceType()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldName:
+		m.ResetName()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldPronunciation:
+		m.ResetPronunciation()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldResourceLoadType:
+		m.ResetResourceLoadType()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldResourceLoadVal:
+		m.ResetResourceLoadVal()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldFileName:
+		m.ResetFileName()
+		return nil
+	case customprofilegeneralbackgroundresource.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilegeneralbackgroundresource field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofilegeneralbackgroundresourceMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilegeneralbackgroundresource unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofilegeneralbackgroundresourceMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilegeneralbackgroundresource edge %s", name)
+}
+
+// CustomprofilematerialresourceMutation represents an operation that mutates the Customprofilematerialresource nodes in the graph.
+type CustomprofilematerialresourceMutation struct {
+	config
+	op                           Op
+	typ                          string
+	id                           *int
+	custom_profile_resource_type *string
+	game_id                      *int64
+	addgame_id                   *int64
+	seq                          *int64
+	addseq                       *int64
+	name                         *string
+	pronunciation                *string
+	resource_load_type           *string
+	resource_load_val            *string
+	file_name                    *string
+	server_region                *string
+	clearedFields                map[string]struct{}
+	done                         bool
+	oldValue                     func(context.Context) (*Customprofilematerialresource, error)
+	predicates                   []predicate.Customprofilematerialresource
+}
+
+var _ ent.Mutation = (*CustomprofilematerialresourceMutation)(nil)
+
+// customprofilematerialresourceOption allows management of the mutation configuration using functional options.
+type customprofilematerialresourceOption func(*CustomprofilematerialresourceMutation)
+
+// newCustomprofilematerialresourceMutation creates new mutation for the Customprofilematerialresource entity.
+func newCustomprofilematerialresourceMutation(c config, op Op, opts ...customprofilematerialresourceOption) *CustomprofilematerialresourceMutation {
+	m := &CustomprofilematerialresourceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofilematerialresource,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofilematerialresourceID sets the ID field of the mutation.
+func withCustomprofilematerialresourceID(id int) customprofilematerialresourceOption {
+	return func(m *CustomprofilematerialresourceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofilematerialresource
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofilematerialresource, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofilematerialresource.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofilematerialresource sets the old Customprofilematerialresource of the mutation.
+func withCustomprofilematerialresource(node *Customprofilematerialresource) customprofilematerialresourceOption {
+	return func(m *CustomprofilematerialresourceMutation) {
+		m.oldValue = func(context.Context) (*Customprofilematerialresource, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofilematerialresourceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofilematerialresourceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofilematerialresourceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofilematerialresourceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofilematerialresource.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCustomProfileResourceType sets the "custom_profile_resource_type" field.
+func (m *CustomprofilematerialresourceMutation) SetCustomProfileResourceType(s string) {
+	m.custom_profile_resource_type = &s
+}
+
+// CustomProfileResourceType returns the value of the "custom_profile_resource_type" field in the mutation.
+func (m *CustomprofilematerialresourceMutation) CustomProfileResourceType() (r string, exists bool) {
+	v := m.custom_profile_resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomProfileResourceType returns the old "custom_profile_resource_type" field's value of the Customprofilematerialresource entity.
+// If the Customprofilematerialresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilematerialresourceMutation) OldCustomProfileResourceType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomProfileResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomProfileResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomProfileResourceType: %w", err)
+	}
+	return oldValue.CustomProfileResourceType, nil
+}
+
+// ClearCustomProfileResourceType clears the value of the "custom_profile_resource_type" field.
+func (m *CustomprofilematerialresourceMutation) ClearCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	m.clearedFields[customprofilematerialresource.FieldCustomProfileResourceType] = struct{}{}
+}
+
+// CustomProfileResourceTypeCleared returns if the "custom_profile_resource_type" field was cleared in this mutation.
+func (m *CustomprofilematerialresourceMutation) CustomProfileResourceTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilematerialresource.FieldCustomProfileResourceType]
+	return ok
+}
+
+// ResetCustomProfileResourceType resets all changes to the "custom_profile_resource_type" field.
+func (m *CustomprofilematerialresourceMutation) ResetCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	delete(m.clearedFields, customprofilematerialresource.FieldCustomProfileResourceType)
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofilematerialresourceMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofilematerialresourceMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofilematerialresource entity.
+// If the Customprofilematerialresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilematerialresourceMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofilematerialresourceMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofilematerialresourceMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofilematerialresourceMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofilematerialresource.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofilematerialresourceMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofilematerialresource.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofilematerialresourceMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofilematerialresource.FieldGameID)
+}
+
+// SetSeq sets the "seq" field.
+func (m *CustomprofilematerialresourceMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *CustomprofilematerialresourceMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Customprofilematerialresource entity.
+// If the Customprofilematerialresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilematerialresourceMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *CustomprofilematerialresourceMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *CustomprofilematerialresourceMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSeq clears the value of the "seq" field.
+func (m *CustomprofilematerialresourceMutation) ClearSeq() {
+	m.seq = nil
+	m.addseq = nil
+	m.clearedFields[customprofilematerialresource.FieldSeq] = struct{}{}
+}
+
+// SeqCleared returns if the "seq" field was cleared in this mutation.
+func (m *CustomprofilematerialresourceMutation) SeqCleared() bool {
+	_, ok := m.clearedFields[customprofilematerialresource.FieldSeq]
+	return ok
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *CustomprofilematerialresourceMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+	delete(m.clearedFields, customprofilematerialresource.FieldSeq)
+}
+
+// SetName sets the "name" field.
+func (m *CustomprofilematerialresourceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomprofilematerialresourceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Customprofilematerialresource entity.
+// If the Customprofilematerialresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilematerialresourceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *CustomprofilematerialresourceMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[customprofilematerialresource.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *CustomprofilematerialresourceMutation) NameCleared() bool {
+	_, ok := m.clearedFields[customprofilematerialresource.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomprofilematerialresourceMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, customprofilematerialresource.FieldName)
+}
+
+// SetPronunciation sets the "pronunciation" field.
+func (m *CustomprofilematerialresourceMutation) SetPronunciation(s string) {
+	m.pronunciation = &s
+}
+
+// Pronunciation returns the value of the "pronunciation" field in the mutation.
+func (m *CustomprofilematerialresourceMutation) Pronunciation() (r string, exists bool) {
+	v := m.pronunciation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPronunciation returns the old "pronunciation" field's value of the Customprofilematerialresource entity.
+// If the Customprofilematerialresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilematerialresourceMutation) OldPronunciation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPronunciation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPronunciation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPronunciation: %w", err)
+	}
+	return oldValue.Pronunciation, nil
+}
+
+// ClearPronunciation clears the value of the "pronunciation" field.
+func (m *CustomprofilematerialresourceMutation) ClearPronunciation() {
+	m.pronunciation = nil
+	m.clearedFields[customprofilematerialresource.FieldPronunciation] = struct{}{}
+}
+
+// PronunciationCleared returns if the "pronunciation" field was cleared in this mutation.
+func (m *CustomprofilematerialresourceMutation) PronunciationCleared() bool {
+	_, ok := m.clearedFields[customprofilematerialresource.FieldPronunciation]
+	return ok
+}
+
+// ResetPronunciation resets all changes to the "pronunciation" field.
+func (m *CustomprofilematerialresourceMutation) ResetPronunciation() {
+	m.pronunciation = nil
+	delete(m.clearedFields, customprofilematerialresource.FieldPronunciation)
+}
+
+// SetResourceLoadType sets the "resource_load_type" field.
+func (m *CustomprofilematerialresourceMutation) SetResourceLoadType(s string) {
+	m.resource_load_type = &s
+}
+
+// ResourceLoadType returns the value of the "resource_load_type" field in the mutation.
+func (m *CustomprofilematerialresourceMutation) ResourceLoadType() (r string, exists bool) {
+	v := m.resource_load_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadType returns the old "resource_load_type" field's value of the Customprofilematerialresource entity.
+// If the Customprofilematerialresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilematerialresourceMutation) OldResourceLoadType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadType: %w", err)
+	}
+	return oldValue.ResourceLoadType, nil
+}
+
+// ClearResourceLoadType clears the value of the "resource_load_type" field.
+func (m *CustomprofilematerialresourceMutation) ClearResourceLoadType() {
+	m.resource_load_type = nil
+	m.clearedFields[customprofilematerialresource.FieldResourceLoadType] = struct{}{}
+}
+
+// ResourceLoadTypeCleared returns if the "resource_load_type" field was cleared in this mutation.
+func (m *CustomprofilematerialresourceMutation) ResourceLoadTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilematerialresource.FieldResourceLoadType]
+	return ok
+}
+
+// ResetResourceLoadType resets all changes to the "resource_load_type" field.
+func (m *CustomprofilematerialresourceMutation) ResetResourceLoadType() {
+	m.resource_load_type = nil
+	delete(m.clearedFields, customprofilematerialresource.FieldResourceLoadType)
+}
+
+// SetResourceLoadVal sets the "resource_load_val" field.
+func (m *CustomprofilematerialresourceMutation) SetResourceLoadVal(s string) {
+	m.resource_load_val = &s
+}
+
+// ResourceLoadVal returns the value of the "resource_load_val" field in the mutation.
+func (m *CustomprofilematerialresourceMutation) ResourceLoadVal() (r string, exists bool) {
+	v := m.resource_load_val
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadVal returns the old "resource_load_val" field's value of the Customprofilematerialresource entity.
+// If the Customprofilematerialresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilematerialresourceMutation) OldResourceLoadVal(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadVal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadVal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadVal: %w", err)
+	}
+	return oldValue.ResourceLoadVal, nil
+}
+
+// ClearResourceLoadVal clears the value of the "resource_load_val" field.
+func (m *CustomprofilematerialresourceMutation) ClearResourceLoadVal() {
+	m.resource_load_val = nil
+	m.clearedFields[customprofilematerialresource.FieldResourceLoadVal] = struct{}{}
+}
+
+// ResourceLoadValCleared returns if the "resource_load_val" field was cleared in this mutation.
+func (m *CustomprofilematerialresourceMutation) ResourceLoadValCleared() bool {
+	_, ok := m.clearedFields[customprofilematerialresource.FieldResourceLoadVal]
+	return ok
+}
+
+// ResetResourceLoadVal resets all changes to the "resource_load_val" field.
+func (m *CustomprofilematerialresourceMutation) ResetResourceLoadVal() {
+	m.resource_load_val = nil
+	delete(m.clearedFields, customprofilematerialresource.FieldResourceLoadVal)
+}
+
+// SetFileName sets the "file_name" field.
+func (m *CustomprofilematerialresourceMutation) SetFileName(s string) {
+	m.file_name = &s
+}
+
+// FileName returns the value of the "file_name" field in the mutation.
+func (m *CustomprofilematerialresourceMutation) FileName() (r string, exists bool) {
+	v := m.file_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFileName returns the old "file_name" field's value of the Customprofilematerialresource entity.
+// If the Customprofilematerialresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilematerialresourceMutation) OldFileName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFileName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFileName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFileName: %w", err)
+	}
+	return oldValue.FileName, nil
+}
+
+// ClearFileName clears the value of the "file_name" field.
+func (m *CustomprofilematerialresourceMutation) ClearFileName() {
+	m.file_name = nil
+	m.clearedFields[customprofilematerialresource.FieldFileName] = struct{}{}
+}
+
+// FileNameCleared returns if the "file_name" field was cleared in this mutation.
+func (m *CustomprofilematerialresourceMutation) FileNameCleared() bool {
+	_, ok := m.clearedFields[customprofilematerialresource.FieldFileName]
+	return ok
+}
+
+// ResetFileName resets all changes to the "file_name" field.
+func (m *CustomprofilematerialresourceMutation) ResetFileName() {
+	m.file_name = nil
+	delete(m.clearedFields, customprofilematerialresource.FieldFileName)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofilematerialresourceMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofilematerialresourceMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofilematerialresource entity.
+// If the Customprofilematerialresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilematerialresourceMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofilematerialresourceMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofilematerialresourceMutation builder.
+func (m *CustomprofilematerialresourceMutation) Where(ps ...predicate.Customprofilematerialresource) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofilematerialresourceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofilematerialresourceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofilematerialresource, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofilematerialresourceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofilematerialresourceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofilematerialresource).
+func (m *CustomprofilematerialresourceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofilematerialresourceMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.custom_profile_resource_type != nil {
+		fields = append(fields, customprofilematerialresource.FieldCustomProfileResourceType)
+	}
+	if m.game_id != nil {
+		fields = append(fields, customprofilematerialresource.FieldGameID)
+	}
+	if m.seq != nil {
+		fields = append(fields, customprofilematerialresource.FieldSeq)
+	}
+	if m.name != nil {
+		fields = append(fields, customprofilematerialresource.FieldName)
+	}
+	if m.pronunciation != nil {
+		fields = append(fields, customprofilematerialresource.FieldPronunciation)
+	}
+	if m.resource_load_type != nil {
+		fields = append(fields, customprofilematerialresource.FieldResourceLoadType)
+	}
+	if m.resource_load_val != nil {
+		fields = append(fields, customprofilematerialresource.FieldResourceLoadVal)
+	}
+	if m.file_name != nil {
+		fields = append(fields, customprofilematerialresource.FieldFileName)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofilematerialresource.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofilematerialresourceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilematerialresource.FieldCustomProfileResourceType:
+		return m.CustomProfileResourceType()
+	case customprofilematerialresource.FieldGameID:
+		return m.GameID()
+	case customprofilematerialresource.FieldSeq:
+		return m.Seq()
+	case customprofilematerialresource.FieldName:
+		return m.Name()
+	case customprofilematerialresource.FieldPronunciation:
+		return m.Pronunciation()
+	case customprofilematerialresource.FieldResourceLoadType:
+		return m.ResourceLoadType()
+	case customprofilematerialresource.FieldResourceLoadVal:
+		return m.ResourceLoadVal()
+	case customprofilematerialresource.FieldFileName:
+		return m.FileName()
+	case customprofilematerialresource.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofilematerialresourceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofilematerialresource.FieldCustomProfileResourceType:
+		return m.OldCustomProfileResourceType(ctx)
+	case customprofilematerialresource.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofilematerialresource.FieldSeq:
+		return m.OldSeq(ctx)
+	case customprofilematerialresource.FieldName:
+		return m.OldName(ctx)
+	case customprofilematerialresource.FieldPronunciation:
+		return m.OldPronunciation(ctx)
+	case customprofilematerialresource.FieldResourceLoadType:
+		return m.OldResourceLoadType(ctx)
+	case customprofilematerialresource.FieldResourceLoadVal:
+		return m.OldResourceLoadVal(ctx)
+	case customprofilematerialresource.FieldFileName:
+		return m.OldFileName(ctx)
+	case customprofilematerialresource.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofilematerialresource field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilematerialresourceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofilematerialresource.FieldCustomProfileResourceType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomProfileResourceType(v)
+		return nil
+	case customprofilematerialresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofilematerialresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case customprofilematerialresource.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customprofilematerialresource.FieldPronunciation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPronunciation(v)
+		return nil
+	case customprofilematerialresource.FieldResourceLoadType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadType(v)
+		return nil
+	case customprofilematerialresource.FieldResourceLoadVal:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadVal(v)
+		return nil
+	case customprofilematerialresource.FieldFileName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFileName(v)
+		return nil
+	case customprofilematerialresource.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilematerialresource field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofilematerialresourceMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofilematerialresource.FieldGameID)
+	}
+	if m.addseq != nil {
+		fields = append(fields, customprofilematerialresource.FieldSeq)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofilematerialresourceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilematerialresource.FieldGameID:
+		return m.AddedGameID()
+	case customprofilematerialresource.FieldSeq:
+		return m.AddedSeq()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilematerialresourceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofilematerialresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case customprofilematerialresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilematerialresource numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofilematerialresourceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofilematerialresource.FieldCustomProfileResourceType) {
+		fields = append(fields, customprofilematerialresource.FieldCustomProfileResourceType)
+	}
+	if m.FieldCleared(customprofilematerialresource.FieldGameID) {
+		fields = append(fields, customprofilematerialresource.FieldGameID)
+	}
+	if m.FieldCleared(customprofilematerialresource.FieldSeq) {
+		fields = append(fields, customprofilematerialresource.FieldSeq)
+	}
+	if m.FieldCleared(customprofilematerialresource.FieldName) {
+		fields = append(fields, customprofilematerialresource.FieldName)
+	}
+	if m.FieldCleared(customprofilematerialresource.FieldPronunciation) {
+		fields = append(fields, customprofilematerialresource.FieldPronunciation)
+	}
+	if m.FieldCleared(customprofilematerialresource.FieldResourceLoadType) {
+		fields = append(fields, customprofilematerialresource.FieldResourceLoadType)
+	}
+	if m.FieldCleared(customprofilematerialresource.FieldResourceLoadVal) {
+		fields = append(fields, customprofilematerialresource.FieldResourceLoadVal)
+	}
+	if m.FieldCleared(customprofilematerialresource.FieldFileName) {
+		fields = append(fields, customprofilematerialresource.FieldFileName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofilematerialresourceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofilematerialresourceMutation) ClearField(name string) error {
+	switch name {
+	case customprofilematerialresource.FieldCustomProfileResourceType:
+		m.ClearCustomProfileResourceType()
+		return nil
+	case customprofilematerialresource.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofilematerialresource.FieldSeq:
+		m.ClearSeq()
+		return nil
+	case customprofilematerialresource.FieldName:
+		m.ClearName()
+		return nil
+	case customprofilematerialresource.FieldPronunciation:
+		m.ClearPronunciation()
+		return nil
+	case customprofilematerialresource.FieldResourceLoadType:
+		m.ClearResourceLoadType()
+		return nil
+	case customprofilematerialresource.FieldResourceLoadVal:
+		m.ClearResourceLoadVal()
+		return nil
+	case customprofilematerialresource.FieldFileName:
+		m.ClearFileName()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilematerialresource nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofilematerialresourceMutation) ResetField(name string) error {
+	switch name {
+	case customprofilematerialresource.FieldCustomProfileResourceType:
+		m.ResetCustomProfileResourceType()
+		return nil
+	case customprofilematerialresource.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofilematerialresource.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case customprofilematerialresource.FieldName:
+		m.ResetName()
+		return nil
+	case customprofilematerialresource.FieldPronunciation:
+		m.ResetPronunciation()
+		return nil
+	case customprofilematerialresource.FieldResourceLoadType:
+		m.ResetResourceLoadType()
+		return nil
+	case customprofilematerialresource.FieldResourceLoadVal:
+		m.ResetResourceLoadVal()
+		return nil
+	case customprofilematerialresource.FieldFileName:
+		m.ResetFileName()
+		return nil
+	case customprofilematerialresource.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilematerialresource field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofilematerialresourceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofilematerialresourceMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofilematerialresourceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofilematerialresourceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofilematerialresourceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofilematerialresourceMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofilematerialresourceMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilematerialresource unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofilematerialresourceMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilematerialresource edge %s", name)
+}
+
+// CustomprofilememberstandingpictureresourceMutation represents an operation that mutates the Customprofilememberstandingpictureresource nodes in the graph.
+type CustomprofilememberstandingpictureresourceMutation struct {
+	config
+	op                           Op
+	typ                          string
+	id                           *int
+	custom_profile_resource_type *string
+	game_id                      *int64
+	addgame_id                   *int64
+	seq                          *int64
+	addseq                       *int64
+	name                         *string
+	pronunciation                *string
+	resource_load_type           *string
+	resource_load_val            *string
+	file_name                    *string
+	character_id                 *int64
+	addcharacter_id              *int64
+	server_region                *string
+	clearedFields                map[string]struct{}
+	done                         bool
+	oldValue                     func(context.Context) (*Customprofilememberstandingpictureresource, error)
+	predicates                   []predicate.Customprofilememberstandingpictureresource
+}
+
+var _ ent.Mutation = (*CustomprofilememberstandingpictureresourceMutation)(nil)
+
+// customprofilememberstandingpictureresourceOption allows management of the mutation configuration using functional options.
+type customprofilememberstandingpictureresourceOption func(*CustomprofilememberstandingpictureresourceMutation)
+
+// newCustomprofilememberstandingpictureresourceMutation creates new mutation for the Customprofilememberstandingpictureresource entity.
+func newCustomprofilememberstandingpictureresourceMutation(c config, op Op, opts ...customprofilememberstandingpictureresourceOption) *CustomprofilememberstandingpictureresourceMutation {
+	m := &CustomprofilememberstandingpictureresourceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofilememberstandingpictureresource,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofilememberstandingpictureresourceID sets the ID field of the mutation.
+func withCustomprofilememberstandingpictureresourceID(id int) customprofilememberstandingpictureresourceOption {
+	return func(m *CustomprofilememberstandingpictureresourceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofilememberstandingpictureresource
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofilememberstandingpictureresource, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofilememberstandingpictureresource.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofilememberstandingpictureresource sets the old Customprofilememberstandingpictureresource of the mutation.
+func withCustomprofilememberstandingpictureresource(node *Customprofilememberstandingpictureresource) customprofilememberstandingpictureresourceOption {
+	return func(m *CustomprofilememberstandingpictureresourceMutation) {
+		m.oldValue = func(context.Context) (*Customprofilememberstandingpictureresource, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofilememberstandingpictureresourceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofilememberstandingpictureresourceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofilememberstandingpictureresourceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofilememberstandingpictureresource.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCustomProfileResourceType sets the "custom_profile_resource_type" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetCustomProfileResourceType(s string) {
+	m.custom_profile_resource_type = &s
+}
+
+// CustomProfileResourceType returns the value of the "custom_profile_resource_type" field in the mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) CustomProfileResourceType() (r string, exists bool) {
+	v := m.custom_profile_resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomProfileResourceType returns the old "custom_profile_resource_type" field's value of the Customprofilememberstandingpictureresource entity.
+// If the Customprofilememberstandingpictureresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilememberstandingpictureresourceMutation) OldCustomProfileResourceType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomProfileResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomProfileResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomProfileResourceType: %w", err)
+	}
+	return oldValue.CustomProfileResourceType, nil
+}
+
+// ClearCustomProfileResourceType clears the value of the "custom_profile_resource_type" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	m.clearedFields[customprofilememberstandingpictureresource.FieldCustomProfileResourceType] = struct{}{}
+}
+
+// CustomProfileResourceTypeCleared returns if the "custom_profile_resource_type" field was cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) CustomProfileResourceTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilememberstandingpictureresource.FieldCustomProfileResourceType]
+	return ok
+}
+
+// ResetCustomProfileResourceType resets all changes to the "custom_profile_resource_type" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	delete(m.clearedFields, customprofilememberstandingpictureresource.FieldCustomProfileResourceType)
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofilememberstandingpictureresource entity.
+// If the Customprofilememberstandingpictureresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilememberstandingpictureresourceMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofilememberstandingpictureresource.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofilememberstandingpictureresource.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofilememberstandingpictureresource.FieldGameID)
+}
+
+// SetSeq sets the "seq" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Customprofilememberstandingpictureresource entity.
+// If the Customprofilememberstandingpictureresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilememberstandingpictureresourceMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSeq clears the value of the "seq" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearSeq() {
+	m.seq = nil
+	m.addseq = nil
+	m.clearedFields[customprofilememberstandingpictureresource.FieldSeq] = struct{}{}
+}
+
+// SeqCleared returns if the "seq" field was cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) SeqCleared() bool {
+	_, ok := m.clearedFields[customprofilememberstandingpictureresource.FieldSeq]
+	return ok
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+	delete(m.clearedFields, customprofilememberstandingpictureresource.FieldSeq)
+}
+
+// SetName sets the "name" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Customprofilememberstandingpictureresource entity.
+// If the Customprofilememberstandingpictureresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilememberstandingpictureresourceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[customprofilememberstandingpictureresource.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) NameCleared() bool {
+	_, ok := m.clearedFields[customprofilememberstandingpictureresource.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, customprofilememberstandingpictureresource.FieldName)
+}
+
+// SetPronunciation sets the "pronunciation" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetPronunciation(s string) {
+	m.pronunciation = &s
+}
+
+// Pronunciation returns the value of the "pronunciation" field in the mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) Pronunciation() (r string, exists bool) {
+	v := m.pronunciation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPronunciation returns the old "pronunciation" field's value of the Customprofilememberstandingpictureresource entity.
+// If the Customprofilememberstandingpictureresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilememberstandingpictureresourceMutation) OldPronunciation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPronunciation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPronunciation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPronunciation: %w", err)
+	}
+	return oldValue.Pronunciation, nil
+}
+
+// ClearPronunciation clears the value of the "pronunciation" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearPronunciation() {
+	m.pronunciation = nil
+	m.clearedFields[customprofilememberstandingpictureresource.FieldPronunciation] = struct{}{}
+}
+
+// PronunciationCleared returns if the "pronunciation" field was cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) PronunciationCleared() bool {
+	_, ok := m.clearedFields[customprofilememberstandingpictureresource.FieldPronunciation]
+	return ok
+}
+
+// ResetPronunciation resets all changes to the "pronunciation" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetPronunciation() {
+	m.pronunciation = nil
+	delete(m.clearedFields, customprofilememberstandingpictureresource.FieldPronunciation)
+}
+
+// SetResourceLoadType sets the "resource_load_type" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetResourceLoadType(s string) {
+	m.resource_load_type = &s
+}
+
+// ResourceLoadType returns the value of the "resource_load_type" field in the mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResourceLoadType() (r string, exists bool) {
+	v := m.resource_load_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadType returns the old "resource_load_type" field's value of the Customprofilememberstandingpictureresource entity.
+// If the Customprofilememberstandingpictureresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilememberstandingpictureresourceMutation) OldResourceLoadType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadType: %w", err)
+	}
+	return oldValue.ResourceLoadType, nil
+}
+
+// ClearResourceLoadType clears the value of the "resource_load_type" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearResourceLoadType() {
+	m.resource_load_type = nil
+	m.clearedFields[customprofilememberstandingpictureresource.FieldResourceLoadType] = struct{}{}
+}
+
+// ResourceLoadTypeCleared returns if the "resource_load_type" field was cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResourceLoadTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilememberstandingpictureresource.FieldResourceLoadType]
+	return ok
+}
+
+// ResetResourceLoadType resets all changes to the "resource_load_type" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetResourceLoadType() {
+	m.resource_load_type = nil
+	delete(m.clearedFields, customprofilememberstandingpictureresource.FieldResourceLoadType)
+}
+
+// SetResourceLoadVal sets the "resource_load_val" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetResourceLoadVal(s string) {
+	m.resource_load_val = &s
+}
+
+// ResourceLoadVal returns the value of the "resource_load_val" field in the mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResourceLoadVal() (r string, exists bool) {
+	v := m.resource_load_val
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadVal returns the old "resource_load_val" field's value of the Customprofilememberstandingpictureresource entity.
+// If the Customprofilememberstandingpictureresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilememberstandingpictureresourceMutation) OldResourceLoadVal(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadVal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadVal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadVal: %w", err)
+	}
+	return oldValue.ResourceLoadVal, nil
+}
+
+// ClearResourceLoadVal clears the value of the "resource_load_val" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearResourceLoadVal() {
+	m.resource_load_val = nil
+	m.clearedFields[customprofilememberstandingpictureresource.FieldResourceLoadVal] = struct{}{}
+}
+
+// ResourceLoadValCleared returns if the "resource_load_val" field was cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResourceLoadValCleared() bool {
+	_, ok := m.clearedFields[customprofilememberstandingpictureresource.FieldResourceLoadVal]
+	return ok
+}
+
+// ResetResourceLoadVal resets all changes to the "resource_load_val" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetResourceLoadVal() {
+	m.resource_load_val = nil
+	delete(m.clearedFields, customprofilememberstandingpictureresource.FieldResourceLoadVal)
+}
+
+// SetFileName sets the "file_name" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetFileName(s string) {
+	m.file_name = &s
+}
+
+// FileName returns the value of the "file_name" field in the mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) FileName() (r string, exists bool) {
+	v := m.file_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFileName returns the old "file_name" field's value of the Customprofilememberstandingpictureresource entity.
+// If the Customprofilememberstandingpictureresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilememberstandingpictureresourceMutation) OldFileName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFileName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFileName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFileName: %w", err)
+	}
+	return oldValue.FileName, nil
+}
+
+// ClearFileName clears the value of the "file_name" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearFileName() {
+	m.file_name = nil
+	m.clearedFields[customprofilememberstandingpictureresource.FieldFileName] = struct{}{}
+}
+
+// FileNameCleared returns if the "file_name" field was cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) FileNameCleared() bool {
+	_, ok := m.clearedFields[customprofilememberstandingpictureresource.FieldFileName]
+	return ok
+}
+
+// ResetFileName resets all changes to the "file_name" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetFileName() {
+	m.file_name = nil
+	delete(m.clearedFields, customprofilememberstandingpictureresource.FieldFileName)
+}
+
+// SetCharacterID sets the "character_id" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetCharacterID(i int64) {
+	m.character_id = &i
+	m.addcharacter_id = nil
+}
+
+// CharacterID returns the value of the "character_id" field in the mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) CharacterID() (r int64, exists bool) {
+	v := m.character_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCharacterID returns the old "character_id" field's value of the Customprofilememberstandingpictureresource entity.
+// If the Customprofilememberstandingpictureresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilememberstandingpictureresourceMutation) OldCharacterID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCharacterID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCharacterID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCharacterID: %w", err)
+	}
+	return oldValue.CharacterID, nil
+}
+
+// AddCharacterID adds i to the "character_id" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) AddCharacterID(i int64) {
+	if m.addcharacter_id != nil {
+		*m.addcharacter_id += i
+	} else {
+		m.addcharacter_id = &i
+	}
+}
+
+// AddedCharacterID returns the value that was added to the "character_id" field in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) AddedCharacterID() (r int64, exists bool) {
+	v := m.addcharacter_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCharacterID clears the value of the "character_id" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearCharacterID() {
+	m.character_id = nil
+	m.addcharacter_id = nil
+	m.clearedFields[customprofilememberstandingpictureresource.FieldCharacterID] = struct{}{}
+}
+
+// CharacterIDCleared returns if the "character_id" field was cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) CharacterIDCleared() bool {
+	_, ok := m.clearedFields[customprofilememberstandingpictureresource.FieldCharacterID]
+	return ok
+}
+
+// ResetCharacterID resets all changes to the "character_id" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetCharacterID() {
+	m.character_id = nil
+	m.addcharacter_id = nil
+	delete(m.clearedFields, customprofilememberstandingpictureresource.FieldCharacterID)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofilememberstandingpictureresource entity.
+// If the Customprofilememberstandingpictureresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilememberstandingpictureresourceMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofilememberstandingpictureresourceMutation builder.
+func (m *CustomprofilememberstandingpictureresourceMutation) Where(ps ...predicate.Customprofilememberstandingpictureresource) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofilememberstandingpictureresourceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofilememberstandingpictureresourceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofilememberstandingpictureresource, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofilememberstandingpictureresourceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofilememberstandingpictureresource).
+func (m *CustomprofilememberstandingpictureresourceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofilememberstandingpictureresourceMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.custom_profile_resource_type != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldCustomProfileResourceType)
+	}
+	if m.game_id != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldGameID)
+	}
+	if m.seq != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldSeq)
+	}
+	if m.name != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldName)
+	}
+	if m.pronunciation != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldPronunciation)
+	}
+	if m.resource_load_type != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldResourceLoadType)
+	}
+	if m.resource_load_val != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldResourceLoadVal)
+	}
+	if m.file_name != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldFileName)
+	}
+	if m.character_id != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldCharacterID)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofilememberstandingpictureresourceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilememberstandingpictureresource.FieldCustomProfileResourceType:
+		return m.CustomProfileResourceType()
+	case customprofilememberstandingpictureresource.FieldGameID:
+		return m.GameID()
+	case customprofilememberstandingpictureresource.FieldSeq:
+		return m.Seq()
+	case customprofilememberstandingpictureresource.FieldName:
+		return m.Name()
+	case customprofilememberstandingpictureresource.FieldPronunciation:
+		return m.Pronunciation()
+	case customprofilememberstandingpictureresource.FieldResourceLoadType:
+		return m.ResourceLoadType()
+	case customprofilememberstandingpictureresource.FieldResourceLoadVal:
+		return m.ResourceLoadVal()
+	case customprofilememberstandingpictureresource.FieldFileName:
+		return m.FileName()
+	case customprofilememberstandingpictureresource.FieldCharacterID:
+		return m.CharacterID()
+	case customprofilememberstandingpictureresource.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofilememberstandingpictureresourceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofilememberstandingpictureresource.FieldCustomProfileResourceType:
+		return m.OldCustomProfileResourceType(ctx)
+	case customprofilememberstandingpictureresource.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofilememberstandingpictureresource.FieldSeq:
+		return m.OldSeq(ctx)
+	case customprofilememberstandingpictureresource.FieldName:
+		return m.OldName(ctx)
+	case customprofilememberstandingpictureresource.FieldPronunciation:
+		return m.OldPronunciation(ctx)
+	case customprofilememberstandingpictureresource.FieldResourceLoadType:
+		return m.OldResourceLoadType(ctx)
+	case customprofilememberstandingpictureresource.FieldResourceLoadVal:
+		return m.OldResourceLoadVal(ctx)
+	case customprofilememberstandingpictureresource.FieldFileName:
+		return m.OldFileName(ctx)
+	case customprofilememberstandingpictureresource.FieldCharacterID:
+		return m.OldCharacterID(ctx)
+	case customprofilememberstandingpictureresource.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofilememberstandingpictureresource field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilememberstandingpictureresourceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofilememberstandingpictureresource.FieldCustomProfileResourceType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomProfileResourceType(v)
+		return nil
+	case customprofilememberstandingpictureresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofilememberstandingpictureresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case customprofilememberstandingpictureresource.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customprofilememberstandingpictureresource.FieldPronunciation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPronunciation(v)
+		return nil
+	case customprofilememberstandingpictureresource.FieldResourceLoadType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadType(v)
+		return nil
+	case customprofilememberstandingpictureresource.FieldResourceLoadVal:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadVal(v)
+		return nil
+	case customprofilememberstandingpictureresource.FieldFileName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFileName(v)
+		return nil
+	case customprofilememberstandingpictureresource.FieldCharacterID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCharacterID(v)
+		return nil
+	case customprofilememberstandingpictureresource.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilememberstandingpictureresource field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldGameID)
+	}
+	if m.addseq != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldSeq)
+	}
+	if m.addcharacter_id != nil {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldCharacterID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofilememberstandingpictureresourceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilememberstandingpictureresource.FieldGameID:
+		return m.AddedGameID()
+	case customprofilememberstandingpictureresource.FieldSeq:
+		return m.AddedSeq()
+	case customprofilememberstandingpictureresource.FieldCharacterID:
+		return m.AddedCharacterID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilememberstandingpictureresourceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofilememberstandingpictureresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case customprofilememberstandingpictureresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	case customprofilememberstandingpictureresource.FieldCharacterID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCharacterID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilememberstandingpictureresource numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofilememberstandingpictureresource.FieldCustomProfileResourceType) {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldCustomProfileResourceType)
+	}
+	if m.FieldCleared(customprofilememberstandingpictureresource.FieldGameID) {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldGameID)
+	}
+	if m.FieldCleared(customprofilememberstandingpictureresource.FieldSeq) {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldSeq)
+	}
+	if m.FieldCleared(customprofilememberstandingpictureresource.FieldName) {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldName)
+	}
+	if m.FieldCleared(customprofilememberstandingpictureresource.FieldPronunciation) {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldPronunciation)
+	}
+	if m.FieldCleared(customprofilememberstandingpictureresource.FieldResourceLoadType) {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldResourceLoadType)
+	}
+	if m.FieldCleared(customprofilememberstandingpictureresource.FieldResourceLoadVal) {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldResourceLoadVal)
+	}
+	if m.FieldCleared(customprofilememberstandingpictureresource.FieldFileName) {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldFileName)
+	}
+	if m.FieldCleared(customprofilememberstandingpictureresource.FieldCharacterID) {
+		fields = append(fields, customprofilememberstandingpictureresource.FieldCharacterID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearField(name string) error {
+	switch name {
+	case customprofilememberstandingpictureresource.FieldCustomProfileResourceType:
+		m.ClearCustomProfileResourceType()
+		return nil
+	case customprofilememberstandingpictureresource.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofilememberstandingpictureresource.FieldSeq:
+		m.ClearSeq()
+		return nil
+	case customprofilememberstandingpictureresource.FieldName:
+		m.ClearName()
+		return nil
+	case customprofilememberstandingpictureresource.FieldPronunciation:
+		m.ClearPronunciation()
+		return nil
+	case customprofilememberstandingpictureresource.FieldResourceLoadType:
+		m.ClearResourceLoadType()
+		return nil
+	case customprofilememberstandingpictureresource.FieldResourceLoadVal:
+		m.ClearResourceLoadVal()
+		return nil
+	case customprofilememberstandingpictureresource.FieldFileName:
+		m.ClearFileName()
+		return nil
+	case customprofilememberstandingpictureresource.FieldCharacterID:
+		m.ClearCharacterID()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilememberstandingpictureresource nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetField(name string) error {
+	switch name {
+	case customprofilememberstandingpictureresource.FieldCustomProfileResourceType:
+		m.ResetCustomProfileResourceType()
+		return nil
+	case customprofilememberstandingpictureresource.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofilememberstandingpictureresource.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case customprofilememberstandingpictureresource.FieldName:
+		m.ResetName()
+		return nil
+	case customprofilememberstandingpictureresource.FieldPronunciation:
+		m.ResetPronunciation()
+		return nil
+	case customprofilememberstandingpictureresource.FieldResourceLoadType:
+		m.ResetResourceLoadType()
+		return nil
+	case customprofilememberstandingpictureresource.FieldResourceLoadVal:
+		m.ResetResourceLoadVal()
+		return nil
+	case customprofilememberstandingpictureresource.FieldFileName:
+		m.ResetFileName()
+		return nil
+	case customprofilememberstandingpictureresource.FieldCharacterID:
+		m.ResetCharacterID()
+		return nil
+	case customprofilememberstandingpictureresource.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilememberstandingpictureresource field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofilememberstandingpictureresourceMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofilememberstandingpictureresourceMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilememberstandingpictureresource unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofilememberstandingpictureresourceMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilememberstandingpictureresource edge %s", name)
+}
+
+// CustomprofileplayerinforesourceMutation represents an operation that mutates the Customprofileplayerinforesource nodes in the graph.
+type CustomprofileplayerinforesourceMutation struct {
+	config
+	op                           Op
+	typ                          string
+	id                           *int
+	custom_profile_resource_type *string
+	game_id                      *int64
+	addgame_id                   *int64
+	seq                          *int64
+	addseq                       *int64
+	name                         *string
+	pronunciation                *string
+	resource_load_type           *string
+	resource_load_val            *string
+	file_name                    *string
+	group_id                     *int64
+	addgroup_id                  *int64
+	server_region                *string
+	clearedFields                map[string]struct{}
+	done                         bool
+	oldValue                     func(context.Context) (*Customprofileplayerinforesource, error)
+	predicates                   []predicate.Customprofileplayerinforesource
+}
+
+var _ ent.Mutation = (*CustomprofileplayerinforesourceMutation)(nil)
+
+// customprofileplayerinforesourceOption allows management of the mutation configuration using functional options.
+type customprofileplayerinforesourceOption func(*CustomprofileplayerinforesourceMutation)
+
+// newCustomprofileplayerinforesourceMutation creates new mutation for the Customprofileplayerinforesource entity.
+func newCustomprofileplayerinforesourceMutation(c config, op Op, opts ...customprofileplayerinforesourceOption) *CustomprofileplayerinforesourceMutation {
+	m := &CustomprofileplayerinforesourceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofileplayerinforesource,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofileplayerinforesourceID sets the ID field of the mutation.
+func withCustomprofileplayerinforesourceID(id int) customprofileplayerinforesourceOption {
+	return func(m *CustomprofileplayerinforesourceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofileplayerinforesource
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofileplayerinforesource, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofileplayerinforesource.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofileplayerinforesource sets the old Customprofileplayerinforesource of the mutation.
+func withCustomprofileplayerinforesource(node *Customprofileplayerinforesource) customprofileplayerinforesourceOption {
+	return func(m *CustomprofileplayerinforesourceMutation) {
+		m.oldValue = func(context.Context) (*Customprofileplayerinforesource, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofileplayerinforesourceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofileplayerinforesourceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofileplayerinforesourceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofileplayerinforesourceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofileplayerinforesource.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCustomProfileResourceType sets the "custom_profile_resource_type" field.
+func (m *CustomprofileplayerinforesourceMutation) SetCustomProfileResourceType(s string) {
+	m.custom_profile_resource_type = &s
+}
+
+// CustomProfileResourceType returns the value of the "custom_profile_resource_type" field in the mutation.
+func (m *CustomprofileplayerinforesourceMutation) CustomProfileResourceType() (r string, exists bool) {
+	v := m.custom_profile_resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomProfileResourceType returns the old "custom_profile_resource_type" field's value of the Customprofileplayerinforesource entity.
+// If the Customprofileplayerinforesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileplayerinforesourceMutation) OldCustomProfileResourceType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomProfileResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomProfileResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomProfileResourceType: %w", err)
+	}
+	return oldValue.CustomProfileResourceType, nil
+}
+
+// ClearCustomProfileResourceType clears the value of the "custom_profile_resource_type" field.
+func (m *CustomprofileplayerinforesourceMutation) ClearCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	m.clearedFields[customprofileplayerinforesource.FieldCustomProfileResourceType] = struct{}{}
+}
+
+// CustomProfileResourceTypeCleared returns if the "custom_profile_resource_type" field was cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) CustomProfileResourceTypeCleared() bool {
+	_, ok := m.clearedFields[customprofileplayerinforesource.FieldCustomProfileResourceType]
+	return ok
+}
+
+// ResetCustomProfileResourceType resets all changes to the "custom_profile_resource_type" field.
+func (m *CustomprofileplayerinforesourceMutation) ResetCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	delete(m.clearedFields, customprofileplayerinforesource.FieldCustomProfileResourceType)
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofileplayerinforesourceMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofileplayerinforesourceMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofileplayerinforesource entity.
+// If the Customprofileplayerinforesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileplayerinforesourceMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofileplayerinforesourceMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofileplayerinforesourceMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofileplayerinforesource.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofileplayerinforesource.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofileplayerinforesourceMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofileplayerinforesource.FieldGameID)
+}
+
+// SetSeq sets the "seq" field.
+func (m *CustomprofileplayerinforesourceMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *CustomprofileplayerinforesourceMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Customprofileplayerinforesource entity.
+// If the Customprofileplayerinforesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileplayerinforesourceMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *CustomprofileplayerinforesourceMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSeq clears the value of the "seq" field.
+func (m *CustomprofileplayerinforesourceMutation) ClearSeq() {
+	m.seq = nil
+	m.addseq = nil
+	m.clearedFields[customprofileplayerinforesource.FieldSeq] = struct{}{}
+}
+
+// SeqCleared returns if the "seq" field was cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) SeqCleared() bool {
+	_, ok := m.clearedFields[customprofileplayerinforesource.FieldSeq]
+	return ok
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *CustomprofileplayerinforesourceMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+	delete(m.clearedFields, customprofileplayerinforesource.FieldSeq)
+}
+
+// SetName sets the "name" field.
+func (m *CustomprofileplayerinforesourceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomprofileplayerinforesourceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Customprofileplayerinforesource entity.
+// If the Customprofileplayerinforesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileplayerinforesourceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *CustomprofileplayerinforesourceMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[customprofileplayerinforesource.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) NameCleared() bool {
+	_, ok := m.clearedFields[customprofileplayerinforesource.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomprofileplayerinforesourceMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, customprofileplayerinforesource.FieldName)
+}
+
+// SetPronunciation sets the "pronunciation" field.
+func (m *CustomprofileplayerinforesourceMutation) SetPronunciation(s string) {
+	m.pronunciation = &s
+}
+
+// Pronunciation returns the value of the "pronunciation" field in the mutation.
+func (m *CustomprofileplayerinforesourceMutation) Pronunciation() (r string, exists bool) {
+	v := m.pronunciation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPronunciation returns the old "pronunciation" field's value of the Customprofileplayerinforesource entity.
+// If the Customprofileplayerinforesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileplayerinforesourceMutation) OldPronunciation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPronunciation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPronunciation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPronunciation: %w", err)
+	}
+	return oldValue.Pronunciation, nil
+}
+
+// ClearPronunciation clears the value of the "pronunciation" field.
+func (m *CustomprofileplayerinforesourceMutation) ClearPronunciation() {
+	m.pronunciation = nil
+	m.clearedFields[customprofileplayerinforesource.FieldPronunciation] = struct{}{}
+}
+
+// PronunciationCleared returns if the "pronunciation" field was cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) PronunciationCleared() bool {
+	_, ok := m.clearedFields[customprofileplayerinforesource.FieldPronunciation]
+	return ok
+}
+
+// ResetPronunciation resets all changes to the "pronunciation" field.
+func (m *CustomprofileplayerinforesourceMutation) ResetPronunciation() {
+	m.pronunciation = nil
+	delete(m.clearedFields, customprofileplayerinforesource.FieldPronunciation)
+}
+
+// SetResourceLoadType sets the "resource_load_type" field.
+func (m *CustomprofileplayerinforesourceMutation) SetResourceLoadType(s string) {
+	m.resource_load_type = &s
+}
+
+// ResourceLoadType returns the value of the "resource_load_type" field in the mutation.
+func (m *CustomprofileplayerinforesourceMutation) ResourceLoadType() (r string, exists bool) {
+	v := m.resource_load_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadType returns the old "resource_load_type" field's value of the Customprofileplayerinforesource entity.
+// If the Customprofileplayerinforesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileplayerinforesourceMutation) OldResourceLoadType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadType: %w", err)
+	}
+	return oldValue.ResourceLoadType, nil
+}
+
+// ClearResourceLoadType clears the value of the "resource_load_type" field.
+func (m *CustomprofileplayerinforesourceMutation) ClearResourceLoadType() {
+	m.resource_load_type = nil
+	m.clearedFields[customprofileplayerinforesource.FieldResourceLoadType] = struct{}{}
+}
+
+// ResourceLoadTypeCleared returns if the "resource_load_type" field was cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) ResourceLoadTypeCleared() bool {
+	_, ok := m.clearedFields[customprofileplayerinforesource.FieldResourceLoadType]
+	return ok
+}
+
+// ResetResourceLoadType resets all changes to the "resource_load_type" field.
+func (m *CustomprofileplayerinforesourceMutation) ResetResourceLoadType() {
+	m.resource_load_type = nil
+	delete(m.clearedFields, customprofileplayerinforesource.FieldResourceLoadType)
+}
+
+// SetResourceLoadVal sets the "resource_load_val" field.
+func (m *CustomprofileplayerinforesourceMutation) SetResourceLoadVal(s string) {
+	m.resource_load_val = &s
+}
+
+// ResourceLoadVal returns the value of the "resource_load_val" field in the mutation.
+func (m *CustomprofileplayerinforesourceMutation) ResourceLoadVal() (r string, exists bool) {
+	v := m.resource_load_val
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadVal returns the old "resource_load_val" field's value of the Customprofileplayerinforesource entity.
+// If the Customprofileplayerinforesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileplayerinforesourceMutation) OldResourceLoadVal(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadVal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadVal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadVal: %w", err)
+	}
+	return oldValue.ResourceLoadVal, nil
+}
+
+// ClearResourceLoadVal clears the value of the "resource_load_val" field.
+func (m *CustomprofileplayerinforesourceMutation) ClearResourceLoadVal() {
+	m.resource_load_val = nil
+	m.clearedFields[customprofileplayerinforesource.FieldResourceLoadVal] = struct{}{}
+}
+
+// ResourceLoadValCleared returns if the "resource_load_val" field was cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) ResourceLoadValCleared() bool {
+	_, ok := m.clearedFields[customprofileplayerinforesource.FieldResourceLoadVal]
+	return ok
+}
+
+// ResetResourceLoadVal resets all changes to the "resource_load_val" field.
+func (m *CustomprofileplayerinforesourceMutation) ResetResourceLoadVal() {
+	m.resource_load_val = nil
+	delete(m.clearedFields, customprofileplayerinforesource.FieldResourceLoadVal)
+}
+
+// SetFileName sets the "file_name" field.
+func (m *CustomprofileplayerinforesourceMutation) SetFileName(s string) {
+	m.file_name = &s
+}
+
+// FileName returns the value of the "file_name" field in the mutation.
+func (m *CustomprofileplayerinforesourceMutation) FileName() (r string, exists bool) {
+	v := m.file_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFileName returns the old "file_name" field's value of the Customprofileplayerinforesource entity.
+// If the Customprofileplayerinforesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileplayerinforesourceMutation) OldFileName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFileName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFileName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFileName: %w", err)
+	}
+	return oldValue.FileName, nil
+}
+
+// ClearFileName clears the value of the "file_name" field.
+func (m *CustomprofileplayerinforesourceMutation) ClearFileName() {
+	m.file_name = nil
+	m.clearedFields[customprofileplayerinforesource.FieldFileName] = struct{}{}
+}
+
+// FileNameCleared returns if the "file_name" field was cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) FileNameCleared() bool {
+	_, ok := m.clearedFields[customprofileplayerinforesource.FieldFileName]
+	return ok
+}
+
+// ResetFileName resets all changes to the "file_name" field.
+func (m *CustomprofileplayerinforesourceMutation) ResetFileName() {
+	m.file_name = nil
+	delete(m.clearedFields, customprofileplayerinforesource.FieldFileName)
+}
+
+// SetGroupID sets the "group_id" field.
+func (m *CustomprofileplayerinforesourceMutation) SetGroupID(i int64) {
+	m.group_id = &i
+	m.addgroup_id = nil
+}
+
+// GroupID returns the value of the "group_id" field in the mutation.
+func (m *CustomprofileplayerinforesourceMutation) GroupID() (r int64, exists bool) {
+	v := m.group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGroupID returns the old "group_id" field's value of the Customprofileplayerinforesource entity.
+// If the Customprofileplayerinforesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileplayerinforesourceMutation) OldGroupID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGroupID: %w", err)
+	}
+	return oldValue.GroupID, nil
+}
+
+// AddGroupID adds i to the "group_id" field.
+func (m *CustomprofileplayerinforesourceMutation) AddGroupID(i int64) {
+	if m.addgroup_id != nil {
+		*m.addgroup_id += i
+	} else {
+		m.addgroup_id = &i
+	}
+}
+
+// AddedGroupID returns the value that was added to the "group_id" field in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) AddedGroupID() (r int64, exists bool) {
+	v := m.addgroup_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGroupID clears the value of the "group_id" field.
+func (m *CustomprofileplayerinforesourceMutation) ClearGroupID() {
+	m.group_id = nil
+	m.addgroup_id = nil
+	m.clearedFields[customprofileplayerinforesource.FieldGroupID] = struct{}{}
+}
+
+// GroupIDCleared returns if the "group_id" field was cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) GroupIDCleared() bool {
+	_, ok := m.clearedFields[customprofileplayerinforesource.FieldGroupID]
+	return ok
+}
+
+// ResetGroupID resets all changes to the "group_id" field.
+func (m *CustomprofileplayerinforesourceMutation) ResetGroupID() {
+	m.group_id = nil
+	m.addgroup_id = nil
+	delete(m.clearedFields, customprofileplayerinforesource.FieldGroupID)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofileplayerinforesourceMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofileplayerinforesourceMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofileplayerinforesource entity.
+// If the Customprofileplayerinforesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileplayerinforesourceMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofileplayerinforesourceMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofileplayerinforesourceMutation builder.
+func (m *CustomprofileplayerinforesourceMutation) Where(ps ...predicate.Customprofileplayerinforesource) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofileplayerinforesourceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofileplayerinforesourceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofileplayerinforesource, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofileplayerinforesourceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofileplayerinforesourceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofileplayerinforesource).
+func (m *CustomprofileplayerinforesourceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofileplayerinforesourceMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.custom_profile_resource_type != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldCustomProfileResourceType)
+	}
+	if m.game_id != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldGameID)
+	}
+	if m.seq != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldSeq)
+	}
+	if m.name != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldName)
+	}
+	if m.pronunciation != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldPronunciation)
+	}
+	if m.resource_load_type != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldResourceLoadType)
+	}
+	if m.resource_load_val != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldResourceLoadVal)
+	}
+	if m.file_name != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldFileName)
+	}
+	if m.group_id != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldGroupID)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofileplayerinforesourceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofileplayerinforesource.FieldCustomProfileResourceType:
+		return m.CustomProfileResourceType()
+	case customprofileplayerinforesource.FieldGameID:
+		return m.GameID()
+	case customprofileplayerinforesource.FieldSeq:
+		return m.Seq()
+	case customprofileplayerinforesource.FieldName:
+		return m.Name()
+	case customprofileplayerinforesource.FieldPronunciation:
+		return m.Pronunciation()
+	case customprofileplayerinforesource.FieldResourceLoadType:
+		return m.ResourceLoadType()
+	case customprofileplayerinforesource.FieldResourceLoadVal:
+		return m.ResourceLoadVal()
+	case customprofileplayerinforesource.FieldFileName:
+		return m.FileName()
+	case customprofileplayerinforesource.FieldGroupID:
+		return m.GroupID()
+	case customprofileplayerinforesource.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofileplayerinforesourceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofileplayerinforesource.FieldCustomProfileResourceType:
+		return m.OldCustomProfileResourceType(ctx)
+	case customprofileplayerinforesource.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofileplayerinforesource.FieldSeq:
+		return m.OldSeq(ctx)
+	case customprofileplayerinforesource.FieldName:
+		return m.OldName(ctx)
+	case customprofileplayerinforesource.FieldPronunciation:
+		return m.OldPronunciation(ctx)
+	case customprofileplayerinforesource.FieldResourceLoadType:
+		return m.OldResourceLoadType(ctx)
+	case customprofileplayerinforesource.FieldResourceLoadVal:
+		return m.OldResourceLoadVal(ctx)
+	case customprofileplayerinforesource.FieldFileName:
+		return m.OldFileName(ctx)
+	case customprofileplayerinforesource.FieldGroupID:
+		return m.OldGroupID(ctx)
+	case customprofileplayerinforesource.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofileplayerinforesource field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofileplayerinforesourceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofileplayerinforesource.FieldCustomProfileResourceType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomProfileResourceType(v)
+		return nil
+	case customprofileplayerinforesource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofileplayerinforesource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case customprofileplayerinforesource.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customprofileplayerinforesource.FieldPronunciation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPronunciation(v)
+		return nil
+	case customprofileplayerinforesource.FieldResourceLoadType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadType(v)
+		return nil
+	case customprofileplayerinforesource.FieldResourceLoadVal:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadVal(v)
+		return nil
+	case customprofileplayerinforesource.FieldFileName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFileName(v)
+		return nil
+	case customprofileplayerinforesource.FieldGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGroupID(v)
+		return nil
+	case customprofileplayerinforesource.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileplayerinforesource field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofileplayerinforesourceMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldGameID)
+	}
+	if m.addseq != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldSeq)
+	}
+	if m.addgroup_id != nil {
+		fields = append(fields, customprofileplayerinforesource.FieldGroupID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofileplayerinforesourceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofileplayerinforesource.FieldGameID:
+		return m.AddedGameID()
+	case customprofileplayerinforesource.FieldSeq:
+		return m.AddedSeq()
+	case customprofileplayerinforesource.FieldGroupID:
+		return m.AddedGroupID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofileplayerinforesourceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofileplayerinforesource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case customprofileplayerinforesource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	case customprofileplayerinforesource.FieldGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGroupID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileplayerinforesource numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofileplayerinforesourceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofileplayerinforesource.FieldCustomProfileResourceType) {
+		fields = append(fields, customprofileplayerinforesource.FieldCustomProfileResourceType)
+	}
+	if m.FieldCleared(customprofileplayerinforesource.FieldGameID) {
+		fields = append(fields, customprofileplayerinforesource.FieldGameID)
+	}
+	if m.FieldCleared(customprofileplayerinforesource.FieldSeq) {
+		fields = append(fields, customprofileplayerinforesource.FieldSeq)
+	}
+	if m.FieldCleared(customprofileplayerinforesource.FieldName) {
+		fields = append(fields, customprofileplayerinforesource.FieldName)
+	}
+	if m.FieldCleared(customprofileplayerinforesource.FieldPronunciation) {
+		fields = append(fields, customprofileplayerinforesource.FieldPronunciation)
+	}
+	if m.FieldCleared(customprofileplayerinforesource.FieldResourceLoadType) {
+		fields = append(fields, customprofileplayerinforesource.FieldResourceLoadType)
+	}
+	if m.FieldCleared(customprofileplayerinforesource.FieldResourceLoadVal) {
+		fields = append(fields, customprofileplayerinforesource.FieldResourceLoadVal)
+	}
+	if m.FieldCleared(customprofileplayerinforesource.FieldFileName) {
+		fields = append(fields, customprofileplayerinforesource.FieldFileName)
+	}
+	if m.FieldCleared(customprofileplayerinforesource.FieldGroupID) {
+		fields = append(fields, customprofileplayerinforesource.FieldGroupID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofileplayerinforesourceMutation) ClearField(name string) error {
+	switch name {
+	case customprofileplayerinforesource.FieldCustomProfileResourceType:
+		m.ClearCustomProfileResourceType()
+		return nil
+	case customprofileplayerinforesource.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofileplayerinforesource.FieldSeq:
+		m.ClearSeq()
+		return nil
+	case customprofileplayerinforesource.FieldName:
+		m.ClearName()
+		return nil
+	case customprofileplayerinforesource.FieldPronunciation:
+		m.ClearPronunciation()
+		return nil
+	case customprofileplayerinforesource.FieldResourceLoadType:
+		m.ClearResourceLoadType()
+		return nil
+	case customprofileplayerinforesource.FieldResourceLoadVal:
+		m.ClearResourceLoadVal()
+		return nil
+	case customprofileplayerinforesource.FieldFileName:
+		m.ClearFileName()
+		return nil
+	case customprofileplayerinforesource.FieldGroupID:
+		m.ClearGroupID()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileplayerinforesource nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofileplayerinforesourceMutation) ResetField(name string) error {
+	switch name {
+	case customprofileplayerinforesource.FieldCustomProfileResourceType:
+		m.ResetCustomProfileResourceType()
+		return nil
+	case customprofileplayerinforesource.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofileplayerinforesource.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case customprofileplayerinforesource.FieldName:
+		m.ResetName()
+		return nil
+	case customprofileplayerinforesource.FieldPronunciation:
+		m.ResetPronunciation()
+		return nil
+	case customprofileplayerinforesource.FieldResourceLoadType:
+		m.ResetResourceLoadType()
+		return nil
+	case customprofileplayerinforesource.FieldResourceLoadVal:
+		m.ResetResourceLoadVal()
+		return nil
+	case customprofileplayerinforesource.FieldFileName:
+		m.ResetFileName()
+		return nil
+	case customprofileplayerinforesource.FieldGroupID:
+		m.ResetGroupID()
+		return nil
+	case customprofileplayerinforesource.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileplayerinforesource field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofileplayerinforesourceMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofileplayerinforesourceMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofileplayerinforesource unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofileplayerinforesourceMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofileplayerinforesource edge %s", name)
+}
+
+// CustomprofileshaperesourceMutation represents an operation that mutates the Customprofileshaperesource nodes in the graph.
+type CustomprofileshaperesourceMutation struct {
+	config
+	op                           Op
+	typ                          string
+	id                           *int
+	custom_profile_resource_type *string
+	game_id                      *int64
+	addgame_id                   *int64
+	seq                          *int64
+	addseq                       *int64
+	name                         *string
+	pronunciation                *string
+	resource_load_type           *string
+	resource_load_val            *string
+	file_name                    *string
+	server_region                *string
+	clearedFields                map[string]struct{}
+	done                         bool
+	oldValue                     func(context.Context) (*Customprofileshaperesource, error)
+	predicates                   []predicate.Customprofileshaperesource
+}
+
+var _ ent.Mutation = (*CustomprofileshaperesourceMutation)(nil)
+
+// customprofileshaperesourceOption allows management of the mutation configuration using functional options.
+type customprofileshaperesourceOption func(*CustomprofileshaperesourceMutation)
+
+// newCustomprofileshaperesourceMutation creates new mutation for the Customprofileshaperesource entity.
+func newCustomprofileshaperesourceMutation(c config, op Op, opts ...customprofileshaperesourceOption) *CustomprofileshaperesourceMutation {
+	m := &CustomprofileshaperesourceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofileshaperesource,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofileshaperesourceID sets the ID field of the mutation.
+func withCustomprofileshaperesourceID(id int) customprofileshaperesourceOption {
+	return func(m *CustomprofileshaperesourceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofileshaperesource
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofileshaperesource, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofileshaperesource.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofileshaperesource sets the old Customprofileshaperesource of the mutation.
+func withCustomprofileshaperesource(node *Customprofileshaperesource) customprofileshaperesourceOption {
+	return func(m *CustomprofileshaperesourceMutation) {
+		m.oldValue = func(context.Context) (*Customprofileshaperesource, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofileshaperesourceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofileshaperesourceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofileshaperesourceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofileshaperesourceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofileshaperesource.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCustomProfileResourceType sets the "custom_profile_resource_type" field.
+func (m *CustomprofileshaperesourceMutation) SetCustomProfileResourceType(s string) {
+	m.custom_profile_resource_type = &s
+}
+
+// CustomProfileResourceType returns the value of the "custom_profile_resource_type" field in the mutation.
+func (m *CustomprofileshaperesourceMutation) CustomProfileResourceType() (r string, exists bool) {
+	v := m.custom_profile_resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomProfileResourceType returns the old "custom_profile_resource_type" field's value of the Customprofileshaperesource entity.
+// If the Customprofileshaperesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileshaperesourceMutation) OldCustomProfileResourceType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomProfileResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomProfileResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomProfileResourceType: %w", err)
+	}
+	return oldValue.CustomProfileResourceType, nil
+}
+
+// ClearCustomProfileResourceType clears the value of the "custom_profile_resource_type" field.
+func (m *CustomprofileshaperesourceMutation) ClearCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	m.clearedFields[customprofileshaperesource.FieldCustomProfileResourceType] = struct{}{}
+}
+
+// CustomProfileResourceTypeCleared returns if the "custom_profile_resource_type" field was cleared in this mutation.
+func (m *CustomprofileshaperesourceMutation) CustomProfileResourceTypeCleared() bool {
+	_, ok := m.clearedFields[customprofileshaperesource.FieldCustomProfileResourceType]
+	return ok
+}
+
+// ResetCustomProfileResourceType resets all changes to the "custom_profile_resource_type" field.
+func (m *CustomprofileshaperesourceMutation) ResetCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	delete(m.clearedFields, customprofileshaperesource.FieldCustomProfileResourceType)
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofileshaperesourceMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofileshaperesourceMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofileshaperesource entity.
+// If the Customprofileshaperesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileshaperesourceMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofileshaperesourceMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofileshaperesourceMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofileshaperesourceMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofileshaperesource.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofileshaperesourceMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofileshaperesource.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofileshaperesourceMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofileshaperesource.FieldGameID)
+}
+
+// SetSeq sets the "seq" field.
+func (m *CustomprofileshaperesourceMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *CustomprofileshaperesourceMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Customprofileshaperesource entity.
+// If the Customprofileshaperesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileshaperesourceMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *CustomprofileshaperesourceMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *CustomprofileshaperesourceMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSeq clears the value of the "seq" field.
+func (m *CustomprofileshaperesourceMutation) ClearSeq() {
+	m.seq = nil
+	m.addseq = nil
+	m.clearedFields[customprofileshaperesource.FieldSeq] = struct{}{}
+}
+
+// SeqCleared returns if the "seq" field was cleared in this mutation.
+func (m *CustomprofileshaperesourceMutation) SeqCleared() bool {
+	_, ok := m.clearedFields[customprofileshaperesource.FieldSeq]
+	return ok
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *CustomprofileshaperesourceMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+	delete(m.clearedFields, customprofileshaperesource.FieldSeq)
+}
+
+// SetName sets the "name" field.
+func (m *CustomprofileshaperesourceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomprofileshaperesourceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Customprofileshaperesource entity.
+// If the Customprofileshaperesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileshaperesourceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *CustomprofileshaperesourceMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[customprofileshaperesource.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *CustomprofileshaperesourceMutation) NameCleared() bool {
+	_, ok := m.clearedFields[customprofileshaperesource.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomprofileshaperesourceMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, customprofileshaperesource.FieldName)
+}
+
+// SetPronunciation sets the "pronunciation" field.
+func (m *CustomprofileshaperesourceMutation) SetPronunciation(s string) {
+	m.pronunciation = &s
+}
+
+// Pronunciation returns the value of the "pronunciation" field in the mutation.
+func (m *CustomprofileshaperesourceMutation) Pronunciation() (r string, exists bool) {
+	v := m.pronunciation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPronunciation returns the old "pronunciation" field's value of the Customprofileshaperesource entity.
+// If the Customprofileshaperesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileshaperesourceMutation) OldPronunciation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPronunciation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPronunciation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPronunciation: %w", err)
+	}
+	return oldValue.Pronunciation, nil
+}
+
+// ClearPronunciation clears the value of the "pronunciation" field.
+func (m *CustomprofileshaperesourceMutation) ClearPronunciation() {
+	m.pronunciation = nil
+	m.clearedFields[customprofileshaperesource.FieldPronunciation] = struct{}{}
+}
+
+// PronunciationCleared returns if the "pronunciation" field was cleared in this mutation.
+func (m *CustomprofileshaperesourceMutation) PronunciationCleared() bool {
+	_, ok := m.clearedFields[customprofileshaperesource.FieldPronunciation]
+	return ok
+}
+
+// ResetPronunciation resets all changes to the "pronunciation" field.
+func (m *CustomprofileshaperesourceMutation) ResetPronunciation() {
+	m.pronunciation = nil
+	delete(m.clearedFields, customprofileshaperesource.FieldPronunciation)
+}
+
+// SetResourceLoadType sets the "resource_load_type" field.
+func (m *CustomprofileshaperesourceMutation) SetResourceLoadType(s string) {
+	m.resource_load_type = &s
+}
+
+// ResourceLoadType returns the value of the "resource_load_type" field in the mutation.
+func (m *CustomprofileshaperesourceMutation) ResourceLoadType() (r string, exists bool) {
+	v := m.resource_load_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadType returns the old "resource_load_type" field's value of the Customprofileshaperesource entity.
+// If the Customprofileshaperesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileshaperesourceMutation) OldResourceLoadType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadType: %w", err)
+	}
+	return oldValue.ResourceLoadType, nil
+}
+
+// ClearResourceLoadType clears the value of the "resource_load_type" field.
+func (m *CustomprofileshaperesourceMutation) ClearResourceLoadType() {
+	m.resource_load_type = nil
+	m.clearedFields[customprofileshaperesource.FieldResourceLoadType] = struct{}{}
+}
+
+// ResourceLoadTypeCleared returns if the "resource_load_type" field was cleared in this mutation.
+func (m *CustomprofileshaperesourceMutation) ResourceLoadTypeCleared() bool {
+	_, ok := m.clearedFields[customprofileshaperesource.FieldResourceLoadType]
+	return ok
+}
+
+// ResetResourceLoadType resets all changes to the "resource_load_type" field.
+func (m *CustomprofileshaperesourceMutation) ResetResourceLoadType() {
+	m.resource_load_type = nil
+	delete(m.clearedFields, customprofileshaperesource.FieldResourceLoadType)
+}
+
+// SetResourceLoadVal sets the "resource_load_val" field.
+func (m *CustomprofileshaperesourceMutation) SetResourceLoadVal(s string) {
+	m.resource_load_val = &s
+}
+
+// ResourceLoadVal returns the value of the "resource_load_val" field in the mutation.
+func (m *CustomprofileshaperesourceMutation) ResourceLoadVal() (r string, exists bool) {
+	v := m.resource_load_val
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadVal returns the old "resource_load_val" field's value of the Customprofileshaperesource entity.
+// If the Customprofileshaperesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileshaperesourceMutation) OldResourceLoadVal(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadVal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadVal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadVal: %w", err)
+	}
+	return oldValue.ResourceLoadVal, nil
+}
+
+// ClearResourceLoadVal clears the value of the "resource_load_val" field.
+func (m *CustomprofileshaperesourceMutation) ClearResourceLoadVal() {
+	m.resource_load_val = nil
+	m.clearedFields[customprofileshaperesource.FieldResourceLoadVal] = struct{}{}
+}
+
+// ResourceLoadValCleared returns if the "resource_load_val" field was cleared in this mutation.
+func (m *CustomprofileshaperesourceMutation) ResourceLoadValCleared() bool {
+	_, ok := m.clearedFields[customprofileshaperesource.FieldResourceLoadVal]
+	return ok
+}
+
+// ResetResourceLoadVal resets all changes to the "resource_load_val" field.
+func (m *CustomprofileshaperesourceMutation) ResetResourceLoadVal() {
+	m.resource_load_val = nil
+	delete(m.clearedFields, customprofileshaperesource.FieldResourceLoadVal)
+}
+
+// SetFileName sets the "file_name" field.
+func (m *CustomprofileshaperesourceMutation) SetFileName(s string) {
+	m.file_name = &s
+}
+
+// FileName returns the value of the "file_name" field in the mutation.
+func (m *CustomprofileshaperesourceMutation) FileName() (r string, exists bool) {
+	v := m.file_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFileName returns the old "file_name" field's value of the Customprofileshaperesource entity.
+// If the Customprofileshaperesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileshaperesourceMutation) OldFileName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFileName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFileName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFileName: %w", err)
+	}
+	return oldValue.FileName, nil
+}
+
+// ClearFileName clears the value of the "file_name" field.
+func (m *CustomprofileshaperesourceMutation) ClearFileName() {
+	m.file_name = nil
+	m.clearedFields[customprofileshaperesource.FieldFileName] = struct{}{}
+}
+
+// FileNameCleared returns if the "file_name" field was cleared in this mutation.
+func (m *CustomprofileshaperesourceMutation) FileNameCleared() bool {
+	_, ok := m.clearedFields[customprofileshaperesource.FieldFileName]
+	return ok
+}
+
+// ResetFileName resets all changes to the "file_name" field.
+func (m *CustomprofileshaperesourceMutation) ResetFileName() {
+	m.file_name = nil
+	delete(m.clearedFields, customprofileshaperesource.FieldFileName)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofileshaperesourceMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofileshaperesourceMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofileshaperesource entity.
+// If the Customprofileshaperesource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileshaperesourceMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofileshaperesourceMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofileshaperesourceMutation builder.
+func (m *CustomprofileshaperesourceMutation) Where(ps ...predicate.Customprofileshaperesource) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofileshaperesourceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofileshaperesourceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofileshaperesource, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofileshaperesourceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofileshaperesourceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofileshaperesource).
+func (m *CustomprofileshaperesourceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofileshaperesourceMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.custom_profile_resource_type != nil {
+		fields = append(fields, customprofileshaperesource.FieldCustomProfileResourceType)
+	}
+	if m.game_id != nil {
+		fields = append(fields, customprofileshaperesource.FieldGameID)
+	}
+	if m.seq != nil {
+		fields = append(fields, customprofileshaperesource.FieldSeq)
+	}
+	if m.name != nil {
+		fields = append(fields, customprofileshaperesource.FieldName)
+	}
+	if m.pronunciation != nil {
+		fields = append(fields, customprofileshaperesource.FieldPronunciation)
+	}
+	if m.resource_load_type != nil {
+		fields = append(fields, customprofileshaperesource.FieldResourceLoadType)
+	}
+	if m.resource_load_val != nil {
+		fields = append(fields, customprofileshaperesource.FieldResourceLoadVal)
+	}
+	if m.file_name != nil {
+		fields = append(fields, customprofileshaperesource.FieldFileName)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofileshaperesource.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofileshaperesourceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofileshaperesource.FieldCustomProfileResourceType:
+		return m.CustomProfileResourceType()
+	case customprofileshaperesource.FieldGameID:
+		return m.GameID()
+	case customprofileshaperesource.FieldSeq:
+		return m.Seq()
+	case customprofileshaperesource.FieldName:
+		return m.Name()
+	case customprofileshaperesource.FieldPronunciation:
+		return m.Pronunciation()
+	case customprofileshaperesource.FieldResourceLoadType:
+		return m.ResourceLoadType()
+	case customprofileshaperesource.FieldResourceLoadVal:
+		return m.ResourceLoadVal()
+	case customprofileshaperesource.FieldFileName:
+		return m.FileName()
+	case customprofileshaperesource.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofileshaperesourceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofileshaperesource.FieldCustomProfileResourceType:
+		return m.OldCustomProfileResourceType(ctx)
+	case customprofileshaperesource.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofileshaperesource.FieldSeq:
+		return m.OldSeq(ctx)
+	case customprofileshaperesource.FieldName:
+		return m.OldName(ctx)
+	case customprofileshaperesource.FieldPronunciation:
+		return m.OldPronunciation(ctx)
+	case customprofileshaperesource.FieldResourceLoadType:
+		return m.OldResourceLoadType(ctx)
+	case customprofileshaperesource.FieldResourceLoadVal:
+		return m.OldResourceLoadVal(ctx)
+	case customprofileshaperesource.FieldFileName:
+		return m.OldFileName(ctx)
+	case customprofileshaperesource.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofileshaperesource field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofileshaperesourceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofileshaperesource.FieldCustomProfileResourceType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomProfileResourceType(v)
+		return nil
+	case customprofileshaperesource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofileshaperesource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case customprofileshaperesource.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customprofileshaperesource.FieldPronunciation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPronunciation(v)
+		return nil
+	case customprofileshaperesource.FieldResourceLoadType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadType(v)
+		return nil
+	case customprofileshaperesource.FieldResourceLoadVal:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadVal(v)
+		return nil
+	case customprofileshaperesource.FieldFileName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFileName(v)
+		return nil
+	case customprofileshaperesource.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileshaperesource field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofileshaperesourceMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofileshaperesource.FieldGameID)
+	}
+	if m.addseq != nil {
+		fields = append(fields, customprofileshaperesource.FieldSeq)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofileshaperesourceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofileshaperesource.FieldGameID:
+		return m.AddedGameID()
+	case customprofileshaperesource.FieldSeq:
+		return m.AddedSeq()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofileshaperesourceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofileshaperesource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case customprofileshaperesource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileshaperesource numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofileshaperesourceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofileshaperesource.FieldCustomProfileResourceType) {
+		fields = append(fields, customprofileshaperesource.FieldCustomProfileResourceType)
+	}
+	if m.FieldCleared(customprofileshaperesource.FieldGameID) {
+		fields = append(fields, customprofileshaperesource.FieldGameID)
+	}
+	if m.FieldCleared(customprofileshaperesource.FieldSeq) {
+		fields = append(fields, customprofileshaperesource.FieldSeq)
+	}
+	if m.FieldCleared(customprofileshaperesource.FieldName) {
+		fields = append(fields, customprofileshaperesource.FieldName)
+	}
+	if m.FieldCleared(customprofileshaperesource.FieldPronunciation) {
+		fields = append(fields, customprofileshaperesource.FieldPronunciation)
+	}
+	if m.FieldCleared(customprofileshaperesource.FieldResourceLoadType) {
+		fields = append(fields, customprofileshaperesource.FieldResourceLoadType)
+	}
+	if m.FieldCleared(customprofileshaperesource.FieldResourceLoadVal) {
+		fields = append(fields, customprofileshaperesource.FieldResourceLoadVal)
+	}
+	if m.FieldCleared(customprofileshaperesource.FieldFileName) {
+		fields = append(fields, customprofileshaperesource.FieldFileName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofileshaperesourceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofileshaperesourceMutation) ClearField(name string) error {
+	switch name {
+	case customprofileshaperesource.FieldCustomProfileResourceType:
+		m.ClearCustomProfileResourceType()
+		return nil
+	case customprofileshaperesource.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofileshaperesource.FieldSeq:
+		m.ClearSeq()
+		return nil
+	case customprofileshaperesource.FieldName:
+		m.ClearName()
+		return nil
+	case customprofileshaperesource.FieldPronunciation:
+		m.ClearPronunciation()
+		return nil
+	case customprofileshaperesource.FieldResourceLoadType:
+		m.ClearResourceLoadType()
+		return nil
+	case customprofileshaperesource.FieldResourceLoadVal:
+		m.ClearResourceLoadVal()
+		return nil
+	case customprofileshaperesource.FieldFileName:
+		m.ClearFileName()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileshaperesource nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofileshaperesourceMutation) ResetField(name string) error {
+	switch name {
+	case customprofileshaperesource.FieldCustomProfileResourceType:
+		m.ResetCustomProfileResourceType()
+		return nil
+	case customprofileshaperesource.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofileshaperesource.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case customprofileshaperesource.FieldName:
+		m.ResetName()
+		return nil
+	case customprofileshaperesource.FieldPronunciation:
+		m.ResetPronunciation()
+		return nil
+	case customprofileshaperesource.FieldResourceLoadType:
+		m.ResetResourceLoadType()
+		return nil
+	case customprofileshaperesource.FieldResourceLoadVal:
+		m.ResetResourceLoadVal()
+		return nil
+	case customprofileshaperesource.FieldFileName:
+		m.ResetFileName()
+		return nil
+	case customprofileshaperesource.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileshaperesource field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofileshaperesourceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofileshaperesourceMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofileshaperesourceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofileshaperesourceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofileshaperesourceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofileshaperesourceMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofileshaperesourceMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofileshaperesource unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofileshaperesourceMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofileshaperesource edge %s", name)
+}
+
+// CustomprofilestorybackgroundresourceMutation represents an operation that mutates the Customprofilestorybackgroundresource nodes in the graph.
+type CustomprofilestorybackgroundresourceMutation struct {
+	config
+	op                           Op
+	typ                          string
+	id                           *int
+	custom_profile_resource_type *string
+	game_id                      *int64
+	addgame_id                   *int64
+	seq                          *int64
+	addseq                       *int64
+	name                         *string
+	pronunciation                *string
+	resource_load_type           *string
+	resource_load_val            *string
+	file_name                    *string
+	server_region                *string
+	clearedFields                map[string]struct{}
+	done                         bool
+	oldValue                     func(context.Context) (*Customprofilestorybackgroundresource, error)
+	predicates                   []predicate.Customprofilestorybackgroundresource
+}
+
+var _ ent.Mutation = (*CustomprofilestorybackgroundresourceMutation)(nil)
+
+// customprofilestorybackgroundresourceOption allows management of the mutation configuration using functional options.
+type customprofilestorybackgroundresourceOption func(*CustomprofilestorybackgroundresourceMutation)
+
+// newCustomprofilestorybackgroundresourceMutation creates new mutation for the Customprofilestorybackgroundresource entity.
+func newCustomprofilestorybackgroundresourceMutation(c config, op Op, opts ...customprofilestorybackgroundresourceOption) *CustomprofilestorybackgroundresourceMutation {
+	m := &CustomprofilestorybackgroundresourceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofilestorybackgroundresource,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofilestorybackgroundresourceID sets the ID field of the mutation.
+func withCustomprofilestorybackgroundresourceID(id int) customprofilestorybackgroundresourceOption {
+	return func(m *CustomprofilestorybackgroundresourceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofilestorybackgroundresource
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofilestorybackgroundresource, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofilestorybackgroundresource.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofilestorybackgroundresource sets the old Customprofilestorybackgroundresource of the mutation.
+func withCustomprofilestorybackgroundresource(node *Customprofilestorybackgroundresource) customprofilestorybackgroundresourceOption {
+	return func(m *CustomprofilestorybackgroundresourceMutation) {
+		m.oldValue = func(context.Context) (*Customprofilestorybackgroundresource, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofilestorybackgroundresourceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofilestorybackgroundresourceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofilestorybackgroundresourceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofilestorybackgroundresource.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCustomProfileResourceType sets the "custom_profile_resource_type" field.
+func (m *CustomprofilestorybackgroundresourceMutation) SetCustomProfileResourceType(s string) {
+	m.custom_profile_resource_type = &s
+}
+
+// CustomProfileResourceType returns the value of the "custom_profile_resource_type" field in the mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) CustomProfileResourceType() (r string, exists bool) {
+	v := m.custom_profile_resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomProfileResourceType returns the old "custom_profile_resource_type" field's value of the Customprofilestorybackgroundresource entity.
+// If the Customprofilestorybackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilestorybackgroundresourceMutation) OldCustomProfileResourceType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomProfileResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomProfileResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomProfileResourceType: %w", err)
+	}
+	return oldValue.CustomProfileResourceType, nil
+}
+
+// ClearCustomProfileResourceType clears the value of the "custom_profile_resource_type" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	m.clearedFields[customprofilestorybackgroundresource.FieldCustomProfileResourceType] = struct{}{}
+}
+
+// CustomProfileResourceTypeCleared returns if the "custom_profile_resource_type" field was cleared in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) CustomProfileResourceTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilestorybackgroundresource.FieldCustomProfileResourceType]
+	return ok
+}
+
+// ResetCustomProfileResourceType resets all changes to the "custom_profile_resource_type" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ResetCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	delete(m.clearedFields, customprofilestorybackgroundresource.FieldCustomProfileResourceType)
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofilestorybackgroundresourceMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofilestorybackgroundresource entity.
+// If the Customprofilestorybackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilestorybackgroundresourceMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofilestorybackgroundresourceMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofilestorybackgroundresource.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofilestorybackgroundresource.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofilestorybackgroundresource.FieldGameID)
+}
+
+// SetSeq sets the "seq" field.
+func (m *CustomprofilestorybackgroundresourceMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Customprofilestorybackgroundresource entity.
+// If the Customprofilestorybackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilestorybackgroundresourceMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *CustomprofilestorybackgroundresourceMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSeq clears the value of the "seq" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearSeq() {
+	m.seq = nil
+	m.addseq = nil
+	m.clearedFields[customprofilestorybackgroundresource.FieldSeq] = struct{}{}
+}
+
+// SeqCleared returns if the "seq" field was cleared in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) SeqCleared() bool {
+	_, ok := m.clearedFields[customprofilestorybackgroundresource.FieldSeq]
+	return ok
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+	delete(m.clearedFields, customprofilestorybackgroundresource.FieldSeq)
+}
+
+// SetName sets the "name" field.
+func (m *CustomprofilestorybackgroundresourceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Customprofilestorybackgroundresource entity.
+// If the Customprofilestorybackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilestorybackgroundresourceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[customprofilestorybackgroundresource.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) NameCleared() bool {
+	_, ok := m.clearedFields[customprofilestorybackgroundresource.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, customprofilestorybackgroundresource.FieldName)
+}
+
+// SetPronunciation sets the "pronunciation" field.
+func (m *CustomprofilestorybackgroundresourceMutation) SetPronunciation(s string) {
+	m.pronunciation = &s
+}
+
+// Pronunciation returns the value of the "pronunciation" field in the mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) Pronunciation() (r string, exists bool) {
+	v := m.pronunciation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPronunciation returns the old "pronunciation" field's value of the Customprofilestorybackgroundresource entity.
+// If the Customprofilestorybackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilestorybackgroundresourceMutation) OldPronunciation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPronunciation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPronunciation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPronunciation: %w", err)
+	}
+	return oldValue.Pronunciation, nil
+}
+
+// ClearPronunciation clears the value of the "pronunciation" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearPronunciation() {
+	m.pronunciation = nil
+	m.clearedFields[customprofilestorybackgroundresource.FieldPronunciation] = struct{}{}
+}
+
+// PronunciationCleared returns if the "pronunciation" field was cleared in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) PronunciationCleared() bool {
+	_, ok := m.clearedFields[customprofilestorybackgroundresource.FieldPronunciation]
+	return ok
+}
+
+// ResetPronunciation resets all changes to the "pronunciation" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ResetPronunciation() {
+	m.pronunciation = nil
+	delete(m.clearedFields, customprofilestorybackgroundresource.FieldPronunciation)
+}
+
+// SetResourceLoadType sets the "resource_load_type" field.
+func (m *CustomprofilestorybackgroundresourceMutation) SetResourceLoadType(s string) {
+	m.resource_load_type = &s
+}
+
+// ResourceLoadType returns the value of the "resource_load_type" field in the mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) ResourceLoadType() (r string, exists bool) {
+	v := m.resource_load_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadType returns the old "resource_load_type" field's value of the Customprofilestorybackgroundresource entity.
+// If the Customprofilestorybackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilestorybackgroundresourceMutation) OldResourceLoadType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadType: %w", err)
+	}
+	return oldValue.ResourceLoadType, nil
+}
+
+// ClearResourceLoadType clears the value of the "resource_load_type" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearResourceLoadType() {
+	m.resource_load_type = nil
+	m.clearedFields[customprofilestorybackgroundresource.FieldResourceLoadType] = struct{}{}
+}
+
+// ResourceLoadTypeCleared returns if the "resource_load_type" field was cleared in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) ResourceLoadTypeCleared() bool {
+	_, ok := m.clearedFields[customprofilestorybackgroundresource.FieldResourceLoadType]
+	return ok
+}
+
+// ResetResourceLoadType resets all changes to the "resource_load_type" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ResetResourceLoadType() {
+	m.resource_load_type = nil
+	delete(m.clearedFields, customprofilestorybackgroundresource.FieldResourceLoadType)
+}
+
+// SetResourceLoadVal sets the "resource_load_val" field.
+func (m *CustomprofilestorybackgroundresourceMutation) SetResourceLoadVal(s string) {
+	m.resource_load_val = &s
+}
+
+// ResourceLoadVal returns the value of the "resource_load_val" field in the mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) ResourceLoadVal() (r string, exists bool) {
+	v := m.resource_load_val
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadVal returns the old "resource_load_val" field's value of the Customprofilestorybackgroundresource entity.
+// If the Customprofilestorybackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilestorybackgroundresourceMutation) OldResourceLoadVal(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadVal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadVal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadVal: %w", err)
+	}
+	return oldValue.ResourceLoadVal, nil
+}
+
+// ClearResourceLoadVal clears the value of the "resource_load_val" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearResourceLoadVal() {
+	m.resource_load_val = nil
+	m.clearedFields[customprofilestorybackgroundresource.FieldResourceLoadVal] = struct{}{}
+}
+
+// ResourceLoadValCleared returns if the "resource_load_val" field was cleared in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) ResourceLoadValCleared() bool {
+	_, ok := m.clearedFields[customprofilestorybackgroundresource.FieldResourceLoadVal]
+	return ok
+}
+
+// ResetResourceLoadVal resets all changes to the "resource_load_val" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ResetResourceLoadVal() {
+	m.resource_load_val = nil
+	delete(m.clearedFields, customprofilestorybackgroundresource.FieldResourceLoadVal)
+}
+
+// SetFileName sets the "file_name" field.
+func (m *CustomprofilestorybackgroundresourceMutation) SetFileName(s string) {
+	m.file_name = &s
+}
+
+// FileName returns the value of the "file_name" field in the mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) FileName() (r string, exists bool) {
+	v := m.file_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFileName returns the old "file_name" field's value of the Customprofilestorybackgroundresource entity.
+// If the Customprofilestorybackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilestorybackgroundresourceMutation) OldFileName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFileName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFileName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFileName: %w", err)
+	}
+	return oldValue.FileName, nil
+}
+
+// ClearFileName clears the value of the "file_name" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearFileName() {
+	m.file_name = nil
+	m.clearedFields[customprofilestorybackgroundresource.FieldFileName] = struct{}{}
+}
+
+// FileNameCleared returns if the "file_name" field was cleared in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) FileNameCleared() bool {
+	_, ok := m.clearedFields[customprofilestorybackgroundresource.FieldFileName]
+	return ok
+}
+
+// ResetFileName resets all changes to the "file_name" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ResetFileName() {
+	m.file_name = nil
+	delete(m.clearedFields, customprofilestorybackgroundresource.FieldFileName)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofilestorybackgroundresourceMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofilestorybackgroundresource entity.
+// If the Customprofilestorybackgroundresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofilestorybackgroundresourceMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofilestorybackgroundresourceMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofilestorybackgroundresourceMutation builder.
+func (m *CustomprofilestorybackgroundresourceMutation) Where(ps ...predicate.Customprofilestorybackgroundresource) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofilestorybackgroundresourceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofilestorybackgroundresourceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofilestorybackgroundresource, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofilestorybackgroundresourceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofilestorybackgroundresourceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofilestorybackgroundresource).
+func (m *CustomprofilestorybackgroundresourceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofilestorybackgroundresourceMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.custom_profile_resource_type != nil {
+		fields = append(fields, customprofilestorybackgroundresource.FieldCustomProfileResourceType)
+	}
+	if m.game_id != nil {
+		fields = append(fields, customprofilestorybackgroundresource.FieldGameID)
+	}
+	if m.seq != nil {
+		fields = append(fields, customprofilestorybackgroundresource.FieldSeq)
+	}
+	if m.name != nil {
+		fields = append(fields, customprofilestorybackgroundresource.FieldName)
+	}
+	if m.pronunciation != nil {
+		fields = append(fields, customprofilestorybackgroundresource.FieldPronunciation)
+	}
+	if m.resource_load_type != nil {
+		fields = append(fields, customprofilestorybackgroundresource.FieldResourceLoadType)
+	}
+	if m.resource_load_val != nil {
+		fields = append(fields, customprofilestorybackgroundresource.FieldResourceLoadVal)
+	}
+	if m.file_name != nil {
+		fields = append(fields, customprofilestorybackgroundresource.FieldFileName)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofilestorybackgroundresource.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofilestorybackgroundresourceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilestorybackgroundresource.FieldCustomProfileResourceType:
+		return m.CustomProfileResourceType()
+	case customprofilestorybackgroundresource.FieldGameID:
+		return m.GameID()
+	case customprofilestorybackgroundresource.FieldSeq:
+		return m.Seq()
+	case customprofilestorybackgroundresource.FieldName:
+		return m.Name()
+	case customprofilestorybackgroundresource.FieldPronunciation:
+		return m.Pronunciation()
+	case customprofilestorybackgroundresource.FieldResourceLoadType:
+		return m.ResourceLoadType()
+	case customprofilestorybackgroundresource.FieldResourceLoadVal:
+		return m.ResourceLoadVal()
+	case customprofilestorybackgroundresource.FieldFileName:
+		return m.FileName()
+	case customprofilestorybackgroundresource.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofilestorybackgroundresourceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofilestorybackgroundresource.FieldCustomProfileResourceType:
+		return m.OldCustomProfileResourceType(ctx)
+	case customprofilestorybackgroundresource.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofilestorybackgroundresource.FieldSeq:
+		return m.OldSeq(ctx)
+	case customprofilestorybackgroundresource.FieldName:
+		return m.OldName(ctx)
+	case customprofilestorybackgroundresource.FieldPronunciation:
+		return m.OldPronunciation(ctx)
+	case customprofilestorybackgroundresource.FieldResourceLoadType:
+		return m.OldResourceLoadType(ctx)
+	case customprofilestorybackgroundresource.FieldResourceLoadVal:
+		return m.OldResourceLoadVal(ctx)
+	case customprofilestorybackgroundresource.FieldFileName:
+		return m.OldFileName(ctx)
+	case customprofilestorybackgroundresource.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofilestorybackgroundresource field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilestorybackgroundresourceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofilestorybackgroundresource.FieldCustomProfileResourceType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomProfileResourceType(v)
+		return nil
+	case customprofilestorybackgroundresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofilestorybackgroundresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case customprofilestorybackgroundresource.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customprofilestorybackgroundresource.FieldPronunciation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPronunciation(v)
+		return nil
+	case customprofilestorybackgroundresource.FieldResourceLoadType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadType(v)
+		return nil
+	case customprofilestorybackgroundresource.FieldResourceLoadVal:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadVal(v)
+		return nil
+	case customprofilestorybackgroundresource.FieldFileName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFileName(v)
+		return nil
+	case customprofilestorybackgroundresource.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilestorybackgroundresource field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofilestorybackgroundresource.FieldGameID)
+	}
+	if m.addseq != nil {
+		fields = append(fields, customprofilestorybackgroundresource.FieldSeq)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofilestorybackgroundresourceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofilestorybackgroundresource.FieldGameID:
+		return m.AddedGameID()
+	case customprofilestorybackgroundresource.FieldSeq:
+		return m.AddedSeq()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofilestorybackgroundresourceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofilestorybackgroundresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case customprofilestorybackgroundresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilestorybackgroundresource numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofilestorybackgroundresource.FieldCustomProfileResourceType) {
+		fields = append(fields, customprofilestorybackgroundresource.FieldCustomProfileResourceType)
+	}
+	if m.FieldCleared(customprofilestorybackgroundresource.FieldGameID) {
+		fields = append(fields, customprofilestorybackgroundresource.FieldGameID)
+	}
+	if m.FieldCleared(customprofilestorybackgroundresource.FieldSeq) {
+		fields = append(fields, customprofilestorybackgroundresource.FieldSeq)
+	}
+	if m.FieldCleared(customprofilestorybackgroundresource.FieldName) {
+		fields = append(fields, customprofilestorybackgroundresource.FieldName)
+	}
+	if m.FieldCleared(customprofilestorybackgroundresource.FieldPronunciation) {
+		fields = append(fields, customprofilestorybackgroundresource.FieldPronunciation)
+	}
+	if m.FieldCleared(customprofilestorybackgroundresource.FieldResourceLoadType) {
+		fields = append(fields, customprofilestorybackgroundresource.FieldResourceLoadType)
+	}
+	if m.FieldCleared(customprofilestorybackgroundresource.FieldResourceLoadVal) {
+		fields = append(fields, customprofilestorybackgroundresource.FieldResourceLoadVal)
+	}
+	if m.FieldCleared(customprofilestorybackgroundresource.FieldFileName) {
+		fields = append(fields, customprofilestorybackgroundresource.FieldFileName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearField(name string) error {
+	switch name {
+	case customprofilestorybackgroundresource.FieldCustomProfileResourceType:
+		m.ClearCustomProfileResourceType()
+		return nil
+	case customprofilestorybackgroundresource.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofilestorybackgroundresource.FieldSeq:
+		m.ClearSeq()
+		return nil
+	case customprofilestorybackgroundresource.FieldName:
+		m.ClearName()
+		return nil
+	case customprofilestorybackgroundresource.FieldPronunciation:
+		m.ClearPronunciation()
+		return nil
+	case customprofilestorybackgroundresource.FieldResourceLoadType:
+		m.ClearResourceLoadType()
+		return nil
+	case customprofilestorybackgroundresource.FieldResourceLoadVal:
+		m.ClearResourceLoadVal()
+		return nil
+	case customprofilestorybackgroundresource.FieldFileName:
+		m.ClearFileName()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilestorybackgroundresource nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofilestorybackgroundresourceMutation) ResetField(name string) error {
+	switch name {
+	case customprofilestorybackgroundresource.FieldCustomProfileResourceType:
+		m.ResetCustomProfileResourceType()
+		return nil
+	case customprofilestorybackgroundresource.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofilestorybackgroundresource.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case customprofilestorybackgroundresource.FieldName:
+		m.ResetName()
+		return nil
+	case customprofilestorybackgroundresource.FieldPronunciation:
+		m.ResetPronunciation()
+		return nil
+	case customprofilestorybackgroundresource.FieldResourceLoadType:
+		m.ResetResourceLoadType()
+		return nil
+	case customprofilestorybackgroundresource.FieldResourceLoadVal:
+		m.ResetResourceLoadVal()
+		return nil
+	case customprofilestorybackgroundresource.FieldFileName:
+		m.ResetFileName()
+		return nil
+	case customprofilestorybackgroundresource.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofilestorybackgroundresource field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofilestorybackgroundresourceMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofilestorybackgroundresourceMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilestorybackgroundresource unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofilestorybackgroundresourceMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofilestorybackgroundresource edge %s", name)
+}
+
+// CustomprofiletextcolorMutation represents an operation that mutates the Customprofiletextcolor nodes in the graph.
+type CustomprofiletextcolorMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	game_id       *int64
+	addgame_id    *int64
+	seq           *int64
+	addseq        *int64
+	color_code    *string
+	server_region *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Customprofiletextcolor, error)
+	predicates    []predicate.Customprofiletextcolor
+}
+
+var _ ent.Mutation = (*CustomprofiletextcolorMutation)(nil)
+
+// customprofiletextcolorOption allows management of the mutation configuration using functional options.
+type customprofiletextcolorOption func(*CustomprofiletextcolorMutation)
+
+// newCustomprofiletextcolorMutation creates new mutation for the Customprofiletextcolor entity.
+func newCustomprofiletextcolorMutation(c config, op Op, opts ...customprofiletextcolorOption) *CustomprofiletextcolorMutation {
+	m := &CustomprofiletextcolorMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofiletextcolor,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofiletextcolorID sets the ID field of the mutation.
+func withCustomprofiletextcolorID(id int) customprofiletextcolorOption {
+	return func(m *CustomprofiletextcolorMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofiletextcolor
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofiletextcolor, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofiletextcolor.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofiletextcolor sets the old Customprofiletextcolor of the mutation.
+func withCustomprofiletextcolor(node *Customprofiletextcolor) customprofiletextcolorOption {
+	return func(m *CustomprofiletextcolorMutation) {
+		m.oldValue = func(context.Context) (*Customprofiletextcolor, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofiletextcolorMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofiletextcolorMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofiletextcolorMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofiletextcolorMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofiletextcolor.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofiletextcolorMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofiletextcolorMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofiletextcolor entity.
+// If the Customprofiletextcolor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofiletextcolorMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofiletextcolorMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofiletextcolorMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofiletextcolorMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofiletextcolor.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofiletextcolorMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofiletextcolor.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofiletextcolorMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofiletextcolor.FieldGameID)
+}
+
+// SetSeq sets the "seq" field.
+func (m *CustomprofiletextcolorMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *CustomprofiletextcolorMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Customprofiletextcolor entity.
+// If the Customprofiletextcolor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofiletextcolorMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *CustomprofiletextcolorMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *CustomprofiletextcolorMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSeq clears the value of the "seq" field.
+func (m *CustomprofiletextcolorMutation) ClearSeq() {
+	m.seq = nil
+	m.addseq = nil
+	m.clearedFields[customprofiletextcolor.FieldSeq] = struct{}{}
+}
+
+// SeqCleared returns if the "seq" field was cleared in this mutation.
+func (m *CustomprofiletextcolorMutation) SeqCleared() bool {
+	_, ok := m.clearedFields[customprofiletextcolor.FieldSeq]
+	return ok
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *CustomprofiletextcolorMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+	delete(m.clearedFields, customprofiletextcolor.FieldSeq)
+}
+
+// SetColorCode sets the "color_code" field.
+func (m *CustomprofiletextcolorMutation) SetColorCode(s string) {
+	m.color_code = &s
+}
+
+// ColorCode returns the value of the "color_code" field in the mutation.
+func (m *CustomprofiletextcolorMutation) ColorCode() (r string, exists bool) {
+	v := m.color_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldColorCode returns the old "color_code" field's value of the Customprofiletextcolor entity.
+// If the Customprofiletextcolor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofiletextcolorMutation) OldColorCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldColorCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldColorCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldColorCode: %w", err)
+	}
+	return oldValue.ColorCode, nil
+}
+
+// ClearColorCode clears the value of the "color_code" field.
+func (m *CustomprofiletextcolorMutation) ClearColorCode() {
+	m.color_code = nil
+	m.clearedFields[customprofiletextcolor.FieldColorCode] = struct{}{}
+}
+
+// ColorCodeCleared returns if the "color_code" field was cleared in this mutation.
+func (m *CustomprofiletextcolorMutation) ColorCodeCleared() bool {
+	_, ok := m.clearedFields[customprofiletextcolor.FieldColorCode]
+	return ok
+}
+
+// ResetColorCode resets all changes to the "color_code" field.
+func (m *CustomprofiletextcolorMutation) ResetColorCode() {
+	m.color_code = nil
+	delete(m.clearedFields, customprofiletextcolor.FieldColorCode)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofiletextcolorMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofiletextcolorMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofiletextcolor entity.
+// If the Customprofiletextcolor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofiletextcolorMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofiletextcolorMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofiletextcolorMutation builder.
+func (m *CustomprofiletextcolorMutation) Where(ps ...predicate.Customprofiletextcolor) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofiletextcolorMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofiletextcolorMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofiletextcolor, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofiletextcolorMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofiletextcolorMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofiletextcolor).
+func (m *CustomprofiletextcolorMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofiletextcolorMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.game_id != nil {
+		fields = append(fields, customprofiletextcolor.FieldGameID)
+	}
+	if m.seq != nil {
+		fields = append(fields, customprofiletextcolor.FieldSeq)
+	}
+	if m.color_code != nil {
+		fields = append(fields, customprofiletextcolor.FieldColorCode)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofiletextcolor.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofiletextcolorMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofiletextcolor.FieldGameID:
+		return m.GameID()
+	case customprofiletextcolor.FieldSeq:
+		return m.Seq()
+	case customprofiletextcolor.FieldColorCode:
+		return m.ColorCode()
+	case customprofiletextcolor.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofiletextcolorMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofiletextcolor.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofiletextcolor.FieldSeq:
+		return m.OldSeq(ctx)
+	case customprofiletextcolor.FieldColorCode:
+		return m.OldColorCode(ctx)
+	case customprofiletextcolor.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofiletextcolor field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofiletextcolorMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofiletextcolor.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofiletextcolor.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case customprofiletextcolor.FieldColorCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetColorCode(v)
+		return nil
+	case customprofiletextcolor.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofiletextcolor field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofiletextcolorMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofiletextcolor.FieldGameID)
+	}
+	if m.addseq != nil {
+		fields = append(fields, customprofiletextcolor.FieldSeq)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofiletextcolorMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofiletextcolor.FieldGameID:
+		return m.AddedGameID()
+	case customprofiletextcolor.FieldSeq:
+		return m.AddedSeq()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofiletextcolorMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofiletextcolor.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case customprofiletextcolor.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofiletextcolor numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofiletextcolorMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofiletextcolor.FieldGameID) {
+		fields = append(fields, customprofiletextcolor.FieldGameID)
+	}
+	if m.FieldCleared(customprofiletextcolor.FieldSeq) {
+		fields = append(fields, customprofiletextcolor.FieldSeq)
+	}
+	if m.FieldCleared(customprofiletextcolor.FieldColorCode) {
+		fields = append(fields, customprofiletextcolor.FieldColorCode)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofiletextcolorMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofiletextcolorMutation) ClearField(name string) error {
+	switch name {
+	case customprofiletextcolor.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofiletextcolor.FieldSeq:
+		m.ClearSeq()
+		return nil
+	case customprofiletextcolor.FieldColorCode:
+		m.ClearColorCode()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofiletextcolor nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofiletextcolorMutation) ResetField(name string) error {
+	switch name {
+	case customprofiletextcolor.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofiletextcolor.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case customprofiletextcolor.FieldColorCode:
+		m.ResetColorCode()
+		return nil
+	case customprofiletextcolor.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofiletextcolor field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofiletextcolorMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofiletextcolorMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofiletextcolorMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofiletextcolorMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofiletextcolorMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofiletextcolorMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofiletextcolorMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofiletextcolor unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofiletextcolorMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofiletextcolor edge %s", name)
+}
+
+// CustomprofiletextfontMutation represents an operation that mutates the Customprofiletextfont nodes in the graph.
+type CustomprofiletextfontMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	game_id          *int64
+	addgame_id       *int64
+	name             *string
+	font_name        *string
+	assetbundle_name *string
+	server_region    *string
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Customprofiletextfont, error)
+	predicates       []predicate.Customprofiletextfont
+}
+
+var _ ent.Mutation = (*CustomprofiletextfontMutation)(nil)
+
+// customprofiletextfontOption allows management of the mutation configuration using functional options.
+type customprofiletextfontOption func(*CustomprofiletextfontMutation)
+
+// newCustomprofiletextfontMutation creates new mutation for the Customprofiletextfont entity.
+func newCustomprofiletextfontMutation(c config, op Op, opts ...customprofiletextfontOption) *CustomprofiletextfontMutation {
+	m := &CustomprofiletextfontMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofiletextfont,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofiletextfontID sets the ID field of the mutation.
+func withCustomprofiletextfontID(id int) customprofiletextfontOption {
+	return func(m *CustomprofiletextfontMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofiletextfont
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofiletextfont, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofiletextfont.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofiletextfont sets the old Customprofiletextfont of the mutation.
+func withCustomprofiletextfont(node *Customprofiletextfont) customprofiletextfontOption {
+	return func(m *CustomprofiletextfontMutation) {
+		m.oldValue = func(context.Context) (*Customprofiletextfont, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofiletextfontMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofiletextfontMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofiletextfontMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofiletextfontMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofiletextfont.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofiletextfontMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofiletextfontMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofiletextfont entity.
+// If the Customprofiletextfont object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofiletextfontMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofiletextfontMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofiletextfontMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofiletextfontMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofiletextfont.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofiletextfontMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofiletextfont.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofiletextfontMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofiletextfont.FieldGameID)
+}
+
+// SetName sets the "name" field.
+func (m *CustomprofiletextfontMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomprofiletextfontMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Customprofiletextfont entity.
+// If the Customprofiletextfont object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofiletextfontMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *CustomprofiletextfontMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[customprofiletextfont.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *CustomprofiletextfontMutation) NameCleared() bool {
+	_, ok := m.clearedFields[customprofiletextfont.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomprofiletextfontMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, customprofiletextfont.FieldName)
+}
+
+// SetFontName sets the "font_name" field.
+func (m *CustomprofiletextfontMutation) SetFontName(s string) {
+	m.font_name = &s
+}
+
+// FontName returns the value of the "font_name" field in the mutation.
+func (m *CustomprofiletextfontMutation) FontName() (r string, exists bool) {
+	v := m.font_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFontName returns the old "font_name" field's value of the Customprofiletextfont entity.
+// If the Customprofiletextfont object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofiletextfontMutation) OldFontName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFontName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFontName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFontName: %w", err)
+	}
+	return oldValue.FontName, nil
+}
+
+// ClearFontName clears the value of the "font_name" field.
+func (m *CustomprofiletextfontMutation) ClearFontName() {
+	m.font_name = nil
+	m.clearedFields[customprofiletextfont.FieldFontName] = struct{}{}
+}
+
+// FontNameCleared returns if the "font_name" field was cleared in this mutation.
+func (m *CustomprofiletextfontMutation) FontNameCleared() bool {
+	_, ok := m.clearedFields[customprofiletextfont.FieldFontName]
+	return ok
+}
+
+// ResetFontName resets all changes to the "font_name" field.
+func (m *CustomprofiletextfontMutation) ResetFontName() {
+	m.font_name = nil
+	delete(m.clearedFields, customprofiletextfont.FieldFontName)
+}
+
+// SetAssetbundleName sets the "assetbundle_name" field.
+func (m *CustomprofiletextfontMutation) SetAssetbundleName(s string) {
+	m.assetbundle_name = &s
+}
+
+// AssetbundleName returns the value of the "assetbundle_name" field in the mutation.
+func (m *CustomprofiletextfontMutation) AssetbundleName() (r string, exists bool) {
+	v := m.assetbundle_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAssetbundleName returns the old "assetbundle_name" field's value of the Customprofiletextfont entity.
+// If the Customprofiletextfont object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofiletextfontMutation) OldAssetbundleName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAssetbundleName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAssetbundleName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAssetbundleName: %w", err)
+	}
+	return oldValue.AssetbundleName, nil
+}
+
+// ClearAssetbundleName clears the value of the "assetbundle_name" field.
+func (m *CustomprofiletextfontMutation) ClearAssetbundleName() {
+	m.assetbundle_name = nil
+	m.clearedFields[customprofiletextfont.FieldAssetbundleName] = struct{}{}
+}
+
+// AssetbundleNameCleared returns if the "assetbundle_name" field was cleared in this mutation.
+func (m *CustomprofiletextfontMutation) AssetbundleNameCleared() bool {
+	_, ok := m.clearedFields[customprofiletextfont.FieldAssetbundleName]
+	return ok
+}
+
+// ResetAssetbundleName resets all changes to the "assetbundle_name" field.
+func (m *CustomprofiletextfontMutation) ResetAssetbundleName() {
+	m.assetbundle_name = nil
+	delete(m.clearedFields, customprofiletextfont.FieldAssetbundleName)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofiletextfontMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofiletextfontMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofiletextfont entity.
+// If the Customprofiletextfont object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofiletextfontMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofiletextfontMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofiletextfontMutation builder.
+func (m *CustomprofiletextfontMutation) Where(ps ...predicate.Customprofiletextfont) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofiletextfontMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofiletextfontMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofiletextfont, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofiletextfontMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofiletextfontMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofiletextfont).
+func (m *CustomprofiletextfontMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofiletextfontMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.game_id != nil {
+		fields = append(fields, customprofiletextfont.FieldGameID)
+	}
+	if m.name != nil {
+		fields = append(fields, customprofiletextfont.FieldName)
+	}
+	if m.font_name != nil {
+		fields = append(fields, customprofiletextfont.FieldFontName)
+	}
+	if m.assetbundle_name != nil {
+		fields = append(fields, customprofiletextfont.FieldAssetbundleName)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofiletextfont.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofiletextfontMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofiletextfont.FieldGameID:
+		return m.GameID()
+	case customprofiletextfont.FieldName:
+		return m.Name()
+	case customprofiletextfont.FieldFontName:
+		return m.FontName()
+	case customprofiletextfont.FieldAssetbundleName:
+		return m.AssetbundleName()
+	case customprofiletextfont.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofiletextfontMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofiletextfont.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofiletextfont.FieldName:
+		return m.OldName(ctx)
+	case customprofiletextfont.FieldFontName:
+		return m.OldFontName(ctx)
+	case customprofiletextfont.FieldAssetbundleName:
+		return m.OldAssetbundleName(ctx)
+	case customprofiletextfont.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofiletextfont field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofiletextfontMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofiletextfont.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofiletextfont.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customprofiletextfont.FieldFontName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFontName(v)
+		return nil
+	case customprofiletextfont.FieldAssetbundleName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAssetbundleName(v)
+		return nil
+	case customprofiletextfont.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofiletextfont field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofiletextfontMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofiletextfont.FieldGameID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofiletextfontMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofiletextfont.FieldGameID:
+		return m.AddedGameID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofiletextfontMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofiletextfont.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofiletextfont numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofiletextfontMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofiletextfont.FieldGameID) {
+		fields = append(fields, customprofiletextfont.FieldGameID)
+	}
+	if m.FieldCleared(customprofiletextfont.FieldName) {
+		fields = append(fields, customprofiletextfont.FieldName)
+	}
+	if m.FieldCleared(customprofiletextfont.FieldFontName) {
+		fields = append(fields, customprofiletextfont.FieldFontName)
+	}
+	if m.FieldCleared(customprofiletextfont.FieldAssetbundleName) {
+		fields = append(fields, customprofiletextfont.FieldAssetbundleName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofiletextfontMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofiletextfontMutation) ClearField(name string) error {
+	switch name {
+	case customprofiletextfont.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofiletextfont.FieldName:
+		m.ClearName()
+		return nil
+	case customprofiletextfont.FieldFontName:
+		m.ClearFontName()
+		return nil
+	case customprofiletextfont.FieldAssetbundleName:
+		m.ClearAssetbundleName()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofiletextfont nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofiletextfontMutation) ResetField(name string) error {
+	switch name {
+	case customprofiletextfont.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofiletextfont.FieldName:
+		m.ResetName()
+		return nil
+	case customprofiletextfont.FieldFontName:
+		m.ResetFontName()
+		return nil
+	case customprofiletextfont.FieldAssetbundleName:
+		m.ResetAssetbundleName()
+		return nil
+	case customprofiletextfont.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofiletextfont field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofiletextfontMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofiletextfontMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofiletextfontMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofiletextfontMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofiletextfontMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofiletextfontMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofiletextfontMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofiletextfont unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofiletextfontMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofiletextfont edge %s", name)
+}
+
+// CustomprofileuserinterfaceiconresourceMutation represents an operation that mutates the Customprofileuserinterfaceiconresource nodes in the graph.
+type CustomprofileuserinterfaceiconresourceMutation struct {
+	config
+	op                           Op
+	typ                          string
+	id                           *int
+	custom_profile_resource_type *string
+	game_id                      *int64
+	addgame_id                   *int64
+	seq                          *int64
+	addseq                       *int64
+	name                         *string
+	pronunciation                *string
+	resource_load_type           *string
+	resource_load_val            *string
+	file_name                    *string
+	server_region                *string
+	clearedFields                map[string]struct{}
+	done                         bool
+	oldValue                     func(context.Context) (*Customprofileuserinterfaceiconresource, error)
+	predicates                   []predicate.Customprofileuserinterfaceiconresource
+}
+
+var _ ent.Mutation = (*CustomprofileuserinterfaceiconresourceMutation)(nil)
+
+// customprofileuserinterfaceiconresourceOption allows management of the mutation configuration using functional options.
+type customprofileuserinterfaceiconresourceOption func(*CustomprofileuserinterfaceiconresourceMutation)
+
+// newCustomprofileuserinterfaceiconresourceMutation creates new mutation for the Customprofileuserinterfaceiconresource entity.
+func newCustomprofileuserinterfaceiconresourceMutation(c config, op Op, opts ...customprofileuserinterfaceiconresourceOption) *CustomprofileuserinterfaceiconresourceMutation {
+	m := &CustomprofileuserinterfaceiconresourceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomprofileuserinterfaceiconresource,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomprofileuserinterfaceiconresourceID sets the ID field of the mutation.
+func withCustomprofileuserinterfaceiconresourceID(id int) customprofileuserinterfaceiconresourceOption {
+	return func(m *CustomprofileuserinterfaceiconresourceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Customprofileuserinterfaceiconresource
+		)
+		m.oldValue = func(ctx context.Context) (*Customprofileuserinterfaceiconresource, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Customprofileuserinterfaceiconresource.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomprofileuserinterfaceiconresource sets the old Customprofileuserinterfaceiconresource of the mutation.
+func withCustomprofileuserinterfaceiconresource(node *Customprofileuserinterfaceiconresource) customprofileuserinterfaceiconresourceOption {
+	return func(m *CustomprofileuserinterfaceiconresourceMutation) {
+		m.oldValue = func(context.Context) (*Customprofileuserinterfaceiconresource, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomprofileuserinterfaceiconresourceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomprofileuserinterfaceiconresourceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Customprofileuserinterfaceiconresource.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCustomProfileResourceType sets the "custom_profile_resource_type" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SetCustomProfileResourceType(s string) {
+	m.custom_profile_resource_type = &s
+}
+
+// CustomProfileResourceType returns the value of the "custom_profile_resource_type" field in the mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) CustomProfileResourceType() (r string, exists bool) {
+	v := m.custom_profile_resource_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomProfileResourceType returns the old "custom_profile_resource_type" field's value of the Customprofileuserinterfaceiconresource entity.
+// If the Customprofileuserinterfaceiconresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileuserinterfaceiconresourceMutation) OldCustomProfileResourceType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomProfileResourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomProfileResourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomProfileResourceType: %w", err)
+	}
+	return oldValue.CustomProfileResourceType, nil
+}
+
+// ClearCustomProfileResourceType clears the value of the "custom_profile_resource_type" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	m.clearedFields[customprofileuserinterfaceiconresource.FieldCustomProfileResourceType] = struct{}{}
+}
+
+// CustomProfileResourceTypeCleared returns if the "custom_profile_resource_type" field was cleared in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) CustomProfileResourceTypeCleared() bool {
+	_, ok := m.clearedFields[customprofileuserinterfaceiconresource.FieldCustomProfileResourceType]
+	return ok
+}
+
+// ResetCustomProfileResourceType resets all changes to the "custom_profile_resource_type" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResetCustomProfileResourceType() {
+	m.custom_profile_resource_type = nil
+	delete(m.clearedFields, customprofileuserinterfaceiconresource.FieldCustomProfileResourceType)
+}
+
+// SetGameID sets the "game_id" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Customprofileuserinterfaceiconresource entity.
+// If the Customprofileuserinterfaceiconresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileuserinterfaceiconresourceMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[customprofileuserinterfaceiconresource.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[customprofileuserinterfaceiconresource.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, customprofileuserinterfaceiconresource.FieldGameID)
+}
+
+// SetSeq sets the "seq" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SetSeq(i int64) {
+	m.seq = &i
+	m.addseq = nil
+}
+
+// Seq returns the value of the "seq" field in the mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) Seq() (r int64, exists bool) {
+	v := m.seq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSeq returns the old "seq" field's value of the Customprofileuserinterfaceiconresource entity.
+// If the Customprofileuserinterfaceiconresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileuserinterfaceiconresourceMutation) OldSeq(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSeq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSeq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSeq: %w", err)
+	}
+	return oldValue.Seq, nil
+}
+
+// AddSeq adds i to the "seq" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) AddSeq(i int64) {
+	if m.addseq != nil {
+		*m.addseq += i
+	} else {
+		m.addseq = &i
+	}
+}
+
+// AddedSeq returns the value that was added to the "seq" field in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) AddedSeq() (r int64, exists bool) {
+	v := m.addseq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSeq clears the value of the "seq" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearSeq() {
+	m.seq = nil
+	m.addseq = nil
+	m.clearedFields[customprofileuserinterfaceiconresource.FieldSeq] = struct{}{}
+}
+
+// SeqCleared returns if the "seq" field was cleared in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SeqCleared() bool {
+	_, ok := m.clearedFields[customprofileuserinterfaceiconresource.FieldSeq]
+	return ok
+}
+
+// ResetSeq resets all changes to the "seq" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResetSeq() {
+	m.seq = nil
+	m.addseq = nil
+	delete(m.clearedFields, customprofileuserinterfaceiconresource.FieldSeq)
+}
+
+// SetName sets the "name" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Customprofileuserinterfaceiconresource entity.
+// If the Customprofileuserinterfaceiconresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileuserinterfaceiconresourceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[customprofileuserinterfaceiconresource.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) NameCleared() bool {
+	_, ok := m.clearedFields[customprofileuserinterfaceiconresource.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, customprofileuserinterfaceiconresource.FieldName)
+}
+
+// SetPronunciation sets the "pronunciation" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SetPronunciation(s string) {
+	m.pronunciation = &s
+}
+
+// Pronunciation returns the value of the "pronunciation" field in the mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) Pronunciation() (r string, exists bool) {
+	v := m.pronunciation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPronunciation returns the old "pronunciation" field's value of the Customprofileuserinterfaceiconresource entity.
+// If the Customprofileuserinterfaceiconresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileuserinterfaceiconresourceMutation) OldPronunciation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPronunciation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPronunciation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPronunciation: %w", err)
+	}
+	return oldValue.Pronunciation, nil
+}
+
+// ClearPronunciation clears the value of the "pronunciation" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearPronunciation() {
+	m.pronunciation = nil
+	m.clearedFields[customprofileuserinterfaceiconresource.FieldPronunciation] = struct{}{}
+}
+
+// PronunciationCleared returns if the "pronunciation" field was cleared in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) PronunciationCleared() bool {
+	_, ok := m.clearedFields[customprofileuserinterfaceiconresource.FieldPronunciation]
+	return ok
+}
+
+// ResetPronunciation resets all changes to the "pronunciation" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResetPronunciation() {
+	m.pronunciation = nil
+	delete(m.clearedFields, customprofileuserinterfaceiconresource.FieldPronunciation)
+}
+
+// SetResourceLoadType sets the "resource_load_type" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SetResourceLoadType(s string) {
+	m.resource_load_type = &s
+}
+
+// ResourceLoadType returns the value of the "resource_load_type" field in the mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResourceLoadType() (r string, exists bool) {
+	v := m.resource_load_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadType returns the old "resource_load_type" field's value of the Customprofileuserinterfaceiconresource entity.
+// If the Customprofileuserinterfaceiconresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileuserinterfaceiconresourceMutation) OldResourceLoadType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadType: %w", err)
+	}
+	return oldValue.ResourceLoadType, nil
+}
+
+// ClearResourceLoadType clears the value of the "resource_load_type" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearResourceLoadType() {
+	m.resource_load_type = nil
+	m.clearedFields[customprofileuserinterfaceiconresource.FieldResourceLoadType] = struct{}{}
+}
+
+// ResourceLoadTypeCleared returns if the "resource_load_type" field was cleared in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResourceLoadTypeCleared() bool {
+	_, ok := m.clearedFields[customprofileuserinterfaceiconresource.FieldResourceLoadType]
+	return ok
+}
+
+// ResetResourceLoadType resets all changes to the "resource_load_type" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResetResourceLoadType() {
+	m.resource_load_type = nil
+	delete(m.clearedFields, customprofileuserinterfaceiconresource.FieldResourceLoadType)
+}
+
+// SetResourceLoadVal sets the "resource_load_val" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SetResourceLoadVal(s string) {
+	m.resource_load_val = &s
+}
+
+// ResourceLoadVal returns the value of the "resource_load_val" field in the mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResourceLoadVal() (r string, exists bool) {
+	v := m.resource_load_val
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceLoadVal returns the old "resource_load_val" field's value of the Customprofileuserinterfaceiconresource entity.
+// If the Customprofileuserinterfaceiconresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileuserinterfaceiconresourceMutation) OldResourceLoadVal(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceLoadVal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceLoadVal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceLoadVal: %w", err)
+	}
+	return oldValue.ResourceLoadVal, nil
+}
+
+// ClearResourceLoadVal clears the value of the "resource_load_val" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearResourceLoadVal() {
+	m.resource_load_val = nil
+	m.clearedFields[customprofileuserinterfaceiconresource.FieldResourceLoadVal] = struct{}{}
+}
+
+// ResourceLoadValCleared returns if the "resource_load_val" field was cleared in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResourceLoadValCleared() bool {
+	_, ok := m.clearedFields[customprofileuserinterfaceiconresource.FieldResourceLoadVal]
+	return ok
+}
+
+// ResetResourceLoadVal resets all changes to the "resource_load_val" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResetResourceLoadVal() {
+	m.resource_load_val = nil
+	delete(m.clearedFields, customprofileuserinterfaceiconresource.FieldResourceLoadVal)
+}
+
+// SetFileName sets the "file_name" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SetFileName(s string) {
+	m.file_name = &s
+}
+
+// FileName returns the value of the "file_name" field in the mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) FileName() (r string, exists bool) {
+	v := m.file_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFileName returns the old "file_name" field's value of the Customprofileuserinterfaceiconresource entity.
+// If the Customprofileuserinterfaceiconresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileuserinterfaceiconresourceMutation) OldFileName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFileName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFileName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFileName: %w", err)
+	}
+	return oldValue.FileName, nil
+}
+
+// ClearFileName clears the value of the "file_name" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearFileName() {
+	m.file_name = nil
+	m.clearedFields[customprofileuserinterfaceiconresource.FieldFileName] = struct{}{}
+}
+
+// FileNameCleared returns if the "file_name" field was cleared in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) FileNameCleared() bool {
+	_, ok := m.clearedFields[customprofileuserinterfaceiconresource.FieldFileName]
+	return ok
+}
+
+// ResetFileName resets all changes to the "file_name" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResetFileName() {
+	m.file_name = nil
+	delete(m.clearedFields, customprofileuserinterfaceiconresource.FieldFileName)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Customprofileuserinterfaceiconresource entity.
+// If the Customprofileuserinterfaceiconresource object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomprofileuserinterfaceiconresourceMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the CustomprofileuserinterfaceiconresourceMutation builder.
+func (m *CustomprofileuserinterfaceiconresourceMutation) Where(ps ...predicate.Customprofileuserinterfaceiconresource) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomprofileuserinterfaceiconresourceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomprofileuserinterfaceiconresourceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Customprofileuserinterfaceiconresource, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomprofileuserinterfaceiconresourceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Customprofileuserinterfaceiconresource).
+func (m *CustomprofileuserinterfaceiconresourceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomprofileuserinterfaceiconresourceMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.custom_profile_resource_type != nil {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldCustomProfileResourceType)
+	}
+	if m.game_id != nil {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldGameID)
+	}
+	if m.seq != nil {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldSeq)
+	}
+	if m.name != nil {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldName)
+	}
+	if m.pronunciation != nil {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldPronunciation)
+	}
+	if m.resource_load_type != nil {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldResourceLoadType)
+	}
+	if m.resource_load_val != nil {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldResourceLoadVal)
+	}
+	if m.file_name != nil {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldFileName)
+	}
+	if m.server_region != nil {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomprofileuserinterfaceiconresourceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customprofileuserinterfaceiconresource.FieldCustomProfileResourceType:
+		return m.CustomProfileResourceType()
+	case customprofileuserinterfaceiconresource.FieldGameID:
+		return m.GameID()
+	case customprofileuserinterfaceiconresource.FieldSeq:
+		return m.Seq()
+	case customprofileuserinterfaceiconresource.FieldName:
+		return m.Name()
+	case customprofileuserinterfaceiconresource.FieldPronunciation:
+		return m.Pronunciation()
+	case customprofileuserinterfaceiconresource.FieldResourceLoadType:
+		return m.ResourceLoadType()
+	case customprofileuserinterfaceiconresource.FieldResourceLoadVal:
+		return m.ResourceLoadVal()
+	case customprofileuserinterfaceiconresource.FieldFileName:
+		return m.FileName()
+	case customprofileuserinterfaceiconresource.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomprofileuserinterfaceiconresourceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customprofileuserinterfaceiconresource.FieldCustomProfileResourceType:
+		return m.OldCustomProfileResourceType(ctx)
+	case customprofileuserinterfaceiconresource.FieldGameID:
+		return m.OldGameID(ctx)
+	case customprofileuserinterfaceiconresource.FieldSeq:
+		return m.OldSeq(ctx)
+	case customprofileuserinterfaceiconresource.FieldName:
+		return m.OldName(ctx)
+	case customprofileuserinterfaceiconresource.FieldPronunciation:
+		return m.OldPronunciation(ctx)
+	case customprofileuserinterfaceiconresource.FieldResourceLoadType:
+		return m.OldResourceLoadType(ctx)
+	case customprofileuserinterfaceiconresource.FieldResourceLoadVal:
+		return m.OldResourceLoadVal(ctx)
+	case customprofileuserinterfaceiconresource.FieldFileName:
+		return m.OldFileName(ctx)
+	case customprofileuserinterfaceiconresource.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Customprofileuserinterfaceiconresource field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofileuserinterfaceiconresourceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customprofileuserinterfaceiconresource.FieldCustomProfileResourceType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomProfileResourceType(v)
+		return nil
+	case customprofileuserinterfaceiconresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case customprofileuserinterfaceiconresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSeq(v)
+		return nil
+	case customprofileuserinterfaceiconresource.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customprofileuserinterfaceiconresource.FieldPronunciation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPronunciation(v)
+		return nil
+	case customprofileuserinterfaceiconresource.FieldResourceLoadType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadType(v)
+		return nil
+	case customprofileuserinterfaceiconresource.FieldResourceLoadVal:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceLoadVal(v)
+		return nil
+	case customprofileuserinterfaceiconresource.FieldFileName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFileName(v)
+		return nil
+	case customprofileuserinterfaceiconresource.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileuserinterfaceiconresource field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldGameID)
+	}
+	if m.addseq != nil {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldSeq)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomprofileuserinterfaceiconresourceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customprofileuserinterfaceiconresource.FieldGameID:
+		return m.AddedGameID()
+	case customprofileuserinterfaceiconresource.FieldSeq:
+		return m.AddedSeq()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomprofileuserinterfaceiconresourceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case customprofileuserinterfaceiconresource.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case customprofileuserinterfaceiconresource.FieldSeq:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSeq(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileuserinterfaceiconresource numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(customprofileuserinterfaceiconresource.FieldCustomProfileResourceType) {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldCustomProfileResourceType)
+	}
+	if m.FieldCleared(customprofileuserinterfaceiconresource.FieldGameID) {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldGameID)
+	}
+	if m.FieldCleared(customprofileuserinterfaceiconresource.FieldSeq) {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldSeq)
+	}
+	if m.FieldCleared(customprofileuserinterfaceiconresource.FieldName) {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldName)
+	}
+	if m.FieldCleared(customprofileuserinterfaceiconresource.FieldPronunciation) {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldPronunciation)
+	}
+	if m.FieldCleared(customprofileuserinterfaceiconresource.FieldResourceLoadType) {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldResourceLoadType)
+	}
+	if m.FieldCleared(customprofileuserinterfaceiconresource.FieldResourceLoadVal) {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldResourceLoadVal)
+	}
+	if m.FieldCleared(customprofileuserinterfaceiconresource.FieldFileName) {
+		fields = append(fields, customprofileuserinterfaceiconresource.FieldFileName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearField(name string) error {
+	switch name {
+	case customprofileuserinterfaceiconresource.FieldCustomProfileResourceType:
+		m.ClearCustomProfileResourceType()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldSeq:
+		m.ClearSeq()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldName:
+		m.ClearName()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldPronunciation:
+		m.ClearPronunciation()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldResourceLoadType:
+		m.ClearResourceLoadType()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldResourceLoadVal:
+		m.ClearResourceLoadVal()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldFileName:
+		m.ClearFileName()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileuserinterfaceiconresource nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResetField(name string) error {
+	switch name {
+	case customprofileuserinterfaceiconresource.FieldCustomProfileResourceType:
+		m.ResetCustomProfileResourceType()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldSeq:
+		m.ResetSeq()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldName:
+		m.ResetName()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldPronunciation:
+		m.ResetPronunciation()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldResourceLoadType:
+		m.ResetResourceLoadType()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldResourceLoadVal:
+		m.ResetResourceLoadVal()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldFileName:
+		m.ResetFileName()
+		return nil
+	case customprofileuserinterfaceiconresource.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Customprofileuserinterfaceiconresource field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomprofileuserinterfaceiconresourceMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Customprofileuserinterfaceiconresource unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomprofileuserinterfaceiconresourceMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Customprofileuserinterfaceiconresource edge %s", name)
+}
+
 // EventMutation represents an operation that mutates the Event nodes in the graph.
 type EventMutation struct {
 	config
@@ -25200,6 +36741,8 @@ type EventMutation struct {
 	event_point_assetbundle_name             *string
 	standby_screen_display_start_at          *int64
 	addstandby_screen_display_start_at       *int64
+	event_break_time_id                      *int64
+	addevent_break_time_id                   *int64
 	server_region                            *string
 	clearedFields                            map[string]struct{}
 	done                                     bool
@@ -26483,6 +38026,76 @@ func (m *EventMutation) ResetStandbyScreenDisplayStartAt() {
 	delete(m.clearedFields, event.FieldStandbyScreenDisplayStartAt)
 }
 
+// SetEventBreakTimeID sets the "event_break_time_id" field.
+func (m *EventMutation) SetEventBreakTimeID(i int64) {
+	m.event_break_time_id = &i
+	m.addevent_break_time_id = nil
+}
+
+// EventBreakTimeID returns the value of the "event_break_time_id" field in the mutation.
+func (m *EventMutation) EventBreakTimeID() (r int64, exists bool) {
+	v := m.event_break_time_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEventBreakTimeID returns the old "event_break_time_id" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldEventBreakTimeID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEventBreakTimeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEventBreakTimeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEventBreakTimeID: %w", err)
+	}
+	return oldValue.EventBreakTimeID, nil
+}
+
+// AddEventBreakTimeID adds i to the "event_break_time_id" field.
+func (m *EventMutation) AddEventBreakTimeID(i int64) {
+	if m.addevent_break_time_id != nil {
+		*m.addevent_break_time_id += i
+	} else {
+		m.addevent_break_time_id = &i
+	}
+}
+
+// AddedEventBreakTimeID returns the value that was added to the "event_break_time_id" field in this mutation.
+func (m *EventMutation) AddedEventBreakTimeID() (r int64, exists bool) {
+	v := m.addevent_break_time_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearEventBreakTimeID clears the value of the "event_break_time_id" field.
+func (m *EventMutation) ClearEventBreakTimeID() {
+	m.event_break_time_id = nil
+	m.addevent_break_time_id = nil
+	m.clearedFields[event.FieldEventBreakTimeID] = struct{}{}
+}
+
+// EventBreakTimeIDCleared returns if the "event_break_time_id" field was cleared in this mutation.
+func (m *EventMutation) EventBreakTimeIDCleared() bool {
+	_, ok := m.clearedFields[event.FieldEventBreakTimeID]
+	return ok
+}
+
+// ResetEventBreakTimeID resets all changes to the "event_break_time_id" field.
+func (m *EventMutation) ResetEventBreakTimeID() {
+	m.event_break_time_id = nil
+	m.addevent_break_time_id = nil
+	delete(m.clearedFields, event.FieldEventBreakTimeID)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *EventMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -26553,7 +38166,7 @@ func (m *EventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EventMutation) Fields() []string {
-	fields := make([]string, 0, 20)
+	fields := make([]string, 0, 21)
 	if m.game_id != nil {
 		fields = append(fields, event.FieldGameID)
 	}
@@ -26611,6 +38224,9 @@ func (m *EventMutation) Fields() []string {
 	if m.standby_screen_display_start_at != nil {
 		fields = append(fields, event.FieldStandbyScreenDisplayStartAt)
 	}
+	if m.event_break_time_id != nil {
+		fields = append(fields, event.FieldEventBreakTimeID)
+	}
 	if m.server_region != nil {
 		fields = append(fields, event.FieldServerRegion)
 	}
@@ -26660,6 +38276,8 @@ func (m *EventMutation) Field(name string) (ent.Value, bool) {
 		return m.EventPointAssetbundleName()
 	case event.FieldStandbyScreenDisplayStartAt:
 		return m.StandbyScreenDisplayStartAt()
+	case event.FieldEventBreakTimeID:
+		return m.EventBreakTimeID()
 	case event.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -26709,6 +38327,8 @@ func (m *EventMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldEventPointAssetbundleName(ctx)
 	case event.FieldStandbyScreenDisplayStartAt:
 		return m.OldStandbyScreenDisplayStartAt(ctx)
+	case event.FieldEventBreakTimeID:
+		return m.OldEventBreakTimeID(ctx)
 	case event.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -26853,6 +38473,13 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStandbyScreenDisplayStartAt(v)
 		return nil
+	case event.FieldEventBreakTimeID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventBreakTimeID(v)
+		return nil
 	case event.FieldServerRegion:
 		v, ok := value.(string)
 		if !ok {
@@ -26901,6 +38528,9 @@ func (m *EventMutation) AddedFields() []string {
 	if m.addstandby_screen_display_start_at != nil {
 		fields = append(fields, event.FieldStandbyScreenDisplayStartAt)
 	}
+	if m.addevent_break_time_id != nil {
+		fields = append(fields, event.FieldEventBreakTimeID)
+	}
 	return fields
 }
 
@@ -26931,6 +38561,8 @@ func (m *EventMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedVirtualLiveID()
 	case event.FieldStandbyScreenDisplayStartAt:
 		return m.AddedStandbyScreenDisplayStartAt()
+	case event.FieldEventBreakTimeID:
+		return m.AddedEventBreakTimeID()
 	}
 	return nil, false
 }
@@ -27017,6 +38649,13 @@ func (m *EventMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddStandbyScreenDisplayStartAt(v)
 		return nil
+	case event.FieldEventBreakTimeID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEventBreakTimeID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Event numeric field %s", name)
 }
@@ -27081,6 +38720,9 @@ func (m *EventMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(event.FieldStandbyScreenDisplayStartAt) {
 		fields = append(fields, event.FieldStandbyScreenDisplayStartAt)
+	}
+	if m.FieldCleared(event.FieldEventBreakTimeID) {
+		fields = append(fields, event.FieldEventBreakTimeID)
 	}
 	return fields
 }
@@ -27153,6 +38795,9 @@ func (m *EventMutation) ClearField(name string) error {
 	case event.FieldStandbyScreenDisplayStartAt:
 		m.ClearStandbyScreenDisplayStartAt()
 		return nil
+	case event.FieldEventBreakTimeID:
+		m.ClearEventBreakTimeID()
+		return nil
 	}
 	return fmt.Errorf("unknown Event nullable field %s", name)
 }
@@ -27217,6 +38862,9 @@ func (m *EventMutation) ResetField(name string) error {
 		return nil
 	case event.FieldStandbyScreenDisplayStartAt:
 		m.ResetStandbyScreenDisplayStartAt()
+		return nil
+	case event.FieldEventBreakTimeID:
+		m.ResetEventBreakTimeID()
 		return nil
 	case event.FieldServerRegion:
 		m.ResetServerRegion()
@@ -34067,6 +45715,11 @@ type GachaMutation struct {
 	addgacha_freebie_group_id                      *int64
 	daily_spin_limit                               *int64
 	adddaily_spin_limit                            *int64
+	is_select_character                            *bool
+	gacha_character_bonus_group_id                 *int64
+	addgacha_character_bonus_group_id              *int64
+	rate_choice_gacha_wish_group_id                *int64
+	addrate_choice_gacha_wish_group_id             *int64
 	server_region                                  *string
 	clearedFields                                  map[string]struct{}
 	done                                           bool
@@ -35808,6 +47461,195 @@ func (m *GachaMutation) ResetDailySpinLimit() {
 	delete(m.clearedFields, gacha.FieldDailySpinLimit)
 }
 
+// SetIsSelectCharacter sets the "is_select_character" field.
+func (m *GachaMutation) SetIsSelectCharacter(b bool) {
+	m.is_select_character = &b
+}
+
+// IsSelectCharacter returns the value of the "is_select_character" field in the mutation.
+func (m *GachaMutation) IsSelectCharacter() (r bool, exists bool) {
+	v := m.is_select_character
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsSelectCharacter returns the old "is_select_character" field's value of the Gacha entity.
+// If the Gacha object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GachaMutation) OldIsSelectCharacter(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsSelectCharacter is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsSelectCharacter requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsSelectCharacter: %w", err)
+	}
+	return oldValue.IsSelectCharacter, nil
+}
+
+// ClearIsSelectCharacter clears the value of the "is_select_character" field.
+func (m *GachaMutation) ClearIsSelectCharacter() {
+	m.is_select_character = nil
+	m.clearedFields[gacha.FieldIsSelectCharacter] = struct{}{}
+}
+
+// IsSelectCharacterCleared returns if the "is_select_character" field was cleared in this mutation.
+func (m *GachaMutation) IsSelectCharacterCleared() bool {
+	_, ok := m.clearedFields[gacha.FieldIsSelectCharacter]
+	return ok
+}
+
+// ResetIsSelectCharacter resets all changes to the "is_select_character" field.
+func (m *GachaMutation) ResetIsSelectCharacter() {
+	m.is_select_character = nil
+	delete(m.clearedFields, gacha.FieldIsSelectCharacter)
+}
+
+// SetGachaCharacterBonusGroupID sets the "gacha_character_bonus_group_id" field.
+func (m *GachaMutation) SetGachaCharacterBonusGroupID(i int64) {
+	m.gacha_character_bonus_group_id = &i
+	m.addgacha_character_bonus_group_id = nil
+}
+
+// GachaCharacterBonusGroupID returns the value of the "gacha_character_bonus_group_id" field in the mutation.
+func (m *GachaMutation) GachaCharacterBonusGroupID() (r int64, exists bool) {
+	v := m.gacha_character_bonus_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGachaCharacterBonusGroupID returns the old "gacha_character_bonus_group_id" field's value of the Gacha entity.
+// If the Gacha object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GachaMutation) OldGachaCharacterBonusGroupID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGachaCharacterBonusGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGachaCharacterBonusGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGachaCharacterBonusGroupID: %w", err)
+	}
+	return oldValue.GachaCharacterBonusGroupID, nil
+}
+
+// AddGachaCharacterBonusGroupID adds i to the "gacha_character_bonus_group_id" field.
+func (m *GachaMutation) AddGachaCharacterBonusGroupID(i int64) {
+	if m.addgacha_character_bonus_group_id != nil {
+		*m.addgacha_character_bonus_group_id += i
+	} else {
+		m.addgacha_character_bonus_group_id = &i
+	}
+}
+
+// AddedGachaCharacterBonusGroupID returns the value that was added to the "gacha_character_bonus_group_id" field in this mutation.
+func (m *GachaMutation) AddedGachaCharacterBonusGroupID() (r int64, exists bool) {
+	v := m.addgacha_character_bonus_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGachaCharacterBonusGroupID clears the value of the "gacha_character_bonus_group_id" field.
+func (m *GachaMutation) ClearGachaCharacterBonusGroupID() {
+	m.gacha_character_bonus_group_id = nil
+	m.addgacha_character_bonus_group_id = nil
+	m.clearedFields[gacha.FieldGachaCharacterBonusGroupID] = struct{}{}
+}
+
+// GachaCharacterBonusGroupIDCleared returns if the "gacha_character_bonus_group_id" field was cleared in this mutation.
+func (m *GachaMutation) GachaCharacterBonusGroupIDCleared() bool {
+	_, ok := m.clearedFields[gacha.FieldGachaCharacterBonusGroupID]
+	return ok
+}
+
+// ResetGachaCharacterBonusGroupID resets all changes to the "gacha_character_bonus_group_id" field.
+func (m *GachaMutation) ResetGachaCharacterBonusGroupID() {
+	m.gacha_character_bonus_group_id = nil
+	m.addgacha_character_bonus_group_id = nil
+	delete(m.clearedFields, gacha.FieldGachaCharacterBonusGroupID)
+}
+
+// SetRateChoiceGachaWishGroupID sets the "rate_choice_gacha_wish_group_id" field.
+func (m *GachaMutation) SetRateChoiceGachaWishGroupID(i int64) {
+	m.rate_choice_gacha_wish_group_id = &i
+	m.addrate_choice_gacha_wish_group_id = nil
+}
+
+// RateChoiceGachaWishGroupID returns the value of the "rate_choice_gacha_wish_group_id" field in the mutation.
+func (m *GachaMutation) RateChoiceGachaWishGroupID() (r int64, exists bool) {
+	v := m.rate_choice_gacha_wish_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRateChoiceGachaWishGroupID returns the old "rate_choice_gacha_wish_group_id" field's value of the Gacha entity.
+// If the Gacha object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GachaMutation) OldRateChoiceGachaWishGroupID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRateChoiceGachaWishGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRateChoiceGachaWishGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRateChoiceGachaWishGroupID: %w", err)
+	}
+	return oldValue.RateChoiceGachaWishGroupID, nil
+}
+
+// AddRateChoiceGachaWishGroupID adds i to the "rate_choice_gacha_wish_group_id" field.
+func (m *GachaMutation) AddRateChoiceGachaWishGroupID(i int64) {
+	if m.addrate_choice_gacha_wish_group_id != nil {
+		*m.addrate_choice_gacha_wish_group_id += i
+	} else {
+		m.addrate_choice_gacha_wish_group_id = &i
+	}
+}
+
+// AddedRateChoiceGachaWishGroupID returns the value that was added to the "rate_choice_gacha_wish_group_id" field in this mutation.
+func (m *GachaMutation) AddedRateChoiceGachaWishGroupID() (r int64, exists bool) {
+	v := m.addrate_choice_gacha_wish_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearRateChoiceGachaWishGroupID clears the value of the "rate_choice_gacha_wish_group_id" field.
+func (m *GachaMutation) ClearRateChoiceGachaWishGroupID() {
+	m.rate_choice_gacha_wish_group_id = nil
+	m.addrate_choice_gacha_wish_group_id = nil
+	m.clearedFields[gacha.FieldRateChoiceGachaWishGroupID] = struct{}{}
+}
+
+// RateChoiceGachaWishGroupIDCleared returns if the "rate_choice_gacha_wish_group_id" field was cleared in this mutation.
+func (m *GachaMutation) RateChoiceGachaWishGroupIDCleared() bool {
+	_, ok := m.clearedFields[gacha.FieldRateChoiceGachaWishGroupID]
+	return ok
+}
+
+// ResetRateChoiceGachaWishGroupID resets all changes to the "rate_choice_gacha_wish_group_id" field.
+func (m *GachaMutation) ResetRateChoiceGachaWishGroupID() {
+	m.rate_choice_gacha_wish_group_id = nil
+	m.addrate_choice_gacha_wish_group_id = nil
+	delete(m.clearedFields, gacha.FieldRateChoiceGachaWishGroupID)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *GachaMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -35878,7 +47720,7 @@ func (m *GachaMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GachaMutation) Fields() []string {
-	fields := make([]string, 0, 26)
+	fields := make([]string, 0, 29)
 	if m.game_id != nil {
 		fields = append(fields, gacha.FieldGameID)
 	}
@@ -35954,6 +47796,15 @@ func (m *GachaMutation) Fields() []string {
 	if m.daily_spin_limit != nil {
 		fields = append(fields, gacha.FieldDailySpinLimit)
 	}
+	if m.is_select_character != nil {
+		fields = append(fields, gacha.FieldIsSelectCharacter)
+	}
+	if m.gacha_character_bonus_group_id != nil {
+		fields = append(fields, gacha.FieldGachaCharacterBonusGroupID)
+	}
+	if m.rate_choice_gacha_wish_group_id != nil {
+		fields = append(fields, gacha.FieldRateChoiceGachaWishGroupID)
+	}
 	if m.server_region != nil {
 		fields = append(fields, gacha.FieldServerRegion)
 	}
@@ -36015,6 +47866,12 @@ func (m *GachaMutation) Field(name string) (ent.Value, bool) {
 		return m.GachaFreebieGroupID()
 	case gacha.FieldDailySpinLimit:
 		return m.DailySpinLimit()
+	case gacha.FieldIsSelectCharacter:
+		return m.IsSelectCharacter()
+	case gacha.FieldGachaCharacterBonusGroupID:
+		return m.GachaCharacterBonusGroupID()
+	case gacha.FieldRateChoiceGachaWishGroupID:
+		return m.RateChoiceGachaWishGroupID()
 	case gacha.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -36076,6 +47933,12 @@ func (m *GachaMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldGachaFreebieGroupID(ctx)
 	case gacha.FieldDailySpinLimit:
 		return m.OldDailySpinLimit(ctx)
+	case gacha.FieldIsSelectCharacter:
+		return m.OldIsSelectCharacter(ctx)
+	case gacha.FieldGachaCharacterBonusGroupID:
+		return m.OldGachaCharacterBonusGroupID(ctx)
+	case gacha.FieldRateChoiceGachaWishGroupID:
+		return m.OldRateChoiceGachaWishGroupID(ctx)
 	case gacha.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -36262,6 +48125,27 @@ func (m *GachaMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetDailySpinLimit(v)
 		return nil
+	case gacha.FieldIsSelectCharacter:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsSelectCharacter(v)
+		return nil
+	case gacha.FieldGachaCharacterBonusGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGachaCharacterBonusGroupID(v)
+		return nil
+	case gacha.FieldRateChoiceGachaWishGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRateChoiceGachaWishGroupID(v)
+		return nil
 	case gacha.FieldServerRegion:
 		v, ok := value.(string)
 		if !ok {
@@ -36322,6 +48206,12 @@ func (m *GachaMutation) AddedFields() []string {
 	if m.adddaily_spin_limit != nil {
 		fields = append(fields, gacha.FieldDailySpinLimit)
 	}
+	if m.addgacha_character_bonus_group_id != nil {
+		fields = append(fields, gacha.FieldGachaCharacterBonusGroupID)
+	}
+	if m.addrate_choice_gacha_wish_group_id != nil {
+		fields = append(fields, gacha.FieldRateChoiceGachaWishGroupID)
+	}
 	return fields
 }
 
@@ -36360,6 +48250,10 @@ func (m *GachaMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedGachaFreebieGroupID()
 	case gacha.FieldDailySpinLimit:
 		return m.AddedDailySpinLimit()
+	case gacha.FieldGachaCharacterBonusGroupID:
+		return m.AddedGachaCharacterBonusGroupID()
+	case gacha.FieldRateChoiceGachaWishGroupID:
+		return m.AddedRateChoiceGachaWishGroupID()
 	}
 	return nil, false
 }
@@ -36474,6 +48368,20 @@ func (m *GachaMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddDailySpinLimit(v)
 		return nil
+	case gacha.FieldGachaCharacterBonusGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGachaCharacterBonusGroupID(v)
+		return nil
+	case gacha.FieldRateChoiceGachaWishGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRateChoiceGachaWishGroupID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Gacha numeric field %s", name)
 }
@@ -36556,6 +48464,15 @@ func (m *GachaMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(gacha.FieldDailySpinLimit) {
 		fields = append(fields, gacha.FieldDailySpinLimit)
+	}
+	if m.FieldCleared(gacha.FieldIsSelectCharacter) {
+		fields = append(fields, gacha.FieldIsSelectCharacter)
+	}
+	if m.FieldCleared(gacha.FieldGachaCharacterBonusGroupID) {
+		fields = append(fields, gacha.FieldGachaCharacterBonusGroupID)
+	}
+	if m.FieldCleared(gacha.FieldRateChoiceGachaWishGroupID) {
+		fields = append(fields, gacha.FieldRateChoiceGachaWishGroupID)
 	}
 	return fields
 }
@@ -36646,6 +48563,15 @@ func (m *GachaMutation) ClearField(name string) error {
 	case gacha.FieldDailySpinLimit:
 		m.ClearDailySpinLimit()
 		return nil
+	case gacha.FieldIsSelectCharacter:
+		m.ClearIsSelectCharacter()
+		return nil
+	case gacha.FieldGachaCharacterBonusGroupID:
+		m.ClearGachaCharacterBonusGroupID()
+		return nil
+	case gacha.FieldRateChoiceGachaWishGroupID:
+		m.ClearRateChoiceGachaWishGroupID()
+		return nil
 	}
 	return fmt.Errorf("unknown Gacha nullable field %s", name)
 }
@@ -36728,6 +48654,15 @@ func (m *GachaMutation) ResetField(name string) error {
 		return nil
 	case gacha.FieldDailySpinLimit:
 		m.ResetDailySpinLimit()
+		return nil
+	case gacha.FieldIsSelectCharacter:
+		m.ResetIsSelectCharacter()
+		return nil
+	case gacha.FieldGachaCharacterBonusGroupID:
+		m.ResetGachaCharacterBonusGroupID()
+		return nil
+	case gacha.FieldRateChoiceGachaWishGroupID:
+		m.ResetRateChoiceGachaWishGroupID()
 		return nil
 	case gacha.FieldServerRegion:
 		m.ResetServerRegion()
@@ -43784,22 +55719,24 @@ func (m *LevelMutation) ResetEdge(name string) error {
 // LimitedtimemusicMutation represents an operation that mutates the Limitedtimemusic nodes in the graph.
 type LimitedtimemusicMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	game_id       *int64
-	addgame_id    *int64
-	music_id      *int64
-	addmusic_id   *int64
-	start_at      *int64
-	addstart_at   *int64
-	end_at        *int64
-	addend_at     *int64
-	server_region *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Limitedtimemusic, error)
-	predicates    []predicate.Limitedtimemusic
+	op                       Op
+	typ                      string
+	id                       *int
+	game_id                  *int64
+	addgame_id               *int64
+	music_id                 *int64
+	addmusic_id              *int64
+	start_at                 *int64
+	addstart_at              *int64
+	end_at                   *int64
+	addend_at                *int64
+	collaboration_mode_id    *int64
+	addcollaboration_mode_id *int64
+	server_region            *string
+	clearedFields            map[string]struct{}
+	done                     bool
+	oldValue                 func(context.Context) (*Limitedtimemusic, error)
+	predicates               []predicate.Limitedtimemusic
 }
 
 var _ ent.Mutation = (*LimitedtimemusicMutation)(nil)
@@ -44180,6 +56117,76 @@ func (m *LimitedtimemusicMutation) ResetEndAt() {
 	delete(m.clearedFields, limitedtimemusic.FieldEndAt)
 }
 
+// SetCollaborationModeID sets the "collaboration_mode_id" field.
+func (m *LimitedtimemusicMutation) SetCollaborationModeID(i int64) {
+	m.collaboration_mode_id = &i
+	m.addcollaboration_mode_id = nil
+}
+
+// CollaborationModeID returns the value of the "collaboration_mode_id" field in the mutation.
+func (m *LimitedtimemusicMutation) CollaborationModeID() (r int64, exists bool) {
+	v := m.collaboration_mode_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCollaborationModeID returns the old "collaboration_mode_id" field's value of the Limitedtimemusic entity.
+// If the Limitedtimemusic object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LimitedtimemusicMutation) OldCollaborationModeID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCollaborationModeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCollaborationModeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCollaborationModeID: %w", err)
+	}
+	return oldValue.CollaborationModeID, nil
+}
+
+// AddCollaborationModeID adds i to the "collaboration_mode_id" field.
+func (m *LimitedtimemusicMutation) AddCollaborationModeID(i int64) {
+	if m.addcollaboration_mode_id != nil {
+		*m.addcollaboration_mode_id += i
+	} else {
+		m.addcollaboration_mode_id = &i
+	}
+}
+
+// AddedCollaborationModeID returns the value that was added to the "collaboration_mode_id" field in this mutation.
+func (m *LimitedtimemusicMutation) AddedCollaborationModeID() (r int64, exists bool) {
+	v := m.addcollaboration_mode_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCollaborationModeID clears the value of the "collaboration_mode_id" field.
+func (m *LimitedtimemusicMutation) ClearCollaborationModeID() {
+	m.collaboration_mode_id = nil
+	m.addcollaboration_mode_id = nil
+	m.clearedFields[limitedtimemusic.FieldCollaborationModeID] = struct{}{}
+}
+
+// CollaborationModeIDCleared returns if the "collaboration_mode_id" field was cleared in this mutation.
+func (m *LimitedtimemusicMutation) CollaborationModeIDCleared() bool {
+	_, ok := m.clearedFields[limitedtimemusic.FieldCollaborationModeID]
+	return ok
+}
+
+// ResetCollaborationModeID resets all changes to the "collaboration_mode_id" field.
+func (m *LimitedtimemusicMutation) ResetCollaborationModeID() {
+	m.collaboration_mode_id = nil
+	m.addcollaboration_mode_id = nil
+	delete(m.clearedFields, limitedtimemusic.FieldCollaborationModeID)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *LimitedtimemusicMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -44250,7 +56257,7 @@ func (m *LimitedtimemusicMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LimitedtimemusicMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.game_id != nil {
 		fields = append(fields, limitedtimemusic.FieldGameID)
 	}
@@ -44262,6 +56269,9 @@ func (m *LimitedtimemusicMutation) Fields() []string {
 	}
 	if m.end_at != nil {
 		fields = append(fields, limitedtimemusic.FieldEndAt)
+	}
+	if m.collaboration_mode_id != nil {
+		fields = append(fields, limitedtimemusic.FieldCollaborationModeID)
 	}
 	if m.server_region != nil {
 		fields = append(fields, limitedtimemusic.FieldServerRegion)
@@ -44282,6 +56292,8 @@ func (m *LimitedtimemusicMutation) Field(name string) (ent.Value, bool) {
 		return m.StartAt()
 	case limitedtimemusic.FieldEndAt:
 		return m.EndAt()
+	case limitedtimemusic.FieldCollaborationModeID:
+		return m.CollaborationModeID()
 	case limitedtimemusic.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -44301,6 +56313,8 @@ func (m *LimitedtimemusicMutation) OldField(ctx context.Context, name string) (e
 		return m.OldStartAt(ctx)
 	case limitedtimemusic.FieldEndAt:
 		return m.OldEndAt(ctx)
+	case limitedtimemusic.FieldCollaborationModeID:
+		return m.OldCollaborationModeID(ctx)
 	case limitedtimemusic.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -44340,6 +56354,13 @@ func (m *LimitedtimemusicMutation) SetField(name string, value ent.Value) error 
 		}
 		m.SetEndAt(v)
 		return nil
+	case limitedtimemusic.FieldCollaborationModeID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCollaborationModeID(v)
+		return nil
 	case limitedtimemusic.FieldServerRegion:
 		v, ok := value.(string)
 		if !ok {
@@ -44367,6 +56388,9 @@ func (m *LimitedtimemusicMutation) AddedFields() []string {
 	if m.addend_at != nil {
 		fields = append(fields, limitedtimemusic.FieldEndAt)
 	}
+	if m.addcollaboration_mode_id != nil {
+		fields = append(fields, limitedtimemusic.FieldCollaborationModeID)
+	}
 	return fields
 }
 
@@ -44383,6 +56407,8 @@ func (m *LimitedtimemusicMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedStartAt()
 	case limitedtimemusic.FieldEndAt:
 		return m.AddedEndAt()
+	case limitedtimemusic.FieldCollaborationModeID:
+		return m.AddedCollaborationModeID()
 	}
 	return nil, false
 }
@@ -44420,6 +56446,13 @@ func (m *LimitedtimemusicMutation) AddField(name string, value ent.Value) error 
 		}
 		m.AddEndAt(v)
 		return nil
+	case limitedtimemusic.FieldCollaborationModeID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCollaborationModeID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Limitedtimemusic numeric field %s", name)
 }
@@ -44439,6 +56472,9 @@ func (m *LimitedtimemusicMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(limitedtimemusic.FieldEndAt) {
 		fields = append(fields, limitedtimemusic.FieldEndAt)
+	}
+	if m.FieldCleared(limitedtimemusic.FieldCollaborationModeID) {
+		fields = append(fields, limitedtimemusic.FieldCollaborationModeID)
 	}
 	return fields
 }
@@ -44466,6 +56502,9 @@ func (m *LimitedtimemusicMutation) ClearField(name string) error {
 	case limitedtimemusic.FieldEndAt:
 		m.ClearEndAt()
 		return nil
+	case limitedtimemusic.FieldCollaborationModeID:
+		m.ClearCollaborationModeID()
+		return nil
 	}
 	return fmt.Errorf("unknown Limitedtimemusic nullable field %s", name)
 }
@@ -44485,6 +56524,9 @@ func (m *LimitedtimemusicMutation) ResetField(name string) error {
 		return nil
 	case limitedtimemusic.FieldEndAt:
 		m.ResetEndAt()
+		return nil
+	case limitedtimemusic.FieldCollaborationModeID:
+		m.ResetCollaborationModeID()
 		return nil
 	case limitedtimemusic.FieldServerRegion:
 		m.ResetServerRegion()
@@ -46720,6 +58762,9 @@ type MusicMutation struct {
 	addmusic_collaboration_id             *int64
 	infos                                 *json.RawMessage
 	appendinfos                           json.RawMessage
+	sec_for_music_score_maker             *int64
+	addsec_for_music_score_maker          *int64
+	is_available_for_music_score_maker    *bool
 	server_region                         *string
 	clearedFields                         map[string]struct{}
 	done                                  bool
@@ -48166,6 +60211,125 @@ func (m *MusicMutation) ResetInfos() {
 	delete(m.clearedFields, music.FieldInfos)
 }
 
+// SetSecForMusicScoreMaker sets the "sec_for_music_score_maker" field.
+func (m *MusicMutation) SetSecForMusicScoreMaker(i int64) {
+	m.sec_for_music_score_maker = &i
+	m.addsec_for_music_score_maker = nil
+}
+
+// SecForMusicScoreMaker returns the value of the "sec_for_music_score_maker" field in the mutation.
+func (m *MusicMutation) SecForMusicScoreMaker() (r int64, exists bool) {
+	v := m.sec_for_music_score_maker
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSecForMusicScoreMaker returns the old "sec_for_music_score_maker" field's value of the Music entity.
+// If the Music object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicMutation) OldSecForMusicScoreMaker(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSecForMusicScoreMaker is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSecForMusicScoreMaker requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSecForMusicScoreMaker: %w", err)
+	}
+	return oldValue.SecForMusicScoreMaker, nil
+}
+
+// AddSecForMusicScoreMaker adds i to the "sec_for_music_score_maker" field.
+func (m *MusicMutation) AddSecForMusicScoreMaker(i int64) {
+	if m.addsec_for_music_score_maker != nil {
+		*m.addsec_for_music_score_maker += i
+	} else {
+		m.addsec_for_music_score_maker = &i
+	}
+}
+
+// AddedSecForMusicScoreMaker returns the value that was added to the "sec_for_music_score_maker" field in this mutation.
+func (m *MusicMutation) AddedSecForMusicScoreMaker() (r int64, exists bool) {
+	v := m.addsec_for_music_score_maker
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSecForMusicScoreMaker clears the value of the "sec_for_music_score_maker" field.
+func (m *MusicMutation) ClearSecForMusicScoreMaker() {
+	m.sec_for_music_score_maker = nil
+	m.addsec_for_music_score_maker = nil
+	m.clearedFields[music.FieldSecForMusicScoreMaker] = struct{}{}
+}
+
+// SecForMusicScoreMakerCleared returns if the "sec_for_music_score_maker" field was cleared in this mutation.
+func (m *MusicMutation) SecForMusicScoreMakerCleared() bool {
+	_, ok := m.clearedFields[music.FieldSecForMusicScoreMaker]
+	return ok
+}
+
+// ResetSecForMusicScoreMaker resets all changes to the "sec_for_music_score_maker" field.
+func (m *MusicMutation) ResetSecForMusicScoreMaker() {
+	m.sec_for_music_score_maker = nil
+	m.addsec_for_music_score_maker = nil
+	delete(m.clearedFields, music.FieldSecForMusicScoreMaker)
+}
+
+// SetIsAvailableForMusicScoreMaker sets the "is_available_for_music_score_maker" field.
+func (m *MusicMutation) SetIsAvailableForMusicScoreMaker(b bool) {
+	m.is_available_for_music_score_maker = &b
+}
+
+// IsAvailableForMusicScoreMaker returns the value of the "is_available_for_music_score_maker" field in the mutation.
+func (m *MusicMutation) IsAvailableForMusicScoreMaker() (r bool, exists bool) {
+	v := m.is_available_for_music_score_maker
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsAvailableForMusicScoreMaker returns the old "is_available_for_music_score_maker" field's value of the Music entity.
+// If the Music object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusicMutation) OldIsAvailableForMusicScoreMaker(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsAvailableForMusicScoreMaker is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsAvailableForMusicScoreMaker requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsAvailableForMusicScoreMaker: %w", err)
+	}
+	return oldValue.IsAvailableForMusicScoreMaker, nil
+}
+
+// ClearIsAvailableForMusicScoreMaker clears the value of the "is_available_for_music_score_maker" field.
+func (m *MusicMutation) ClearIsAvailableForMusicScoreMaker() {
+	m.is_available_for_music_score_maker = nil
+	m.clearedFields[music.FieldIsAvailableForMusicScoreMaker] = struct{}{}
+}
+
+// IsAvailableForMusicScoreMakerCleared returns if the "is_available_for_music_score_maker" field was cleared in this mutation.
+func (m *MusicMutation) IsAvailableForMusicScoreMakerCleared() bool {
+	_, ok := m.clearedFields[music.FieldIsAvailableForMusicScoreMaker]
+	return ok
+}
+
+// ResetIsAvailableForMusicScoreMaker resets all changes to the "is_available_for_music_score_maker" field.
+func (m *MusicMutation) ResetIsAvailableForMusicScoreMaker() {
+	m.is_available_for_music_score_maker = nil
+	delete(m.clearedFields, music.FieldIsAvailableForMusicScoreMaker)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *MusicMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -48236,7 +60400,7 @@ func (m *MusicMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MusicMutation) Fields() []string {
-	fields := make([]string, 0, 23)
+	fields := make([]string, 0, 25)
 	if m.game_id != nil {
 		fields = append(fields, music.FieldGameID)
 	}
@@ -48303,6 +60467,12 @@ func (m *MusicMutation) Fields() []string {
 	if m.infos != nil {
 		fields = append(fields, music.FieldInfos)
 	}
+	if m.sec_for_music_score_maker != nil {
+		fields = append(fields, music.FieldSecForMusicScoreMaker)
+	}
+	if m.is_available_for_music_score_maker != nil {
+		fields = append(fields, music.FieldIsAvailableForMusicScoreMaker)
+	}
 	if m.server_region != nil {
 		fields = append(fields, music.FieldServerRegion)
 	}
@@ -48358,6 +60528,10 @@ func (m *MusicMutation) Field(name string) (ent.Value, bool) {
 		return m.MusicCollaborationID()
 	case music.FieldInfos:
 		return m.Infos()
+	case music.FieldSecForMusicScoreMaker:
+		return m.SecForMusicScoreMaker()
+	case music.FieldIsAvailableForMusicScoreMaker:
+		return m.IsAvailableForMusicScoreMaker()
 	case music.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -48413,6 +60587,10 @@ func (m *MusicMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldMusicCollaborationID(ctx)
 	case music.FieldInfos:
 		return m.OldInfos(ctx)
+	case music.FieldSecForMusicScoreMaker:
+		return m.OldSecForMusicScoreMaker(ctx)
+	case music.FieldIsAvailableForMusicScoreMaker:
+		return m.OldIsAvailableForMusicScoreMaker(ctx)
 	case music.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -48578,6 +60756,20 @@ func (m *MusicMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetInfos(v)
 		return nil
+	case music.FieldSecForMusicScoreMaker:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSecForMusicScoreMaker(v)
+		return nil
+	case music.FieldIsAvailableForMusicScoreMaker:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsAvailableForMusicScoreMaker(v)
+		return nil
 	case music.FieldServerRegion:
 		v, ok := value.(string)
 		if !ok {
@@ -48626,6 +60818,9 @@ func (m *MusicMutation) AddedFields() []string {
 	if m.addmusic_collaboration_id != nil {
 		fields = append(fields, music.FieldMusicCollaborationID)
 	}
+	if m.addsec_for_music_score_maker != nil {
+		fields = append(fields, music.FieldSecForMusicScoreMaker)
+	}
 	return fields
 }
 
@@ -48656,6 +60851,8 @@ func (m *MusicMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedFillerSec()
 	case music.FieldMusicCollaborationID:
 		return m.AddedMusicCollaborationID()
+	case music.FieldSecForMusicScoreMaker:
+		return m.AddedSecForMusicScoreMaker()
 	}
 	return nil, false
 }
@@ -48742,6 +60939,13 @@ func (m *MusicMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddMusicCollaborationID(v)
 		return nil
+	case music.FieldSecForMusicScoreMaker:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSecForMusicScoreMaker(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Music numeric field %s", name)
 }
@@ -48815,6 +61019,12 @@ func (m *MusicMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(music.FieldInfos) {
 		fields = append(fields, music.FieldInfos)
+	}
+	if m.FieldCleared(music.FieldSecForMusicScoreMaker) {
+		fields = append(fields, music.FieldSecForMusicScoreMaker)
+	}
+	if m.FieldCleared(music.FieldIsAvailableForMusicScoreMaker) {
+		fields = append(fields, music.FieldIsAvailableForMusicScoreMaker)
 	}
 	return fields
 }
@@ -48896,6 +61106,12 @@ func (m *MusicMutation) ClearField(name string) error {
 	case music.FieldInfos:
 		m.ClearInfos()
 		return nil
+	case music.FieldSecForMusicScoreMaker:
+		m.ClearSecForMusicScoreMaker()
+		return nil
+	case music.FieldIsAvailableForMusicScoreMaker:
+		m.ClearIsAvailableForMusicScoreMaker()
+		return nil
 	}
 	return fmt.Errorf("unknown Music nullable field %s", name)
 }
@@ -48969,6 +61185,12 @@ func (m *MusicMutation) ResetField(name string) error {
 		return nil
 	case music.FieldInfos:
 		m.ResetInfos()
+		return nil
+	case music.FieldSecForMusicScoreMaker:
+		m.ResetSecForMusicScoreMaker()
+		return nil
+	case music.FieldIsAvailableForMusicScoreMaker:
+		m.ResetIsAvailableForMusicScoreMaker()
 		return nil
 	case music.FieldServerRegion:
 		m.ResetServerRegion()
@@ -49608,6 +61830,839 @@ func (m *MusicArtistMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *MusicArtistMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown MusicArtist edge %s", name)
+}
+
+// MusiccategorieMutation represents an operation that mutates the Musiccategorie nodes in the graph.
+type MusiccategorieMutation struct {
+	config
+	op                        Op
+	typ                       string
+	id                        *int
+	game_id                   *int64
+	addgame_id                *int64
+	music_id                  *int64
+	addmusic_id               *int64
+	music_category_name       *string
+	music_asset_variant_id    *int64
+	addmusic_asset_variant_id *int64
+	published_at              *int64
+	addpublished_at           *int64
+	server_region             *string
+	clearedFields             map[string]struct{}
+	done                      bool
+	oldValue                  func(context.Context) (*Musiccategorie, error)
+	predicates                []predicate.Musiccategorie
+}
+
+var _ ent.Mutation = (*MusiccategorieMutation)(nil)
+
+// musiccategorieOption allows management of the mutation configuration using functional options.
+type musiccategorieOption func(*MusiccategorieMutation)
+
+// newMusiccategorieMutation creates new mutation for the Musiccategorie entity.
+func newMusiccategorieMutation(c config, op Op, opts ...musiccategorieOption) *MusiccategorieMutation {
+	m := &MusiccategorieMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMusiccategorie,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMusiccategorieID sets the ID field of the mutation.
+func withMusiccategorieID(id int) musiccategorieOption {
+	return func(m *MusiccategorieMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Musiccategorie
+		)
+		m.oldValue = func(ctx context.Context) (*Musiccategorie, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Musiccategorie.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMusiccategorie sets the old Musiccategorie of the mutation.
+func withMusiccategorie(node *Musiccategorie) musiccategorieOption {
+	return func(m *MusiccategorieMutation) {
+		m.oldValue = func(context.Context) (*Musiccategorie, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MusiccategorieMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MusiccategorieMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MusiccategorieMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *MusiccategorieMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Musiccategorie.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetGameID sets the "game_id" field.
+func (m *MusiccategorieMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *MusiccategorieMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Musiccategorie entity.
+// If the Musiccategorie object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusiccategorieMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *MusiccategorieMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *MusiccategorieMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *MusiccategorieMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[musiccategorie.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MusiccategorieMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[musiccategorie.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *MusiccategorieMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, musiccategorie.FieldGameID)
+}
+
+// SetMusicID sets the "music_id" field.
+func (m *MusiccategorieMutation) SetMusicID(i int64) {
+	m.music_id = &i
+	m.addmusic_id = nil
+}
+
+// MusicID returns the value of the "music_id" field in the mutation.
+func (m *MusiccategorieMutation) MusicID() (r int64, exists bool) {
+	v := m.music_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMusicID returns the old "music_id" field's value of the Musiccategorie entity.
+// If the Musiccategorie object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusiccategorieMutation) OldMusicID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMusicID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMusicID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMusicID: %w", err)
+	}
+	return oldValue.MusicID, nil
+}
+
+// AddMusicID adds i to the "music_id" field.
+func (m *MusiccategorieMutation) AddMusicID(i int64) {
+	if m.addmusic_id != nil {
+		*m.addmusic_id += i
+	} else {
+		m.addmusic_id = &i
+	}
+}
+
+// AddedMusicID returns the value that was added to the "music_id" field in this mutation.
+func (m *MusiccategorieMutation) AddedMusicID() (r int64, exists bool) {
+	v := m.addmusic_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMusicID clears the value of the "music_id" field.
+func (m *MusiccategorieMutation) ClearMusicID() {
+	m.music_id = nil
+	m.addmusic_id = nil
+	m.clearedFields[musiccategorie.FieldMusicID] = struct{}{}
+}
+
+// MusicIDCleared returns if the "music_id" field was cleared in this mutation.
+func (m *MusiccategorieMutation) MusicIDCleared() bool {
+	_, ok := m.clearedFields[musiccategorie.FieldMusicID]
+	return ok
+}
+
+// ResetMusicID resets all changes to the "music_id" field.
+func (m *MusiccategorieMutation) ResetMusicID() {
+	m.music_id = nil
+	m.addmusic_id = nil
+	delete(m.clearedFields, musiccategorie.FieldMusicID)
+}
+
+// SetMusicCategoryName sets the "music_category_name" field.
+func (m *MusiccategorieMutation) SetMusicCategoryName(s string) {
+	m.music_category_name = &s
+}
+
+// MusicCategoryName returns the value of the "music_category_name" field in the mutation.
+func (m *MusiccategorieMutation) MusicCategoryName() (r string, exists bool) {
+	v := m.music_category_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMusicCategoryName returns the old "music_category_name" field's value of the Musiccategorie entity.
+// If the Musiccategorie object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusiccategorieMutation) OldMusicCategoryName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMusicCategoryName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMusicCategoryName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMusicCategoryName: %w", err)
+	}
+	return oldValue.MusicCategoryName, nil
+}
+
+// ClearMusicCategoryName clears the value of the "music_category_name" field.
+func (m *MusiccategorieMutation) ClearMusicCategoryName() {
+	m.music_category_name = nil
+	m.clearedFields[musiccategorie.FieldMusicCategoryName] = struct{}{}
+}
+
+// MusicCategoryNameCleared returns if the "music_category_name" field was cleared in this mutation.
+func (m *MusiccategorieMutation) MusicCategoryNameCleared() bool {
+	_, ok := m.clearedFields[musiccategorie.FieldMusicCategoryName]
+	return ok
+}
+
+// ResetMusicCategoryName resets all changes to the "music_category_name" field.
+func (m *MusiccategorieMutation) ResetMusicCategoryName() {
+	m.music_category_name = nil
+	delete(m.clearedFields, musiccategorie.FieldMusicCategoryName)
+}
+
+// SetMusicAssetVariantID sets the "music_asset_variant_id" field.
+func (m *MusiccategorieMutation) SetMusicAssetVariantID(i int64) {
+	m.music_asset_variant_id = &i
+	m.addmusic_asset_variant_id = nil
+}
+
+// MusicAssetVariantID returns the value of the "music_asset_variant_id" field in the mutation.
+func (m *MusiccategorieMutation) MusicAssetVariantID() (r int64, exists bool) {
+	v := m.music_asset_variant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMusicAssetVariantID returns the old "music_asset_variant_id" field's value of the Musiccategorie entity.
+// If the Musiccategorie object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusiccategorieMutation) OldMusicAssetVariantID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMusicAssetVariantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMusicAssetVariantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMusicAssetVariantID: %w", err)
+	}
+	return oldValue.MusicAssetVariantID, nil
+}
+
+// AddMusicAssetVariantID adds i to the "music_asset_variant_id" field.
+func (m *MusiccategorieMutation) AddMusicAssetVariantID(i int64) {
+	if m.addmusic_asset_variant_id != nil {
+		*m.addmusic_asset_variant_id += i
+	} else {
+		m.addmusic_asset_variant_id = &i
+	}
+}
+
+// AddedMusicAssetVariantID returns the value that was added to the "music_asset_variant_id" field in this mutation.
+func (m *MusiccategorieMutation) AddedMusicAssetVariantID() (r int64, exists bool) {
+	v := m.addmusic_asset_variant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMusicAssetVariantID clears the value of the "music_asset_variant_id" field.
+func (m *MusiccategorieMutation) ClearMusicAssetVariantID() {
+	m.music_asset_variant_id = nil
+	m.addmusic_asset_variant_id = nil
+	m.clearedFields[musiccategorie.FieldMusicAssetVariantID] = struct{}{}
+}
+
+// MusicAssetVariantIDCleared returns if the "music_asset_variant_id" field was cleared in this mutation.
+func (m *MusiccategorieMutation) MusicAssetVariantIDCleared() bool {
+	_, ok := m.clearedFields[musiccategorie.FieldMusicAssetVariantID]
+	return ok
+}
+
+// ResetMusicAssetVariantID resets all changes to the "music_asset_variant_id" field.
+func (m *MusiccategorieMutation) ResetMusicAssetVariantID() {
+	m.music_asset_variant_id = nil
+	m.addmusic_asset_variant_id = nil
+	delete(m.clearedFields, musiccategorie.FieldMusicAssetVariantID)
+}
+
+// SetPublishedAt sets the "published_at" field.
+func (m *MusiccategorieMutation) SetPublishedAt(i int64) {
+	m.published_at = &i
+	m.addpublished_at = nil
+}
+
+// PublishedAt returns the value of the "published_at" field in the mutation.
+func (m *MusiccategorieMutation) PublishedAt() (r int64, exists bool) {
+	v := m.published_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPublishedAt returns the old "published_at" field's value of the Musiccategorie entity.
+// If the Musiccategorie object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusiccategorieMutation) OldPublishedAt(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPublishedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPublishedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPublishedAt: %w", err)
+	}
+	return oldValue.PublishedAt, nil
+}
+
+// AddPublishedAt adds i to the "published_at" field.
+func (m *MusiccategorieMutation) AddPublishedAt(i int64) {
+	if m.addpublished_at != nil {
+		*m.addpublished_at += i
+	} else {
+		m.addpublished_at = &i
+	}
+}
+
+// AddedPublishedAt returns the value that was added to the "published_at" field in this mutation.
+func (m *MusiccategorieMutation) AddedPublishedAt() (r int64, exists bool) {
+	v := m.addpublished_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPublishedAt clears the value of the "published_at" field.
+func (m *MusiccategorieMutation) ClearPublishedAt() {
+	m.published_at = nil
+	m.addpublished_at = nil
+	m.clearedFields[musiccategorie.FieldPublishedAt] = struct{}{}
+}
+
+// PublishedAtCleared returns if the "published_at" field was cleared in this mutation.
+func (m *MusiccategorieMutation) PublishedAtCleared() bool {
+	_, ok := m.clearedFields[musiccategorie.FieldPublishedAt]
+	return ok
+}
+
+// ResetPublishedAt resets all changes to the "published_at" field.
+func (m *MusiccategorieMutation) ResetPublishedAt() {
+	m.published_at = nil
+	m.addpublished_at = nil
+	delete(m.clearedFields, musiccategorie.FieldPublishedAt)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *MusiccategorieMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *MusiccategorieMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Musiccategorie entity.
+// If the Musiccategorie object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MusiccategorieMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *MusiccategorieMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the MusiccategorieMutation builder.
+func (m *MusiccategorieMutation) Where(ps ...predicate.Musiccategorie) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MusiccategorieMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MusiccategorieMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Musiccategorie, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MusiccategorieMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MusiccategorieMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Musiccategorie).
+func (m *MusiccategorieMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MusiccategorieMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.game_id != nil {
+		fields = append(fields, musiccategorie.FieldGameID)
+	}
+	if m.music_id != nil {
+		fields = append(fields, musiccategorie.FieldMusicID)
+	}
+	if m.music_category_name != nil {
+		fields = append(fields, musiccategorie.FieldMusicCategoryName)
+	}
+	if m.music_asset_variant_id != nil {
+		fields = append(fields, musiccategorie.FieldMusicAssetVariantID)
+	}
+	if m.published_at != nil {
+		fields = append(fields, musiccategorie.FieldPublishedAt)
+	}
+	if m.server_region != nil {
+		fields = append(fields, musiccategorie.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MusiccategorieMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case musiccategorie.FieldGameID:
+		return m.GameID()
+	case musiccategorie.FieldMusicID:
+		return m.MusicID()
+	case musiccategorie.FieldMusicCategoryName:
+		return m.MusicCategoryName()
+	case musiccategorie.FieldMusicAssetVariantID:
+		return m.MusicAssetVariantID()
+	case musiccategorie.FieldPublishedAt:
+		return m.PublishedAt()
+	case musiccategorie.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MusiccategorieMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case musiccategorie.FieldGameID:
+		return m.OldGameID(ctx)
+	case musiccategorie.FieldMusicID:
+		return m.OldMusicID(ctx)
+	case musiccategorie.FieldMusicCategoryName:
+		return m.OldMusicCategoryName(ctx)
+	case musiccategorie.FieldMusicAssetVariantID:
+		return m.OldMusicAssetVariantID(ctx)
+	case musiccategorie.FieldPublishedAt:
+		return m.OldPublishedAt(ctx)
+	case musiccategorie.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Musiccategorie field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MusiccategorieMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case musiccategorie.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case musiccategorie.FieldMusicID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMusicID(v)
+		return nil
+	case musiccategorie.FieldMusicCategoryName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMusicCategoryName(v)
+		return nil
+	case musiccategorie.FieldMusicAssetVariantID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMusicAssetVariantID(v)
+		return nil
+	case musiccategorie.FieldPublishedAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPublishedAt(v)
+		return nil
+	case musiccategorie.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Musiccategorie field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MusiccategorieMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, musiccategorie.FieldGameID)
+	}
+	if m.addmusic_id != nil {
+		fields = append(fields, musiccategorie.FieldMusicID)
+	}
+	if m.addmusic_asset_variant_id != nil {
+		fields = append(fields, musiccategorie.FieldMusicAssetVariantID)
+	}
+	if m.addpublished_at != nil {
+		fields = append(fields, musiccategorie.FieldPublishedAt)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MusiccategorieMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case musiccategorie.FieldGameID:
+		return m.AddedGameID()
+	case musiccategorie.FieldMusicID:
+		return m.AddedMusicID()
+	case musiccategorie.FieldMusicAssetVariantID:
+		return m.AddedMusicAssetVariantID()
+	case musiccategorie.FieldPublishedAt:
+		return m.AddedPublishedAt()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MusiccategorieMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case musiccategorie.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case musiccategorie.FieldMusicID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMusicID(v)
+		return nil
+	case musiccategorie.FieldMusicAssetVariantID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMusicAssetVariantID(v)
+		return nil
+	case musiccategorie.FieldPublishedAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPublishedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Musiccategorie numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MusiccategorieMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(musiccategorie.FieldGameID) {
+		fields = append(fields, musiccategorie.FieldGameID)
+	}
+	if m.FieldCleared(musiccategorie.FieldMusicID) {
+		fields = append(fields, musiccategorie.FieldMusicID)
+	}
+	if m.FieldCleared(musiccategorie.FieldMusicCategoryName) {
+		fields = append(fields, musiccategorie.FieldMusicCategoryName)
+	}
+	if m.FieldCleared(musiccategorie.FieldMusicAssetVariantID) {
+		fields = append(fields, musiccategorie.FieldMusicAssetVariantID)
+	}
+	if m.FieldCleared(musiccategorie.FieldPublishedAt) {
+		fields = append(fields, musiccategorie.FieldPublishedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MusiccategorieMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MusiccategorieMutation) ClearField(name string) error {
+	switch name {
+	case musiccategorie.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case musiccategorie.FieldMusicID:
+		m.ClearMusicID()
+		return nil
+	case musiccategorie.FieldMusicCategoryName:
+		m.ClearMusicCategoryName()
+		return nil
+	case musiccategorie.FieldMusicAssetVariantID:
+		m.ClearMusicAssetVariantID()
+		return nil
+	case musiccategorie.FieldPublishedAt:
+		m.ClearPublishedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Musiccategorie nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MusiccategorieMutation) ResetField(name string) error {
+	switch name {
+	case musiccategorie.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case musiccategorie.FieldMusicID:
+		m.ResetMusicID()
+		return nil
+	case musiccategorie.FieldMusicCategoryName:
+		m.ResetMusicCategoryName()
+		return nil
+	case musiccategorie.FieldMusicAssetVariantID:
+		m.ResetMusicAssetVariantID()
+		return nil
+	case musiccategorie.FieldPublishedAt:
+		m.ResetPublishedAt()
+		return nil
+	case musiccategorie.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Musiccategorie field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MusiccategorieMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MusiccategorieMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MusiccategorieMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MusiccategorieMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MusiccategorieMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MusiccategorieMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MusiccategorieMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Musiccategorie unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MusiccategorieMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Musiccategorie edge %s", name)
 }
 
 // MusicdifficultieMutation represents an operation that mutates the Musicdifficultie nodes in the graph.
@@ -72746,28 +85801,30 @@ func (m *MysekaigateunitskinMutation) ResetEdge(name string) error {
 // MysekaihousingcompetitionMutation represents an operation that mutates the Mysekaihousingcompetition nodes in the graph.
 type MysekaihousingcompetitionMutation struct {
 	config
-	op                                     Op
-	typ                                    string
-	id                                     *int
-	game_id                                *int64
-	addgame_id                             *int64
-	name                                   *string
-	description                            *string
-	submit_start_at                        *int64
-	addsubmit_start_at                     *int64
-	review_start_at                        *int64
-	addreview_start_at                     *int64
-	submit_end_at                          *int64
-	addsubmit_end_at                       *int64
-	aggregate_at                           *int64
-	addaggregate_at                        *int64
-	background_image_assetbundle_file_name *string
-	back_number_accent_color_code          *string
-	server_region                          *string
-	clearedFields                          map[string]struct{}
-	done                                   bool
-	oldValue                               func(context.Context) (*Mysekaihousingcompetition, error)
-	predicates                             []predicate.Mysekaihousingcompetition
+	op                                            Op
+	typ                                           string
+	id                                            *int
+	game_id                                       *int64
+	addgame_id                                    *int64
+	name                                          *string
+	description                                   *string
+	submit_start_at                               *int64
+	addsubmit_start_at                            *int64
+	review_start_at                               *int64
+	addreview_start_at                            *int64
+	submit_end_at                                 *int64
+	addsubmit_end_at                              *int64
+	aggregate_at                                  *int64
+	addaggregate_at                               *int64
+	background_image_assetbundle_file_name        *string
+	back_number_accent_color_code                 *string
+	mysekai_housing_competition_review_rank_id    *int64
+	addmysekai_housing_competition_review_rank_id *int64
+	server_region                                 *string
+	clearedFields                                 map[string]struct{}
+	done                                          bool
+	oldValue                                      func(context.Context) (*Mysekaihousingcompetition, error)
+	predicates                                    []predicate.Mysekaihousingcompetition
 }
 
 var _ ent.Mutation = (*MysekaihousingcompetitionMutation)(nil)
@@ -73414,6 +86471,76 @@ func (m *MysekaihousingcompetitionMutation) ResetBackNumberAccentColorCode() {
 	delete(m.clearedFields, mysekaihousingcompetition.FieldBackNumberAccentColorCode)
 }
 
+// SetMysekaiHousingCompetitionReviewRankID sets the "mysekai_housing_competition_review_rank_id" field.
+func (m *MysekaihousingcompetitionMutation) SetMysekaiHousingCompetitionReviewRankID(i int64) {
+	m.mysekai_housing_competition_review_rank_id = &i
+	m.addmysekai_housing_competition_review_rank_id = nil
+}
+
+// MysekaiHousingCompetitionReviewRankID returns the value of the "mysekai_housing_competition_review_rank_id" field in the mutation.
+func (m *MysekaihousingcompetitionMutation) MysekaiHousingCompetitionReviewRankID() (r int64, exists bool) {
+	v := m.mysekai_housing_competition_review_rank_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMysekaiHousingCompetitionReviewRankID returns the old "mysekai_housing_competition_review_rank_id" field's value of the Mysekaihousingcompetition entity.
+// If the Mysekaihousingcompetition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaihousingcompetitionMutation) OldMysekaiHousingCompetitionReviewRankID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMysekaiHousingCompetitionReviewRankID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMysekaiHousingCompetitionReviewRankID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMysekaiHousingCompetitionReviewRankID: %w", err)
+	}
+	return oldValue.MysekaiHousingCompetitionReviewRankID, nil
+}
+
+// AddMysekaiHousingCompetitionReviewRankID adds i to the "mysekai_housing_competition_review_rank_id" field.
+func (m *MysekaihousingcompetitionMutation) AddMysekaiHousingCompetitionReviewRankID(i int64) {
+	if m.addmysekai_housing_competition_review_rank_id != nil {
+		*m.addmysekai_housing_competition_review_rank_id += i
+	} else {
+		m.addmysekai_housing_competition_review_rank_id = &i
+	}
+}
+
+// AddedMysekaiHousingCompetitionReviewRankID returns the value that was added to the "mysekai_housing_competition_review_rank_id" field in this mutation.
+func (m *MysekaihousingcompetitionMutation) AddedMysekaiHousingCompetitionReviewRankID() (r int64, exists bool) {
+	v := m.addmysekai_housing_competition_review_rank_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMysekaiHousingCompetitionReviewRankID clears the value of the "mysekai_housing_competition_review_rank_id" field.
+func (m *MysekaihousingcompetitionMutation) ClearMysekaiHousingCompetitionReviewRankID() {
+	m.mysekai_housing_competition_review_rank_id = nil
+	m.addmysekai_housing_competition_review_rank_id = nil
+	m.clearedFields[mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID] = struct{}{}
+}
+
+// MysekaiHousingCompetitionReviewRankIDCleared returns if the "mysekai_housing_competition_review_rank_id" field was cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) MysekaiHousingCompetitionReviewRankIDCleared() bool {
+	_, ok := m.clearedFields[mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID]
+	return ok
+}
+
+// ResetMysekaiHousingCompetitionReviewRankID resets all changes to the "mysekai_housing_competition_review_rank_id" field.
+func (m *MysekaihousingcompetitionMutation) ResetMysekaiHousingCompetitionReviewRankID() {
+	m.mysekai_housing_competition_review_rank_id = nil
+	m.addmysekai_housing_competition_review_rank_id = nil
+	delete(m.clearedFields, mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *MysekaihousingcompetitionMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -73484,7 +86611,7 @@ func (m *MysekaihousingcompetitionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MysekaihousingcompetitionMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.game_id != nil {
 		fields = append(fields, mysekaihousingcompetition.FieldGameID)
 	}
@@ -73511,6 +86638,9 @@ func (m *MysekaihousingcompetitionMutation) Fields() []string {
 	}
 	if m.back_number_accent_color_code != nil {
 		fields = append(fields, mysekaihousingcompetition.FieldBackNumberAccentColorCode)
+	}
+	if m.mysekai_housing_competition_review_rank_id != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID)
 	}
 	if m.server_region != nil {
 		fields = append(fields, mysekaihousingcompetition.FieldServerRegion)
@@ -73541,6 +86671,8 @@ func (m *MysekaihousingcompetitionMutation) Field(name string) (ent.Value, bool)
 		return m.BackgroundImageAssetbundleFileName()
 	case mysekaihousingcompetition.FieldBackNumberAccentColorCode:
 		return m.BackNumberAccentColorCode()
+	case mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID:
+		return m.MysekaiHousingCompetitionReviewRankID()
 	case mysekaihousingcompetition.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -73570,6 +86702,8 @@ func (m *MysekaihousingcompetitionMutation) OldField(ctx context.Context, name s
 		return m.OldBackgroundImageAssetbundleFileName(ctx)
 	case mysekaihousingcompetition.FieldBackNumberAccentColorCode:
 		return m.OldBackNumberAccentColorCode(ctx)
+	case mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID:
+		return m.OldMysekaiHousingCompetitionReviewRankID(ctx)
 	case mysekaihousingcompetition.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -73644,6 +86778,13 @@ func (m *MysekaihousingcompetitionMutation) SetField(name string, value ent.Valu
 		}
 		m.SetBackNumberAccentColorCode(v)
 		return nil
+	case mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMysekaiHousingCompetitionReviewRankID(v)
+		return nil
 	case mysekaihousingcompetition.FieldServerRegion:
 		v, ok := value.(string)
 		if !ok {
@@ -73674,6 +86815,9 @@ func (m *MysekaihousingcompetitionMutation) AddedFields() []string {
 	if m.addaggregate_at != nil {
 		fields = append(fields, mysekaihousingcompetition.FieldAggregateAt)
 	}
+	if m.addmysekai_housing_competition_review_rank_id != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID)
+	}
 	return fields
 }
 
@@ -73692,6 +86836,8 @@ func (m *MysekaihousingcompetitionMutation) AddedField(name string) (ent.Value, 
 		return m.AddedSubmitEndAt()
 	case mysekaihousingcompetition.FieldAggregateAt:
 		return m.AddedAggregateAt()
+	case mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID:
+		return m.AddedMysekaiHousingCompetitionReviewRankID()
 	}
 	return nil, false
 }
@@ -73736,6 +86882,13 @@ func (m *MysekaihousingcompetitionMutation) AddField(name string, value ent.Valu
 		}
 		m.AddAggregateAt(v)
 		return nil
+	case mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMysekaiHousingCompetitionReviewRankID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Mysekaihousingcompetition numeric field %s", name)
 }
@@ -73770,6 +86923,9 @@ func (m *MysekaihousingcompetitionMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(mysekaihousingcompetition.FieldBackNumberAccentColorCode) {
 		fields = append(fields, mysekaihousingcompetition.FieldBackNumberAccentColorCode)
+	}
+	if m.FieldCleared(mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID) {
+		fields = append(fields, mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID)
 	}
 	return fields
 }
@@ -73812,6 +86968,9 @@ func (m *MysekaihousingcompetitionMutation) ClearField(name string) error {
 	case mysekaihousingcompetition.FieldBackNumberAccentColorCode:
 		m.ClearBackNumberAccentColorCode()
 		return nil
+	case mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID:
+		m.ClearMysekaiHousingCompetitionReviewRankID()
+		return nil
 	}
 	return fmt.Errorf("unknown Mysekaihousingcompetition nullable field %s", name)
 }
@@ -73846,6 +87005,9 @@ func (m *MysekaihousingcompetitionMutation) ResetField(name string) error {
 		return nil
 	case mysekaihousingcompetition.FieldBackNumberAccentColorCode:
 		m.ResetBackNumberAccentColorCode()
+		return nil
+	case mysekaihousingcompetition.FieldMysekaiHousingCompetitionReviewRankID:
+		m.ResetMysekaiHousingCompetitionReviewRankID()
 		return nil
 	case mysekaihousingcompetition.FieldServerRegion:
 		m.ResetServerRegion()
@@ -83955,6 +97117,1647 @@ func (m *NgwordMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Ngword edge %s", name)
 }
 
+// OmikujiMutation represents an operation that mutates the Omikuji nodes in the graph.
+type OmikujiMutation struct {
+	config
+	op                             Op
+	typ                            string
+	id                             *int
+	game_id                        *int64
+	addgame_id                     *int64
+	omikuji_group_id               *int64
+	addomikuji_group_id            *int64
+	unit                           *string
+	fortune_type                   *string
+	summary                        *string
+	title1                         *string
+	description1                   *string
+	title2                         *string
+	description2                   *string
+	title3                         *string
+	description3                   *string
+	unit_assetbundle_name          *string
+	fortune_assetbundle_name       *string
+	omikuji_cover_assetbundle_name *string
+	unit_file_path                 *string
+	fortune_file_path              *string
+	omikuji_cover_file_path        *string
+	server_region                  *string
+	clearedFields                  map[string]struct{}
+	done                           bool
+	oldValue                       func(context.Context) (*Omikuji, error)
+	predicates                     []predicate.Omikuji
+}
+
+var _ ent.Mutation = (*OmikujiMutation)(nil)
+
+// omikujiOption allows management of the mutation configuration using functional options.
+type omikujiOption func(*OmikujiMutation)
+
+// newOmikujiMutation creates new mutation for the Omikuji entity.
+func newOmikujiMutation(c config, op Op, opts ...omikujiOption) *OmikujiMutation {
+	m := &OmikujiMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeOmikuji,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withOmikujiID sets the ID field of the mutation.
+func withOmikujiID(id int) omikujiOption {
+	return func(m *OmikujiMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Omikuji
+		)
+		m.oldValue = func(ctx context.Context) (*Omikuji, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Omikuji.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withOmikuji sets the old Omikuji of the mutation.
+func withOmikuji(node *Omikuji) omikujiOption {
+	return func(m *OmikujiMutation) {
+		m.oldValue = func(context.Context) (*Omikuji, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m OmikujiMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m OmikujiMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *OmikujiMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *OmikujiMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Omikuji.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetGameID sets the "game_id" field.
+func (m *OmikujiMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *OmikujiMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *OmikujiMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *OmikujiMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *OmikujiMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[omikuji.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *OmikujiMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *OmikujiMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, omikuji.FieldGameID)
+}
+
+// SetOmikujiGroupID sets the "omikuji_group_id" field.
+func (m *OmikujiMutation) SetOmikujiGroupID(i int64) {
+	m.omikuji_group_id = &i
+	m.addomikuji_group_id = nil
+}
+
+// OmikujiGroupID returns the value of the "omikuji_group_id" field in the mutation.
+func (m *OmikujiMutation) OmikujiGroupID() (r int64, exists bool) {
+	v := m.omikuji_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOmikujiGroupID returns the old "omikuji_group_id" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldOmikujiGroupID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOmikujiGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOmikujiGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOmikujiGroupID: %w", err)
+	}
+	return oldValue.OmikujiGroupID, nil
+}
+
+// AddOmikujiGroupID adds i to the "omikuji_group_id" field.
+func (m *OmikujiMutation) AddOmikujiGroupID(i int64) {
+	if m.addomikuji_group_id != nil {
+		*m.addomikuji_group_id += i
+	} else {
+		m.addomikuji_group_id = &i
+	}
+}
+
+// AddedOmikujiGroupID returns the value that was added to the "omikuji_group_id" field in this mutation.
+func (m *OmikujiMutation) AddedOmikujiGroupID() (r int64, exists bool) {
+	v := m.addomikuji_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearOmikujiGroupID clears the value of the "omikuji_group_id" field.
+func (m *OmikujiMutation) ClearOmikujiGroupID() {
+	m.omikuji_group_id = nil
+	m.addomikuji_group_id = nil
+	m.clearedFields[omikuji.FieldOmikujiGroupID] = struct{}{}
+}
+
+// OmikujiGroupIDCleared returns if the "omikuji_group_id" field was cleared in this mutation.
+func (m *OmikujiMutation) OmikujiGroupIDCleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldOmikujiGroupID]
+	return ok
+}
+
+// ResetOmikujiGroupID resets all changes to the "omikuji_group_id" field.
+func (m *OmikujiMutation) ResetOmikujiGroupID() {
+	m.omikuji_group_id = nil
+	m.addomikuji_group_id = nil
+	delete(m.clearedFields, omikuji.FieldOmikujiGroupID)
+}
+
+// SetUnit sets the "unit" field.
+func (m *OmikujiMutation) SetUnit(s string) {
+	m.unit = &s
+}
+
+// Unit returns the value of the "unit" field in the mutation.
+func (m *OmikujiMutation) Unit() (r string, exists bool) {
+	v := m.unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUnit returns the old "unit" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldUnit(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUnit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUnit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUnit: %w", err)
+	}
+	return oldValue.Unit, nil
+}
+
+// ClearUnit clears the value of the "unit" field.
+func (m *OmikujiMutation) ClearUnit() {
+	m.unit = nil
+	m.clearedFields[omikuji.FieldUnit] = struct{}{}
+}
+
+// UnitCleared returns if the "unit" field was cleared in this mutation.
+func (m *OmikujiMutation) UnitCleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldUnit]
+	return ok
+}
+
+// ResetUnit resets all changes to the "unit" field.
+func (m *OmikujiMutation) ResetUnit() {
+	m.unit = nil
+	delete(m.clearedFields, omikuji.FieldUnit)
+}
+
+// SetFortuneType sets the "fortune_type" field.
+func (m *OmikujiMutation) SetFortuneType(s string) {
+	m.fortune_type = &s
+}
+
+// FortuneType returns the value of the "fortune_type" field in the mutation.
+func (m *OmikujiMutation) FortuneType() (r string, exists bool) {
+	v := m.fortune_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFortuneType returns the old "fortune_type" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldFortuneType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFortuneType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFortuneType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFortuneType: %w", err)
+	}
+	return oldValue.FortuneType, nil
+}
+
+// ClearFortuneType clears the value of the "fortune_type" field.
+func (m *OmikujiMutation) ClearFortuneType() {
+	m.fortune_type = nil
+	m.clearedFields[omikuji.FieldFortuneType] = struct{}{}
+}
+
+// FortuneTypeCleared returns if the "fortune_type" field was cleared in this mutation.
+func (m *OmikujiMutation) FortuneTypeCleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldFortuneType]
+	return ok
+}
+
+// ResetFortuneType resets all changes to the "fortune_type" field.
+func (m *OmikujiMutation) ResetFortuneType() {
+	m.fortune_type = nil
+	delete(m.clearedFields, omikuji.FieldFortuneType)
+}
+
+// SetSummary sets the "summary" field.
+func (m *OmikujiMutation) SetSummary(s string) {
+	m.summary = &s
+}
+
+// Summary returns the value of the "summary" field in the mutation.
+func (m *OmikujiMutation) Summary() (r string, exists bool) {
+	v := m.summary
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSummary returns the old "summary" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldSummary(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSummary is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSummary requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSummary: %w", err)
+	}
+	return oldValue.Summary, nil
+}
+
+// ClearSummary clears the value of the "summary" field.
+func (m *OmikujiMutation) ClearSummary() {
+	m.summary = nil
+	m.clearedFields[omikuji.FieldSummary] = struct{}{}
+}
+
+// SummaryCleared returns if the "summary" field was cleared in this mutation.
+func (m *OmikujiMutation) SummaryCleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldSummary]
+	return ok
+}
+
+// ResetSummary resets all changes to the "summary" field.
+func (m *OmikujiMutation) ResetSummary() {
+	m.summary = nil
+	delete(m.clearedFields, omikuji.FieldSummary)
+}
+
+// SetTitle1 sets the "title1" field.
+func (m *OmikujiMutation) SetTitle1(s string) {
+	m.title1 = &s
+}
+
+// Title1 returns the value of the "title1" field in the mutation.
+func (m *OmikujiMutation) Title1() (r string, exists bool) {
+	v := m.title1
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle1 returns the old "title1" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldTitle1(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle1 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle1 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle1: %w", err)
+	}
+	return oldValue.Title1, nil
+}
+
+// ClearTitle1 clears the value of the "title1" field.
+func (m *OmikujiMutation) ClearTitle1() {
+	m.title1 = nil
+	m.clearedFields[omikuji.FieldTitle1] = struct{}{}
+}
+
+// Title1Cleared returns if the "title1" field was cleared in this mutation.
+func (m *OmikujiMutation) Title1Cleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldTitle1]
+	return ok
+}
+
+// ResetTitle1 resets all changes to the "title1" field.
+func (m *OmikujiMutation) ResetTitle1() {
+	m.title1 = nil
+	delete(m.clearedFields, omikuji.FieldTitle1)
+}
+
+// SetDescription1 sets the "description1" field.
+func (m *OmikujiMutation) SetDescription1(s string) {
+	m.description1 = &s
+}
+
+// Description1 returns the value of the "description1" field in the mutation.
+func (m *OmikujiMutation) Description1() (r string, exists bool) {
+	v := m.description1
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription1 returns the old "description1" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldDescription1(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription1 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription1 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription1: %w", err)
+	}
+	return oldValue.Description1, nil
+}
+
+// ClearDescription1 clears the value of the "description1" field.
+func (m *OmikujiMutation) ClearDescription1() {
+	m.description1 = nil
+	m.clearedFields[omikuji.FieldDescription1] = struct{}{}
+}
+
+// Description1Cleared returns if the "description1" field was cleared in this mutation.
+func (m *OmikujiMutation) Description1Cleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldDescription1]
+	return ok
+}
+
+// ResetDescription1 resets all changes to the "description1" field.
+func (m *OmikujiMutation) ResetDescription1() {
+	m.description1 = nil
+	delete(m.clearedFields, omikuji.FieldDescription1)
+}
+
+// SetTitle2 sets the "title2" field.
+func (m *OmikujiMutation) SetTitle2(s string) {
+	m.title2 = &s
+}
+
+// Title2 returns the value of the "title2" field in the mutation.
+func (m *OmikujiMutation) Title2() (r string, exists bool) {
+	v := m.title2
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle2 returns the old "title2" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldTitle2(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle2 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle2 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle2: %w", err)
+	}
+	return oldValue.Title2, nil
+}
+
+// ClearTitle2 clears the value of the "title2" field.
+func (m *OmikujiMutation) ClearTitle2() {
+	m.title2 = nil
+	m.clearedFields[omikuji.FieldTitle2] = struct{}{}
+}
+
+// Title2Cleared returns if the "title2" field was cleared in this mutation.
+func (m *OmikujiMutation) Title2Cleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldTitle2]
+	return ok
+}
+
+// ResetTitle2 resets all changes to the "title2" field.
+func (m *OmikujiMutation) ResetTitle2() {
+	m.title2 = nil
+	delete(m.clearedFields, omikuji.FieldTitle2)
+}
+
+// SetDescription2 sets the "description2" field.
+func (m *OmikujiMutation) SetDescription2(s string) {
+	m.description2 = &s
+}
+
+// Description2 returns the value of the "description2" field in the mutation.
+func (m *OmikujiMutation) Description2() (r string, exists bool) {
+	v := m.description2
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription2 returns the old "description2" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldDescription2(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription2 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription2 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription2: %w", err)
+	}
+	return oldValue.Description2, nil
+}
+
+// ClearDescription2 clears the value of the "description2" field.
+func (m *OmikujiMutation) ClearDescription2() {
+	m.description2 = nil
+	m.clearedFields[omikuji.FieldDescription2] = struct{}{}
+}
+
+// Description2Cleared returns if the "description2" field was cleared in this mutation.
+func (m *OmikujiMutation) Description2Cleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldDescription2]
+	return ok
+}
+
+// ResetDescription2 resets all changes to the "description2" field.
+func (m *OmikujiMutation) ResetDescription2() {
+	m.description2 = nil
+	delete(m.clearedFields, omikuji.FieldDescription2)
+}
+
+// SetTitle3 sets the "title3" field.
+func (m *OmikujiMutation) SetTitle3(s string) {
+	m.title3 = &s
+}
+
+// Title3 returns the value of the "title3" field in the mutation.
+func (m *OmikujiMutation) Title3() (r string, exists bool) {
+	v := m.title3
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle3 returns the old "title3" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldTitle3(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle3 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle3 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle3: %w", err)
+	}
+	return oldValue.Title3, nil
+}
+
+// ClearTitle3 clears the value of the "title3" field.
+func (m *OmikujiMutation) ClearTitle3() {
+	m.title3 = nil
+	m.clearedFields[omikuji.FieldTitle3] = struct{}{}
+}
+
+// Title3Cleared returns if the "title3" field was cleared in this mutation.
+func (m *OmikujiMutation) Title3Cleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldTitle3]
+	return ok
+}
+
+// ResetTitle3 resets all changes to the "title3" field.
+func (m *OmikujiMutation) ResetTitle3() {
+	m.title3 = nil
+	delete(m.clearedFields, omikuji.FieldTitle3)
+}
+
+// SetDescription3 sets the "description3" field.
+func (m *OmikujiMutation) SetDescription3(s string) {
+	m.description3 = &s
+}
+
+// Description3 returns the value of the "description3" field in the mutation.
+func (m *OmikujiMutation) Description3() (r string, exists bool) {
+	v := m.description3
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription3 returns the old "description3" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldDescription3(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription3 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription3 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription3: %w", err)
+	}
+	return oldValue.Description3, nil
+}
+
+// ClearDescription3 clears the value of the "description3" field.
+func (m *OmikujiMutation) ClearDescription3() {
+	m.description3 = nil
+	m.clearedFields[omikuji.FieldDescription3] = struct{}{}
+}
+
+// Description3Cleared returns if the "description3" field was cleared in this mutation.
+func (m *OmikujiMutation) Description3Cleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldDescription3]
+	return ok
+}
+
+// ResetDescription3 resets all changes to the "description3" field.
+func (m *OmikujiMutation) ResetDescription3() {
+	m.description3 = nil
+	delete(m.clearedFields, omikuji.FieldDescription3)
+}
+
+// SetUnitAssetbundleName sets the "unit_assetbundle_name" field.
+func (m *OmikujiMutation) SetUnitAssetbundleName(s string) {
+	m.unit_assetbundle_name = &s
+}
+
+// UnitAssetbundleName returns the value of the "unit_assetbundle_name" field in the mutation.
+func (m *OmikujiMutation) UnitAssetbundleName() (r string, exists bool) {
+	v := m.unit_assetbundle_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUnitAssetbundleName returns the old "unit_assetbundle_name" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldUnitAssetbundleName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUnitAssetbundleName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUnitAssetbundleName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUnitAssetbundleName: %w", err)
+	}
+	return oldValue.UnitAssetbundleName, nil
+}
+
+// ClearUnitAssetbundleName clears the value of the "unit_assetbundle_name" field.
+func (m *OmikujiMutation) ClearUnitAssetbundleName() {
+	m.unit_assetbundle_name = nil
+	m.clearedFields[omikuji.FieldUnitAssetbundleName] = struct{}{}
+}
+
+// UnitAssetbundleNameCleared returns if the "unit_assetbundle_name" field was cleared in this mutation.
+func (m *OmikujiMutation) UnitAssetbundleNameCleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldUnitAssetbundleName]
+	return ok
+}
+
+// ResetUnitAssetbundleName resets all changes to the "unit_assetbundle_name" field.
+func (m *OmikujiMutation) ResetUnitAssetbundleName() {
+	m.unit_assetbundle_name = nil
+	delete(m.clearedFields, omikuji.FieldUnitAssetbundleName)
+}
+
+// SetFortuneAssetbundleName sets the "fortune_assetbundle_name" field.
+func (m *OmikujiMutation) SetFortuneAssetbundleName(s string) {
+	m.fortune_assetbundle_name = &s
+}
+
+// FortuneAssetbundleName returns the value of the "fortune_assetbundle_name" field in the mutation.
+func (m *OmikujiMutation) FortuneAssetbundleName() (r string, exists bool) {
+	v := m.fortune_assetbundle_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFortuneAssetbundleName returns the old "fortune_assetbundle_name" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldFortuneAssetbundleName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFortuneAssetbundleName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFortuneAssetbundleName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFortuneAssetbundleName: %w", err)
+	}
+	return oldValue.FortuneAssetbundleName, nil
+}
+
+// ClearFortuneAssetbundleName clears the value of the "fortune_assetbundle_name" field.
+func (m *OmikujiMutation) ClearFortuneAssetbundleName() {
+	m.fortune_assetbundle_name = nil
+	m.clearedFields[omikuji.FieldFortuneAssetbundleName] = struct{}{}
+}
+
+// FortuneAssetbundleNameCleared returns if the "fortune_assetbundle_name" field was cleared in this mutation.
+func (m *OmikujiMutation) FortuneAssetbundleNameCleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldFortuneAssetbundleName]
+	return ok
+}
+
+// ResetFortuneAssetbundleName resets all changes to the "fortune_assetbundle_name" field.
+func (m *OmikujiMutation) ResetFortuneAssetbundleName() {
+	m.fortune_assetbundle_name = nil
+	delete(m.clearedFields, omikuji.FieldFortuneAssetbundleName)
+}
+
+// SetOmikujiCoverAssetbundleName sets the "omikuji_cover_assetbundle_name" field.
+func (m *OmikujiMutation) SetOmikujiCoverAssetbundleName(s string) {
+	m.omikuji_cover_assetbundle_name = &s
+}
+
+// OmikujiCoverAssetbundleName returns the value of the "omikuji_cover_assetbundle_name" field in the mutation.
+func (m *OmikujiMutation) OmikujiCoverAssetbundleName() (r string, exists bool) {
+	v := m.omikuji_cover_assetbundle_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOmikujiCoverAssetbundleName returns the old "omikuji_cover_assetbundle_name" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldOmikujiCoverAssetbundleName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOmikujiCoverAssetbundleName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOmikujiCoverAssetbundleName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOmikujiCoverAssetbundleName: %w", err)
+	}
+	return oldValue.OmikujiCoverAssetbundleName, nil
+}
+
+// ClearOmikujiCoverAssetbundleName clears the value of the "omikuji_cover_assetbundle_name" field.
+func (m *OmikujiMutation) ClearOmikujiCoverAssetbundleName() {
+	m.omikuji_cover_assetbundle_name = nil
+	m.clearedFields[omikuji.FieldOmikujiCoverAssetbundleName] = struct{}{}
+}
+
+// OmikujiCoverAssetbundleNameCleared returns if the "omikuji_cover_assetbundle_name" field was cleared in this mutation.
+func (m *OmikujiMutation) OmikujiCoverAssetbundleNameCleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldOmikujiCoverAssetbundleName]
+	return ok
+}
+
+// ResetOmikujiCoverAssetbundleName resets all changes to the "omikuji_cover_assetbundle_name" field.
+func (m *OmikujiMutation) ResetOmikujiCoverAssetbundleName() {
+	m.omikuji_cover_assetbundle_name = nil
+	delete(m.clearedFields, omikuji.FieldOmikujiCoverAssetbundleName)
+}
+
+// SetUnitFilePath sets the "unit_file_path" field.
+func (m *OmikujiMutation) SetUnitFilePath(s string) {
+	m.unit_file_path = &s
+}
+
+// UnitFilePath returns the value of the "unit_file_path" field in the mutation.
+func (m *OmikujiMutation) UnitFilePath() (r string, exists bool) {
+	v := m.unit_file_path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUnitFilePath returns the old "unit_file_path" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldUnitFilePath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUnitFilePath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUnitFilePath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUnitFilePath: %w", err)
+	}
+	return oldValue.UnitFilePath, nil
+}
+
+// ClearUnitFilePath clears the value of the "unit_file_path" field.
+func (m *OmikujiMutation) ClearUnitFilePath() {
+	m.unit_file_path = nil
+	m.clearedFields[omikuji.FieldUnitFilePath] = struct{}{}
+}
+
+// UnitFilePathCleared returns if the "unit_file_path" field was cleared in this mutation.
+func (m *OmikujiMutation) UnitFilePathCleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldUnitFilePath]
+	return ok
+}
+
+// ResetUnitFilePath resets all changes to the "unit_file_path" field.
+func (m *OmikujiMutation) ResetUnitFilePath() {
+	m.unit_file_path = nil
+	delete(m.clearedFields, omikuji.FieldUnitFilePath)
+}
+
+// SetFortuneFilePath sets the "fortune_file_path" field.
+func (m *OmikujiMutation) SetFortuneFilePath(s string) {
+	m.fortune_file_path = &s
+}
+
+// FortuneFilePath returns the value of the "fortune_file_path" field in the mutation.
+func (m *OmikujiMutation) FortuneFilePath() (r string, exists bool) {
+	v := m.fortune_file_path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFortuneFilePath returns the old "fortune_file_path" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldFortuneFilePath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFortuneFilePath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFortuneFilePath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFortuneFilePath: %w", err)
+	}
+	return oldValue.FortuneFilePath, nil
+}
+
+// ClearFortuneFilePath clears the value of the "fortune_file_path" field.
+func (m *OmikujiMutation) ClearFortuneFilePath() {
+	m.fortune_file_path = nil
+	m.clearedFields[omikuji.FieldFortuneFilePath] = struct{}{}
+}
+
+// FortuneFilePathCleared returns if the "fortune_file_path" field was cleared in this mutation.
+func (m *OmikujiMutation) FortuneFilePathCleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldFortuneFilePath]
+	return ok
+}
+
+// ResetFortuneFilePath resets all changes to the "fortune_file_path" field.
+func (m *OmikujiMutation) ResetFortuneFilePath() {
+	m.fortune_file_path = nil
+	delete(m.clearedFields, omikuji.FieldFortuneFilePath)
+}
+
+// SetOmikujiCoverFilePath sets the "omikuji_cover_file_path" field.
+func (m *OmikujiMutation) SetOmikujiCoverFilePath(s string) {
+	m.omikuji_cover_file_path = &s
+}
+
+// OmikujiCoverFilePath returns the value of the "omikuji_cover_file_path" field in the mutation.
+func (m *OmikujiMutation) OmikujiCoverFilePath() (r string, exists bool) {
+	v := m.omikuji_cover_file_path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOmikujiCoverFilePath returns the old "omikuji_cover_file_path" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldOmikujiCoverFilePath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOmikujiCoverFilePath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOmikujiCoverFilePath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOmikujiCoverFilePath: %w", err)
+	}
+	return oldValue.OmikujiCoverFilePath, nil
+}
+
+// ClearOmikujiCoverFilePath clears the value of the "omikuji_cover_file_path" field.
+func (m *OmikujiMutation) ClearOmikujiCoverFilePath() {
+	m.omikuji_cover_file_path = nil
+	m.clearedFields[omikuji.FieldOmikujiCoverFilePath] = struct{}{}
+}
+
+// OmikujiCoverFilePathCleared returns if the "omikuji_cover_file_path" field was cleared in this mutation.
+func (m *OmikujiMutation) OmikujiCoverFilePathCleared() bool {
+	_, ok := m.clearedFields[omikuji.FieldOmikujiCoverFilePath]
+	return ok
+}
+
+// ResetOmikujiCoverFilePath resets all changes to the "omikuji_cover_file_path" field.
+func (m *OmikujiMutation) ResetOmikujiCoverFilePath() {
+	m.omikuji_cover_file_path = nil
+	delete(m.clearedFields, omikuji.FieldOmikujiCoverFilePath)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *OmikujiMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *OmikujiMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Omikuji entity.
+// If the Omikuji object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OmikujiMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *OmikujiMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the OmikujiMutation builder.
+func (m *OmikujiMutation) Where(ps ...predicate.Omikuji) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the OmikujiMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *OmikujiMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Omikuji, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *OmikujiMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *OmikujiMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Omikuji).
+func (m *OmikujiMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *OmikujiMutation) Fields() []string {
+	fields := make([]string, 0, 18)
+	if m.game_id != nil {
+		fields = append(fields, omikuji.FieldGameID)
+	}
+	if m.omikuji_group_id != nil {
+		fields = append(fields, omikuji.FieldOmikujiGroupID)
+	}
+	if m.unit != nil {
+		fields = append(fields, omikuji.FieldUnit)
+	}
+	if m.fortune_type != nil {
+		fields = append(fields, omikuji.FieldFortuneType)
+	}
+	if m.summary != nil {
+		fields = append(fields, omikuji.FieldSummary)
+	}
+	if m.title1 != nil {
+		fields = append(fields, omikuji.FieldTitle1)
+	}
+	if m.description1 != nil {
+		fields = append(fields, omikuji.FieldDescription1)
+	}
+	if m.title2 != nil {
+		fields = append(fields, omikuji.FieldTitle2)
+	}
+	if m.description2 != nil {
+		fields = append(fields, omikuji.FieldDescription2)
+	}
+	if m.title3 != nil {
+		fields = append(fields, omikuji.FieldTitle3)
+	}
+	if m.description3 != nil {
+		fields = append(fields, omikuji.FieldDescription3)
+	}
+	if m.unit_assetbundle_name != nil {
+		fields = append(fields, omikuji.FieldUnitAssetbundleName)
+	}
+	if m.fortune_assetbundle_name != nil {
+		fields = append(fields, omikuji.FieldFortuneAssetbundleName)
+	}
+	if m.omikuji_cover_assetbundle_name != nil {
+		fields = append(fields, omikuji.FieldOmikujiCoverAssetbundleName)
+	}
+	if m.unit_file_path != nil {
+		fields = append(fields, omikuji.FieldUnitFilePath)
+	}
+	if m.fortune_file_path != nil {
+		fields = append(fields, omikuji.FieldFortuneFilePath)
+	}
+	if m.omikuji_cover_file_path != nil {
+		fields = append(fields, omikuji.FieldOmikujiCoverFilePath)
+	}
+	if m.server_region != nil {
+		fields = append(fields, omikuji.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *OmikujiMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case omikuji.FieldGameID:
+		return m.GameID()
+	case omikuji.FieldOmikujiGroupID:
+		return m.OmikujiGroupID()
+	case omikuji.FieldUnit:
+		return m.Unit()
+	case omikuji.FieldFortuneType:
+		return m.FortuneType()
+	case omikuji.FieldSummary:
+		return m.Summary()
+	case omikuji.FieldTitle1:
+		return m.Title1()
+	case omikuji.FieldDescription1:
+		return m.Description1()
+	case omikuji.FieldTitle2:
+		return m.Title2()
+	case omikuji.FieldDescription2:
+		return m.Description2()
+	case omikuji.FieldTitle3:
+		return m.Title3()
+	case omikuji.FieldDescription3:
+		return m.Description3()
+	case omikuji.FieldUnitAssetbundleName:
+		return m.UnitAssetbundleName()
+	case omikuji.FieldFortuneAssetbundleName:
+		return m.FortuneAssetbundleName()
+	case omikuji.FieldOmikujiCoverAssetbundleName:
+		return m.OmikujiCoverAssetbundleName()
+	case omikuji.FieldUnitFilePath:
+		return m.UnitFilePath()
+	case omikuji.FieldFortuneFilePath:
+		return m.FortuneFilePath()
+	case omikuji.FieldOmikujiCoverFilePath:
+		return m.OmikujiCoverFilePath()
+	case omikuji.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *OmikujiMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case omikuji.FieldGameID:
+		return m.OldGameID(ctx)
+	case omikuji.FieldOmikujiGroupID:
+		return m.OldOmikujiGroupID(ctx)
+	case omikuji.FieldUnit:
+		return m.OldUnit(ctx)
+	case omikuji.FieldFortuneType:
+		return m.OldFortuneType(ctx)
+	case omikuji.FieldSummary:
+		return m.OldSummary(ctx)
+	case omikuji.FieldTitle1:
+		return m.OldTitle1(ctx)
+	case omikuji.FieldDescription1:
+		return m.OldDescription1(ctx)
+	case omikuji.FieldTitle2:
+		return m.OldTitle2(ctx)
+	case omikuji.FieldDescription2:
+		return m.OldDescription2(ctx)
+	case omikuji.FieldTitle3:
+		return m.OldTitle3(ctx)
+	case omikuji.FieldDescription3:
+		return m.OldDescription3(ctx)
+	case omikuji.FieldUnitAssetbundleName:
+		return m.OldUnitAssetbundleName(ctx)
+	case omikuji.FieldFortuneAssetbundleName:
+		return m.OldFortuneAssetbundleName(ctx)
+	case omikuji.FieldOmikujiCoverAssetbundleName:
+		return m.OldOmikujiCoverAssetbundleName(ctx)
+	case omikuji.FieldUnitFilePath:
+		return m.OldUnitFilePath(ctx)
+	case omikuji.FieldFortuneFilePath:
+		return m.OldFortuneFilePath(ctx)
+	case omikuji.FieldOmikujiCoverFilePath:
+		return m.OldOmikujiCoverFilePath(ctx)
+	case omikuji.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Omikuji field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *OmikujiMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case omikuji.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case omikuji.FieldOmikujiGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOmikujiGroupID(v)
+		return nil
+	case omikuji.FieldUnit:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUnit(v)
+		return nil
+	case omikuji.FieldFortuneType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFortuneType(v)
+		return nil
+	case omikuji.FieldSummary:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSummary(v)
+		return nil
+	case omikuji.FieldTitle1:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle1(v)
+		return nil
+	case omikuji.FieldDescription1:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription1(v)
+		return nil
+	case omikuji.FieldTitle2:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle2(v)
+		return nil
+	case omikuji.FieldDescription2:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription2(v)
+		return nil
+	case omikuji.FieldTitle3:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle3(v)
+		return nil
+	case omikuji.FieldDescription3:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription3(v)
+		return nil
+	case omikuji.FieldUnitAssetbundleName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUnitAssetbundleName(v)
+		return nil
+	case omikuji.FieldFortuneAssetbundleName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFortuneAssetbundleName(v)
+		return nil
+	case omikuji.FieldOmikujiCoverAssetbundleName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOmikujiCoverAssetbundleName(v)
+		return nil
+	case omikuji.FieldUnitFilePath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUnitFilePath(v)
+		return nil
+	case omikuji.FieldFortuneFilePath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFortuneFilePath(v)
+		return nil
+	case omikuji.FieldOmikujiCoverFilePath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOmikujiCoverFilePath(v)
+		return nil
+	case omikuji.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Omikuji field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *OmikujiMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, omikuji.FieldGameID)
+	}
+	if m.addomikuji_group_id != nil {
+		fields = append(fields, omikuji.FieldOmikujiGroupID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *OmikujiMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case omikuji.FieldGameID:
+		return m.AddedGameID()
+	case omikuji.FieldOmikujiGroupID:
+		return m.AddedOmikujiGroupID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *OmikujiMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case omikuji.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case omikuji.FieldOmikujiGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOmikujiGroupID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Omikuji numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *OmikujiMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(omikuji.FieldGameID) {
+		fields = append(fields, omikuji.FieldGameID)
+	}
+	if m.FieldCleared(omikuji.FieldOmikujiGroupID) {
+		fields = append(fields, omikuji.FieldOmikujiGroupID)
+	}
+	if m.FieldCleared(omikuji.FieldUnit) {
+		fields = append(fields, omikuji.FieldUnit)
+	}
+	if m.FieldCleared(omikuji.FieldFortuneType) {
+		fields = append(fields, omikuji.FieldFortuneType)
+	}
+	if m.FieldCleared(omikuji.FieldSummary) {
+		fields = append(fields, omikuji.FieldSummary)
+	}
+	if m.FieldCleared(omikuji.FieldTitle1) {
+		fields = append(fields, omikuji.FieldTitle1)
+	}
+	if m.FieldCleared(omikuji.FieldDescription1) {
+		fields = append(fields, omikuji.FieldDescription1)
+	}
+	if m.FieldCleared(omikuji.FieldTitle2) {
+		fields = append(fields, omikuji.FieldTitle2)
+	}
+	if m.FieldCleared(omikuji.FieldDescription2) {
+		fields = append(fields, omikuji.FieldDescription2)
+	}
+	if m.FieldCleared(omikuji.FieldTitle3) {
+		fields = append(fields, omikuji.FieldTitle3)
+	}
+	if m.FieldCleared(omikuji.FieldDescription3) {
+		fields = append(fields, omikuji.FieldDescription3)
+	}
+	if m.FieldCleared(omikuji.FieldUnitAssetbundleName) {
+		fields = append(fields, omikuji.FieldUnitAssetbundleName)
+	}
+	if m.FieldCleared(omikuji.FieldFortuneAssetbundleName) {
+		fields = append(fields, omikuji.FieldFortuneAssetbundleName)
+	}
+	if m.FieldCleared(omikuji.FieldOmikujiCoverAssetbundleName) {
+		fields = append(fields, omikuji.FieldOmikujiCoverAssetbundleName)
+	}
+	if m.FieldCleared(omikuji.FieldUnitFilePath) {
+		fields = append(fields, omikuji.FieldUnitFilePath)
+	}
+	if m.FieldCleared(omikuji.FieldFortuneFilePath) {
+		fields = append(fields, omikuji.FieldFortuneFilePath)
+	}
+	if m.FieldCleared(omikuji.FieldOmikujiCoverFilePath) {
+		fields = append(fields, omikuji.FieldOmikujiCoverFilePath)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *OmikujiMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *OmikujiMutation) ClearField(name string) error {
+	switch name {
+	case omikuji.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case omikuji.FieldOmikujiGroupID:
+		m.ClearOmikujiGroupID()
+		return nil
+	case omikuji.FieldUnit:
+		m.ClearUnit()
+		return nil
+	case omikuji.FieldFortuneType:
+		m.ClearFortuneType()
+		return nil
+	case omikuji.FieldSummary:
+		m.ClearSummary()
+		return nil
+	case omikuji.FieldTitle1:
+		m.ClearTitle1()
+		return nil
+	case omikuji.FieldDescription1:
+		m.ClearDescription1()
+		return nil
+	case omikuji.FieldTitle2:
+		m.ClearTitle2()
+		return nil
+	case omikuji.FieldDescription2:
+		m.ClearDescription2()
+		return nil
+	case omikuji.FieldTitle3:
+		m.ClearTitle3()
+		return nil
+	case omikuji.FieldDescription3:
+		m.ClearDescription3()
+		return nil
+	case omikuji.FieldUnitAssetbundleName:
+		m.ClearUnitAssetbundleName()
+		return nil
+	case omikuji.FieldFortuneAssetbundleName:
+		m.ClearFortuneAssetbundleName()
+		return nil
+	case omikuji.FieldOmikujiCoverAssetbundleName:
+		m.ClearOmikujiCoverAssetbundleName()
+		return nil
+	case omikuji.FieldUnitFilePath:
+		m.ClearUnitFilePath()
+		return nil
+	case omikuji.FieldFortuneFilePath:
+		m.ClearFortuneFilePath()
+		return nil
+	case omikuji.FieldOmikujiCoverFilePath:
+		m.ClearOmikujiCoverFilePath()
+		return nil
+	}
+	return fmt.Errorf("unknown Omikuji nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *OmikujiMutation) ResetField(name string) error {
+	switch name {
+	case omikuji.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case omikuji.FieldOmikujiGroupID:
+		m.ResetOmikujiGroupID()
+		return nil
+	case omikuji.FieldUnit:
+		m.ResetUnit()
+		return nil
+	case omikuji.FieldFortuneType:
+		m.ResetFortuneType()
+		return nil
+	case omikuji.FieldSummary:
+		m.ResetSummary()
+		return nil
+	case omikuji.FieldTitle1:
+		m.ResetTitle1()
+		return nil
+	case omikuji.FieldDescription1:
+		m.ResetDescription1()
+		return nil
+	case omikuji.FieldTitle2:
+		m.ResetTitle2()
+		return nil
+	case omikuji.FieldDescription2:
+		m.ResetDescription2()
+		return nil
+	case omikuji.FieldTitle3:
+		m.ResetTitle3()
+		return nil
+	case omikuji.FieldDescription3:
+		m.ResetDescription3()
+		return nil
+	case omikuji.FieldUnitAssetbundleName:
+		m.ResetUnitAssetbundleName()
+		return nil
+	case omikuji.FieldFortuneAssetbundleName:
+		m.ResetFortuneAssetbundleName()
+		return nil
+	case omikuji.FieldOmikujiCoverAssetbundleName:
+		m.ResetOmikujiCoverAssetbundleName()
+		return nil
+	case omikuji.FieldUnitFilePath:
+		m.ResetUnitFilePath()
+		return nil
+	case omikuji.FieldFortuneFilePath:
+		m.ResetFortuneFilePath()
+		return nil
+	case omikuji.FieldOmikujiCoverFilePath:
+		m.ResetOmikujiCoverFilePath()
+		return nil
+	case omikuji.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Omikuji field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *OmikujiMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *OmikujiMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *OmikujiMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *OmikujiMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *OmikujiMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *OmikujiMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *OmikujiMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Omikuji unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *OmikujiMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Omikuji edge %s", name)
+}
+
 // OutsidecharacterMutation represents an operation that mutates the Outsidecharacter nodes in the graph.
 type OutsidecharacterMutation struct {
 	config
@@ -84589,6 +99392,8 @@ type PlayerframeMutation struct {
 	description              *string
 	game_character_id        *int64
 	addgame_character_id     *int64
+	parts_count              *int64
+	addparts_count           *int64
 	server_region            *string
 	clearedFields            map[string]struct{}
 	done                     bool
@@ -85023,6 +99828,76 @@ func (m *PlayerframeMutation) ResetGameCharacterID() {
 	delete(m.clearedFields, playerframe.FieldGameCharacterID)
 }
 
+// SetPartsCount sets the "parts_count" field.
+func (m *PlayerframeMutation) SetPartsCount(i int64) {
+	m.parts_count = &i
+	m.addparts_count = nil
+}
+
+// PartsCount returns the value of the "parts_count" field in the mutation.
+func (m *PlayerframeMutation) PartsCount() (r int64, exists bool) {
+	v := m.parts_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPartsCount returns the old "parts_count" field's value of the Playerframe entity.
+// If the Playerframe object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlayerframeMutation) OldPartsCount(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPartsCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPartsCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPartsCount: %w", err)
+	}
+	return oldValue.PartsCount, nil
+}
+
+// AddPartsCount adds i to the "parts_count" field.
+func (m *PlayerframeMutation) AddPartsCount(i int64) {
+	if m.addparts_count != nil {
+		*m.addparts_count += i
+	} else {
+		m.addparts_count = &i
+	}
+}
+
+// AddedPartsCount returns the value that was added to the "parts_count" field in this mutation.
+func (m *PlayerframeMutation) AddedPartsCount() (r int64, exists bool) {
+	v := m.addparts_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPartsCount clears the value of the "parts_count" field.
+func (m *PlayerframeMutation) ClearPartsCount() {
+	m.parts_count = nil
+	m.addparts_count = nil
+	m.clearedFields[playerframe.FieldPartsCount] = struct{}{}
+}
+
+// PartsCountCleared returns if the "parts_count" field was cleared in this mutation.
+func (m *PlayerframeMutation) PartsCountCleared() bool {
+	_, ok := m.clearedFields[playerframe.FieldPartsCount]
+	return ok
+}
+
+// ResetPartsCount resets all changes to the "parts_count" field.
+func (m *PlayerframeMutation) ResetPartsCount() {
+	m.parts_count = nil
+	m.addparts_count = nil
+	delete(m.clearedFields, playerframe.FieldPartsCount)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *PlayerframeMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -85093,7 +99968,7 @@ func (m *PlayerframeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PlayerframeMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.game_id != nil {
 		fields = append(fields, playerframe.FieldGameID)
 	}
@@ -85108,6 +99983,9 @@ func (m *PlayerframeMutation) Fields() []string {
 	}
 	if m.game_character_id != nil {
 		fields = append(fields, playerframe.FieldGameCharacterID)
+	}
+	if m.parts_count != nil {
+		fields = append(fields, playerframe.FieldPartsCount)
 	}
 	if m.server_region != nil {
 		fields = append(fields, playerframe.FieldServerRegion)
@@ -85130,6 +100008,8 @@ func (m *PlayerframeMutation) Field(name string) (ent.Value, bool) {
 		return m.Description()
 	case playerframe.FieldGameCharacterID:
 		return m.GameCharacterID()
+	case playerframe.FieldPartsCount:
+		return m.PartsCount()
 	case playerframe.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -85151,6 +100031,8 @@ func (m *PlayerframeMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldDescription(ctx)
 	case playerframe.FieldGameCharacterID:
 		return m.OldGameCharacterID(ctx)
+	case playerframe.FieldPartsCount:
+		return m.OldPartsCount(ctx)
 	case playerframe.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -85197,6 +100079,13 @@ func (m *PlayerframeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetGameCharacterID(v)
 		return nil
+	case playerframe.FieldPartsCount:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPartsCount(v)
+		return nil
 	case playerframe.FieldServerRegion:
 		v, ok := value.(string)
 		if !ok {
@@ -85224,6 +100113,9 @@ func (m *PlayerframeMutation) AddedFields() []string {
 	if m.addgame_character_id != nil {
 		fields = append(fields, playerframe.FieldGameCharacterID)
 	}
+	if m.addparts_count != nil {
+		fields = append(fields, playerframe.FieldPartsCount)
+	}
 	return fields
 }
 
@@ -85240,6 +100132,8 @@ func (m *PlayerframeMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedPlayerFrameGroupID()
 	case playerframe.FieldGameCharacterID:
 		return m.AddedGameCharacterID()
+	case playerframe.FieldPartsCount:
+		return m.AddedPartsCount()
 	}
 	return nil, false
 }
@@ -85277,6 +100171,13 @@ func (m *PlayerframeMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddGameCharacterID(v)
 		return nil
+	case playerframe.FieldPartsCount:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPartsCount(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Playerframe numeric field %s", name)
 }
@@ -85299,6 +100200,9 @@ func (m *PlayerframeMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(playerframe.FieldGameCharacterID) {
 		fields = append(fields, playerframe.FieldGameCharacterID)
+	}
+	if m.FieldCleared(playerframe.FieldPartsCount) {
+		fields = append(fields, playerframe.FieldPartsCount)
 	}
 	return fields
 }
@@ -85329,6 +100233,9 @@ func (m *PlayerframeMutation) ClearField(name string) error {
 	case playerframe.FieldGameCharacterID:
 		m.ClearGameCharacterID()
 		return nil
+	case playerframe.FieldPartsCount:
+		m.ClearPartsCount()
+		return nil
 	}
 	return fmt.Errorf("unknown Playerframe nullable field %s", name)
 }
@@ -85351,6 +100258,9 @@ func (m *PlayerframeMutation) ResetField(name string) error {
 		return nil
 	case playerframe.FieldGameCharacterID:
 		m.ResetGameCharacterID()
+		return nil
+	case playerframe.FieldPartsCount:
+		m.ResetPartsCount()
 		return nil
 	case playerframe.FieldServerRegion:
 		m.ResetServerRegion()
@@ -85410,20 +100320,23 @@ func (m *PlayerframeMutation) ResetEdge(name string) error {
 // PlayerframegroupMutation represents an operation that mutates the Playerframegroup nodes in the graph.
 type PlayerframegroupMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int
-	game_id          *int64
-	addgame_id       *int64
-	seq              *int64
-	addseq           *int64
-	name             *string
-	assetbundle_name *string
-	server_region    *string
-	clearedFields    map[string]struct{}
-	done             bool
-	oldValue         func(context.Context) (*Playerframegroup, error)
-	predicates       []predicate.Playerframegroup
+	op                Op
+	typ               string
+	id                *int
+	game_id           *int64
+	addgame_id        *int64
+	seq               *int64
+	addseq            *int64
+	name              *string
+	assetbundle_name  *string
+	player_frame_type *string
+	edit_count        *int64
+	addedit_count     *int64
+	server_region     *string
+	clearedFields     map[string]struct{}
+	done              bool
+	oldValue          func(context.Context) (*Playerframegroup, error)
+	predicates        []predicate.Playerframegroup
 }
 
 var _ ent.Mutation = (*PlayerframegroupMutation)(nil)
@@ -85762,6 +100675,125 @@ func (m *PlayerframegroupMutation) ResetAssetbundleName() {
 	delete(m.clearedFields, playerframegroup.FieldAssetbundleName)
 }
 
+// SetPlayerFrameType sets the "player_frame_type" field.
+func (m *PlayerframegroupMutation) SetPlayerFrameType(s string) {
+	m.player_frame_type = &s
+}
+
+// PlayerFrameType returns the value of the "player_frame_type" field in the mutation.
+func (m *PlayerframegroupMutation) PlayerFrameType() (r string, exists bool) {
+	v := m.player_frame_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlayerFrameType returns the old "player_frame_type" field's value of the Playerframegroup entity.
+// If the Playerframegroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlayerframegroupMutation) OldPlayerFrameType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlayerFrameType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlayerFrameType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlayerFrameType: %w", err)
+	}
+	return oldValue.PlayerFrameType, nil
+}
+
+// ClearPlayerFrameType clears the value of the "player_frame_type" field.
+func (m *PlayerframegroupMutation) ClearPlayerFrameType() {
+	m.player_frame_type = nil
+	m.clearedFields[playerframegroup.FieldPlayerFrameType] = struct{}{}
+}
+
+// PlayerFrameTypeCleared returns if the "player_frame_type" field was cleared in this mutation.
+func (m *PlayerframegroupMutation) PlayerFrameTypeCleared() bool {
+	_, ok := m.clearedFields[playerframegroup.FieldPlayerFrameType]
+	return ok
+}
+
+// ResetPlayerFrameType resets all changes to the "player_frame_type" field.
+func (m *PlayerframegroupMutation) ResetPlayerFrameType() {
+	m.player_frame_type = nil
+	delete(m.clearedFields, playerframegroup.FieldPlayerFrameType)
+}
+
+// SetEditCount sets the "edit_count" field.
+func (m *PlayerframegroupMutation) SetEditCount(i int64) {
+	m.edit_count = &i
+	m.addedit_count = nil
+}
+
+// EditCount returns the value of the "edit_count" field in the mutation.
+func (m *PlayerframegroupMutation) EditCount() (r int64, exists bool) {
+	v := m.edit_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEditCount returns the old "edit_count" field's value of the Playerframegroup entity.
+// If the Playerframegroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlayerframegroupMutation) OldEditCount(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEditCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEditCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEditCount: %w", err)
+	}
+	return oldValue.EditCount, nil
+}
+
+// AddEditCount adds i to the "edit_count" field.
+func (m *PlayerframegroupMutation) AddEditCount(i int64) {
+	if m.addedit_count != nil {
+		*m.addedit_count += i
+	} else {
+		m.addedit_count = &i
+	}
+}
+
+// AddedEditCount returns the value that was added to the "edit_count" field in this mutation.
+func (m *PlayerframegroupMutation) AddedEditCount() (r int64, exists bool) {
+	v := m.addedit_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearEditCount clears the value of the "edit_count" field.
+func (m *PlayerframegroupMutation) ClearEditCount() {
+	m.edit_count = nil
+	m.addedit_count = nil
+	m.clearedFields[playerframegroup.FieldEditCount] = struct{}{}
+}
+
+// EditCountCleared returns if the "edit_count" field was cleared in this mutation.
+func (m *PlayerframegroupMutation) EditCountCleared() bool {
+	_, ok := m.clearedFields[playerframegroup.FieldEditCount]
+	return ok
+}
+
+// ResetEditCount resets all changes to the "edit_count" field.
+func (m *PlayerframegroupMutation) ResetEditCount() {
+	m.edit_count = nil
+	m.addedit_count = nil
+	delete(m.clearedFields, playerframegroup.FieldEditCount)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *PlayerframegroupMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -85832,7 +100864,7 @@ func (m *PlayerframegroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PlayerframegroupMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 7)
 	if m.game_id != nil {
 		fields = append(fields, playerframegroup.FieldGameID)
 	}
@@ -85844,6 +100876,12 @@ func (m *PlayerframegroupMutation) Fields() []string {
 	}
 	if m.assetbundle_name != nil {
 		fields = append(fields, playerframegroup.FieldAssetbundleName)
+	}
+	if m.player_frame_type != nil {
+		fields = append(fields, playerframegroup.FieldPlayerFrameType)
+	}
+	if m.edit_count != nil {
+		fields = append(fields, playerframegroup.FieldEditCount)
 	}
 	if m.server_region != nil {
 		fields = append(fields, playerframegroup.FieldServerRegion)
@@ -85864,6 +100902,10 @@ func (m *PlayerframegroupMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case playerframegroup.FieldAssetbundleName:
 		return m.AssetbundleName()
+	case playerframegroup.FieldPlayerFrameType:
+		return m.PlayerFrameType()
+	case playerframegroup.FieldEditCount:
+		return m.EditCount()
 	case playerframegroup.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -85883,6 +100925,10 @@ func (m *PlayerframegroupMutation) OldField(ctx context.Context, name string) (e
 		return m.OldName(ctx)
 	case playerframegroup.FieldAssetbundleName:
 		return m.OldAssetbundleName(ctx)
+	case playerframegroup.FieldPlayerFrameType:
+		return m.OldPlayerFrameType(ctx)
+	case playerframegroup.FieldEditCount:
+		return m.OldEditCount(ctx)
 	case playerframegroup.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -85922,6 +100968,20 @@ func (m *PlayerframegroupMutation) SetField(name string, value ent.Value) error 
 		}
 		m.SetAssetbundleName(v)
 		return nil
+	case playerframegroup.FieldPlayerFrameType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlayerFrameType(v)
+		return nil
+	case playerframegroup.FieldEditCount:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEditCount(v)
+		return nil
 	case playerframegroup.FieldServerRegion:
 		v, ok := value.(string)
 		if !ok {
@@ -85943,6 +101003,9 @@ func (m *PlayerframegroupMutation) AddedFields() []string {
 	if m.addseq != nil {
 		fields = append(fields, playerframegroup.FieldSeq)
 	}
+	if m.addedit_count != nil {
+		fields = append(fields, playerframegroup.FieldEditCount)
+	}
 	return fields
 }
 
@@ -85955,6 +101018,8 @@ func (m *PlayerframegroupMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedGameID()
 	case playerframegroup.FieldSeq:
 		return m.AddedSeq()
+	case playerframegroup.FieldEditCount:
+		return m.AddedEditCount()
 	}
 	return nil, false
 }
@@ -85978,6 +101043,13 @@ func (m *PlayerframegroupMutation) AddField(name string, value ent.Value) error 
 		}
 		m.AddSeq(v)
 		return nil
+	case playerframegroup.FieldEditCount:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEditCount(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Playerframegroup numeric field %s", name)
 }
@@ -85997,6 +101069,12 @@ func (m *PlayerframegroupMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(playerframegroup.FieldAssetbundleName) {
 		fields = append(fields, playerframegroup.FieldAssetbundleName)
+	}
+	if m.FieldCleared(playerframegroup.FieldPlayerFrameType) {
+		fields = append(fields, playerframegroup.FieldPlayerFrameType)
+	}
+	if m.FieldCleared(playerframegroup.FieldEditCount) {
+		fields = append(fields, playerframegroup.FieldEditCount)
 	}
 	return fields
 }
@@ -86024,6 +101102,12 @@ func (m *PlayerframegroupMutation) ClearField(name string) error {
 	case playerframegroup.FieldAssetbundleName:
 		m.ClearAssetbundleName()
 		return nil
+	case playerframegroup.FieldPlayerFrameType:
+		m.ClearPlayerFrameType()
+		return nil
+	case playerframegroup.FieldEditCount:
+		m.ClearEditCount()
+		return nil
 	}
 	return fmt.Errorf("unknown Playerframegroup nullable field %s", name)
 }
@@ -86043,6 +101127,12 @@ func (m *PlayerframegroupMutation) ResetField(name string) error {
 		return nil
 	case playerframegroup.FieldAssetbundleName:
 		m.ResetAssetbundleName()
+		return nil
+	case playerframegroup.FieldPlayerFrameType:
+		m.ResetPlayerFrameType()
+		return nil
+	case playerframegroup.FieldEditCount:
+		m.ResetEditCount()
 		return nil
 	case playerframegroup.FieldServerRegion:
 		m.ResetServerRegion()
@@ -92828,6 +107918,737 @@ func (m *StampMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Stamp edge %s", name)
 }
 
+// UnitstoryepisodegroupMutation represents an operation that mutates the Unitstoryepisodegroup nodes in the graph.
+type UnitstoryepisodegroupMutation struct {
+	config
+	op                    Op
+	typ                   string
+	id                    *int
+	game_id               *int64
+	addgame_id            *int64
+	unit                  *string
+	unit_episode_category *string
+	outline               *string
+	assetbundle_name      *string
+	server_region         *string
+	clearedFields         map[string]struct{}
+	done                  bool
+	oldValue              func(context.Context) (*Unitstoryepisodegroup, error)
+	predicates            []predicate.Unitstoryepisodegroup
+}
+
+var _ ent.Mutation = (*UnitstoryepisodegroupMutation)(nil)
+
+// unitstoryepisodegroupOption allows management of the mutation configuration using functional options.
+type unitstoryepisodegroupOption func(*UnitstoryepisodegroupMutation)
+
+// newUnitstoryepisodegroupMutation creates new mutation for the Unitstoryepisodegroup entity.
+func newUnitstoryepisodegroupMutation(c config, op Op, opts ...unitstoryepisodegroupOption) *UnitstoryepisodegroupMutation {
+	m := &UnitstoryepisodegroupMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeUnitstoryepisodegroup,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withUnitstoryepisodegroupID sets the ID field of the mutation.
+func withUnitstoryepisodegroupID(id int) unitstoryepisodegroupOption {
+	return func(m *UnitstoryepisodegroupMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Unitstoryepisodegroup
+		)
+		m.oldValue = func(ctx context.Context) (*Unitstoryepisodegroup, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Unitstoryepisodegroup.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withUnitstoryepisodegroup sets the old Unitstoryepisodegroup of the mutation.
+func withUnitstoryepisodegroup(node *Unitstoryepisodegroup) unitstoryepisodegroupOption {
+	return func(m *UnitstoryepisodegroupMutation) {
+		m.oldValue = func(context.Context) (*Unitstoryepisodegroup, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m UnitstoryepisodegroupMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m UnitstoryepisodegroupMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *UnitstoryepisodegroupMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *UnitstoryepisodegroupMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Unitstoryepisodegroup.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetGameID sets the "game_id" field.
+func (m *UnitstoryepisodegroupMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *UnitstoryepisodegroupMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Unitstoryepisodegroup entity.
+// If the Unitstoryepisodegroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnitstoryepisodegroupMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *UnitstoryepisodegroupMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *UnitstoryepisodegroupMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *UnitstoryepisodegroupMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[unitstoryepisodegroup.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *UnitstoryepisodegroupMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[unitstoryepisodegroup.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *UnitstoryepisodegroupMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, unitstoryepisodegroup.FieldGameID)
+}
+
+// SetUnit sets the "unit" field.
+func (m *UnitstoryepisodegroupMutation) SetUnit(s string) {
+	m.unit = &s
+}
+
+// Unit returns the value of the "unit" field in the mutation.
+func (m *UnitstoryepisodegroupMutation) Unit() (r string, exists bool) {
+	v := m.unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUnit returns the old "unit" field's value of the Unitstoryepisodegroup entity.
+// If the Unitstoryepisodegroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnitstoryepisodegroupMutation) OldUnit(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUnit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUnit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUnit: %w", err)
+	}
+	return oldValue.Unit, nil
+}
+
+// ClearUnit clears the value of the "unit" field.
+func (m *UnitstoryepisodegroupMutation) ClearUnit() {
+	m.unit = nil
+	m.clearedFields[unitstoryepisodegroup.FieldUnit] = struct{}{}
+}
+
+// UnitCleared returns if the "unit" field was cleared in this mutation.
+func (m *UnitstoryepisodegroupMutation) UnitCleared() bool {
+	_, ok := m.clearedFields[unitstoryepisodegroup.FieldUnit]
+	return ok
+}
+
+// ResetUnit resets all changes to the "unit" field.
+func (m *UnitstoryepisodegroupMutation) ResetUnit() {
+	m.unit = nil
+	delete(m.clearedFields, unitstoryepisodegroup.FieldUnit)
+}
+
+// SetUnitEpisodeCategory sets the "unit_episode_category" field.
+func (m *UnitstoryepisodegroupMutation) SetUnitEpisodeCategory(s string) {
+	m.unit_episode_category = &s
+}
+
+// UnitEpisodeCategory returns the value of the "unit_episode_category" field in the mutation.
+func (m *UnitstoryepisodegroupMutation) UnitEpisodeCategory() (r string, exists bool) {
+	v := m.unit_episode_category
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUnitEpisodeCategory returns the old "unit_episode_category" field's value of the Unitstoryepisodegroup entity.
+// If the Unitstoryepisodegroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnitstoryepisodegroupMutation) OldUnitEpisodeCategory(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUnitEpisodeCategory is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUnitEpisodeCategory requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUnitEpisodeCategory: %w", err)
+	}
+	return oldValue.UnitEpisodeCategory, nil
+}
+
+// ClearUnitEpisodeCategory clears the value of the "unit_episode_category" field.
+func (m *UnitstoryepisodegroupMutation) ClearUnitEpisodeCategory() {
+	m.unit_episode_category = nil
+	m.clearedFields[unitstoryepisodegroup.FieldUnitEpisodeCategory] = struct{}{}
+}
+
+// UnitEpisodeCategoryCleared returns if the "unit_episode_category" field was cleared in this mutation.
+func (m *UnitstoryepisodegroupMutation) UnitEpisodeCategoryCleared() bool {
+	_, ok := m.clearedFields[unitstoryepisodegroup.FieldUnitEpisodeCategory]
+	return ok
+}
+
+// ResetUnitEpisodeCategory resets all changes to the "unit_episode_category" field.
+func (m *UnitstoryepisodegroupMutation) ResetUnitEpisodeCategory() {
+	m.unit_episode_category = nil
+	delete(m.clearedFields, unitstoryepisodegroup.FieldUnitEpisodeCategory)
+}
+
+// SetOutline sets the "outline" field.
+func (m *UnitstoryepisodegroupMutation) SetOutline(s string) {
+	m.outline = &s
+}
+
+// Outline returns the value of the "outline" field in the mutation.
+func (m *UnitstoryepisodegroupMutation) Outline() (r string, exists bool) {
+	v := m.outline
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOutline returns the old "outline" field's value of the Unitstoryepisodegroup entity.
+// If the Unitstoryepisodegroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnitstoryepisodegroupMutation) OldOutline(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOutline is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOutline requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOutline: %w", err)
+	}
+	return oldValue.Outline, nil
+}
+
+// ClearOutline clears the value of the "outline" field.
+func (m *UnitstoryepisodegroupMutation) ClearOutline() {
+	m.outline = nil
+	m.clearedFields[unitstoryepisodegroup.FieldOutline] = struct{}{}
+}
+
+// OutlineCleared returns if the "outline" field was cleared in this mutation.
+func (m *UnitstoryepisodegroupMutation) OutlineCleared() bool {
+	_, ok := m.clearedFields[unitstoryepisodegroup.FieldOutline]
+	return ok
+}
+
+// ResetOutline resets all changes to the "outline" field.
+func (m *UnitstoryepisodegroupMutation) ResetOutline() {
+	m.outline = nil
+	delete(m.clearedFields, unitstoryepisodegroup.FieldOutline)
+}
+
+// SetAssetbundleName sets the "assetbundle_name" field.
+func (m *UnitstoryepisodegroupMutation) SetAssetbundleName(s string) {
+	m.assetbundle_name = &s
+}
+
+// AssetbundleName returns the value of the "assetbundle_name" field in the mutation.
+func (m *UnitstoryepisodegroupMutation) AssetbundleName() (r string, exists bool) {
+	v := m.assetbundle_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAssetbundleName returns the old "assetbundle_name" field's value of the Unitstoryepisodegroup entity.
+// If the Unitstoryepisodegroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnitstoryepisodegroupMutation) OldAssetbundleName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAssetbundleName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAssetbundleName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAssetbundleName: %w", err)
+	}
+	return oldValue.AssetbundleName, nil
+}
+
+// ClearAssetbundleName clears the value of the "assetbundle_name" field.
+func (m *UnitstoryepisodegroupMutation) ClearAssetbundleName() {
+	m.assetbundle_name = nil
+	m.clearedFields[unitstoryepisodegroup.FieldAssetbundleName] = struct{}{}
+}
+
+// AssetbundleNameCleared returns if the "assetbundle_name" field was cleared in this mutation.
+func (m *UnitstoryepisodegroupMutation) AssetbundleNameCleared() bool {
+	_, ok := m.clearedFields[unitstoryepisodegroup.FieldAssetbundleName]
+	return ok
+}
+
+// ResetAssetbundleName resets all changes to the "assetbundle_name" field.
+func (m *UnitstoryepisodegroupMutation) ResetAssetbundleName() {
+	m.assetbundle_name = nil
+	delete(m.clearedFields, unitstoryepisodegroup.FieldAssetbundleName)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *UnitstoryepisodegroupMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *UnitstoryepisodegroupMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Unitstoryepisodegroup entity.
+// If the Unitstoryepisodegroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnitstoryepisodegroupMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *UnitstoryepisodegroupMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the UnitstoryepisodegroupMutation builder.
+func (m *UnitstoryepisodegroupMutation) Where(ps ...predicate.Unitstoryepisodegroup) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the UnitstoryepisodegroupMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *UnitstoryepisodegroupMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Unitstoryepisodegroup, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *UnitstoryepisodegroupMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *UnitstoryepisodegroupMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Unitstoryepisodegroup).
+func (m *UnitstoryepisodegroupMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *UnitstoryepisodegroupMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.game_id != nil {
+		fields = append(fields, unitstoryepisodegroup.FieldGameID)
+	}
+	if m.unit != nil {
+		fields = append(fields, unitstoryepisodegroup.FieldUnit)
+	}
+	if m.unit_episode_category != nil {
+		fields = append(fields, unitstoryepisodegroup.FieldUnitEpisodeCategory)
+	}
+	if m.outline != nil {
+		fields = append(fields, unitstoryepisodegroup.FieldOutline)
+	}
+	if m.assetbundle_name != nil {
+		fields = append(fields, unitstoryepisodegroup.FieldAssetbundleName)
+	}
+	if m.server_region != nil {
+		fields = append(fields, unitstoryepisodegroup.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *UnitstoryepisodegroupMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case unitstoryepisodegroup.FieldGameID:
+		return m.GameID()
+	case unitstoryepisodegroup.FieldUnit:
+		return m.Unit()
+	case unitstoryepisodegroup.FieldUnitEpisodeCategory:
+		return m.UnitEpisodeCategory()
+	case unitstoryepisodegroup.FieldOutline:
+		return m.Outline()
+	case unitstoryepisodegroup.FieldAssetbundleName:
+		return m.AssetbundleName()
+	case unitstoryepisodegroup.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *UnitstoryepisodegroupMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case unitstoryepisodegroup.FieldGameID:
+		return m.OldGameID(ctx)
+	case unitstoryepisodegroup.FieldUnit:
+		return m.OldUnit(ctx)
+	case unitstoryepisodegroup.FieldUnitEpisodeCategory:
+		return m.OldUnitEpisodeCategory(ctx)
+	case unitstoryepisodegroup.FieldOutline:
+		return m.OldOutline(ctx)
+	case unitstoryepisodegroup.FieldAssetbundleName:
+		return m.OldAssetbundleName(ctx)
+	case unitstoryepisodegroup.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Unitstoryepisodegroup field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UnitstoryepisodegroupMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case unitstoryepisodegroup.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case unitstoryepisodegroup.FieldUnit:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUnit(v)
+		return nil
+	case unitstoryepisodegroup.FieldUnitEpisodeCategory:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUnitEpisodeCategory(v)
+		return nil
+	case unitstoryepisodegroup.FieldOutline:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOutline(v)
+		return nil
+	case unitstoryepisodegroup.FieldAssetbundleName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAssetbundleName(v)
+		return nil
+	case unitstoryepisodegroup.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Unitstoryepisodegroup field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *UnitstoryepisodegroupMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, unitstoryepisodegroup.FieldGameID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *UnitstoryepisodegroupMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case unitstoryepisodegroup.FieldGameID:
+		return m.AddedGameID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UnitstoryepisodegroupMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case unitstoryepisodegroup.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Unitstoryepisodegroup numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *UnitstoryepisodegroupMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(unitstoryepisodegroup.FieldGameID) {
+		fields = append(fields, unitstoryepisodegroup.FieldGameID)
+	}
+	if m.FieldCleared(unitstoryepisodegroup.FieldUnit) {
+		fields = append(fields, unitstoryepisodegroup.FieldUnit)
+	}
+	if m.FieldCleared(unitstoryepisodegroup.FieldUnitEpisodeCategory) {
+		fields = append(fields, unitstoryepisodegroup.FieldUnitEpisodeCategory)
+	}
+	if m.FieldCleared(unitstoryepisodegroup.FieldOutline) {
+		fields = append(fields, unitstoryepisodegroup.FieldOutline)
+	}
+	if m.FieldCleared(unitstoryepisodegroup.FieldAssetbundleName) {
+		fields = append(fields, unitstoryepisodegroup.FieldAssetbundleName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *UnitstoryepisodegroupMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *UnitstoryepisodegroupMutation) ClearField(name string) error {
+	switch name {
+	case unitstoryepisodegroup.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case unitstoryepisodegroup.FieldUnit:
+		m.ClearUnit()
+		return nil
+	case unitstoryepisodegroup.FieldUnitEpisodeCategory:
+		m.ClearUnitEpisodeCategory()
+		return nil
+	case unitstoryepisodegroup.FieldOutline:
+		m.ClearOutline()
+		return nil
+	case unitstoryepisodegroup.FieldAssetbundleName:
+		m.ClearAssetbundleName()
+		return nil
+	}
+	return fmt.Errorf("unknown Unitstoryepisodegroup nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *UnitstoryepisodegroupMutation) ResetField(name string) error {
+	switch name {
+	case unitstoryepisodegroup.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case unitstoryepisodegroup.FieldUnit:
+		m.ResetUnit()
+		return nil
+	case unitstoryepisodegroup.FieldUnitEpisodeCategory:
+		m.ResetUnitEpisodeCategory()
+		return nil
+	case unitstoryepisodegroup.FieldOutline:
+		m.ResetOutline()
+		return nil
+	case unitstoryepisodegroup.FieldAssetbundleName:
+		m.ResetAssetbundleName()
+		return nil
+	case unitstoryepisodegroup.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Unitstoryepisodegroup field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *UnitstoryepisodegroupMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *UnitstoryepisodegroupMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *UnitstoryepisodegroupMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *UnitstoryepisodegroupMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *UnitstoryepisodegroupMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *UnitstoryepisodegroupMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *UnitstoryepisodegroupMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Unitstoryepisodegroup unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *UnitstoryepisodegroupMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Unitstoryepisodegroup edge %s", name)
+}
+
 // VirtualliveMutation represents an operation that mutates the Virtuallive nodes in the graph.
 type VirtualliveMutation struct {
 	config
@@ -98335,15 +114156,21 @@ func (m *WorldbloomdifferentattributebonuseMutation) ResetEdge(name string) erro
 // WorldbloomsupportdeckbonuseMutation represents an operation that mutates the Worldbloomsupportdeckbonuse nodes in the graph.
 type WorldbloomsupportdeckbonuseMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int
-	card_rarity_type *string
-	server_region    *string
-	clearedFields    map[string]struct{}
-	done             bool
-	oldValue         func(context.Context) (*Worldbloomsupportdeckbonuse, error)
-	predicates       []predicate.Worldbloomsupportdeckbonuse
+	op                                                 Op
+	typ                                                string
+	id                                                 *int
+	card_rarity_type                                   *string
+	world_bloom_support_deck_character_bonuses         *json.RawMessage
+	appendworld_bloom_support_deck_character_bonuses   json.RawMessage
+	world_bloom_support_deck_master_rank_bonuses       *json.RawMessage
+	appendworld_bloom_support_deck_master_rank_bonuses json.RawMessage
+	world_bloom_support_deck_skill_level_bonuses       *json.RawMessage
+	appendworld_bloom_support_deck_skill_level_bonuses json.RawMessage
+	server_region                                      *string
+	clearedFields                                      map[string]struct{}
+	done                                               bool
+	oldValue                                           func(context.Context) (*Worldbloomsupportdeckbonuse, error)
+	predicates                                         []predicate.Worldbloomsupportdeckbonuse
 }
 
 var _ ent.Mutation = (*WorldbloomsupportdeckbonuseMutation)(nil)
@@ -98493,6 +114320,201 @@ func (m *WorldbloomsupportdeckbonuseMutation) ResetCardRarityType() {
 	delete(m.clearedFields, worldbloomsupportdeckbonuse.FieldCardRarityType)
 }
 
+// SetWorldBloomSupportDeckCharacterBonuses sets the "world_bloom_support_deck_character_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) SetWorldBloomSupportDeckCharacterBonuses(jm json.RawMessage) {
+	m.world_bloom_support_deck_character_bonuses = &jm
+	m.appendworld_bloom_support_deck_character_bonuses = nil
+}
+
+// WorldBloomSupportDeckCharacterBonuses returns the value of the "world_bloom_support_deck_character_bonuses" field in the mutation.
+func (m *WorldbloomsupportdeckbonuseMutation) WorldBloomSupportDeckCharacterBonuses() (r json.RawMessage, exists bool) {
+	v := m.world_bloom_support_deck_character_bonuses
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorldBloomSupportDeckCharacterBonuses returns the old "world_bloom_support_deck_character_bonuses" field's value of the Worldbloomsupportdeckbonuse entity.
+// If the Worldbloomsupportdeckbonuse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorldbloomsupportdeckbonuseMutation) OldWorldBloomSupportDeckCharacterBonuses(ctx context.Context) (v json.RawMessage, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorldBloomSupportDeckCharacterBonuses is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorldBloomSupportDeckCharacterBonuses requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorldBloomSupportDeckCharacterBonuses: %w", err)
+	}
+	return oldValue.WorldBloomSupportDeckCharacterBonuses, nil
+}
+
+// AppendWorldBloomSupportDeckCharacterBonuses adds jm to the "world_bloom_support_deck_character_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) AppendWorldBloomSupportDeckCharacterBonuses(jm json.RawMessage) {
+	m.appendworld_bloom_support_deck_character_bonuses = append(m.appendworld_bloom_support_deck_character_bonuses, jm...)
+}
+
+// AppendedWorldBloomSupportDeckCharacterBonuses returns the list of values that were appended to the "world_bloom_support_deck_character_bonuses" field in this mutation.
+func (m *WorldbloomsupportdeckbonuseMutation) AppendedWorldBloomSupportDeckCharacterBonuses() (json.RawMessage, bool) {
+	if len(m.appendworld_bloom_support_deck_character_bonuses) == 0 {
+		return nil, false
+	}
+	return m.appendworld_bloom_support_deck_character_bonuses, true
+}
+
+// ClearWorldBloomSupportDeckCharacterBonuses clears the value of the "world_bloom_support_deck_character_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) ClearWorldBloomSupportDeckCharacterBonuses() {
+	m.world_bloom_support_deck_character_bonuses = nil
+	m.appendworld_bloom_support_deck_character_bonuses = nil
+	m.clearedFields[worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses] = struct{}{}
+}
+
+// WorldBloomSupportDeckCharacterBonusesCleared returns if the "world_bloom_support_deck_character_bonuses" field was cleared in this mutation.
+func (m *WorldbloomsupportdeckbonuseMutation) WorldBloomSupportDeckCharacterBonusesCleared() bool {
+	_, ok := m.clearedFields[worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses]
+	return ok
+}
+
+// ResetWorldBloomSupportDeckCharacterBonuses resets all changes to the "world_bloom_support_deck_character_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) ResetWorldBloomSupportDeckCharacterBonuses() {
+	m.world_bloom_support_deck_character_bonuses = nil
+	m.appendworld_bloom_support_deck_character_bonuses = nil
+	delete(m.clearedFields, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses)
+}
+
+// SetWorldBloomSupportDeckMasterRankBonuses sets the "world_bloom_support_deck_master_rank_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) SetWorldBloomSupportDeckMasterRankBonuses(jm json.RawMessage) {
+	m.world_bloom_support_deck_master_rank_bonuses = &jm
+	m.appendworld_bloom_support_deck_master_rank_bonuses = nil
+}
+
+// WorldBloomSupportDeckMasterRankBonuses returns the value of the "world_bloom_support_deck_master_rank_bonuses" field in the mutation.
+func (m *WorldbloomsupportdeckbonuseMutation) WorldBloomSupportDeckMasterRankBonuses() (r json.RawMessage, exists bool) {
+	v := m.world_bloom_support_deck_master_rank_bonuses
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorldBloomSupportDeckMasterRankBonuses returns the old "world_bloom_support_deck_master_rank_bonuses" field's value of the Worldbloomsupportdeckbonuse entity.
+// If the Worldbloomsupportdeckbonuse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorldbloomsupportdeckbonuseMutation) OldWorldBloomSupportDeckMasterRankBonuses(ctx context.Context) (v json.RawMessage, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorldBloomSupportDeckMasterRankBonuses is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorldBloomSupportDeckMasterRankBonuses requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorldBloomSupportDeckMasterRankBonuses: %w", err)
+	}
+	return oldValue.WorldBloomSupportDeckMasterRankBonuses, nil
+}
+
+// AppendWorldBloomSupportDeckMasterRankBonuses adds jm to the "world_bloom_support_deck_master_rank_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) AppendWorldBloomSupportDeckMasterRankBonuses(jm json.RawMessage) {
+	m.appendworld_bloom_support_deck_master_rank_bonuses = append(m.appendworld_bloom_support_deck_master_rank_bonuses, jm...)
+}
+
+// AppendedWorldBloomSupportDeckMasterRankBonuses returns the list of values that were appended to the "world_bloom_support_deck_master_rank_bonuses" field in this mutation.
+func (m *WorldbloomsupportdeckbonuseMutation) AppendedWorldBloomSupportDeckMasterRankBonuses() (json.RawMessage, bool) {
+	if len(m.appendworld_bloom_support_deck_master_rank_bonuses) == 0 {
+		return nil, false
+	}
+	return m.appendworld_bloom_support_deck_master_rank_bonuses, true
+}
+
+// ClearWorldBloomSupportDeckMasterRankBonuses clears the value of the "world_bloom_support_deck_master_rank_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) ClearWorldBloomSupportDeckMasterRankBonuses() {
+	m.world_bloom_support_deck_master_rank_bonuses = nil
+	m.appendworld_bloom_support_deck_master_rank_bonuses = nil
+	m.clearedFields[worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses] = struct{}{}
+}
+
+// WorldBloomSupportDeckMasterRankBonusesCleared returns if the "world_bloom_support_deck_master_rank_bonuses" field was cleared in this mutation.
+func (m *WorldbloomsupportdeckbonuseMutation) WorldBloomSupportDeckMasterRankBonusesCleared() bool {
+	_, ok := m.clearedFields[worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses]
+	return ok
+}
+
+// ResetWorldBloomSupportDeckMasterRankBonuses resets all changes to the "world_bloom_support_deck_master_rank_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) ResetWorldBloomSupportDeckMasterRankBonuses() {
+	m.world_bloom_support_deck_master_rank_bonuses = nil
+	m.appendworld_bloom_support_deck_master_rank_bonuses = nil
+	delete(m.clearedFields, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses)
+}
+
+// SetWorldBloomSupportDeckSkillLevelBonuses sets the "world_bloom_support_deck_skill_level_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) SetWorldBloomSupportDeckSkillLevelBonuses(jm json.RawMessage) {
+	m.world_bloom_support_deck_skill_level_bonuses = &jm
+	m.appendworld_bloom_support_deck_skill_level_bonuses = nil
+}
+
+// WorldBloomSupportDeckSkillLevelBonuses returns the value of the "world_bloom_support_deck_skill_level_bonuses" field in the mutation.
+func (m *WorldbloomsupportdeckbonuseMutation) WorldBloomSupportDeckSkillLevelBonuses() (r json.RawMessage, exists bool) {
+	v := m.world_bloom_support_deck_skill_level_bonuses
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorldBloomSupportDeckSkillLevelBonuses returns the old "world_bloom_support_deck_skill_level_bonuses" field's value of the Worldbloomsupportdeckbonuse entity.
+// If the Worldbloomsupportdeckbonuse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorldbloomsupportdeckbonuseMutation) OldWorldBloomSupportDeckSkillLevelBonuses(ctx context.Context) (v json.RawMessage, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorldBloomSupportDeckSkillLevelBonuses is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorldBloomSupportDeckSkillLevelBonuses requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorldBloomSupportDeckSkillLevelBonuses: %w", err)
+	}
+	return oldValue.WorldBloomSupportDeckSkillLevelBonuses, nil
+}
+
+// AppendWorldBloomSupportDeckSkillLevelBonuses adds jm to the "world_bloom_support_deck_skill_level_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) AppendWorldBloomSupportDeckSkillLevelBonuses(jm json.RawMessage) {
+	m.appendworld_bloom_support_deck_skill_level_bonuses = append(m.appendworld_bloom_support_deck_skill_level_bonuses, jm...)
+}
+
+// AppendedWorldBloomSupportDeckSkillLevelBonuses returns the list of values that were appended to the "world_bloom_support_deck_skill_level_bonuses" field in this mutation.
+func (m *WorldbloomsupportdeckbonuseMutation) AppendedWorldBloomSupportDeckSkillLevelBonuses() (json.RawMessage, bool) {
+	if len(m.appendworld_bloom_support_deck_skill_level_bonuses) == 0 {
+		return nil, false
+	}
+	return m.appendworld_bloom_support_deck_skill_level_bonuses, true
+}
+
+// ClearWorldBloomSupportDeckSkillLevelBonuses clears the value of the "world_bloom_support_deck_skill_level_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) ClearWorldBloomSupportDeckSkillLevelBonuses() {
+	m.world_bloom_support_deck_skill_level_bonuses = nil
+	m.appendworld_bloom_support_deck_skill_level_bonuses = nil
+	m.clearedFields[worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses] = struct{}{}
+}
+
+// WorldBloomSupportDeckSkillLevelBonusesCleared returns if the "world_bloom_support_deck_skill_level_bonuses" field was cleared in this mutation.
+func (m *WorldbloomsupportdeckbonuseMutation) WorldBloomSupportDeckSkillLevelBonusesCleared() bool {
+	_, ok := m.clearedFields[worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses]
+	return ok
+}
+
+// ResetWorldBloomSupportDeckSkillLevelBonuses resets all changes to the "world_bloom_support_deck_skill_level_bonuses" field.
+func (m *WorldbloomsupportdeckbonuseMutation) ResetWorldBloomSupportDeckSkillLevelBonuses() {
+	m.world_bloom_support_deck_skill_level_bonuses = nil
+	m.appendworld_bloom_support_deck_skill_level_bonuses = nil
+	delete(m.clearedFields, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *WorldbloomsupportdeckbonuseMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -98563,9 +114585,18 @@ func (m *WorldbloomsupportdeckbonuseMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorldbloomsupportdeckbonuseMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 5)
 	if m.card_rarity_type != nil {
 		fields = append(fields, worldbloomsupportdeckbonuse.FieldCardRarityType)
+	}
+	if m.world_bloom_support_deck_character_bonuses != nil {
+		fields = append(fields, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses)
+	}
+	if m.world_bloom_support_deck_master_rank_bonuses != nil {
+		fields = append(fields, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses)
+	}
+	if m.world_bloom_support_deck_skill_level_bonuses != nil {
+		fields = append(fields, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses)
 	}
 	if m.server_region != nil {
 		fields = append(fields, worldbloomsupportdeckbonuse.FieldServerRegion)
@@ -98580,6 +114611,12 @@ func (m *WorldbloomsupportdeckbonuseMutation) Field(name string) (ent.Value, boo
 	switch name {
 	case worldbloomsupportdeckbonuse.FieldCardRarityType:
 		return m.CardRarityType()
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses:
+		return m.WorldBloomSupportDeckCharacterBonuses()
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses:
+		return m.WorldBloomSupportDeckMasterRankBonuses()
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses:
+		return m.WorldBloomSupportDeckSkillLevelBonuses()
 	case worldbloomsupportdeckbonuse.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -98593,6 +114630,12 @@ func (m *WorldbloomsupportdeckbonuseMutation) OldField(ctx context.Context, name
 	switch name {
 	case worldbloomsupportdeckbonuse.FieldCardRarityType:
 		return m.OldCardRarityType(ctx)
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses:
+		return m.OldWorldBloomSupportDeckCharacterBonuses(ctx)
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses:
+		return m.OldWorldBloomSupportDeckMasterRankBonuses(ctx)
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses:
+		return m.OldWorldBloomSupportDeckSkillLevelBonuses(ctx)
 	case worldbloomsupportdeckbonuse.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -98610,6 +114653,27 @@ func (m *WorldbloomsupportdeckbonuseMutation) SetField(name string, value ent.Va
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCardRarityType(v)
+		return nil
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses:
+		v, ok := value.(json.RawMessage)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorldBloomSupportDeckCharacterBonuses(v)
+		return nil
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses:
+		v, ok := value.(json.RawMessage)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorldBloomSupportDeckMasterRankBonuses(v)
+		return nil
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses:
+		v, ok := value.(json.RawMessage)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorldBloomSupportDeckSkillLevelBonuses(v)
 		return nil
 	case worldbloomsupportdeckbonuse.FieldServerRegion:
 		v, ok := value.(string)
@@ -98651,6 +114715,15 @@ func (m *WorldbloomsupportdeckbonuseMutation) ClearedFields() []string {
 	if m.FieldCleared(worldbloomsupportdeckbonuse.FieldCardRarityType) {
 		fields = append(fields, worldbloomsupportdeckbonuse.FieldCardRarityType)
 	}
+	if m.FieldCleared(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses) {
+		fields = append(fields, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses)
+	}
+	if m.FieldCleared(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses) {
+		fields = append(fields, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses)
+	}
+	if m.FieldCleared(worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses) {
+		fields = append(fields, worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses)
+	}
 	return fields
 }
 
@@ -98668,6 +114741,15 @@ func (m *WorldbloomsupportdeckbonuseMutation) ClearField(name string) error {
 	case worldbloomsupportdeckbonuse.FieldCardRarityType:
 		m.ClearCardRarityType()
 		return nil
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses:
+		m.ClearWorldBloomSupportDeckCharacterBonuses()
+		return nil
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses:
+		m.ClearWorldBloomSupportDeckMasterRankBonuses()
+		return nil
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses:
+		m.ClearWorldBloomSupportDeckSkillLevelBonuses()
+		return nil
 	}
 	return fmt.Errorf("unknown Worldbloomsupportdeckbonuse nullable field %s", name)
 }
@@ -98678,6 +114760,15 @@ func (m *WorldbloomsupportdeckbonuseMutation) ResetField(name string) error {
 	switch name {
 	case worldbloomsupportdeckbonuse.FieldCardRarityType:
 		m.ResetCardRarityType()
+		return nil
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckCharacterBonuses:
+		m.ResetWorldBloomSupportDeckCharacterBonuses()
+		return nil
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckMasterRankBonuses:
+		m.ResetWorldBloomSupportDeckMasterRankBonuses()
+		return nil
+	case worldbloomsupportdeckbonuse.FieldWorldBloomSupportDeckSkillLevelBonuses:
+		m.ResetWorldBloomSupportDeckSkillLevelBonuses()
 		return nil
 	case worldbloomsupportdeckbonuse.FieldServerRegion:
 		m.ResetServerRegion()

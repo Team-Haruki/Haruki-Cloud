@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -11,10 +12,28 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
+// mysekaiFileToTable maps a master JSON file to the table that holds its
+// rows. Besides the MySekai tables it lists the tables Cloud forwards as
+// whole rows (custom profile resources, omikujis, unit story episode groups,
+// event stories), which need the camelCase map shape rather than a typed
+// model.
 var mysekaiFileToTable = map[string]string{
 	"cards.json": "cards",
 	"characterArchiveMysekaiCharacterTalkGroups.json":         "characterarchivemysekaicharactertalkgroups",
 	"customMusicScoreTags.json":                               "custommusicscoretags",
+	"customProfileCharacterIconResources.json":                "customprofilecharactericonresources",
+	"customProfileCollectionResources.json":                   "customprofilecollectionresources",
+	"customProfileEtcResources.json":                          "customprofileetcresources",
+	"customProfileGeneralBackgroundResources.json":            "customprofilegeneralbackgroundresources",
+	"customProfileMaterialResources.json":                     "customprofilematerialresources",
+	"customProfileMemberStandingPictureResources.json":        "customprofilememberstandingpictureresources",
+	"customProfilePlayerInfoResources.json":                   "customprofileplayerinforesources",
+	"customProfileShapeResources.json":                        "customprofileshaperesources",
+	"customProfileStoryBackgroundResources.json":              "customprofilestorybackgroundresources",
+	"customProfileTextColors.json":                            "customprofiletextcolors",
+	"customProfileTextFonts.json":                             "customprofiletextfonts",
+	"customProfileUserInterfaceIconResources.json":            "customprofileuserinterfaceiconresources",
+	"eventStories.json":                                       "eventstories",
 	"gameCharacters.json":                                     "gamecharacters",
 	"gameCharacterUnits.json":                                 "gamecharacterunits",
 	"limitedTimeMusics.json":                                  "limitedtimemusics",
@@ -51,6 +70,16 @@ var mysekaiFileToTable = map[string]string{
 	"mysekaiSiteHarvestFixtures.json":                         "mysekaisiteharvestfixtures",
 	"mysekaiSiteLayouts.json":                                 "mysekaisitelayouts",
 	"mysekaiSiteLevels.json":                                  "mysekaisitelevels",
+	"omikujis.json":                                           "omikujis",
+	"unitStoryEpisodeGroups.json":                             "unitstoryepisodegroups",
+}
+
+// MasterRowSource is implemented by row stores that can say whether a master
+// table was served at all. ok is false only when neither the database nor a
+// local store answered (no database, query error, or missing file); a served
+// but empty table reports ok with no rows.
+type MasterRowSource interface {
+	LoadMasterRows(ctx context.Context, filename string) (rows map[int]map[string]any, ok bool)
 }
 
 type dbMySekaiProvider struct {
@@ -58,22 +87,20 @@ type dbMySekaiProvider struct {
 	region renderregion.Value
 	local  *localMySekaiProvider
 
-	db          *sql.DB
-	dbType      string
-	mu          sync.Mutex
-	lists       map[string][]map[string]any
-	mapsByID    map[string]map[int]map[string]any
-	unavailable map[string]struct{}
+	db       *sql.DB
+	dbType   string
+	mu       sync.Mutex
+	lists    map[string][]map[string]any
+	mapsByID map[string]map[int]map[string]any
 }
 
 func newDBMySekaiProvider(client *sekaiDB.Client, region renderregion.Value, cfg databaseProviderConfig) *dbMySekaiProvider {
 	p := &dbMySekaiProvider{
-		client:      client,
-		region:      region,
-		dbType:      strings.TrimSpace(cfg.sekaiDBType),
-		lists:       make(map[string][]map[string]any),
-		mapsByID:    make(map[string]map[int]map[string]any),
-		unavailable: make(map[string]struct{}),
+		client:   client,
+		region:   region,
+		dbType:   strings.TrimSpace(cfg.sekaiDBType),
+		lists:    make(map[string][]map[string]any),
+		mapsByID: make(map[string]map[int]map[string]any),
 	}
 	if p.dbType == "" {
 		p.dbType = "postgres"
@@ -101,29 +128,61 @@ func (p *dbMySekaiProvider) Configured() bool {
 }
 
 func (p *dbMySekaiProvider) LoadList(filename string) []map[string]any {
+	return p.LoadListContext(context.Background(), filename)
+}
+
+// LoadListContext serves a table from the database first. A served but
+// empty table falls back to the local store when one is configured (the
+// table exists before its first ingest), and a database that cannot answer
+// falls back the same way.
+func (p *dbMySekaiProvider) LoadListContext(ctx context.Context, filename string) []map[string]any {
 	if p == nil {
 		return nil
 	}
-	if items, ok := p.loadDBList(filename); ok {
+	items, ok := p.loadDBList(ctx, filename)
+	if ok && len(items) > 0 {
 		return items
 	}
-	if p.local == nil {
-		return nil
+	if p.local != nil {
+		if fallback := p.local.LoadList(filename); fallback != nil {
+			return fallback
+		}
 	}
-	return p.local.LoadList(filename)
+	if ok {
+		return items
+	}
+	return nil
 }
 
 func (p *dbMySekaiProvider) LoadMapByID(filename string) map[int]map[string]any {
+	return p.LoadMapByIDContext(context.Background(), filename)
+}
+
+func (p *dbMySekaiProvider) LoadMapByIDContext(ctx context.Context, filename string) map[int]map[string]any {
+	rows, _ := p.LoadMasterRows(ctx, filename)
+	return rows
+}
+
+// LoadMasterRows implements MasterRowSource with the LoadListContext
+// precedence: database rows, else the local store, else the served empty
+// table.
+func (p *dbMySekaiProvider) LoadMasterRows(ctx context.Context, filename string) (map[int]map[string]any, bool) {
 	if p == nil {
-		return nil
+		return nil, false
 	}
-	if items, ok := p.loadDBMapByID(filename); ok {
-		return items
+	items, ok := p.loadDBMapByID(ctx, filename)
+	if ok && len(items) > 0 {
+		return items, true
 	}
-	if p.local == nil {
-		return nil
+	if p.local != nil {
+		if fallback := p.local.LoadMapByID(filename); fallback != nil {
+			return fallback, true
+		}
 	}
-	return p.local.LoadMapByID(filename)
+	if ok {
+		return items, true
+	}
+	return nil, false
 }
 
 func (p *dbMySekaiProvider) LoadObject(filename string, target any) bool {
@@ -140,7 +199,10 @@ func (p *dbMySekaiProvider) Close() error {
 	return p.db.Close()
 }
 
-func (p *dbMySekaiProvider) loadDBList(filename string) ([]map[string]any, bool) {
+// loadDBList serves one table from the database. The rows are cached until
+// the masterdata cache is reset (the registry poll resets it after an
+// ingest); a query error is not cached, so the next call retries.
+func (p *dbMySekaiProvider) loadDBList(ctx context.Context, filename string) ([]map[string]any, bool) {
 	if p == nil || p.db == nil {
 		return nil, false
 	}
@@ -154,27 +216,26 @@ func (p *dbMySekaiProvider) loadDBList(filename string) ([]map[string]any, bool)
 		p.mu.Unlock()
 		return items, true
 	}
-	if _, ok := p.unavailable[filename]; ok {
-		p.mu.Unlock()
-		return nil, false
-	}
 	p.mu.Unlock()
 
-	items, err := p.queryTable(table)
+	fillCtx, cancel := cacheFillContext(ctx)
+	defer cancel()
+	items, err := p.queryTable(fillCtx, table)
 	if err != nil {
-		p.mu.Lock()
-		p.unavailable[filename] = struct{}{}
-		p.mu.Unlock()
 		return nil, false
 	}
 
 	p.mu.Lock()
+	if cached, ok := p.lists[filename]; ok {
+		p.mu.Unlock()
+		return cached, true
+	}
 	p.lists[filename] = items
 	p.mu.Unlock()
 	return items, true
 }
 
-func (p *dbMySekaiProvider) loadDBMapByID(filename string) (map[int]map[string]any, bool) {
+func (p *dbMySekaiProvider) loadDBMapByID(ctx context.Context, filename string) (map[int]map[string]any, bool) {
 	if p == nil || p.db == nil {
 		return nil, false
 	}
@@ -186,7 +247,7 @@ func (p *dbMySekaiProvider) loadDBMapByID(filename string) (map[int]map[string]a
 	}
 	p.mu.Unlock()
 
-	items, ok := p.loadDBList(filename)
+	items, ok := p.loadDBList(ctx, filename)
 	if !ok {
 		return nil, false
 	}
@@ -198,13 +259,17 @@ func (p *dbMySekaiProvider) loadDBMapByID(filename string) (map[int]map[string]a
 	}
 
 	p.mu.Lock()
+	if cached, ok := p.mapsByID[filename]; ok {
+		p.mu.Unlock()
+		return cached, true
+	}
 	p.mapsByID[filename] = result
 	p.mu.Unlock()
 	return result, true
 }
 
-func (p *dbMySekaiProvider) queryTable(table string) ([]map[string]any, error) {
-	rows, err := queryMySekaiTable(p.db, p.dbType, table, renderregion.WithDefault(p.region).String())
+func (p *dbMySekaiProvider) queryTable(ctx context.Context, table string) ([]map[string]any, error) {
+	rows, err := queryMySekaiTable(ctx, p.db, p.dbType, table, renderregion.WithDefault(p.region).String())
 	if err != nil {
 		return nil, err
 	}
@@ -246,6 +311,19 @@ var mysekaiPostgresTableQueries = map[string]string{
 	"cards": `SELECT * FROM "cards" WHERE server_region = $1`,
 	"characterarchivemysekaicharactertalkgroups":         `SELECT * FROM "characterarchivemysekaicharactertalkgroups" WHERE server_region = $1`,
 	"custommusicscoretags":                               `SELECT * FROM "custommusicscoretags" WHERE server_region = $1`,
+	"customprofilecharactericonresources":                `SELECT * FROM "customprofilecharactericonresources" WHERE server_region = $1`,
+	"customprofilecollectionresources":                   `SELECT * FROM "customprofilecollectionresources" WHERE server_region = $1`,
+	"customprofileetcresources":                          `SELECT * FROM "customprofileetcresources" WHERE server_region = $1`,
+	"customprofilegeneralbackgroundresources":            `SELECT * FROM "customprofilegeneralbackgroundresources" WHERE server_region = $1`,
+	"customprofilematerialresources":                     `SELECT * FROM "customprofilematerialresources" WHERE server_region = $1`,
+	"customprofilememberstandingpictureresources":        `SELECT * FROM "customprofilememberstandingpictureresources" WHERE server_region = $1`,
+	"customprofileplayerinforesources":                   `SELECT * FROM "customprofileplayerinforesources" WHERE server_region = $1`,
+	"customprofileshaperesources":                        `SELECT * FROM "customprofileshaperesources" WHERE server_region = $1`,
+	"customprofilestorybackgroundresources":              `SELECT * FROM "customprofilestorybackgroundresources" WHERE server_region = $1`,
+	"customprofiletextcolors":                            `SELECT * FROM "customprofiletextcolors" WHERE server_region = $1`,
+	"customprofiletextfonts":                             `SELECT * FROM "customprofiletextfonts" WHERE server_region = $1`,
+	"customprofileuserinterfaceiconresources":            `SELECT * FROM "customprofileuserinterfaceiconresources" WHERE server_region = $1`,
+	"eventstories":                                       `SELECT * FROM "eventstories" WHERE server_region = $1`,
 	"gamecharacters":                                     `SELECT * FROM "gamecharacters" WHERE server_region = $1`,
 	"gamecharacterunits":                                 `SELECT * FROM "gamecharacterunits" WHERE server_region = $1`,
 	"limitedtimemusics":                                  `SELECT * FROM "limitedtimemusics" WHERE server_region = $1`,
@@ -282,12 +360,27 @@ var mysekaiPostgresTableQueries = map[string]string{
 	"mysekaisiteharvestfixtures":                         `SELECT * FROM "mysekaisiteharvestfixtures" WHERE server_region = $1`,
 	"mysekaisitelayouts":                                 `SELECT * FROM "mysekaisitelayouts" WHERE server_region = $1`,
 	"mysekaisitelevels":                                  `SELECT * FROM "mysekaisitelevels" WHERE server_region = $1`,
+	"omikujis":                                           `SELECT * FROM "omikujis" WHERE server_region = $1`,
+	"unitstoryepisodegroups":                             `SELECT * FROM "unitstoryepisodegroups" WHERE server_region = $1`,
 }
 
 var mysekaiQuestionMarkTableQueries = map[string]string{
 	"cards": `SELECT * FROM cards WHERE server_region = ?`,
 	"characterarchivemysekaicharactertalkgroups":         `SELECT * FROM characterarchivemysekaicharactertalkgroups WHERE server_region = ?`,
 	"custommusicscoretags":                               `SELECT * FROM custommusicscoretags WHERE server_region = ?`,
+	"customprofilecharactericonresources":                `SELECT * FROM customprofilecharactericonresources WHERE server_region = ?`,
+	"customprofilecollectionresources":                   `SELECT * FROM customprofilecollectionresources WHERE server_region = ?`,
+	"customprofileetcresources":                          `SELECT * FROM customprofileetcresources WHERE server_region = ?`,
+	"customprofilegeneralbackgroundresources":            `SELECT * FROM customprofilegeneralbackgroundresources WHERE server_region = ?`,
+	"customprofilematerialresources":                     `SELECT * FROM customprofilematerialresources WHERE server_region = ?`,
+	"customprofilememberstandingpictureresources":        `SELECT * FROM customprofilememberstandingpictureresources WHERE server_region = ?`,
+	"customprofileplayerinforesources":                   `SELECT * FROM customprofileplayerinforesources WHERE server_region = ?`,
+	"customprofileshaperesources":                        `SELECT * FROM customprofileshaperesources WHERE server_region = ?`,
+	"customprofilestorybackgroundresources":              `SELECT * FROM customprofilestorybackgroundresources WHERE server_region = ?`,
+	"customprofiletextcolors":                            `SELECT * FROM customprofiletextcolors WHERE server_region = ?`,
+	"customprofiletextfonts":                             `SELECT * FROM customprofiletextfonts WHERE server_region = ?`,
+	"customprofileuserinterfaceiconresources":            `SELECT * FROM customprofileuserinterfaceiconresources WHERE server_region = ?`,
+	"eventstories":                                       `SELECT * FROM eventstories WHERE server_region = ?`,
 	"gamecharacters":                                     `SELECT * FROM gamecharacters WHERE server_region = ?`,
 	"gamecharacterunits":                                 `SELECT * FROM gamecharacterunits WHERE server_region = ?`,
 	"limitedtimemusics":                                  `SELECT * FROM limitedtimemusics WHERE server_region = ?`,
@@ -324,9 +417,11 @@ var mysekaiQuestionMarkTableQueries = map[string]string{
 	"mysekaisiteharvestfixtures":                         `SELECT * FROM mysekaisiteharvestfixtures WHERE server_region = ?`,
 	"mysekaisitelayouts":                                 `SELECT * FROM mysekaisitelayouts WHERE server_region = ?`,
 	"mysekaisitelevels":                                  `SELECT * FROM mysekaisitelevels WHERE server_region = ?`,
+	"omikujis":                                           `SELECT * FROM omikujis WHERE server_region = ?`,
+	"unitstoryepisodegroups":                             `SELECT * FROM unitstoryepisodegroups WHERE server_region = ?`,
 }
 
-func queryMySekaiTable(db *sql.DB, dbType, table, region string) (*sql.Rows, error) {
+func queryMySekaiTable(ctx context.Context, db *sql.DB, dbType, table, region string) (*sql.Rows, error) {
 	queries := mysekaiQuestionMarkTableQueries
 	if strings.EqualFold(dbType, "postgres") {
 		queries = mysekaiPostgresTableQueries
@@ -335,7 +430,7 @@ func queryMySekaiTable(db *sql.DB, dbType, table, region string) (*sql.Rows, err
 	if !ok {
 		return nil, fmt.Errorf("unsupported MySekai masterdata table %q", table)
 	}
-	return db.Query(query, region)
+	return db.QueryContext(ctx, query, region)
 }
 
 func mysekaiColumnKey(col string) string {

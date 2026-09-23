@@ -143,8 +143,10 @@ func TestDBMySekaiProviderDatabaseAndFallbackPaths(t *testing.T) {
 
 	}
 	{
-		_, unavailable := p.unavailable["cards.json"]
-		testutil.RequireArgs(t, unavailable, "missing DB table should be negative-cached")
+		p.mu.Lock()
+		_, cached := p.lists["cards.json"]
+		p.mu.Unlock()
+		testutil.RequireArgs(t, !cached, "missing DB table must not be cached as loaded")
 	}
 	{
 
@@ -175,7 +177,7 @@ func TestDBMySekaiProviderDatabaseAndFallbackPaths(t *testing.T) {
 	}
 
 	p.dbType = "postgres"
-	postgresPlaceholderItems, err := p.queryTable("musics")
+	postgresPlaceholderItems, err := p.queryTable(context.Background(), "musics")
 	{
 		testutil.Require(t, !(err != nil), "Postgres-style placeholder query on SQLite = %#v, %v", postgresPlaceholderItems, err)
 		testutil.Require(t, !(len(postgresPlaceholderItems) != 2), "Postgres-style placeholder query on SQLite = %#v, %v", postgresPlaceholderItems, err)
@@ -183,7 +185,7 @@ func TestDBMySekaiProviderDatabaseAndFallbackPaths(t *testing.T) {
 
 	p.dbType = "sqlite3"
 	{
-		_, err := p.queryTable("missing_table")
+		_, err := p.queryTable(context.Background(), "missing_table")
 		testutil.RequireArgs(t, !(err == nil), "querying a missing table should fail")
 	}
 	{
@@ -372,12 +374,12 @@ func TestDBMySekaiQueryWhitelistsMatchFileMapping(t *testing.T) {
 
 	injectedTable := `musics"; DROP TABLE musics; --`
 	{
-		_, err := queryMySekaiTable(nil, "postgres", injectedTable, "jp")
+		_, err := queryMySekaiTable(context.Background(), nil, "postgres", injectedTable, "jp")
 		testutil.RequireArgs(t, !(err == nil), "Postgres query accepted an unlisted table identifier")
 	}
 	{
 
-		_, err := queryMySekaiTable(nil, "sqlite3", injectedTable, "jp")
+		_, err := queryMySekaiTable(context.Background(), nil, "sqlite3", injectedTable, "jp")
 		testutil.RequireArgs(t, !(err == nil), "question-mark query accepted an unlisted table identifier")
 	}
 

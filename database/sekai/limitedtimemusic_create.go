@@ -75,6 +75,20 @@ func (_c *LimitedtimemusicCreate) SetNillableEndAt(v *int64) *LimitedtimemusicCr
 	return _c
 }
 
+// SetCollaborationModeID sets the "collaboration_mode_id" field.
+func (_c *LimitedtimemusicCreate) SetCollaborationModeID(v int64) *LimitedtimemusicCreate {
+	_c.mutation.SetCollaborationModeID(v)
+	return _c
+}
+
+// SetNillableCollaborationModeID sets the "collaboration_mode_id" field if the given value is not nil.
+func (_c *LimitedtimemusicCreate) SetNillableCollaborationModeID(v *int64) *LimitedtimemusicCreate {
+	if v != nil {
+		_c.SetCollaborationModeID(*v)
+	}
+	return _c
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_c *LimitedtimemusicCreate) SetServerRegion(v string) *LimitedtimemusicCreate {
 	_c.mutation.SetServerRegion(v)
@@ -159,6 +173,10 @@ func (_c *LimitedtimemusicCreate) createSpec() (*Limitedtimemusic, *sqlgraph.Cre
 	if value, ok := _c.mutation.EndAt(); ok {
 		_spec.SetField(limitedtimemusic.FieldEndAt, field.TypeInt64, value)
 		_node.EndAt = value
+	}
+	if value, ok := _c.mutation.CollaborationModeID(); ok {
+		_spec.SetField(limitedtimemusic.FieldCollaborationModeID, field.TypeInt64, value)
+		_node.CollaborationModeID = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(limitedtimemusic.FieldServerRegion, field.TypeString, value)

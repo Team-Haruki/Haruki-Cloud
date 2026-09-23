@@ -35,6 +35,18 @@ import (
 	"haruki-cloud/database/sekai/cheerfulcarnivalteam"
 	"haruki-cloud/database/sekai/costume3d"
 	"haruki-cloud/database/sekai/custommusicscoretag"
+	"haruki-cloud/database/sekai/customprofilecharactericonresource"
+	"haruki-cloud/database/sekai/customprofilecollectionresource"
+	"haruki-cloud/database/sekai/customprofileetcresource"
+	"haruki-cloud/database/sekai/customprofilegeneralbackgroundresource"
+	"haruki-cloud/database/sekai/customprofilematerialresource"
+	"haruki-cloud/database/sekai/customprofilememberstandingpictureresource"
+	"haruki-cloud/database/sekai/customprofileplayerinforesource"
+	"haruki-cloud/database/sekai/customprofileshaperesource"
+	"haruki-cloud/database/sekai/customprofilestorybackgroundresource"
+	"haruki-cloud/database/sekai/customprofiletextcolor"
+	"haruki-cloud/database/sekai/customprofiletextfont"
+	"haruki-cloud/database/sekai/customprofileuserinterfaceiconresource"
 	"haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
@@ -57,6 +69,7 @@ import (
 	"haruki-cloud/database/sekai/material"
 	"haruki-cloud/database/sekai/music"
 	"haruki-cloud/database/sekai/musicartist"
+	"haruki-cloud/database/sekai/musiccategorie"
 	"haruki-cloud/database/sekai/musicdifficultie"
 	"haruki-cloud/database/sekai/musictag"
 	"haruki-cloud/database/sekai/musicvocal"
@@ -96,6 +109,7 @@ import (
 	"haruki-cloud/database/sekai/mysekaisitelayout"
 	"haruki-cloud/database/sekai/mysekaisitelevel"
 	"haruki-cloud/database/sekai/ngword"
+	"haruki-cloud/database/sekai/omikuji"
 	"haruki-cloud/database/sekai/outsidecharacter"
 	"haruki-cloud/database/sekai/playerframe"
 	"haruki-cloud/database/sekai/playerframegroup"
@@ -106,6 +120,7 @@ import (
 	"haruki-cloud/database/sekai/skill"
 	"haruki-cloud/database/sekai/skillpracticeticket"
 	"haruki-cloud/database/sekai/stamp"
+	"haruki-cloud/database/sekai/unitstoryepisodegroup"
 	"haruki-cloud/database/sekai/virtuallive"
 	"haruki-cloud/database/sekai/worldbloom"
 	"haruki-cloud/database/sekai/worldbloomchapterrankingrewardrange"
@@ -171,6 +186,30 @@ type Client struct {
 	Costume3D *Costume3DClient
 	// Custommusicscoretag is the client for interacting with the Custommusicscoretag builders.
 	Custommusicscoretag *CustommusicscoretagClient
+	// Customprofilecharactericonresource is the client for interacting with the Customprofilecharactericonresource builders.
+	Customprofilecharactericonresource *CustomprofilecharactericonresourceClient
+	// Customprofilecollectionresource is the client for interacting with the Customprofilecollectionresource builders.
+	Customprofilecollectionresource *CustomprofilecollectionresourceClient
+	// Customprofileetcresource is the client for interacting with the Customprofileetcresource builders.
+	Customprofileetcresource *CustomprofileetcresourceClient
+	// Customprofilegeneralbackgroundresource is the client for interacting with the Customprofilegeneralbackgroundresource builders.
+	Customprofilegeneralbackgroundresource *CustomprofilegeneralbackgroundresourceClient
+	// Customprofilematerialresource is the client for interacting with the Customprofilematerialresource builders.
+	Customprofilematerialresource *CustomprofilematerialresourceClient
+	// Customprofilememberstandingpictureresource is the client for interacting with the Customprofilememberstandingpictureresource builders.
+	Customprofilememberstandingpictureresource *CustomprofilememberstandingpictureresourceClient
+	// Customprofileplayerinforesource is the client for interacting with the Customprofileplayerinforesource builders.
+	Customprofileplayerinforesource *CustomprofileplayerinforesourceClient
+	// Customprofileshaperesource is the client for interacting with the Customprofileshaperesource builders.
+	Customprofileshaperesource *CustomprofileshaperesourceClient
+	// Customprofilestorybackgroundresource is the client for interacting with the Customprofilestorybackgroundresource builders.
+	Customprofilestorybackgroundresource *CustomprofilestorybackgroundresourceClient
+	// Customprofiletextcolor is the client for interacting with the Customprofiletextcolor builders.
+	Customprofiletextcolor *CustomprofiletextcolorClient
+	// Customprofiletextfont is the client for interacting with the Customprofiletextfont builders.
+	Customprofiletextfont *CustomprofiletextfontClient
+	// Customprofileuserinterfaceiconresource is the client for interacting with the Customprofileuserinterfaceiconresource builders.
+	Customprofileuserinterfaceiconresource *CustomprofileuserinterfaceiconresourceClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
 	// Eventcard is the client for interacting with the Eventcard builders.
@@ -215,6 +254,8 @@ type Client struct {
 	Music *MusicClient
 	// MusicArtist is the client for interacting with the MusicArtist builders.
 	MusicArtist *MusicArtistClient
+	// Musiccategorie is the client for interacting with the Musiccategorie builders.
+	Musiccategorie *MusiccategorieClient
 	// Musicdifficultie is the client for interacting with the Musicdifficultie builders.
 	Musicdifficultie *MusicdifficultieClient
 	// Musictag is the client for interacting with the Musictag builders.
@@ -293,6 +334,8 @@ type Client struct {
 	Mysekaisitelevel *MysekaisitelevelClient
 	// Ngword is the client for interacting with the Ngword builders.
 	Ngword *NgwordClient
+	// Omikuji is the client for interacting with the Omikuji builders.
+	Omikuji *OmikujiClient
 	// Outsidecharacter is the client for interacting with the Outsidecharacter builders.
 	Outsidecharacter *OutsidecharacterClient
 	// Playerframe is the client for interacting with the Playerframe builders.
@@ -313,6 +356,8 @@ type Client struct {
 	Skillpracticeticket *SkillpracticeticketClient
 	// Stamp is the client for interacting with the Stamp builders.
 	Stamp *StampClient
+	// Unitstoryepisodegroup is the client for interacting with the Unitstoryepisodegroup builders.
+	Unitstoryepisodegroup *UnitstoryepisodegroupClient
 	// Virtuallive is the client for interacting with the Virtuallive builders.
 	Virtuallive *VirtualliveClient
 	// Worldbloom is the client for interacting with the Worldbloom builders.
@@ -360,6 +405,18 @@ func (c *Client) init() {
 	c.Cheerfulcarnivalteam = NewCheerfulcarnivalteamClient(c.config)
 	c.Costume3D = NewCostume3DClient(c.config)
 	c.Custommusicscoretag = NewCustommusicscoretagClient(c.config)
+	c.Customprofilecharactericonresource = NewCustomprofilecharactericonresourceClient(c.config)
+	c.Customprofilecollectionresource = NewCustomprofilecollectionresourceClient(c.config)
+	c.Customprofileetcresource = NewCustomprofileetcresourceClient(c.config)
+	c.Customprofilegeneralbackgroundresource = NewCustomprofilegeneralbackgroundresourceClient(c.config)
+	c.Customprofilematerialresource = NewCustomprofilematerialresourceClient(c.config)
+	c.Customprofilememberstandingpictureresource = NewCustomprofilememberstandingpictureresourceClient(c.config)
+	c.Customprofileplayerinforesource = NewCustomprofileplayerinforesourceClient(c.config)
+	c.Customprofileshaperesource = NewCustomprofileshaperesourceClient(c.config)
+	c.Customprofilestorybackgroundresource = NewCustomprofilestorybackgroundresourceClient(c.config)
+	c.Customprofiletextcolor = NewCustomprofiletextcolorClient(c.config)
+	c.Customprofiletextfont = NewCustomprofiletextfontClient(c.config)
+	c.Customprofileuserinterfaceiconresource = NewCustomprofileuserinterfaceiconresourceClient(c.config)
 	c.Event = NewEventClient(c.config)
 	c.Eventcard = NewEventcardClient(c.config)
 	c.Eventdeckbonuse = NewEventdeckbonuseClient(c.config)
@@ -382,6 +439,7 @@ func (c *Client) init() {
 	c.Material = NewMaterialClient(c.config)
 	c.Music = NewMusicClient(c.config)
 	c.MusicArtist = NewMusicArtistClient(c.config)
+	c.Musiccategorie = NewMusiccategorieClient(c.config)
 	c.Musicdifficultie = NewMusicdifficultieClient(c.config)
 	c.Musictag = NewMusictagClient(c.config)
 	c.Musicvocal = NewMusicvocalClient(c.config)
@@ -421,6 +479,7 @@ func (c *Client) init() {
 	c.Mysekaisitelayout = NewMysekaisitelayoutClient(c.config)
 	c.Mysekaisitelevel = NewMysekaisitelevelClient(c.config)
 	c.Ngword = NewNgwordClient(c.config)
+	c.Omikuji = NewOmikujiClient(c.config)
 	c.Outsidecharacter = NewOutsidecharacterClient(c.config)
 	c.Playerframe = NewPlayerframeClient(c.config)
 	c.Playerframegroup = NewPlayerframegroupClient(c.config)
@@ -431,6 +490,7 @@ func (c *Client) init() {
 	c.Skill = NewSkillClient(c.config)
 	c.Skillpracticeticket = NewSkillpracticeticketClient(c.config)
 	c.Stamp = NewStampClient(c.config)
+	c.Unitstoryepisodegroup = NewUnitstoryepisodegroupClient(c.config)
 	c.Virtuallive = NewVirtualliveClient(c.config)
 	c.Worldbloom = NewWorldbloomClient(c.config)
 	c.Worldbloomchapterrankingrewardrange = NewWorldbloomchapterrankingrewardrangeClient(c.config)
@@ -544,46 +604,59 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Cardsupplie:                  NewCardsupplieClient(cfg),
 		Challengelivehighscorereward: NewChallengelivehighscorerewardClient(cfg),
 		Character2D:                  NewCharacter2DClient(cfg),
-		Characterarchivemysekaicharactertalkgroup: NewCharacterarchivemysekaicharactertalkgroupClient(cfg),
-		Charactermissionv2:                        NewCharactermissionv2Client(cfg),
-		Charactermissionv2Areaitem:                NewCharactermissionv2AreaitemClient(cfg),
-		Charactermissionv2Exjson:                  NewCharactermissionv2ExjsonClient(cfg),
-		Charactermissionv2Parametergroup:          NewCharactermissionv2ParametergroupClient(cfg),
-		Characterrank:                             NewCharacterrankClient(cfg),
-		Cheerfulcarnivalteam:                      NewCheerfulcarnivalteamClient(cfg),
-		Costume3D:                                 NewCostume3DClient(cfg),
-		Custommusicscoretag:                       NewCustommusicscoretagClient(cfg),
-		Event:                                     NewEventClient(cfg),
-		Eventcard:                                 NewEventcardClient(cfg),
-		Eventdeckbonuse:                           NewEventdeckbonuseClient(cfg),
-		Eventexchangesummarie:                     NewEventexchangesummarieClient(cfg),
-		Eventitem:                                 NewEventitemClient(cfg),
-		Eventmusic:                                NewEventmusicClient(cfg),
-		Eventraritybonusrate:                      NewEventraritybonusrateClient(cfg),
-		Eventstorie:                               NewEventstorieClient(cfg),
-		Eventstoryunit:                            NewEventstoryunitClient(cfg),
-		Gacha:                                     NewGachaClient(cfg),
-		Gachaceilitem:                             NewGachaceilitemClient(cfg),
-		Gachaticket:                               NewGachaticketClient(cfg),
-		Gamecharacter:                             NewGamecharacterClient(cfg),
-		Gamecharacterunit:                         NewGamecharacterunitClient(cfg),
-		Honor:                                     NewHonorClient(cfg),
-		Honorgroup:                                NewHonorgroupClient(cfg),
-		Level:                                     NewLevelClient(cfg),
-		Limitedtimemusic:                          NewLimitedtimemusicClient(cfg),
-		Masterlesson:                              NewMasterlessonClient(cfg),
-		Material:                                  NewMaterialClient(cfg),
-		Music:                                     NewMusicClient(cfg),
-		MusicArtist:                               NewMusicArtistClient(cfg),
-		Musicdifficultie:                          NewMusicdifficultieClient(cfg),
-		Musictag:                                  NewMusictagClient(cfg),
-		Musicvocal:                                NewMusicvocalClient(cfg),
-		Mysekaiblueprint:                          NewMysekaiblueprintClient(cfg),
-		Mysekaiblueprintmysekaimaterialcost:       NewMysekaiblueprintmysekaimaterialcostClient(cfg),
-		Mysekaicharactertalk:                      NewMysekaicharactertalkClient(cfg),
-		Mysekaicharactertalkcondition:             NewMysekaicharactertalkconditionClient(cfg),
-		Mysekaicharactertalkconditiongroup:        NewMysekaicharactertalkconditiongroupClient(cfg),
-		Mysekaicharactertalkfixturecommon:         NewMysekaicharactertalkfixturecommonClient(cfg),
+		Characterarchivemysekaicharactertalkgroup:  NewCharacterarchivemysekaicharactertalkgroupClient(cfg),
+		Charactermissionv2:                         NewCharactermissionv2Client(cfg),
+		Charactermissionv2Areaitem:                 NewCharactermissionv2AreaitemClient(cfg),
+		Charactermissionv2Exjson:                   NewCharactermissionv2ExjsonClient(cfg),
+		Charactermissionv2Parametergroup:           NewCharactermissionv2ParametergroupClient(cfg),
+		Characterrank:                              NewCharacterrankClient(cfg),
+		Cheerfulcarnivalteam:                       NewCheerfulcarnivalteamClient(cfg),
+		Costume3D:                                  NewCostume3DClient(cfg),
+		Custommusicscoretag:                        NewCustommusicscoretagClient(cfg),
+		Customprofilecharactericonresource:         NewCustomprofilecharactericonresourceClient(cfg),
+		Customprofilecollectionresource:            NewCustomprofilecollectionresourceClient(cfg),
+		Customprofileetcresource:                   NewCustomprofileetcresourceClient(cfg),
+		Customprofilegeneralbackgroundresource:     NewCustomprofilegeneralbackgroundresourceClient(cfg),
+		Customprofilematerialresource:              NewCustomprofilematerialresourceClient(cfg),
+		Customprofilememberstandingpictureresource: NewCustomprofilememberstandingpictureresourceClient(cfg),
+		Customprofileplayerinforesource:            NewCustomprofileplayerinforesourceClient(cfg),
+		Customprofileshaperesource:                 NewCustomprofileshaperesourceClient(cfg),
+		Customprofilestorybackgroundresource:       NewCustomprofilestorybackgroundresourceClient(cfg),
+		Customprofiletextcolor:                     NewCustomprofiletextcolorClient(cfg),
+		Customprofiletextfont:                      NewCustomprofiletextfontClient(cfg),
+		Customprofileuserinterfaceiconresource:     NewCustomprofileuserinterfaceiconresourceClient(cfg),
+		Event:                                      NewEventClient(cfg),
+		Eventcard:                                  NewEventcardClient(cfg),
+		Eventdeckbonuse:                            NewEventdeckbonuseClient(cfg),
+		Eventexchangesummarie:                      NewEventexchangesummarieClient(cfg),
+		Eventitem:                                  NewEventitemClient(cfg),
+		Eventmusic:                                 NewEventmusicClient(cfg),
+		Eventraritybonusrate:                       NewEventraritybonusrateClient(cfg),
+		Eventstorie:                                NewEventstorieClient(cfg),
+		Eventstoryunit:                             NewEventstoryunitClient(cfg),
+		Gacha:                                      NewGachaClient(cfg),
+		Gachaceilitem:                              NewGachaceilitemClient(cfg),
+		Gachaticket:                                NewGachaticketClient(cfg),
+		Gamecharacter:                              NewGamecharacterClient(cfg),
+		Gamecharacterunit:                          NewGamecharacterunitClient(cfg),
+		Honor:                                      NewHonorClient(cfg),
+		Honorgroup:                                 NewHonorgroupClient(cfg),
+		Level:                                      NewLevelClient(cfg),
+		Limitedtimemusic:                           NewLimitedtimemusicClient(cfg),
+		Masterlesson:                               NewMasterlessonClient(cfg),
+		Material:                                   NewMaterialClient(cfg),
+		Music:                                      NewMusicClient(cfg),
+		MusicArtist:                                NewMusicArtistClient(cfg),
+		Musiccategorie:                             NewMusiccategorieClient(cfg),
+		Musicdifficultie:                           NewMusicdifficultieClient(cfg),
+		Musictag:                                   NewMusictagClient(cfg),
+		Musicvocal:                                 NewMusicvocalClient(cfg),
+		Mysekaiblueprint:                           NewMysekaiblueprintClient(cfg),
+		Mysekaiblueprintmysekaimaterialcost:        NewMysekaiblueprintmysekaimaterialcostClient(cfg),
+		Mysekaicharactertalk:                       NewMysekaicharactertalkClient(cfg),
+		Mysekaicharactertalkcondition:              NewMysekaicharactertalkconditionClient(cfg),
+		Mysekaicharactertalkconditiongroup:         NewMysekaicharactertalkconditiongroupClient(cfg),
+		Mysekaicharactertalkfixturecommon:          NewMysekaicharactertalkfixturecommonClient(cfg),
 		Mysekaicharactertalkfixturecommonmysekaifixturegroup: NewMysekaicharactertalkfixturecommonmysekaifixturegroupClient(cfg),
 		Mysekaicustomfixture:                              NewMysekaicustomfixtureClient(cfg),
 		Mysekaifixture:                                    NewMysekaifixtureClient(cfg),
@@ -614,6 +687,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Mysekaisitelayout:                                 NewMysekaisitelayoutClient(cfg),
 		Mysekaisitelevel:                                  NewMysekaisitelevelClient(cfg),
 		Ngword:                                            NewNgwordClient(cfg),
+		Omikuji:                                           NewOmikujiClient(cfg),
 		Outsidecharacter:                                  NewOutsidecharacterClient(cfg),
 		Playerframe:                                       NewPlayerframeClient(cfg),
 		Playerframegroup:                                  NewPlayerframegroupClient(cfg),
@@ -624,12 +698,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Skill:                                             NewSkillClient(cfg),
 		Skillpracticeticket:                               NewSkillpracticeticketClient(cfg),
 		Stamp:                                             NewStampClient(cfg),
+		Unitstoryepisodegroup:                             NewUnitstoryepisodegroupClient(cfg),
 		Virtuallive:                                       NewVirtualliveClient(cfg),
 		Worldbloom:                                        NewWorldbloomClient(cfg),
 		Worldbloomchapterrankingrewardrange:               NewWorldbloomchapterrankingrewardrangeClient(cfg),
 		Worldbloomdifferentattributebonuse:                NewWorldbloomdifferentattributebonuseClient(cfg),
 		Worldbloomsupportdeckbonuse:                       NewWorldbloomsupportdeckbonuseClient(cfg),
-		Worldbloomsupportdeckuniteventlimitedbonuse:       NewWorldbloomsupportdeckuniteventlimitedbonuseClient(cfg),
+		Worldbloomsupportdeckuniteventlimitedbonuse: NewWorldbloomsupportdeckuniteventlimitedbonuseClient(cfg),
 	}, nil
 }
 
@@ -664,46 +739,59 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Cardsupplie:                  NewCardsupplieClient(cfg),
 		Challengelivehighscorereward: NewChallengelivehighscorerewardClient(cfg),
 		Character2D:                  NewCharacter2DClient(cfg),
-		Characterarchivemysekaicharactertalkgroup: NewCharacterarchivemysekaicharactertalkgroupClient(cfg),
-		Charactermissionv2:                        NewCharactermissionv2Client(cfg),
-		Charactermissionv2Areaitem:                NewCharactermissionv2AreaitemClient(cfg),
-		Charactermissionv2Exjson:                  NewCharactermissionv2ExjsonClient(cfg),
-		Charactermissionv2Parametergroup:          NewCharactermissionv2ParametergroupClient(cfg),
-		Characterrank:                             NewCharacterrankClient(cfg),
-		Cheerfulcarnivalteam:                      NewCheerfulcarnivalteamClient(cfg),
-		Costume3D:                                 NewCostume3DClient(cfg),
-		Custommusicscoretag:                       NewCustommusicscoretagClient(cfg),
-		Event:                                     NewEventClient(cfg),
-		Eventcard:                                 NewEventcardClient(cfg),
-		Eventdeckbonuse:                           NewEventdeckbonuseClient(cfg),
-		Eventexchangesummarie:                     NewEventexchangesummarieClient(cfg),
-		Eventitem:                                 NewEventitemClient(cfg),
-		Eventmusic:                                NewEventmusicClient(cfg),
-		Eventraritybonusrate:                      NewEventraritybonusrateClient(cfg),
-		Eventstorie:                               NewEventstorieClient(cfg),
-		Eventstoryunit:                            NewEventstoryunitClient(cfg),
-		Gacha:                                     NewGachaClient(cfg),
-		Gachaceilitem:                             NewGachaceilitemClient(cfg),
-		Gachaticket:                               NewGachaticketClient(cfg),
-		Gamecharacter:                             NewGamecharacterClient(cfg),
-		Gamecharacterunit:                         NewGamecharacterunitClient(cfg),
-		Honor:                                     NewHonorClient(cfg),
-		Honorgroup:                                NewHonorgroupClient(cfg),
-		Level:                                     NewLevelClient(cfg),
-		Limitedtimemusic:                          NewLimitedtimemusicClient(cfg),
-		Masterlesson:                              NewMasterlessonClient(cfg),
-		Material:                                  NewMaterialClient(cfg),
-		Music:                                     NewMusicClient(cfg),
-		MusicArtist:                               NewMusicArtistClient(cfg),
-		Musicdifficultie:                          NewMusicdifficultieClient(cfg),
-		Musictag:                                  NewMusictagClient(cfg),
-		Musicvocal:                                NewMusicvocalClient(cfg),
-		Mysekaiblueprint:                          NewMysekaiblueprintClient(cfg),
-		Mysekaiblueprintmysekaimaterialcost:       NewMysekaiblueprintmysekaimaterialcostClient(cfg),
-		Mysekaicharactertalk:                      NewMysekaicharactertalkClient(cfg),
-		Mysekaicharactertalkcondition:             NewMysekaicharactertalkconditionClient(cfg),
-		Mysekaicharactertalkconditiongroup:        NewMysekaicharactertalkconditiongroupClient(cfg),
-		Mysekaicharactertalkfixturecommon:         NewMysekaicharactertalkfixturecommonClient(cfg),
+		Characterarchivemysekaicharactertalkgroup:  NewCharacterarchivemysekaicharactertalkgroupClient(cfg),
+		Charactermissionv2:                         NewCharactermissionv2Client(cfg),
+		Charactermissionv2Areaitem:                 NewCharactermissionv2AreaitemClient(cfg),
+		Charactermissionv2Exjson:                   NewCharactermissionv2ExjsonClient(cfg),
+		Charactermissionv2Parametergroup:           NewCharactermissionv2ParametergroupClient(cfg),
+		Characterrank:                              NewCharacterrankClient(cfg),
+		Cheerfulcarnivalteam:                       NewCheerfulcarnivalteamClient(cfg),
+		Costume3D:                                  NewCostume3DClient(cfg),
+		Custommusicscoretag:                        NewCustommusicscoretagClient(cfg),
+		Customprofilecharactericonresource:         NewCustomprofilecharactericonresourceClient(cfg),
+		Customprofilecollectionresource:            NewCustomprofilecollectionresourceClient(cfg),
+		Customprofileetcresource:                   NewCustomprofileetcresourceClient(cfg),
+		Customprofilegeneralbackgroundresource:     NewCustomprofilegeneralbackgroundresourceClient(cfg),
+		Customprofilematerialresource:              NewCustomprofilematerialresourceClient(cfg),
+		Customprofilememberstandingpictureresource: NewCustomprofilememberstandingpictureresourceClient(cfg),
+		Customprofileplayerinforesource:            NewCustomprofileplayerinforesourceClient(cfg),
+		Customprofileshaperesource:                 NewCustomprofileshaperesourceClient(cfg),
+		Customprofilestorybackgroundresource:       NewCustomprofilestorybackgroundresourceClient(cfg),
+		Customprofiletextcolor:                     NewCustomprofiletextcolorClient(cfg),
+		Customprofiletextfont:                      NewCustomprofiletextfontClient(cfg),
+		Customprofileuserinterfaceiconresource:     NewCustomprofileuserinterfaceiconresourceClient(cfg),
+		Event:                                      NewEventClient(cfg),
+		Eventcard:                                  NewEventcardClient(cfg),
+		Eventdeckbonuse:                            NewEventdeckbonuseClient(cfg),
+		Eventexchangesummarie:                      NewEventexchangesummarieClient(cfg),
+		Eventitem:                                  NewEventitemClient(cfg),
+		Eventmusic:                                 NewEventmusicClient(cfg),
+		Eventraritybonusrate:                       NewEventraritybonusrateClient(cfg),
+		Eventstorie:                                NewEventstorieClient(cfg),
+		Eventstoryunit:                             NewEventstoryunitClient(cfg),
+		Gacha:                                      NewGachaClient(cfg),
+		Gachaceilitem:                              NewGachaceilitemClient(cfg),
+		Gachaticket:                                NewGachaticketClient(cfg),
+		Gamecharacter:                              NewGamecharacterClient(cfg),
+		Gamecharacterunit:                          NewGamecharacterunitClient(cfg),
+		Honor:                                      NewHonorClient(cfg),
+		Honorgroup:                                 NewHonorgroupClient(cfg),
+		Level:                                      NewLevelClient(cfg),
+		Limitedtimemusic:                           NewLimitedtimemusicClient(cfg),
+		Masterlesson:                               NewMasterlessonClient(cfg),
+		Material:                                   NewMaterialClient(cfg),
+		Music:                                      NewMusicClient(cfg),
+		MusicArtist:                                NewMusicArtistClient(cfg),
+		Musiccategorie:                             NewMusiccategorieClient(cfg),
+		Musicdifficultie:                           NewMusicdifficultieClient(cfg),
+		Musictag:                                   NewMusictagClient(cfg),
+		Musicvocal:                                 NewMusicvocalClient(cfg),
+		Mysekaiblueprint:                           NewMysekaiblueprintClient(cfg),
+		Mysekaiblueprintmysekaimaterialcost:        NewMysekaiblueprintmysekaimaterialcostClient(cfg),
+		Mysekaicharactertalk:                       NewMysekaicharactertalkClient(cfg),
+		Mysekaicharactertalkcondition:              NewMysekaicharactertalkconditionClient(cfg),
+		Mysekaicharactertalkconditiongroup:         NewMysekaicharactertalkconditiongroupClient(cfg),
+		Mysekaicharactertalkfixturecommon:          NewMysekaicharactertalkfixturecommonClient(cfg),
 		Mysekaicharactertalkfixturecommonmysekaifixturegroup: NewMysekaicharactertalkfixturecommonmysekaifixturegroupClient(cfg),
 		Mysekaicustomfixture:                              NewMysekaicustomfixtureClient(cfg),
 		Mysekaifixture:                                    NewMysekaifixtureClient(cfg),
@@ -734,6 +822,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Mysekaisitelayout:                                 NewMysekaisitelayoutClient(cfg),
 		Mysekaisitelevel:                                  NewMysekaisitelevelClient(cfg),
 		Ngword:                                            NewNgwordClient(cfg),
+		Omikuji:                                           NewOmikujiClient(cfg),
 		Outsidecharacter:                                  NewOutsidecharacterClient(cfg),
 		Playerframe:                                       NewPlayerframeClient(cfg),
 		Playerframegroup:                                  NewPlayerframegroupClient(cfg),
@@ -744,12 +833,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Skill:                                             NewSkillClient(cfg),
 		Skillpracticeticket:                               NewSkillpracticeticketClient(cfg),
 		Stamp:                                             NewStampClient(cfg),
+		Unitstoryepisodegroup:                             NewUnitstoryepisodegroupClient(cfg),
 		Virtuallive:                                       NewVirtualliveClient(cfg),
 		Worldbloom:                                        NewWorldbloomClient(cfg),
 		Worldbloomchapterrankingrewardrange:               NewWorldbloomchapterrankingrewardrangeClient(cfg),
 		Worldbloomdifferentattributebonuse:                NewWorldbloomdifferentattributebonuseClient(cfg),
 		Worldbloomsupportdeckbonuse:                       NewWorldbloomsupportdeckbonuseClient(cfg),
-		Worldbloomsupportdeckuniteventlimitedbonuse:       NewWorldbloomsupportdeckuniteventlimitedbonuseClient(cfg),
+		Worldbloomsupportdeckuniteventlimitedbonuse: NewWorldbloomsupportdeckuniteventlimitedbonuseClient(cfg),
 	}, nil
 }
 
@@ -785,15 +875,21 @@ func (c *Client) Use(hooks ...Hook) {
 		c.Characterarchivemysekaicharactertalkgroup, c.Charactermissionv2,
 		c.Charactermissionv2Areaitem, c.Charactermissionv2Exjson,
 		c.Charactermissionv2Parametergroup, c.Characterrank, c.Cheerfulcarnivalteam,
-		c.Costume3D, c.Custommusicscoretag, c.Event, c.Eventcard, c.Eventdeckbonuse,
-		c.Eventexchangesummarie, c.Eventitem, c.Eventmusic, c.Eventraritybonusrate,
-		c.Eventstorie, c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket,
-		c.Gamecharacter, c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level,
-		c.Limitedtimemusic, c.Masterlesson, c.Material, c.Music, c.MusicArtist,
-		c.Musicdifficultie, c.Musictag, c.Musicvocal, c.Mysekaiblueprint,
-		c.Mysekaiblueprintmysekaimaterialcost, c.Mysekaicharactertalk,
-		c.Mysekaicharactertalkcondition, c.Mysekaicharactertalkconditiongroup,
-		c.Mysekaicharactertalkfixturecommon,
+		c.Costume3D, c.Custommusicscoretag, c.Customprofilecharactericonresource,
+		c.Customprofilecollectionresource, c.Customprofileetcresource,
+		c.Customprofilegeneralbackgroundresource, c.Customprofilematerialresource,
+		c.Customprofilememberstandingpictureresource,
+		c.Customprofileplayerinforesource, c.Customprofileshaperesource,
+		c.Customprofilestorybackgroundresource, c.Customprofiletextcolor,
+		c.Customprofiletextfont, c.Customprofileuserinterfaceiconresource, c.Event,
+		c.Eventcard, c.Eventdeckbonuse, c.Eventexchangesummarie, c.Eventitem,
+		c.Eventmusic, c.Eventraritybonusrate, c.Eventstorie, c.Eventstoryunit, c.Gacha,
+		c.Gachaceilitem, c.Gachaticket, c.Gamecharacter, c.Gamecharacterunit, c.Honor,
+		c.Honorgroup, c.Level, c.Limitedtimemusic, c.Masterlesson, c.Material, c.Music,
+		c.MusicArtist, c.Musiccategorie, c.Musicdifficultie, c.Musictag, c.Musicvocal,
+		c.Mysekaiblueprint, c.Mysekaiblueprintmysekaimaterialcost,
+		c.Mysekaicharactertalk, c.Mysekaicharactertalkcondition,
+		c.Mysekaicharactertalkconditiongroup, c.Mysekaicharactertalkfixturecommon,
 		c.Mysekaicharactertalkfixturecommonmysekaifixturegroup, c.Mysekaicustomfixture,
 		c.Mysekaifixture, c.Mysekaifixturegamecharactergroup,
 		c.Mysekaifixturegamecharactergroupperformancebonuse, c.Mysekaifixturemaingenre,
@@ -805,10 +901,11 @@ func (c *Client) Use(hooks ...Hook) {
 		c.Mysekaimaterialgamecharacterrelation, c.Mysekaimusicrecord,
 		c.Mysekaimusicrecordcategorie, c.Mysekaiphenomenabackgroundcolor,
 		c.Mysekaiphenomenon, c.Mysekairankrelease, c.Mysekaisiteharvestfixture,
-		c.Mysekaisitelayout, c.Mysekaisitelevel, c.Ngword, c.Outsidecharacter,
-		c.Playerframe, c.Playerframegroup, c.Practiceticket, c.Resourceboxdetail,
-		c.Resourceboxe, c.Shopitem, c.Skill, c.Skillpracticeticket, c.Stamp,
-		c.Virtuallive, c.Worldbloom, c.Worldbloomchapterrankingrewardrange,
+		c.Mysekaisitelayout, c.Mysekaisitelevel, c.Ngword, c.Omikuji,
+		c.Outsidecharacter, c.Playerframe, c.Playerframegroup, c.Practiceticket,
+		c.Resourceboxdetail, c.Resourceboxe, c.Shopitem, c.Skill,
+		c.Skillpracticeticket, c.Stamp, c.Unitstoryepisodegroup, c.Virtuallive,
+		c.Worldbloom, c.Worldbloomchapterrankingrewardrange,
 		c.Worldbloomdifferentattributebonuse, c.Worldbloomsupportdeckbonuse,
 		c.Worldbloomsupportdeckuniteventlimitedbonuse,
 	} {
@@ -826,15 +923,21 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.Characterarchivemysekaicharactertalkgroup, c.Charactermissionv2,
 		c.Charactermissionv2Areaitem, c.Charactermissionv2Exjson,
 		c.Charactermissionv2Parametergroup, c.Characterrank, c.Cheerfulcarnivalteam,
-		c.Costume3D, c.Custommusicscoretag, c.Event, c.Eventcard, c.Eventdeckbonuse,
-		c.Eventexchangesummarie, c.Eventitem, c.Eventmusic, c.Eventraritybonusrate,
-		c.Eventstorie, c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket,
-		c.Gamecharacter, c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level,
-		c.Limitedtimemusic, c.Masterlesson, c.Material, c.Music, c.MusicArtist,
-		c.Musicdifficultie, c.Musictag, c.Musicvocal, c.Mysekaiblueprint,
-		c.Mysekaiblueprintmysekaimaterialcost, c.Mysekaicharactertalk,
-		c.Mysekaicharactertalkcondition, c.Mysekaicharactertalkconditiongroup,
-		c.Mysekaicharactertalkfixturecommon,
+		c.Costume3D, c.Custommusicscoretag, c.Customprofilecharactericonresource,
+		c.Customprofilecollectionresource, c.Customprofileetcresource,
+		c.Customprofilegeneralbackgroundresource, c.Customprofilematerialresource,
+		c.Customprofilememberstandingpictureresource,
+		c.Customprofileplayerinforesource, c.Customprofileshaperesource,
+		c.Customprofilestorybackgroundresource, c.Customprofiletextcolor,
+		c.Customprofiletextfont, c.Customprofileuserinterfaceiconresource, c.Event,
+		c.Eventcard, c.Eventdeckbonuse, c.Eventexchangesummarie, c.Eventitem,
+		c.Eventmusic, c.Eventraritybonusrate, c.Eventstorie, c.Eventstoryunit, c.Gacha,
+		c.Gachaceilitem, c.Gachaticket, c.Gamecharacter, c.Gamecharacterunit, c.Honor,
+		c.Honorgroup, c.Level, c.Limitedtimemusic, c.Masterlesson, c.Material, c.Music,
+		c.MusicArtist, c.Musiccategorie, c.Musicdifficultie, c.Musictag, c.Musicvocal,
+		c.Mysekaiblueprint, c.Mysekaiblueprintmysekaimaterialcost,
+		c.Mysekaicharactertalk, c.Mysekaicharactertalkcondition,
+		c.Mysekaicharactertalkconditiongroup, c.Mysekaicharactertalkfixturecommon,
 		c.Mysekaicharactertalkfixturecommonmysekaifixturegroup, c.Mysekaicustomfixture,
 		c.Mysekaifixture, c.Mysekaifixturegamecharactergroup,
 		c.Mysekaifixturegamecharactergroupperformancebonuse, c.Mysekaifixturemaingenre,
@@ -846,10 +949,11 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.Mysekaimaterialgamecharacterrelation, c.Mysekaimusicrecord,
 		c.Mysekaimusicrecordcategorie, c.Mysekaiphenomenabackgroundcolor,
 		c.Mysekaiphenomenon, c.Mysekairankrelease, c.Mysekaisiteharvestfixture,
-		c.Mysekaisitelayout, c.Mysekaisitelevel, c.Ngword, c.Outsidecharacter,
-		c.Playerframe, c.Playerframegroup, c.Practiceticket, c.Resourceboxdetail,
-		c.Resourceboxe, c.Shopitem, c.Skill, c.Skillpracticeticket, c.Stamp,
-		c.Virtuallive, c.Worldbloom, c.Worldbloomchapterrankingrewardrange,
+		c.Mysekaisitelayout, c.Mysekaisitelevel, c.Ngword, c.Omikuji,
+		c.Outsidecharacter, c.Playerframe, c.Playerframegroup, c.Practiceticket,
+		c.Resourceboxdetail, c.Resourceboxe, c.Shopitem, c.Skill,
+		c.Skillpracticeticket, c.Stamp, c.Unitstoryepisodegroup, c.Virtuallive,
+		c.Worldbloom, c.Worldbloomchapterrankingrewardrange,
 		c.Worldbloomdifferentattributebonuse, c.Worldbloomsupportdeckbonuse,
 		c.Worldbloomsupportdeckuniteventlimitedbonuse,
 	} {
@@ -908,6 +1012,30 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Costume3D.mutate(ctx, m)
 	case *CustommusicscoretagMutation:
 		return c.Custommusicscoretag.mutate(ctx, m)
+	case *CustomprofilecharactericonresourceMutation:
+		return c.Customprofilecharactericonresource.mutate(ctx, m)
+	case *CustomprofilecollectionresourceMutation:
+		return c.Customprofilecollectionresource.mutate(ctx, m)
+	case *CustomprofileetcresourceMutation:
+		return c.Customprofileetcresource.mutate(ctx, m)
+	case *CustomprofilegeneralbackgroundresourceMutation:
+		return c.Customprofilegeneralbackgroundresource.mutate(ctx, m)
+	case *CustomprofilematerialresourceMutation:
+		return c.Customprofilematerialresource.mutate(ctx, m)
+	case *CustomprofilememberstandingpictureresourceMutation:
+		return c.Customprofilememberstandingpictureresource.mutate(ctx, m)
+	case *CustomprofileplayerinforesourceMutation:
+		return c.Customprofileplayerinforesource.mutate(ctx, m)
+	case *CustomprofileshaperesourceMutation:
+		return c.Customprofileshaperesource.mutate(ctx, m)
+	case *CustomprofilestorybackgroundresourceMutation:
+		return c.Customprofilestorybackgroundresource.mutate(ctx, m)
+	case *CustomprofiletextcolorMutation:
+		return c.Customprofiletextcolor.mutate(ctx, m)
+	case *CustomprofiletextfontMutation:
+		return c.Customprofiletextfont.mutate(ctx, m)
+	case *CustomprofileuserinterfaceiconresourceMutation:
+		return c.Customprofileuserinterfaceiconresource.mutate(ctx, m)
 	case *EventMutation:
 		return c.Event.mutate(ctx, m)
 	case *EventcardMutation:
@@ -952,6 +1080,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Music.mutate(ctx, m)
 	case *MusicArtistMutation:
 		return c.MusicArtist.mutate(ctx, m)
+	case *MusiccategorieMutation:
+		return c.Musiccategorie.mutate(ctx, m)
 	case *MusicdifficultieMutation:
 		return c.Musicdifficultie.mutate(ctx, m)
 	case *MusictagMutation:
@@ -1030,6 +1160,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Mysekaisitelevel.mutate(ctx, m)
 	case *NgwordMutation:
 		return c.Ngword.mutate(ctx, m)
+	case *OmikujiMutation:
+		return c.Omikuji.mutate(ctx, m)
 	case *OutsidecharacterMutation:
 		return c.Outsidecharacter.mutate(ctx, m)
 	case *PlayerframeMutation:
@@ -1050,6 +1182,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Skillpracticeticket.mutate(ctx, m)
 	case *StampMutation:
 		return c.Stamp.mutate(ctx, m)
+	case *UnitstoryepisodegroupMutation:
+		return c.Unitstoryepisodegroup.mutate(ctx, m)
 	case *VirtualliveMutation:
 		return c.Virtuallive.mutate(ctx, m)
 	case *WorldbloomMutation:
@@ -4259,6 +4393,1602 @@ func (c *CustommusicscoretagClient) mutate(ctx context.Context, m *Custommusicsc
 	}
 }
 
+// CustomprofilecharactericonresourceClient is a client for the Customprofilecharactericonresource schema.
+type CustomprofilecharactericonresourceClient struct {
+	config
+}
+
+// NewCustomprofilecharactericonresourceClient returns a client for the Customprofilecharactericonresource from the given config.
+func NewCustomprofilecharactericonresourceClient(c config) *CustomprofilecharactericonresourceClient {
+	return &CustomprofilecharactericonresourceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofilecharactericonresource.Hooks(f(g(h())))`.
+func (c *CustomprofilecharactericonresourceClient) Use(hooks ...Hook) {
+	c.hooks.Customprofilecharactericonresource = append(c.hooks.Customprofilecharactericonresource, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofilecharactericonresource.Intercept(f(g(h())))`.
+func (c *CustomprofilecharactericonresourceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofilecharactericonresource = append(c.inters.Customprofilecharactericonresource, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofilecharactericonresource entity.
+func (c *CustomprofilecharactericonresourceClient) Create() *CustomprofilecharactericonresourceCreate {
+	mutation := newCustomprofilecharactericonresourceMutation(c.config, OpCreate)
+	return &CustomprofilecharactericonresourceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofilecharactericonresource entities.
+func (c *CustomprofilecharactericonresourceClient) CreateBulk(builders ...*CustomprofilecharactericonresourceCreate) *CustomprofilecharactericonresourceCreateBulk {
+	return &CustomprofilecharactericonresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofilecharactericonresourceClient) MapCreateBulk(slice any, setFunc func(*CustomprofilecharactericonresourceCreate, int)) *CustomprofilecharactericonresourceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofilecharactericonresourceCreateBulk{err: fmt.Errorf("calling to CustomprofilecharactericonresourceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofilecharactericonresourceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofilecharactericonresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofilecharactericonresource.
+func (c *CustomprofilecharactericonresourceClient) Update() *CustomprofilecharactericonresourceUpdate {
+	mutation := newCustomprofilecharactericonresourceMutation(c.config, OpUpdate)
+	return &CustomprofilecharactericonresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofilecharactericonresourceClient) UpdateOne(_m *Customprofilecharactericonresource) *CustomprofilecharactericonresourceUpdateOne {
+	mutation := newCustomprofilecharactericonresourceMutation(c.config, OpUpdateOne, withCustomprofilecharactericonresource(_m))
+	return &CustomprofilecharactericonresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofilecharactericonresourceClient) UpdateOneID(id int) *CustomprofilecharactericonresourceUpdateOne {
+	mutation := newCustomprofilecharactericonresourceMutation(c.config, OpUpdateOne, withCustomprofilecharactericonresourceID(id))
+	return &CustomprofilecharactericonresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofilecharactericonresource.
+func (c *CustomprofilecharactericonresourceClient) Delete() *CustomprofilecharactericonresourceDelete {
+	mutation := newCustomprofilecharactericonresourceMutation(c.config, OpDelete)
+	return &CustomprofilecharactericonresourceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofilecharactericonresourceClient) DeleteOne(_m *Customprofilecharactericonresource) *CustomprofilecharactericonresourceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofilecharactericonresourceClient) DeleteOneID(id int) *CustomprofilecharactericonresourceDeleteOne {
+	builder := c.Delete().Where(customprofilecharactericonresource.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofilecharactericonresourceDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofilecharactericonresource.
+func (c *CustomprofilecharactericonresourceClient) Query() *CustomprofilecharactericonresourceQuery {
+	return &CustomprofilecharactericonresourceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofilecharactericonresource},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofilecharactericonresource entity by its id.
+func (c *CustomprofilecharactericonresourceClient) Get(ctx context.Context, id int) (*Customprofilecharactericonresource, error) {
+	return c.Query().Where(customprofilecharactericonresource.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofilecharactericonresourceClient) GetX(ctx context.Context, id int) *Customprofilecharactericonresource {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofilecharactericonresourceClient) Hooks() []Hook {
+	return c.hooks.Customprofilecharactericonresource
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofilecharactericonresourceClient) Interceptors() []Interceptor {
+	return c.inters.Customprofilecharactericonresource
+}
+
+func (c *CustomprofilecharactericonresourceClient) mutate(ctx context.Context, m *CustomprofilecharactericonresourceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofilecharactericonresourceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofilecharactericonresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofilecharactericonresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofilecharactericonresourceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofilecharactericonresource mutation op: %q", m.Op())
+	}
+}
+
+// CustomprofilecollectionresourceClient is a client for the Customprofilecollectionresource schema.
+type CustomprofilecollectionresourceClient struct {
+	config
+}
+
+// NewCustomprofilecollectionresourceClient returns a client for the Customprofilecollectionresource from the given config.
+func NewCustomprofilecollectionresourceClient(c config) *CustomprofilecollectionresourceClient {
+	return &CustomprofilecollectionresourceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofilecollectionresource.Hooks(f(g(h())))`.
+func (c *CustomprofilecollectionresourceClient) Use(hooks ...Hook) {
+	c.hooks.Customprofilecollectionresource = append(c.hooks.Customprofilecollectionresource, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofilecollectionresource.Intercept(f(g(h())))`.
+func (c *CustomprofilecollectionresourceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofilecollectionresource = append(c.inters.Customprofilecollectionresource, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofilecollectionresource entity.
+func (c *CustomprofilecollectionresourceClient) Create() *CustomprofilecollectionresourceCreate {
+	mutation := newCustomprofilecollectionresourceMutation(c.config, OpCreate)
+	return &CustomprofilecollectionresourceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofilecollectionresource entities.
+func (c *CustomprofilecollectionresourceClient) CreateBulk(builders ...*CustomprofilecollectionresourceCreate) *CustomprofilecollectionresourceCreateBulk {
+	return &CustomprofilecollectionresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofilecollectionresourceClient) MapCreateBulk(slice any, setFunc func(*CustomprofilecollectionresourceCreate, int)) *CustomprofilecollectionresourceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofilecollectionresourceCreateBulk{err: fmt.Errorf("calling to CustomprofilecollectionresourceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofilecollectionresourceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofilecollectionresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofilecollectionresource.
+func (c *CustomprofilecollectionresourceClient) Update() *CustomprofilecollectionresourceUpdate {
+	mutation := newCustomprofilecollectionresourceMutation(c.config, OpUpdate)
+	return &CustomprofilecollectionresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofilecollectionresourceClient) UpdateOne(_m *Customprofilecollectionresource) *CustomprofilecollectionresourceUpdateOne {
+	mutation := newCustomprofilecollectionresourceMutation(c.config, OpUpdateOne, withCustomprofilecollectionresource(_m))
+	return &CustomprofilecollectionresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofilecollectionresourceClient) UpdateOneID(id int) *CustomprofilecollectionresourceUpdateOne {
+	mutation := newCustomprofilecollectionresourceMutation(c.config, OpUpdateOne, withCustomprofilecollectionresourceID(id))
+	return &CustomprofilecollectionresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofilecollectionresource.
+func (c *CustomprofilecollectionresourceClient) Delete() *CustomprofilecollectionresourceDelete {
+	mutation := newCustomprofilecollectionresourceMutation(c.config, OpDelete)
+	return &CustomprofilecollectionresourceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofilecollectionresourceClient) DeleteOne(_m *Customprofilecollectionresource) *CustomprofilecollectionresourceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofilecollectionresourceClient) DeleteOneID(id int) *CustomprofilecollectionresourceDeleteOne {
+	builder := c.Delete().Where(customprofilecollectionresource.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofilecollectionresourceDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofilecollectionresource.
+func (c *CustomprofilecollectionresourceClient) Query() *CustomprofilecollectionresourceQuery {
+	return &CustomprofilecollectionresourceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofilecollectionresource},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofilecollectionresource entity by its id.
+func (c *CustomprofilecollectionresourceClient) Get(ctx context.Context, id int) (*Customprofilecollectionresource, error) {
+	return c.Query().Where(customprofilecollectionresource.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofilecollectionresourceClient) GetX(ctx context.Context, id int) *Customprofilecollectionresource {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofilecollectionresourceClient) Hooks() []Hook {
+	return c.hooks.Customprofilecollectionresource
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofilecollectionresourceClient) Interceptors() []Interceptor {
+	return c.inters.Customprofilecollectionresource
+}
+
+func (c *CustomprofilecollectionresourceClient) mutate(ctx context.Context, m *CustomprofilecollectionresourceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofilecollectionresourceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofilecollectionresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofilecollectionresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofilecollectionresourceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofilecollectionresource mutation op: %q", m.Op())
+	}
+}
+
+// CustomprofileetcresourceClient is a client for the Customprofileetcresource schema.
+type CustomprofileetcresourceClient struct {
+	config
+}
+
+// NewCustomprofileetcresourceClient returns a client for the Customprofileetcresource from the given config.
+func NewCustomprofileetcresourceClient(c config) *CustomprofileetcresourceClient {
+	return &CustomprofileetcresourceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofileetcresource.Hooks(f(g(h())))`.
+func (c *CustomprofileetcresourceClient) Use(hooks ...Hook) {
+	c.hooks.Customprofileetcresource = append(c.hooks.Customprofileetcresource, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofileetcresource.Intercept(f(g(h())))`.
+func (c *CustomprofileetcresourceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofileetcresource = append(c.inters.Customprofileetcresource, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofileetcresource entity.
+func (c *CustomprofileetcresourceClient) Create() *CustomprofileetcresourceCreate {
+	mutation := newCustomprofileetcresourceMutation(c.config, OpCreate)
+	return &CustomprofileetcresourceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofileetcresource entities.
+func (c *CustomprofileetcresourceClient) CreateBulk(builders ...*CustomprofileetcresourceCreate) *CustomprofileetcresourceCreateBulk {
+	return &CustomprofileetcresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofileetcresourceClient) MapCreateBulk(slice any, setFunc func(*CustomprofileetcresourceCreate, int)) *CustomprofileetcresourceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofileetcresourceCreateBulk{err: fmt.Errorf("calling to CustomprofileetcresourceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofileetcresourceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofileetcresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofileetcresource.
+func (c *CustomprofileetcresourceClient) Update() *CustomprofileetcresourceUpdate {
+	mutation := newCustomprofileetcresourceMutation(c.config, OpUpdate)
+	return &CustomprofileetcresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofileetcresourceClient) UpdateOne(_m *Customprofileetcresource) *CustomprofileetcresourceUpdateOne {
+	mutation := newCustomprofileetcresourceMutation(c.config, OpUpdateOne, withCustomprofileetcresource(_m))
+	return &CustomprofileetcresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofileetcresourceClient) UpdateOneID(id int) *CustomprofileetcresourceUpdateOne {
+	mutation := newCustomprofileetcresourceMutation(c.config, OpUpdateOne, withCustomprofileetcresourceID(id))
+	return &CustomprofileetcresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofileetcresource.
+func (c *CustomprofileetcresourceClient) Delete() *CustomprofileetcresourceDelete {
+	mutation := newCustomprofileetcresourceMutation(c.config, OpDelete)
+	return &CustomprofileetcresourceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofileetcresourceClient) DeleteOne(_m *Customprofileetcresource) *CustomprofileetcresourceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofileetcresourceClient) DeleteOneID(id int) *CustomprofileetcresourceDeleteOne {
+	builder := c.Delete().Where(customprofileetcresource.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofileetcresourceDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofileetcresource.
+func (c *CustomprofileetcresourceClient) Query() *CustomprofileetcresourceQuery {
+	return &CustomprofileetcresourceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofileetcresource},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofileetcresource entity by its id.
+func (c *CustomprofileetcresourceClient) Get(ctx context.Context, id int) (*Customprofileetcresource, error) {
+	return c.Query().Where(customprofileetcresource.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofileetcresourceClient) GetX(ctx context.Context, id int) *Customprofileetcresource {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofileetcresourceClient) Hooks() []Hook {
+	return c.hooks.Customprofileetcresource
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofileetcresourceClient) Interceptors() []Interceptor {
+	return c.inters.Customprofileetcresource
+}
+
+func (c *CustomprofileetcresourceClient) mutate(ctx context.Context, m *CustomprofileetcresourceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofileetcresourceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofileetcresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofileetcresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofileetcresourceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofileetcresource mutation op: %q", m.Op())
+	}
+}
+
+// CustomprofilegeneralbackgroundresourceClient is a client for the Customprofilegeneralbackgroundresource schema.
+type CustomprofilegeneralbackgroundresourceClient struct {
+	config
+}
+
+// NewCustomprofilegeneralbackgroundresourceClient returns a client for the Customprofilegeneralbackgroundresource from the given config.
+func NewCustomprofilegeneralbackgroundresourceClient(c config) *CustomprofilegeneralbackgroundresourceClient {
+	return &CustomprofilegeneralbackgroundresourceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofilegeneralbackgroundresource.Hooks(f(g(h())))`.
+func (c *CustomprofilegeneralbackgroundresourceClient) Use(hooks ...Hook) {
+	c.hooks.Customprofilegeneralbackgroundresource = append(c.hooks.Customprofilegeneralbackgroundresource, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofilegeneralbackgroundresource.Intercept(f(g(h())))`.
+func (c *CustomprofilegeneralbackgroundresourceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofilegeneralbackgroundresource = append(c.inters.Customprofilegeneralbackgroundresource, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofilegeneralbackgroundresource entity.
+func (c *CustomprofilegeneralbackgroundresourceClient) Create() *CustomprofilegeneralbackgroundresourceCreate {
+	mutation := newCustomprofilegeneralbackgroundresourceMutation(c.config, OpCreate)
+	return &CustomprofilegeneralbackgroundresourceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofilegeneralbackgroundresource entities.
+func (c *CustomprofilegeneralbackgroundresourceClient) CreateBulk(builders ...*CustomprofilegeneralbackgroundresourceCreate) *CustomprofilegeneralbackgroundresourceCreateBulk {
+	return &CustomprofilegeneralbackgroundresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofilegeneralbackgroundresourceClient) MapCreateBulk(slice any, setFunc func(*CustomprofilegeneralbackgroundresourceCreate, int)) *CustomprofilegeneralbackgroundresourceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofilegeneralbackgroundresourceCreateBulk{err: fmt.Errorf("calling to CustomprofilegeneralbackgroundresourceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofilegeneralbackgroundresourceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofilegeneralbackgroundresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofilegeneralbackgroundresource.
+func (c *CustomprofilegeneralbackgroundresourceClient) Update() *CustomprofilegeneralbackgroundresourceUpdate {
+	mutation := newCustomprofilegeneralbackgroundresourceMutation(c.config, OpUpdate)
+	return &CustomprofilegeneralbackgroundresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofilegeneralbackgroundresourceClient) UpdateOne(_m *Customprofilegeneralbackgroundresource) *CustomprofilegeneralbackgroundresourceUpdateOne {
+	mutation := newCustomprofilegeneralbackgroundresourceMutation(c.config, OpUpdateOne, withCustomprofilegeneralbackgroundresource(_m))
+	return &CustomprofilegeneralbackgroundresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofilegeneralbackgroundresourceClient) UpdateOneID(id int) *CustomprofilegeneralbackgroundresourceUpdateOne {
+	mutation := newCustomprofilegeneralbackgroundresourceMutation(c.config, OpUpdateOne, withCustomprofilegeneralbackgroundresourceID(id))
+	return &CustomprofilegeneralbackgroundresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofilegeneralbackgroundresource.
+func (c *CustomprofilegeneralbackgroundresourceClient) Delete() *CustomprofilegeneralbackgroundresourceDelete {
+	mutation := newCustomprofilegeneralbackgroundresourceMutation(c.config, OpDelete)
+	return &CustomprofilegeneralbackgroundresourceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofilegeneralbackgroundresourceClient) DeleteOne(_m *Customprofilegeneralbackgroundresource) *CustomprofilegeneralbackgroundresourceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofilegeneralbackgroundresourceClient) DeleteOneID(id int) *CustomprofilegeneralbackgroundresourceDeleteOne {
+	builder := c.Delete().Where(customprofilegeneralbackgroundresource.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofilegeneralbackgroundresourceDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofilegeneralbackgroundresource.
+func (c *CustomprofilegeneralbackgroundresourceClient) Query() *CustomprofilegeneralbackgroundresourceQuery {
+	return &CustomprofilegeneralbackgroundresourceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofilegeneralbackgroundresource},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofilegeneralbackgroundresource entity by its id.
+func (c *CustomprofilegeneralbackgroundresourceClient) Get(ctx context.Context, id int) (*Customprofilegeneralbackgroundresource, error) {
+	return c.Query().Where(customprofilegeneralbackgroundresource.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofilegeneralbackgroundresourceClient) GetX(ctx context.Context, id int) *Customprofilegeneralbackgroundresource {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofilegeneralbackgroundresourceClient) Hooks() []Hook {
+	return c.hooks.Customprofilegeneralbackgroundresource
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofilegeneralbackgroundresourceClient) Interceptors() []Interceptor {
+	return c.inters.Customprofilegeneralbackgroundresource
+}
+
+func (c *CustomprofilegeneralbackgroundresourceClient) mutate(ctx context.Context, m *CustomprofilegeneralbackgroundresourceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofilegeneralbackgroundresourceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofilegeneralbackgroundresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofilegeneralbackgroundresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofilegeneralbackgroundresourceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofilegeneralbackgroundresource mutation op: %q", m.Op())
+	}
+}
+
+// CustomprofilematerialresourceClient is a client for the Customprofilematerialresource schema.
+type CustomprofilematerialresourceClient struct {
+	config
+}
+
+// NewCustomprofilematerialresourceClient returns a client for the Customprofilematerialresource from the given config.
+func NewCustomprofilematerialresourceClient(c config) *CustomprofilematerialresourceClient {
+	return &CustomprofilematerialresourceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofilematerialresource.Hooks(f(g(h())))`.
+func (c *CustomprofilematerialresourceClient) Use(hooks ...Hook) {
+	c.hooks.Customprofilematerialresource = append(c.hooks.Customprofilematerialresource, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofilematerialresource.Intercept(f(g(h())))`.
+func (c *CustomprofilematerialresourceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofilematerialresource = append(c.inters.Customprofilematerialresource, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofilematerialresource entity.
+func (c *CustomprofilematerialresourceClient) Create() *CustomprofilematerialresourceCreate {
+	mutation := newCustomprofilematerialresourceMutation(c.config, OpCreate)
+	return &CustomprofilematerialresourceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofilematerialresource entities.
+func (c *CustomprofilematerialresourceClient) CreateBulk(builders ...*CustomprofilematerialresourceCreate) *CustomprofilematerialresourceCreateBulk {
+	return &CustomprofilematerialresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofilematerialresourceClient) MapCreateBulk(slice any, setFunc func(*CustomprofilematerialresourceCreate, int)) *CustomprofilematerialresourceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofilematerialresourceCreateBulk{err: fmt.Errorf("calling to CustomprofilematerialresourceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofilematerialresourceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofilematerialresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofilematerialresource.
+func (c *CustomprofilematerialresourceClient) Update() *CustomprofilematerialresourceUpdate {
+	mutation := newCustomprofilematerialresourceMutation(c.config, OpUpdate)
+	return &CustomprofilematerialresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofilematerialresourceClient) UpdateOne(_m *Customprofilematerialresource) *CustomprofilematerialresourceUpdateOne {
+	mutation := newCustomprofilematerialresourceMutation(c.config, OpUpdateOne, withCustomprofilematerialresource(_m))
+	return &CustomprofilematerialresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofilematerialresourceClient) UpdateOneID(id int) *CustomprofilematerialresourceUpdateOne {
+	mutation := newCustomprofilematerialresourceMutation(c.config, OpUpdateOne, withCustomprofilematerialresourceID(id))
+	return &CustomprofilematerialresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofilematerialresource.
+func (c *CustomprofilematerialresourceClient) Delete() *CustomprofilematerialresourceDelete {
+	mutation := newCustomprofilematerialresourceMutation(c.config, OpDelete)
+	return &CustomprofilematerialresourceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofilematerialresourceClient) DeleteOne(_m *Customprofilematerialresource) *CustomprofilematerialresourceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofilematerialresourceClient) DeleteOneID(id int) *CustomprofilematerialresourceDeleteOne {
+	builder := c.Delete().Where(customprofilematerialresource.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofilematerialresourceDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofilematerialresource.
+func (c *CustomprofilematerialresourceClient) Query() *CustomprofilematerialresourceQuery {
+	return &CustomprofilematerialresourceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofilematerialresource},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofilematerialresource entity by its id.
+func (c *CustomprofilematerialresourceClient) Get(ctx context.Context, id int) (*Customprofilematerialresource, error) {
+	return c.Query().Where(customprofilematerialresource.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofilematerialresourceClient) GetX(ctx context.Context, id int) *Customprofilematerialresource {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofilematerialresourceClient) Hooks() []Hook {
+	return c.hooks.Customprofilematerialresource
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofilematerialresourceClient) Interceptors() []Interceptor {
+	return c.inters.Customprofilematerialresource
+}
+
+func (c *CustomprofilematerialresourceClient) mutate(ctx context.Context, m *CustomprofilematerialresourceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofilematerialresourceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofilematerialresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofilematerialresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofilematerialresourceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofilematerialresource mutation op: %q", m.Op())
+	}
+}
+
+// CustomprofilememberstandingpictureresourceClient is a client for the Customprofilememberstandingpictureresource schema.
+type CustomprofilememberstandingpictureresourceClient struct {
+	config
+}
+
+// NewCustomprofilememberstandingpictureresourceClient returns a client for the Customprofilememberstandingpictureresource from the given config.
+func NewCustomprofilememberstandingpictureresourceClient(c config) *CustomprofilememberstandingpictureresourceClient {
+	return &CustomprofilememberstandingpictureresourceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofilememberstandingpictureresource.Hooks(f(g(h())))`.
+func (c *CustomprofilememberstandingpictureresourceClient) Use(hooks ...Hook) {
+	c.hooks.Customprofilememberstandingpictureresource = append(c.hooks.Customprofilememberstandingpictureresource, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofilememberstandingpictureresource.Intercept(f(g(h())))`.
+func (c *CustomprofilememberstandingpictureresourceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofilememberstandingpictureresource = append(c.inters.Customprofilememberstandingpictureresource, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofilememberstandingpictureresource entity.
+func (c *CustomprofilememberstandingpictureresourceClient) Create() *CustomprofilememberstandingpictureresourceCreate {
+	mutation := newCustomprofilememberstandingpictureresourceMutation(c.config, OpCreate)
+	return &CustomprofilememberstandingpictureresourceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofilememberstandingpictureresource entities.
+func (c *CustomprofilememberstandingpictureresourceClient) CreateBulk(builders ...*CustomprofilememberstandingpictureresourceCreate) *CustomprofilememberstandingpictureresourceCreateBulk {
+	return &CustomprofilememberstandingpictureresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofilememberstandingpictureresourceClient) MapCreateBulk(slice any, setFunc func(*CustomprofilememberstandingpictureresourceCreate, int)) *CustomprofilememberstandingpictureresourceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofilememberstandingpictureresourceCreateBulk{err: fmt.Errorf("calling to CustomprofilememberstandingpictureresourceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofilememberstandingpictureresourceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofilememberstandingpictureresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofilememberstandingpictureresource.
+func (c *CustomprofilememberstandingpictureresourceClient) Update() *CustomprofilememberstandingpictureresourceUpdate {
+	mutation := newCustomprofilememberstandingpictureresourceMutation(c.config, OpUpdate)
+	return &CustomprofilememberstandingpictureresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofilememberstandingpictureresourceClient) UpdateOne(_m *Customprofilememberstandingpictureresource) *CustomprofilememberstandingpictureresourceUpdateOne {
+	mutation := newCustomprofilememberstandingpictureresourceMutation(c.config, OpUpdateOne, withCustomprofilememberstandingpictureresource(_m))
+	return &CustomprofilememberstandingpictureresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofilememberstandingpictureresourceClient) UpdateOneID(id int) *CustomprofilememberstandingpictureresourceUpdateOne {
+	mutation := newCustomprofilememberstandingpictureresourceMutation(c.config, OpUpdateOne, withCustomprofilememberstandingpictureresourceID(id))
+	return &CustomprofilememberstandingpictureresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofilememberstandingpictureresource.
+func (c *CustomprofilememberstandingpictureresourceClient) Delete() *CustomprofilememberstandingpictureresourceDelete {
+	mutation := newCustomprofilememberstandingpictureresourceMutation(c.config, OpDelete)
+	return &CustomprofilememberstandingpictureresourceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofilememberstandingpictureresourceClient) DeleteOne(_m *Customprofilememberstandingpictureresource) *CustomprofilememberstandingpictureresourceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofilememberstandingpictureresourceClient) DeleteOneID(id int) *CustomprofilememberstandingpictureresourceDeleteOne {
+	builder := c.Delete().Where(customprofilememberstandingpictureresource.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofilememberstandingpictureresourceDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofilememberstandingpictureresource.
+func (c *CustomprofilememberstandingpictureresourceClient) Query() *CustomprofilememberstandingpictureresourceQuery {
+	return &CustomprofilememberstandingpictureresourceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofilememberstandingpictureresource},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofilememberstandingpictureresource entity by its id.
+func (c *CustomprofilememberstandingpictureresourceClient) Get(ctx context.Context, id int) (*Customprofilememberstandingpictureresource, error) {
+	return c.Query().Where(customprofilememberstandingpictureresource.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofilememberstandingpictureresourceClient) GetX(ctx context.Context, id int) *Customprofilememberstandingpictureresource {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofilememberstandingpictureresourceClient) Hooks() []Hook {
+	return c.hooks.Customprofilememberstandingpictureresource
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofilememberstandingpictureresourceClient) Interceptors() []Interceptor {
+	return c.inters.Customprofilememberstandingpictureresource
+}
+
+func (c *CustomprofilememberstandingpictureresourceClient) mutate(ctx context.Context, m *CustomprofilememberstandingpictureresourceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofilememberstandingpictureresourceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofilememberstandingpictureresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofilememberstandingpictureresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofilememberstandingpictureresourceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofilememberstandingpictureresource mutation op: %q", m.Op())
+	}
+}
+
+// CustomprofileplayerinforesourceClient is a client for the Customprofileplayerinforesource schema.
+type CustomprofileplayerinforesourceClient struct {
+	config
+}
+
+// NewCustomprofileplayerinforesourceClient returns a client for the Customprofileplayerinforesource from the given config.
+func NewCustomprofileplayerinforesourceClient(c config) *CustomprofileplayerinforesourceClient {
+	return &CustomprofileplayerinforesourceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofileplayerinforesource.Hooks(f(g(h())))`.
+func (c *CustomprofileplayerinforesourceClient) Use(hooks ...Hook) {
+	c.hooks.Customprofileplayerinforesource = append(c.hooks.Customprofileplayerinforesource, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofileplayerinforesource.Intercept(f(g(h())))`.
+func (c *CustomprofileplayerinforesourceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofileplayerinforesource = append(c.inters.Customprofileplayerinforesource, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofileplayerinforesource entity.
+func (c *CustomprofileplayerinforesourceClient) Create() *CustomprofileplayerinforesourceCreate {
+	mutation := newCustomprofileplayerinforesourceMutation(c.config, OpCreate)
+	return &CustomprofileplayerinforesourceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofileplayerinforesource entities.
+func (c *CustomprofileplayerinforesourceClient) CreateBulk(builders ...*CustomprofileplayerinforesourceCreate) *CustomprofileplayerinforesourceCreateBulk {
+	return &CustomprofileplayerinforesourceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofileplayerinforesourceClient) MapCreateBulk(slice any, setFunc func(*CustomprofileplayerinforesourceCreate, int)) *CustomprofileplayerinforesourceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofileplayerinforesourceCreateBulk{err: fmt.Errorf("calling to CustomprofileplayerinforesourceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofileplayerinforesourceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofileplayerinforesourceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofileplayerinforesource.
+func (c *CustomprofileplayerinforesourceClient) Update() *CustomprofileplayerinforesourceUpdate {
+	mutation := newCustomprofileplayerinforesourceMutation(c.config, OpUpdate)
+	return &CustomprofileplayerinforesourceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofileplayerinforesourceClient) UpdateOne(_m *Customprofileplayerinforesource) *CustomprofileplayerinforesourceUpdateOne {
+	mutation := newCustomprofileplayerinforesourceMutation(c.config, OpUpdateOne, withCustomprofileplayerinforesource(_m))
+	return &CustomprofileplayerinforesourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofileplayerinforesourceClient) UpdateOneID(id int) *CustomprofileplayerinforesourceUpdateOne {
+	mutation := newCustomprofileplayerinforesourceMutation(c.config, OpUpdateOne, withCustomprofileplayerinforesourceID(id))
+	return &CustomprofileplayerinforesourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofileplayerinforesource.
+func (c *CustomprofileplayerinforesourceClient) Delete() *CustomprofileplayerinforesourceDelete {
+	mutation := newCustomprofileplayerinforesourceMutation(c.config, OpDelete)
+	return &CustomprofileplayerinforesourceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofileplayerinforesourceClient) DeleteOne(_m *Customprofileplayerinforesource) *CustomprofileplayerinforesourceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofileplayerinforesourceClient) DeleteOneID(id int) *CustomprofileplayerinforesourceDeleteOne {
+	builder := c.Delete().Where(customprofileplayerinforesource.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofileplayerinforesourceDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofileplayerinforesource.
+func (c *CustomprofileplayerinforesourceClient) Query() *CustomprofileplayerinforesourceQuery {
+	return &CustomprofileplayerinforesourceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofileplayerinforesource},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofileplayerinforesource entity by its id.
+func (c *CustomprofileplayerinforesourceClient) Get(ctx context.Context, id int) (*Customprofileplayerinforesource, error) {
+	return c.Query().Where(customprofileplayerinforesource.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofileplayerinforesourceClient) GetX(ctx context.Context, id int) *Customprofileplayerinforesource {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofileplayerinforesourceClient) Hooks() []Hook {
+	return c.hooks.Customprofileplayerinforesource
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofileplayerinforesourceClient) Interceptors() []Interceptor {
+	return c.inters.Customprofileplayerinforesource
+}
+
+func (c *CustomprofileplayerinforesourceClient) mutate(ctx context.Context, m *CustomprofileplayerinforesourceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofileplayerinforesourceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofileplayerinforesourceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofileplayerinforesourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofileplayerinforesourceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofileplayerinforesource mutation op: %q", m.Op())
+	}
+}
+
+// CustomprofileshaperesourceClient is a client for the Customprofileshaperesource schema.
+type CustomprofileshaperesourceClient struct {
+	config
+}
+
+// NewCustomprofileshaperesourceClient returns a client for the Customprofileshaperesource from the given config.
+func NewCustomprofileshaperesourceClient(c config) *CustomprofileshaperesourceClient {
+	return &CustomprofileshaperesourceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofileshaperesource.Hooks(f(g(h())))`.
+func (c *CustomprofileshaperesourceClient) Use(hooks ...Hook) {
+	c.hooks.Customprofileshaperesource = append(c.hooks.Customprofileshaperesource, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofileshaperesource.Intercept(f(g(h())))`.
+func (c *CustomprofileshaperesourceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofileshaperesource = append(c.inters.Customprofileshaperesource, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofileshaperesource entity.
+func (c *CustomprofileshaperesourceClient) Create() *CustomprofileshaperesourceCreate {
+	mutation := newCustomprofileshaperesourceMutation(c.config, OpCreate)
+	return &CustomprofileshaperesourceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofileshaperesource entities.
+func (c *CustomprofileshaperesourceClient) CreateBulk(builders ...*CustomprofileshaperesourceCreate) *CustomprofileshaperesourceCreateBulk {
+	return &CustomprofileshaperesourceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofileshaperesourceClient) MapCreateBulk(slice any, setFunc func(*CustomprofileshaperesourceCreate, int)) *CustomprofileshaperesourceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofileshaperesourceCreateBulk{err: fmt.Errorf("calling to CustomprofileshaperesourceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofileshaperesourceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofileshaperesourceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofileshaperesource.
+func (c *CustomprofileshaperesourceClient) Update() *CustomprofileshaperesourceUpdate {
+	mutation := newCustomprofileshaperesourceMutation(c.config, OpUpdate)
+	return &CustomprofileshaperesourceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofileshaperesourceClient) UpdateOne(_m *Customprofileshaperesource) *CustomprofileshaperesourceUpdateOne {
+	mutation := newCustomprofileshaperesourceMutation(c.config, OpUpdateOne, withCustomprofileshaperesource(_m))
+	return &CustomprofileshaperesourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofileshaperesourceClient) UpdateOneID(id int) *CustomprofileshaperesourceUpdateOne {
+	mutation := newCustomprofileshaperesourceMutation(c.config, OpUpdateOne, withCustomprofileshaperesourceID(id))
+	return &CustomprofileshaperesourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofileshaperesource.
+func (c *CustomprofileshaperesourceClient) Delete() *CustomprofileshaperesourceDelete {
+	mutation := newCustomprofileshaperesourceMutation(c.config, OpDelete)
+	return &CustomprofileshaperesourceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofileshaperesourceClient) DeleteOne(_m *Customprofileshaperesource) *CustomprofileshaperesourceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofileshaperesourceClient) DeleteOneID(id int) *CustomprofileshaperesourceDeleteOne {
+	builder := c.Delete().Where(customprofileshaperesource.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofileshaperesourceDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofileshaperesource.
+func (c *CustomprofileshaperesourceClient) Query() *CustomprofileshaperesourceQuery {
+	return &CustomprofileshaperesourceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofileshaperesource},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofileshaperesource entity by its id.
+func (c *CustomprofileshaperesourceClient) Get(ctx context.Context, id int) (*Customprofileshaperesource, error) {
+	return c.Query().Where(customprofileshaperesource.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofileshaperesourceClient) GetX(ctx context.Context, id int) *Customprofileshaperesource {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofileshaperesourceClient) Hooks() []Hook {
+	return c.hooks.Customprofileshaperesource
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofileshaperesourceClient) Interceptors() []Interceptor {
+	return c.inters.Customprofileshaperesource
+}
+
+func (c *CustomprofileshaperesourceClient) mutate(ctx context.Context, m *CustomprofileshaperesourceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofileshaperesourceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofileshaperesourceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofileshaperesourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofileshaperesourceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofileshaperesource mutation op: %q", m.Op())
+	}
+}
+
+// CustomprofilestorybackgroundresourceClient is a client for the Customprofilestorybackgroundresource schema.
+type CustomprofilestorybackgroundresourceClient struct {
+	config
+}
+
+// NewCustomprofilestorybackgroundresourceClient returns a client for the Customprofilestorybackgroundresource from the given config.
+func NewCustomprofilestorybackgroundresourceClient(c config) *CustomprofilestorybackgroundresourceClient {
+	return &CustomprofilestorybackgroundresourceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofilestorybackgroundresource.Hooks(f(g(h())))`.
+func (c *CustomprofilestorybackgroundresourceClient) Use(hooks ...Hook) {
+	c.hooks.Customprofilestorybackgroundresource = append(c.hooks.Customprofilestorybackgroundresource, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofilestorybackgroundresource.Intercept(f(g(h())))`.
+func (c *CustomprofilestorybackgroundresourceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofilestorybackgroundresource = append(c.inters.Customprofilestorybackgroundresource, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofilestorybackgroundresource entity.
+func (c *CustomprofilestorybackgroundresourceClient) Create() *CustomprofilestorybackgroundresourceCreate {
+	mutation := newCustomprofilestorybackgroundresourceMutation(c.config, OpCreate)
+	return &CustomprofilestorybackgroundresourceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofilestorybackgroundresource entities.
+func (c *CustomprofilestorybackgroundresourceClient) CreateBulk(builders ...*CustomprofilestorybackgroundresourceCreate) *CustomprofilestorybackgroundresourceCreateBulk {
+	return &CustomprofilestorybackgroundresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofilestorybackgroundresourceClient) MapCreateBulk(slice any, setFunc func(*CustomprofilestorybackgroundresourceCreate, int)) *CustomprofilestorybackgroundresourceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofilestorybackgroundresourceCreateBulk{err: fmt.Errorf("calling to CustomprofilestorybackgroundresourceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofilestorybackgroundresourceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofilestorybackgroundresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofilestorybackgroundresource.
+func (c *CustomprofilestorybackgroundresourceClient) Update() *CustomprofilestorybackgroundresourceUpdate {
+	mutation := newCustomprofilestorybackgroundresourceMutation(c.config, OpUpdate)
+	return &CustomprofilestorybackgroundresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofilestorybackgroundresourceClient) UpdateOne(_m *Customprofilestorybackgroundresource) *CustomprofilestorybackgroundresourceUpdateOne {
+	mutation := newCustomprofilestorybackgroundresourceMutation(c.config, OpUpdateOne, withCustomprofilestorybackgroundresource(_m))
+	return &CustomprofilestorybackgroundresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofilestorybackgroundresourceClient) UpdateOneID(id int) *CustomprofilestorybackgroundresourceUpdateOne {
+	mutation := newCustomprofilestorybackgroundresourceMutation(c.config, OpUpdateOne, withCustomprofilestorybackgroundresourceID(id))
+	return &CustomprofilestorybackgroundresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofilestorybackgroundresource.
+func (c *CustomprofilestorybackgroundresourceClient) Delete() *CustomprofilestorybackgroundresourceDelete {
+	mutation := newCustomprofilestorybackgroundresourceMutation(c.config, OpDelete)
+	return &CustomprofilestorybackgroundresourceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofilestorybackgroundresourceClient) DeleteOne(_m *Customprofilestorybackgroundresource) *CustomprofilestorybackgroundresourceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofilestorybackgroundresourceClient) DeleteOneID(id int) *CustomprofilestorybackgroundresourceDeleteOne {
+	builder := c.Delete().Where(customprofilestorybackgroundresource.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofilestorybackgroundresourceDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofilestorybackgroundresource.
+func (c *CustomprofilestorybackgroundresourceClient) Query() *CustomprofilestorybackgroundresourceQuery {
+	return &CustomprofilestorybackgroundresourceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofilestorybackgroundresource},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofilestorybackgroundresource entity by its id.
+func (c *CustomprofilestorybackgroundresourceClient) Get(ctx context.Context, id int) (*Customprofilestorybackgroundresource, error) {
+	return c.Query().Where(customprofilestorybackgroundresource.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofilestorybackgroundresourceClient) GetX(ctx context.Context, id int) *Customprofilestorybackgroundresource {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofilestorybackgroundresourceClient) Hooks() []Hook {
+	return c.hooks.Customprofilestorybackgroundresource
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofilestorybackgroundresourceClient) Interceptors() []Interceptor {
+	return c.inters.Customprofilestorybackgroundresource
+}
+
+func (c *CustomprofilestorybackgroundresourceClient) mutate(ctx context.Context, m *CustomprofilestorybackgroundresourceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofilestorybackgroundresourceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofilestorybackgroundresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofilestorybackgroundresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofilestorybackgroundresourceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofilestorybackgroundresource mutation op: %q", m.Op())
+	}
+}
+
+// CustomprofiletextcolorClient is a client for the Customprofiletextcolor schema.
+type CustomprofiletextcolorClient struct {
+	config
+}
+
+// NewCustomprofiletextcolorClient returns a client for the Customprofiletextcolor from the given config.
+func NewCustomprofiletextcolorClient(c config) *CustomprofiletextcolorClient {
+	return &CustomprofiletextcolorClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofiletextcolor.Hooks(f(g(h())))`.
+func (c *CustomprofiletextcolorClient) Use(hooks ...Hook) {
+	c.hooks.Customprofiletextcolor = append(c.hooks.Customprofiletextcolor, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofiletextcolor.Intercept(f(g(h())))`.
+func (c *CustomprofiletextcolorClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofiletextcolor = append(c.inters.Customprofiletextcolor, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofiletextcolor entity.
+func (c *CustomprofiletextcolorClient) Create() *CustomprofiletextcolorCreate {
+	mutation := newCustomprofiletextcolorMutation(c.config, OpCreate)
+	return &CustomprofiletextcolorCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofiletextcolor entities.
+func (c *CustomprofiletextcolorClient) CreateBulk(builders ...*CustomprofiletextcolorCreate) *CustomprofiletextcolorCreateBulk {
+	return &CustomprofiletextcolorCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofiletextcolorClient) MapCreateBulk(slice any, setFunc func(*CustomprofiletextcolorCreate, int)) *CustomprofiletextcolorCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofiletextcolorCreateBulk{err: fmt.Errorf("calling to CustomprofiletextcolorClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofiletextcolorCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofiletextcolorCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofiletextcolor.
+func (c *CustomprofiletextcolorClient) Update() *CustomprofiletextcolorUpdate {
+	mutation := newCustomprofiletextcolorMutation(c.config, OpUpdate)
+	return &CustomprofiletextcolorUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofiletextcolorClient) UpdateOne(_m *Customprofiletextcolor) *CustomprofiletextcolorUpdateOne {
+	mutation := newCustomprofiletextcolorMutation(c.config, OpUpdateOne, withCustomprofiletextcolor(_m))
+	return &CustomprofiletextcolorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofiletextcolorClient) UpdateOneID(id int) *CustomprofiletextcolorUpdateOne {
+	mutation := newCustomprofiletextcolorMutation(c.config, OpUpdateOne, withCustomprofiletextcolorID(id))
+	return &CustomprofiletextcolorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofiletextcolor.
+func (c *CustomprofiletextcolorClient) Delete() *CustomprofiletextcolorDelete {
+	mutation := newCustomprofiletextcolorMutation(c.config, OpDelete)
+	return &CustomprofiletextcolorDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofiletextcolorClient) DeleteOne(_m *Customprofiletextcolor) *CustomprofiletextcolorDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofiletextcolorClient) DeleteOneID(id int) *CustomprofiletextcolorDeleteOne {
+	builder := c.Delete().Where(customprofiletextcolor.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofiletextcolorDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofiletextcolor.
+func (c *CustomprofiletextcolorClient) Query() *CustomprofiletextcolorQuery {
+	return &CustomprofiletextcolorQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofiletextcolor},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofiletextcolor entity by its id.
+func (c *CustomprofiletextcolorClient) Get(ctx context.Context, id int) (*Customprofiletextcolor, error) {
+	return c.Query().Where(customprofiletextcolor.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofiletextcolorClient) GetX(ctx context.Context, id int) *Customprofiletextcolor {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofiletextcolorClient) Hooks() []Hook {
+	return c.hooks.Customprofiletextcolor
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofiletextcolorClient) Interceptors() []Interceptor {
+	return c.inters.Customprofiletextcolor
+}
+
+func (c *CustomprofiletextcolorClient) mutate(ctx context.Context, m *CustomprofiletextcolorMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofiletextcolorCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofiletextcolorUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofiletextcolorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofiletextcolorDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofiletextcolor mutation op: %q", m.Op())
+	}
+}
+
+// CustomprofiletextfontClient is a client for the Customprofiletextfont schema.
+type CustomprofiletextfontClient struct {
+	config
+}
+
+// NewCustomprofiletextfontClient returns a client for the Customprofiletextfont from the given config.
+func NewCustomprofiletextfontClient(c config) *CustomprofiletextfontClient {
+	return &CustomprofiletextfontClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofiletextfont.Hooks(f(g(h())))`.
+func (c *CustomprofiletextfontClient) Use(hooks ...Hook) {
+	c.hooks.Customprofiletextfont = append(c.hooks.Customprofiletextfont, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofiletextfont.Intercept(f(g(h())))`.
+func (c *CustomprofiletextfontClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofiletextfont = append(c.inters.Customprofiletextfont, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofiletextfont entity.
+func (c *CustomprofiletextfontClient) Create() *CustomprofiletextfontCreate {
+	mutation := newCustomprofiletextfontMutation(c.config, OpCreate)
+	return &CustomprofiletextfontCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofiletextfont entities.
+func (c *CustomprofiletextfontClient) CreateBulk(builders ...*CustomprofiletextfontCreate) *CustomprofiletextfontCreateBulk {
+	return &CustomprofiletextfontCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofiletextfontClient) MapCreateBulk(slice any, setFunc func(*CustomprofiletextfontCreate, int)) *CustomprofiletextfontCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofiletextfontCreateBulk{err: fmt.Errorf("calling to CustomprofiletextfontClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofiletextfontCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofiletextfontCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofiletextfont.
+func (c *CustomprofiletextfontClient) Update() *CustomprofiletextfontUpdate {
+	mutation := newCustomprofiletextfontMutation(c.config, OpUpdate)
+	return &CustomprofiletextfontUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofiletextfontClient) UpdateOne(_m *Customprofiletextfont) *CustomprofiletextfontUpdateOne {
+	mutation := newCustomprofiletextfontMutation(c.config, OpUpdateOne, withCustomprofiletextfont(_m))
+	return &CustomprofiletextfontUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofiletextfontClient) UpdateOneID(id int) *CustomprofiletextfontUpdateOne {
+	mutation := newCustomprofiletextfontMutation(c.config, OpUpdateOne, withCustomprofiletextfontID(id))
+	return &CustomprofiletextfontUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofiletextfont.
+func (c *CustomprofiletextfontClient) Delete() *CustomprofiletextfontDelete {
+	mutation := newCustomprofiletextfontMutation(c.config, OpDelete)
+	return &CustomprofiletextfontDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofiletextfontClient) DeleteOne(_m *Customprofiletextfont) *CustomprofiletextfontDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofiletextfontClient) DeleteOneID(id int) *CustomprofiletextfontDeleteOne {
+	builder := c.Delete().Where(customprofiletextfont.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofiletextfontDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofiletextfont.
+func (c *CustomprofiletextfontClient) Query() *CustomprofiletextfontQuery {
+	return &CustomprofiletextfontQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofiletextfont},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofiletextfont entity by its id.
+func (c *CustomprofiletextfontClient) Get(ctx context.Context, id int) (*Customprofiletextfont, error) {
+	return c.Query().Where(customprofiletextfont.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofiletextfontClient) GetX(ctx context.Context, id int) *Customprofiletextfont {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofiletextfontClient) Hooks() []Hook {
+	return c.hooks.Customprofiletextfont
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofiletextfontClient) Interceptors() []Interceptor {
+	return c.inters.Customprofiletextfont
+}
+
+func (c *CustomprofiletextfontClient) mutate(ctx context.Context, m *CustomprofiletextfontMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofiletextfontCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofiletextfontUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofiletextfontUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofiletextfontDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofiletextfont mutation op: %q", m.Op())
+	}
+}
+
+// CustomprofileuserinterfaceiconresourceClient is a client for the Customprofileuserinterfaceiconresource schema.
+type CustomprofileuserinterfaceiconresourceClient struct {
+	config
+}
+
+// NewCustomprofileuserinterfaceiconresourceClient returns a client for the Customprofileuserinterfaceiconresource from the given config.
+func NewCustomprofileuserinterfaceiconresourceClient(c config) *CustomprofileuserinterfaceiconresourceClient {
+	return &CustomprofileuserinterfaceiconresourceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customprofileuserinterfaceiconresource.Hooks(f(g(h())))`.
+func (c *CustomprofileuserinterfaceiconresourceClient) Use(hooks ...Hook) {
+	c.hooks.Customprofileuserinterfaceiconresource = append(c.hooks.Customprofileuserinterfaceiconresource, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customprofileuserinterfaceiconresource.Intercept(f(g(h())))`.
+func (c *CustomprofileuserinterfaceiconresourceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Customprofileuserinterfaceiconresource = append(c.inters.Customprofileuserinterfaceiconresource, interceptors...)
+}
+
+// Create returns a builder for creating a Customprofileuserinterfaceiconresource entity.
+func (c *CustomprofileuserinterfaceiconresourceClient) Create() *CustomprofileuserinterfaceiconresourceCreate {
+	mutation := newCustomprofileuserinterfaceiconresourceMutation(c.config, OpCreate)
+	return &CustomprofileuserinterfaceiconresourceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Customprofileuserinterfaceiconresource entities.
+func (c *CustomprofileuserinterfaceiconresourceClient) CreateBulk(builders ...*CustomprofileuserinterfaceiconresourceCreate) *CustomprofileuserinterfaceiconresourceCreateBulk {
+	return &CustomprofileuserinterfaceiconresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomprofileuserinterfaceiconresourceClient) MapCreateBulk(slice any, setFunc func(*CustomprofileuserinterfaceiconresourceCreate, int)) *CustomprofileuserinterfaceiconresourceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomprofileuserinterfaceiconresourceCreateBulk{err: fmt.Errorf("calling to CustomprofileuserinterfaceiconresourceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomprofileuserinterfaceiconresourceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomprofileuserinterfaceiconresourceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Customprofileuserinterfaceiconresource.
+func (c *CustomprofileuserinterfaceiconresourceClient) Update() *CustomprofileuserinterfaceiconresourceUpdate {
+	mutation := newCustomprofileuserinterfaceiconresourceMutation(c.config, OpUpdate)
+	return &CustomprofileuserinterfaceiconresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomprofileuserinterfaceiconresourceClient) UpdateOne(_m *Customprofileuserinterfaceiconresource) *CustomprofileuserinterfaceiconresourceUpdateOne {
+	mutation := newCustomprofileuserinterfaceiconresourceMutation(c.config, OpUpdateOne, withCustomprofileuserinterfaceiconresource(_m))
+	return &CustomprofileuserinterfaceiconresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomprofileuserinterfaceiconresourceClient) UpdateOneID(id int) *CustomprofileuserinterfaceiconresourceUpdateOne {
+	mutation := newCustomprofileuserinterfaceiconresourceMutation(c.config, OpUpdateOne, withCustomprofileuserinterfaceiconresourceID(id))
+	return &CustomprofileuserinterfaceiconresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Customprofileuserinterfaceiconresource.
+func (c *CustomprofileuserinterfaceiconresourceClient) Delete() *CustomprofileuserinterfaceiconresourceDelete {
+	mutation := newCustomprofileuserinterfaceiconresourceMutation(c.config, OpDelete)
+	return &CustomprofileuserinterfaceiconresourceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomprofileuserinterfaceiconresourceClient) DeleteOne(_m *Customprofileuserinterfaceiconresource) *CustomprofileuserinterfaceiconresourceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomprofileuserinterfaceiconresourceClient) DeleteOneID(id int) *CustomprofileuserinterfaceiconresourceDeleteOne {
+	builder := c.Delete().Where(customprofileuserinterfaceiconresource.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomprofileuserinterfaceiconresourceDeleteOne{builder}
+}
+
+// Query returns a query builder for Customprofileuserinterfaceiconresource.
+func (c *CustomprofileuserinterfaceiconresourceClient) Query() *CustomprofileuserinterfaceiconresourceQuery {
+	return &CustomprofileuserinterfaceiconresourceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomprofileuserinterfaceiconresource},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Customprofileuserinterfaceiconresource entity by its id.
+func (c *CustomprofileuserinterfaceiconresourceClient) Get(ctx context.Context, id int) (*Customprofileuserinterfaceiconresource, error) {
+	return c.Query().Where(customprofileuserinterfaceiconresource.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomprofileuserinterfaceiconresourceClient) GetX(ctx context.Context, id int) *Customprofileuserinterfaceiconresource {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustomprofileuserinterfaceiconresourceClient) Hooks() []Hook {
+	return c.hooks.Customprofileuserinterfaceiconresource
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomprofileuserinterfaceiconresourceClient) Interceptors() []Interceptor {
+	return c.inters.Customprofileuserinterfaceiconresource
+}
+
+func (c *CustomprofileuserinterfaceiconresourceClient) mutate(ctx context.Context, m *CustomprofileuserinterfaceiconresourceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomprofileuserinterfaceiconresourceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomprofileuserinterfaceiconresourceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomprofileuserinterfaceiconresourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomprofileuserinterfaceiconresourceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Customprofileuserinterfaceiconresource mutation op: %q", m.Op())
+	}
+}
+
 // EventClient is a client for the Event schema.
 type EventClient struct {
 	config
@@ -7182,6 +8912,139 @@ func (c *MusicArtistClient) mutate(ctx context.Context, m *MusicArtistMutation) 
 		return (&MusicArtistDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("sekai: unknown MusicArtist mutation op: %q", m.Op())
+	}
+}
+
+// MusiccategorieClient is a client for the Musiccategorie schema.
+type MusiccategorieClient struct {
+	config
+}
+
+// NewMusiccategorieClient returns a client for the Musiccategorie from the given config.
+func NewMusiccategorieClient(c config) *MusiccategorieClient {
+	return &MusiccategorieClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `musiccategorie.Hooks(f(g(h())))`.
+func (c *MusiccategorieClient) Use(hooks ...Hook) {
+	c.hooks.Musiccategorie = append(c.hooks.Musiccategorie, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `musiccategorie.Intercept(f(g(h())))`.
+func (c *MusiccategorieClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Musiccategorie = append(c.inters.Musiccategorie, interceptors...)
+}
+
+// Create returns a builder for creating a Musiccategorie entity.
+func (c *MusiccategorieClient) Create() *MusiccategorieCreate {
+	mutation := newMusiccategorieMutation(c.config, OpCreate)
+	return &MusiccategorieCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Musiccategorie entities.
+func (c *MusiccategorieClient) CreateBulk(builders ...*MusiccategorieCreate) *MusiccategorieCreateBulk {
+	return &MusiccategorieCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MusiccategorieClient) MapCreateBulk(slice any, setFunc func(*MusiccategorieCreate, int)) *MusiccategorieCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MusiccategorieCreateBulk{err: fmt.Errorf("calling to MusiccategorieClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MusiccategorieCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MusiccategorieCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Musiccategorie.
+func (c *MusiccategorieClient) Update() *MusiccategorieUpdate {
+	mutation := newMusiccategorieMutation(c.config, OpUpdate)
+	return &MusiccategorieUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MusiccategorieClient) UpdateOne(_m *Musiccategorie) *MusiccategorieUpdateOne {
+	mutation := newMusiccategorieMutation(c.config, OpUpdateOne, withMusiccategorie(_m))
+	return &MusiccategorieUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MusiccategorieClient) UpdateOneID(id int) *MusiccategorieUpdateOne {
+	mutation := newMusiccategorieMutation(c.config, OpUpdateOne, withMusiccategorieID(id))
+	return &MusiccategorieUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Musiccategorie.
+func (c *MusiccategorieClient) Delete() *MusiccategorieDelete {
+	mutation := newMusiccategorieMutation(c.config, OpDelete)
+	return &MusiccategorieDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MusiccategorieClient) DeleteOne(_m *Musiccategorie) *MusiccategorieDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MusiccategorieClient) DeleteOneID(id int) *MusiccategorieDeleteOne {
+	builder := c.Delete().Where(musiccategorie.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MusiccategorieDeleteOne{builder}
+}
+
+// Query returns a query builder for Musiccategorie.
+func (c *MusiccategorieClient) Query() *MusiccategorieQuery {
+	return &MusiccategorieQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMusiccategorie},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Musiccategorie entity by its id.
+func (c *MusiccategorieClient) Get(ctx context.Context, id int) (*Musiccategorie, error) {
+	return c.Query().Where(musiccategorie.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MusiccategorieClient) GetX(ctx context.Context, id int) *Musiccategorie {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MusiccategorieClient) Hooks() []Hook {
+	return c.hooks.Musiccategorie
+}
+
+// Interceptors returns the client interceptors.
+func (c *MusiccategorieClient) Interceptors() []Interceptor {
+	return c.inters.Musiccategorie
+}
+
+func (c *MusiccategorieClient) mutate(ctx context.Context, m *MusiccategorieMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MusiccategorieCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MusiccategorieUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MusiccategorieUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MusiccategorieDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Musiccategorie mutation op: %q", m.Op())
 	}
 }
 
@@ -12372,6 +14235,139 @@ func (c *NgwordClient) mutate(ctx context.Context, m *NgwordMutation) (Value, er
 	}
 }
 
+// OmikujiClient is a client for the Omikuji schema.
+type OmikujiClient struct {
+	config
+}
+
+// NewOmikujiClient returns a client for the Omikuji from the given config.
+func NewOmikujiClient(c config) *OmikujiClient {
+	return &OmikujiClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `omikuji.Hooks(f(g(h())))`.
+func (c *OmikujiClient) Use(hooks ...Hook) {
+	c.hooks.Omikuji = append(c.hooks.Omikuji, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `omikuji.Intercept(f(g(h())))`.
+func (c *OmikujiClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Omikuji = append(c.inters.Omikuji, interceptors...)
+}
+
+// Create returns a builder for creating a Omikuji entity.
+func (c *OmikujiClient) Create() *OmikujiCreate {
+	mutation := newOmikujiMutation(c.config, OpCreate)
+	return &OmikujiCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Omikuji entities.
+func (c *OmikujiClient) CreateBulk(builders ...*OmikujiCreate) *OmikujiCreateBulk {
+	return &OmikujiCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *OmikujiClient) MapCreateBulk(slice any, setFunc func(*OmikujiCreate, int)) *OmikujiCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &OmikujiCreateBulk{err: fmt.Errorf("calling to OmikujiClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*OmikujiCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &OmikujiCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Omikuji.
+func (c *OmikujiClient) Update() *OmikujiUpdate {
+	mutation := newOmikujiMutation(c.config, OpUpdate)
+	return &OmikujiUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *OmikujiClient) UpdateOne(_m *Omikuji) *OmikujiUpdateOne {
+	mutation := newOmikujiMutation(c.config, OpUpdateOne, withOmikuji(_m))
+	return &OmikujiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *OmikujiClient) UpdateOneID(id int) *OmikujiUpdateOne {
+	mutation := newOmikujiMutation(c.config, OpUpdateOne, withOmikujiID(id))
+	return &OmikujiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Omikuji.
+func (c *OmikujiClient) Delete() *OmikujiDelete {
+	mutation := newOmikujiMutation(c.config, OpDelete)
+	return &OmikujiDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *OmikujiClient) DeleteOne(_m *Omikuji) *OmikujiDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *OmikujiClient) DeleteOneID(id int) *OmikujiDeleteOne {
+	builder := c.Delete().Where(omikuji.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &OmikujiDeleteOne{builder}
+}
+
+// Query returns a query builder for Omikuji.
+func (c *OmikujiClient) Query() *OmikujiQuery {
+	return &OmikujiQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeOmikuji},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Omikuji entity by its id.
+func (c *OmikujiClient) Get(ctx context.Context, id int) (*Omikuji, error) {
+	return c.Query().Where(omikuji.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *OmikujiClient) GetX(ctx context.Context, id int) *Omikuji {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *OmikujiClient) Hooks() []Hook {
+	return c.hooks.Omikuji
+}
+
+// Interceptors returns the client interceptors.
+func (c *OmikujiClient) Interceptors() []Interceptor {
+	return c.inters.Omikuji
+}
+
+func (c *OmikujiClient) mutate(ctx context.Context, m *OmikujiMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&OmikujiCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&OmikujiUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&OmikujiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&OmikujiDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Omikuji mutation op: %q", m.Op())
+	}
+}
+
 // OutsidecharacterClient is a client for the Outsidecharacter schema.
 type OutsidecharacterClient struct {
 	config
@@ -13702,6 +15698,139 @@ func (c *StampClient) mutate(ctx context.Context, m *StampMutation) (Value, erro
 	}
 }
 
+// UnitstoryepisodegroupClient is a client for the Unitstoryepisodegroup schema.
+type UnitstoryepisodegroupClient struct {
+	config
+}
+
+// NewUnitstoryepisodegroupClient returns a client for the Unitstoryepisodegroup from the given config.
+func NewUnitstoryepisodegroupClient(c config) *UnitstoryepisodegroupClient {
+	return &UnitstoryepisodegroupClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `unitstoryepisodegroup.Hooks(f(g(h())))`.
+func (c *UnitstoryepisodegroupClient) Use(hooks ...Hook) {
+	c.hooks.Unitstoryepisodegroup = append(c.hooks.Unitstoryepisodegroup, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `unitstoryepisodegroup.Intercept(f(g(h())))`.
+func (c *UnitstoryepisodegroupClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Unitstoryepisodegroup = append(c.inters.Unitstoryepisodegroup, interceptors...)
+}
+
+// Create returns a builder for creating a Unitstoryepisodegroup entity.
+func (c *UnitstoryepisodegroupClient) Create() *UnitstoryepisodegroupCreate {
+	mutation := newUnitstoryepisodegroupMutation(c.config, OpCreate)
+	return &UnitstoryepisodegroupCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Unitstoryepisodegroup entities.
+func (c *UnitstoryepisodegroupClient) CreateBulk(builders ...*UnitstoryepisodegroupCreate) *UnitstoryepisodegroupCreateBulk {
+	return &UnitstoryepisodegroupCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UnitstoryepisodegroupClient) MapCreateBulk(slice any, setFunc func(*UnitstoryepisodegroupCreate, int)) *UnitstoryepisodegroupCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UnitstoryepisodegroupCreateBulk{err: fmt.Errorf("calling to UnitstoryepisodegroupClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UnitstoryepisodegroupCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UnitstoryepisodegroupCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Unitstoryepisodegroup.
+func (c *UnitstoryepisodegroupClient) Update() *UnitstoryepisodegroupUpdate {
+	mutation := newUnitstoryepisodegroupMutation(c.config, OpUpdate)
+	return &UnitstoryepisodegroupUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UnitstoryepisodegroupClient) UpdateOne(_m *Unitstoryepisodegroup) *UnitstoryepisodegroupUpdateOne {
+	mutation := newUnitstoryepisodegroupMutation(c.config, OpUpdateOne, withUnitstoryepisodegroup(_m))
+	return &UnitstoryepisodegroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UnitstoryepisodegroupClient) UpdateOneID(id int) *UnitstoryepisodegroupUpdateOne {
+	mutation := newUnitstoryepisodegroupMutation(c.config, OpUpdateOne, withUnitstoryepisodegroupID(id))
+	return &UnitstoryepisodegroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Unitstoryepisodegroup.
+func (c *UnitstoryepisodegroupClient) Delete() *UnitstoryepisodegroupDelete {
+	mutation := newUnitstoryepisodegroupMutation(c.config, OpDelete)
+	return &UnitstoryepisodegroupDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UnitstoryepisodegroupClient) DeleteOne(_m *Unitstoryepisodegroup) *UnitstoryepisodegroupDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UnitstoryepisodegroupClient) DeleteOneID(id int) *UnitstoryepisodegroupDeleteOne {
+	builder := c.Delete().Where(unitstoryepisodegroup.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UnitstoryepisodegroupDeleteOne{builder}
+}
+
+// Query returns a query builder for Unitstoryepisodegroup.
+func (c *UnitstoryepisodegroupClient) Query() *UnitstoryepisodegroupQuery {
+	return &UnitstoryepisodegroupQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUnitstoryepisodegroup},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Unitstoryepisodegroup entity by its id.
+func (c *UnitstoryepisodegroupClient) Get(ctx context.Context, id int) (*Unitstoryepisodegroup, error) {
+	return c.Query().Where(unitstoryepisodegroup.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UnitstoryepisodegroupClient) GetX(ctx context.Context, id int) *Unitstoryepisodegroup {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *UnitstoryepisodegroupClient) Hooks() []Hook {
+	return c.hooks.Unitstoryepisodegroup
+}
+
+// Interceptors returns the client interceptors.
+func (c *UnitstoryepisodegroupClient) Interceptors() []Interceptor {
+	return c.inters.Unitstoryepisodegroup
+}
+
+func (c *UnitstoryepisodegroupClient) mutate(ctx context.Context, m *UnitstoryepisodegroupMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UnitstoryepisodegroupCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UnitstoryepisodegroupUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UnitstoryepisodegroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UnitstoryepisodegroupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Unitstoryepisodegroup mutation op: %q", m.Op())
+	}
+}
+
 // VirtualliveClient is a client for the Virtuallive schema.
 type VirtualliveClient struct {
 	config
@@ -14509,14 +16638,20 @@ type (
 		Characterarchivemysekaicharactertalkgroup, Charactermissionv2,
 		Charactermissionv2Areaitem, Charactermissionv2Exjson,
 		Charactermissionv2Parametergroup, Characterrank, Cheerfulcarnivalteam,
-		Costume3D, Custommusicscoretag, Event, Eventcard, Eventdeckbonuse,
+		Costume3D, Custommusicscoretag, Customprofilecharactericonresource,
+		Customprofilecollectionresource, Customprofileetcresource,
+		Customprofilegeneralbackgroundresource, Customprofilematerialresource,
+		Customprofilememberstandingpictureresource, Customprofileplayerinforesource,
+		Customprofileshaperesource, Customprofilestorybackgroundresource,
+		Customprofiletextcolor, Customprofiletextfont,
+		Customprofileuserinterfaceiconresource, Event, Eventcard, Eventdeckbonuse,
 		Eventexchangesummarie, Eventitem, Eventmusic, Eventraritybonusrate,
 		Eventstorie, Eventstoryunit, Gacha, Gachaceilitem, Gachaticket, Gamecharacter,
 		Gamecharacterunit, Honor, Honorgroup, Level, Limitedtimemusic, Masterlesson,
-		Material, Music, MusicArtist, Musicdifficultie, Musictag, Musicvocal,
-		Mysekaiblueprint, Mysekaiblueprintmysekaimaterialcost, Mysekaicharactertalk,
-		Mysekaicharactertalkcondition, Mysekaicharactertalkconditiongroup,
-		Mysekaicharactertalkfixturecommon,
+		Material, Music, MusicArtist, Musiccategorie, Musicdifficultie, Musictag,
+		Musicvocal, Mysekaiblueprint, Mysekaiblueprintmysekaimaterialcost,
+		Mysekaicharactertalk, Mysekaicharactertalkcondition,
+		Mysekaicharactertalkconditiongroup, Mysekaicharactertalkfixturecommon,
 		Mysekaicharactertalkfixturecommonmysekaifixturegroup, Mysekaicustomfixture,
 		Mysekaifixture, Mysekaifixturegamecharactergroup,
 		Mysekaifixturegamecharactergroupperformancebonuse, Mysekaifixturemaingenre,
@@ -14528,11 +16663,11 @@ type (
 		Mysekaimaterialgamecharacterrelation, Mysekaimusicrecord,
 		Mysekaimusicrecordcategorie, Mysekaiphenomenabackgroundcolor,
 		Mysekaiphenomenon, Mysekairankrelease, Mysekaisiteharvestfixture,
-		Mysekaisitelayout, Mysekaisitelevel, Ngword, Outsidecharacter, Playerframe,
-		Playerframegroup, Practiceticket, Resourceboxdetail, Resourceboxe, Shopitem,
-		Skill, Skillpracticeticket, Stamp, Virtuallive, Worldbloom,
-		Worldbloomchapterrankingrewardrange, Worldbloomdifferentattributebonuse,
-		Worldbloomsupportdeckbonuse,
+		Mysekaisitelayout, Mysekaisitelevel, Ngword, Omikuji, Outsidecharacter,
+		Playerframe, Playerframegroup, Practiceticket, Resourceboxdetail, Resourceboxe,
+		Shopitem, Skill, Skillpracticeticket, Stamp, Unitstoryepisodegroup,
+		Virtuallive, Worldbloom, Worldbloomchapterrankingrewardrange,
+		Worldbloomdifferentattributebonuse, Worldbloomsupportdeckbonuse,
 		Worldbloomsupportdeckuniteventlimitedbonuse []ent.Hook
 	}
 	inters struct {
@@ -14542,14 +16677,20 @@ type (
 		Characterarchivemysekaicharactertalkgroup, Charactermissionv2,
 		Charactermissionv2Areaitem, Charactermissionv2Exjson,
 		Charactermissionv2Parametergroup, Characterrank, Cheerfulcarnivalteam,
-		Costume3D, Custommusicscoretag, Event, Eventcard, Eventdeckbonuse,
+		Costume3D, Custommusicscoretag, Customprofilecharactericonresource,
+		Customprofilecollectionresource, Customprofileetcresource,
+		Customprofilegeneralbackgroundresource, Customprofilematerialresource,
+		Customprofilememberstandingpictureresource, Customprofileplayerinforesource,
+		Customprofileshaperesource, Customprofilestorybackgroundresource,
+		Customprofiletextcolor, Customprofiletextfont,
+		Customprofileuserinterfaceiconresource, Event, Eventcard, Eventdeckbonuse,
 		Eventexchangesummarie, Eventitem, Eventmusic, Eventraritybonusrate,
 		Eventstorie, Eventstoryunit, Gacha, Gachaceilitem, Gachaticket, Gamecharacter,
 		Gamecharacterunit, Honor, Honorgroup, Level, Limitedtimemusic, Masterlesson,
-		Material, Music, MusicArtist, Musicdifficultie, Musictag, Musicvocal,
-		Mysekaiblueprint, Mysekaiblueprintmysekaimaterialcost, Mysekaicharactertalk,
-		Mysekaicharactertalkcondition, Mysekaicharactertalkconditiongroup,
-		Mysekaicharactertalkfixturecommon,
+		Material, Music, MusicArtist, Musiccategorie, Musicdifficultie, Musictag,
+		Musicvocal, Mysekaiblueprint, Mysekaiblueprintmysekaimaterialcost,
+		Mysekaicharactertalk, Mysekaicharactertalkcondition,
+		Mysekaicharactertalkconditiongroup, Mysekaicharactertalkfixturecommon,
 		Mysekaicharactertalkfixturecommonmysekaifixturegroup, Mysekaicustomfixture,
 		Mysekaifixture, Mysekaifixturegamecharactergroup,
 		Mysekaifixturegamecharactergroupperformancebonuse, Mysekaifixturemaingenre,
@@ -14561,11 +16702,11 @@ type (
 		Mysekaimaterialgamecharacterrelation, Mysekaimusicrecord,
 		Mysekaimusicrecordcategorie, Mysekaiphenomenabackgroundcolor,
 		Mysekaiphenomenon, Mysekairankrelease, Mysekaisiteharvestfixture,
-		Mysekaisitelayout, Mysekaisitelevel, Ngword, Outsidecharacter, Playerframe,
-		Playerframegroup, Practiceticket, Resourceboxdetail, Resourceboxe, Shopitem,
-		Skill, Skillpracticeticket, Stamp, Virtuallive, Worldbloom,
-		Worldbloomchapterrankingrewardrange, Worldbloomdifferentattributebonuse,
-		Worldbloomsupportdeckbonuse,
+		Mysekaisitelayout, Mysekaisitelevel, Ngword, Omikuji, Outsidecharacter,
+		Playerframe, Playerframegroup, Practiceticket, Resourceboxdetail, Resourceboxe,
+		Shopitem, Skill, Skillpracticeticket, Stamp, Unitstoryepisodegroup,
+		Virtuallive, Worldbloom, Worldbloomchapterrankingrewardrange,
+		Worldbloomdifferentattributebonuse, Worldbloomsupportdeckbonuse,
 		Worldbloomsupportdeckuniteventlimitedbonuse []ent.Interceptor
 	}
 )

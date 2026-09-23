@@ -21,6 +21,8 @@ const (
 	FieldDescription = "description"
 	// FieldGameCharacterID holds the string denoting the game_character_id field in the database.
 	FieldGameCharacterID = "game_character_id"
+	// FieldPartsCount holds the string denoting the parts_count field in the database.
+	FieldPartsCount = "parts_count"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the playerframe in the database.
@@ -35,6 +37,7 @@ var Columns = []string{
 	FieldPlayerFrameGroupID,
 	FieldDescription,
 	FieldGameCharacterID,
+	FieldPartsCount,
 	FieldServerRegion,
 }
 
@@ -79,6 +82,11 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByGameCharacterID orders the results by the game_character_id field.
 func ByGameCharacterID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGameCharacterID, opts...).ToFunc()
+}
+
+// ByPartsCount orders the results by the parts_count field.
+func ByPartsCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPartsCount, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

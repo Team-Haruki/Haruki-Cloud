@@ -191,7 +191,7 @@ pjsk_render:               # 渲染引擎配置
   asset_probe: {}          # 无本地素材根时按 assets 槽位选路径（startapp/ondemand、大小写）；positive_ttl 6h / listing_ttl 30m / negative_ttl 5m / timeout 3s / warm_prefixes []
   image_cache: {}          # pg_url、hosts、render_index.*、gc_*、legacy_redirect
   drawing_artifact: {}     # Artifact 模式放量白名单
-  local_masterdata: {}     # legacy/dev 本地 Masterdata fallback；生产默认关闭
+  local_masterdata: {}     # legacy/dev 本地 Masterdata fallback；生产默认关闭。所有 master 读取（含库存道具表、自定义名片资源、MySekai 大门皮肤/自定义谱面标签、JP musicCategories）都先走 DB，只有开启 enabled+allow_fallback（或 allow_leaks）且某张表为空/不可用时才读本地 JSON
   masterdata_registry: {}  # url / poll_interval / settle_delays：轮询 master registry 的 /v1/master/{region}/current，contentHash（缺省时 ETag）变化时立即重置该区服 DB provider 缓存，并在 settle_delays（默认 5m、15m）后再重置以等待 DB ingest 落库；url 为空时依次取 deck_recommend.registry_url、music_meta.base_url（source=registry）
 
 sekai:                     # Sekai Masterdata 数据库

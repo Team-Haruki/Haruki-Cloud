@@ -72,6 +72,11 @@ func (p *dbMusicProvider) GetByID(ctx context.Context, id int) (*masterdata.Musi
 	}
 
 	model := common.ConvertMusicEntity(entity)
+	if err := p.fillMusicCategories(ctx, model); err != nil {
+		// Serve the music as read, but do not cache it with categories
+		// missing: the next call retries the category index.
+		return model, nil
+	}
 	p.mu.Lock()
 	p.musicByID[model.ID] = model
 	p.mu.Unlock()
@@ -121,13 +126,16 @@ func (p *dbMusicProvider) GetAll(ctx context.Context) []*masterdata.Music {
 		list = append(list, model)
 		byID[model.ID] = model
 	}
+	categoriesFilled := p.fillMusicCategories(ctx, list...) == nil
 	sort.Slice(list, func(i, j int) bool {
 		if list[i].PublishedAt == list[j].PublishedAt {
 			return list[i].ID < list[j].ID
 		}
 		return list[i].PublishedAt < list[j].PublishedAt
 	})
-	p.storeMusicListWithIndex(list, byID, false)
+	if categoriesFilled {
+		p.storeMusicListWithIndex(list, byID, false)
+	}
 	return common.CloneMusicList(list)
 }
 

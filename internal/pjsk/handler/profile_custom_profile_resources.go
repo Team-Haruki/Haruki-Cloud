@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	json "haruki-cloud/internal/jsonutil"
+
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -391,6 +393,10 @@ func customProfileStoryFavoriteIDs(stories []sekaiapi.UserStoryFavorite) (map[in
 	return eventStoryIDs, unitStoryIDs
 }
 
+// loadCustomProfileStoryEvents resolves the event names behind favourite
+// event stories through the typed event provider (database first, like every
+// other event read), falling back to the events master file only when no
+// provider serves the region.
 func loadCustomProfileStoryEvents(ctx context.Context, app *renderapp.App, region renderregion.Value, eventStories map[int]map[string]any) map[int]map[string]any {
 	eventIDs := make(map[int]struct{})
 	for _, row := range eventStories {
@@ -399,10 +405,23 @@ func loadCustomProfileStoryEvents(ctx context.Context, app *renderapp.App, regio
 		}
 	}
 	events := map[int]map[string]any{}
-	if len(eventIDs) > 0 {
-		if loaded, err := loadCustomProfileMasterTable(ctx, app, region, "events.json", eventIDs); err == nil {
-			return loaded
+	if len(eventIDs) == 0 {
+		return events
+	}
+	if src := customProfileProviderForRegion(app, region); src != nil && src.Events() != nil {
+		for eventID := range eventIDs {
+			eventInfo, err := src.Events().GetByID(ctx, eventID)
+			if err != nil || eventInfo == nil {
+				continue
+			}
+			events[eventID] = map[string]any{"id": eventInfo.ID, "name": eventInfo.Name}
 		}
+		if len(events) > 0 {
+			return events
+		}
+	}
+	if loaded, err := loadCustomProfileMasterTable(ctx, app, region, "events.json", eventIDs); err == nil {
+		return loaded
 	}
 	return events
 }
@@ -500,10 +519,55 @@ func collectCustomProfileHonorResources(ctx context.Context, app *renderapp.App,
 	return nil
 }
 
+// loadCustomProfileMasterTable returns the requested rows of a custom profile
+// master table, whole and with the game JSON key names, so Drawing receives
+// the same payload whichever source served them. The region's master row
+// source (database first, its local store second) answers first; the local
+// masterdata files are read only when no source answered and the local
+// fallback flag is on.
 func loadCustomProfileMasterTable(ctx context.Context, app *renderapp.App, region renderregion.Value, filename string, ids map[int]struct{}) (map[int]map[string]any, error) {
 	if len(ids) == 0 {
 		return map[int]map[string]any{}, nil
 	}
+	if rows, ok := customProfileMasterRows(ctx, app, region, filename); ok {
+		result := make(map[int]map[string]any, len(ids))
+		for id := range ids {
+			if row := rows[id]; row != nil {
+				result[id] = cloneCustomProfileMasterRow(row)
+			}
+		}
+		return result, nil
+	}
+	if app != nil && !app.LocalMasterdataFallbackEnabled() {
+		return nil, fmt.Errorf("custom profile masterdata %s is not available for region %s", filename, region)
+	}
+	return loadCustomProfileMasterFile(ctx, app, region, filename, ids)
+}
+
+// customProfileMasterRows serves a whole master table from the region's row
+// source. ok is false when no provider is configured or none of its sources
+// (database, local store) could answer.
+func customProfileMasterRows(ctx context.Context, app *renderapp.App, region renderregion.Value, filename string) (map[int]map[string]any, bool) {
+	src := customProfileProviderForRegion(app, region)
+	if src == nil {
+		return nil, false
+	}
+	store := src.MySekai()
+	if store == nil {
+		return nil, false
+	}
+	startedAt := time.Now()
+	defer func() {
+		commandtrace.RecordOperation(ctx, "custom_profile.master.rows", time.Since(startedAt))
+	}()
+	if rowSource, ok := store.(provider.MasterRowSource); ok {
+		return rowSource.LoadMasterRows(ctx, filename)
+	}
+	rows := store.LoadMapByID(filename)
+	return rows, rows != nil
+}
+
+func loadCustomProfileMasterFile(ctx context.Context, app *renderapp.App, region renderregion.Value, filename string, ids map[int]struct{}) (map[int]map[string]any, error) {
 	startedAt := time.Now()
 	var readErr error
 	for _, dir := range customProfileMasterdataDirs(app, region) {
@@ -917,6 +981,9 @@ func mapInt(row map[string]any, key string) (int, bool) {
 		return int(v), true
 	case float64:
 		return int(v), true
+	case json.Number:
+		i, err := v.Int64()
+		return int(i), err == nil
 	case string:
 		i, err := strconv.Atoi(strings.TrimSpace(v))
 		return i, err == nil

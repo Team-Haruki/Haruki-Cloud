@@ -54,6 +54,9 @@ var fileToTable = map[string]string{
 	"mysekaiMaterialGameCharacterRelations.json":              "mysekaimaterialgamecharacterrelations",
 }
 
+// mysekaiMasterdataFillTimeout bounds one table fill of the DB store.
+const mysekaiMasterdataFillTimeout = 30 * time.Second
+
 // dbMasterdataStore queries the sekai PostgreSQL database instead of reading
 // local JSON files.  It presents the same map-based interface that the
 // controller expects.
@@ -146,43 +149,56 @@ func (s *dbMasterdataStore) contextOrBackground() context.Context {
 }
 
 func (s *dbMasterdataStore) loadList(filename string) []map[string]any {
+	items, _ := s.loadListChecked(filename)
+	return items
+}
+
+// loadListChecked serves one table, caching it until the next reset. ok is
+// false when the table is unmapped or the query failed; a failed fill is
+// not cached, so the next call retries.
+func (s *dbMasterdataStore) loadListChecked(filename string) ([]map[string]any, bool) {
 	if s == nil || s.db == nil {
-		return nil
+		return nil, false
 	}
 
 	if s.cache == nil {
-		return nil
+		return nil, false
 	}
 	s.cache.mu.Lock()
 	if cached, ok := s.cache.lists[filename]; ok {
 		s.cache.mu.Unlock()
-		return cached
+		return cached, true
 	}
 	generation := s.cache.generation
 	s.cache.mu.Unlock()
 
 	tableName, ok := fileToTable[filename]
 	if !ok {
-		return nil
+		return nil, false
 	}
 
-	items, err := s.queryTable(s.contextOrBackground(), tableName)
+	// The fill runs detached from the request so a client that disconnects
+	// mid-query cannot leave a partial table behind; the trace values on
+	// the context are kept.
+	fillCtx, cancel := context.WithTimeout(context.WithoutCancel(s.contextOrBackground()), mysekaiMasterdataFillTimeout)
+	defer cancel()
+	items, err := s.queryTable(fillCtx, tableName)
 	if err != nil {
-		return nil
+		return nil, false
 	}
 
 	s.cache.mu.Lock()
 	if generation != s.cache.generation {
 		s.cache.mu.Unlock()
-		return s.loadList(filename)
+		return s.loadListChecked(filename)
 	}
 	if cached, ok := s.cache.lists[filename]; ok {
 		s.cache.mu.Unlock()
-		return cached
+		return cached, true
 	}
 	s.cache.lists[filename] = items
 	s.cache.mu.Unlock()
-	return items
+	return items, true
 }
 
 func (s *dbMasterdataStore) loadMapByID(filename string) map[int]map[string]any {
@@ -201,7 +217,11 @@ func (s *dbMasterdataStore) loadMapByID(filename string) map[int]map[string]any 
 	generation := s.cache.generation
 	s.cache.mu.Unlock()
 
-	items := s.loadList(filename)
+	items, ok := s.loadListChecked(filename)
+	if !ok {
+		// Nothing was served: do not cache an empty index for a failed fill.
+		return map[int]map[string]any{}
+	}
 	result := make(map[int]map[string]any, len(items))
 	for _, item := range items {
 		id := intNumber(item["id"], 0)

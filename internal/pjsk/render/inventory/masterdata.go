@@ -1,23 +1,40 @@
 package inventory
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	json "haruki-cloud/internal/jsonutil"
 
+	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/database/sekai/boostitem"
+	"haruki-cloud/database/sekai/eventitem"
+	"haruki-cloud/database/sekai/gachaceilitem"
+	"haruki-cloud/database/sekai/gachaticket"
+	"haruki-cloud/database/sekai/material"
+	"haruki-cloud/database/sekai/mysekaimaterial"
+	"haruki-cloud/database/sekai/practiceticket"
+	"haruki-cloud/database/sekai/skillpracticeticket"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-func newMasterdataStore(localDir string) *masterdataStore {
+// masterdataFillTimeout bounds the queries that fill a region's inventory
+// tables. They run detached from the request context so a client that
+// disconnects mid-fill cannot leave a partial region cached.
+const masterdataFillTimeout = 30 * time.Second
+
+func newMasterdataStore(client *sekaiDB.Client, localDir string) *masterdataStore {
 	return &masterdataStore{
+		client:   client,
 		localDir: strings.TrimSpace(localDir),
 		cache:    make(map[string]*regionMasterdata),
 	}
 }
 
-func (s *masterdataStore) forRegion(region renderregion.Value) *regionMasterdata {
+func (s *masterdataStore) forRegion(ctx context.Context, region renderregion.Value) *regionMasterdata {
 	if s == nil {
 		return emptyRegionMasterdata()
 	}
@@ -33,7 +50,12 @@ func (s *masterdataStore) forRegion(region renderregion.Value) *regionMasterdata
 		return cached
 	}
 
-	loaded := s.loadRegion(renderregion.Normalize(key))
+	loaded, complete := s.loadRegion(ctx, renderregion.Normalize(key))
+	if !complete {
+		// A table query failed: serve what was loaded, keep the region
+		// uncached so the next request retries the database.
+		return loaded
+	}
 	s.mu.Lock()
 	if existing := s.cache[key]; existing != nil {
 		s.mu.Unlock()
@@ -53,20 +75,219 @@ func (s *masterdataStore) resetCache() {
 	s.mu.Unlock()
 }
 
-func (s *masterdataStore) loadRegion(region renderregion.Value) *regionMasterdata {
+// loadRegion fills every inventory table for a region, database first. A
+// table the database serves empty (or cannot serve) is read from the local
+// masterdata when a local directory is configured. complete is false when a
+// database query failed.
+func (s *masterdataStore) loadRegion(ctx context.Context, region renderregion.Value) (*regionMasterdata, bool) {
 	md := emptyRegionMasterdata()
-	if strings.TrimSpace(s.localDir) == "" {
-		return md
+	if s.client == nil && strings.TrimSpace(s.localDir) == "" {
+		return md, true
 	}
-	loadIndexedMasterdata(s.localDir, region, "materials.json", md.materials, func(item materialMeta) int { return item.ID })
-	loadIndexedMasterdata(s.localDir, region, "boostItems.json", md.boostItems, func(item boostItemMeta) int { return item.ID })
-	loadIndexedMasterdata(s.localDir, region, "eventItems.json", md.eventItems, func(item eventItemMeta) int { return item.ID })
-	loadIndexedMasterdata(s.localDir, region, "gachaTickets.json", md.gachaTickets, func(item assetNamedMeta) int { return item.ID })
-	loadIndexedMasterdata(s.localDir, region, "practiceTickets.json", md.practiceTickets, func(item ticketMeta) int { return item.ID })
-	loadIndexedMasterdata(s.localDir, region, "skillPracticeTickets.json", md.skillPracticeTickets, func(item ticketMeta) int { return item.ID })
-	loadIndexedMasterdata(s.localDir, region, "gachaCeilItems.json", md.gachaCeilItems, func(item assetNamedMeta) int { return item.ID })
-	loadIndexedMasterdata(s.localDir, region, "mysekaiMaterials.json", md.mysekaiMaterials, func(item mysekaiMaterialMeta) int { return item.ID })
-	return md
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	fillCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), masterdataFillTimeout)
+	defer cancel()
+
+	tables := []struct {
+		fromDB    func(context.Context, renderregion.Value, *regionMasterdata) (bool, error)
+		fromLocal func()
+	}{
+		{s.loadMaterials, func() {
+			loadIndexedMasterdata(s.localDir, region, "materials.json", md.materials, func(item materialMeta) int { return item.ID })
+		}},
+		{s.loadBoostItems, func() {
+			loadIndexedMasterdata(s.localDir, region, "boostItems.json", md.boostItems, func(item boostItemMeta) int { return item.ID })
+		}},
+		{s.loadEventItems, func() {
+			loadIndexedMasterdata(s.localDir, region, "eventItems.json", md.eventItems, func(item eventItemMeta) int { return item.ID })
+		}},
+		{s.loadGachaTickets, func() {
+			loadIndexedMasterdata(s.localDir, region, "gachaTickets.json", md.gachaTickets, func(item assetNamedMeta) int { return item.ID })
+		}},
+		{s.loadPracticeTickets, func() {
+			loadIndexedMasterdata(s.localDir, region, "practiceTickets.json", md.practiceTickets, func(item ticketMeta) int { return item.ID })
+		}},
+		{s.loadSkillPracticeTickets, func() {
+			loadIndexedMasterdata(s.localDir, region, "skillPracticeTickets.json", md.skillPracticeTickets, func(item ticketMeta) int { return item.ID })
+		}},
+		{s.loadGachaCeilItems, func() {
+			loadIndexedMasterdata(s.localDir, region, "gachaCeilItems.json", md.gachaCeilItems, func(item assetNamedMeta) int { return item.ID })
+		}},
+		{s.loadMysekaiMaterials, func() {
+			loadIndexedMasterdata(s.localDir, region, "mysekaiMaterials.json", md.mysekaiMaterials, func(item mysekaiMaterialMeta) int { return item.ID })
+		}},
+	}
+
+	complete := true
+	for _, table := range tables {
+		filled, err := table.fromDB(fillCtx, region, md)
+		if err != nil {
+			complete = false
+		}
+		if !filled && strings.TrimSpace(s.localDir) != "" {
+			table.fromLocal()
+		}
+	}
+	return md, complete
+}
+
+// Each loader reports filled=true when the database returned at least one
+// row for the region, so the caller knows whether the local file is still
+// needed.
+
+func (s *masterdataStore) loadMaterials(ctx context.Context, region renderregion.Value, md *regionMasterdata) (bool, error) {
+	if s.client == nil {
+		return false, nil
+	}
+	items, err := s.client.Material.Query().Where(material.ServerRegionEQ(region.String())).Order(material.ByGameID()).All(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, item := range items {
+		if item.GameID <= 0 {
+			continue
+		}
+		md.materials[int(item.GameID)] = materialMeta{
+			ID: int(item.GameID), Seq: int(item.Seq), MaterialType: item.MaterialType, Name: item.Name, FlavorText: item.FlavorText,
+		}
+	}
+	return len(items) > 0, nil
+}
+
+func (s *masterdataStore) loadBoostItems(ctx context.Context, region renderregion.Value, md *regionMasterdata) (bool, error) {
+	if s.client == nil {
+		return false, nil
+	}
+	items, err := s.client.Boostitem.Query().Where(boostitem.ServerRegionEQ(region.String())).Order(boostitem.ByGameID()).All(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, item := range items {
+		if item.GameID <= 0 {
+			continue
+		}
+		md.boostItems[int(item.GameID)] = boostItemMeta{
+			ID: int(item.GameID), Seq: int(item.Seq), Name: item.Name, RecoveryValue: int(item.RecoveryValue), FlavorText: item.FlavorText,
+		}
+	}
+	return len(items) > 0, nil
+}
+
+func (s *masterdataStore) loadEventItems(ctx context.Context, region renderregion.Value, md *regionMasterdata) (bool, error) {
+	if s.client == nil {
+		return false, nil
+	}
+	items, err := s.client.Eventitem.Query().Where(eventitem.ServerRegionEQ(region.String())).Order(eventitem.ByGameID()).All(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, item := range items {
+		if item.GameID <= 0 {
+			continue
+		}
+		md.eventItems[int(item.GameID)] = eventItemMeta{
+			ID: int(item.GameID), EventID: int(item.EventID), Name: item.Name, AssetbundleName: item.AssetbundleName, FlavorText: item.FlavorText,
+		}
+	}
+	return len(items) > 0, nil
+}
+
+func (s *masterdataStore) loadGachaTickets(ctx context.Context, region renderregion.Value, md *regionMasterdata) (bool, error) {
+	if s.client == nil {
+		return false, nil
+	}
+	items, err := s.client.Gachaticket.Query().Where(gachaticket.ServerRegionEQ(region.String())).Order(gachaticket.ByGameID()).All(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, item := range items {
+		if item.GameID <= 0 {
+			continue
+		}
+		md.gachaTickets[int(item.GameID)] = assetNamedMeta{
+			ID: int(item.GameID), Name: item.Name, AssetbundleName: item.AssetbundleName,
+		}
+	}
+	return len(items) > 0, nil
+}
+
+func (s *masterdataStore) loadPracticeTickets(ctx context.Context, region renderregion.Value, md *regionMasterdata) (bool, error) {
+	if s.client == nil {
+		return false, nil
+	}
+	items, err := s.client.Practiceticket.Query().Where(practiceticket.ServerRegionEQ(region.String())).Order(practiceticket.ByGameID()).All(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, item := range items {
+		if item.GameID <= 0 {
+			continue
+		}
+		md.practiceTickets[int(item.GameID)] = ticketMeta{
+			ID: int(item.GameID), Name: item.Name, CharacterID: int(item.CharacterID), Exp: int(item.Exp), FlavorText: item.FlavorText,
+		}
+	}
+	return len(items) > 0, nil
+}
+
+func (s *masterdataStore) loadSkillPracticeTickets(ctx context.Context, region renderregion.Value, md *regionMasterdata) (bool, error) {
+	if s.client == nil {
+		return false, nil
+	}
+	items, err := s.client.Skillpracticeticket.Query().Where(skillpracticeticket.ServerRegionEQ(region.String())).Order(skillpracticeticket.ByGameID()).All(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, item := range items {
+		if item.GameID <= 0 {
+			continue
+		}
+		md.skillPracticeTickets[int(item.GameID)] = ticketMeta{
+			ID: int(item.GameID), Name: item.Name, CharacterID: int(item.CharacterID), Exp: int(item.Exp), FlavorText: item.FlavorText,
+		}
+	}
+	return len(items) > 0, nil
+}
+
+func (s *masterdataStore) loadGachaCeilItems(ctx context.Context, region renderregion.Value, md *regionMasterdata) (bool, error) {
+	if s.client == nil {
+		return false, nil
+	}
+	items, err := s.client.Gachaceilitem.Query().Where(gachaceilitem.ServerRegionEQ(region.String())).Order(gachaceilitem.ByGameID()).All(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, item := range items {
+		if item.GameID <= 0 {
+			continue
+		}
+		md.gachaCeilItems[int(item.GameID)] = assetNamedMeta{
+			ID: int(item.GameID), Name: item.Name, AssetbundleName: item.AssetbundleName,
+		}
+	}
+	return len(items) > 0, nil
+}
+
+func (s *masterdataStore) loadMysekaiMaterials(ctx context.Context, region renderregion.Value, md *regionMasterdata) (bool, error) {
+	if s.client == nil {
+		return false, nil
+	}
+	items, err := s.client.Mysekaimaterial.Query().Where(mysekaimaterial.ServerRegionEQ(region.String())).Order(mysekaimaterial.ByGameID()).All(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, item := range items {
+		if item.GameID <= 0 {
+			continue
+		}
+		md.mysekaiMaterials[int(item.GameID)] = mysekaiMaterialMeta{
+			ID: int(item.GameID), Seq: int(item.Seq), Type: item.MysekaiMaterialType, Name: item.Name,
+			Description: item.Description, IconAssetbundleName: item.IconAssetbundleName,
+		}
+	}
+	return len(items) > 0, nil
 }
 
 func loadIndexedMasterdata[T any](localDir string, region renderregion.Value, filename string, destination map[int]T, idOf func(T) int) {

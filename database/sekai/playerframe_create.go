@@ -89,6 +89,20 @@ func (_c *PlayerframeCreate) SetNillableGameCharacterID(v *int64) *PlayerframeCr
 	return _c
 }
 
+// SetPartsCount sets the "parts_count" field.
+func (_c *PlayerframeCreate) SetPartsCount(v int64) *PlayerframeCreate {
+	_c.mutation.SetPartsCount(v)
+	return _c
+}
+
+// SetNillablePartsCount sets the "parts_count" field if the given value is not nil.
+func (_c *PlayerframeCreate) SetNillablePartsCount(v *int64) *PlayerframeCreate {
+	if v != nil {
+		_c.SetPartsCount(*v)
+	}
+	return _c
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_c *PlayerframeCreate) SetServerRegion(v string) *PlayerframeCreate {
 	_c.mutation.SetServerRegion(v)
@@ -177,6 +191,10 @@ func (_c *PlayerframeCreate) createSpec() (*Playerframe, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.GameCharacterID(); ok {
 		_spec.SetField(playerframe.FieldGameCharacterID, field.TypeInt64, value)
 		_node.GameCharacterID = value
+	}
+	if value, ok := _c.mutation.PartsCount(); ok {
+		_spec.SetField(playerframe.FieldPartsCount, field.TypeInt64, value)
+		_node.PartsCount = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(playerframe.FieldServerRegion, field.TypeString, value)

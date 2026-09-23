@@ -21,9 +21,8 @@ func TestDatabaseProviderResetMasterdataCacheClearsPermanentCaches(t *testing.T)
 	frames.init()
 	frames.frameCache[1] = &masterdata.PlayerFrame{ID: 1}
 	mysekai := &dbMySekaiProvider{
-		lists:       map[string][]map[string]any{"mysekaiFixtures.json": {{"id": 1}}},
-		mapsByID:    map[string]map[int]map[string]any{"mysekaiFixtures.json": {1: {"id": 1}}},
-		unavailable: map[string]struct{}{"mysekaiBlueprints.json": {}},
+		lists:    map[string][]map[string]any{"mysekaiFixtures.json": {{"id": 1}}},
+		mapsByID: map[string]map[int]map[string]any{"mysekaiFixtures.json": {1: {"id": 1}}},
 	}
 
 	provider := &DatabaseProvider{
@@ -51,7 +50,7 @@ func TestDatabaseProviderResetMasterdataCacheClearsPermanentCaches(t *testing.T)
 	if len(frames.frameCache) != 0 {
 		t.Fatalf("player frame cache was not reset: %+v", frames.frameCache)
 	}
-	if len(mysekai.lists) != 0 || len(mysekai.mapsByID) != 0 || len(mysekai.unavailable) != 0 {
-		t.Fatalf("mysekai provider cache was not reset: lists=%+v maps=%+v unavailable=%+v", mysekai.lists, mysekai.mapsByID, mysekai.unavailable)
+	if len(mysekai.lists) != 0 || len(mysekai.mapsByID) != 0 {
+		t.Fatalf("mysekai provider cache was not reset: lists=%+v maps=%+v", mysekai.lists, mysekai.mapsByID)
 	}
 }

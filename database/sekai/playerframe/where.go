@@ -78,6 +78,11 @@ func GameCharacterID(v int64) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldEQ(FieldGameCharacterID, v))
 }
 
+// PartsCount applies equality check predicate on the "parts_count" field. It's identical to PartsCountEQ.
+func PartsCount(v int64) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldEQ(FieldPartsCount, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldEQ(FieldServerRegion, v))
@@ -356,6 +361,56 @@ func GameCharacterIDIsNil() predicate.Playerframe {
 // GameCharacterIDNotNil applies the NotNil predicate on the "game_character_id" field.
 func GameCharacterIDNotNil() predicate.Playerframe {
 	return predicate.Playerframe(sql.FieldNotNull(FieldGameCharacterID))
+}
+
+// PartsCountEQ applies the EQ predicate on the "parts_count" field.
+func PartsCountEQ(v int64) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldEQ(FieldPartsCount, v))
+}
+
+// PartsCountNEQ applies the NEQ predicate on the "parts_count" field.
+func PartsCountNEQ(v int64) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldNEQ(FieldPartsCount, v))
+}
+
+// PartsCountIn applies the In predicate on the "parts_count" field.
+func PartsCountIn(vs ...int64) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldIn(FieldPartsCount, vs...))
+}
+
+// PartsCountNotIn applies the NotIn predicate on the "parts_count" field.
+func PartsCountNotIn(vs ...int64) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldNotIn(FieldPartsCount, vs...))
+}
+
+// PartsCountGT applies the GT predicate on the "parts_count" field.
+func PartsCountGT(v int64) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldGT(FieldPartsCount, v))
+}
+
+// PartsCountGTE applies the GTE predicate on the "parts_count" field.
+func PartsCountGTE(v int64) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldGTE(FieldPartsCount, v))
+}
+
+// PartsCountLT applies the LT predicate on the "parts_count" field.
+func PartsCountLT(v int64) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldLT(FieldPartsCount, v))
+}
+
+// PartsCountLTE applies the LTE predicate on the "parts_count" field.
+func PartsCountLTE(v int64) predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldLTE(FieldPartsCount, v))
+}
+
+// PartsCountIsNil applies the IsNil predicate on the "parts_count" field.
+func PartsCountIsNil() predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldIsNull(FieldPartsCount))
+}
+
+// PartsCountNotNil applies the NotNil predicate on the "parts_count" field.
+func PartsCountNotNil() predicate.Playerframe {
+	return predicate.Playerframe(sql.FieldNotNull(FieldPartsCount))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

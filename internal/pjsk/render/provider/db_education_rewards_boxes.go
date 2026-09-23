@@ -138,6 +138,7 @@ func (p *dbEducationProvider) ensureResourceBoxesLoaded(ctx context.Context) boo
 		}
 		p.boxByPurpose[box.ResourceBoxPurpose][box.ID] = box
 	}
+	supplementResourceBoxDetailsFromDB(ctx, p.client, p.region.String(), p.boxByPurpose)
 	supplementResourceBoxDetailsFromStore(p.store, p.boxByPurpose)
 	p.mergeLocalResourceBoxes(ctx)
 	p.boxesLoaded = true

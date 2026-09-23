@@ -1,9 +1,13 @@
 package provider
 
 import (
+	"context"
 	json "haruki-cloud/internal/jsonutil"
 	"slices"
 	"strings"
+
+	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/database/sekai/resourceboxdetail"
 )
 
 type resourceBoxDetailRecord struct {
@@ -15,16 +19,48 @@ type resourceBoxDetailRecord struct {
 	ResourceType       string `json:"resourceType"`
 }
 
+// supplementResourceBoxDetailsFromDB fills boxes whose details are empty
+// from resourceboxdetails (tw/kr/cn ship box contents as a separate file).
+// Rows carry no game id or seq: their insert order is the display order, so
+// the query orders by the identity id and the index keeps that order.
+func supplementResourceBoxDetailsFromDB(ctx context.Context, client *sekaiDB.Client, region string, byPurpose map[string]map[int]*ResourceBox) {
+	if client == nil || len(byPurpose) == 0 {
+		return
+	}
+	items, err := client.Resourceboxdetail.Query().
+		Where(resourceboxdetail.ServerRegionEQ(region)).
+		Order(resourceboxdetail.ByID()).
+		All(ctx)
+	if err != nil || len(items) == 0 {
+		return
+	}
+	rows := make([]resourceBoxDetailRecord, 0, len(items))
+	for _, item := range items {
+		resourceID := int(item.ResourceID)
+		resourceLevel := int(item.ResourceLevel)
+		rows = append(rows, resourceBoxDetailRecord{
+			ResourceBoxID:      int(item.ResourceBoxID),
+			ResourceBoxPurpose: item.ResourceBoxPurpose,
+			ResourceID:         &resourceID,
+			ResourceLevel:      &resourceLevel,
+			ResourceQuantity:   int(item.ResourceQuantity),
+			ResourceType:       item.ResourceType,
+		})
+	}
+	fillResourceBoxDetails(byPurpose, indexResourceBoxDetails(rows))
+}
+
 func supplementResourceBoxDetailsFromStore(store *localStore, byPurpose map[string]map[int]*ResourceBox) {
 	if store == nil || !store.Configured() || len(byPurpose) == 0 {
 		return
 	}
+	fillResourceBoxDetails(byPurpose, loadResourceBoxDetailsIndex(store))
+}
 
-	detailIndex := loadResourceBoxDetailsIndex(store)
+func fillResourceBoxDetails(byPurpose map[string]map[int]*ResourceBox, detailIndex map[string]map[int][]ResourceBoxDetail) {
 	if len(detailIndex) == 0 {
 		return
 	}
-
 	for purpose, purposeBoxes := range byPurpose {
 		purposeDetails, ok := detailIndex[purpose]
 		if !ok {

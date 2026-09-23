@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -15,6 +16,7 @@ import (
 	"haruki-cloud/database/sekai/eventdeckbonuse"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	"haruki-cloud/database/sekai/worldbloom"
+	"haruki-cloud/database/sekai/worldbloomchapterrankingrewardrange"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -38,6 +40,10 @@ type dbEventProvider struct {
 
 	supplyMu    sync.RWMutex
 	supplyCache map[int]string
+
+	wbRangeMu         sync.RWMutex
+	wbRangesByChapter map[worldBloomChapterRankingRewardKey][]masterdata.WorldBloomChapterRankingRewardRange
+	wbRangesLoaded    bool
 }
 
 func (p *dbEventProvider) init() {
@@ -46,6 +52,7 @@ func (p *dbEventProvider) init() {
 		p.cardCache = make(map[int]*masterdata.Card)
 		p.unitCache = make(map[int]string)
 		p.supplyCache = make(map[int]string)
+		p.wbRangesByChapter = make(map[worldBloomChapterRankingRewardKey][]masterdata.WorldBloomChapterRankingRewardRange)
 	})
 }
 
@@ -345,6 +352,9 @@ func (p *dbEventProvider) GetWorldBloomChapterRankingRewardRanges(ctx context.Co
 	if eventID <= 0 || gameCharacterID <= 0 {
 		return nil, nil
 	}
+	if ranges := p.worldBloomChapterRankingRewardRangesFromDB(ctx, eventID, gameCharacterID); len(ranges) > 0 {
+		return ranges, nil
+	}
 	if p.local != nil {
 		ranges, err := p.local.GetWorldBloomChapterRankingRewardRanges(ctx, eventID, gameCharacterID)
 		if err == nil && len(ranges) > 0 {
@@ -356,6 +366,73 @@ func (p *dbEventProvider) GetWorldBloomChapterRankingRewardRanges(ctx context.Co
 	}
 	local := &localEventProvider{store: p.store}
 	return local.GetWorldBloomChapterRankingRewardRanges(ctx, eventID, gameCharacterID)
+}
+
+// worldBloomChapterRankingRewardRangesFromDB serves a chapter's reward ranges
+// from worldbloomchapterrankingrewardranges. The region is loaded once and
+// kept until the masterdata cache is reset; an empty table is retried on
+// every call so a region that is ingested later is picked up.
+func (p *dbEventProvider) worldBloomChapterRankingRewardRangesFromDB(ctx context.Context, eventID, gameCharacterID int) []masterdata.WorldBloomChapterRankingRewardRange {
+	if !p.ensureWorldBloomChapterRankingRewardRangesLoaded(ctx) {
+		return nil
+	}
+	key := worldBloomChapterRankingRewardKey{eventID: eventID, gameCharacterID: gameCharacterID}
+	p.wbRangeMu.RLock()
+	defer p.wbRangeMu.RUnlock()
+	ranges := p.wbRangesByChapter[key]
+	if len(ranges) == 0 {
+		return nil
+	}
+	return slices.Clone(ranges)
+}
+
+func (p *dbEventProvider) ensureWorldBloomChapterRankingRewardRangesLoaded(ctx context.Context) bool {
+	p.init()
+	p.wbRangeMu.RLock()
+	if p.wbRangesLoaded {
+		p.wbRangeMu.RUnlock()
+		return true
+	}
+	p.wbRangeMu.RUnlock()
+
+	p.wbRangeMu.Lock()
+	defer p.wbRangeMu.Unlock()
+	if p.wbRangesLoaded {
+		return true
+	}
+	items, err := p.client.Worldbloomchapterrankingrewardrange.Query().
+		Where(worldbloomchapterrankingrewardrange.ServerRegionEQ(p.region.String())).
+		All(ctx)
+	if err != nil || len(items) == 0 {
+		return false
+	}
+	byChapter := make(map[worldBloomChapterRankingRewardKey][]masterdata.WorldBloomChapterRankingRewardRange)
+	for _, item := range items {
+		model := masterdata.WorldBloomChapterRankingRewardRange{
+			ID:              int(item.GameID),
+			EventID:         int(item.EventID),
+			GameCharacterID: int(item.GameCharacterID),
+			FromRank:        int(item.FromRank),
+			ToRank:          int(item.ToRank),
+			ResourceBoxID:   int(item.ResourceBoxID),
+		}
+		if model.EventID <= 0 || model.GameCharacterID <= 0 {
+			continue
+		}
+		key := worldBloomChapterRankingRewardKey{eventID: model.EventID, gameCharacterID: model.GameCharacterID}
+		byChapter[key] = append(byChapter[key], model)
+	}
+	for _, ranges := range byChapter {
+		sort.Slice(ranges, func(i, j int) bool {
+			if ranges[i].ToRank != ranges[j].ToRank {
+				return ranges[i].ToRank < ranges[j].ToRank
+			}
+			return ranges[i].FromRank < ranges[j].FromRank
+		})
+	}
+	p.wbRangesByChapter = byChapter
+	p.wbRangesLoaded = true
+	return true
 }
 
 func (p *dbEventProvider) getCardsByIDs(ctx context.Context, ids []int64) ([]*masterdata.Card, error) {

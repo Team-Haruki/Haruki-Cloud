@@ -322,7 +322,8 @@ func normalizeAppConfig(cfg *Config) context.Context {
 }
 
 func newAppDependencies(initCtx context.Context, sekaiClient *sekaiDB.Client, cfg Config) appDependencies {
-	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
+	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs).
+		WithStore(cfg.Stores.Assets, cfg.AssetProbe, logger.NewLoggerFromGlobal("PJSKAssets"))
 	assetReader := assets.NewAssetReader(assetHelper, cfg.Stores.Assets)
 	snapshotService, staticSnapshotProvider := newAppSnapshotServices(initCtx, sekaiClient, assetHelper, cfg)
 	drawingClient, imageStore, imageStoreErr := newAppDrawingClient(initCtx, cfg)

@@ -259,14 +259,27 @@ func parseAuthorization(value string) (credential, signedHeaders string, ok bool
 }
 
 type listResult struct {
-	XMLName               xml.Name    `xml:"ListBucketResult"`
-	Xmlns                 string      `xml:"xmlns,attr"`
-	Prefix                string      `xml:"Prefix"`
-	KeyCount              int         `xml:"KeyCount"`
-	MaxKeys               int         `xml:"MaxKeys"`
-	IsTruncated           bool        `xml:"IsTruncated"`
-	NextContinuationToken string      `xml:"NextContinuationToken,omitempty"`
-	Contents              []listEntry `xml:"Contents"`
+	XMLName               xml.Name     `xml:"ListBucketResult"`
+	Xmlns                 string       `xml:"xmlns,attr"`
+	Prefix                string       `xml:"Prefix"`
+	KeyCount              int          `xml:"KeyCount"`
+	MaxKeys               int          `xml:"MaxKeys"`
+	Delimiter             string       `xml:"Delimiter,omitempty"`
+	IsTruncated           bool         `xml:"IsTruncated"`
+	NextContinuationToken string       `xml:"NextContinuationToken,omitempty"`
+	Contents              []listEntry  `xml:"Contents"`
+	CommonPrefixes        []listPrefix `xml:"CommonPrefixes,omitempty"`
+}
+
+type listPrefix struct {
+	Prefix string `xml:"Prefix"`
+}
+
+// listItem is one ListObjectsV2 result row: an object key or, with a
+// delimiter, a rolled-up common prefix.
+type listItem struct {
+	name   string
+	prefix bool
 }
 
 type listEntry struct {
@@ -284,6 +297,7 @@ func (s *Server) list(w http.ResponseWriter, r *http.Request) {
 		maxKeys = 1000
 	}
 	token := query.Get("continuation-token")
+	delimiter := query.Get("delimiter")
 	s.mu.Lock()
 	keys := make([]string, 0, len(s.objects))
 	for key := range s.objects {
@@ -292,19 +306,36 @@ func (s *Server) list(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	slices.Sort(keys)
-	result := listResult{Xmlns: "http://s3.amazonaws.com/doc/2006-03-01/", Prefix: prefix, MaxKeys: maxKeys}
-	if len(keys) > maxKeys {
-		result.IsTruncated, result.NextContinuationToken = true, keys[maxKeys]
-		keys = keys[:maxKeys]
-	}
+	items := make([]listItem, 0, len(keys))
 	for _, key := range keys {
-		object := s.objects[key]
+		if delimiter != "" {
+			if idx := strings.Index(key[len(prefix):], delimiter); idx >= 0 {
+				common := key[:len(prefix)+idx+len(delimiter)]
+				if len(items) == 0 || items[len(items)-1].name != common {
+					items = append(items, listItem{name: common, prefix: true})
+				}
+				continue
+			}
+		}
+		items = append(items, listItem{name: key})
+	}
+	result := listResult{Xmlns: "http://s3.amazonaws.com/doc/2006-03-01/", Prefix: prefix, Delimiter: delimiter, MaxKeys: maxKeys}
+	if len(items) > maxKeys {
+		result.IsTruncated, result.NextContinuationToken = true, items[maxKeys].name
+		items = items[:maxKeys]
+	}
+	for _, item := range items {
+		if item.prefix {
+			result.CommonPrefixes = append(result.CommonPrefixes, listPrefix{Prefix: item.name})
+			continue
+		}
+		object := s.objects[item.name]
 		result.Contents = append(result.Contents, listEntry{
-			Key: key, LastModified: object.ModTime.Format("2006-01-02T15:04:05.000Z"), ETag: object.ETag, Size: len(object.Data),
+			Key: item.name, LastModified: object.ModTime.Format("2006-01-02T15:04:05.000Z"), ETag: object.ETag, Size: len(object.Data),
 		})
 	}
 	s.mu.Unlock()
-	result.KeyCount = len(result.Contents)
+	result.KeyCount = len(items)
 	w.Header().Set("Content-Type", "application/xml")
 	_, _ = io.WriteString(w, xml.Header)
 	_ = xml.NewEncoder(w).Encode(result)

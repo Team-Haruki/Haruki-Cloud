@@ -17,15 +17,20 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/storage"
+	"haruki-cloud/utils/logger"
 )
 
-// AssetHelper resolves assets against a primary directory with legacy fallbacks.
+// AssetHelper resolves assets against a primary directory with legacy
+// fallbacks and, once WithStore attached the assets slot, against the store
+// when no local root answers.
 type AssetHelper struct {
 	roots           []string
 	ctx             context.Context
 	fs              assetFileSystem
 	directoryCache  *assetDirectoryCache
 	resolutionCache *assetResolutionCache
+	store           *storeProbe
 }
 
 type assetFileSystem interface {
@@ -153,6 +158,66 @@ func (h *AssetHelper) WithContext(ctx context.Context) *AssetHelper {
 	return &clone
 }
 
+// WithStore attaches the assets store that region path choice consults when
+// no local root is configured or every local root misses. A nil or Disabled
+// store detaches it. The probe is shared by every WithContext copy; WithStore
+// mutates and returns h so the composition root can chain it.
+func (h *AssetHelper) WithStore(store storage.Store, cfg StoreProbeConfig, log *logger.Logger) *AssetHelper {
+	if h == nil {
+		return nil
+	}
+	if store == nil || store == storage.Disabled() {
+		h.store = nil
+		return h
+	}
+	h.store = newStoreProbe(store, cfg, log)
+	return h
+}
+
+// ProbesStore reports whether region path choice can consult a store.
+func (h *AssetHelper) ProbesStore() bool {
+	return h != nil && h.store != nil
+}
+
+// resolveStorePath returns the first candidate Drawing path whose object
+// exists in the store, with each segment's case corrected to the stored
+// spelling. A store failure ends the search (the probe logs it) so the caller
+// falls back to its first candidate.
+func (h *AssetHelper) resolveStorePath(candidates []string) (string, bool) {
+	if !h.ProbesStore() {
+		return "", false
+	}
+	ctx := h.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	for _, candidate := range candidates {
+		key, ok := candidateKey(candidate)
+		if !ok {
+			continue
+		}
+		resolved, found, err := h.store.resolve(ctx, key)
+		if err != nil {
+			return "", false
+		}
+		if found {
+			return replaceDrawingKey(candidate, key, resolved), true
+		}
+	}
+	return "", false
+}
+
+// replaceDrawingKey swaps the object key at the end of candidate for its
+// resolved spelling, keeping whatever prefix ("asset/", a leading "/") the
+// caller built. A candidate that does not end in key is returned unchanged.
+func replaceDrawingKey(candidate string, key, resolved storage.Key) string {
+	clean := filepath.ToSlash(strings.TrimSpace(candidate))
+	if key == resolved || !strings.HasSuffix(clean, string(key)) {
+		return clean
+	}
+	return clean[:len(clean)-len(key)] + string(resolved)
+}
+
 func (h *AssetHelper) Roots() []string {
 	out := make([]string, len(h.roots))
 	copy(out, h.roots)
@@ -268,10 +333,13 @@ func assetResolutionKey(relPaths []string) string {
 // Without an explicit clear, positive and negative results refresh after the
 // short resolution TTL.
 func (h *AssetHelper) ClearResolutionCache() {
-	if h == nil || h.resolutionCache == nil {
+	if h == nil {
 		return
 	}
-	h.resolutionCache.clear()
+	if h.resolutionCache != nil {
+		h.resolutionCache.clear()
+	}
+	h.store.clear()
 }
 
 func (h *AssetHelper) localCandidatePaths(candidateRel string) []string {
@@ -772,6 +840,12 @@ func preferredRegionAssetModes(relPath string) []string {
 // For top-level paths that are primarily delivered from ondemand (for example
 // gacha/event/event_story/music/mysekai), the priority is reversed to
 // ondemand first and startapp second.
+//
+// Existence is probed on the local roots first, exactly as before. A helper
+// with a store attached (WithStore) then asks the store when it has no local
+// root or every local root missed, and returns the candidate with each
+// segment's case corrected to the stored spelling. A store failure, a
+// helper without a store or a total miss all yield the first candidate.
 func ResolveRegionAssetPath(helper *AssetHelper, region string, relPaths ...string) string {
 	if len(relPaths) == 0 {
 		return ""
@@ -792,11 +866,17 @@ func ResolveRegionAssetPath(helper *AssetHelper, region string, relPaths ...stri
 	}
 	// Probe local existence to choose the right candidate, but keep the returned
 	// path relative for DrawingAPI callers that cannot access host-local absolute paths.
+	// A store-backed helper without local roots skips the (cwd-relative) disk probe.
 	if helper != nil {
-		for _, candidate := range candidates {
-			if helper.FirstExisting(candidate) != "" {
-				return candidate
+		if !helper.ProbesStore() || helperHasLocalRoots(helper) {
+			for _, candidate := range candidates {
+				if helper.FirstExisting(candidate) != "" {
+					return candidate
+				}
 			}
+		}
+		if resolved, ok := helper.resolveStorePath(candidates); ok {
+			return resolved
 		}
 	}
 	// Fall back to the first candidate as a relative path so that callers forwarding

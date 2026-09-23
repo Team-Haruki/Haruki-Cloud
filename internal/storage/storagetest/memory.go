@@ -33,6 +33,8 @@ type Memory struct {
 	FailStat   func(storage.Key) error
 	FailDelete func(storage.Key) error
 	FailList   func(storage.Key) error
+	// FailListDir defaults to FailList when nil.
+	FailListDir func(storage.Key) error
 	// MaxObjectBytes bounds Put; NewMemory sets storage.DefaultMaxObjectBytes.
 	MaxObjectBytes int64
 
@@ -164,6 +166,54 @@ func (m *Memory) List(ctx context.Context, rawPrefix storage.Key, fn func(storag
 			return err
 		}
 		if err := fn(object); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ListDir implements storage.Store. Objects come first in key order, then the
+// sub-prefixes in name order.
+func (m *Memory) ListDir(ctx context.Context, rawPrefix storage.Key, fn func(storage.DirEntry) error) error {
+	m.mu.Lock()
+	m.calls = append(m.calls, Op{Method: "ListDir", Key: rawPrefix})
+	m.mu.Unlock()
+	prefix, err := storage.CleanDirPrefix(string(rawPrefix))
+	if err != nil {
+		return err
+	}
+	fail := m.FailListDir
+	if fail == nil {
+		fail = m.FailList
+	}
+	if fail != nil {
+		if err := fail(prefix); err != nil {
+			return err
+		}
+	}
+	var dirs []string
+	seen := map[string]struct{}{}
+	for _, object := range m.snapshot(prefix) {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		rel := strings.TrimPrefix(string(object.Key), string(prefix))
+		if name, _, nested := strings.Cut(rel, "/"); nested {
+			if _, ok := seen[name]; !ok {
+				seen[name] = struct{}{}
+				dirs = append(dirs, name)
+			}
+			continue
+		}
+		if err := fn(storage.DirEntry{Name: rel, Object: object}); err != nil {
+			return err
+		}
+	}
+	for _, name := range dirs {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if err := fn(storage.DirEntry{Name: name, Dir: true}); err != nil {
 			return err
 		}
 	}

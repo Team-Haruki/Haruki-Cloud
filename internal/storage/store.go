@@ -30,6 +30,15 @@ type Object struct {
 	ETag    string // "" on local
 }
 
+// DirEntry is one immediate child of a ListDir prefix: an object (Dir false,
+// Object set) or a common sub-prefix (Dir true, Object zero).
+type DirEntry struct {
+	// Name is the child's last key segment, without a trailing "/".
+	Name   string
+	Dir    bool
+	Object Object
+}
+
 // PutOptions carries per-write metadata.
 type PutOptions struct {
 	// ContentType is sent by the s3 backend; the local backend ignores it.
@@ -50,6 +59,12 @@ type Store interface {
 	// Delete removes key; a missing key is not an error.
 	Delete(ctx context.Context, key Key) error
 	List(ctx context.Context, prefix Key, fn func(Object) error) error
+	// ListDir visits the immediate children of a directory prefix ("" is the
+	// root; a missing trailing "/" is added): the objects directly under it
+	// and, once each, the common sub-prefixes (S3 delimiter "/" semantics).
+	// Order is unspecified; a missing directory visits nothing. An error
+	// returned by fn aborts the listing and is returned unchanged.
+	ListDir(ctx context.Context, prefix Key, fn func(DirEntry) error) error
 }
 
 // ErrNotExist is fs.ErrNotExist so existing errors.Is checks keep working.
@@ -79,6 +94,10 @@ func (disabledStore) Stat(context.Context, Key) (Object, error) { return Object{
 func (disabledStore) Delete(context.Context, Key) error { return ErrNotConfigured }
 
 func (disabledStore) List(context.Context, Key, func(Object) error) error {
+	return ErrNotConfigured
+}
+
+func (disabledStore) ListDir(context.Context, Key, func(DirEntry) error) error {
 	return ErrNotConfigured
 }
 

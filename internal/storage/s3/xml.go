@@ -61,10 +61,15 @@ func decodeError(body io.Reader) (code, message string) {
 }
 
 type listBucketResult struct {
-	XMLName               xml.Name    `xml:"ListBucketResult"`
-	IsTruncated           bool        `xml:"IsTruncated"`
-	NextContinuationToken string      `xml:"NextContinuationToken"`
-	Contents              []listEntry `xml:"Contents"`
+	XMLName               xml.Name           `xml:"ListBucketResult"`
+	IsTruncated           bool               `xml:"IsTruncated"`
+	NextContinuationToken string             `xml:"NextContinuationToken"`
+	Contents              []listEntry        `xml:"Contents"`
+	CommonPrefixes        []listCommonPrefix `xml:"CommonPrefixes"`
+}
+
+type listCommonPrefix struct {
+	Prefix string `xml:"Prefix"`
 }
 
 type listEntry struct {

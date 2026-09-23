@@ -343,6 +343,15 @@ pjsk_render:
     #   endpoints: [...]
     #   mirror: { scheme: fs, root: "/asset" }
     #   mirror_mode: write        # write (read-through to the mirror) | write_only
+  asset_probe:
+    # Store-backed asset path choice (startapp vs ondemand, exact key casing) against
+    # storage.assets when asset_dirs.primary is "" (a node without a local asset tree).
+    # With a local root the disk is still probed first; the store only answers local misses.
+    # Outcomes are cached in a bounded in-process LRU; a store failure falls back to the
+    # first candidate path and is logged at most once a minute. Zero values keep the defaults.
+    positive_ttl: "6h"            # resolved keys and directory listings (env HARUKI_PJSK_RENDER_ASSET_PROBE_POSITIVE_TTL)
+    negative_ttl: "10m"           # misses (env HARUKI_PJSK_RENDER_ASSET_PROBE_NEGATIVE_TTL)
+    timeout: "5s"                 # one HEAD or one directory listing; the slot's stat_timeout / request_timeout still apply per attempt (env HARUKI_PJSK_RENDER_ASSET_PROBE_TIMEOUT)
   
   local_masterdata:
     enabled: false            # legacy/dev only; production should use sekai.remote_sync instead

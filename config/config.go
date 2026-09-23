@@ -455,6 +455,9 @@ func ApplyEnvOverrides(cfg *Config) error {
 	if err := envStringSlice("HARUKI_PJSK_RENDER_ASSETS_BASE_URLS", &cfg.PJSKRender.AssetDirs.AssetsBaseURLs); err != nil {
 		return err
 	}
+	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_POSITIVE_TTL", &cfg.PJSKRender.AssetProbe.PositiveTTL)
+	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_NEGATIVE_TTL", &cfg.PJSKRender.AssetProbe.NegativeTTL)
+	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_TIMEOUT", &cfg.PJSKRender.AssetProbe.Timeout)
 	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_OUTPUT_DIR", &cfg.PJSKRender.MusicMeta.OutputDir)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_SOURCE", &cfg.PJSKRender.MusicMeta.Source)
@@ -557,6 +560,15 @@ type SekaiRemoteSyncConfig struct {
 	FailStartup   bool          `yaml:"fail_startup"`
 	PgDumpPath    string        `yaml:"pg_dump_path"`
 	PgRestorePath string        `yaml:"pg_restore_path"`
+}
+
+// AssetProbeConfig tunes the store-backed asset path probe (startapp /
+// ondemand choice and case correction against the assets slot when no local
+// asset root is configured). Zero values select the defaults.
+type AssetProbeConfig struct {
+	PositiveTTL time.Duration `yaml:"positive_ttl"` // resolved keys and directory listings (default 6h)
+	NegativeTTL time.Duration `yaml:"negative_ttl"` // misses (default 10m)
+	Timeout     time.Duration `yaml:"timeout"`      // one Stat or one directory listing (default 5s)
 }
 
 type AssetDirsConfig struct {
@@ -744,6 +756,7 @@ type PJSKRenderConfig struct {
 	Preview3D                 Preview3DConfig                 `yaml:"preview_3d"`
 	DeckRecommend             DeckRecommendConfig             `yaml:"deck_recommend"`
 	Storage                   StorageConfig                   `yaml:"storage"`
+	AssetProbe                AssetProbeConfig                `yaml:"asset_probe"`
 }
 
 // StorageConfig is pjsk_render.storage: one Asset-Updater style provider

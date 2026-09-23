@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/storage"
@@ -28,6 +29,8 @@ func Conformance(t *testing.T, factory func(t *testing.T) storage.Store) {
 		{"Delete", conformDelete},
 		{"List", conformList},
 		{"ListAbort", conformListAbort},
+		{"ListDir", conformListDir},
+		{"ListDirAbort", conformListDirAbort},
 		{"KeyRejection", conformKeyRejection},
 		{"TooLarge", conformTooLarge},
 		{"ContextCanceled", conformContextCanceled},
@@ -136,6 +139,64 @@ func conformListAbort(t *testing.T, store storage.Store) {
 		return stop
 	})
 	check(t, errors.Is(err, stop) && visits == 1, "List abort = %v after %d visits", err, visits)
+}
+
+func listDir(t *testing.T, store storage.Store, prefix storage.Key) (objects, dirs []string) {
+	t.Helper()
+	err := store.ListDir(context.Background(), prefix, func(entry storage.DirEntry) error {
+		if entry.Dir {
+			check(t, entry.Object == storage.Object{}, "ListDir(%q) dir %q carries an object", prefix, entry.Name)
+			dirs = append(dirs, entry.Name)
+			return nil
+		}
+		check(t, entry.Object.Key == storage.Key(strings.TrimSuffix(string(prefix), "/")+"/"+entry.Name) ||
+			(prefix == "" && entry.Object.Key == storage.Key(entry.Name)),
+			"ListDir(%q) object %q has key %q", prefix, entry.Name, entry.Object.Key)
+		objects = append(objects, entry.Name)
+		return nil
+	})
+	check(t, err == nil, "ListDir(%q) error = %v", prefix, err)
+	slices.Sort(objects)
+	slices.Sort(dirs)
+	return objects, dirs
+}
+
+func conformListDir(t *testing.T, store storage.Store) {
+	ctx := context.Background()
+	for _, key := range []storage.Key{"d/a", "d/b/c", "d/b/e/f", "d/x/y", "da", "top"} {
+		check(t, store.Put(ctx, key, []byte(key), storage.PutOptions{}) == nil, "Put %q failed", key)
+	}
+	cases := []struct {
+		prefix        storage.Key
+		objects, dirs []string
+	}{
+		{"", []string{"da", "top"}, []string{"d"}},
+		{"d/", []string{"a"}, []string{"b", "x"}},
+		{"d", []string{"a"}, []string{"b", "x"}},
+		{"d/b/", []string{"c"}, []string{"e"}},
+		{"d/b/e/", []string{"f"}, nil},
+		{"zzz/", nil, nil},
+		{"d/a/", nil, nil},
+	}
+	for _, tc := range cases {
+		objects, dirs := listDir(t, store, tc.prefix)
+		check(t, slices.Equal(objects, tc.objects), "ListDir(%q) objects = %v, want %v", tc.prefix, objects, tc.objects)
+		check(t, slices.Equal(dirs, tc.dirs), "ListDir(%q) dirs = %v, want %v", tc.prefix, dirs, tc.dirs)
+	}
+}
+
+func conformListDirAbort(t *testing.T, store storage.Store) {
+	ctx := context.Background()
+	for _, key := range []storage.Key{"m/1", "m/2", "m/3/4"} {
+		check(t, store.Put(ctx, key, []byte("x"), storage.PutOptions{}) == nil, "Put %q failed", key)
+	}
+	stop := errors.New("stop")
+	visits := 0
+	err := store.ListDir(ctx, "m/", func(storage.DirEntry) error {
+		visits++
+		return stop
+	})
+	check(t, errors.Is(err, stop) && visits == 1, "ListDir abort = %v after %d visits", err, visits)
 }
 
 func conformKeyRejection(t *testing.T, store storage.Store) {

@@ -178,9 +178,11 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		AssetPrimaryDir:                    harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
 		AssetLegacyDirs:                    harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
 		AssetProbe: renderassets.StoreProbeConfig{
-			PositiveTTL: harukiConfig.Cfg.PJSKRender.AssetProbe.PositiveTTL,
-			NegativeTTL: harukiConfig.Cfg.PJSKRender.AssetProbe.NegativeTTL,
-			Timeout:     harukiConfig.Cfg.PJSKRender.AssetProbe.Timeout,
+			PositiveTTL:  harukiConfig.Cfg.PJSKRender.AssetProbe.PositiveTTL,
+			NegativeTTL:  harukiConfig.Cfg.PJSKRender.AssetProbe.NegativeTTL,
+			ListingTTL:   harukiConfig.Cfg.PJSKRender.AssetProbe.ListingTTL,
+			Timeout:      harukiConfig.Cfg.PJSKRender.AssetProbe.Timeout,
+			WarmPrefixes: harukiConfig.Cfg.PJSKRender.AssetProbe.WarmPrefixes,
 		},
 		LocalMasterdata: renderapp.LocalMasterdataConfig{
 			Enabled:         harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,

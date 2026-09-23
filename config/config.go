@@ -457,7 +457,11 @@ func ApplyEnvOverrides(cfg *Config) error {
 	}
 	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_POSITIVE_TTL", &cfg.PJSKRender.AssetProbe.PositiveTTL)
 	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_NEGATIVE_TTL", &cfg.PJSKRender.AssetProbe.NegativeTTL)
+	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_LISTING_TTL", &cfg.PJSKRender.AssetProbe.ListingTTL)
 	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_TIMEOUT", &cfg.PJSKRender.AssetProbe.Timeout)
+	if err := envStringSlice("HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_PREFIXES", &cfg.PJSKRender.AssetProbe.WarmPrefixes); err != nil {
+		return err
+	}
 	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_OUTPUT_DIR", &cfg.PJSKRender.MusicMeta.OutputDir)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_SOURCE", &cfg.PJSKRender.MusicMeta.Source)
@@ -566,9 +570,11 @@ type SekaiRemoteSyncConfig struct {
 // ondemand choice and case correction against the assets slot when no local
 // asset root is configured). Zero values select the defaults.
 type AssetProbeConfig struct {
-	PositiveTTL time.Duration `yaml:"positive_ttl"` // resolved keys and directory listings (default 6h)
-	NegativeTTL time.Duration `yaml:"negative_ttl"` // misses (default 10m)
-	Timeout     time.Duration `yaml:"timeout"`      // one Stat or one directory listing (default 5s)
+	PositiveTTL  time.Duration `yaml:"positive_ttl"`  // resolved keys (default 6h)
+	ListingTTL   time.Duration `yaml:"listing_ttl"`   // directory listings (default 30m)
+	NegativeTTL  time.Duration `yaml:"negative_ttl"`  // misses; a miss in a listing older than this re-lists it once (default 5m)
+	Timeout      time.Duration `yaml:"timeout"`       // one HEAD or one directory listing (default 3s)
+	WarmPrefixes []string      `yaml:"warm_prefixes"` // directories listed in the background at startup (default none)
 }
 
 type AssetDirsConfig struct {

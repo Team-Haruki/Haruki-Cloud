@@ -174,6 +174,16 @@ func (h *AssetHelper) WithStore(store storage.Store, cfg StoreProbeConfig, log *
 	return h
 }
 
+// WarmUp lists the probe's configured warm prefixes so the first renders
+// after a restart find their directory listings cached. It returns when the
+// prefixes are listed or ctx ends; without a store it is a no-op.
+func (h *AssetHelper) WarmUp(ctx context.Context) {
+	if !h.ProbesStore() {
+		return
+	}
+	h.store.warm(ctx)
+}
+
 // ProbesStore reports whether region path choice can consult a store.
 func (h *AssetHelper) ProbesStore() bool {
 	return h != nil && h.store != nil

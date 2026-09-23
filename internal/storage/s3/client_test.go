@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -542,5 +543,75 @@ func TestRequestBuildFailure(t *testing.T) {
 	ep := c.endpoints[0]
 	if _, err := c.send(context.Background(), ep, "BAD METHOD", "k", "", nil, nil); err == nil {
 		t.Fatal("send with an invalid method must fail")
+	}
+}
+
+const listDirPage1 = `<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+<IsTruncated>true</IsTruncated><NextContinuationToken>root/d/b/</NextContinuationToken>
+<Contents><Key>root/d/</Key><Size>0</Size></Contents>
+<Contents><Key>root/d/a</Key><LastModified>2026-09-13T08:00:00.000Z</LastModified><ETag>&quot;e1&quot;</ETag><Size>3</Size></Contents>
+<CommonPrefixes><Prefix>root/d/b/</Prefix></CommonPrefixes>
+</ListBucketResult>`
+
+const listDirPage2 = `<ListBucketResult><IsTruncated>false</IsTruncated>
+<Contents><Key>root/d/c</Key><Size>5</Size></Contents>
+<Contents><Key>root/d/ignored/slash</Key><Size>1</Size></Contents>
+<Contents><Key>other/x</Key><Size>1</Size></Contents>
+<CommonPrefixes><Prefix>root/d/e/</Prefix></CommonPrefixes>
+<CommonPrefixes><Prefix>root/d/</Prefix></CommonPrefixes>
+<CommonPrefixes><Prefix>elsewhere/</Prefix></CommonPrefixes>
+</ListBucketResult>`
+
+// The continuation token of the first page lands on a common prefix, as it
+// does when a page boundary falls between two sub-directories.
+func TestListDirPagesAcrossCommonPrefixes(t *testing.T) {
+	var queries []string
+	var mu sync.Mutex
+	server := serve(t, func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		queries = append(queries, r.URL.RawQuery)
+		mu.Unlock()
+		if r.URL.Query().Get("continuation-token") == "root/d/b/" {
+			_, _ = io.WriteString(w, listDirPage2)
+			return
+		}
+		_, _ = io.WriteString(w, listDirPage1)
+	})
+	cfg := testConfig(server.URL)
+	cfg.Root = "root"
+	c := mustClient(t, cfg)
+	c.pageSize = 2
+	var objects, dirs []string
+	err := c.ListDir(context.Background(), "d", func(entry storage.DirEntry) error {
+		if entry.Dir {
+			if entry.Object != (storage.Object{}) {
+				t.Errorf("dir %q carries an object", entry.Name)
+			}
+			dirs = append(dirs, entry.Name)
+			return nil
+		}
+		if entry.Object.Key != storage.Key("d/"+entry.Name) {
+			t.Errorf("object %q has key %q", entry.Name, entry.Object.Key)
+		}
+		objects = append(objects, entry.Name)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(objects, ",") != "a,c" || strings.Join(dirs, ",") != "b,e" {
+		t.Fatalf("objects = %v, dirs = %v", objects, dirs)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(queries) != 2 {
+		t.Fatalf("queries = %v", queries)
+	}
+	first, _ := url.ParseQuery(queries[0])
+	second, _ := url.ParseQuery(queries[1])
+	if first.Get("delimiter") != "/" || first.Get("prefix") != "root/d/" || first.Get("max-keys") != "2" || first.Get("continuation-token") != "" ||
+		second.Get("continuation-token") != "root/d/b/" || second.Get("delimiter") != "/" {
+		t.Fatalf("queries = %v", queries)
 	}
 }

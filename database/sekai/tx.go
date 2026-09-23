@@ -22,6 +22,8 @@ type Tx struct {
 	Bond *BondClient
 	// Bondshonor is the client for interacting with the Bondshonor builders.
 	Bondshonor *BondshonorClient
+	// Bondshonorword is the client for interacting with the Bondshonorword builders.
+	Bondshonorword *BondshonorwordClient
 	// Boostitem is the client for interacting with the Boostitem builders.
 	Boostitem *BoostitemClient
 	// Card is the client for interacting with the Card builders.
@@ -42,6 +44,12 @@ type Tx struct {
 	Character2D *Character2DClient
 	// Characterarchivemysekaicharactertalkgroup is the client for interacting with the Characterarchivemysekaicharactertalkgroup builders.
 	Characterarchivemysekaicharactertalkgroup *CharacterarchivemysekaicharactertalkgroupClient
+	// Charactermissionv2 is the client for interacting with the Charactermissionv2 builders.
+	Charactermissionv2 *Charactermissionv2Client
+	// Charactermissionv2Areaitem is the client for interacting with the Charactermissionv2Areaitem builders.
+	Charactermissionv2Areaitem *Charactermissionv2AreaitemClient
+	// Charactermissionv2Exjson is the client for interacting with the Charactermissionv2Exjson builders.
+	Charactermissionv2Exjson *Charactermissionv2ExjsonClient
 	// Charactermissionv2Parametergroup is the client for interacting with the Charactermissionv2Parametergroup builders.
 	Charactermissionv2Parametergroup *Charactermissionv2ParametergroupClient
 	// Characterrank is the client for interacting with the Characterrank builders.
@@ -90,6 +98,8 @@ type Tx struct {
 	Limitedtimemusic *LimitedtimemusicClient
 	// Masterlesson is the client for interacting with the Masterlesson builders.
 	Masterlesson *MasterlessonClient
+	// Material is the client for interacting with the Material builders.
+	Material *MaterialClient
 	// Music is the client for interacting with the Music builders.
 	Music *MusicClient
 	// MusicArtist is the client for interacting with the MusicArtist builders.
@@ -178,18 +188,26 @@ type Tx struct {
 	Playerframe *PlayerframeClient
 	// Playerframegroup is the client for interacting with the Playerframegroup builders.
 	Playerframegroup *PlayerframegroupClient
+	// Practiceticket is the client for interacting with the Practiceticket builders.
+	Practiceticket *PracticeticketClient
+	// Resourceboxdetail is the client for interacting with the Resourceboxdetail builders.
+	Resourceboxdetail *ResourceboxdetailClient
 	// Resourceboxe is the client for interacting with the Resourceboxe builders.
 	Resourceboxe *ResourceboxeClient
 	// Shopitem is the client for interacting with the Shopitem builders.
 	Shopitem *ShopitemClient
 	// Skill is the client for interacting with the Skill builders.
 	Skill *SkillClient
+	// Skillpracticeticket is the client for interacting with the Skillpracticeticket builders.
+	Skillpracticeticket *SkillpracticeticketClient
 	// Stamp is the client for interacting with the Stamp builders.
 	Stamp *StampClient
 	// Virtuallive is the client for interacting with the Virtuallive builders.
 	Virtuallive *VirtualliveClient
 	// Worldbloom is the client for interacting with the Worldbloom builders.
 	Worldbloom *WorldbloomClient
+	// Worldbloomchapterrankingrewardrange is the client for interacting with the Worldbloomchapterrankingrewardrange builders.
+	Worldbloomchapterrankingrewardrange *WorldbloomchapterrankingrewardrangeClient
 	// Worldbloomdifferentattributebonuse is the client for interacting with the Worldbloomdifferentattributebonuse builders.
 	Worldbloomdifferentattributebonuse *WorldbloomdifferentattributebonuseClient
 	// Worldbloomsupportdeckbonuse is the client for interacting with the Worldbloomsupportdeckbonuse builders.
@@ -332,6 +350,7 @@ func (tx *Tx) init() {
 	tx.Areaitemlevel = NewAreaitemlevelClient(tx.config)
 	tx.Bond = NewBondClient(tx.config)
 	tx.Bondshonor = NewBondshonorClient(tx.config)
+	tx.Bondshonorword = NewBondshonorwordClient(tx.config)
 	tx.Boostitem = NewBoostitemClient(tx.config)
 	tx.Card = NewCardClient(tx.config)
 	tx.Cardcostume3D = NewCardcostume3DClient(tx.config)
@@ -342,6 +361,9 @@ func (tx *Tx) init() {
 	tx.Challengelivehighscorereward = NewChallengelivehighscorerewardClient(tx.config)
 	tx.Character2D = NewCharacter2DClient(tx.config)
 	tx.Characterarchivemysekaicharactertalkgroup = NewCharacterarchivemysekaicharactertalkgroupClient(tx.config)
+	tx.Charactermissionv2 = NewCharactermissionv2Client(tx.config)
+	tx.Charactermissionv2Areaitem = NewCharactermissionv2AreaitemClient(tx.config)
+	tx.Charactermissionv2Exjson = NewCharactermissionv2ExjsonClient(tx.config)
 	tx.Charactermissionv2Parametergroup = NewCharactermissionv2ParametergroupClient(tx.config)
 	tx.Characterrank = NewCharacterrankClient(tx.config)
 	tx.Cheerfulcarnivalteam = NewCheerfulcarnivalteamClient(tx.config)
@@ -366,6 +388,7 @@ func (tx *Tx) init() {
 	tx.Level = NewLevelClient(tx.config)
 	tx.Limitedtimemusic = NewLimitedtimemusicClient(tx.config)
 	tx.Masterlesson = NewMasterlessonClient(tx.config)
+	tx.Material = NewMaterialClient(tx.config)
 	tx.Music = NewMusicClient(tx.config)
 	tx.MusicArtist = NewMusicArtistClient(tx.config)
 	tx.Musicdifficultie = NewMusicdifficultieClient(tx.config)
@@ -410,12 +433,16 @@ func (tx *Tx) init() {
 	tx.Outsidecharacter = NewOutsidecharacterClient(tx.config)
 	tx.Playerframe = NewPlayerframeClient(tx.config)
 	tx.Playerframegroup = NewPlayerframegroupClient(tx.config)
+	tx.Practiceticket = NewPracticeticketClient(tx.config)
+	tx.Resourceboxdetail = NewResourceboxdetailClient(tx.config)
 	tx.Resourceboxe = NewResourceboxeClient(tx.config)
 	tx.Shopitem = NewShopitemClient(tx.config)
 	tx.Skill = NewSkillClient(tx.config)
+	tx.Skillpracticeticket = NewSkillpracticeticketClient(tx.config)
 	tx.Stamp = NewStampClient(tx.config)
 	tx.Virtuallive = NewVirtualliveClient(tx.config)
 	tx.Worldbloom = NewWorldbloomClient(tx.config)
+	tx.Worldbloomchapterrankingrewardrange = NewWorldbloomchapterrankingrewardrangeClient(tx.config)
 	tx.Worldbloomdifferentattributebonuse = NewWorldbloomdifferentattributebonuseClient(tx.config)
 	tx.Worldbloomsupportdeckbonuse = NewWorldbloomsupportdeckbonuseClient(tx.config)
 	tx.Worldbloomsupportdeckuniteventlimitedbonuse = NewWorldbloomsupportdeckuniteventlimitedbonuseClient(tx.config)

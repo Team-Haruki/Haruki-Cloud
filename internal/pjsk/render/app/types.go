@@ -73,6 +73,7 @@ type Config struct {
 	// against Stores.Assets when no local root answers.
 	AssetProbe               assets.StoreProbeConfig
 	LocalMasterdata          LocalMasterdataConfig
+	MasterdataRegistry       MasterdataRegistryConfig
 	SekaiDBType              string
 	SekaiDSN                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
 	UserSnapshot             UserSnapshotConfig
@@ -119,6 +120,19 @@ type LocalMasterdataConfig struct {
 	AllowLeaks      bool // when true, unopened event/worldbloom deck queries may fall back to local masterdata
 	Dir             string
 	RefreshInterval time.Duration
+}
+
+// MasterdataRegistryConfig names the master registry whose per-region
+// manifest pointer drives DB-backed masterdata cache resets. An empty URL
+// derives from DeckRecommend.RegistryURL, then MusicMetaBaseURL when the
+// music meta source is the registry; PollInterval 0 selects the default and
+// a negative value disables the loop. SettleDelays schedules follow-up
+// resets after a change because the DB ingest commits after the registry
+// pointer moves; nil selects the default [5m, 15m], an empty slice disables.
+type MasterdataRegistryConfig struct {
+	URL          string
+	PollInterval time.Duration
+	SettleDelays []time.Duration
 }
 
 type UserSnapshotConfig struct {

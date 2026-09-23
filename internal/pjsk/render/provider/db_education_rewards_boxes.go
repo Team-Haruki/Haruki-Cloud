@@ -112,12 +112,16 @@ func (p *dbEducationProvider) ensureResourceBoxesLoaded(ctx context.Context) boo
 		return true
 	}
 
+	fillCtx, cancel := cacheFillContext(ctx)
+	defer cancel()
 	items, err := p.client.Resourceboxe.Query().
 		Where(resourceboxe.ServerRegionEQ(p.region.String())).
-		All(ctx)
+		All(fillCtx)
 	if err != nil {
 		return false
 	}
+	byID := make(map[int]*ResourceBox, len(items))
+	byPurpose := make(map[string]map[int]*ResourceBox)
 	for _, item := range items {
 		box := &ResourceBox{
 			ID:                 int(item.GameID),
@@ -132,14 +136,19 @@ func (p *dbEducationProvider) ensureResourceBoxesLoaded(ctx context.Context) boo
 			}
 			box.Details = details
 		}
-		p.boxByID[box.ID] = box
-		if _, ok := p.boxByPurpose[box.ResourceBoxPurpose]; !ok {
-			p.boxByPurpose[box.ResourceBoxPurpose] = make(map[int]*ResourceBox)
+		byID[box.ID] = box
+		if _, ok := byPurpose[box.ResourceBoxPurpose]; !ok {
+			byPurpose[box.ResourceBoxPurpose] = make(map[int]*ResourceBox)
 		}
-		p.boxByPurpose[box.ResourceBoxPurpose][box.ID] = box
+		byPurpose[box.ResourceBoxPurpose][box.ID] = box
 	}
-	supplementResourceBoxDetailsFromStore(p.store, p.boxByPurpose)
-	p.mergeLocalResourceBoxes(ctx)
+	if err := supplementResourceBoxDetailsFromDB(fillCtx, p.client, p.region.String(), byPurpose); err != nil {
+		return false
+	}
+	supplementResourceBoxDetailsFromStore(p.store, byPurpose)
+	p.boxByID = byID
+	p.boxByPurpose = byPurpose
+	p.mergeLocalResourceBoxes(fillCtx)
 	p.boxesLoaded = true
 	return true
 }

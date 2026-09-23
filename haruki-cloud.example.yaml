@@ -365,6 +365,11 @@ pjsk_render:
     dir: ""
     refresh_interval: "-1s"
 
+  masterdata_registry:
+    url: ""                   # Haruki master registry base URL polled to reset DB-backed masterdata caches after an ingest; empty derives from deck_recommend.registry_url, then music_meta.base_url when music_meta.source=registry (env HARUKI_PJSK_RENDER_MASTERDATA_REGISTRY_URL)
+    poll_interval: "3m"       # how often /v1/master/{region}/current is checked (ETag conditional GET); 0 = 3m, negative disables (env HARUKI_PJSK_RENDER_MASTERDATA_REGISTRY_POLL_INTERVAL)
+    # settle_delays: ["5m", "15m"]  # follow-up resets after a change: the DB ingest commits after the registry pointer moves, so the immediate reset can still see old rows; [] disables (env ..._SETTLE_DELAYS, comma-separated)
+
   deck_recommend:
     enabled: true
     disable: true

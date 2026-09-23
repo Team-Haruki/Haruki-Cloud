@@ -1,9 +1,14 @@
 package provider
 
 import (
+	"context"
 	json "haruki-cloud/internal/jsonutil"
 	"slices"
 	"strings"
+	"time"
+
+	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/database/sekai/resourceboxdetail"
 )
 
 type resourceBoxDetailRecord struct {
@@ -15,16 +20,65 @@ type resourceBoxDetailRecord struct {
 	ResourceType       string `json:"resourceType"`
 }
 
+// cacheFillTimeout bounds the master data queries that fill a provider
+// cache. They run detached from the request context so a client that
+// disconnects mid-fill cannot leave an error cached as "loaded".
+const cacheFillTimeout = 30 * time.Second
+
+func cacheFillContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithTimeout(context.WithoutCancel(ctx), cacheFillTimeout)
+}
+
+// supplementResourceBoxDetailsFromDB fills boxes whose details are empty
+// from resourceboxdetails (tw/kr/cn ship box contents as a separate file).
+// Rows carry no game id or seq: their insert order is the display order, so
+// the query orders by the identity id. A query error is returned so the
+// caller does not mark the boxes loaded.
+func supplementResourceBoxDetailsFromDB(ctx context.Context, client *sekaiDB.Client, region string, byPurpose map[string]map[int]*ResourceBox) error {
+	if client == nil || len(byPurpose) == 0 {
+		return nil
+	}
+	items, err := client.Resourceboxdetail.Query().
+		Where(resourceboxdetail.ServerRegionEQ(region)).
+		Order(resourceboxdetail.ByID()).
+		All(ctx)
+	if err != nil {
+		return err
+	}
+	if len(items) == 0 {
+		return nil
+	}
+	rows := make([]resourceBoxDetailRecord, 0, len(items))
+	for _, item := range items {
+		resourceID := int(item.ResourceID)
+		resourceLevel := int(item.ResourceLevel)
+		rows = append(rows, resourceBoxDetailRecord{
+			ResourceBoxID:      int(item.ResourceBoxID),
+			ResourceBoxPurpose: item.ResourceBoxPurpose,
+			ResourceID:         &resourceID,
+			ResourceLevel:      &resourceLevel,
+			ResourceQuantity:   int(item.ResourceQuantity),
+			ResourceType:       item.ResourceType,
+		})
+	}
+	fillResourceBoxDetails(byPurpose, indexResourceBoxDetails(rows))
+	return nil
+}
+
 func supplementResourceBoxDetailsFromStore(store *localStore, byPurpose map[string]map[int]*ResourceBox) {
 	if store == nil || !store.Configured() || len(byPurpose) == 0 {
 		return
 	}
+	fillResourceBoxDetails(byPurpose, loadResourceBoxDetailsIndex(store))
+}
 
-	detailIndex := loadResourceBoxDetailsIndex(store)
+func fillResourceBoxDetails(byPurpose map[string]map[int]*ResourceBox, detailIndex map[string]map[int][]ResourceBoxDetail) {
 	if len(detailIndex) == 0 {
 		return
 	}
-
 	for purpose, purposeBoxes := range byPurpose {
 		purposeDetails, ok := detailIndex[purpose]
 		if !ok {

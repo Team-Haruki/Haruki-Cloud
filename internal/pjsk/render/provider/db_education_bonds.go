@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"haruki-cloud/database/sekai/bond"
+	"haruki-cloud/database/sekai/charactermissionv2"
 	"haruki-cloud/database/sekai/charactermissionv2parametergroup"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	"haruki-cloud/database/sekai/level"
@@ -170,7 +171,13 @@ func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bo
 		return true
 	}
 
-	if p.store != nil && p.store.Configured() {
+	fillCtx, cancel := cacheFillContext(ctx)
+	defer cancel()
+	missionsFromDB, err := p.loadCharacterMissionsFromDB(fillCtx)
+	if err != nil {
+		return false
+	}
+	if !missionsFromDB && p.store != nil && p.store.Configured() {
 		if missions, err := p.store.loadJSON[localCharacterMissionJSON]("characterMissionV2s.json"); err == nil {
 			for _, item := range missions {
 				mission := &CharacterMission{
@@ -190,8 +197,9 @@ func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bo
 			charactermissionv2parametergroup.ServerRegionEQ(p.region.String()),
 		).
 		Order(charactermissionv2parametergroup.ByID(), charactermissionv2parametergroup.ByGameID(), charactermissionv2parametergroup.BySeq()).
-		All(ctx)
+		All(fillCtx)
 	if err != nil {
+		p.characterMissionsByCharacter = make(map[int][]*CharacterMission)
 		return false
 	}
 	p.leaderRequirements = make([]LeaderMissionRequirement, 0)
@@ -219,6 +227,35 @@ func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bo
 
 	p.leaderMissionsLoaded = true
 	return true
+}
+
+// loadCharacterMissionsFromDB fills the per-character mission index from
+// charactermissionv2s. It reports false when the table has no rows for the
+// region (not ingested yet) so the caller can fall back to the local
+// characterMissionV2s.json; a query error is returned so nothing is marked
+// loaded and the next call retries.
+func (p *dbEducationProvider) loadCharacterMissionsFromDB(ctx context.Context) (bool, error) {
+	items, err := p.client.Charactermissionv2.Query().
+		Where(charactermissionv2.ServerRegionEQ(p.region.String())).
+		Order(charactermissionv2.ByGameID()).
+		All(ctx)
+	if err != nil {
+		return false, err
+	}
+	if len(items) == 0 {
+		return false, nil
+	}
+	for _, item := range items {
+		mission := &CharacterMission{
+			ID:                   int(item.GameID),
+			CharacterID:          int(item.CharacterID),
+			CharacterMissionType: item.CharacterMissionType,
+			ParameterGroupID:     int(item.ParameterGroupID),
+			IsAchievementMission: item.IsAchievementMission,
+		}
+		p.characterMissionsByCharacter[mission.CharacterID] = append(p.characterMissionsByCharacter[mission.CharacterID], mission)
+	}
+	return true, nil
 }
 
 func cloneEdBonds(source []*Bond) []*Bond {

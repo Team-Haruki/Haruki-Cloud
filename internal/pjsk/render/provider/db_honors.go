@@ -7,6 +7,7 @@ import (
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/bondshonor"
+	"haruki-cloud/database/sekai/bondshonorword"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	sekaiHonor "haruki-cloud/database/sekai/honor"
 	"haruki-cloud/database/sekai/honorgroup"
@@ -214,13 +215,13 @@ func (p *dbHonorProvider) GetBondsHonorByID(ctx context.Context, id int) (*maste
 	return common.CloneBondsHonor(model), nil
 }
 
-func (p *dbHonorProvider) GetBondsHonorWordByID(_ context.Context, id int) (*masterdata.BondsHonorWord, error) {
+func (p *dbHonorProvider) GetBondsHonorWordByID(ctx context.Context, id int) (*masterdata.BondsHonorWord, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("invalid bonds honor word id")
 	}
 	p.init()
 
-	if !p.ensureBondsHonorWordsLoaded() {
+	if !p.ensureBondsHonorWordsLoaded(ctx) {
 		return nil, fmt.Errorf("bonds honor words are not configured")
 	}
 
@@ -232,7 +233,7 @@ func (p *dbHonorProvider) GetBondsHonorWordByID(_ context.Context, id int) (*mas
 	return nil, fmt.Errorf("bonds honor word %d not found", id)
 }
 
-func (p *dbHonorProvider) ensureBondsHonorWordsLoaded() bool {
+func (p *dbHonorProvider) ensureBondsHonorWordsLoaded(ctx context.Context) bool {
 	p.init()
 	p.bondsWordMu.RLock()
 	if p.bondsWordLoaded {
@@ -244,6 +245,16 @@ func (p *dbHonorProvider) ensureBondsHonorWordsLoaded() bool {
 	p.bondsWordMu.Lock()
 	defer p.bondsWordMu.Unlock()
 	if p.bondsWordLoaded {
+		return true
+	}
+	fillCtx, cancel := cacheFillContext(ctx)
+	defer cancel()
+	loaded, err := p.loadBondsHonorWordsFromDB(fillCtx)
+	if err != nil {
+		return false
+	}
+	if loaded {
+		p.bondsWordLoaded = true
 		return true
 	}
 	if p.store == nil || !p.store.Configured() {
@@ -259,6 +270,33 @@ func (p *dbHonorProvider) ensureBondsHonorWordsLoaded() bool {
 	}
 	p.bondsWordLoaded = true
 	return true
+}
+
+// loadBondsHonorWordsFromDB fills the bonds word cache from bondshonorwords
+// and reports false when the region has no rows yet, leaving the local
+// bondsHonorWords.json as the secondary source. A query error is returned so
+// the words are not marked loaded from the local file.
+func (p *dbHonorProvider) loadBondsHonorWordsFromDB(ctx context.Context) (bool, error) {
+	items, err := p.client.Bondshonorword.Query().
+		Where(bondshonorword.ServerRegionEQ(p.region.String())).
+		All(ctx)
+	if err != nil {
+		return false, err
+	}
+	if len(items) == 0 {
+		return false, nil
+	}
+	for _, item := range items {
+		p.bondsWordCache[int(item.GameID)] = &masterdata.BondsHonorWord{
+			ID:              int(item.GameID),
+			Seq:             int(item.Seq),
+			BondsGroupID:    int(item.BondsGroupID),
+			AssetBundleName: item.AssetbundleName,
+			Name:            item.Name,
+			Description:     item.Description,
+		}
+	}
+	return true, nil
 }
 
 func (p *dbHonorProvider) GetGameCharacterUnitByID(ctx context.Context, id int) (*masterdata.GameCharacterUnit, bool) {

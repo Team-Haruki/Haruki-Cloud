@@ -17,7 +17,7 @@
 | **chunithm/maindb** | `ent/chunithm/maindb/schema/` | `database/chunithm/maindb/` | MySQL/PostgreSQL | 3 |
 | **chunithm/music** | `ent/chunithm/music/schema/` | `database/chunithm/music/` | MySQL/PostgreSQL | 3 |
 | **pjsk** | `ent/pjsk/schema/` | `database/pjsk/` | PostgreSQL | 9 |
-| **sekai** | `ent/sekai/schema/` | `database/sekai/` | PostgreSQL | 83 |
+| **sekai** | `ent/sekai/schema/` | `database/sekai/` | PostgreSQL | 92 |
 | **users** | `ent/users/schema/` | `database/users/` | PostgreSQL | 1 |
 
 ---
@@ -420,7 +420,7 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 
 ### 8.1 通用设计模式
 
-**所有 83 张表均遵循相同模式**：
+**所有 92 张表均遵循相同模式**：
 
 ```
 server_region  string     必填，区服标识（jp/cn/tw/en/kr）
@@ -429,6 +429,9 @@ game_id        int64      optional，游戏内 ID
 ```
 
 - 唯一索引：**`(game_id, server_region)`**（跨区服存储）
+  - 例外：`Resourceboxdetail` 没有 `game_id`（tw/kr/cn 的 `resourceBoxDetails.json` 行无 id），
+    改用非唯一索引 `(server_region, id)`：Cloud 按区服整表读取并按 `id` 排序，
+    以保持导入顺序（即礼盒内容的展示顺序）
 - 几乎所有字段均为 `Optional()`，字段值直接来自游戏 Masterdata JSON
 - JSON 类型字段用于存储内嵌数组/对象（如 `gacha_details[]`、`skill_effects[]`）
 
@@ -510,7 +513,7 @@ c, _ := client.Card.Query().
 | `Gachaceilitem` | `gacha_ceil_item_type`, `name`, `assetbundle_name` | 天井道具 |
 | `Gachaticket` | `name`, `assetbundle_name` | 抽卡票 |
 
-### 8.8 WorldBloom 系统（4 张）
+### 8.8 WorldBloom 系统（5 张）
 
 | Schema 类型 | 主要字段 | 说明 |
 |------------|---------|------|
@@ -518,6 +521,7 @@ c, _ := client.Card.Query().
 | `Worldbloomsupportdeckbonuse` | `unit`, `support_deck_bonus_type`, `bonus_rate` | WL 支援组合加成 |
 | `Worldbloomsupportdeckuniteventlimitedbonuse` | `unit`, `bonus_rate` | WL 活动限定组合加成 |
 | `Worldbloomdifferentattributebonuse` | `attr`, `bonus_rate` | WL 异属性加成 |
+| `Worldbloomchapterrankingrewardrange` | `event_id`, `game_character_id`, `from_rank`, `to_rank`, `resource_box_id` | WL 章节排名奖励区间 |
 
 ### 8.9 MySekai 系统（15 张）
 
@@ -572,7 +576,7 @@ c, _ := client.Card.Query().
 |------------|---------|------|
 | `Mysekaigamecharacterunitgroup` | `game_character_unit_ids[]` | 游戏角色单元分组 |
 
-### 8.14 成长/奖励系统（5 张）
+### 8.14 成长/奖励系统（9 张）
 
 | Schema 类型 | 主要字段 | 说明 |
 |------------|---------|------|
@@ -581,8 +585,12 @@ c, _ := client.Card.Query().
 | `Bond` | `game_character_id`, `bondsHonorWordId`, `level` | 角色羁绊等级 |
 | `Bondshonor` | `bond_honor_type`, `rank`, `name`, `levels[]` | 羁绊称号 |
 | `Challengelivehighscorereward` | `character_id`, `high_score`, `resource_box_id` | 挑战 Live 高分奖励 |
+| `Bondshonorword` | `bonds_group_id`, `seq`, `assetbundle_name`, `name` | 羁绊称号词条 |
+| `Charactermissionv2` | `character_mission_type`, `character_id`, `parameter_group_id`, `is_achievement_mission` | 角色任务 |
+| `Charactermissionv2Areaitem` | `character_mission_type`, `area_item_id`, `character_id`, `unit` | 角色任务关联区域道具 |
+| `Charactermissionv2Exjson` | `character_mission_ex_type`, `character_mission_type`, `resource_type` | 角色任务扩展 |
 
-### 8.15 其他系统（12 张）
+### 8.15 其他系统（16 张）
 
 | Schema 类型 | 主要字段 | 说明 |
 |------------|---------|------|
@@ -593,6 +601,10 @@ c, _ := client.Card.Query().
 | `Shopitem` | `shop_item_type`, `seq`, `cost_resource_type`, `cost_resource_quantity` | 商店道具 |
 | `Boostitem` | `name`, `boost_item_type`, `recover_exp` | 体力恢复道具 |
 | `Resourceboxe` | `resource_box_purpose`, `resource_box_type`, `details[]` | 资源礼盒 |
+| `Resourceboxdetail` | `resource_box_purpose`, `resource_box_id`, `resource_type`, `resource_id`, `resource_quantity` | 资源礼盒内容（仅 tw/kr/cn；jp/en 内嵌于 `Resourceboxe.details`） |
+| `Material` | `name`, `material_type`, `flavor_text`, `can_use` | 素材 |
+| `Practiceticket` | `name`, `exp`, `character_id` | 练习券 |
+| `Skillpracticeticket` | `name`, `exp`, `character_id` | 技能练习券 |
 | `Playerframe` | `name`, `seq`, `playerframe_type`, `assetbundle_name` | 玩家边框 |
 | `Playerframegroup` | `name`, `seq` | 边框组 |
 | `Honorgroup` | `name`, `honor_type`, `bg_asset_bundle_name` | 称号组 |

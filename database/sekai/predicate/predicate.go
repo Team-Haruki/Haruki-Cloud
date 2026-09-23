@@ -21,6 +21,9 @@ type Bond func(*sql.Selector)
 // Bondshonor is the predicate function for bondshonor builders.
 type Bondshonor func(*sql.Selector)
 
+// Bondshonorword is the predicate function for bondshonorword builders.
+type Bondshonorword func(*sql.Selector)
+
 // Boostitem is the predicate function for boostitem builders.
 type Boostitem func(*sql.Selector)
 
@@ -50,6 +53,15 @@ type Character2D func(*sql.Selector)
 
 // Characterarchivemysekaicharactertalkgroup is the predicate function for characterarchivemysekaicharactertalkgroup builders.
 type Characterarchivemysekaicharactertalkgroup func(*sql.Selector)
+
+// Charactermissionv2 is the predicate function for charactermissionv2 builders.
+type Charactermissionv2 func(*sql.Selector)
+
+// Charactermissionv2Areaitem is the predicate function for charactermissionv2areaitem builders.
+type Charactermissionv2Areaitem func(*sql.Selector)
+
+// Charactermissionv2Exjson is the predicate function for charactermissionv2exjson builders.
+type Charactermissionv2Exjson func(*sql.Selector)
 
 // Charactermissionv2Parametergroup is the predicate function for charactermissionv2parametergroup builders.
 type Charactermissionv2Parametergroup func(*sql.Selector)
@@ -122,6 +134,9 @@ type Limitedtimemusic func(*sql.Selector)
 
 // Masterlesson is the predicate function for masterlesson builders.
 type Masterlesson func(*sql.Selector)
+
+// Material is the predicate function for material builders.
+type Material func(*sql.Selector)
 
 // Music is the predicate function for music builders.
 type Music func(*sql.Selector)
@@ -255,6 +270,12 @@ type Playerframe func(*sql.Selector)
 // Playerframegroup is the predicate function for playerframegroup builders.
 type Playerframegroup func(*sql.Selector)
 
+// Practiceticket is the predicate function for practiceticket builders.
+type Practiceticket func(*sql.Selector)
+
+// Resourceboxdetail is the predicate function for resourceboxdetail builders.
+type Resourceboxdetail func(*sql.Selector)
+
 // Resourceboxe is the predicate function for resourceboxe builders.
 type Resourceboxe func(*sql.Selector)
 
@@ -264,6 +285,9 @@ type Shopitem func(*sql.Selector)
 // Skill is the predicate function for skill builders.
 type Skill func(*sql.Selector)
 
+// Skillpracticeticket is the predicate function for skillpracticeticket builders.
+type Skillpracticeticket func(*sql.Selector)
+
 // Stamp is the predicate function for stamp builders.
 type Stamp func(*sql.Selector)
 
@@ -272,6 +296,9 @@ type Virtuallive func(*sql.Selector)
 
 // Worldbloom is the predicate function for worldbloom builders.
 type Worldbloom func(*sql.Selector)
+
+// Worldbloomchapterrankingrewardrange is the predicate function for worldbloomchapterrankingrewardrange builders.
+type Worldbloomchapterrankingrewardrange func(*sql.Selector)
 
 // Worldbloomdifferentattributebonuse is the predicate function for worldbloomdifferentattributebonuse builders.
 type Worldbloomdifferentattributebonuse func(*sql.Selector)

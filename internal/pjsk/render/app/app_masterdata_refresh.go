@@ -35,14 +35,7 @@ func (a *App) startLocalMasterdataRefresh(ctx context.Context, root string, inte
 		ctx = context.Background()
 	}
 
-	additionalResetters := make([]masterdataCacheResetter, 0, 2)
-	if a.MySekai != nil {
-		additionalResetters = append(additionalResetters, a.MySekai)
-	}
-	if a.Inventory != nil {
-		additionalResetters = append(additionalResetters, a.Inventory)
-	}
-	state := newLocalMasterdataRefreshState(root, a.Providers, additionalResetters...)
+	state := newLocalMasterdataRefreshState(root, a.Providers, a.masterdataAdditionalResetters()...)
 	if len(state.providers) == 0 {
 		return
 	}
@@ -71,20 +64,12 @@ type localMasterdataRefreshState struct {
 }
 
 func newLocalMasterdataRefreshState(root string, providers map[renderregion.Value]provider.MasterDataProvider, additionalResetters ...masterdataCacheResetter) *localMasterdataRefreshState {
-	state := &localMasterdataRefreshState{
+	return &localMasterdataRefreshState{
 		root:                root,
-		providers:           make(map[renderregion.Value]masterdataCacheResetter, len(providers)),
+		providers:           masterdataResettersByRegion(providers),
 		additionalResetters: additionalResetters,
 		signatures:          make(map[renderregion.Value]string, len(providers)),
 	}
-	for region, src := range providers {
-		resetter, ok := src.(masterdataCacheResetter)
-		if !ok || resetter == nil {
-			continue
-		}
-		state.providers[renderregion.WithDefault(region)] = resetter
-	}
-	return state
 }
 
 func (s *localMasterdataRefreshState) captureInitial() {

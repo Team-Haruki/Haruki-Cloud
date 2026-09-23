@@ -323,6 +323,10 @@ func (p *dbEventProvider) resetLocalMasterdataCache() {
 	p.supplyMu.Lock()
 	p.supplyCache = make(map[int]string)
 	p.supplyMu.Unlock()
+	p.wbRangeMu.Lock()
+	p.wbRangesByChapter = make(map[worldBloomChapterRankingRewardKey][]masterdata.WorldBloomChapterRankingRewardRange)
+	p.wbRangesLoaded = false
+	p.wbRangeMu.Unlock()
 }
 
 func (p *dbEducationProvider) resetLocalMasterdataCache() {

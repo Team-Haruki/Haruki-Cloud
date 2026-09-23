@@ -1,5 +1,7 @@
 package provider
 
+import "context"
+
 // ===========================================================================
 // localMySekaiProvider
 // ===========================================================================
@@ -36,6 +38,16 @@ func (p *localMySekaiProvider) LoadMapByID(filename string) map[int]map[string]a
 		}
 	}
 	return result
+}
+
+// LoadMasterRows implements MasterRowSource: a missing or unreadable file
+// reports ok=false.
+func (p *localMySekaiProvider) LoadMasterRows(_ context.Context, filename string) (map[int]map[string]any, bool) {
+	if p == nil {
+		return nil, false
+	}
+	rows := p.LoadMapByID(filename)
+	return rows, rows != nil
 }
 
 func (p *localMySekaiProvider) LoadObject(filename string, target any) bool {

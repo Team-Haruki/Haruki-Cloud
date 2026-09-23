@@ -1,6 +1,7 @@
 package inventory
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,8 +19,8 @@ func TestControllerResetMasterdataCacheReloadsInventoryFiles(t *testing.T) {
 	if err := os.WriteFile(path, []byte(`[{"id":1,"name":"Old"}]`), 0o644); err != nil {
 		t.Fatalf("write initial materials: %v", err)
 	}
-	controller := &Controller{masterdata: newMasterdataStore(root)}
-	if got := controller.masterdata.forRegion(renderregion.JP).materials[1].Name; got != "Old" {
+	controller := &Controller{masterdata: newMasterdataStore(nil, root)}
+	if got := controller.masterdata.forRegion(context.Background(), renderregion.JP).materials[1].Name; got != "Old" {
 		t.Fatalf("initial material name = %q", got)
 	}
 
@@ -28,7 +29,7 @@ func TestControllerResetMasterdataCacheReloadsInventoryFiles(t *testing.T) {
 	}
 	controller.ResetMasterdataCache()
 
-	if got := controller.masterdata.forRegion(renderregion.JP).materials[1].Name; got != "Updated" {
+	if got := controller.masterdata.forRegion(context.Background(), renderregion.JP).materials[1].Name; got != "Updated" {
 		t.Fatalf("reloaded material name = %q", got)
 	}
 }

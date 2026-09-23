@@ -72,6 +72,7 @@ func (p *dbMusicProvider) GetByID(ctx context.Context, id int) (*masterdata.Musi
 	}
 
 	model := common.ConvertMusicEntity(entity)
+	p.fillMusicCategories(ctx, model)
 	p.mu.Lock()
 	p.musicByID[model.ID] = model
 	p.mu.Unlock()
@@ -121,6 +122,7 @@ func (p *dbMusicProvider) GetAll(ctx context.Context) []*masterdata.Music {
 		list = append(list, model)
 		byID[model.ID] = model
 	}
+	p.fillMusicCategories(ctx, list...)
 	sort.Slice(list, func(i, j int) bool {
 		if list[i].PublishedAt == list[j].PublishedAt {
 			return list[i].ID < list[j].ID

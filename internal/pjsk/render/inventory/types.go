@@ -4,13 +4,19 @@ import (
 	"context"
 	"sync"
 
+	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
+// MasterdataOptions configures the inventory master tables: Sekai serves
+// them from the database; LocalDir is the local masterdata root used only
+// for a table the database cannot serve (empty or failing), which the
+// composition root leaves blank unless the local fallback flag is on.
 type MasterdataOptions struct {
+	Sekai    *sekaiDB.Client
 	LocalDir string
 }
 
@@ -90,6 +96,7 @@ type mysekaiMaterialMeta struct {
 }
 
 type masterdataStore struct {
+	client   *sekaiDB.Client
 	localDir string
 	mu       sync.RWMutex
 	cache    map[string]*regionMasterdata

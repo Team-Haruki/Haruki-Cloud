@@ -40,6 +40,16 @@ type dbMusicProvider struct {
 	limitedByMusic  map[int][]*masterdata.LimitedTimeMusic
 	limitedLoaded   bool
 	limitedLoadedAt time.Time
+
+	// JP 6.8 moved musics.categories into musiccategories. The region table
+	// is loaded whole (ordered by game id) and applied to musics whose own
+	// categories are empty; regions that still ship musics.categories have
+	// an empty table and never need it.
+	categoryMu         sync.RWMutex
+	categoryLoads      singleflight.Group
+	categoriesByMusic  map[int][]string
+	categoriesLoaded   bool
+	categoriesLoadedAt time.Time
 }
 
 func (p *dbMusicProvider) init() {

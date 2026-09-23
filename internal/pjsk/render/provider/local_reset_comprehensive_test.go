@@ -257,10 +257,9 @@ func TestDatabaseProviderResetMasterdataCacheClearsAllCachesAndFallbacks(t *test
 
 	mysekaiStore := resetTestDirtyStore("mysekai")
 	mysekai := &dbMySekaiProvider{
-		local:       &localMySekaiProvider{store: mysekaiStore},
-		lists:       map[string][]map[string]any{"list": {{"id": 1}}},
-		mapsByID:    map[string]map[int]map[string]any{"map": {1: {"id": 1}}},
-		unavailable: map[string]struct{}{"missing": {}},
+		local:    &localMySekaiProvider{store: mysekaiStore},
+		lists:    map[string][]map[string]any{"list": {{"id": 1}}},
+		mapsByID: map[string]map[int]map[string]any{"map": {1: {"id": 1}}},
 	}
 
 	provider := &DatabaseProvider{
@@ -370,7 +369,6 @@ func TestDatabaseProviderResetMasterdataCacheClearsAllCachesAndFallbacks(t *test
 	resetTestRequireStoreReset(t, "mysekai fallback", mysekaiStore)
 	resetTestRequireEmptyMap(t, "mysekai.lists", mysekai.lists)
 	resetTestRequireEmptyMap(t, "mysekai.mapsByID", mysekai.mapsByID)
-	resetTestRequireEmptyMap(t, "mysekai.unavailable", mysekai.unavailable)
 }
 
 func TestDatabaseFallbackResetWithoutLocalSources(t *testing.T) {

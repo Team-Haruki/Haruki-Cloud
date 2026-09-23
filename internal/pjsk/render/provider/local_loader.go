@@ -144,6 +144,12 @@ func (j *localMusicJSON) toModel() *masterdata.Music {
 	}
 }
 
+type localMusicCategoryJSON struct {
+	ID                int    `json:"id"`
+	MusicID           int    `json:"musicId"`
+	MusicCategoryName string `json:"musicCategoryName"`
+}
+
 type localEventJSON struct {
 	ID                       int             `json:"id"`
 	EventType                string          `json:"eventType"`

@@ -99,13 +99,16 @@ func TestDBMasterdataStoreWithContextTracesColdLoad(t *testing.T) {
 	}
 }
 
-func TestDBMasterdataStoreColdLoadHonorsRequestCancellation(t *testing.T) {
+// A cold load runs detached from the request (context.WithoutCancel with a
+// fill timeout), so a client that disconnects mid-fill neither aborts the
+// fill nor poisons the shared cache.
+func TestDBMasterdataStoreColdLoadSurvivesRequestCancellation(t *testing.T) {
 	store := newTestDBMasterdataStore(t)
 	canceledCtx, cancel := context.WithCancel(context.Background())
 	cancel()
 	canceled := store.WithContext(canceledCtx).(*dbMasterdataStore)
-	if items := canceled.loadList("musics.json"); items != nil {
-		t.Fatalf("canceled cold load returned items: %+v", items)
+	if items := canceled.loadList("musics.json"); len(items) != 1 {
+		t.Fatalf("canceled cold load did not fill: %+v", items)
 	}
 	if !errors.Is(canceledCtx.Err(), context.Canceled) {
 		t.Fatalf("context error = %v", canceledCtx.Err())
@@ -113,7 +116,33 @@ func TestDBMasterdataStoreColdLoadHonorsRequestCancellation(t *testing.T) {
 
 	active := store.WithContext(context.Background()).(*dbMasterdataStore)
 	if items := active.loadList("musics.json"); len(items) != 1 {
-		t.Fatalf("canceled load poisoned shared cache: %+v", items)
+		t.Fatalf("shared cache after canceled load: %+v", items)
+	}
+}
+
+// A failed fill must not leave an empty index cached: the next call
+// retries the query.
+func TestDBMasterdataStoreFailedFillIsNotCached(t *testing.T) {
+	store := newTestDBMasterdataStore(t)
+	if items := store.loadMapByID("mysekaiGateSkins.json"); len(items) != 0 {
+		t.Fatalf("missing table served rows: %+v", items)
+	}
+	store.cache.mu.Lock()
+	_, cachedMap := store.cache.mapsByID["mysekaiGateSkins.json"]
+	_, cachedList := store.cache.lists["mysekaiGateSkins.json"]
+	store.cache.mu.Unlock()
+	if cachedMap || cachedList {
+		t.Fatalf("failed fill was cached: map=%v list=%v", cachedMap, cachedList)
+	}
+	if _, err := store.db.Exec(`CREATE TABLE mysekaigateskins (id INTEGER PRIMARY KEY AUTOINCREMENT, game_id INTEGER, mysekai_gate_skin_type TEXT, mysekai_gate_skin_type_id INTEGER, server_region TEXT NOT NULL)`); err != nil {
+		t.Fatalf("create gate skins: %v", err)
+	}
+	if _, err := store.db.Exec(`INSERT INTO mysekaigateskins (game_id, mysekai_gate_skin_type, mysekai_gate_skin_type_id, server_region) VALUES (3, 'unit', 2, 'jp')`); err != nil {
+		t.Fatalf("insert gate skin: %v", err)
+	}
+	items := store.loadMapByID("mysekaiGateSkins.json")
+	if len(items) != 1 || stringValue(items[3]["mysekaiGateSkinType"]) != "unit" {
+		t.Fatalf("retry after failed fill = %+v", items)
 	}
 }
 

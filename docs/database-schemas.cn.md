@@ -17,7 +17,7 @@
 | **chunithm/maindb** | `ent/chunithm/maindb/schema/` | `database/chunithm/maindb/` | MySQL/PostgreSQL | 3 |
 | **chunithm/music** | `ent/chunithm/music/schema/` | `database/chunithm/music/` | MySQL/PostgreSQL | 3 |
 | **pjsk** | `ent/pjsk/schema/` | `database/pjsk/` | PostgreSQL | 9 |
-| **sekai** | `ent/sekai/schema/` | `database/sekai/` | PostgreSQL | 92 |
+| **sekai** | `ent/sekai/schema/` | `database/sekai/` | PostgreSQL | 107 |
 | **users** | `ent/users/schema/` | `database/users/` | PostgreSQL | 1 |
 
 ---
@@ -420,7 +420,7 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 
 ### 8.1 通用设计模式
 
-**所有 92 张表均遵循相同模式**：
+**所有 107 张表均遵循相同模式**：
 
 ```
 server_region  string     必填，区服标识（jp/cn/tw/en/kr）
@@ -482,7 +482,7 @@ c, _ := client.Card.Query().
 | `Characterrank` | `character_id`, `character_rank`, `power_up_bonuses[]` | 角色等级（粉丝等级）加成 |
 | `Charactermissionv2parametergroup` | `character_id`, `parameters[]` | 角色任务 V2 参数组 |
 
-### 8.5 音乐系统（5 张）
+### 8.5 音乐系统（6 张）
 
 | Schema 类型 | 主要字段 | 说明 |
 |------------|---------|------|
@@ -491,6 +491,7 @@ c, _ := client.Card.Query().
 | `Musicartist` | `name` | 艺术家 |
 | `Musictag` | `music_id`, `music_tag` | 歌曲标签 |
 | `Limitedtimemusic` | `music_id`, `music_limited_type`, `start_at`, `end_at` | 限时歌曲 |
+| `Musiccategorie` | `music_id`, `music_category_name`, `music_asset_variant_id`, `published_at` | 歌曲分类（JP 6.8 起替代 `musics.categories`；Cloud 在 `categories` 为空时按 `game_id` 顺序回填） |
 
 ### 8.6 活动系统（9 张）
 
@@ -590,7 +591,30 @@ c, _ := client.Card.Query().
 | `Charactermissionv2Areaitem` | `character_mission_type`, `area_item_id`, `character_id`, `unit` | 角色任务关联区域道具 |
 | `Charactermissionv2Exjson` | `character_mission_ex_type`, `character_mission_type`, `resource_type` | 角色任务扩展 |
 
-### 8.15 其他系统（16 张）
+### 8.15 自定义名片系统（14 张）
+
+`customProfile*` 系列与 `omikujis`、`unitStoryEpisodeGroups` 由 Cloud 整行转发给 Drawing
+（`internal/pjsk/handler/profile_custom_profile_resources.go`），因此所有顶层键都有对应列，
+读取走 `provider.MySekai()` 的原生 SQL 行存储（`SELECT *` → camelCase 键，NULL 列省略）。
+
+| Schema 类型 | 主要字段 | 说明 |
+|------------|---------|------|
+| `Customprofiletextcolor` | `seq`, `color_code` | 文字颜色 |
+| `Customprofiletextfont` | `name`, `font_name`, `assetbundle_name` | 文字字体 |
+| `Customprofileshaperesource` | `resource_load_val`, `file_name`, `seq`, `name` | 图形素材 |
+| `Customprofileplayerinforesource` | `resource_load_val`, `file_name`, `group_id` | 玩家信息组件 |
+| `Customprofilegeneralbackgroundresource` | `resource_load_val`, `file_name` | 通用背景 |
+| `Customprofilestorybackgroundresource` | `resource_load_val`, `file_name` | 剧情背景 |
+| `Customprofilememberstandingpictureresource` | `resource_load_val`, `file_name`, `character_id` | 成员立绘 |
+| `Customprofilecollectionresource` | `resource_load_val`, `file_name`, `custom_profile_resource_collection_type`, `group_id` | 收藏品（含御神签） |
+| `Customprofileetcresource` | `resource_load_val`, `file_name` | 其他素材 |
+| `Customprofilecharactericonresource` | `resource_load_val`, `file_name` | 角色图标（仅 JP） |
+| `Customprofilematerialresource` | `resource_load_val`, `file_name` | 素材图标（仅 JP） |
+| `Customprofileuserinterfaceiconresource` | `resource_load_val`, `file_name` | UI 图标（仅 JP） |
+| `Omikuji` | `omikuji_group_id`, `unit`, `fortune_type`, `summary`, `title1..3`, `description1..3`, `omikuji_cover_*` | 御神签 |
+| `Unitstoryepisodegroup` | `unit`, `unit_episode_category`, `outline`, `assetbundle_name` | 团队剧情章节组 |
+
+### 8.16 其他系统（16 张）
 
 | Schema 类型 | 主要字段 | 说明 |
 |------------|---------|------|

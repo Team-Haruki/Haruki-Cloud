@@ -54,6 +54,7 @@ func (p *localMusicProvider) ensureMusics() error {
 			idx.byID[m.ID] = m
 			idx.all = append(idx.all, m)
 		}
+		fillLocalMusicCategories(p.store, idx.all)
 		sort.Slice(idx.all, func(i, j int) bool {
 			if idx.all[i].PublishedAt == idx.all[j].PublishedAt {
 				return idx.all[i].ID < idx.all[j].ID
@@ -62,6 +63,43 @@ func (p *localMusicProvider) ensureMusics() error {
 		})
 		return idx, nil
 	})
+}
+
+// fillLocalMusicCategories mirrors the database path: musics without their
+// own categories take them from musicCategories.json (JP 6.8), in file
+// order. A missing file changes nothing.
+func fillLocalMusicCategories(store *localStore, musics []*masterdata.Music) {
+	needed := false
+	for _, m := range musics {
+		if m != nil && len(m.Categories) == 0 {
+			needed = true
+			break
+		}
+	}
+	if !needed {
+		return
+	}
+	items, err := store.loadJSON[localMusicCategoryJSON]("musicCategories.json")
+	if err != nil || len(items) == 0 {
+		return
+	}
+	sort.SliceStable(items, func(i, j int) bool { return items[i].ID < items[j].ID })
+	byMusic := make(map[int][]string)
+	for _, item := range items {
+		name := strings.TrimSpace(item.MusicCategoryName)
+		if item.MusicID <= 0 || name == "" {
+			continue
+		}
+		byMusic[item.MusicID] = append(byMusic[item.MusicID], name)
+	}
+	for _, m := range musics {
+		if m == nil || len(m.Categories) > 0 {
+			continue
+		}
+		if categories := byMusic[m.ID]; len(categories) > 0 {
+			m.Categories = append([]string(nil), categories...)
+		}
+	}
 }
 
 func (p *localMusicProvider) ensureDifficulties() error {

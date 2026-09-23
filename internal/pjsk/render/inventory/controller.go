@@ -26,7 +26,7 @@ func NewController(
 		assets:        assetHelper,
 		snapshot:      snapshotService,
 		defaultRegion: renderregion.WithDefault(defaultRegion),
-		masterdata:    newMasterdataStore(options.LocalDir),
+		masterdata:    newMasterdataStore(options.Sekai, options.LocalDir),
 	}
 }
 
@@ -72,7 +72,7 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 		return nil, fmt.Errorf("user snapshot is missing profile data")
 	}
 
-	items := c.inventoryItems(region, raw, c.masterdata.forRegion(region))
+	items := c.inventoryItems(region, raw, c.masterdata.forRegion(c.requestCtx, region))
 	items = filterInventoryItems(items, filter)
 	sections := buildInventorySections(items)
 	if filter == FilterBoost {

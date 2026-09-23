@@ -298,6 +298,11 @@ func (p *dbMusicProvider) resetLocalMasterdataCache() {
 	p.limitedLoaded = false
 	p.limitedLoadedAt = time.Time{}
 	p.limitedMu.Unlock()
+	p.categoryMu.Lock()
+	p.categoriesByMusic = make(map[int][]string)
+	p.categoriesLoaded = false
+	p.categoriesLoadedAt = time.Time{}
+	p.categoryMu.Unlock()
 }
 
 func (p *dbEventProvider) resetLocalMasterdataCache() {
@@ -446,7 +451,6 @@ func (p *dbMySekaiProvider) resetLocalMasterdataCache() {
 	p.mu.Lock()
 	p.lists = make(map[string][]map[string]any)
 	p.mapsByID = make(map[string]map[int]map[string]any)
-	p.unavailable = make(map[string]struct{})
 	p.mu.Unlock()
 	if p.local != nil {
 		p.local.store.ResetCache()

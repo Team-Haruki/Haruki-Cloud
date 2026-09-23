@@ -1,6 +1,7 @@
 package inventory
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,7 +57,7 @@ func TestInventoryRefactorRequestErrors(t *testing.T) {
 }
 
 func TestInventoryRefactorMasterdataBranches(t *testing.T) {
-	if got := (*masterdataStore)(nil).forRegion(renderregion.JP); got == nil {
+	if got := (*masterdataStore)(nil).forRegion(context.Background(), renderregion.JP); got == nil {
 		t.Fatal("nil store returned nil masterdata")
 	}
 	(*masterdataStore)(nil).resetCache()

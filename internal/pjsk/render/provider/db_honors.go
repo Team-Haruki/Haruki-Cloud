@@ -247,7 +247,13 @@ func (p *dbHonorProvider) ensureBondsHonorWordsLoaded(ctx context.Context) bool 
 	if p.bondsWordLoaded {
 		return true
 	}
-	if p.loadBondsHonorWordsFromDB(ctx) {
+	fillCtx, cancel := cacheFillContext(ctx)
+	defer cancel()
+	loaded, err := p.loadBondsHonorWordsFromDB(fillCtx)
+	if err != nil {
+		return false
+	}
+	if loaded {
 		p.bondsWordLoaded = true
 		return true
 	}
@@ -268,13 +274,17 @@ func (p *dbHonorProvider) ensureBondsHonorWordsLoaded(ctx context.Context) bool 
 
 // loadBondsHonorWordsFromDB fills the bonds word cache from bondshonorwords
 // and reports false when the region has no rows yet, leaving the local
-// bondsHonorWords.json as the secondary source.
-func (p *dbHonorProvider) loadBondsHonorWordsFromDB(ctx context.Context) bool {
+// bondsHonorWords.json as the secondary source. A query error is returned so
+// the words are not marked loaded from the local file.
+func (p *dbHonorProvider) loadBondsHonorWordsFromDB(ctx context.Context) (bool, error) {
 	items, err := p.client.Bondshonorword.Query().
 		Where(bondshonorword.ServerRegionEQ(p.region.String())).
 		All(ctx)
-	if err != nil || len(items) == 0 {
-		return false
+	if err != nil {
+		return false, err
+	}
+	if len(items) == 0 {
+		return false, nil
 	}
 	for _, item := range items {
 		p.bondsWordCache[int(item.GameID)] = &masterdata.BondsHonorWord{
@@ -286,7 +296,7 @@ func (p *dbHonorProvider) loadBondsHonorWordsFromDB(ctx context.Context) bool {
 			Description:     item.Description,
 		}
 	}
-	return true
+	return true, nil
 }
 
 func (p *dbHonorProvider) GetGameCharacterUnitByID(ctx context.Context, id int) (*masterdata.GameCharacterUnit, bool) {

@@ -194,6 +194,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		MasterdataRegistry: renderapp.MasterdataRegistryConfig{
 			URL:          harukiConfig.Cfg.PJSKRender.MasterdataRegistry.URL,
 			PollInterval: harukiConfig.Cfg.PJSKRender.MasterdataRegistry.PollInterval,
+			SettleDelays: harukiConfig.Cfg.PJSKRender.MasterdataRegistry.SettleDelays,
 		},
 		SekaiDBType: harukiConfig.Cfg.Sekai.DBType,
 		SekaiDSN:    harukiConfig.Cfg.Sekai.DBURL,

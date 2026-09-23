@@ -246,6 +246,7 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", "true")
 	t.Setenv("HARUKI_PJSK_RENDER_MASTERDATA_REGISTRY_URL", "http://registry:9998")
 	t.Setenv("HARUKI_PJSK_RENDER_MASTERDATA_REGISTRY_POLL_INTERVAL", "2m")
+	t.Setenv("HARUKI_PJSK_RENDER_MASTERDATA_REGISTRY_SETTLE_DELAYS", "1m, 4m")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_ENABLED", "true")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URL", "http://127.0.0.1:38080")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URLS", `{"jp":"http://jp-engine:8080","cn":"http://cn-engine:8080"}`)
@@ -283,6 +284,7 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	testutil.Require(t, cfg.PJSKRender.LocalMasterdata.AllowLeaks, "expected local masterdata allow_leaks override to be true")
 	testutil.Require(t, !(cfg.PJSKRender.MasterdataRegistry.URL != "http://registry:9998"), "unexpected masterdata registry url override: %q", cfg.PJSKRender.MasterdataRegistry.URL)
 	testutil.Require(t, !(cfg.PJSKRender.MasterdataRegistry.PollInterval != 2*time.Minute), "unexpected masterdata registry poll interval: %v", cfg.PJSKRender.MasterdataRegistry.PollInterval)
+	testutil.Require(t, len(cfg.PJSKRender.MasterdataRegistry.SettleDelays) == 2 && cfg.PJSKRender.MasterdataRegistry.SettleDelays[1] == 4*time.Minute, "unexpected masterdata registry settle delays: %v", cfg.PJSKRender.MasterdataRegistry.SettleDelays)
 	testutil.Require(t, cfg.PJSKRender.Preview3D.Enabled, "expected 3d preview enabled override to be true")
 	testutil.Require(t, !(cfg.PJSKRender.Preview3D.EngineBaseURL != "http://127.0.0.1:38080"), "unexpected 3d preview engine url: %q", cfg.PJSKRender.Preview3D.EngineBaseURL)
 	{

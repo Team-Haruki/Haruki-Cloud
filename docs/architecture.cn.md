@@ -192,7 +192,7 @@ pjsk_render:               # 渲染引擎配置
   image_cache: {}          # pg_url、hosts、render_index.*、gc_*、legacy_redirect
   drawing_artifact: {}     # Artifact 模式放量白名单
   local_masterdata: {}     # legacy/dev 本地 Masterdata fallback；生产默认关闭
-  masterdata_registry: {}  # url / poll_interval：轮询 master registry 的 /v1/master/{region}/current，contentHash 变化时重置该区服 DB provider 缓存；url 为空时依次取 deck_recommend.registry_url、music_meta.base_url（source=registry）
+  masterdata_registry: {}  # url / poll_interval / settle_delays：轮询 master registry 的 /v1/master/{region}/current，contentHash（缺省时 ETag）变化时立即重置该区服 DB provider 缓存，并在 settle_delays（默认 5m、15m）后再重置以等待 DB ingest 落库；url 为空时依次取 deck_recommend.registry_url、music_meta.base_url（source=registry）
 
 sekai:                     # Sekai Masterdata 数据库
   db_url: "..."

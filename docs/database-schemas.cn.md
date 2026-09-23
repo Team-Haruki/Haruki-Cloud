@@ -430,8 +430,8 @@ game_id        int64      optional，游戏内 ID
 
 - 唯一索引：**`(game_id, server_region)`**（跨区服存储）
   - 例外：`Resourceboxdetail` 没有 `game_id`（tw/kr/cn 的 `resourceBoxDetails.json` 行无 id），
-    改用非唯一索引 `(server_region, resource_box_purpose, resource_box_id, id)`，
-    读取时按 `id` 排序以保持导入顺序（即礼盒内容的展示顺序）
+    改用非唯一索引 `(server_region, id)`：Cloud 按区服整表读取并按 `id` 排序，
+    以保持导入顺序（即礼盒内容的展示顺序）
 - 几乎所有字段均为 `Optional()`，字段值直接来自游戏 Masterdata JSON
 - JSON 类型字段用于存储内嵌数组/对象（如 `gacha_details[]`、`skill_effects[]`）
 

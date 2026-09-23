@@ -98,6 +98,29 @@ func envDuration(name string, dst *time.Duration) {
 	}
 }
 
+// envDurationSlice parses a comma-separated list of durations; an explicit
+// empty value sets an empty (non-nil) slice so a default list can be
+// disabled from the environment.
+func envDurationSlice(name string, dst *[]time.Duration) {
+	v, ok := os.LookupEnv(name)
+	if !ok {
+		return
+	}
+	out := make([]time.Duration, 0)
+	for _, part := range strings.Split(v, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		d, err := time.ParseDuration(part)
+		if err != nil {
+			return
+		}
+		out = append(out, d)
+	}
+	*dst = out
+}
+
 func envStringMap(name string, dst *map[string]string) error {
 	v := strings.TrimSpace(os.Getenv(name))
 	if v == "" {
@@ -482,6 +505,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", &cfg.PJSKRender.LocalMasterdata.AllowLeaks)
 	envStr("HARUKI_PJSK_RENDER_MASTERDATA_REGISTRY_URL", &cfg.PJSKRender.MasterdataRegistry.URL)
 	envDuration("HARUKI_PJSK_RENDER_MASTERDATA_REGISTRY_POLL_INTERVAL", &cfg.PJSKRender.MasterdataRegistry.PollInterval)
+	envDurationSlice("HARUKI_PJSK_RENDER_MASTERDATA_REGISTRY_SETTLE_DELAYS", &cfg.PJSKRender.MasterdataRegistry.SettleDelays)
 	envBool("HARUKI_PJSK_RENDER_3D_PREVIEW_ENABLED", &cfg.PJSKRender.Preview3D.Enabled)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URL", &cfg.PJSKRender.Preview3D.EngineBaseURL)
 	if err := envStringMap("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URLS", &cfg.PJSKRender.Preview3D.EngineBaseURLs); err != nil {
@@ -599,8 +623,9 @@ type LocalMasterdataConfig struct {
 // MasterdataRegistryConfig is pjsk_render.masterdata_registry: the master
 // registry Cloud polls to reset DB-backed masterdata caches after an ingest.
 type MasterdataRegistryConfig struct {
-	URL          string        `yaml:"url"`           // registry base URL; empty derives from deck_recommend.registry_url, then music_meta.base_url when music_meta.source=registry
-	PollInterval time.Duration `yaml:"poll_interval"` // how often /v1/master/{region}/current is polled; 0 = default 3m, negative disables
+	URL          string          `yaml:"url"`           // registry base URL; empty derives from deck_recommend.registry_url, then music_meta.base_url when music_meta.source=registry
+	PollInterval time.Duration   `yaml:"poll_interval"` // how often /v1/master/{region}/current is polled; 0 = default 3m, negative disables
+	SettleDelays []time.Duration `yaml:"settle_delays"` // follow-up cache resets after a change (the DB ingest lands after the registry pointer moves); unset = [5m, 15m], [] disables
 }
 
 type UserSnapshotConfig struct {

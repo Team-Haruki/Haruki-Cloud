@@ -369,9 +369,10 @@ func (p *dbEventProvider) GetWorldBloomChapterRankingRewardRanges(ctx context.Co
 }
 
 // worldBloomChapterRankingRewardRangesFromDB serves a chapter's reward ranges
-// from worldbloomchapterrankingrewardranges. The region is loaded once and
-// kept until the masterdata cache is reset; an empty table is retried on
-// every call so a region that is ingested later is picked up.
+// from worldbloomchapterrankingrewardranges. The region is loaded once,
+// including an empty result, and kept until the masterdata cache is reset
+// (the registry poll resets it after an ingest); a query error leaves the
+// cache unloaded so the next call retries.
 func (p *dbEventProvider) worldBloomChapterRankingRewardRangesFromDB(ctx context.Context, eventID, gameCharacterID int) []masterdata.WorldBloomChapterRankingRewardRange {
 	if !p.ensureWorldBloomChapterRankingRewardRangesLoaded(ctx) {
 		return nil
@@ -400,10 +401,12 @@ func (p *dbEventProvider) ensureWorldBloomChapterRankingRewardRangesLoaded(ctx c
 	if p.wbRangesLoaded {
 		return true
 	}
+	fillCtx, cancel := cacheFillContext(ctx)
+	defer cancel()
 	items, err := p.client.Worldbloomchapterrankingrewardrange.Query().
 		Where(worldbloomchapterrankingrewardrange.ServerRegionEQ(p.region.String())).
-		All(ctx)
-	if err != nil || len(items) == 0 {
+		All(fillCtx)
+	if err != nil {
 		return false
 	}
 	byChapter := make(map[worldBloomChapterRankingRewardKey][]masterdata.WorldBloomChapterRankingRewardRange)

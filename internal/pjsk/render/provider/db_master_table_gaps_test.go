@@ -272,3 +272,157 @@ func TestDBEventProviderReadsWorldBloomRewardRangesFromDatabaseFirst(t *testing.
 	fallback, err := empty.events.GetWorldBloomChapterRankingRewardRanges(ctx, 99, 5)
 	testutil.Require(t, err == nil && len(fallback) == 1 && fallback[0].ResourceBoxID == 500, "empty table should fall back to local ranges: %+v, %v", fallback, err)
 }
+
+// gapTableFixture opens a shared in-memory database whose tables can be
+// dropped and recreated to simulate a transient query failure.
+type gapTableFixture struct {
+	dsn      string
+	provider *DatabaseProvider
+	raw      *sql.DB
+}
+
+func newGapTableFixture(t *testing.T, name string, region renderregion.Value) *gapTableFixture {
+	t.Helper()
+	dsn := fmt.Sprintf("file:provider_gap_%s_%d?mode=memory&cache=shared&_fk=1", name, time.Now().UnixNano())
+	client := sekaienttest.Open(t, "sqlite3", dsn)
+	raw, err := sql.Open("sqlite3", dsn)
+	testutil.Require(t, err == nil, "open raw sqlite handle: %v", err)
+	t.Cleanup(func() { raw.Close() })
+	return &gapTableFixture{dsn: dsn, provider: NewDatabaseProvider(client, region), raw: raw}
+}
+
+func (f *gapTableFixture) dropTable(t *testing.T, table string) {
+	t.Helper()
+	_, err := f.raw.Exec("DROP TABLE " + table)
+	testutil.Require(t, err == nil, "drop %s: %v", table, err)
+}
+
+func (f *gapTableFixture) recreateTables(t *testing.T) {
+	t.Helper()
+	err := f.provider.client.Schema.Create(context.Background())
+	testutil.Require(t, err == nil, "recreate schema: %v", err)
+}
+
+func TestDBEducationProviderMissionQueryErrorIsNotCached(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	writeTestFile(t, root, "characterMissionV2s.json", `[
+		{"id":901,"characterId":5,"characterMissionType":"local_only","parameterGroupId":101,"isAchievementMission":false}
+	]`)
+	fixture := newGapTableFixture(t, "missions_error", renderregion.JP)
+	provider := fixture.provider
+	provider.education.store = newLocalStore(root)
+
+	fixture.dropTable(t, "charactermissionv2s")
+	testutil.Require(t, provider.education.GetCharacterMissions(ctx, 5) == nil, "query error must not serve local missions as loaded")
+	provider.education.missionMu.RLock()
+	loaded := provider.education.leaderMissionsLoaded
+	provider.education.missionMu.RUnlock()
+	testutil.Require(t, !loaded, "query error must not mark missions loaded")
+
+	fixture.recreateTables(t)
+	_, err := provider.client.Charactermissionv2.Create().
+		SetGameID(501).SetCharacterID(5).SetCharacterMissionType("leader").SetParameterGroupID(101).
+		SetServerRegion(renderregion.JP.String()).
+		Save(ctx)
+	testutil.Require(t, err == nil, "create mission: %v", err)
+	missions := provider.education.GetCharacterMissions(ctx, 5)
+	testutil.Require(t, len(missions) == 1 && missions[0].ID == 501, "next call must retry and read the database: %+v", missions)
+
+	cancelled, cancel := context.WithCancel(ctx)
+	cancel()
+	provider.ResetMasterdataCache()
+	missions = provider.education.GetCharacterMissions(cancelled, 5)
+	testutil.Require(t, len(missions) == 1, "cache fill must run detached from a cancelled request context: %+v", missions)
+}
+
+func TestDBEducationProviderResourceBoxDetailQueryErrorIsNotCached(t *testing.T) {
+	ctx := context.Background()
+	fixture := newGapTableFixture(t, "box_details_error", renderregion.CN)
+	provider := fixture.provider
+	client := provider.client
+
+	_, err := client.Resourceboxe.Create().
+		SetGameID(300).SetResourceBoxPurpose("challenge").SetResourceBoxType("expand").
+		SetServerRegion(renderregion.CN.String()).
+		Save(ctx)
+	testutil.Require(t, err == nil, "create cn resource box: %v", err)
+
+	fixture.dropTable(t, "resourceboxdetails")
+	testutil.Require(t, provider.education.GetResourceBoxByPurpose(ctx, "challenge", 300) == nil, "detail query error must not serve boxes without contents")
+	provider.education.boxMu.RLock()
+	loaded := provider.education.boxesLoaded
+	provider.education.boxMu.RUnlock()
+	testutil.Require(t, !loaded, "detail query error must not mark boxes loaded")
+
+	fixture.recreateTables(t)
+	_, err = client.Resourceboxdetail.Create().
+		SetResourceBoxID(300).SetResourceBoxPurpose("challenge").SetResourceType("jewel").SetResourceQuantity(100).
+		SetServerRegion(renderregion.CN.String()).
+		Save(ctx)
+	testutil.Require(t, err == nil, "create detail: %v", err)
+	cancelled, cancel := context.WithCancel(ctx)
+	cancel()
+	box := provider.education.GetResourceBoxByPurpose(cancelled, "challenge", 300)
+	testutil.Require(t, box != nil && len(box.Details) == 1 && box.Details[0].ResourceType == "jewel", "next call must retry detached from the request context: %+v", box)
+}
+
+func TestDBHonorProviderBondsWordQueryErrorIsNotCached(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	writeTestFile(t, root, "bondsHonorWords.json", `[
+		{"ID":30,"Seq":1,"BondsGroupID":20,"AssetBundleName":"word_30_local","Name":"Local","Description":"local"}
+	]`)
+	fixture := newGapTableFixture(t, "bonds_words_error", renderregion.JP)
+	provider := fixture.provider
+	provider.honors.store = newLocalStore(root)
+
+	fixture.dropTable(t, "bondshonorwords")
+	_, err := provider.honors.GetBondsHonorWordByID(ctx, 30)
+	testutil.Require(t, err != nil, "query error must not serve the local file as loaded")
+	provider.honors.bondsWordMu.RLock()
+	loaded := provider.honors.bondsWordLoaded
+	provider.honors.bondsWordMu.RUnlock()
+	testutil.Require(t, !loaded, "query error must not mark bonds words loaded")
+
+	fixture.recreateTables(t)
+	_, err = provider.client.Bondshonorword.Create().
+		SetGameID(30).SetName("Together").SetServerRegion(renderregion.JP.String()).
+		Save(ctx)
+	testutil.Require(t, err == nil, "create bonds word: %v", err)
+	word, err := provider.honors.GetBondsHonorWordByID(ctx, 30)
+	testutil.Require(t, err == nil && word != nil && word.Name == "Together", "next call must retry and read the database: %+v, %v", word, err)
+}
+
+func TestDBEventProviderWorldBloomRangesCacheEmptyAndRetryErrors(t *testing.T) {
+	ctx := context.Background()
+	fixture := newGapTableFixture(t, "wb_ranges_error", renderregion.JP)
+	provider := fixture.provider
+
+	fixture.dropTable(t, "worldbloomchapterrankingrewardranges")
+	ranges, err := provider.events.GetWorldBloomChapterRankingRewardRanges(ctx, 99, 5)
+	testutil.Require(t, err == nil && ranges == nil, "query error yields no ranges: %+v, %v", ranges, err)
+	provider.events.wbRangeMu.RLock()
+	loaded := provider.events.wbRangesLoaded
+	provider.events.wbRangeMu.RUnlock()
+	testutil.Require(t, !loaded, "query error must not mark ranges loaded")
+
+	fixture.recreateTables(t)
+	ranges, err = provider.events.GetWorldBloomChapterRankingRewardRanges(ctx, 99, 5)
+	testutil.Require(t, err == nil && ranges == nil, "empty table yields no ranges: %+v, %v", ranges, err)
+	provider.events.wbRangeMu.RLock()
+	loaded = provider.events.wbRangesLoaded
+	provider.events.wbRangeMu.RUnlock()
+	testutil.Require(t, loaded, "an empty table must be cached until the next reset")
+
+	_, err = provider.client.Worldbloomchapterrankingrewardrange.Create().
+		SetGameID(10).SetEventID(99).SetGameCharacterID(5).SetFromRank(1).SetToRank(10).SetResourceBoxID(600).
+		SetServerRegion(renderregion.JP.String()).
+		Save(ctx)
+	testutil.Require(t, err == nil, "create range: %v", err)
+	ranges, err = provider.events.GetWorldBloomChapterRankingRewardRanges(ctx, 99, 5)
+	testutil.Require(t, err == nil && ranges == nil, "cached empty result must hold until reset: %+v, %v", ranges, err)
+	provider.ResetMasterdataCache()
+	ranges, err = provider.events.GetWorldBloomChapterRankingRewardRanges(ctx, 99, 5)
+	testutil.Require(t, err == nil && len(ranges) == 1 && ranges[0].ResourceBoxID == 600, "reset must pick up the ingested rows: %+v, %v", ranges, err)
+}

@@ -2243,9 +2243,9 @@ var (
 		PrimaryKey: []*schema.Column{ResourceboxdetailsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "resourceboxdetail_server_region_purpose_box_id",
+				Name:    "resourceboxdetail_server_region_id",
 				Unique:  false,
-				Columns: []*schema.Column{ResourceboxdetailsColumns[7], ResourceboxdetailsColumns[4], ResourceboxdetailsColumns[1], ResourceboxdetailsColumns[0]},
+				Columns: []*schema.Column{ResourceboxdetailsColumns[7], ResourceboxdetailsColumns[0]},
 			},
 		},
 	}

@@ -32,12 +32,10 @@ func (Resourceboxdetail) Annotations() []schema.Annotation {
 }
 
 // Indexes deviates from the Sekai-API generator output: the table has no
-// game_id, and Cloud reads it per (region, purpose, box) in insert order, so
-// the covering index carries id as its last column. The storage key keeps the
-// name under PostgreSQL's 63-byte identifier limit.
+// game_id, and Cloud loads a whole region ordered by id (insert order is the
+// display order of a box's contents), so the index is (server_region, id).
 func (Resourceboxdetail) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("server_region", "resource_box_purpose", "resource_box_id", "id").
-			StorageKey("resourceboxdetail_server_region_purpose_box_id"),
+		index.Fields("server_region", "id"),
 	}
 }

@@ -90,7 +90,7 @@ func fillLocalMusicCategories(store *localStore, musics []*masterdata.Music) {
 		if item.MusicID <= 0 || name == "" {
 			continue
 		}
-		byMusic[item.MusicID] = append(byMusic[item.MusicID], name)
+		byMusic[item.MusicID] = appendMusicCategory(byMusic[item.MusicID], name)
 	}
 	for _, m := range musics {
 		if m == nil || len(m.Categories) > 0 {

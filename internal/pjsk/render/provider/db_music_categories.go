@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -13,9 +14,10 @@ import (
 
 // fillMusicCategories sets Categories from musiccategories for the musics
 // whose own categories are empty (JP 6.8 dropped musics.categories). The
-// table is only loaded when at least one music needs it; a load error
-// leaves the musics as they are and the cache unloaded.
-func (p *dbMusicProvider) fillMusicCategories(ctx context.Context, musics ...*masterdata.Music) {
+// table is only loaded when at least one music needs it. A load error is
+// returned so the caller does not cache musics with categories missing;
+// the index stays unloaded and the next call retries.
+func (p *dbMusicProvider) fillMusicCategories(ctx context.Context, musics ...*masterdata.Music) error {
 	needed := false
 	for _, item := range musics {
 		if item != nil && len(item.Categories) == 0 {
@@ -24,10 +26,10 @@ func (p *dbMusicProvider) fillMusicCategories(ctx context.Context, musics ...*ma
 		}
 	}
 	if !needed {
-		return
+		return nil
 	}
 	if err := p.ensureMusicCategoriesLoaded(ctx); err != nil {
-		return
+		return err
 	}
 	p.categoryMu.RLock()
 	defer p.categoryMu.RUnlock()
@@ -39,6 +41,7 @@ func (p *dbMusicProvider) fillMusicCategories(ctx context.Context, musics ...*ma
 			item.Categories = append([]string(nil), categories...)
 		}
 	}
+	return nil
 }
 
 func (p *dbMusicProvider) ensureMusicCategoriesLoaded(ctx context.Context) error {
@@ -74,7 +77,7 @@ func (p *dbMusicProvider) ensureMusicCategoriesLoaded(ctx context.Context) error
 				if item.MusicID <= 0 || name == "" {
 					continue
 				}
-				byMusic[int(item.MusicID)] = append(byMusic[int(item.MusicID)], name)
+				byMusic[int(item.MusicID)] = appendMusicCategory(byMusic[int(item.MusicID)], name)
 			}
 
 			p.categoryMu.Lock()
@@ -88,4 +91,14 @@ func (p *dbMusicProvider) ensureMusicCategoriesLoaded(ctx context.Context) error
 	})
 
 	return waitDBBulkIndexFlight(ctx, result, callerToken, "musics.category_index_wait", "musics.category_index_shared")
+}
+
+// appendMusicCategory adds a category once per music: the live table repeats
+// a name for some musics (several mv_2d rows), and the first occurrence in
+// game_id order is kept.
+func appendMusicCategory(categories []string, name string) []string {
+	if slices.Contains(categories, name) {
+		return categories
+	}
+	return append(categories, name)
 }

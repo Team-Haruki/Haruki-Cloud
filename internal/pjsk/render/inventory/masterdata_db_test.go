@@ -1,11 +1,14 @@
 package inventory
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -293,4 +296,22 @@ func TestInventoryListServesLocalFilesWhenDatabaseIsDownWithLocalFallback(t *tes
 		}
 	}
 	testutil.Require(t, found, "local material missing from sections: %+v", request.Sections)
+}
+
+func TestInventoryMasterdataLogsFailedFillOncePerBackoff(t *testing.T) {
+	ctx := context.Background()
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:inventory_log_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	testutil.Require(t, client.Close() == nil, "close client")
+
+	var logs bytes.Buffer
+	store := newMasterdataStore(client, "")
+	store.fill.Logger = slog.New(slog.NewTextHandler(&logs, nil))
+	for range 3 {
+		_, err := store.forRegion(ctx, renderregion.CN)
+		testutil.Require(t, errors.Is(err, cachefill.ErrUnavailable), "forRegion = %v; want ErrUnavailable", err)
+	}
+	testutil.Require(t, strings.Count(logs.String(), "\n") == 1, "one failed fill and two backoff hits logged:\n%s", logs.String())
+	for _, want := range []string{"level=WARN", "cache=inventory", "key=cn", "materials:", "database is closed"} {
+		testutil.Require(t, strings.Contains(logs.String(), want), "log %q lacks %q", logs.String(), want)
+	}
 }

@@ -6,6 +6,7 @@ import (
 
 	sekaiDB "haruki-cloud/database/sekai"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 )
 
 type DatabaseProviderOption func(*databaseProviderConfig)
@@ -67,14 +68,14 @@ func NewDatabaseProvider(client *sekaiDB.Client, region renderregion.Value, opts
 	p.characters = &dbCharacterProvider{client: client, region: region}
 	p.skills = &dbSkillProvider{client: client, region: region, characters: p.characters}
 	p.cards = &dbCardProvider{client: client, region: region, characters: p.characters, skills: p.skills}
-	p.events = &dbEventProvider{client: client, region: region}
+	p.events = &dbEventProvider{client: client, region: region, fill: cachefill.Group{Cache: "events", Region: region.String()}}
 	p.musics = &dbMusicProvider{client: client, region: region, events: p.events}
 	p.gachas = &dbGachaProvider{client: client, region: region}
 	p.costumes = &dbCostumeProvider{client: client, region: region}
-	p.honors = &dbHonorProvider{client: client, region: region}
+	p.honors = &dbHonorProvider{client: client, region: region, fill: cachefill.Group{Cache: "honors", Region: region.String()}}
 	p.stamps = &dbStampProvider{client: client, region: region}
 	p.vlives = &dbVLiveProvider{client: client, region: region}
-	p.education = &dbEducationProvider{client: client, region: region}
+	p.education = &dbEducationProvider{client: client, region: region, fill: cachefill.Group{Cache: "education", Region: region.String()}}
 	p.playerFrames = &dbPlayerFrameProvider{client: client, region: region}
 	p.mysekai = newDBMySekaiProvider(client, region, cfg)
 	return p

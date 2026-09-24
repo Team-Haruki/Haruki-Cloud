@@ -1,8 +1,11 @@
 package cachefill
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"log/slog"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -166,4 +169,48 @@ func TestUnavailableWrapsOnce(t *testing.T) {
 	if again := Unavailable(err); again != err {
 		t.Fatalf("Unavailable wrapped twice: %v", again)
 	}
+}
+
+func TestGroupLogsEachRecordedFailureOnce(t *testing.T) {
+	var logs bytes.Buffer
+	clock := testutil.NewFakeClock()
+	group := Group{
+		Cache:  "education",
+		Region: "jp",
+		Now:    clock.Now,
+		Logger: slog.New(slog.NewTextHandler(&logs, nil)),
+	}
+	cause := errors.New("dial tcp db-host:5432: connect: connection refused")
+	failing := func(context.Context) error { return cause }
+	ctx := context.Background()
+
+	_ = group.Do(ctx, "leaderMissions", failing)
+	for range 3 {
+		err := group.Do(ctx, "leaderMissions", failing)
+		testutil.Require(t, errors.Is(err, ErrBackoff), "call during the backoff = %v; want ErrBackoff", err)
+	}
+	lines := strings.Split(strings.TrimSpace(logs.String()), "\n")
+	testutil.Require(t, len(lines) == 1, "a failure and three backoff hits logged %d lines, want 1:\n%s", len(lines), logs.String())
+	for _, want := range []string{"level=WARN", `msg="master data fill failed"`, "cache=education", "region=jp", "key=leaderMissions", "generation=0", "connection refused"} {
+		testutil.Require(t, strings.Contains(lines[0], want), "log line %q lacks %q", lines[0], want)
+	}
+
+	clock.Advance(DefaultBackoff)
+	_ = group.Do(ctx, "leaderMissions", failing)
+	testutil.Require(t, strings.Count(logs.String(), "\n") == 2, "the retry after the backoff must log its failure once:\n%s", logs.String())
+
+	clock.Advance(DefaultBackoff)
+	logs.Reset()
+	testutil.Require(t, group.Do(ctx, "leaderMissions", func(context.Context) error { return nil }) == nil, "successful fill failed")
+	testutil.Require(t, logs.Len() == 0, "a successful fill logged: %s", logs.String())
+}
+
+func TestGroupDoesNotLogFailuresOfFillsStraddlingAReset(t *testing.T) {
+	var logs bytes.Buffer
+	group := Group{Cache: "inventory", Logger: slog.New(slog.NewTextHandler(&logs, nil))}
+	_ = group.Do(context.Background(), "cn", func(context.Context) error {
+		group.Reset()
+		return errors.New("stale")
+	})
+	testutil.Require(t, logs.Len() == 0, "a fill that straddled a reset logged: %s", logs.String())
 }

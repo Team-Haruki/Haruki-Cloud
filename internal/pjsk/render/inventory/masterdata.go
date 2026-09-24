@@ -3,6 +3,7 @@ package inventory
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,6 +38,8 @@ func newMasterdataStore(client *sekaiDB.Client, localDir string) *masterdataStor
 		localDir: strings.TrimSpace(localDir),
 		cache:    make(map[string]*regionMasterdata),
 		partial:  make(map[string]*regionMasterdata),
+		// Keys are regions, so the failure log's key names the region.
+		fill: cachefill.Group{Cache: "inventory"},
 	}
 }
 
@@ -92,7 +95,7 @@ func (s *masterdataStore) fillRegion(fillCtx context.Context, key string) error 
 		return nil
 	}
 
-	loaded, complete, loadErr := s.loadRegion(fillCtx, renderregion.Normalize(key))
+	loaded, dbErr, loadErr := s.loadRegion(fillCtx, renderregion.Normalize(key))
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -109,9 +112,9 @@ func (s *masterdataStore) fillRegion(fillCtx context.Context, key string) error 
 		delete(s.partial, key)
 		return loadErr
 	}
-	if !complete {
+	if dbErr != nil {
 		s.partial[key] = loaded
-		return errMasterdataFillIncomplete
+		return fmt.Errorf("%w: %w", errMasterdataFillIncomplete, dbErr)
 	}
 	if s.cache[key] == nil {
 		s.cache[key] = loaded
@@ -140,64 +143,65 @@ func (s *masterdataStore) resetCache() {
 
 // loadRegion fills every inventory table for a region, database first. A
 // table the database serves empty (or cannot serve) is read from the local
-// masterdata when a local directory is configured. complete is false when a
-// database query failed; err is set when a failed table was not supplied by
-// a local file either, so the region cannot be served.
-func (s *masterdataStore) loadRegion(fillCtx context.Context, region renderregion.Value) (md *regionMasterdata, complete bool, err error) {
+// masterdata when a local directory is configured. dbErr joins the failed
+// database queries, each naming its table; err joins those whose table no
+// local file supplied either, so the region cannot be served.
+func (s *masterdataStore) loadRegion(fillCtx context.Context, region renderregion.Value) (md *regionMasterdata, dbErr, err error) {
 	md = emptyRegionMasterdata()
 	if s.client == nil && strings.TrimSpace(s.localDir) == "" {
-		return md, true, nil
+		return md, nil, nil
 	}
 	if fillCtx == nil {
 		fillCtx = context.Background()
 	}
 
 	tables := []struct {
+		name      string
 		fromDB    func(context.Context, renderregion.Value, *regionMasterdata) (bool, error)
 		fromLocal func() bool
 	}{
-		{s.loadMaterials, func() bool {
+		{"materials", s.loadMaterials, func() bool {
 			return loadIndexedMasterdata(s.localDir, region, "materials.json", md.materials, func(item materialMeta) int { return item.ID })
 		}},
-		{s.loadBoostItems, func() bool {
+		{"boostItems", s.loadBoostItems, func() bool {
 			return loadIndexedMasterdata(s.localDir, region, "boostItems.json", md.boostItems, func(item boostItemMeta) int { return item.ID })
 		}},
-		{s.loadEventItems, func() bool {
+		{"eventItems", s.loadEventItems, func() bool {
 			return loadIndexedMasterdata(s.localDir, region, "eventItems.json", md.eventItems, func(item eventItemMeta) int { return item.ID })
 		}},
-		{s.loadGachaTickets, func() bool {
+		{"gachaTickets", s.loadGachaTickets, func() bool {
 			return loadIndexedMasterdata(s.localDir, region, "gachaTickets.json", md.gachaTickets, func(item assetNamedMeta) int { return item.ID })
 		}},
-		{s.loadPracticeTickets, func() bool {
+		{"practiceTickets", s.loadPracticeTickets, func() bool {
 			return loadIndexedMasterdata(s.localDir, region, "practiceTickets.json", md.practiceTickets, func(item ticketMeta) int { return item.ID })
 		}},
-		{s.loadSkillPracticeTickets, func() bool {
+		{"skillPracticeTickets", s.loadSkillPracticeTickets, func() bool {
 			return loadIndexedMasterdata(s.localDir, region, "skillPracticeTickets.json", md.skillPracticeTickets, func(item ticketMeta) int { return item.ID })
 		}},
-		{s.loadGachaCeilItems, func() bool {
+		{"gachaCeilItems", s.loadGachaCeilItems, func() bool {
 			return loadIndexedMasterdata(s.localDir, region, "gachaCeilItems.json", md.gachaCeilItems, func(item assetNamedMeta) int { return item.ID })
 		}},
-		{s.loadMysekaiMaterials, func() bool {
+		{"mysekaiMaterials", s.loadMysekaiMaterials, func() bool {
 			return loadIndexedMasterdata(s.localDir, region, "mysekaiMaterials.json", md.mysekaiMaterials, func(item mysekaiMaterialMeta) int { return item.ID })
 		}},
 	}
 
-	complete = true
-	var unserved []error
+	var failed, unserved []error
 	for _, table := range tables {
-		filled, dbErr := table.fromDB(fillCtx, region, md)
+		filled, queryErr := table.fromDB(fillCtx, region, md)
 		localFilled := false
 		if !filled && strings.TrimSpace(s.localDir) != "" {
 			localFilled = table.fromLocal()
 		}
-		if dbErr != nil {
-			complete = false
+		if queryErr != nil {
+			queryErr = fmt.Errorf("%s: %w", table.name, queryErr)
+			failed = append(failed, queryErr)
 			if !localFilled {
-				unserved = append(unserved, dbErr)
+				unserved = append(unserved, queryErr)
 			}
 		}
 	}
-	return md, complete, errors.Join(unserved...)
+	return md, errors.Join(failed...), errors.Join(unserved...)
 }
 
 // Each loader reports filled=true when the database returned at least one

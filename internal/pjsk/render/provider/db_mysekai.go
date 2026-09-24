@@ -114,6 +114,7 @@ func newDBMySekaiProvider(client *sekaiDB.Client, region renderregion.Value, cfg
 		lists:    make(map[string][]map[string]any),
 		mapsByID: make(map[string]map[int]map[string]any),
 	}
+	p.fill.Cache, p.fill.Region = "mysekai", region.String()
 	if p.dbType == "" {
 		p.dbType = "postgres"
 	}

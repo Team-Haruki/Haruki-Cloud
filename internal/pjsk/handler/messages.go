@@ -8,6 +8,7 @@ import (
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -31,6 +32,7 @@ const (
 
 	// Service errors
 	ErrMsgBindingServiceUnavailable = "绑定服务未就绪"
+	ErrMsgMasterdataUnavailable     = "游戏基础数据暂时不可用，请稍后再试"
 
 	// Card catalog notice titles
 	CardCatalogTitleNoBinding        = "未绑定账号，当前显示全服卡牌"
@@ -311,6 +313,8 @@ func WrapDomainError(err error) error {
 		return newBindingRequiredReplayError()
 	case errors.Is(err, accountdata.ErrBindingServiceUnavailable):
 		return onebot11.NewReplayError("%s", bindingServiceUnavailableMessage())
+	case errors.Is(err, cachefill.ErrUnavailable):
+		return onebot11.NewReplayError("%s", ErrMsgMasterdataUnavailable)
 	case errors.Is(err, sekaiapi.ErrAccountBindingNotFound),
 		errors.Is(err, sekaiapi.ErrInvalidPlatformUser):
 		if useTempBindingNotice() {

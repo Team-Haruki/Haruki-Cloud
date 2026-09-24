@@ -19,6 +19,7 @@ import (
 	"haruki-cloud/database/sekai/practiceticket"
 	"haruki-cloud/database/sekai/skillpracticeticket"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 )
 
 var (
@@ -44,11 +45,13 @@ func newMasterdataStore(client *sekaiDB.Client, localDir string) *masterdataStor
 // detached from the request context and is shared by concurrent requests;
 // a fill that straddles a cache reset is discarded and run again so rows
 // read before an ingest are never cached. A fill in which a query failed is
-// not cached: what it loaded is served until the fill backoff elapses, then
-// the next request retries.
-func (s *masterdataStore) forRegion(ctx context.Context, region renderregion.Value) *regionMasterdata {
+// not cached: when local files supplied every failed table, what it loaded
+// is served until the fill backoff elapses and the next request retries;
+// otherwise the request fails with an error wrapping
+// cachefill.ErrUnavailable instead of rendering with items missing.
+func (s *masterdataStore) forRegion(ctx context.Context, region renderregion.Value) (*regionMasterdata, error) {
 	if s == nil {
-		return emptyRegionMasterdata()
+		return emptyRegionMasterdata(), nil
 	}
 	key := renderregion.WithDefault(region).String()
 	if strings.TrimSpace(key) == "" {
@@ -57,9 +60,9 @@ func (s *masterdataStore) forRegion(ctx context.Context, region renderregion.Val
 
 	for {
 		if cached, partial := s.lookup(key); cached != nil {
-			return cached
+			return cached, nil
 		} else if partial != nil && s.fill.Failing(key) {
-			return partial
+			return partial, nil
 		}
 
 		err := s.fill.Do(ctx, key, func(fillCtx context.Context) error {
@@ -71,11 +74,11 @@ func (s *masterdataStore) forRegion(ctx context.Context, region renderregion.Val
 		cached, partial := s.lookup(key)
 		switch {
 		case cached != nil:
-			return cached
+			return cached, nil
 		case err != nil && partial != nil:
-			return partial
+			return partial, nil
 		case err != nil:
-			return emptyRegionMasterdata()
+			return nil, cachefill.Unavailable(err)
 		}
 	}
 }
@@ -89,7 +92,7 @@ func (s *masterdataStore) fillRegion(fillCtx context.Context, key string) error 
 		return nil
 	}
 
-	loaded, complete := s.loadRegion(fillCtx, renderregion.Normalize(key))
+	loaded, complete, loadErr := s.loadRegion(fillCtx, renderregion.Normalize(key))
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -101,6 +104,10 @@ func (s *masterdataStore) fillRegion(fillCtx context.Context, key string) error 
 	}
 	if s.partial == nil {
 		s.partial = make(map[string]*regionMasterdata)
+	}
+	if loadErr != nil {
+		delete(s.partial, key)
+		return loadErr
 	}
 	if !complete {
 		s.partial[key] = loaded
@@ -134,11 +141,12 @@ func (s *masterdataStore) resetCache() {
 // loadRegion fills every inventory table for a region, database first. A
 // table the database serves empty (or cannot serve) is read from the local
 // masterdata when a local directory is configured. complete is false when a
-// database query failed.
-func (s *masterdataStore) loadRegion(fillCtx context.Context, region renderregion.Value) (*regionMasterdata, bool) {
-	md := emptyRegionMasterdata()
+// database query failed; err is set when a failed table was not supplied by
+// a local file either, so the region cannot be served.
+func (s *masterdataStore) loadRegion(fillCtx context.Context, region renderregion.Value) (md *regionMasterdata, complete bool, err error) {
+	md = emptyRegionMasterdata()
 	if s.client == nil && strings.TrimSpace(s.localDir) == "" {
-		return md, true
+		return md, true, nil
 	}
 	if fillCtx == nil {
 		fillCtx = context.Background()
@@ -146,45 +154,50 @@ func (s *masterdataStore) loadRegion(fillCtx context.Context, region renderregio
 
 	tables := []struct {
 		fromDB    func(context.Context, renderregion.Value, *regionMasterdata) (bool, error)
-		fromLocal func()
+		fromLocal func() bool
 	}{
-		{s.loadMaterials, func() {
-			loadIndexedMasterdata(s.localDir, region, "materials.json", md.materials, func(item materialMeta) int { return item.ID })
+		{s.loadMaterials, func() bool {
+			return loadIndexedMasterdata(s.localDir, region, "materials.json", md.materials, func(item materialMeta) int { return item.ID })
 		}},
-		{s.loadBoostItems, func() {
-			loadIndexedMasterdata(s.localDir, region, "boostItems.json", md.boostItems, func(item boostItemMeta) int { return item.ID })
+		{s.loadBoostItems, func() bool {
+			return loadIndexedMasterdata(s.localDir, region, "boostItems.json", md.boostItems, func(item boostItemMeta) int { return item.ID })
 		}},
-		{s.loadEventItems, func() {
-			loadIndexedMasterdata(s.localDir, region, "eventItems.json", md.eventItems, func(item eventItemMeta) int { return item.ID })
+		{s.loadEventItems, func() bool {
+			return loadIndexedMasterdata(s.localDir, region, "eventItems.json", md.eventItems, func(item eventItemMeta) int { return item.ID })
 		}},
-		{s.loadGachaTickets, func() {
-			loadIndexedMasterdata(s.localDir, region, "gachaTickets.json", md.gachaTickets, func(item assetNamedMeta) int { return item.ID })
+		{s.loadGachaTickets, func() bool {
+			return loadIndexedMasterdata(s.localDir, region, "gachaTickets.json", md.gachaTickets, func(item assetNamedMeta) int { return item.ID })
 		}},
-		{s.loadPracticeTickets, func() {
-			loadIndexedMasterdata(s.localDir, region, "practiceTickets.json", md.practiceTickets, func(item ticketMeta) int { return item.ID })
+		{s.loadPracticeTickets, func() bool {
+			return loadIndexedMasterdata(s.localDir, region, "practiceTickets.json", md.practiceTickets, func(item ticketMeta) int { return item.ID })
 		}},
-		{s.loadSkillPracticeTickets, func() {
-			loadIndexedMasterdata(s.localDir, region, "skillPracticeTickets.json", md.skillPracticeTickets, func(item ticketMeta) int { return item.ID })
+		{s.loadSkillPracticeTickets, func() bool {
+			return loadIndexedMasterdata(s.localDir, region, "skillPracticeTickets.json", md.skillPracticeTickets, func(item ticketMeta) int { return item.ID })
 		}},
-		{s.loadGachaCeilItems, func() {
-			loadIndexedMasterdata(s.localDir, region, "gachaCeilItems.json", md.gachaCeilItems, func(item assetNamedMeta) int { return item.ID })
+		{s.loadGachaCeilItems, func() bool {
+			return loadIndexedMasterdata(s.localDir, region, "gachaCeilItems.json", md.gachaCeilItems, func(item assetNamedMeta) int { return item.ID })
 		}},
-		{s.loadMysekaiMaterials, func() {
-			loadIndexedMasterdata(s.localDir, region, "mysekaiMaterials.json", md.mysekaiMaterials, func(item mysekaiMaterialMeta) int { return item.ID })
+		{s.loadMysekaiMaterials, func() bool {
+			return loadIndexedMasterdata(s.localDir, region, "mysekaiMaterials.json", md.mysekaiMaterials, func(item mysekaiMaterialMeta) int { return item.ID })
 		}},
 	}
 
-	complete := true
+	complete = true
+	var unserved []error
 	for _, table := range tables {
-		filled, err := table.fromDB(fillCtx, region, md)
-		if err != nil {
-			complete = false
-		}
+		filled, dbErr := table.fromDB(fillCtx, region, md)
+		localFilled := false
 		if !filled && strings.TrimSpace(s.localDir) != "" {
-			table.fromLocal()
+			localFilled = table.fromLocal()
+		}
+		if dbErr != nil {
+			complete = false
+			if !localFilled {
+				unserved = append(unserved, dbErr)
+			}
 		}
 	}
-	return md, complete
+	return md, complete, errors.Join(unserved...)
 }
 
 // Each loader reports filled=true when the database returned at least one
@@ -344,16 +357,19 @@ func (s *masterdataStore) loadMysekaiMaterials(ctx context.Context, region rende
 	return len(items) > 0, nil
 }
 
-func loadIndexedMasterdata[T any](localDir string, region renderregion.Value, filename string, destination map[int]T, idOf func(T) int) {
+// loadIndexedMasterdata reports whether a local file for the table was
+// found and decoded.
+func loadIndexedMasterdata[T any](localDir string, region renderregion.Value, filename string, destination map[int]T, idOf func(T) int) bool {
 	var items []T
 	if loadMasterdataFile(localDir, region, filename, &items) != nil {
-		return
+		return false
 	}
 	for _, item := range items {
 		if id := idOf(item); id > 0 {
 			destination[id] = item
 		}
 	}
+	return true
 }
 
 func emptyRegionMasterdata() *regionMasterdata {

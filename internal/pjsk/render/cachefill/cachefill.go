@@ -32,6 +32,19 @@ const (
 // the same key failed less than Backoff ago. It wraps that failure.
 var ErrBackoff = errors.New("cache fill skipped: previous fill failed recently")
 
+// ErrUnavailable marks a request that could not be answered because a
+// master data fill failed and no local fallback supplied the data. Callers
+// surface it as a failure instead of rendering empty or partial tables.
+var ErrUnavailable = errors.New("master data temporarily unavailable")
+
+// Unavailable wraps a failed fill's error with ErrUnavailable; nil stays nil.
+func Unavailable(err error) error {
+	if err == nil || errors.Is(err, ErrUnavailable) {
+		return err
+	}
+	return fmt.Errorf("%w: %w", ErrUnavailable, err)
+}
+
 // Group coordinates fills per key. The zero value is ready to use.
 //
 // Reset starts a new generation: a fill that began before it records

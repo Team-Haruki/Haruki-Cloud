@@ -27,9 +27,9 @@ type DataSource interface {
 	GetBonds() []*Bond
 	GetBondLevels() []*BondLevel
 	GetGameCharacterStyle(gameID int) *GameCharacterStyle
-	GetCharacterMissions(characterID int) []*CharacterMission
-	GetCharacterMissionParameterGroups(parameterGroupID int) []*CharacterMissionParameterGroup
-	GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int)
+	GetCharacterMissions(characterID int) ([]*CharacterMission, error)
+	GetCharacterMissionParameterGroups(parameterGroupID int) ([]*CharacterMissionParameterGroup, error)
+	GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int, error)
 	GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel
 	GetShopItemByResourceBoxID(resourceBoxID int) *ShopItem
 	GetShopItems() []*ShopItem

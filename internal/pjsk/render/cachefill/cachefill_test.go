@@ -153,3 +153,17 @@ func TestGroupFillRunsDetachedFromRequestContext(t *testing.T) {
 	_, hasDeadline := fillCtx.Deadline()
 	testutil.Require(t, hasDeadline, "nil group context must still be bounded")
 }
+
+func TestUnavailableWrapsOnce(t *testing.T) {
+	if Unavailable(nil) != nil {
+		t.Fatal("Unavailable(nil) != nil")
+	}
+	cause := errors.New("sql: database is closed")
+	err := Unavailable(cause)
+	if !errors.Is(err, ErrUnavailable) || !errors.Is(err, cause) {
+		t.Fatalf("Unavailable(cause) = %v; want ErrUnavailable wrapping cause", err)
+	}
+	if again := Unavailable(err); again != err {
+		t.Fatalf("Unavailable wrapped twice: %v", again)
+	}
+}

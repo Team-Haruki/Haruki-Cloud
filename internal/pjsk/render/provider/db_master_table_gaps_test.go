@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -50,7 +51,8 @@ func TestDBEducationProviderReadsCharacterMissionsFromDatabaseFirst(t *testing.T
 		Save(ctx)
 	testutil.Require(t, err == nil, "create parameter group: %v", err)
 
-	missions := provider.education.GetCharacterMissions(ctx, 5)
+	missions, err := provider.education.GetCharacterMissions(ctx, 5)
+	testutil.Require(t, err == nil, "character missions: %v", err)
 	testutil.Require(t, len(missions) == 2, "character missions = %+v, want the two JP database rows", missions)
 	testutil.Require(t, missions[0].ID == 501 && missions[0].CharacterMissionType == "leader", "character missions = %+v", missions)
 	testutil.Require(t, missions[1].ID == 502 && missions[1].ParameterGroupID == 102, "character missions = %+v", missions)
@@ -69,7 +71,8 @@ func TestDBEducationProviderCharacterMissionsFallBackWhenTableEmpty(t *testing.T
 	provider := openProviderBehaviorDB(t, "education_missions_empty")
 	provider.education.store = newLocalStore(root)
 
-	missions := provider.education.GetCharacterMissions(ctx, 5)
+	missions, err := provider.education.GetCharacterMissions(ctx, 5)
+	testutil.Require(t, err == nil, "character missions: %v", err)
 	testutil.Require(t, len(missions) == 1 && missions[0].ID == 901, "empty table should fall back to local missions, got %+v", missions)
 }
 
@@ -318,11 +321,17 @@ func TestDBEducationProviderMissionQueryErrorIsNotCached(t *testing.T) {
 	provider.education.fill.Now = clock.Now
 
 	fixture.dropTable(t, "charactermissionv2s")
-	testutil.Require(t, provider.education.GetCharacterMissions(ctx, 5) == nil, "query error without local masterdata must yield nothing")
+	missions, err := provider.education.GetCharacterMissions(ctx, 5)
+	testutil.Require(t, missions == nil && errors.Is(err, cachefill.ErrUnavailable), "query error without local masterdata = %+v, %v; want ErrUnavailable", missions, err)
+	groups, err := provider.education.GetCharacterMissionParameterGroups(ctx, 101)
+	testutil.Require(t, groups == nil && errors.Is(err, cachefill.ErrUnavailable), "parameter groups during the backoff = %+v, %v; want ErrUnavailable", groups, err)
+	requirements, maxPlay, err := provider.education.GetLeaderMissionRequirements(ctx)
+	testutil.Require(t, requirements == nil && maxPlay == 0 && errors.Is(err, cachefill.ErrUnavailable), "leader requirements during the backoff = %+v, %d, %v; want ErrUnavailable", requirements, maxPlay, err)
 
 	provider.education.store = newLocalStore(root)
 	clock.Advance(cachefill.DefaultBackoff)
-	missions := provider.education.GetCharacterMissions(ctx, 5)
+	missions, err = provider.education.GetCharacterMissions(ctx, 5)
+	testutil.Require(t, err == nil, "local fallback missions: %v", err)
 	testutil.Require(t, len(missions) == 1 && missions[0].ID == 901, "query error must serve the local missions for the request: %+v", missions)
 	provider.education.missionMu.RLock()
 	loaded := provider.education.leaderMissionsLoaded
@@ -330,21 +339,21 @@ func TestDBEducationProviderMissionQueryErrorIsNotCached(t *testing.T) {
 	testutil.Require(t, !loaded, "query error must not mark missions loaded")
 
 	fixture.recreateTables(t)
-	_, err := provider.client.Charactermissionv2.Create().
+	_, err = provider.client.Charactermissionv2.Create().
 		SetGameID(501).SetCharacterID(5).SetCharacterMissionType("leader").SetParameterGroupID(101).
 		SetServerRegion(renderregion.JP.String()).
 		Save(ctx)
 	testutil.Require(t, err == nil, "create mission: %v", err)
-	missions = provider.education.GetCharacterMissions(ctx, 5)
+	missions, _ = provider.education.GetCharacterMissions(ctx, 5)
 	testutil.Require(t, len(missions) == 1 && missions[0].ID == 901, "the database must not be retried during the fill backoff: %+v", missions)
 	clock.Advance(cachefill.DefaultBackoff)
-	missions = provider.education.GetCharacterMissions(ctx, 5)
+	missions, _ = provider.education.GetCharacterMissions(ctx, 5)
 	testutil.Require(t, len(missions) == 1 && missions[0].ID == 501, "the call after the backoff must retry and read the database: %+v", missions)
 
 	cancelled, cancel := context.WithCancel(ctx)
 	cancel()
 	provider.ResetMasterdataCache()
-	missions = provider.education.GetCharacterMissions(cancelled, 5)
+	missions, _ = provider.education.GetCharacterMissions(cancelled, 5)
 	testutil.Require(t, len(missions) == 1, "cache fill must run detached from a cancelled request context: %+v", missions)
 }
 

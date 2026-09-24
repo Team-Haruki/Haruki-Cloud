@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
@@ -8,6 +9,7 @@ import (
 	"haruki-cloud/internal/pjsk/filteralias"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 	"haruki-cloud/internal/pjsk/render/education"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
@@ -434,12 +436,16 @@ func (e *educationExecution) renderLeader() ([]byte, error) {
 	request := drawing.LeaderCountRequest{}
 	mergeParams(e.rc.Cmd.Params, &request)
 	if len(request.LeaderCounts) == 0 && e.snapshot != nil {
-		if built, err := e.controller.BuildLeaderCountRequestFromSnapshot(education.LeaderCountQuery{
+		built, err := e.controller.BuildLeaderCountRequestFromSnapshot(education.LeaderCountQuery{
 			Region:   e.rc.Region,
 			Profile:  e.profile,
 			Snapshot: e.snapshot,
-		}); err == nil {
+		})
+		switch {
+		case err == nil:
 			request = *built
+		case errors.Is(err, cachefill.ErrUnavailable):
+			return nil, err
 		}
 	}
 	return e.controller.RenderLeaderCount(request)

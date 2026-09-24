@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/render/cachefill"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -152,31 +153,31 @@ func (p *localEducationProvider) GetGameCharacterStyle(_ context.Context, gameID
 	return cloneEdGameCharacterStyle(p.styles.v()[gameID])
 }
 
-func (p *localEducationProvider) GetCharacterMissions(_ context.Context, characterID int) []*CharacterMission {
+func (p *localEducationProvider) GetCharacterMissions(_ context.Context, characterID int) ([]*CharacterMission, error) {
 	if characterID <= 0 {
-		return nil
+		return nil, nil
 	}
 	if err := p.ensureLeaderMissionRequirements(); err != nil {
-		return nil
+		return nil, cachefill.Unavailable(err)
 	}
-	return cloneEdCharacterMissions(p.missions.v().missions[characterID])
+	return cloneEdCharacterMissions(p.missions.v().missions[characterID]), nil
 }
 
-func (p *localEducationProvider) GetCharacterMissionParameterGroups(_ context.Context, parameterGroupID int) []*CharacterMissionParameterGroup {
+func (p *localEducationProvider) GetCharacterMissionParameterGroups(_ context.Context, parameterGroupID int) ([]*CharacterMissionParameterGroup, error) {
 	if parameterGroupID <= 0 {
-		return nil
+		return nil, nil
 	}
 	if err := p.ensureLeaderMissionRequirements(); err != nil {
-		return nil
+		return nil, cachefill.Unavailable(err)
 	}
-	return cloneEdCharacterMissionParameterGroups(p.missions.v().groupsByID[parameterGroupID])
+	return cloneEdCharacterMissionParameterGroups(p.missions.v().groupsByID[parameterGroupID]), nil
 }
 
-func (p *localEducationProvider) GetLeaderMissionRequirements(_ context.Context) ([]LeaderMissionRequirement, int) {
+func (p *localEducationProvider) GetLeaderMissionRequirements(_ context.Context) ([]LeaderMissionRequirement, int, error) {
 	if err := p.ensureLeaderMissionRequirements(); err != nil {
-		return nil, 0
+		return nil, 0, cachefill.Unavailable(err)
 	}
-	return cloneEdLeaderMissionRequirements(p.missions.v().requirements), p.missions.v().maxPlayLimit
+	return cloneEdLeaderMissionRequirements(p.missions.v().requirements), p.missions.v().maxPlayLimit, nil
 }
 
 type localBondJSON struct {

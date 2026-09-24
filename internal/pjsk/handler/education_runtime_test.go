@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	json "haruki-cloud/internal/jsonutil"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 	"haruki-cloud/internal/pjsk/render/education"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
@@ -46,6 +48,7 @@ type handlerTestEducationSource struct {
 	shopItems         map[int]*education.ShopItem
 	characterMissions map[int][]*education.CharacterMission
 	missionGroups     map[int][]*education.CharacterMissionParameterGroup
+	missionErr        error
 }
 
 func newHandlerTestEducationSource(region renderregion.Value, maxLevel int, assetName string) *handlerTestEducationSource {
@@ -160,14 +163,23 @@ func (s *handlerTestEducationSource) GetBondLevels() []*education.BondLevel {
 func (s *handlerTestEducationSource) GetGameCharacterStyle(gameID int) *education.GameCharacterStyle {
 	return nil
 }
-func (s *handlerTestEducationSource) GetCharacterMissions(characterID int) []*education.CharacterMission {
-	return s.characterMissions[characterID]
+func (s *handlerTestEducationSource) GetCharacterMissions(characterID int) ([]*education.CharacterMission, error) {
+	if s.missionErr != nil {
+		return nil, s.missionErr
+	}
+	return s.characterMissions[characterID], nil
 }
-func (s *handlerTestEducationSource) GetCharacterMissionParameterGroups(parameterGroupID int) []*education.CharacterMissionParameterGroup {
-	return s.missionGroups[parameterGroupID]
+func (s *handlerTestEducationSource) GetCharacterMissionParameterGroups(parameterGroupID int) ([]*education.CharacterMissionParameterGroup, error) {
+	if s.missionErr != nil {
+		return nil, s.missionErr
+	}
+	return s.missionGroups[parameterGroupID], nil
 }
-func (s *handlerTestEducationSource) GetLeaderMissionRequirements() ([]education.LeaderMissionRequirement, int) {
-	return nil, 0
+func (s *handlerTestEducationSource) GetLeaderMissionRequirements() ([]education.LeaderMissionRequirement, int, error) {
+	if s.missionErr != nil {
+		return nil, 0, s.missionErr
+	}
+	return nil, 0, nil
 }
 func (s *handlerTestEducationSource) GetMysekaiGateLevel(gateID, level int) *education.MysekaiGateLevel {
 	return nil
@@ -628,4 +640,80 @@ func mustBridgeEducationSnapshot(t *testing.T) rendersnapshot.Snapshot {
 		t.Fatalf("NewFromBytes() error = %v", err)
 	}
 	return snapshot
+}
+
+func newMissionTestRequestContext(t *testing.T, mode string, params any, source *handlerTestEducationSource) *RequestContext {
+	t.Helper()
+	ctx := context.Background()
+	service := newHandlerTestBindingServiceWithValidator(t, handlerEducationRegionValidator{})
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	raw, err := json.Marshal(params)
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte{0x89, 'P', 'N', 'G'})
+	}))
+	t.Cleanup(server.Close)
+
+	controller := education.NewController(drawing.NewHarukiDrawingClient(server.URL), nil, nil, renderregion.CN)
+	controller.RegisterSource(source)
+	return &RequestContext{
+		Ctx: ctx,
+		Cmd: &CommandRequest{
+			Module:            parser.ModuleEducation,
+			Mode:              mode,
+			Params:            raw,
+			RequesterPlatform: "qq",
+			RequesterUserID:   "42",
+		},
+		App: &renderapp.App{
+			Config:     renderapp.Config{UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true}},
+			Edu:        controller,
+			Bindings:   service,
+			Snapshots:  rendersnapshot.NewStaticSnapshotProvider(mustBridgeEducationSnapshot(t)),
+			ImageCache: imagecache.New("https://example.com", t.TempDir()),
+		},
+		Region:         renderregion.CN,
+		RegionStr:      "cn",
+		Platform:       "qq",
+		PlatformUserID: "42",
+	}
+}
+
+func TestExecuteEducationMissionsFailWhenMasterdataIsUnavailable(t *testing.T) {
+	for _, test := range []struct {
+		mode   string
+		params any
+	}{
+		{mode: "education-character-mission", params: education.CharacterMissionQuery{Cid: 5}},
+		{mode: "education-character-mission", params: education.CharacterMissionQuery{Cid: 5, ShowAll: true, MissionType: "play_live"}},
+		{mode: "education-leader", params: map[string]any{}},
+	} {
+		source := newHandlerTestEducationSource(renderregion.CN, 15, "cn_item")
+		source.missionErr = cachefill.Unavailable(errors.New("sql: database is closed"))
+		rc := newMissionTestRequestContext(t, test.mode, test.params, source)
+
+		message, err := executeEducation(rc)
+		if message != nil || !errors.Is(err, cachefill.ErrUnavailable) {
+			t.Fatalf("%s %+v = %+v, %v; want ErrUnavailable", test.mode, test.params, message, err)
+		}
+		replay, ok := errors.AsType[onebot11.ReplayError](WrapDomainError(err))
+		if !ok || string(replay) != ErrMsgMasterdataUnavailable {
+			t.Fatalf("%s user-facing error = %v; want %q", test.mode, WrapDomainError(err), ErrMsgMasterdataUnavailable)
+		}
+	}
+}
+
+func TestExecuteEducationCharacterMissionWithoutMissionsIsNotAnOutage(t *testing.T) {
+	source := newHandlerTestEducationSource(renderregion.CN, 15, "cn_item")
+	rc := newMissionTestRequestContext(t, "education-character-mission", education.CharacterMissionQuery{Cid: 5}, source)
+
+	_, err := executeEducation(rc)
+	if err == nil || errors.Is(err, cachefill.ErrUnavailable) || !strings.Contains(err.Error(), "character mission data not found") {
+		t.Fatalf("empty mission table error = %v; want the no-missions error", err)
+	}
 }

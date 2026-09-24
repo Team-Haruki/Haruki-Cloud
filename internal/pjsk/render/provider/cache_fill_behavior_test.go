@@ -44,7 +44,7 @@ func TestDBEducationProviderMissionFillIsSharedAcrossConcurrentCallers(t *testin
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			results[i] = provider.education.GetCharacterMissions(ctx, 5)
+			results[i], _ = provider.education.GetCharacterMissions(ctx, 5)
 		}()
 	}
 	wg.Wait()

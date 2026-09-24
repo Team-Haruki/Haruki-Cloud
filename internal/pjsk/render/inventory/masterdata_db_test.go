@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,8 +14,10 @@ import (
 	"entgo.io/ent"
 
 	sekaienttest "haruki-cloud/database/sekai/enttest"
+	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/cachefill"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -48,7 +51,7 @@ func TestInventoryMasterdataReadsDatabaseFirstWithLocalFallbackPerTable(t *testi
 	}
 
 	store := newMasterdataStore(client, root)
-	md := store.forRegion(ctx, renderregion.CN)
+	md := mustForRegion(t, store, ctx, renderregion.CN)
 	testutil.Require(t, md.materials[5].Name == "db material" && md.materials[5].FlavorText == "from db" && md.materials[5].MaterialType == "common", "materials = %+v", md.materials)
 	_, leaked := md.materials[6]
 	testutil.Require(t, !leaked, "jp material leaked into cn: %+v", md.materials)
@@ -64,15 +67,15 @@ func TestInventoryMasterdataReadsDatabaseFirstWithLocalFallbackPerTable(t *testi
 	// Cached per region until reset.
 	_, err = client.Material.Create().SetGameID(50).SetName("later").SetServerRegion("cn").Save(ctx)
 	testutil.Require(t, err == nil, "create later material: %v", err)
-	_, cachedLater := store.forRegion(ctx, renderregion.CN).materials[50]
+	_, cachedLater := mustForRegion(t, store, ctx, renderregion.CN).materials[50]
 	testutil.Require(t, !cachedLater, "region was reloaded without a reset")
 	store.resetCache()
-	_, reloaded := store.forRegion(ctx, renderregion.CN).materials[50]
+	_, reloaded := mustForRegion(t, store, ctx, renderregion.CN).materials[50]
 	testutil.Require(t, reloaded, "reset did not reload the region")
 
 	// Without a local directory an empty table stays empty.
 	dbOnly := newMasterdataStore(client, "")
-	testutil.Require(t, len(dbOnly.forRegion(ctx, renderregion.CN).eventItems) == 0, "db-only store read local files")
+	testutil.Require(t, len(mustForRegion(t, dbOnly, ctx, renderregion.CN).eventItems) == 0, "db-only store read local files")
 }
 
 func TestInventoryMasterdataDoesNotCacheFailedFills(t *testing.T) {
@@ -81,12 +84,31 @@ func TestInventoryMasterdataDoesNotCacheFailedFills(t *testing.T) {
 	testutil.Require(t, client.Close() == nil, "close client")
 
 	store := newMasterdataStore(client, "")
-	md := store.forRegion(ctx, renderregion.JP)
-	testutil.Require(t, md != nil && len(md.materials) == 0, "closed database served rows: %+v", md.materials)
+	md, err := store.forRegion(ctx, renderregion.JP)
+	testutil.Require(t, md == nil && errors.Is(err, cachefill.ErrUnavailable), "closed database without local files = %+v, %v; want ErrUnavailable", md, err)
 	store.mu.RLock()
-	cached := len(store.cache)
+	cached, partial := len(store.cache), len(store.partial)
 	store.mu.RUnlock()
-	testutil.Require(t, cached == 0, "failed fill was cached: %d regions", cached)
+	testutil.Require(t, cached == 0 && partial == 0, "failed fill was kept: %d cached, %d partial", cached, partial)
+
+	// Requests during the backoff keep failing rather than serving empty tables.
+	md, err = store.forRegion(ctx, renderregion.JP)
+	testutil.Require(t, md == nil && errors.Is(err, cachefill.ErrUnavailable), "request during the backoff = %+v, %v; want ErrUnavailable", md, err)
+}
+
+func TestInventoryMasterdataFailsWhenLocalFilesMissTheFailedTables(t *testing.T) {
+	ctx := context.Background()
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:inventory_fail_partial_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	testutil.Require(t, client.Close() == nil, "close client")
+
+	root := t.TempDir()
+	masterDir := filepath.Join(root, "haruki-sekai-sc-master", "master")
+	testutil.Require(t, os.MkdirAll(masterDir, 0o755) == nil, "mkdir master dir")
+	testutil.Require(t, os.WriteFile(filepath.Join(masterDir, "materials.json"), []byte(`[{"id":5,"name":"local material"}]`), 0o644) == nil, "write materials")
+
+	store := newMasterdataStore(client, root)
+	md, err := store.forRegion(ctx, renderregion.CN)
+	testutil.Require(t, md == nil && errors.Is(err, cachefill.ErrUnavailable), "tables with neither database nor local rows = %+v, %v; want ErrUnavailable", md, err)
 }
 
 func TestInventoryMasterdataSharesOneFillAcrossConcurrentRequests(t *testing.T) {
@@ -113,7 +135,7 @@ func TestInventoryMasterdataSharesOneFillAcrossConcurrentRequests(t *testing.T) 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			results[i] = store.forRegion(ctx, renderregion.CN)
+			results[i], _ = store.forRegion(ctx, renderregion.CN)
 		}()
 	}
 	wg.Wait()
@@ -139,13 +161,13 @@ func TestInventoryMasterdataBacksOffAfterFailedFill(t *testing.T) {
 	root := t.TempDir()
 	masterDir := filepath.Join(root, "haruki-sekai-sc-master", "master")
 	testutil.Require(t, os.MkdirAll(masterDir, 0o755) == nil, "mkdir master dir")
-	testutil.Require(t, os.WriteFile(filepath.Join(masterDir, "materials.json"), []byte(`[{"id":5,"name":"local material"}]`), 0o644) == nil, "write materials")
+	writeAllLocalInventoryTables(t, masterDir)
 
 	store := newMasterdataStore(client, root)
 	clock := testutil.NewFakeClock()
 	store.fill.Now = clock.Now
 
-	md := store.forRegion(ctx, renderregion.CN)
+	md := mustForRegion(t, store, ctx, renderregion.CN)
 	testutil.Require(t, md != nil && md.materials[5].Name == "local material", "failed fill must serve the local files: %+v", md)
 	perFill := queries.Load()
 	testutil.Require(t, perFill == 8, "first fill ran %d queries, want one per table", perFill)
@@ -154,16 +176,16 @@ func TestInventoryMasterdataBacksOffAfterFailedFill(t *testing.T) {
 	store.mu.RUnlock()
 	testutil.Require(t, cached == 0, "failed fill was cached: %d regions", cached)
 
-	again := store.forRegion(ctx, renderregion.CN)
+	again := mustForRegion(t, store, ctx, renderregion.CN)
 	testutil.Require(t, again == md, "requests during the backoff must serve the partial fill")
 	testutil.Require(t, queries.Load() == perFill, "requests during the backoff ran %d more queries", queries.Load()-perFill)
 
 	clock.Advance(cachefill.DefaultBackoff)
-	_ = store.forRegion(ctx, renderregion.CN)
+	_ = mustForRegion(t, store, ctx, renderregion.CN)
 	testutil.Require(t, queries.Load() == 2*perFill, "the request after the backoff must retry: %d queries", queries.Load())
 
 	store.resetCache()
-	_ = store.forRegion(ctx, renderregion.CN)
+	_ = mustForRegion(t, store, ctx, renderregion.CN)
 	testutil.Require(t, queries.Load() == 3*perFill, "a reset must clear the backoff: %d queries", queries.Load())
 }
 
@@ -191,7 +213,10 @@ func TestInventoryMasterdataFillStraddlingResetIsDiscarded(t *testing.T) {
 
 	store := newMasterdataStore(client, "")
 	done := make(chan *regionMasterdata, 1)
-	go func() { done <- store.forRegion(ctx, renderregion.CN) }()
+	go func() {
+		md, _ := store.forRegion(ctx, renderregion.CN)
+		done <- md
+	}()
 
 	<-queried
 	_, err = client.Material.Create().SetGameID(50).SetName("ingested").SetServerRegion("cn").Save(ctx)
@@ -207,4 +232,65 @@ func TestInventoryMasterdataFillStraddlingResetIsDiscarded(t *testing.T) {
 	store.mu.RUnlock()
 	_, cachedIngested := cached.materials[50]
 	testutil.Require(t, cached != nil && cachedIngested, "cache after the reset = %+v; want the post-ingest rows", cached)
+}
+
+func mustForRegion(t *testing.T, store *masterdataStore, ctx context.Context, region renderregion.Value) *regionMasterdata {
+	t.Helper()
+	md, err := store.forRegion(ctx, region)
+	testutil.Require(t, err == nil, "forRegion(%s): %v", region, err)
+	return md
+}
+
+func writeAllLocalInventoryTables(t *testing.T, masterDir string) {
+	t.Helper()
+	for name, content := range map[string]string{
+		"materials.json":            `[{"id":5,"name":"local material"}]`,
+		"boostItems.json":           `[]`,
+		"eventItems.json":           `[]`,
+		"gachaTickets.json":         `[]`,
+		"practiceTickets.json":      `[]`,
+		"skillPracticeTickets.json": `[]`,
+		"gachaCeilItems.json":       `[]`,
+		"mysekaiMaterials.json":     `[]`,
+	} {
+		testutil.Require(t, os.WriteFile(filepath.Join(masterDir, name), []byte(content), 0o644) == nil, "write %s", name)
+	}
+}
+
+func TestInventoryListFailsWhenDatabaseIsDownWithoutLocalFallback(t *testing.T) {
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:inventory_list_down_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	testutil.Require(t, client.Close() == nil, "close client")
+
+	controller := NewController(nil, nil, nil, renderregion.CN, MasterdataOptions{Sekai: client})
+	raw := &snapshot.RawUserData{UserMaterials: []snapshot.RawUserMaterial{{MaterialID: 5, Quantity: 3}}}
+	request, err := controller.WithContext(context.Background()).BuildListRequestFromSnapshot(Query{
+		Region:   renderregion.CN,
+		Snapshot: &inventorySnapshotStub{raw: raw, profile: &drawing.DetailedProfileCardRequest{}},
+	})
+	testutil.Require(t, request == nil && errors.Is(err, cachefill.ErrUnavailable), "inventory list with the database down = %+v, %v; want ErrUnavailable", request, err)
+}
+
+func TestInventoryListServesLocalFilesWhenDatabaseIsDownWithLocalFallback(t *testing.T) {
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:inventory_list_local_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	testutil.Require(t, client.Close() == nil, "close client")
+
+	root := t.TempDir()
+	masterDir := filepath.Join(root, "haruki-sekai-sc-master", "master")
+	testutil.Require(t, os.MkdirAll(masterDir, 0o755) == nil, "mkdir master dir")
+	writeAllLocalInventoryTables(t, masterDir)
+
+	controller := NewController(nil, nil, nil, renderregion.CN, MasterdataOptions{Sekai: client, LocalDir: root})
+	raw := &snapshot.RawUserData{UserMaterials: []snapshot.RawUserMaterial{{MaterialID: 5, Quantity: 3}}}
+	request, err := controller.WithContext(context.Background()).BuildListRequestFromSnapshot(Query{
+		Region:   renderregion.CN,
+		Snapshot: &inventorySnapshotStub{raw: raw, profile: &drawing.DetailedProfileCardRequest{}},
+	})
+	testutil.Require(t, err == nil && request != nil, "inventory list with local fallback: %v", err)
+	found := false
+	for _, section := range request.Sections {
+		for _, item := range section.Items {
+			found = found || (item.ID == 5 && item.Name == "local material")
+		}
+	}
+	testutil.Require(t, found, "local material missing from sections: %+v", request.Sections)
 }

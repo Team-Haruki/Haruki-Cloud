@@ -72,7 +72,11 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 		return nil, fmt.Errorf("user snapshot is missing profile data")
 	}
 
-	items := c.inventoryItems(region, raw, c.masterdata.forRegion(c.requestCtx, region))
+	md, err := c.masterdata.forRegion(c.requestCtx, region)
+	if err != nil {
+		return nil, err
+	}
+	items := c.inventoryItems(region, raw, md)
 	items = filterInventoryItems(items, filter)
 	sections := buildInventorySections(items)
 	if filter == FilterBoost {

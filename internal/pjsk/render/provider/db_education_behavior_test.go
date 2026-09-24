@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -10,6 +11,7 @@ import (
 
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -414,7 +416,8 @@ func TestDBEducationProviderLoadsAndClonesAllMasterdata(t *testing.T) {
 		testutil.RequireArgs(t, !(education.GetGameCharacterStyle(ctx, 999) != nil), "invalid or missing game character styles should return nil")
 	}
 
-	missions := education.GetCharacterMissions(ctx, 5)
+	missions, err := education.GetCharacterMissions(ctx, 5)
+	testutil.Require(t, err == nil, "character missions: %v", err)
 	{
 		testutil.Require(t, !(len(missions) != 1), "character missions = %+v", missions)
 		testutil.Require(t, !(missions[0].ID != 501), "character missions = %+v", missions)
@@ -423,17 +426,19 @@ func TestDBEducationProviderLoadsAndClonesAllMasterdata(t *testing.T) {
 
 	missions[0].ID = -1
 	{
-		cached := education.GetCharacterMissions(ctx, 5)
+		cached, _ := education.GetCharacterMissions(ctx, 5)
 		testutil.RequireArgs(t, !(cached[0].ID != 501), "character mission result aliases the provider cache")
 	}
 
-	groups := education.GetCharacterMissionParameterGroups(ctx, 101)
+	groups, err := education.GetCharacterMissionParameterGroups(ctx, 101)
+	testutil.Require(t, err == nil, "mission parameter groups: %v", err)
 	{
 		testutil.Require(t, !(len(groups) != 1), "mission parameter groups = %+v", groups)
 		testutil.Require(t, !(groups[0].Requirement != 20), "mission parameter groups = %+v", groups)
 	}
 
-	requirements, maxPlayLimit := education.GetLeaderMissionRequirements(ctx)
+	requirements, maxPlayLimit, err := education.GetLeaderMissionRequirements(ctx)
+	testutil.Require(t, err == nil, "leader requirements: %v", err)
 	{
 		testutil.Require(t, !(len(requirements) != 1), "leader requirements = %+v, max=%d", requirements, maxPlayLimit)
 		testutil.Require(t, !(requirements[0].Requirement != 20), "leader requirements = %+v, max=%d", requirements, maxPlayLimit)
@@ -442,14 +447,18 @@ func TestDBEducationProviderLoadsAndClonesAllMasterdata(t *testing.T) {
 
 	requirements[0].Requirement = -1
 	{
-		cached, _ := education.GetLeaderMissionRequirements(ctx)
+		cached, _, _ := education.GetLeaderMissionRequirements(ctx)
 		testutil.RequireArgs(t, !(cached[0].Requirement != 20), "leader requirement result aliases the provider cache")
 	}
 	{
-		testutil.RequireArgs(t, !(education.GetCharacterMissions(ctx, 0) != nil), "invalid or missing mission lookups should return nil")
-		testutil.RequireArgs(t, !(education.GetCharacterMissions(ctx, 99) != nil), "invalid or missing mission lookups should return nil")
-		testutil.RequireArgs(t, !(education.GetCharacterMissionParameterGroups(ctx, 0) != nil), "invalid or missing mission lookups should return nil")
-		testutil.RequireArgs(t, !(education.GetCharacterMissionParameterGroups(ctx, 404) != nil), "invalid or missing mission lookups should return nil")
+		for _, id := range []int{0, 99} {
+			missions, err := education.GetCharacterMissions(ctx, id)
+			testutil.Require(t, missions == nil && err == nil, "mission lookup %d = %+v, %v; want nil, nil", id, missions, err)
+		}
+		for _, id := range []int{0, 404} {
+			groups, err := education.GetCharacterMissionParameterGroups(ctx, id)
+			testutil.Require(t, groups == nil && err == nil, "parameter group lookup %d = %+v, %v; want nil, nil", id, groups, err)
+		}
 	}
 
 	gate := education.GetMysekaiGateLevel(ctx, 7, 3)
@@ -518,7 +527,11 @@ func TestDBEducationProviderReturnsNilWhenDatabaseUnavailable(t *testing.T) {
 		{name: "character ranks", load: func() any { return education.GetCharacterRank(ctx, 5, 1) }},
 		{name: "bonds", load: func() any { return education.GetBonds(ctx) }},
 		{name: "styles", load: func() any { return education.GetGameCharacterStyle(ctx, 5) }},
-		{name: "missions", load: func() any { return education.GetCharacterMissions(ctx, 5) }},
+		{name: "missions", load: func() any {
+			missions, err := education.GetCharacterMissions(ctx, 5)
+			testutil.Require(t, errors.Is(err, cachefill.ErrUnavailable), "missions error = %v, want ErrUnavailable", err)
+			return missions
+		}},
 		{name: "gate levels", load: func() any { return education.GetMysekaiGateLevel(ctx, 1, 1) }},
 		{name: "shop items", load: func() any { return education.GetShopItems(ctx) }},
 	}

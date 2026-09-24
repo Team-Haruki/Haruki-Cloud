@@ -101,8 +101,9 @@ type masterdataStore struct {
 	localDir string
 	mu       sync.RWMutex
 	cache    map[string]*regionMasterdata
-	// partial keeps what a failed fill loaded (database tables that
-	// answered plus local files) to serve while the region backs off.
+	// partial keeps what a failed fill loaded when local files supplied
+	// every table the database failed, to serve while the region backs
+	// off.
 	partial    map[string]*regionMasterdata
 	generation uint64
 	fill       cachefill.Group

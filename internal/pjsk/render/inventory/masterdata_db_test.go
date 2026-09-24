@@ -166,3 +166,45 @@ func TestInventoryMasterdataBacksOffAfterFailedFill(t *testing.T) {
 	_ = store.forRegion(ctx, renderregion.CN)
 	testutil.Require(t, queries.Load() == 3*perFill, "a reset must clear the backoff: %d queries", queries.Load())
 }
+
+func TestInventoryMasterdataFillStraddlingResetIsDiscarded(t *testing.T) {
+	ctx := context.Background()
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:inventory_stale_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	_, err := client.Material.Create().SetGameID(5).SetName("old").SetServerRegion("cn").Save(ctx)
+	testutil.Require(t, err == nil, "create material: %v", err)
+
+	queried := make(chan struct{})
+	release := make(chan struct{})
+	var once sync.Once
+	client.Material.Intercept(ent.InterceptFunc(func(next ent.Querier) ent.Querier {
+		return ent.QuerierFunc(func(ctx context.Context, query ent.Query) (ent.Value, error) {
+			// Complete the read, then hold the fill so the reset lands
+			// between the read and the store.
+			value, err := next.Query(ctx, query)
+			once.Do(func() {
+				close(queried)
+				<-release
+			})
+			return value, err
+		})
+	}))
+
+	store := newMasterdataStore(client, "")
+	done := make(chan *regionMasterdata, 1)
+	go func() { done <- store.forRegion(ctx, renderregion.CN) }()
+
+	<-queried
+	_, err = client.Material.Create().SetGameID(50).SetName("ingested").SetServerRegion("cn").Save(ctx)
+	testutil.Require(t, err == nil, "create ingested material: %v", err)
+	store.resetCache()
+	close(release)
+
+	md := <-done
+	_, served := md.materials[50]
+	testutil.Require(t, served, "request straddling the reset must serve the post-ingest rows: %+v", md.materials)
+	store.mu.RLock()
+	cached := store.cache[renderregion.CN.String()]
+	store.mu.RUnlock()
+	_, cachedIngested := cached.materials[50]
+	testutil.Require(t, cached != nil && cachedIngested, "cache after the reset = %+v; want the post-ingest rows", cached)
+}

@@ -87,6 +87,43 @@ func TestGroupBacksOffAfterFailureAndRecovers(t *testing.T) {
 	testutil.Require(t, errors.Is(err, boom) && !errors.Is(err, ErrBackoff), "fill after reset = %v", err)
 }
 
+func TestGroupResetIgnoresOutcomeOfFillsAlreadyInFlight(t *testing.T) {
+	var group Group
+	started := make(chan struct{})
+	release := make(chan struct{})
+	done := make(chan error, 1)
+	go func() {
+		done <- group.Do(context.Background(), "k", func(context.Context) error {
+			close(started)
+			<-release
+			return errors.New("database is down")
+		})
+	}()
+	<-started
+	group.Reset()
+	close(release)
+	err := <-done
+	testutil.Require(t, err != nil && !errors.Is(err, ErrBackoff), "pre-reset fill error = %v", err)
+	testutil.Require(t, !group.Failing("k"), "a failure from a fill started before the reset must not block the key")
+
+	// A success from a pre-reset fill must not clear a failure recorded after it.
+	started = make(chan struct{})
+	release = make(chan struct{})
+	go func() {
+		done <- group.Do(context.Background(), "k", func(context.Context) error {
+			close(started)
+			<-release
+			return nil
+		})
+	}()
+	<-started
+	group.Reset()
+	group.record("k", group.generation, errors.New("recorded after the reset"))
+	close(release)
+	testutil.Require(t, <-done == nil, "pre-reset fill must still report its own outcome")
+	testutil.Require(t, group.Failing("k"), "a success from a fill started before the reset must not clear a later failure")
+}
+
 func TestGroupFillRunsDetachedFromRequestContext(t *testing.T) {
 	group := Group{Timeout: time.Minute}
 	type key string

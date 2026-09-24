@@ -21,9 +21,14 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-// errMasterdataFillIncomplete reports a region fill in which at least one
-// database query failed.
-var errMasterdataFillIncomplete = errors.New("inventory masterdata fill incomplete")
+var (
+	// errMasterdataFillIncomplete reports a region fill in which at least
+	// one database query failed.
+	errMasterdataFillIncomplete = errors.New("inventory masterdata fill incomplete")
+	// errMasterdataFillStale reports a region fill discarded because the
+	// cache was reset while it ran; the request fills again.
+	errMasterdataFillStale = errors.New("inventory masterdata fill predates a reset")
+)
 
 func newMasterdataStore(client *sekaiDB.Client, localDir string) *masterdataStore {
 	return &masterdataStore{
@@ -36,9 +41,11 @@ func newMasterdataStore(client *sekaiDB.Client, localDir string) *masterdataStor
 
 // forRegion serves a region's inventory tables, filling them once from the
 // database (and local files for the tables it serves empty). The fill runs
-// detached from the request context and is shared by concurrent requests.
-// A fill in which a query failed is not cached: what it loaded is served
-// until the fill backoff elapses, then the next request retries.
+// detached from the request context and is shared by concurrent requests;
+// a fill that straddles a cache reset is discarded and run again so rows
+// read before an ingest are never cached. A fill in which a query failed is
+// not cached: what it loaded is served until the fill backoff elapses, then
+// the next request retries.
 func (s *masterdataStore) forRegion(ctx context.Context, region renderregion.Value) *regionMasterdata {
 	if s == nil {
 		return emptyRegionMasterdata()
@@ -48,47 +55,62 @@ func (s *masterdataStore) forRegion(ctx context.Context, region renderregion.Val
 		key = renderregion.CN.String()
 	}
 
-	if cached, partial := s.lookup(key); cached != nil {
-		return cached
-	} else if partial != nil && s.fill.Failing(key) {
-		return partial
+	for {
+		if cached, partial := s.lookup(key); cached != nil {
+			return cached
+		} else if partial != nil && s.fill.Failing(key) {
+			return partial
+		}
+
+		err := s.fill.Do(ctx, key, func(fillCtx context.Context) error {
+			return s.fillRegion(fillCtx, key)
+		})
+		if errors.Is(err, errMasterdataFillStale) {
+			continue
+		}
+		cached, partial := s.lookup(key)
+		switch {
+		case cached != nil:
+			return cached
+		case err != nil && partial != nil:
+			return partial
+		case err != nil:
+			return emptyRegionMasterdata()
+		}
+	}
+}
+
+func (s *masterdataStore) fillRegion(fillCtx context.Context, key string) error {
+	s.mu.RLock()
+	cached := s.cache[key]
+	generation := s.generation
+	s.mu.RUnlock()
+	if cached != nil {
+		return nil
 	}
 
-	err := s.fill.Do(ctx, key, func(fillCtx context.Context) error {
-		if cached, _ := s.lookup(key); cached != nil {
-			return nil
-		}
-		loaded, complete := s.loadRegion(fillCtx, renderregion.Normalize(key))
-		s.mu.Lock()
-		defer s.mu.Unlock()
-		if s.cache == nil {
-			s.cache = make(map[string]*regionMasterdata)
-		}
-		if s.partial == nil {
-			s.partial = make(map[string]*regionMasterdata)
-		}
-		if !complete {
-			s.partial[key] = loaded
-			return errMasterdataFillIncomplete
-		}
-		if s.cache[key] == nil {
-			s.cache[key] = loaded
-		}
-		delete(s.partial, key)
-		return nil
-	})
-	cached, partial := s.lookup(key)
-	switch {
-	case cached != nil:
-		return cached
-	case err != nil && partial != nil:
-		return partial
-	case err != nil:
-		return emptyRegionMasterdata()
-	default:
-		// The cache was reset while the fill ran; fill again.
-		return s.forRegion(ctx, region)
+	loaded, complete := s.loadRegion(fillCtx, renderregion.Normalize(key))
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if generation != s.generation {
+		return errMasterdataFillStale
 	}
+	if s.cache == nil {
+		s.cache = make(map[string]*regionMasterdata)
+	}
+	if s.partial == nil {
+		s.partial = make(map[string]*regionMasterdata)
+	}
+	if !complete {
+		s.partial[key] = loaded
+		return errMasterdataFillIncomplete
+	}
+	if s.cache[key] == nil {
+		s.cache[key] = loaded
+	}
+	delete(s.partial, key)
+	return nil
 }
 
 func (s *masterdataStore) lookup(key string) (cached, partial *regionMasterdata) {
@@ -104,6 +126,7 @@ func (s *masterdataStore) resetCache() {
 	s.mu.Lock()
 	s.cache = make(map[string]*regionMasterdata)
 	s.partial = make(map[string]*regionMasterdata)
+	s.generation++
 	s.mu.Unlock()
 	s.fill.Reset()
 }

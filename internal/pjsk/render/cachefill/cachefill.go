@@ -33,6 +33,11 @@ const (
 var ErrBackoff = errors.New("cache fill skipped: previous fill failed recently")
 
 // Group coordinates fills per key. The zero value is ready to use.
+//
+// Reset starts a new generation: a fill that began before it records
+// neither its failure nor clears one, so a stale outcome cannot block or
+// unblock the key. Callers that cache results keep their own generation the
+// same way and discard a result whose fill straddled a reset.
 type Group struct {
 	// Timeout bounds one fill; zero means DefaultTimeout.
 	Timeout time.Duration
@@ -42,9 +47,10 @@ type Group struct {
 	// Now is the clock; nil means time.Now.
 	Now func() time.Time
 
-	flights singleflight.Group
-	mu      sync.Mutex
-	failed  map[string]failure
+	flights    singleflight.Group
+	mu         sync.Mutex
+	failed     map[string]failure
+	generation uint64
 }
 
 type failure struct {
@@ -68,10 +74,13 @@ func (g *Group) Do(ctx context.Context, key string, fill func(ctx context.Contex
 		return err
 	}
 	_, err, _ := g.flights.Do(key, func() (any, error) {
+		g.mu.Lock()
+		generation := g.generation
+		g.mu.Unlock()
 		fillCtx, cancel := g.Context(ctx)
 		defer cancel()
 		err := fill(fillCtx)
-		g.record(key, err)
+		g.record(key, generation, err)
 		return nil, err
 	})
 	return err
@@ -94,14 +103,16 @@ func (g *Group) Failing(key string) bool {
 	return g != nil && g.backoffError(key) != nil
 }
 
-// Reset forgets every failure so the next call of each key fills again;
-// callers use it when the underlying cache is reset.
+// Reset forgets every failure so the next call of each key fills again and
+// starts a new generation, so fills already in flight record nothing when
+// they finish; callers use it when the underlying cache is reset.
 func (g *Group) Reset() {
 	if g == nil {
 		return
 	}
 	g.mu.Lock()
 	g.failed = nil
+	g.generation++
 	g.mu.Unlock()
 }
 
@@ -119,9 +130,12 @@ func (g *Group) backoffError(key string) error {
 	return fmt.Errorf("%w: %w", ErrBackoff, last.err)
 }
 
-func (g *Group) record(key string, err error) {
+func (g *Group) record(key string, generation uint64, err error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
+	if generation != g.generation {
+		return
+	}
 	if err == nil {
 		delete(g.failed, key)
 		return

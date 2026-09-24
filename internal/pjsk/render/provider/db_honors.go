@@ -40,9 +40,10 @@ type dbHonorProvider struct {
 	bondsCache   map[int]*masterdata.BondsHonor
 	bondsMissing map[int]struct{}
 
-	bondsWordMu     sync.RWMutex
-	bondsWordCache  map[int]*masterdata.BondsHonorWord
-	bondsWordLoaded bool
+	bondsWordMu         sync.RWMutex
+	bondsWordCache      map[int]*masterdata.BondsHonorWord
+	bondsWordLoaded     bool
+	bondsWordGeneration uint64
 
 	gcuMu    sync.RWMutex
 	gcuCache map[int]*masterdata.GameCharacterUnit
@@ -240,49 +241,63 @@ func (p *dbHonorProvider) GetBondsHonorWordByID(ctx context.Context, id int) (*m
 
 // bondsHonorWords serves the region's bonds honor words: the database rows,
 // else the local bondsHonorWords.json when the table is empty (not ingested
-// yet). Either is cached until the masterdata cache is reset. A query error
-// is never cached; the local file is served for the request when a store is
-// configured, otherwise the error is returned.
+// yet). Either is cached until the masterdata cache is reset; a fill that
+// straddles a reset is discarded and run again so rows read before an
+// ingest are never cached. A query error is never cached; the local file is
+// served for the request when a store is configured, otherwise the error is
+// returned.
 func (p *dbHonorProvider) bondsHonorWords(ctx context.Context) (map[int]*masterdata.BondsHonorWord, error) {
+	for {
+		p.bondsWordMu.RLock()
+		loaded, cache := p.bondsWordLoaded, p.bondsWordCache
+		p.bondsWordMu.RUnlock()
+		if loaded {
+			return cache, nil
+		}
+
+		err := p.fill.Do(ctx, "bondsHonorWords", p.loadBondsHonorWords)
+		if err == nil {
+			continue
+		}
+		if errors.Is(err, errBondsHonorWordsNotConfigured) {
+			return nil, err
+		}
+		if words, localErr := p.loadLocalBondsHonorWords(); localErr == nil {
+			return words, nil
+		}
+		return nil, fmt.Errorf("load bonds honor words: %w", err)
+	}
+}
+
+// loadBondsHonorWords is one fill of the bonds word cache. It returns nil
+// without storing anything when the cache was reset while it ran.
+func (p *dbHonorProvider) loadBondsHonorWords(ctx context.Context) error {
 	p.bondsWordMu.RLock()
-	loaded, cache := p.bondsWordLoaded, p.bondsWordCache
+	loaded, generation := p.bondsWordLoaded, p.bondsWordGeneration
 	p.bondsWordMu.RUnlock()
 	if loaded {
-		return cache, nil
+		return nil
 	}
 
-	err := p.fill.Do(ctx, "bondsHonorWords", func(fillCtx context.Context) error {
-		words, err := p.loadBondsHonorWordsFromDB(fillCtx)
+	words, err := p.loadBondsHonorWordsFromDB(ctx)
+	if err != nil {
+		return err
+	}
+	if len(words) == 0 {
+		words, err = p.loadLocalBondsHonorWords()
 		if err != nil {
-			return err
+			return errBondsHonorWordsNotConfigured
 		}
-		if len(words) == 0 {
-			words, err = p.loadLocalBondsHonorWords()
-			if err != nil {
-				return errBondsHonorWordsNotConfigured
-			}
-		}
-		p.bondsWordMu.Lock()
-		if !p.bondsWordLoaded {
-			p.bondsWordCache = words
-			p.bondsWordLoaded = true
-		}
-		p.bondsWordMu.Unlock()
+	}
+
+	p.bondsWordMu.Lock()
+	defer p.bondsWordMu.Unlock()
+	if generation != p.bondsWordGeneration || p.bondsWordLoaded {
 		return nil
-	})
-	if err == nil {
-		p.bondsWordMu.RLock()
-		cache = p.bondsWordCache
-		p.bondsWordMu.RUnlock()
-		return cache, nil
 	}
-	if errors.Is(err, errBondsHonorWordsNotConfigured) {
-		return nil, err
-	}
-	if words, localErr := p.loadLocalBondsHonorWords(); localErr == nil {
-		return words, nil
-	}
-	return nil, fmt.Errorf("load bonds honor words: %w", err)
+	p.bondsWordCache = words
+	p.bondsWordLoaded = true
+	return nil
 }
 
 // loadBondsHonorWordsFromDB reads the region's rows from bondshonorwords; an

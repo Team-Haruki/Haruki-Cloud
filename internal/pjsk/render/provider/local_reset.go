@@ -432,6 +432,7 @@ func (p *dbHonorProvider) resetLocalMasterdataCache() {
 	p.bondsWordMu.Lock()
 	p.bondsWordCache = make(map[int]*masterdata.BondsHonorWord)
 	p.bondsWordLoaded = false
+	p.bondsWordGeneration++
 	p.bondsWordMu.Unlock()
 
 	p.gcuMu.Lock()
@@ -457,6 +458,7 @@ func (p *dbMySekaiProvider) resetLocalMasterdataCache() {
 	p.mu.Lock()
 	p.lists = make(map[string][]map[string]any)
 	p.mapsByID = make(map[string]map[int]map[string]any)
+	p.generation++
 	p.mu.Unlock()
 	p.fill.Reset()
 	if p.local != nil {

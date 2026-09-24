@@ -103,8 +103,9 @@ type masterdataStore struct {
 	cache    map[string]*regionMasterdata
 	// partial keeps what a failed fill loaded (database tables that
 	// answered plus local files) to serve while the region backs off.
-	partial map[string]*regionMasterdata
-	fill    cachefill.Group
+	partial    map[string]*regionMasterdata
+	generation uint64
+	fill       cachefill.Group
 }
 
 type regionMasterdata struct {

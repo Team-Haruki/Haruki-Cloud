@@ -5,11 +5,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"entgo.io/ent"
+
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -82,4 +87,124 @@ func TestInventoryMasterdataDoesNotCacheFailedFills(t *testing.T) {
 	cached := len(store.cache)
 	store.mu.RUnlock()
 	testutil.Require(t, cached == 0, "failed fill was cached: %d regions", cached)
+}
+
+func TestInventoryMasterdataSharesOneFillAcrossConcurrentRequests(t *testing.T) {
+	ctx := context.Background()
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:inventory_flight_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	_, err := client.Material.Create().SetGameID(5).SetName("db material").SetServerRegion("cn").Save(ctx)
+	testutil.Require(t, err == nil, "create material: %v", err)
+
+	var queries atomic.Int32
+	client.Material.Intercept(ent.InterceptFunc(func(next ent.Querier) ent.Querier {
+		return ent.QuerierFunc(func(ctx context.Context, query ent.Query) (ent.Value, error) {
+			queries.Add(1)
+			// Hold the fill so every request below joins it.
+			time.Sleep(100 * time.Millisecond)
+			return next.Query(ctx, query)
+		})
+	}))
+
+	store := newMasterdataStore(client, "")
+	const requests = 8
+	results := make([]*regionMasterdata, requests)
+	var wg sync.WaitGroup
+	for i := range requests {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			results[i] = store.forRegion(ctx, renderregion.CN)
+		}()
+	}
+	wg.Wait()
+
+	testutil.Require(t, queries.Load() == 1, "%d concurrent requests ran %d material queries, want 1", requests, queries.Load())
+	for i, md := range results {
+		testutil.Require(t, md != nil && md.materials[5].Name == "db material", "request %d materials = %+v", i, md)
+	}
+}
+
+func TestInventoryMasterdataBacksOffAfterFailedFill(t *testing.T) {
+	ctx := context.Background()
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:inventory_backoff_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	var queries atomic.Int32
+	client.Intercept(ent.InterceptFunc(func(next ent.Querier) ent.Querier {
+		return ent.QuerierFunc(func(ctx context.Context, query ent.Query) (ent.Value, error) {
+			queries.Add(1)
+			return next.Query(ctx, query)
+		})
+	}))
+	testutil.Require(t, client.Close() == nil, "close client")
+
+	root := t.TempDir()
+	masterDir := filepath.Join(root, "haruki-sekai-sc-master", "master")
+	testutil.Require(t, os.MkdirAll(masterDir, 0o755) == nil, "mkdir master dir")
+	testutil.Require(t, os.WriteFile(filepath.Join(masterDir, "materials.json"), []byte(`[{"id":5,"name":"local material"}]`), 0o644) == nil, "write materials")
+
+	store := newMasterdataStore(client, root)
+	clock := testutil.NewFakeClock()
+	store.fill.Now = clock.Now
+
+	md := store.forRegion(ctx, renderregion.CN)
+	testutil.Require(t, md != nil && md.materials[5].Name == "local material", "failed fill must serve the local files: %+v", md)
+	perFill := queries.Load()
+	testutil.Require(t, perFill == 8, "first fill ran %d queries, want one per table", perFill)
+	store.mu.RLock()
+	cached := len(store.cache)
+	store.mu.RUnlock()
+	testutil.Require(t, cached == 0, "failed fill was cached: %d regions", cached)
+
+	again := store.forRegion(ctx, renderregion.CN)
+	testutil.Require(t, again == md, "requests during the backoff must serve the partial fill")
+	testutil.Require(t, queries.Load() == perFill, "requests during the backoff ran %d more queries", queries.Load()-perFill)
+
+	clock.Advance(cachefill.DefaultBackoff)
+	_ = store.forRegion(ctx, renderregion.CN)
+	testutil.Require(t, queries.Load() == 2*perFill, "the request after the backoff must retry: %d queries", queries.Load())
+
+	store.resetCache()
+	_ = store.forRegion(ctx, renderregion.CN)
+	testutil.Require(t, queries.Load() == 3*perFill, "a reset must clear the backoff: %d queries", queries.Load())
+}
+
+func TestInventoryMasterdataFillStraddlingResetIsDiscarded(t *testing.T) {
+	ctx := context.Background()
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:inventory_stale_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	_, err := client.Material.Create().SetGameID(5).SetName("old").SetServerRegion("cn").Save(ctx)
+	testutil.Require(t, err == nil, "create material: %v", err)
+
+	queried := make(chan struct{})
+	release := make(chan struct{})
+	var once sync.Once
+	client.Material.Intercept(ent.InterceptFunc(func(next ent.Querier) ent.Querier {
+		return ent.QuerierFunc(func(ctx context.Context, query ent.Query) (ent.Value, error) {
+			// Complete the read, then hold the fill so the reset lands
+			// between the read and the store.
+			value, err := next.Query(ctx, query)
+			once.Do(func() {
+				close(queried)
+				<-release
+			})
+			return value, err
+		})
+	}))
+
+	store := newMasterdataStore(client, "")
+	done := make(chan *regionMasterdata, 1)
+	go func() { done <- store.forRegion(ctx, renderregion.CN) }()
+
+	<-queried
+	_, err = client.Material.Create().SetGameID(50).SetName("ingested").SetServerRegion("cn").Save(ctx)
+	testutil.Require(t, err == nil, "create ingested material: %v", err)
+	store.resetCache()
+	close(release)
+
+	md := <-done
+	_, served := md.materials[50]
+	testutil.Require(t, served, "request straddling the reset must serve the post-ingest rows: %+v", md.materials)
+	store.mu.RLock()
+	cached := store.cache[renderregion.CN.String()]
+	store.mu.RUnlock()
+	_, cachedIngested := cached.materials[50]
+	testutil.Require(t, cached != nil && cachedIngested, "cache after the reset = %+v; want the post-ingest rows", cached)
 }

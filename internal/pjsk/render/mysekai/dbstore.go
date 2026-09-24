@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 )
 
 var fileToTable = map[string]string{
@@ -54,9 +55,6 @@ var fileToTable = map[string]string{
 	"mysekaiMaterialGameCharacterRelations.json":              "mysekaimaterialgamecharacterrelations",
 }
 
-// mysekaiMasterdataFillTimeout bounds one table fill of the DB store.
-const mysekaiMasterdataFillTimeout = 30 * time.Second
-
 // dbMasterdataStore queries the sekai PostgreSQL database instead of reading
 // local JSON files.  It presents the same map-based interface that the
 // controller expects.
@@ -72,6 +70,7 @@ type dbMasterdataCache struct {
 	lists      map[string][]map[string]any
 	mapsByID   map[string]map[int]map[string]any
 	generation uint64
+	fill       cachefill.Group
 }
 
 // newDBMasterdataStore opens a read-only connection to the sekai database
@@ -121,6 +120,7 @@ func (s *dbMasterdataStore) resetCache() {
 	s.cache.mapsByID = make(map[string]map[int]map[string]any)
 	s.cache.generation++
 	s.cache.mu.Unlock()
+	s.cache.fill.Reset()
 }
 
 func (s *dbMasterdataStore) Close() {
@@ -154,8 +154,11 @@ func (s *dbMasterdataStore) loadList(filename string) []map[string]any {
 }
 
 // loadListChecked serves one table, caching it until the next reset. ok is
-// false when the table is unmapped or the query failed; a failed fill is
-// not cached, so the next call retries.
+// false when the table is unmapped or the query failed. Concurrent callers
+// share one fill, which runs detached from the request so a client that
+// disconnects mid-query cannot leave a partial table behind (the trace
+// values on the context are kept). A failed fill is not cached and is not
+// retried until the fill backoff elapses.
 func (s *dbMasterdataStore) loadListChecked(filename string) ([]map[string]any, bool) {
 	if s == nil || s.db == nil {
 		return nil, false
@@ -165,40 +168,53 @@ func (s *dbMasterdataStore) loadListChecked(filename string) ([]map[string]any, 
 		return nil, false
 	}
 	s.cache.mu.Lock()
-	if cached, ok := s.cache.lists[filename]; ok {
-		s.cache.mu.Unlock()
+	cached, ok := s.cache.lists[filename]
+	s.cache.mu.Unlock()
+	if ok {
 		return cached, true
 	}
-	generation := s.cache.generation
-	s.cache.mu.Unlock()
 
 	tableName, ok := fileToTable[filename]
 	if !ok {
 		return nil, false
 	}
 
-	// The fill runs detached from the request so a client that disconnects
-	// mid-query cannot leave a partial table behind; the trace values on
-	// the context are kept.
-	fillCtx, cancel := context.WithTimeout(context.WithoutCancel(s.contextOrBackground()), mysekaiMasterdataFillTimeout)
-	defer cancel()
-	items, err := s.queryTable(fillCtx, tableName)
+	err := s.cache.fill.Do(s.contextOrBackground(), filename, func(fillCtx context.Context) error {
+		s.cache.mu.Lock()
+		_, cached := s.cache.lists[filename]
+		generation := s.cache.generation
+		s.cache.mu.Unlock()
+		if cached {
+			return nil
+		}
+
+		items, err := s.queryTable(fillCtx, tableName)
+		if err != nil {
+			return err
+		}
+
+		s.cache.mu.Lock()
+		defer s.cache.mu.Unlock()
+		if generation != s.cache.generation {
+			// Reset while the query ran: the rows may predate the ingest.
+			return nil
+		}
+		if _, cached := s.cache.lists[filename]; !cached {
+			s.cache.lists[filename] = items
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, false
 	}
 
 	s.cache.mu.Lock()
-	if generation != s.cache.generation {
-		s.cache.mu.Unlock()
+	cached, ok = s.cache.lists[filename]
+	s.cache.mu.Unlock()
+	if !ok {
 		return s.loadListChecked(filename)
 	}
-	if cached, ok := s.cache.lists[filename]; ok {
-		s.cache.mu.Unlock()
-		return cached, true
-	}
-	s.cache.lists[filename] = items
-	s.cache.mu.Unlock()
-	return items, true
+	return cached, true
 }
 
 func (s *dbMasterdataStore) loadMapByID(filename string) map[int]map[string]any {

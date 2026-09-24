@@ -5,7 +5,6 @@ import (
 	json "haruki-cloud/internal/jsonutil"
 	"slices"
 	"strings"
-	"time"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/resourceboxdetail"
@@ -18,18 +17,6 @@ type resourceBoxDetailRecord struct {
 	ResourceLevel      *int   `json:"resourceLevel"`
 	ResourceQuantity   int    `json:"resourceQuantity"`
 	ResourceType       string `json:"resourceType"`
-}
-
-// cacheFillTimeout bounds the master data queries that fill a provider
-// cache. They run detached from the request context so a client that
-// disconnects mid-fill cannot leave an error cached as "loaded".
-const cacheFillTimeout = 30 * time.Second
-
-func cacheFillContext(ctx context.Context) (context.Context, context.CancelFunc) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	return context.WithTimeout(context.WithoutCancel(ctx), cacheFillTimeout)
 }
 
 // supplementResourceBoxDetailsFromDB fills boxes whose details are empty

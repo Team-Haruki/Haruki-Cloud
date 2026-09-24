@@ -5,6 +5,7 @@ import (
 
 	sekaiDB "haruki-cloud/database/sekai"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 )
 
 type dbEducationProvider struct {
@@ -12,6 +13,13 @@ type dbEducationProvider struct {
 	region renderregion.Value
 	store  *localStore
 	once   sync.Once
+	fill   cachefill.Group
+
+	// fallback serves a request the database could not answer from the
+	// local store; one instance keeps its decoded files between requests.
+	fallbackMu    sync.Mutex
+	fallback      *localEducationProvider
+	fallbackStore *localStore
 
 	rewardMu      sync.RWMutex
 	rewardsByChar map[int][]*ChallengeReward
@@ -78,4 +86,19 @@ func (p *dbEducationProvider) init() {
 		p.shopByBoxID = make(map[int]*ShopItem)
 		p.shopItems = nil
 	})
+}
+
+// localFallback returns the local provider over the configured store, or
+// nil when no local masterdata is configured.
+func (p *dbEducationProvider) localFallback() *localEducationProvider {
+	if p.store == nil || !p.store.Configured() {
+		return nil
+	}
+	p.fallbackMu.Lock()
+	defer p.fallbackMu.Unlock()
+	if p.fallback == nil || p.fallbackStore != p.store {
+		p.fallback = &localEducationProvider{store: p.store}
+		p.fallbackStore = p.store
+	}
+	return p.fallback
 }

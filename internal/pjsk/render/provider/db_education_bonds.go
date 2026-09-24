@@ -42,8 +42,18 @@ func (p *dbEducationProvider) GetGameCharacterStyle(ctx context.Context, gameID 
 	return cloneEdGameCharacterStyle(p.stylesByGameID[gameID])
 }
 
+// The mission getters serve the database cache; when the fill failed (not
+// when the table is empty, which the fill handles) they serve the local
+// files for the request instead, when a store is configured.
+
 func (p *dbEducationProvider) GetCharacterMissions(ctx context.Context, characterID int) []*CharacterMission {
-	if characterID <= 0 || !p.ensureLeaderMissionsLoaded(ctx) {
+	if characterID <= 0 {
+		return nil
+	}
+	if err := p.ensureLeaderMissionsLoaded(ctx); err != nil {
+		if local := p.localFallback(); local != nil {
+			return local.GetCharacterMissions(ctx, characterID)
+		}
 		return nil
 	}
 
@@ -53,7 +63,13 @@ func (p *dbEducationProvider) GetCharacterMissions(ctx context.Context, characte
 }
 
 func (p *dbEducationProvider) GetCharacterMissionParameterGroups(ctx context.Context, parameterGroupID int) []*CharacterMissionParameterGroup {
-	if parameterGroupID <= 0 || !p.ensureLeaderMissionsLoaded(ctx) {
+	if parameterGroupID <= 0 {
+		return nil
+	}
+	if err := p.ensureLeaderMissionsLoaded(ctx); err != nil {
+		if local := p.localFallback(); local != nil {
+			return local.GetCharacterMissionParameterGroups(ctx, parameterGroupID)
+		}
 		return nil
 	}
 
@@ -63,7 +79,10 @@ func (p *dbEducationProvider) GetCharacterMissionParameterGroups(ctx context.Con
 }
 
 func (p *dbEducationProvider) GetLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int) {
-	if !p.ensureLeaderMissionsLoaded(ctx) {
+	if err := p.ensureLeaderMissionsLoaded(ctx); err != nil {
+		if local := p.localFallback(); local != nil {
+			return local.GetLeaderMissionRequirements(ctx)
+		}
 		return nil, 0
 	}
 
@@ -155,27 +174,31 @@ func (p *dbEducationProvider) ensureGameCharacterStylesLoaded(ctx context.Contex
 	return true
 }
 
-func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bool {
+// ensureLeaderMissionsLoaded fills the mission caches once, sharing the
+// fill between concurrent callers; a failed fill is reported to the caller,
+// leaves nothing loaded and is not retried until the backoff elapses.
+func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) error {
 	p.init()
 	p.missionMu.RLock()
-	if p.leaderMissionsLoaded {
-		p.missionMu.RUnlock()
-		return true
-	}
+	loaded := p.leaderMissionsLoaded
 	p.missionMu.RUnlock()
+	if loaded {
+		return nil
+	}
+	return p.fill.Do(ctx, "leaderMissions", p.loadLeaderMissions)
+}
 
+func (p *dbEducationProvider) loadLeaderMissions(ctx context.Context) error {
 	p.missionMu.Lock()
 	defer p.missionMu.Unlock()
-
 	if p.leaderMissionsLoaded {
-		return true
+		return nil
 	}
 
-	fillCtx, cancel := cacheFillContext(ctx)
-	defer cancel()
-	missionsFromDB, err := p.loadCharacterMissionsFromDB(fillCtx)
+	missionsByCharacter := make(map[int][]*CharacterMission)
+	missionsFromDB, err := p.loadCharacterMissionsFromDB(ctx, missionsByCharacter)
 	if err != nil {
-		return false
+		return err
 	}
 	if !missionsFromDB && p.store != nil && p.store.Configured() {
 		if missions, err := p.store.loadJSON[localCharacterMissionJSON]("characterMissionV2s.json"); err == nil {
@@ -187,7 +210,7 @@ func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bo
 					ParameterGroupID:     item.ParameterGroupID,
 					IsAchievementMission: item.IsAchievementMission,
 				}
-				p.characterMissionsByCharacter[mission.CharacterID] = append(p.characterMissionsByCharacter[mission.CharacterID], mission)
+				missionsByCharacter[mission.CharacterID] = append(missionsByCharacter[mission.CharacterID], mission)
 			}
 		}
 	}
@@ -197,12 +220,13 @@ func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bo
 			charactermissionv2parametergroup.ServerRegionEQ(p.region.String()),
 		).
 		Order(charactermissionv2parametergroup.ByID(), charactermissionv2parametergroup.ByGameID(), charactermissionv2parametergroup.BySeq()).
-		All(fillCtx)
+		All(ctx)
 	if err != nil {
-		p.characterMissionsByCharacter = make(map[int][]*CharacterMission)
-		return false
+		return err
 	}
-	p.leaderRequirements = make([]LeaderMissionRequirement, 0)
+	groupsByID := make(map[int][]*CharacterMissionParameterGroup)
+	requirements := make([]LeaderMissionRequirement, 0)
+	maxPlayLimit := 0
 	for _, item := range items {
 		group := &CharacterMissionParameterGroup{
 			GameID:      int(item.GameID),
@@ -211,30 +235,34 @@ func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bo
 			Exp:         int(item.Exp),
 			Quantity:    int(item.Quantity),
 		}
-		p.characterMissionGroupsByID[int(item.GameID)] = append(p.characterMissionGroupsByID[int(item.GameID)], group)
+		groupsByID[int(item.GameID)] = append(groupsByID[int(item.GameID)], group)
 		switch item.GameID {
 		case 1:
-			if requirement := int(item.Requirement); requirement > p.leaderMaxPlayLimit {
-				p.leaderMaxPlayLimit = requirement
+			if requirement := int(item.Requirement); requirement > maxPlayLimit {
+				maxPlayLimit = requirement
 			}
 		case 101:
-			p.leaderRequirements = append(p.leaderRequirements, LeaderMissionRequirement{
+			requirements = append(requirements, LeaderMissionRequirement{
 				Seq:         int(item.Seq),
 				Requirement: int(item.Requirement),
 			})
 		}
 	}
 
+	p.characterMissionsByCharacter = missionsByCharacter
+	p.characterMissionGroupsByID = groupsByID
+	p.leaderRequirements = requirements
+	p.leaderMaxPlayLimit = maxPlayLimit
 	p.leaderMissionsLoaded = true
-	return true
+	return nil
 }
 
 // loadCharacterMissionsFromDB fills the per-character mission index from
 // charactermissionv2s. It reports false when the table has no rows for the
 // region (not ingested yet) so the caller can fall back to the local
 // characterMissionV2s.json; a query error is returned so nothing is marked
-// loaded and the next call retries.
-func (p *dbEducationProvider) loadCharacterMissionsFromDB(ctx context.Context) (bool, error) {
+// loaded.
+func (p *dbEducationProvider) loadCharacterMissionsFromDB(ctx context.Context, byCharacter map[int][]*CharacterMission) (bool, error) {
 	items, err := p.client.Charactermissionv2.Query().
 		Where(charactermissionv2.ServerRegionEQ(p.region.String())).
 		Order(charactermissionv2.ByGameID()).
@@ -253,7 +281,7 @@ func (p *dbEducationProvider) loadCharacterMissionsFromDB(ctx context.Context) (
 			ParameterGroupID:     int(item.ParameterGroupID),
 			IsAchievementMission: item.IsAchievementMission,
 		}
-		p.characterMissionsByCharacter[mission.CharacterID] = append(p.characterMissionsByCharacter[mission.CharacterID], mission)
+		byCharacter[mission.CharacterID] = append(byCharacter[mission.CharacterID], mission)
 	}
 	return true, nil
 }

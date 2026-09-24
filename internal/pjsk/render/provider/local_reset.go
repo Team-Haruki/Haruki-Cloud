@@ -316,6 +316,7 @@ func (p *dbEventProvider) resetLocalMasterdataCache() {
 		p.local.reset()
 	}
 	p.init()
+	p.fill.Reset()
 	p.eventMu.Lock()
 	p.eventCache = make(map[int]*masterdata.Event)
 	p.eventMu.Unlock()
@@ -340,6 +341,10 @@ func (p *dbEducationProvider) resetLocalMasterdataCache() {
 	}
 	p.store.ResetCache()
 	p.init()
+	p.fill.Reset()
+	p.fallbackMu.Lock()
+	p.fallback.reset()
+	p.fallbackMu.Unlock()
 
 	p.rewardMu.Lock()
 	p.rewardsByChar = make(map[int][]*ChallengeReward)
@@ -408,6 +413,7 @@ func (p *dbHonorProvider) resetLocalMasterdataCache() {
 		p.store.ResetCache()
 	}
 	p.init()
+	p.fill.Reset()
 
 	p.honorMu.Lock()
 	p.honorCache = make(map[int]*masterdata.Honor)
@@ -426,6 +432,7 @@ func (p *dbHonorProvider) resetLocalMasterdataCache() {
 	p.bondsWordMu.Lock()
 	p.bondsWordCache = make(map[int]*masterdata.BondsHonorWord)
 	p.bondsWordLoaded = false
+	p.bondsWordGeneration++
 	p.bondsWordMu.Unlock()
 
 	p.gcuMu.Lock()
@@ -451,7 +458,9 @@ func (p *dbMySekaiProvider) resetLocalMasterdataCache() {
 	p.mu.Lock()
 	p.lists = make(map[string][]map[string]any)
 	p.mapsByID = make(map[string]map[int]map[string]any)
+	p.generation++
 	p.mu.Unlock()
+	p.fill.Reset()
 	if p.local != nil {
 		p.local.store.ResetCache()
 	}

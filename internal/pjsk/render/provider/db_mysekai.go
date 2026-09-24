@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -10,6 +11,7 @@ import (
 
 	sekaiDB "haruki-cloud/database/sekai"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 )
 
 // mysekaiFileToTable maps a master JSON file to the table that holds its
@@ -82,16 +84,26 @@ type MasterRowSource interface {
 	LoadMasterRows(ctx context.Context, filename string) (rows map[int]map[string]any, ok bool)
 }
 
+// errCacheFillStale reports a fill whose result was discarded because the
+// cache was reset while it ran; the caller fills again.
+var errCacheFillStale = errors.New("cache fill result predates a reset")
+
 type dbMySekaiProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
 	local  *localMySekaiProvider
 
-	db       *sql.DB
-	dbType   string
-	mu       sync.Mutex
-	lists    map[string][]map[string]any
-	mapsByID map[string]map[int]map[string]any
+	db     *sql.DB
+	dbType string
+	// query reads one table's rows; nil means queryTable. Tests replace it
+	// to hold a query open.
+	query func(ctx context.Context, table string) ([]map[string]any, error)
+
+	mu         sync.Mutex
+	lists      map[string][]map[string]any
+	mapsByID   map[string]map[int]map[string]any
+	generation uint64
+	fill       cachefill.Group
 }
 
 func newDBMySekaiProvider(client *sekaiDB.Client, region renderregion.Value, cfg databaseProviderConfig) *dbMySekaiProvider {
@@ -201,7 +213,10 @@ func (p *dbMySekaiProvider) Close() error {
 
 // loadDBList serves one table from the database. The rows are cached until
 // the masterdata cache is reset (the registry poll resets it after an
-// ingest); a query error is not cached, so the next call retries.
+// ingest); a fill that straddles a reset is discarded and run again so rows
+// read before the ingest are never cached. Concurrent callers share one
+// query, and a query error is not cached: the table is not served again
+// until the fill backoff elapses, after which the next call retries.
 func (p *dbMySekaiProvider) loadDBList(ctx context.Context, filename string) ([]map[string]any, bool) {
 	if p == nil || p.db == nil {
 		return nil, false
@@ -211,28 +226,50 @@ func (p *dbMySekaiProvider) loadDBList(ctx context.Context, filename string) ([]
 		return nil, false
 	}
 
-	p.mu.Lock()
-	if items, ok := p.lists[filename]; ok {
+	for {
+		p.mu.Lock()
+		items, ok := p.lists[filename]
 		p.mu.Unlock()
-		return items, true
-	}
-	p.mu.Unlock()
+		if ok {
+			return items, true
+		}
 
-	fillCtx, cancel := cacheFillContext(ctx)
-	defer cancel()
-	items, err := p.queryTable(fillCtx, table)
+		err := p.fill.Do(ctx, filename, func(fillCtx context.Context) error {
+			return p.fillDBList(fillCtx, filename, table)
+		})
+		if err != nil && !errors.Is(err, errCacheFillStale) {
+			return nil, false
+		}
+	}
+}
+
+func (p *dbMySekaiProvider) fillDBList(ctx context.Context, filename, table string) error {
+	p.mu.Lock()
+	_, cached := p.lists[filename]
+	generation := p.generation
+	p.mu.Unlock()
+	if cached {
+		return nil
+	}
+
+	query := p.query
+	if query == nil {
+		query = p.queryTable
+	}
+	items, err := query(ctx, table)
 	if err != nil {
-		return nil, false
+		return err
 	}
 
 	p.mu.Lock()
-	if cached, ok := p.lists[filename]; ok {
-		p.mu.Unlock()
-		return cached, true
+	defer p.mu.Unlock()
+	if generation != p.generation {
+		return errCacheFillStale
 	}
-	p.lists[filename] = items
-	p.mu.Unlock()
-	return items, true
+	if _, cached := p.lists[filename]; !cached {
+		p.lists[filename] = items
+	}
+	return nil
 }
 
 func (p *dbMySekaiProvider) loadDBMapByID(ctx context.Context, filename string) (map[int]map[string]any, bool) {

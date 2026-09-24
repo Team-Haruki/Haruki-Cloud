@@ -163,9 +163,12 @@ func TestCustomProfileMappingAndPathBranches(t *testing.T) {
 	local := provider.NewLocalProvider(t.TempDir(), renderregion.JP)
 	app := &renderapp.App{Provider: local, Providers: map[renderregion.Value]provider.MasterDataProvider{renderregion.CN: local}}
 	{
-		testutil.RequireArgs(t, !(customProfileProviderForRegion(nil, renderregion.JP) != nil), "custom profile provider selection mismatch")
-		testutil.RequireArgs(t, !(customProfileProviderForRegion(app, renderregion.CN) != local), "custom profile provider selection mismatch")
-		testutil.RequireArgs(t, !(customProfileProviderForRegion(app, renderregion.JP) != local), "custom profile provider selection mismatch")
+		src, err := customProfileProviderForRegion(nil, renderregion.JP)
+		testutil.Require(t, src == nil && err != nil, "nil app must not resolve a provider: %v, %v", src, err)
+		src, err = customProfileProviderForRegion(app, renderregion.CN)
+		testutil.Require(t, err == nil && src == local, "custom profile provider selection mismatch: %v, %v", src, err)
+		src, err = customProfileProviderForRegion(app, renderregion.JP)
+		testutil.Require(t, err == nil && src == local, "legacy provider must serve its own region: %v, %v", src, err)
 	}
 
 	card := &masterdata.Card{ID: 1, CharacterID: 2, CardRarityType: "rarity_4", Attr: "cool", Prefix: "prefix", AssetBundleName: "bundle", ReleaseAt: 3}

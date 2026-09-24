@@ -99,26 +99,26 @@ func (p *dbEducationProvider) GetResourceBoxesByPurpose(ctx context.Context, pur
 func (p *dbEducationProvider) ensureResourceBoxesLoaded(ctx context.Context) bool {
 	p.init()
 	p.boxMu.RLock()
-	if p.boxesLoaded {
-		p.boxMu.RUnlock()
+	loaded := p.boxesLoaded
+	p.boxMu.RUnlock()
+	if loaded {
 		return true
 	}
-	p.boxMu.RUnlock()
+	return p.fill.Do(ctx, "resourceBoxes", p.loadResourceBoxes) == nil
+}
 
+func (p *dbEducationProvider) loadResourceBoxes(ctx context.Context) error {
 	p.boxMu.Lock()
 	defer p.boxMu.Unlock()
-
 	if p.boxesLoaded {
-		return true
+		return nil
 	}
 
-	fillCtx, cancel := cacheFillContext(ctx)
-	defer cancel()
 	items, err := p.client.Resourceboxe.Query().
 		Where(resourceboxe.ServerRegionEQ(p.region.String())).
-		All(fillCtx)
+		All(ctx)
 	if err != nil {
-		return false
+		return err
 	}
 	byID := make(map[int]*ResourceBox, len(items))
 	byPurpose := make(map[string]map[int]*ResourceBox)
@@ -142,15 +142,15 @@ func (p *dbEducationProvider) ensureResourceBoxesLoaded(ctx context.Context) boo
 		}
 		byPurpose[box.ResourceBoxPurpose][box.ID] = box
 	}
-	if err := supplementResourceBoxDetailsFromDB(fillCtx, p.client, p.region.String(), byPurpose); err != nil {
-		return false
+	if err := supplementResourceBoxDetailsFromDB(ctx, p.client, p.region.String(), byPurpose); err != nil {
+		return err
 	}
 	supplementResourceBoxDetailsFromStore(p.store, byPurpose)
 	p.boxByID = byID
 	p.boxByPurpose = byPurpose
-	p.mergeLocalResourceBoxes(fillCtx)
+	p.mergeLocalResourceBoxes(ctx)
 	p.boxesLoaded = true
-	return true
+	return nil
 }
 
 func (p *dbEducationProvider) mergeLocalResourceBoxes(ctx context.Context) {

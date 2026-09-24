@@ -2,10 +2,10 @@ package inventory
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	json "haruki-cloud/internal/jsonutil"
 
@@ -21,19 +21,24 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-// masterdataFillTimeout bounds the queries that fill a region's inventory
-// tables. They run detached from the request context so a client that
-// disconnects mid-fill cannot leave a partial region cached.
-const masterdataFillTimeout = 30 * time.Second
+// errMasterdataFillIncomplete reports a region fill in which at least one
+// database query failed.
+var errMasterdataFillIncomplete = errors.New("inventory masterdata fill incomplete")
 
 func newMasterdataStore(client *sekaiDB.Client, localDir string) *masterdataStore {
 	return &masterdataStore{
 		client:   client,
 		localDir: strings.TrimSpace(localDir),
 		cache:    make(map[string]*regionMasterdata),
+		partial:  make(map[string]*regionMasterdata),
 	}
 }
 
+// forRegion serves a region's inventory tables, filling them once from the
+// database (and local files for the tables it serves empty). The fill runs
+// detached from the request context and is shared by concurrent requests.
+// A fill in which a query failed is not cached: what it loaded is served
+// until the fill backoff elapses, then the next request retries.
 func (s *masterdataStore) forRegion(ctx context.Context, region renderregion.Value) *regionMasterdata {
 	if s == nil {
 		return emptyRegionMasterdata()
@@ -43,27 +48,53 @@ func (s *masterdataStore) forRegion(ctx context.Context, region renderregion.Val
 		key = renderregion.CN.String()
 	}
 
-	s.mu.RLock()
-	cached := s.cache[key]
-	s.mu.RUnlock()
-	if cached != nil {
+	if cached, partial := s.lookup(key); cached != nil {
 		return cached
+	} else if partial != nil && s.fill.Failing(key) {
+		return partial
 	}
 
-	loaded, complete := s.loadRegion(ctx, renderregion.Normalize(key))
-	if !complete {
-		// A table query failed: serve what was loaded, keep the region
-		// uncached so the next request retries the database.
-		return loaded
+	err := s.fill.Do(ctx, key, func(fillCtx context.Context) error {
+		if cached, _ := s.lookup(key); cached != nil {
+			return nil
+		}
+		loaded, complete := s.loadRegion(fillCtx, renderregion.Normalize(key))
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if s.cache == nil {
+			s.cache = make(map[string]*regionMasterdata)
+		}
+		if s.partial == nil {
+			s.partial = make(map[string]*regionMasterdata)
+		}
+		if !complete {
+			s.partial[key] = loaded
+			return errMasterdataFillIncomplete
+		}
+		if s.cache[key] == nil {
+			s.cache[key] = loaded
+		}
+		delete(s.partial, key)
+		return nil
+	})
+	cached, partial := s.lookup(key)
+	switch {
+	case cached != nil:
+		return cached
+	case err != nil && partial != nil:
+		return partial
+	case err != nil:
+		return emptyRegionMasterdata()
+	default:
+		// The cache was reset while the fill ran; fill again.
+		return s.forRegion(ctx, region)
 	}
-	s.mu.Lock()
-	if existing := s.cache[key]; existing != nil {
-		s.mu.Unlock()
-		return existing
-	}
-	s.cache[key] = loaded
-	s.mu.Unlock()
-	return loaded
+}
+
+func (s *masterdataStore) lookup(key string) (cached, partial *regionMasterdata) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.cache[key], s.partial[key]
 }
 
 func (s *masterdataStore) resetCache() {
@@ -72,23 +103,23 @@ func (s *masterdataStore) resetCache() {
 	}
 	s.mu.Lock()
 	s.cache = make(map[string]*regionMasterdata)
+	s.partial = make(map[string]*regionMasterdata)
 	s.mu.Unlock()
+	s.fill.Reset()
 }
 
 // loadRegion fills every inventory table for a region, database first. A
 // table the database serves empty (or cannot serve) is read from the local
 // masterdata when a local directory is configured. complete is false when a
 // database query failed.
-func (s *masterdataStore) loadRegion(ctx context.Context, region renderregion.Value) (*regionMasterdata, bool) {
+func (s *masterdataStore) loadRegion(fillCtx context.Context, region renderregion.Value) (*regionMasterdata, bool) {
 	md := emptyRegionMasterdata()
 	if s.client == nil && strings.TrimSpace(s.localDir) == "" {
 		return md, true
 	}
-	if ctx == nil {
-		ctx = context.Background()
+	if fillCtx == nil {
+		fillCtx = context.Background()
 	}
-	fillCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), masterdataFillTimeout)
-	defer cancel()
 
 	tables := []struct {
 		fromDB    func(context.Context, renderregion.Value, *regionMasterdata) (bool, error)

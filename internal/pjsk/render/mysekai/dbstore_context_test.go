@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/pjsk/render/cachefill"
+	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -124,6 +126,8 @@ func TestDBMasterdataStoreColdLoadSurvivesRequestCancellation(t *testing.T) {
 // retries the query.
 func TestDBMasterdataStoreFailedFillIsNotCached(t *testing.T) {
 	store := newTestDBMasterdataStore(t)
+	clock := testutil.NewFakeClock()
+	store.cache.fill.Now = clock.Now
 	if items := store.loadMapByID("mysekaiGateSkins.json"); len(items) != 0 {
 		t.Fatalf("missing table served rows: %+v", items)
 	}
@@ -140,9 +144,29 @@ func TestDBMasterdataStoreFailedFillIsNotCached(t *testing.T) {
 	if _, err := store.db.Exec(`INSERT INTO mysekaigateskins (game_id, mysekai_gate_skin_type, mysekai_gate_skin_type_id, server_region) VALUES (3, 'unit', 2, 'jp')`); err != nil {
 		t.Fatalf("insert gate skin: %v", err)
 	}
+	if items := store.loadMapByID("mysekaiGateSkins.json"); len(items) != 0 {
+		t.Fatalf("the database must not be retried during the fill backoff: %+v", items)
+	}
+	if !store.cache.fill.Failing("mysekaiGateSkins.json") {
+		t.Fatal("table must back off after a query error")
+	}
+	clock.Advance(cachefill.DefaultBackoff)
 	items := store.loadMapByID("mysekaiGateSkins.json")
 	if len(items) != 1 || stringValue(items[3]["mysekaiGateSkinType"]) != "unit" {
-		t.Fatalf("retry after failed fill = %+v", items)
+		t.Fatalf("retry after the backoff = %+v", items)
+	}
+
+	// A reset clears the backoff along with the cached rows.
+	if _, err := store.db.Exec(`DROP TABLE mysekaigateskins`); err != nil {
+		t.Fatalf("drop gate skins: %v", err)
+	}
+	store.resetCache()
+	if items := store.loadMapByID("mysekaiGateSkins.json"); len(items) != 0 {
+		t.Fatalf("dropped table served rows after the reset: %+v", items)
+	}
+	store.resetCache()
+	if store.cache.fill.Failing("mysekaiGateSkins.json") {
+		t.Fatal("reset must clear the backoff")
 	}
 }
 

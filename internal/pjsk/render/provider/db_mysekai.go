@@ -10,6 +10,7 @@ import (
 
 	sekaiDB "haruki-cloud/database/sekai"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 )
 
 // mysekaiFileToTable maps a master JSON file to the table that holds its
@@ -92,6 +93,7 @@ type dbMySekaiProvider struct {
 	mu       sync.Mutex
 	lists    map[string][]map[string]any
 	mapsByID map[string]map[int]map[string]any
+	fill     cachefill.Group
 }
 
 func newDBMySekaiProvider(client *sekaiDB.Client, region renderregion.Value, cfg databaseProviderConfig) *dbMySekaiProvider {
@@ -201,7 +203,9 @@ func (p *dbMySekaiProvider) Close() error {
 
 // loadDBList serves one table from the database. The rows are cached until
 // the masterdata cache is reset (the registry poll resets it after an
-// ingest); a query error is not cached, so the next call retries.
+// ingest). Concurrent callers share one query, and a query error is not
+// cached: the table is not served again until the fill backoff elapses,
+// after which the next call retries.
 func (p *dbMySekaiProvider) loadDBList(ctx context.Context, filename string) ([]map[string]any, bool) {
 	if p == nil || p.db == nil {
 		return nil, false
@@ -212,26 +216,41 @@ func (p *dbMySekaiProvider) loadDBList(ctx context.Context, filename string) ([]
 	}
 
 	p.mu.Lock()
-	if items, ok := p.lists[filename]; ok {
-		p.mu.Unlock()
+	items, ok := p.lists[filename]
+	p.mu.Unlock()
+	if ok {
 		return items, true
 	}
-	p.mu.Unlock()
 
-	fillCtx, cancel := cacheFillContext(ctx)
-	defer cancel()
-	items, err := p.queryTable(fillCtx, table)
+	err := p.fill.Do(ctx, filename, func(fillCtx context.Context) error {
+		p.mu.Lock()
+		_, cached := p.lists[filename]
+		p.mu.Unlock()
+		if cached {
+			return nil
+		}
+		items, err := p.queryTable(fillCtx, table)
+		if err != nil {
+			return err
+		}
+		p.mu.Lock()
+		if _, cached := p.lists[filename]; !cached {
+			p.lists[filename] = items
+		}
+		p.mu.Unlock()
+		return nil
+	})
 	if err != nil {
 		return nil, false
 	}
 
 	p.mu.Lock()
-	if cached, ok := p.lists[filename]; ok {
-		p.mu.Unlock()
-		return cached, true
-	}
-	p.lists[filename] = items
+	items, ok = p.lists[filename]
 	p.mu.Unlock()
+	if !ok {
+		// The cache was reset while the fill ran; fill again.
+		return p.loadDBList(ctx, filename)
+	}
 	return items, true
 }
 

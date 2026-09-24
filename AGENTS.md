@@ -104,6 +104,7 @@ Haruki-Cloud/
 render/
 ├── app/         # the App composition root (see §3)
 ├── assets/      # asset providers
+├── cachefill/   # per-key singleflight + failure backoff for DB-backed master data caches
 ├── card/        # card lookup / parser / detail / list
 ├── common/      # shared render helpers
 ├── costume/     # 3D costume / preview

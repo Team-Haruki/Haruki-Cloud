@@ -240,6 +240,29 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 
 }
 
+func TestCustomProfileResourcesRejectRegionWithoutProvider(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	src := provider.NewLocalProvider(filepath.Join(root, "haruki-sekai-sc-master", "master"), renderregion.CN)
+	app := &renderapp.App{
+		Provider:  src,
+		Providers: map[renderregion.Value]provider.MasterDataProvider{renderregion.CN: src},
+		Config:    renderapp.Config{LocalMasterdata: renderapp.LocalMasterdataConfig{Dir: root}},
+	}
+
+	got, err := customProfileProviderForRegion(app, renderregion.CN)
+	testutil.Require(t, err == nil && got == src, "configured region provider = %v, %v", got, err)
+	got, err = customProfileProviderForRegion(app, renderregion.TW)
+	testutil.Require(t, got == nil && err != nil && strings.Contains(err.Error(), "not available for region tw"), "region without a provider = %v, %v", got, err)
+
+	resources := drawing.CustomProfileResources{}
+	err = collectCustomProfileStampResources(ctx, app, renderregion.TW, customProfileResourceCollector{stampIDs: map[int]struct{}{1: {}}}, resources)
+	testutil.Require(t, err != nil && strings.Contains(err.Error(), "not available for region tw"), "stamp resources for a region without a provider = %v", err)
+	err = collectCustomProfileCardResources(ctx, app, renderregion.TW, customProfileResourceCollector{cardIDs: map[int]struct{}{1: {}}}, resources)
+	testutil.Require(t, err != nil && strings.Contains(err.Error(), "not available for region tw"), "card resources for a region without a provider = %v", err)
+	testutil.Require(t, len(resources) == 0, "another region's rows were served: %#v", resources)
+}
+
 func TestCustomProfileHonorFcApLevelsUseMusicClearCounts(t *testing.T) {
 	levels := customProfileHonorFcApLevels(&sekaiapi.GetAnotherProfileResponse{
 		UserMusicDifficultyClearCount: []sekaiapi.AnotherUserMusicDifficultyClearCount{

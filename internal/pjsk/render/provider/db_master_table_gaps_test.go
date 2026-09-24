@@ -4,11 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 	"haruki-cloud/internal/testutil"
 )
 
@@ -309,12 +311,19 @@ func TestDBEducationProviderMissionQueryErrorIsNotCached(t *testing.T) {
 	writeTestFile(t, root, "characterMissionV2s.json", `[
 		{"id":901,"characterId":5,"characterMissionType":"local_only","parameterGroupId":101,"isAchievementMission":false}
 	]`)
+	writeTestFile(t, root, "characterMissionV2ParameterGroups.json", `[]`)
 	fixture := newGapTableFixture(t, "missions_error", renderregion.JP)
 	provider := fixture.provider
-	provider.education.store = newLocalStore(root)
+	clock := testutil.NewFakeClock()
+	provider.education.fill.Now = clock.Now
 
 	fixture.dropTable(t, "charactermissionv2s")
-	testutil.Require(t, provider.education.GetCharacterMissions(ctx, 5) == nil, "query error must not serve local missions as loaded")
+	testutil.Require(t, provider.education.GetCharacterMissions(ctx, 5) == nil, "query error without local masterdata must yield nothing")
+
+	provider.education.store = newLocalStore(root)
+	clock.Advance(cachefill.DefaultBackoff)
+	missions := provider.education.GetCharacterMissions(ctx, 5)
+	testutil.Require(t, len(missions) == 1 && missions[0].ID == 901, "query error must serve the local missions for the request: %+v", missions)
 	provider.education.missionMu.RLock()
 	loaded := provider.education.leaderMissionsLoaded
 	provider.education.missionMu.RUnlock()
@@ -326,8 +335,11 @@ func TestDBEducationProviderMissionQueryErrorIsNotCached(t *testing.T) {
 		SetServerRegion(renderregion.JP.String()).
 		Save(ctx)
 	testutil.Require(t, err == nil, "create mission: %v", err)
-	missions := provider.education.GetCharacterMissions(ctx, 5)
-	testutil.Require(t, len(missions) == 1 && missions[0].ID == 501, "next call must retry and read the database: %+v", missions)
+	missions = provider.education.GetCharacterMissions(ctx, 5)
+	testutil.Require(t, len(missions) == 1 && missions[0].ID == 901, "the database must not be retried during the fill backoff: %+v", missions)
+	clock.Advance(cachefill.DefaultBackoff)
+	missions = provider.education.GetCharacterMissions(ctx, 5)
+	testutil.Require(t, len(missions) == 1 && missions[0].ID == 501, "the call after the backoff must retry and read the database: %+v", missions)
 
 	cancelled, cancel := context.WithCancel(ctx)
 	cancel()
@@ -341,6 +353,8 @@ func TestDBEducationProviderResourceBoxDetailQueryErrorIsNotCached(t *testing.T)
 	fixture := newGapTableFixture(t, "box_details_error", renderregion.CN)
 	provider := fixture.provider
 	client := provider.client
+	clock := testutil.NewFakeClock()
+	provider.education.fill.Now = clock.Now
 
 	_, err := client.Resourceboxe.Create().
 		SetGameID(300).SetResourceBoxPurpose("challenge").SetResourceBoxType("expand").
@@ -361,6 +375,8 @@ func TestDBEducationProviderResourceBoxDetailQueryErrorIsNotCached(t *testing.T)
 		SetServerRegion(renderregion.CN.String()).
 		Save(ctx)
 	testutil.Require(t, err == nil, "create detail: %v", err)
+	testutil.Require(t, provider.education.GetResourceBoxByPurpose(ctx, "challenge", 300) == nil, "the database must not be retried during the fill backoff")
+	clock.Advance(cachefill.DefaultBackoff)
 	cancelled, cancel := context.WithCancel(ctx)
 	cancel()
 	box := provider.education.GetResourceBoxByPurpose(cancelled, "challenge", 300)
@@ -375,11 +391,16 @@ func TestDBHonorProviderBondsWordQueryErrorIsNotCached(t *testing.T) {
 	]`)
 	fixture := newGapTableFixture(t, "bonds_words_error", renderregion.JP)
 	provider := fixture.provider
-	provider.honors.store = newLocalStore(root)
+	clock := testutil.NewFakeClock()
+	provider.honors.fill.Now = clock.Now
 
 	fixture.dropTable(t, "bondshonorwords")
 	_, err := provider.honors.GetBondsHonorWordByID(ctx, 30)
-	testutil.Require(t, err != nil, "query error must not serve the local file as loaded")
+	testutil.Require(t, err != nil && strings.Contains(err.Error(), "load bonds honor words"), "query error without local masterdata = %v", err)
+
+	provider.honors.store = newLocalStore(root)
+	word, err := provider.honors.GetBondsHonorWordByID(ctx, 30)
+	testutil.Require(t, err == nil && word != nil && word.Name == "Local", "query error must serve the local words for the request: %+v, %v", word, err)
 	provider.honors.bondsWordMu.RLock()
 	loaded := provider.honors.bondsWordLoaded
 	provider.honors.bondsWordMu.RUnlock()
@@ -390,24 +411,42 @@ func TestDBHonorProviderBondsWordQueryErrorIsNotCached(t *testing.T) {
 		SetGameID(30).SetName("Together").SetServerRegion(renderregion.JP.String()).
 		Save(ctx)
 	testutil.Require(t, err == nil, "create bonds word: %v", err)
-	word, err := provider.honors.GetBondsHonorWordByID(ctx, 30)
-	testutil.Require(t, err == nil && word != nil && word.Name == "Together", "next call must retry and read the database: %+v, %v", word, err)
+	word, err = provider.honors.GetBondsHonorWordByID(ctx, 30)
+	testutil.Require(t, err == nil && word != nil && word.Name == "Local", "the database must not be retried during the fill backoff: %+v, %v", word, err)
+	clock.Advance(cachefill.DefaultBackoff)
+	word, err = provider.honors.GetBondsHonorWordByID(ctx, 30)
+	testutil.Require(t, err == nil && word != nil && word.Name == "Together", "the call after the backoff must retry and read the database: %+v, %v", word, err)
 }
 
 func TestDBEventProviderWorldBloomRangesCacheEmptyAndRetryErrors(t *testing.T) {
 	ctx := context.Background()
 	fixture := newGapTableFixture(t, "wb_ranges_error", renderregion.JP)
 	provider := fixture.provider
+	clock := testutil.NewFakeClock()
+	provider.events.fill.Now = clock.Now
 
 	fixture.dropTable(t, "worldbloomchapterrankingrewardranges")
 	ranges, err := provider.events.GetWorldBloomChapterRankingRewardRanges(ctx, 99, 5)
-	testutil.Require(t, err == nil && ranges == nil, "query error yields no ranges: %+v, %v", ranges, err)
+	testutil.Require(t, err != nil && ranges == nil, "query error without local masterdata must be reported: %+v, %v", ranges, err)
 	provider.events.wbRangeMu.RLock()
 	loaded := provider.events.wbRangesLoaded
 	provider.events.wbRangeMu.RUnlock()
 	testutil.Require(t, !loaded, "query error must not mark ranges loaded")
 
+	// With local files configured the query error is served from them.
+	root := t.TempDir()
+	writeTestFile(t, root, "worldBloomChapterRankingRewardRanges.json", `[
+		{"id":1,"eventId":99,"gameCharacterId":5,"fromRank":1,"toRank":10,"resourceBoxId":500}
+	]`)
+	provider.events.store = newLocalStore(root)
+	ranges, err = provider.events.GetWorldBloomChapterRankingRewardRanges(ctx, 99, 5)
+	testutil.Require(t, err == nil && len(ranges) == 1 && ranges[0].ResourceBoxID == 500, "query error must serve the local ranges for the request: %+v, %v", ranges, err)
+	provider.events.store = nil
+
 	fixture.recreateTables(t)
+	ranges, err = provider.events.GetWorldBloomChapterRankingRewardRanges(ctx, 99, 5)
+	testutil.Require(t, err != nil && ranges == nil, "the database must not be retried during the fill backoff: %+v, %v", ranges, err)
+	clock.Advance(cachefill.DefaultBackoff)
 	ranges, err = provider.events.GetWorldBloomChapterRankingRewardRanges(ctx, 99, 5)
 	testutil.Require(t, err == nil && ranges == nil, "empty table yields no ranges: %+v, %v", ranges, err)
 	provider.events.wbRangeMu.RLock()

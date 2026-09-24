@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -12,15 +13,21 @@ import (
 	sekaiHonor "haruki-cloud/database/sekai/honor"
 	"haruki-cloud/database/sekai/honorgroup"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
+
+// errBondsHonorWordsNotConfigured reports a region whose bondshonorwords
+// table is empty and that has no local bondsHonorWords.json to fall back to.
+var errBondsHonorWordsNotConfigured = errors.New("bonds honor words are not configured")
 
 type dbHonorProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
 	store  *localStore
 	once   sync.Once
+	fill   cachefill.Group
 
 	honorMu      sync.RWMutex
 	honorCache   map[int]*masterdata.Honor
@@ -221,73 +228,75 @@ func (p *dbHonorProvider) GetBondsHonorWordByID(ctx context.Context, id int) (*m
 	}
 	p.init()
 
-	if !p.ensureBondsHonorWordsLoaded(ctx) {
-		return nil, fmt.Errorf("bonds honor words are not configured")
+	words, err := p.bondsHonorWords(ctx)
+	if err != nil {
+		return nil, err
 	}
-
-	p.bondsWordMu.RLock()
-	defer p.bondsWordMu.RUnlock()
-	if cached, ok := p.bondsWordCache[id]; ok {
+	if cached, ok := words[id]; ok {
 		return new(*cached), nil
 	}
 	return nil, fmt.Errorf("bonds honor word %d not found", id)
 }
 
-func (p *dbHonorProvider) ensureBondsHonorWordsLoaded(ctx context.Context) bool {
-	p.init()
+// bondsHonorWords serves the region's bonds honor words: the database rows,
+// else the local bondsHonorWords.json when the table is empty (not ingested
+// yet). Either is cached until the masterdata cache is reset. A query error
+// is never cached; the local file is served for the request when a store is
+// configured, otherwise the error is returned.
+func (p *dbHonorProvider) bondsHonorWords(ctx context.Context) (map[int]*masterdata.BondsHonorWord, error) {
 	p.bondsWordMu.RLock()
-	if p.bondsWordLoaded {
-		p.bondsWordMu.RUnlock()
-		return true
-	}
+	loaded, cache := p.bondsWordLoaded, p.bondsWordCache
 	p.bondsWordMu.RUnlock()
-
-	p.bondsWordMu.Lock()
-	defer p.bondsWordMu.Unlock()
-	if p.bondsWordLoaded {
-		return true
-	}
-	fillCtx, cancel := cacheFillContext(ctx)
-	defer cancel()
-	loaded, err := p.loadBondsHonorWordsFromDB(fillCtx)
-	if err != nil {
-		return false
-	}
 	if loaded {
-		p.bondsWordLoaded = true
-		return true
+		return cache, nil
 	}
-	if p.store == nil || !p.store.Configured() {
-		return false
+
+	err := p.fill.Do(ctx, "bondsHonorWords", func(fillCtx context.Context) error {
+		words, err := p.loadBondsHonorWordsFromDB(fillCtx)
+		if err != nil {
+			return err
+		}
+		if len(words) == 0 {
+			words, err = p.loadLocalBondsHonorWords()
+			if err != nil {
+				return errBondsHonorWordsNotConfigured
+			}
+		}
+		p.bondsWordMu.Lock()
+		if !p.bondsWordLoaded {
+			p.bondsWordCache = words
+			p.bondsWordLoaded = true
+		}
+		p.bondsWordMu.Unlock()
+		return nil
+	})
+	if err == nil {
+		p.bondsWordMu.RLock()
+		cache = p.bondsWordCache
+		p.bondsWordMu.RUnlock()
+		return cache, nil
 	}
-	items, err := p.store.loadJSON[masterdata.BondsHonorWord]("bondsHonorWords.json")
-	if err != nil {
-		return false
+	if errors.Is(err, errBondsHonorWordsNotConfigured) {
+		return nil, err
 	}
-	for i := range items {
-		item := items[i]
-		p.bondsWordCache[item.ID] = &item
+	if words, localErr := p.loadLocalBondsHonorWords(); localErr == nil {
+		return words, nil
 	}
-	p.bondsWordLoaded = true
-	return true
+	return nil, fmt.Errorf("load bonds honor words: %w", err)
 }
 
-// loadBondsHonorWordsFromDB fills the bonds word cache from bondshonorwords
-// and reports false when the region has no rows yet, leaving the local
-// bondsHonorWords.json as the secondary source. A query error is returned so
-// the words are not marked loaded from the local file.
-func (p *dbHonorProvider) loadBondsHonorWordsFromDB(ctx context.Context) (bool, error) {
+// loadBondsHonorWordsFromDB reads the region's rows from bondshonorwords; an
+// empty map means the region has no rows yet.
+func (p *dbHonorProvider) loadBondsHonorWordsFromDB(ctx context.Context) (map[int]*masterdata.BondsHonorWord, error) {
 	items, err := p.client.Bondshonorword.Query().
 		Where(bondshonorword.ServerRegionEQ(p.region.String())).
 		All(ctx)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	if len(items) == 0 {
-		return false, nil
-	}
+	words := make(map[int]*masterdata.BondsHonorWord, len(items))
 	for _, item := range items {
-		p.bondsWordCache[int(item.GameID)] = &masterdata.BondsHonorWord{
+		words[int(item.GameID)] = &masterdata.BondsHonorWord{
 			ID:              int(item.GameID),
 			Seq:             int(item.Seq),
 			BondsGroupID:    int(item.BondsGroupID),
@@ -296,7 +305,22 @@ func (p *dbHonorProvider) loadBondsHonorWordsFromDB(ctx context.Context) (bool, 
 			Description:     item.Description,
 		}
 	}
-	return true, nil
+	return words, nil
+}
+
+func (p *dbHonorProvider) loadLocalBondsHonorWords() (map[int]*masterdata.BondsHonorWord, error) {
+	if p.store == nil || !p.store.Configured() {
+		return nil, errBondsHonorWordsNotConfigured
+	}
+	items, err := p.store.loadJSON[masterdata.BondsHonorWord]("bondsHonorWords.json")
+	if err != nil {
+		return nil, err
+	}
+	words := make(map[int]*masterdata.BondsHonorWord, len(items))
+	for i := range items {
+		words[items[i].ID] = &items[i]
+	}
+	return words, nil
 }
 
 func (p *dbHonorProvider) GetGameCharacterUnitByID(ctx context.Context, id int) (*masterdata.GameCharacterUnit, bool) {

@@ -594,6 +594,7 @@ internal/pjsk/render/
 ├── masterdata/           # Masterdata 类型定义
 ├── snapshot/             # 用户游戏快照（live + local fallback）
 ├── provider/             # 大型 Masterdata 数据 Provider（DB/local 双源）
+├── cachefill/            # DB 缓存回填协调：同 key 并发共享一次查询，失败后 5s 内不重试
 ├── releasecheck/         # 资源版本检查
 ├── common/               # 共享工具（卡图缩略图）
 ├── assets/               # 素材管理：路径选择先探本地根，无本地根（或全部未命中）时按 assets 槽位的目录列举（缓存 listing_ttl、宽目录一次递归列举）判存在并纠正大小写，HEAD 仅作无法列举目录的兜底；连续 3 次失败后熔断 30s

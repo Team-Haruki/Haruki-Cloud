@@ -297,8 +297,11 @@ func collectCustomProfileStampResources(ctx context.Context, app *renderapp.App,
 	if len(c.stampIDs) == 0 {
 		return nil
 	}
-	src := customProfileProviderForRegion(app, region)
-	if src == nil || src.Stamps() == nil {
+	src, err := customProfileProviderForRegion(app, region)
+	if err != nil {
+		return err
+	}
+	if src.Stamps() == nil {
 		return fmt.Errorf("stamp masterdata provider is not configured")
 	}
 	stamps, err := src.Stamps().GetAll(ctx)
@@ -331,8 +334,11 @@ func collectCustomProfileCardResources(ctx context.Context, app *renderapp.App, 
 	if len(c.cardIDs) == 0 {
 		return nil
 	}
-	src := customProfileProviderForRegion(app, region)
-	if src == nil || src.Cards() == nil {
+	src, err := customProfileProviderForRegion(app, region)
+	if err != nil {
+		return err
+	}
+	if src.Cards() == nil {
 		return fmt.Errorf("card masterdata provider is not configured")
 	}
 	cards := make(map[int]map[string]any, len(c.cardIDs))
@@ -408,7 +414,7 @@ func loadCustomProfileStoryEvents(ctx context.Context, app *renderapp.App, regio
 	if len(eventIDs) == 0 {
 		return events
 	}
-	if src := customProfileProviderForRegion(app, region); src != nil && src.Events() != nil {
+	if src, err := customProfileProviderForRegion(app, region); err == nil && src.Events() != nil {
 		for eventID := range eventIDs {
 			eventInfo, err := src.Events().GetByID(ctx, eventID)
 			if err != nil || eventInfo == nil {
@@ -548,8 +554,8 @@ func loadCustomProfileMasterTable(ctx context.Context, app *renderapp.App, regio
 // source. ok is false when no provider is configured or none of its sources
 // (database, local store) could answer.
 func customProfileMasterRows(ctx context.Context, app *renderapp.App, region renderregion.Value, filename string) (map[int]map[string]any, bool) {
-	src := customProfileProviderForRegion(app, region)
-	if src == nil {
+	src, err := customProfileProviderForRegion(app, region)
+	if err != nil {
 		return nil, false
 	}
 	store := src.MySekai()
@@ -679,16 +685,21 @@ func customProfileMasterdataRepoDir(region renderregion.Value) string {
 	}
 }
 
-func customProfileProviderForRegion(app *renderapp.App, region renderregion.Value) provider.MasterDataProvider {
+// customProfileProviderForRegion returns the master data provider of the
+// region a custom profile belongs to. A region without a provider is an
+// error: the rows of another region must never be served in its place.
+func customProfileProviderForRegion(app *renderapp.App, region renderregion.Value) (provider.MasterDataProvider, error) {
 	if app == nil {
-		return nil
+		return nil, fmt.Errorf("masterdata provider is not configured")
 	}
-	if app.Providers != nil {
-		if src := app.Providers[renderregion.WithDefault(region)]; src != nil {
-			return src
-		}
+	resolved := renderregion.WithDefault(region)
+	if src := app.Providers[resolved]; src != nil {
+		return src, nil
 	}
-	return app.Provider
+	if app.Provider != nil && renderregion.WithDefault(app.Provider.Region()) == resolved {
+		return app.Provider, nil
+	}
+	return nil, fmt.Errorf("custom profile masterdata is not available for region %s", resolved)
 }
 
 func customProfileCardMasterMap(card *masterdata.Card) map[string]any {

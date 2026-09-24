@@ -18,6 +18,7 @@ import (
 	"haruki-cloud/database/sekai/worldbloom"
 	"haruki-cloud/database/sekai/worldbloomchapterrankingrewardrange"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
@@ -28,6 +29,7 @@ type dbEventProvider struct {
 	once   sync.Once
 	local  *localEventProvider
 	store  *localStore
+	fill   cachefill.Group
 
 	eventMu    sync.RWMutex
 	eventCache map[int]*masterdata.Event
@@ -348,20 +350,28 @@ func (p *dbEventProvider) GetWorldBloomChapters(ctx context.Context, eventID int
 	return result
 }
 
+// GetWorldBloomChapterRankingRewardRanges serves a chapter's reward ranges
+// from the database, else from the local files when the database has none
+// for the chapter. A query error is served from the local files when they
+// are configured and returned otherwise.
 func (p *dbEventProvider) GetWorldBloomChapterRankingRewardRanges(ctx context.Context, eventID, gameCharacterID int) ([]masterdata.WorldBloomChapterRankingRewardRange, error) {
 	if eventID <= 0 || gameCharacterID <= 0 {
 		return nil, nil
 	}
-	if ranges := p.worldBloomChapterRankingRewardRangesFromDB(ctx, eventID, gameCharacterID); len(ranges) > 0 {
+	ranges, err := p.worldBloomChapterRankingRewardRangesFromDB(ctx, eventID, gameCharacterID)
+	if err == nil && len(ranges) > 0 {
 		return ranges, nil
 	}
 	if p.local != nil {
-		ranges, err := p.local.GetWorldBloomChapterRankingRewardRanges(ctx, eventID, gameCharacterID)
-		if err == nil && len(ranges) > 0 {
+		ranges, localErr := p.local.GetWorldBloomChapterRankingRewardRanges(ctx, eventID, gameCharacterID)
+		if localErr == nil && len(ranges) > 0 {
 			return ranges, nil
 		}
 	}
 	if p.store == nil || !p.store.Configured() {
+		if err != nil {
+			return nil, fmt.Errorf("load world bloom chapter ranking reward ranges: %w", err)
+		}
 		return nil, nil
 	}
 	local := &localEventProvider{store: p.store}
@@ -371,43 +381,44 @@ func (p *dbEventProvider) GetWorldBloomChapterRankingRewardRanges(ctx context.Co
 // worldBloomChapterRankingRewardRangesFromDB serves a chapter's reward ranges
 // from worldbloomchapterrankingrewardranges. The region is loaded once,
 // including an empty result, and kept until the masterdata cache is reset
-// (the registry poll resets it after an ingest); a query error leaves the
-// cache unloaded so the next call retries.
-func (p *dbEventProvider) worldBloomChapterRankingRewardRangesFromDB(ctx context.Context, eventID, gameCharacterID int) []masterdata.WorldBloomChapterRankingRewardRange {
-	if !p.ensureWorldBloomChapterRankingRewardRangesLoaded(ctx) {
-		return nil
+// (the registry poll resets it after an ingest); a query error is returned
+// and leaves the cache unloaded.
+func (p *dbEventProvider) worldBloomChapterRankingRewardRangesFromDB(ctx context.Context, eventID, gameCharacterID int) ([]masterdata.WorldBloomChapterRankingRewardRange, error) {
+	if err := p.ensureWorldBloomChapterRankingRewardRangesLoaded(ctx); err != nil {
+		return nil, err
 	}
 	key := worldBloomChapterRankingRewardKey{eventID: eventID, gameCharacterID: gameCharacterID}
 	p.wbRangeMu.RLock()
 	defer p.wbRangeMu.RUnlock()
 	ranges := p.wbRangesByChapter[key]
 	if len(ranges) == 0 {
-		return nil
+		return nil, nil
 	}
-	return slices.Clone(ranges)
+	return slices.Clone(ranges), nil
 }
 
-func (p *dbEventProvider) ensureWorldBloomChapterRankingRewardRangesLoaded(ctx context.Context) bool {
+func (p *dbEventProvider) ensureWorldBloomChapterRankingRewardRangesLoaded(ctx context.Context) error {
 	p.init()
 	p.wbRangeMu.RLock()
-	if p.wbRangesLoaded {
-		p.wbRangeMu.RUnlock()
-		return true
-	}
+	loaded := p.wbRangesLoaded
 	p.wbRangeMu.RUnlock()
+	if loaded {
+		return nil
+	}
+	return p.fill.Do(ctx, "worldBloomChapterRankingRewardRanges", p.loadWorldBloomChapterRankingRewardRanges)
+}
 
+func (p *dbEventProvider) loadWorldBloomChapterRankingRewardRanges(ctx context.Context) error {
 	p.wbRangeMu.Lock()
 	defer p.wbRangeMu.Unlock()
 	if p.wbRangesLoaded {
-		return true
+		return nil
 	}
-	fillCtx, cancel := cacheFillContext(ctx)
-	defer cancel()
 	items, err := p.client.Worldbloomchapterrankingrewardrange.Query().
 		Where(worldbloomchapterrankingrewardrange.ServerRegionEQ(p.region.String())).
-		All(fillCtx)
+		All(ctx)
 	if err != nil {
-		return false
+		return err
 	}
 	byChapter := make(map[worldBloomChapterRankingRewardKey][]masterdata.WorldBloomChapterRankingRewardRange)
 	for _, item := range items {
@@ -435,7 +446,7 @@ func (p *dbEventProvider) ensureWorldBloomChapterRankingRewardRangesLoaded(ctx c
 	}
 	p.wbRangesByChapter = byChapter
 	p.wbRangesLoaded = true
-	return true
+	return nil
 }
 
 func (p *dbEventProvider) getCardsByIDs(ctx context.Context, ids []int64) ([]*masterdata.Card, error) {

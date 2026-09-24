@@ -8,19 +8,23 @@ import (
 type layeredTestContextKey string
 
 type layeredTestSource struct {
-	lists  map[string][]map[string]any
-	maps   map[string]map[int]map[string]any
-	object bool
-	resets int
-	closes int
-	ctx    context.Context
+	lists     map[string][]map[string]any
+	maps      map[string]map[int]map[string]any
+	object    bool
+	resets    int
+	closes    int
+	listCalls int
+	mapCalls  int
+	ctx       context.Context
 }
 
 func (s *layeredTestSource) Configured() bool { return s != nil }
 func (s *layeredTestSource) loadList(filename string) []map[string]any {
+	s.listCalls++
 	return s.lists[filename]
 }
 func (s *layeredTestSource) loadMapByID(filename string) map[int]map[string]any {
+	s.mapCalls++
 	if rows, ok := s.maps[filename]; ok {
 		return rows
 	}
@@ -80,6 +84,34 @@ func TestLayeredMasterdataSourcePrefersDatabaseAndFallsBackWhenEmpty(t *testing.
 	}
 	if got := newLayeredMasterdataSource(nil, fallback); got != fallback {
 		t.Fatalf("without a primary the fallback is used directly: %T", got)
+	}
+}
+
+func TestLayeredMasterdataSourceQueriesPrimaryOnceOnMiss(t *testing.T) {
+	primary := &layeredTestSource{
+		lists: map[string][]map[string]any{"mysekaiGateSkins.json": {}},
+		maps:  map[string]map[int]map[string]any{"mysekaiGateSkins.json": {}},
+	}
+	fallback := &layeredTestSource{}
+	source := newLayeredMasterdataSource(primary, fallback)
+
+	if got := source.loadList("mysekaiGateSkins.json"); got == nil || len(got) != 0 {
+		t.Fatalf("served empty table must stay served: %#v", got)
+	}
+	if got := source.loadList("missing.json"); got != nil {
+		t.Fatalf("unserved table = %#v", got)
+	}
+	if got := source.loadMapByID("mysekaiGateSkins.json"); len(got) != 0 {
+		t.Fatalf("served empty map = %#v", got)
+	}
+	if got := source.loadMapByID("missing.json"); len(got) != 0 {
+		t.Fatalf("unserved map = %#v", got)
+	}
+	if primary.listCalls != 2 || primary.mapCalls != 2 {
+		t.Fatalf("primary was queried list=%d map=%d times on misses, want once per lookup", primary.listCalls, primary.mapCalls)
+	}
+	if fallback.listCalls != 2 || fallback.mapCalls != 2 {
+		t.Fatalf("fallback was queried list=%d map=%d times on misses, want once per lookup", fallback.listCalls, fallback.mapCalls)
 	}
 }
 

@@ -700,20 +700,20 @@ func testLocalEducationBondsAndStyleBranches(t *testing.T, education *localEduca
 
 func testLocalEducationCharacterMissionBranches(t *testing.T, education *localEducationProvider, ctx context.Context) {
 	t.Helper()
-	if missions := education.GetCharacterMissions(ctx, 1); len(missions) != 1 {
-		t.Fatalf("character missions = %+v", missions)
+	if missions, err := education.GetCharacterMissions(ctx, 1); err != nil || len(missions) != 1 {
+		t.Fatalf("character missions = %+v, %v", missions, err)
 	}
-	if education.GetCharacterMissions(ctx, 0) != nil {
+	if missions, _ := education.GetCharacterMissions(ctx, 0); missions != nil {
 		t.Fatal("zero character missions resolved")
 	}
-	if groups := education.GetCharacterMissionParameterGroups(ctx, 10); len(groups) != 2 {
-		t.Fatalf("mission groups = %+v", groups)
+	if groups, err := education.GetCharacterMissionParameterGroups(ctx, 10); err != nil || len(groups) != 2 {
+		t.Fatalf("mission groups = %+v, %v", groups, err)
 	}
-	if education.GetCharacterMissionParameterGroups(ctx, 0) != nil {
+	if groups, _ := education.GetCharacterMissionParameterGroups(ctx, 0); groups != nil {
 		t.Fatal("zero mission group resolved")
 	}
-	if requirements, maxPlay := education.GetLeaderMissionRequirements(ctx); len(requirements) != 2 || requirements[0].Seq != 1 || maxPlay != 20 {
-		t.Fatalf("leader requirements = %+v, max=%d", requirements, maxPlay)
+	if requirements, maxPlay, err := education.GetLeaderMissionRequirements(ctx); err != nil || len(requirements) != 2 || requirements[0].Seq != 1 || maxPlay != 20 {
+		t.Fatalf("leader requirements = %+v, max=%d, err=%v", requirements, maxPlay, err)
 	}
 	if gate := education.GetMysekaiGateLevel(ctx, 1, 2); gate == nil || gate.PowerBonusRate != 0.2 {
 		t.Fatalf("gate level = %+v", gate)

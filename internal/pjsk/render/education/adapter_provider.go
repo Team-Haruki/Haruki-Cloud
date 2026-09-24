@@ -134,8 +134,11 @@ func (a *ProviderAdapter) GetGameCharacterStyle(gameID int) *GameCharacterStyle 
 	}
 }
 
-func (a *ProviderAdapter) GetCharacterMissions(characterID int) []*CharacterMission {
-	pvItems := a.P.Education().GetCharacterMissions(a.Context(), characterID)
+func (a *ProviderAdapter) GetCharacterMissions(characterID int) ([]*CharacterMission, error) {
+	pvItems, err := a.P.Education().GetCharacterMissions(a.Context(), characterID)
+	if err != nil {
+		return nil, err
+	}
 	result := make([]*CharacterMission, len(pvItems))
 	for i, item := range pvItems {
 		if item == nil {
@@ -149,11 +152,14 @@ func (a *ProviderAdapter) GetCharacterMissions(characterID int) []*CharacterMiss
 			IsAchievementMission: item.IsAchievementMission,
 		}
 	}
-	return result
+	return result, nil
 }
 
-func (a *ProviderAdapter) GetCharacterMissionParameterGroups(parameterGroupID int) []*CharacterMissionParameterGroup {
-	pvItems := a.P.Education().GetCharacterMissionParameterGroups(a.Context(), parameterGroupID)
+func (a *ProviderAdapter) GetCharacterMissionParameterGroups(parameterGroupID int) ([]*CharacterMissionParameterGroup, error) {
+	pvItems, err := a.P.Education().GetCharacterMissionParameterGroups(a.Context(), parameterGroupID)
+	if err != nil {
+		return nil, err
+	}
 	result := make([]*CharacterMissionParameterGroup, len(pvItems))
 	for i, item := range pvItems {
 		if item == nil {
@@ -167,11 +173,14 @@ func (a *ProviderAdapter) GetCharacterMissionParameterGroups(parameterGroupID in
 			Quantity:    item.Quantity,
 		}
 	}
-	return result
+	return result, nil
 }
 
-func (a *ProviderAdapter) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
-	pvRequirements, maxPlayLimit := a.P.Education().GetLeaderMissionRequirements(a.Context())
+func (a *ProviderAdapter) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int, error) {
+	pvRequirements, maxPlayLimit, err := a.P.Education().GetLeaderMissionRequirements(a.Context())
+	if err != nil {
+		return nil, 0, err
+	}
 	result := make([]LeaderMissionRequirement, len(pvRequirements))
 	for i, item := range pvRequirements {
 		result[i] = LeaderMissionRequirement{
@@ -179,7 +188,7 @@ func (a *ProviderAdapter) GetLeaderMissionRequirements() ([]LeaderMissionRequire
 			Requirement: item.Requirement,
 		}
 	}
-	return result, maxPlayLimit
+	return result, maxPlayLimit, nil
 }
 
 func (a *ProviderAdapter) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel {

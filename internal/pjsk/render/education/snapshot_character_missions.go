@@ -181,11 +181,19 @@ func buildCharacterMissionAllSection(ctx *resolvedSnapshotContext, cid int, sect
 	if !ok {
 		return drawing.CharacterMissionAllSection{}, fmt.Errorf("character mission type not found: %s", sectionType)
 	}
-	missionDef := findCharacterMissionByType(ctx.source.GetCharacterMissions(cid), sectionType)
+	missions, err := ctx.source.GetCharacterMissions(cid)
+	if err != nil {
+		return drawing.CharacterMissionAllSection{}, err
+	}
+	missionDef := findCharacterMissionByType(missions, sectionType)
 	if missionDef == nil {
 		return drawing.CharacterMissionAllSection{}, fmt.Errorf("character mission definition not found: %s", sectionType)
 	}
-	groups := cloneCharacterMissionParameterGroups(ctx.source.GetCharacterMissionParameterGroups(missionDef.ParameterGroupID))
+	sourceGroups, err := ctx.source.GetCharacterMissionParameterGroups(missionDef.ParameterGroupID)
+	if err != nil {
+		return drawing.CharacterMissionAllSection{}, err
+	}
+	groups := cloneCharacterMissionParameterGroups(sourceGroups)
 	sort.Slice(groups, func(i, j int) bool { return groups[i].Seq < groups[j].Seq })
 	displayRows := buildCharacterMissionAllDisplayRows(groups, base)
 	return drawing.CharacterMissionAllSection{
@@ -244,19 +252,30 @@ func (c *Controller) buildCharacterMissionRows(
 	ctx *resolvedSnapshotContext,
 	cid int,
 ) ([]drawing.CharacterMissionOverviewRow, string, string, int, int, int, int, int, error) {
-	missions := cloneCharacterMissions(ctx.source.GetCharacterMissions(cid))
+	sourceMissions, err := ctx.source.GetCharacterMissions(cid)
+	if err != nil {
+		return nil, "", "", 0, 0, 0, 0, 0, err
+	}
+	missions := cloneCharacterMissions(sourceMissions)
 	if len(missions) == 0 {
 		return nil, "", "", 0, 0, 0, 0, 0, fmt.Errorf("character mission data not found for character %d", cid)
 	}
 	sort.Slice(missions, func(i, j int) bool { return missions[i].ID < missions[j].ID })
 
 	statuses := characterMissionStatusesForCharacter(ctx.raw, cid)
-	levelProgress := resolveCharacterMissionLevelProgress(ctx, cid, statuses)
+	levelProgress, err := resolveCharacterMissionLevelProgress(ctx, cid, statuses)
+	if err != nil {
+		return nil, "", "", 0, 0, 0, 0, 0, err
+	}
 	progressIndex := newCharacterMissionProgressIndex(ctx.raw, cid, statuses)
 
 	rows := make([]drawing.CharacterMissionOverviewRow, 0, len(missions))
 	for _, mission := range missions {
-		rows = append(rows, buildCharacterMissionOverviewRow(ctx.source, mission, progressIndex))
+		row, err := buildCharacterMissionOverviewRow(ctx.source, mission, progressIndex)
+		if err != nil {
+			return nil, "", "", 0, 0, 0, 0, 0, err
+		}
+		rows = append(rows, row)
 	}
 
 	iconPath := c.characterIconPath(cid)
@@ -273,14 +292,17 @@ type characterMissionLevelProgress struct {
 	finalExp     int
 }
 
-func resolveCharacterMissionLevelProgress(ctx *resolvedSnapshotContext, cid int, statuses []rendersnapshot.RawUserCharacterMissionV2Status) characterMissionLevelProgress {
+func resolveCharacterMissionLevelProgress(ctx *resolvedSnapshotContext, cid int, statuses []rendersnapshot.RawUserCharacterMissionV2Status) (characterMissionLevelProgress, error) {
 	levels := cloneCharacterLevels(ctx.source.GetCharacterLevels())
 	levelStarts := characterLevelStarts(levels)
 	currentLevel, currentExp, currentTotalExp := rawCharacterLevelProgress(ctx.raw.UserCharacters, cid)
 	if start, ok := levelStarts[currentLevel]; ok && currentTotalExp >= start && currentTotalExp > 0 {
 		currentExp = currentTotalExp - start
 	}
-	pendingExp := characterMissionPendingExp(ctx.source, statuses)
+	pendingExp, err := characterMissionPendingExp(ctx.source, statuses)
+	if err != nil {
+		return characterMissionLevelProgress{}, err
+	}
 	baseTotalExp := currentTotalExp
 	if baseTotalExp <= 0 && currentLevel > 0 {
 		if levelStart, ok := levelStarts[currentLevel]; ok {
@@ -288,7 +310,7 @@ func resolveCharacterMissionLevelProgress(ctx *resolvedSnapshotContext, cid int,
 		}
 	}
 	finalLevel, finalExp := characterMissionFinalLevel(levels, maxInt(baseTotalExp, 0)+pendingExp, currentLevel, currentExp+pendingExp)
-	return characterMissionLevelProgress{currentLevel, currentExp, pendingExp, finalLevel, finalExp}
+	return characterMissionLevelProgress{currentLevel, currentExp, pendingExp, finalLevel, finalExp}, nil
 }
 
 func characterLevelStarts(levels []*CharacterLevel) map[int]int {
@@ -309,14 +331,18 @@ func rawCharacterLevelProgress(characters []rendersnapshot.RawUserCharacter, cid
 	return character.CharacterRank, character.Exp, character.TotalExp
 }
 
-func characterMissionPendingExp(source DataSource, statuses []rendersnapshot.RawUserCharacterMissionV2Status) int {
+func characterMissionPendingExp(source DataSource, statuses []rendersnapshot.RawUserCharacterMissionV2Status) (int, error) {
 	result := 0
 	for _, status := range statuses {
 		if strings.EqualFold(strings.TrimSpace(status.MissionStatus), "achieved") {
-			result += characterMissionGroupExp(source.GetCharacterMissionParameterGroups(status.ParameterGroupID), status.Seq)
+			groups, err := source.GetCharacterMissionParameterGroups(status.ParameterGroupID)
+			if err != nil {
+				return 0, err
+			}
+			result += characterMissionGroupExp(groups, status.Seq)
 		}
 	}
-	return result
+	return result, nil
 }
 
 func characterMissionFinalLevel(levels []*CharacterLevel, totalExp, fallbackLevel, fallbackExp int) (int, int) {
@@ -356,8 +382,12 @@ func newCharacterMissionProgressIndex(raw *rendersnapshot.RawUserData, cid int, 
 	return result
 }
 
-func buildCharacterMissionOverviewRow(source DataSource, mission *CharacterMission, index characterMissionProgressIndex) drawing.CharacterMissionOverviewRow {
-	groups := cloneCharacterMissionParameterGroups(source.GetCharacterMissionParameterGroups(mission.ParameterGroupID))
+func buildCharacterMissionOverviewRow(source DataSource, mission *CharacterMission, index characterMissionProgressIndex) (drawing.CharacterMissionOverviewRow, error) {
+	sourceGroups, err := source.GetCharacterMissionParameterGroups(mission.ParameterGroupID)
+	if err != nil {
+		return drawing.CharacterMissionOverviewRow{}, err
+	}
+	groups := cloneCharacterMissionParameterGroups(sourceGroups)
 	sort.Slice(groups, func(i, j int) bool { return groups[i].Seq < groups[j].Seq })
 	isEx := isCharacterMissionExType(mission.CharacterMissionType)
 	current := resolveCharacterMissionCurrent(mission, groups, isEx, index)
@@ -371,7 +401,7 @@ func buildCharacterMissionOverviewRow(source DataSource, mission *CharacterMissi
 		NextNeed: nextNeed, NextExp: nextExp, CurrentRound: characterMissionRoundPtr(currentRound),
 		CurrentRoundProgress: characterMissionRoundPtr(roundProgress), CurrentRoundNeed: characterMissionRoundPtr(roundNeed),
 		ExDisplayRoundText: characterMissionRoundTextPtr(roundText),
-	}
+	}, nil
 }
 
 func resolveCharacterMissionCurrent(mission *CharacterMission, groups []*CharacterMissionParameterGroup, isEx bool, index characterMissionProgressIndex) int {

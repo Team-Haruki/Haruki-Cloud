@@ -20,7 +20,7 @@ func TestControllerResetMasterdataCacheReloadsInventoryFiles(t *testing.T) {
 		t.Fatalf("write initial materials: %v", err)
 	}
 	controller := &Controller{masterdata: newMasterdataStore(nil, root)}
-	if got := controller.masterdata.forRegion(context.Background(), renderregion.JP).materials[1].Name; got != "Old" {
+	if got := mustForRegion(t, controller.masterdata, context.Background(), renderregion.JP).materials[1].Name; got != "Old" {
 		t.Fatalf("initial material name = %q", got)
 	}
 
@@ -29,7 +29,7 @@ func TestControllerResetMasterdataCacheReloadsInventoryFiles(t *testing.T) {
 	}
 	controller.ResetMasterdataCache()
 
-	if got := controller.masterdata.forRegion(context.Background(), renderregion.JP).materials[1].Name; got != "Updated" {
+	if got := mustForRegion(t, controller.masterdata, context.Background(), renderregion.JP).materials[1].Name; got != "Updated" {
 		t.Fatalf("reloaded material name = %q", got)
 	}
 }

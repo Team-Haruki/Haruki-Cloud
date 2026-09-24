@@ -57,8 +57,8 @@ func TestInventoryRefactorRequestErrors(t *testing.T) {
 }
 
 func TestInventoryRefactorMasterdataBranches(t *testing.T) {
-	if got := (*masterdataStore)(nil).forRegion(context.Background(), renderregion.JP); got == nil {
-		t.Fatal("nil store returned nil masterdata")
+	if got, err := (*masterdataStore)(nil).forRegion(context.Background(), renderregion.JP); got == nil || err != nil {
+		t.Fatalf("nil store = %v, %v; want empty masterdata", got, err)
 	}
 	(*masterdataStore)(nil).resetCache()
 	if candidates := masterdataFileCandidates(" ", renderregion.JP, "materials.json"); candidates != nil {
@@ -73,7 +73,12 @@ func TestInventoryRefactorMasterdataBranches(t *testing.T) {
 		t.Fatal(err)
 	}
 	destination := make(map[int]materialMeta)
-	loadIndexedMasterdata(dir, renderregion.JP, "materials.json", destination, func(item materialMeta) int { return item.ID })
+	if !loadIndexedMasterdata(dir, renderregion.JP, "materials.json", destination, func(item materialMeta) int { return item.ID }) {
+		t.Fatal("existing masterdata file reported as missing")
+	}
+	if loadIndexedMasterdata(dir, renderregion.JP, "boostItems.json", make(map[int]boostItemMeta), func(item boostItemMeta) int { return item.ID }) {
+		t.Fatal("missing masterdata file reported as loaded")
+	}
 	if len(destination) != 1 || destination[9].Name != "keep" {
 		t.Fatalf("indexed masterdata = %#v", destination)
 	}

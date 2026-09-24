@@ -52,6 +52,7 @@ type testSource struct {
 	missionGroups      map[int][]*CharacterMissionParameterGroup
 	leaderRequirements []LeaderMissionRequirement
 	leaderMaxPlayLimit int
+	missionErr         error
 	gates              map[int]map[int]*MysekaiGateLevel
 	shopItems          map[int]*ShopItem
 }
@@ -130,16 +131,25 @@ func (s *testSource) GetGameCharacterStyle(gameID int) *GameCharacterStyle {
 	return s.charStyles[gameID]
 }
 
-func (s *testSource) GetCharacterMissions(characterID int) []*CharacterMission {
-	return s.characterMissions[characterID]
+func (s *testSource) GetCharacterMissions(characterID int) ([]*CharacterMission, error) {
+	if s.missionErr != nil {
+		return nil, s.missionErr
+	}
+	return s.characterMissions[characterID], nil
 }
 
-func (s *testSource) GetCharacterMissionParameterGroups(parameterGroupID int) []*CharacterMissionParameterGroup {
-	return s.missionGroups[parameterGroupID]
+func (s *testSource) GetCharacterMissionParameterGroups(parameterGroupID int) ([]*CharacterMissionParameterGroup, error) {
+	if s.missionErr != nil {
+		return nil, s.missionErr
+	}
+	return s.missionGroups[parameterGroupID], nil
 }
 
-func (s *testSource) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
-	return append([]LeaderMissionRequirement(nil), s.leaderRequirements...), s.leaderMaxPlayLimit
+func (s *testSource) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int, error) {
+	if s.missionErr != nil {
+		return nil, 0, s.missionErr
+	}
+	return append([]LeaderMissionRequirement(nil), s.leaderRequirements...), s.leaderMaxPlayLimit, nil
 }
 
 func (s *testSource) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel {

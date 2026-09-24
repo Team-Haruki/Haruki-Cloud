@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/database/sekai/charactermissionv2parametergroup"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	"haruki-cloud/database/sekai/level"
+	"haruki-cloud/internal/pjsk/render/cachefill"
 )
 
 func (p *dbEducationProvider) GetBonds(ctx context.Context) []*Bond {
@@ -44,51 +45,53 @@ func (p *dbEducationProvider) GetGameCharacterStyle(ctx context.Context, gameID 
 
 // The mission getters serve the database cache; when the fill failed (not
 // when the table is empty, which the fill handles) they serve the local
-// files for the request instead, when a store is configured.
+// files for the request instead, when a store is configured, and otherwise
+// report the failure wrapped in cachefill.ErrUnavailable so the command
+// fails instead of rendering no missions.
 
-func (p *dbEducationProvider) GetCharacterMissions(ctx context.Context, characterID int) []*CharacterMission {
+func (p *dbEducationProvider) GetCharacterMissions(ctx context.Context, characterID int) ([]*CharacterMission, error) {
 	if characterID <= 0 {
-		return nil
+		return nil, nil
 	}
 	if err := p.ensureLeaderMissionsLoaded(ctx); err != nil {
 		if local := p.localFallback(); local != nil {
 			return local.GetCharacterMissions(ctx, characterID)
 		}
-		return nil
+		return nil, cachefill.Unavailable(err)
 	}
 
 	p.missionMu.RLock()
 	defer p.missionMu.RUnlock()
-	return cloneEdCharacterMissions(p.characterMissionsByCharacter[characterID])
+	return cloneEdCharacterMissions(p.characterMissionsByCharacter[characterID]), nil
 }
 
-func (p *dbEducationProvider) GetCharacterMissionParameterGroups(ctx context.Context, parameterGroupID int) []*CharacterMissionParameterGroup {
+func (p *dbEducationProvider) GetCharacterMissionParameterGroups(ctx context.Context, parameterGroupID int) ([]*CharacterMissionParameterGroup, error) {
 	if parameterGroupID <= 0 {
-		return nil
+		return nil, nil
 	}
 	if err := p.ensureLeaderMissionsLoaded(ctx); err != nil {
 		if local := p.localFallback(); local != nil {
 			return local.GetCharacterMissionParameterGroups(ctx, parameterGroupID)
 		}
-		return nil
+		return nil, cachefill.Unavailable(err)
 	}
 
 	p.missionMu.RLock()
 	defer p.missionMu.RUnlock()
-	return cloneEdCharacterMissionParameterGroups(p.characterMissionGroupsByID[parameterGroupID])
+	return cloneEdCharacterMissionParameterGroups(p.characterMissionGroupsByID[parameterGroupID]), nil
 }
 
-func (p *dbEducationProvider) GetLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int) {
+func (p *dbEducationProvider) GetLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int, error) {
 	if err := p.ensureLeaderMissionsLoaded(ctx); err != nil {
 		if local := p.localFallback(); local != nil {
 			return local.GetLeaderMissionRequirements(ctx)
 		}
-		return nil, 0
+		return nil, 0, cachefill.Unavailable(err)
 	}
 
 	p.missionMu.RLock()
 	defer p.missionMu.RUnlock()
-	return cloneEdLeaderMissionRequirements(p.leaderRequirements), p.leaderMaxPlayLimit
+	return cloneEdLeaderMissionRequirements(p.leaderRequirements), p.leaderMaxPlayLimit, nil
 }
 
 func (p *dbEducationProvider) ensureBondMasterLoaded(ctx context.Context) bool {

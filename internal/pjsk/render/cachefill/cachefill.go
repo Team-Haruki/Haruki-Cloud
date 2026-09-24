@@ -15,11 +15,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
 	"golang.org/x/sync/singleflight"
+
+	"haruki-cloud/utils/logger"
 )
+
+var fillLogger = logger.NewLoggerFromGlobal("MasterdataFill")
 
 const (
 	// DefaultTimeout bounds one detached fill.
@@ -31,6 +36,19 @@ const (
 // ErrBackoff reports a fill that was skipped because the previous fill of
 // the same key failed less than Backoff ago. It wraps that failure.
 var ErrBackoff = errors.New("cache fill skipped: previous fill failed recently")
+
+// ErrUnavailable marks a request that could not be answered because a
+// master data fill failed and no local fallback supplied the data. Callers
+// surface it as a failure instead of rendering empty or partial tables.
+var ErrUnavailable = errors.New("master data temporarily unavailable")
+
+// Unavailable wraps a failed fill's error with ErrUnavailable; nil stays nil.
+func Unavailable(err error) error {
+	if err == nil || errors.Is(err, ErrUnavailable) {
+		return err
+	}
+	return fmt.Errorf("%w: %w", ErrUnavailable, err)
+}
 
 // Group coordinates fills per key. The zero value is ready to use.
 //
@@ -46,6 +64,14 @@ type Group struct {
 	Backoff time.Duration
 	// Now is the clock; nil means time.Now.
 	Now func() time.Time
+	// Cache and Region label the warning logged when a fill fails. A
+	// failure is logged once when it is recorded; calls skipped by the
+	// backoff do not log, so an outage logs at most once per key and
+	// backoff window.
+	Cache  string
+	Region string
+	// Logger receives the failure warnings; nil means the package logger.
+	Logger *slog.Logger
 
 	flights    singleflight.Group
 	mu         sync.Mutex
@@ -80,7 +106,9 @@ func (g *Group) Do(ctx context.Context, key string, fill func(ctx context.Contex
 		fillCtx, cancel := g.Context(ctx)
 		defer cancel()
 		err := fill(fillCtx)
-		g.record(key, generation, err)
+		if g.record(key, generation, err) {
+			g.logFailure(fillCtx, key, generation, err)
+		}
 		return nil, err
 	})
 	return err
@@ -130,20 +158,35 @@ func (g *Group) backoffError(key string) error {
 	return fmt.Errorf("%w: %w", ErrBackoff, last.err)
 }
 
-func (g *Group) record(key string, generation uint64, err error) {
+// record stores the outcome of a fill and reports whether it recorded a
+// new failure.
+func (g *Group) record(key string, generation uint64, err error) bool {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	if generation != g.generation {
-		return
+		return false
 	}
 	if err == nil {
 		delete(g.failed, key)
-		return
+		return false
 	}
 	if g.failed == nil {
 		g.failed = make(map[string]failure)
 	}
 	g.failed[key] = failure{at: g.now(), err: err}
+	return true
+}
+
+func (g *Group) logFailure(ctx context.Context, key string, generation uint64, err error) {
+	log := g.Logger
+	if log == nil {
+		log = fillLogger.Slog()
+	}
+	attrs := []any{"cache", g.Cache, "key", key, "generation", generation, "backoff", g.backoff().String(), "error", err.Error()}
+	if g.Region != "" {
+		attrs = append(attrs, "region", g.Region)
+	}
+	log.WarnContext(ctx, "master data fill failed", attrs...)
 }
 
 func (g *Group) now() time.Time {

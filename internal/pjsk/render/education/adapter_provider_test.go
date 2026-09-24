@@ -61,14 +61,14 @@ func (populatedEducationProvider) GetBondLevels(context.Context) []*provider.Bon
 func (populatedEducationProvider) GetGameCharacterStyle(context.Context, int) *provider.GameCharacterStyle {
 	return &provider.GameCharacterStyle{GameID: 21, CharacterID: 22, ColorCode: "#ffffff"}
 }
-func (populatedEducationProvider) GetCharacterMissions(context.Context, int) []*provider.CharacterMission {
-	return []*provider.CharacterMission{nil, {ID: 23, CharacterID: 24, CharacterMissionType: "live", ParameterGroupID: 25, IsAchievementMission: true}}
+func (populatedEducationProvider) GetCharacterMissions(context.Context, int) ([]*provider.CharacterMission, error) {
+	return []*provider.CharacterMission{nil, {ID: 23, CharacterID: 24, CharacterMissionType: "live", ParameterGroupID: 25, IsAchievementMission: true}}, nil
 }
-func (populatedEducationProvider) GetCharacterMissionParameterGroups(context.Context, int) []*provider.CharacterMissionParameterGroup {
-	return []*provider.CharacterMissionParameterGroup{nil, {GameID: 26, Seq: 27, Requirement: 28, Exp: 29, Quantity: 30}}
+func (populatedEducationProvider) GetCharacterMissionParameterGroups(context.Context, int) ([]*provider.CharacterMissionParameterGroup, error) {
+	return []*provider.CharacterMissionParameterGroup{nil, {GameID: 26, Seq: 27, Requirement: 28, Exp: 29, Quantity: 30}}, nil
 }
-func (populatedEducationProvider) GetLeaderMissionRequirements(context.Context) ([]provider.LeaderMissionRequirement, int) {
-	return []provider.LeaderMissionRequirement{{Seq: 31, Requirement: 32}}, 33
+func (populatedEducationProvider) GetLeaderMissionRequirements(context.Context) ([]provider.LeaderMissionRequirement, int, error) {
+	return []provider.LeaderMissionRequirement{{Seq: 31, Requirement: 32}}, 33, nil
 }
 func (populatedEducationProvider) GetMysekaiGateLevel(context.Context, int, int) *provider.MysekaiGateLevel {
 	return &provider.MysekaiGateLevel{GateID: 34, Level: 35, PowerBonusRate: 0.36}
@@ -126,10 +126,12 @@ func assertEmptyEducationProgression(t *testing.T, a *ProviderAdapter) {
 
 func assertEmptyEducationMissions(t *testing.T, a *ProviderAdapter) {
 	t.Helper()
-	if len(a.GetCharacterMissions(1)) != 0 || len(a.GetCharacterMissionParameterGroups(1)) != 0 {
-		t.Fatal("empty character missions returned data")
+	missions, missionErr := a.GetCharacterMissions(1)
+	groups, groupErr := a.GetCharacterMissionParameterGroups(1)
+	if len(missions) != 0 || len(groups) != 0 {
+		t.Fatalf("empty character missions returned data (%v, %v)", missionErr, groupErr)
 	}
-	if requirements, maxPlayLimit := a.GetLeaderMissionRequirements(); len(requirements) != 0 || maxPlayLimit != 0 {
+	if requirements, maxPlayLimit, _ := a.GetLeaderMissionRequirements(); len(requirements) != 0 || maxPlayLimit != 0 {
 		t.Fatalf("leader requirements = %#v, %d", requirements, maxPlayLimit)
 	}
 	if a.GetMysekaiGateLevel(1, 1) != nil || a.GetShopItemByResourceBoxID(1) != nil || len(a.GetShopItems()) != 0 {
@@ -203,14 +205,17 @@ func assertPopulatedEducationProgression(t *testing.T, adapter *ProviderAdapter)
 
 func assertPopulatedEducationMissions(t *testing.T, adapter *ProviderAdapter) {
 	t.Helper()
-	missions := adapter.GetCharacterMissions(24)
-	groups := adapter.GetCharacterMissionParameterGroups(25)
+	missions, missionErr := adapter.GetCharacterMissions(24)
+	groups, groupErr := adapter.GetCharacterMissionParameterGroups(25)
+	if missionErr != nil || groupErr != nil {
+		t.Fatalf("mission conversion errors = %v, %v", missionErr, groupErr)
+	}
 	if len(missions) != 2 || missions[0] != nil || missions[1].ParameterGroupID != 25 ||
 		len(groups) != 2 || groups[0] != nil || groups[1].Quantity != 30 {
 		t.Fatalf("mission conversion = %#v, %#v", missions, groups)
 	}
-	requirements, maxPlayLimit := adapter.GetLeaderMissionRequirements()
-	if len(requirements) != 1 || requirements[0].Requirement != 32 || maxPlayLimit != 33 {
+	requirements, maxPlayLimit, err := adapter.GetLeaderMissionRequirements()
+	if err != nil || len(requirements) != 1 || requirements[0].Requirement != 32 || maxPlayLimit != 33 {
 		t.Fatalf("leader requirements = %#v, %d", requirements, maxPlayLimit)
 	}
 	if adapter.GetMysekaiGateLevel(34, 35).PowerBonusRate != 0.36 ||

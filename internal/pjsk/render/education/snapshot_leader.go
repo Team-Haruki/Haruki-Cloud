@@ -23,7 +23,10 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 		return nil, err
 	}
 
-	missionRequirements, maxPlayLimit := ctx.source.GetLeaderMissionRequirements()
+	missionRequirements, maxPlayLimit, err := ctx.source.GetLeaderMissionRequirements()
+	if err != nil {
+		return nil, err
+	}
 	progress := collectLeaderMissionProgress(ctx.raw)
 	missionStatuses := leaderMissionStatuses(ctx.snapshot, ctx.raw)
 	status101Count := applyLeaderMissionStatuses(progress, missionStatuses, missionRequirements)

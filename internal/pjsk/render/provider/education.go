@@ -17,9 +17,12 @@ type EducationProvider interface {
 	GetBonds(ctx context.Context) []*Bond
 	GetBondLevels(ctx context.Context) []*BondLevel
 	GetGameCharacterStyle(ctx context.Context, gameID int) *GameCharacterStyle
-	GetCharacterMissions(ctx context.Context, characterID int) []*CharacterMission
-	GetCharacterMissionParameterGroups(ctx context.Context, parameterGroupID int) []*CharacterMissionParameterGroup
-	GetLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int)
+	// The mission getters report an error wrapping cachefill.ErrUnavailable
+	// when the mission tables cannot be read; an empty result with a nil
+	// error means the master data has no matching rows.
+	GetCharacterMissions(ctx context.Context, characterID int) ([]*CharacterMission, error)
+	GetCharacterMissionParameterGroups(ctx context.Context, parameterGroupID int) ([]*CharacterMissionParameterGroup, error)
+	GetLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int, error)
 	GetMysekaiGateLevel(ctx context.Context, gateID, level int) *MysekaiGateLevel
 	GetShopItemByResourceBoxID(ctx context.Context, resourceBoxID int) *ShopItem
 	GetShopItems(ctx context.Context) []*ShopItem

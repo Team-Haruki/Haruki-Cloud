@@ -103,6 +103,7 @@ func newDBMasterdataStore(ctx context.Context, dsn, region string) *dbMasterdata
 		cache: &dbMasterdataCache{
 			lists:    make(map[string][]map[string]any),
 			mapsByID: make(map[string]map[int]map[string]any),
+			fill:     cachefill.Group{Cache: "mysekai.controller", Region: region},
 		},
 	}
 }

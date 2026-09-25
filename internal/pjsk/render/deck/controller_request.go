@@ -47,6 +47,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 
 	c.applyOptionRequestFields(request, option, query)
 	c.applyCommonRecommendMetadata(request, region, recType, metadataOption(option, recType, query), query)
+	applyLimitedAutoScoreNotice(request, result.Decks)
 	return request, nil
 }
 
@@ -334,5 +335,14 @@ func applyRecommendDeckSelectionRequestFields(request *drawing.DeckRequest, opti
 	}
 	if keepAfterTrainingState, ok := option["keep_after_training_state"].(bool); ok {
 		request.KeepAfterTrainingState = keepAfterTrainingState
+	}
+}
+
+func applyLimitedAutoScoreNotice(request *drawing.DeckRequest, decks []RecommendDeck) {
+	for _, deck := range decks {
+		if deck.LimitedAutoScoreCoefficient > 0.700001 {
+			request.AutoScoreNotice = drawing.StringPtr(fmt.Sprintf("使用终章期间限定 AUTO 数值（判定系数 %.1f）", deck.LimitedAutoScoreCoefficient))
+			break
+		}
 	}
 }

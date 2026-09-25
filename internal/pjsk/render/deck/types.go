@@ -162,17 +162,18 @@ type RecommendResult struct {
 }
 
 type RecommendDeck struct {
-	SupportCards         []RecommendCard `json:"support_cards,omitempty"`
-	Cards                []RecommendCard `json:"cards"`
-	Score                int             `json:"score"`
-	LiveScore            int             `json:"live_score"`
-	MysekaiEventPoint    int             `json:"mysekai_event_point"`
-	TotalPower           int             `json:"total_power"`
-	EventBonusRate       float64         `json:"event_bonus_rate"`
-	SupportDeckBonusRate float64         `json:"support_deck_bonus_rate"`
-	MultiLiveScoreUp     float64         `json:"multi_live_score_up"`
-	ChallengeScoreDelta  int             `json:"challenge_score_delta"`
-	Algs                 []string        `json:"-"`
+	LimitedAutoScoreCoefficient float64         `json:"limited_auto_score_coefficient,omitempty"`
+	SupportCards                []RecommendCard `json:"support_cards,omitempty"`
+	Cards                       []RecommendCard `json:"cards"`
+	Score                       int             `json:"score"`
+	LiveScore                   int             `json:"live_score"`
+	MysekaiEventPoint           int             `json:"mysekai_event_point"`
+	TotalPower                  int             `json:"total_power"`
+	EventBonusRate              float64         `json:"event_bonus_rate"`
+	SupportDeckBonusRate        float64         `json:"support_deck_bonus_rate"`
+	MultiLiveScoreUp            float64         `json:"multi_live_score_up"`
+	ChallengeScoreDelta         int             `json:"challenge_score_delta"`
+	Algs                        []string        `json:"-"`
 }
 
 type RecommendCard struct {
@@ -298,15 +299,16 @@ type remoteRecommendSupportCard struct {
 }
 
 type remoteRecommendDeck struct {
-	SupportDeckCards     []remoteRecommendSupportCard `json:"support_deck_cards"`
-	Score                int                          `json:"score"`
-	LiveScore            int                          `json:"live_score"`
-	MysekaiEventPoint    int                          `json:"mysekai_event_point"`
-	TotalPower           int                          `json:"total_power"`
-	EventBonusRate       float64                      `json:"event_bonus_rate"`
-	SupportDeckBonusRate float64                      `json:"support_deck_bonus_rate"`
-	MultiLiveScoreUp     float64                      `json:"multi_live_score_up"`
-	Cards                []remoteRecommendCard        `json:"cards"`
+	LimitedAutoScoreCoefficient float64                      `json:"limited_auto_score_coefficient,omitempty"`
+	SupportDeckCards            []remoteRecommendSupportCard `json:"support_deck_cards"`
+	Score                       int                          `json:"score"`
+	LiveScore                   int                          `json:"live_score"`
+	MysekaiEventPoint           int                          `json:"mysekai_event_point"`
+	TotalPower                  int                          `json:"total_power"`
+	EventBonusRate              float64                      `json:"event_bonus_rate"`
+	SupportDeckBonusRate        float64                      `json:"support_deck_bonus_rate"`
+	MultiLiveScoreUp            float64                      `json:"multi_live_score_up"`
+	Cards                       []remoteRecommendCard        `json:"cards"`
 }
 
 type remoteRecommendCard struct {

@@ -192,6 +192,7 @@ type DeckData struct {
 }
 
 type DeckRequest struct {
+	AutoScoreNotice              *string                    `json:"auto_score_notice,omitempty"`
 	Region                       string                     `json:"region"`
 	Profile                      DetailedProfileCardRequest `json:"profile"`
 	DeckData                     []DeckData                 `json:"deck_data"`

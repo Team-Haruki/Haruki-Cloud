@@ -46,15 +46,16 @@ func convertRemoteDecks(src []remoteRecommendDeck) []RecommendDeck {
 			})
 		}
 		out = append(out, RecommendDeck{
-			SupportCards:         supportCards,
-			Cards:                cards,
-			Score:                d.Score,
-			LiveScore:            d.LiveScore,
-			MysekaiEventPoint:    d.MysekaiEventPoint,
-			TotalPower:           d.TotalPower,
-			EventBonusRate:       d.EventBonusRate,
-			SupportDeckBonusRate: d.SupportDeckBonusRate,
-			MultiLiveScoreUp:     d.MultiLiveScoreUp,
+			LimitedAutoScoreCoefficient: d.LimitedAutoScoreCoefficient,
+			SupportCards:                supportCards,
+			Cards:                       cards,
+			Score:                       d.Score,
+			LiveScore:                   d.LiveScore,
+			MysekaiEventPoint:           d.MysekaiEventPoint,
+			TotalPower:                  d.TotalPower,
+			EventBonusRate:              d.EventBonusRate,
+			SupportDeckBonusRate:        d.SupportDeckBonusRate,
+			MultiLiveScoreUp:            d.MultiLiveScoreUp,
 		})
 	}
 	return out

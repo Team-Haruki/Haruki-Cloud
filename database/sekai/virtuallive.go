@@ -65,6 +65,12 @@ type Virtuallive struct {
 	SubGameCharacterPenlightColorGroupID int64 `json:"sub_game_character_penlight_color_group_id,omitempty"`
 	// VirtualLiveGroupID holds the value of the "virtual_live_group_id" field.
 	VirtualLiveGroupID int64 `json:"virtual_live_group_id,omitempty"`
+	// VirtualLiveTotalCheerPointRewards holds the value of the "virtual_live_total_cheer_point_rewards" field.
+	VirtualLiveTotalCheerPointRewards json.RawMessage `json:"virtual_live_total_cheer_point_rewards,omitempty"`
+	// VirtualLiveTotalCheerPointSurplusReward holds the value of the "virtual_live_total_cheer_point_surplus_reward" field.
+	VirtualLiveTotalCheerPointSurplusReward json.RawMessage `json:"virtual_live_total_cheer_point_surplus_reward,omitempty"`
+	// VirtualLiveVirtualItemOverrideCost holds the value of the "virtual_live_virtual_item_override_cost" field.
+	VirtualLiveVirtualItemOverrideCost json.RawMessage `json:"virtual_live_virtual_item_override_cost,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -75,7 +81,7 @@ func (*Virtuallive) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case virtuallive.FieldVirtualLiveSetlists, virtuallive.FieldVirtualLiveBeginnerSchedules, virtuallive.FieldVirtualLiveSchedules, virtuallive.FieldVirtualLiveCharacters, virtuallive.FieldVirtualLiveRewards, virtuallive.FieldVirtualLiveCheerPointRewards, virtuallive.FieldVirtualLiveWaitingRoom, virtuallive.FieldVirtualItems, virtuallive.FieldVirtualLiveAppeals, virtuallive.FieldVirtualLiveBackgroundMusics, virtuallive.FieldVirtualLiveInformation:
+		case virtuallive.FieldVirtualLiveSetlists, virtuallive.FieldVirtualLiveBeginnerSchedules, virtuallive.FieldVirtualLiveSchedules, virtuallive.FieldVirtualLiveCharacters, virtuallive.FieldVirtualLiveRewards, virtuallive.FieldVirtualLiveCheerPointRewards, virtuallive.FieldVirtualLiveWaitingRoom, virtuallive.FieldVirtualItems, virtuallive.FieldVirtualLiveAppeals, virtuallive.FieldVirtualLiveBackgroundMusics, virtuallive.FieldVirtualLiveInformation, virtuallive.FieldVirtualLiveTotalCheerPointRewards, virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward, virtuallive.FieldVirtualLiveVirtualItemOverrideCost:
 			values[i] = new([]byte)
 		case virtuallive.FieldID, virtuallive.FieldGameID, virtuallive.FieldSeq, virtuallive.FieldScreenMvMusicVocalID, virtuallive.FieldStartAt, virtuallive.FieldEndAt, virtuallive.FieldRankingAnnounceAt, virtuallive.FieldArchiveReleaseConditionID, virtuallive.FieldSubGameCharacterPenlightColorGroupID, virtuallive.FieldVirtualLiveGroupID:
 			values[i] = new(sql.NullInt64)
@@ -268,6 +274,30 @@ func (_m *Virtuallive) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.VirtualLiveGroupID = value.Int64
 			}
+		case virtuallive.FieldVirtualLiveTotalCheerPointRewards:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field virtual_live_total_cheer_point_rewards", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.VirtualLiveTotalCheerPointRewards); err != nil {
+					return fmt.Errorf("unmarshal field virtual_live_total_cheer_point_rewards: %w", err)
+				}
+			}
+		case virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field virtual_live_total_cheer_point_surplus_reward", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.VirtualLiveTotalCheerPointSurplusReward); err != nil {
+					return fmt.Errorf("unmarshal field virtual_live_total_cheer_point_surplus_reward: %w", err)
+				}
+			}
+		case virtuallive.FieldVirtualLiveVirtualItemOverrideCost:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field virtual_live_virtual_item_override_cost", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.VirtualLiveVirtualItemOverrideCost); err != nil {
+					return fmt.Errorf("unmarshal field virtual_live_virtual_item_override_cost: %w", err)
+				}
+			}
 		case virtuallive.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field server_region", values[i])
@@ -381,6 +411,15 @@ func (_m *Virtuallive) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("virtual_live_group_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.VirtualLiveGroupID))
+	builder.WriteString(", ")
+	builder.WriteString("virtual_live_total_cheer_point_rewards=")
+	builder.WriteString(fmt.Sprintf("%v", _m.VirtualLiveTotalCheerPointRewards))
+	builder.WriteString(", ")
+	builder.WriteString("virtual_live_total_cheer_point_surplus_reward=")
+	builder.WriteString(fmt.Sprintf("%v", _m.VirtualLiveTotalCheerPointSurplusReward))
+	builder.WriteString(", ")
+	builder.WriteString("virtual_live_virtual_item_override_cost=")
+	builder.WriteString(fmt.Sprintf("%v", _m.VirtualLiveVirtualItemOverrideCost))
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

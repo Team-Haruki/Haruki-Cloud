@@ -59,6 +59,12 @@ const (
 	FieldSubGameCharacterPenlightColorGroupID = "sub_game_character_penlight_color_group_id"
 	// FieldVirtualLiveGroupID holds the string denoting the virtual_live_group_id field in the database.
 	FieldVirtualLiveGroupID = "virtual_live_group_id"
+	// FieldVirtualLiveTotalCheerPointRewards holds the string denoting the virtual_live_total_cheer_point_rewards field in the database.
+	FieldVirtualLiveTotalCheerPointRewards = "virtual_live_total_cheer_point_rewards"
+	// FieldVirtualLiveTotalCheerPointSurplusReward holds the string denoting the virtual_live_total_cheer_point_surplus_reward field in the database.
+	FieldVirtualLiveTotalCheerPointSurplusReward = "virtual_live_total_cheer_point_surplus_reward"
+	// FieldVirtualLiveVirtualItemOverrideCost holds the string denoting the virtual_live_virtual_item_override_cost field in the database.
+	FieldVirtualLiveVirtualItemOverrideCost = "virtual_live_virtual_item_override_cost"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the virtuallive in the database.
@@ -92,6 +98,9 @@ var Columns = []string{
 	FieldArchiveReleaseConditionID,
 	FieldSubGameCharacterPenlightColorGroupID,
 	FieldVirtualLiveGroupID,
+	FieldVirtualLiveTotalCheerPointRewards,
+	FieldVirtualLiveTotalCheerPointSurplusReward,
+	FieldVirtualLiveVirtualItemOverrideCost,
 	FieldServerRegion,
 }
 

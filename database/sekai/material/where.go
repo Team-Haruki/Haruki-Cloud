@@ -93,6 +93,11 @@ func ChangeFlavorTextAt(v int64) predicate.Material {
 	return predicate.Material(sql.FieldEQ(FieldChangeFlavorTextAt, v))
 }
 
+// ExpiredAt applies equality check predicate on the "expired_at" field. It's identical to ExpiredAtEQ.
+func ExpiredAt(v int64) predicate.Material {
+	return predicate.Material(sql.FieldEQ(FieldExpiredAt, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Material {
 	return predicate.Material(sql.FieldEQ(FieldServerRegion, v))
@@ -566,6 +571,56 @@ func ChangeFlavorTextAtIsNil() predicate.Material {
 // ChangeFlavorTextAtNotNil applies the NotNil predicate on the "change_flavor_text_at" field.
 func ChangeFlavorTextAtNotNil() predicate.Material {
 	return predicate.Material(sql.FieldNotNull(FieldChangeFlavorTextAt))
+}
+
+// ExpiredAtEQ applies the EQ predicate on the "expired_at" field.
+func ExpiredAtEQ(v int64) predicate.Material {
+	return predicate.Material(sql.FieldEQ(FieldExpiredAt, v))
+}
+
+// ExpiredAtNEQ applies the NEQ predicate on the "expired_at" field.
+func ExpiredAtNEQ(v int64) predicate.Material {
+	return predicate.Material(sql.FieldNEQ(FieldExpiredAt, v))
+}
+
+// ExpiredAtIn applies the In predicate on the "expired_at" field.
+func ExpiredAtIn(vs ...int64) predicate.Material {
+	return predicate.Material(sql.FieldIn(FieldExpiredAt, vs...))
+}
+
+// ExpiredAtNotIn applies the NotIn predicate on the "expired_at" field.
+func ExpiredAtNotIn(vs ...int64) predicate.Material {
+	return predicate.Material(sql.FieldNotIn(FieldExpiredAt, vs...))
+}
+
+// ExpiredAtGT applies the GT predicate on the "expired_at" field.
+func ExpiredAtGT(v int64) predicate.Material {
+	return predicate.Material(sql.FieldGT(FieldExpiredAt, v))
+}
+
+// ExpiredAtGTE applies the GTE predicate on the "expired_at" field.
+func ExpiredAtGTE(v int64) predicate.Material {
+	return predicate.Material(sql.FieldGTE(FieldExpiredAt, v))
+}
+
+// ExpiredAtLT applies the LT predicate on the "expired_at" field.
+func ExpiredAtLT(v int64) predicate.Material {
+	return predicate.Material(sql.FieldLT(FieldExpiredAt, v))
+}
+
+// ExpiredAtLTE applies the LTE predicate on the "expired_at" field.
+func ExpiredAtLTE(v int64) predicate.Material {
+	return predicate.Material(sql.FieldLTE(FieldExpiredAt, v))
+}
+
+// ExpiredAtIsNil applies the IsNil predicate on the "expired_at" field.
+func ExpiredAtIsNil() predicate.Material {
+	return predicate.Material(sql.FieldIsNull(FieldExpiredAt))
+}
+
+// ExpiredAtNotNil applies the NotNil predicate on the "expired_at" field.
+func ExpiredAtNotNil() predicate.Material {
+	return predicate.Material(sql.FieldNotNull(FieldExpiredAt))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

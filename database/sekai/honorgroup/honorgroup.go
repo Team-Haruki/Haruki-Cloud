@@ -23,6 +23,8 @@ const (
 	FieldBackgroundAssetbundleName = "background_assetbundle_name"
 	// FieldFrameName holds the string denoting the frame_name field in the database.
 	FieldFrameName = "frame_name"
+	// FieldIsMedalDisplayed holds the string denoting the is_medal_displayed field in the database.
+	FieldIsMedalDisplayed = "is_medal_displayed"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the honorgroup in the database.
@@ -38,6 +40,7 @@ var Columns = []string{
 	FieldHonorType,
 	FieldBackgroundAssetbundleName,
 	FieldFrameName,
+	FieldIsMedalDisplayed,
 	FieldServerRegion,
 }
 
@@ -87,6 +90,11 @@ func ByBackgroundAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 // ByFrameName orders the results by the frame_name field.
 func ByFrameName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFrameName, opts...).ToFunc()
+}
+
+// ByIsMedalDisplayed orders the results by the is_medal_displayed field.
+func ByIsMedalDisplayed(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsMedalDisplayed, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

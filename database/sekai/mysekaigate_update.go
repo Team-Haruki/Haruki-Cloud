@@ -114,6 +114,26 @@ func (_u *MysekaigateUpdate) ClearAssetbundleName() *MysekaigateUpdate {
 	return _u
 }
 
+// SetMysekaiGateType sets the "mysekai_gate_type" field.
+func (_u *MysekaigateUpdate) SetMysekaiGateType(v string) *MysekaigateUpdate {
+	_u.mutation.SetMysekaiGateType(v)
+	return _u
+}
+
+// SetNillableMysekaiGateType sets the "mysekai_gate_type" field if the given value is not nil.
+func (_u *MysekaigateUpdate) SetNillableMysekaiGateType(v *string) *MysekaigateUpdate {
+	if v != nil {
+		_u.SetMysekaiGateType(*v)
+	}
+	return _u
+}
+
+// ClearMysekaiGateType clears the value of the "mysekai_gate_type" field.
+func (_u *MysekaigateUpdate) ClearMysekaiGateType() *MysekaigateUpdate {
+	_u.mutation.ClearMysekaiGateType()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *MysekaigateUpdate) SetServerRegion(v string) *MysekaigateUpdate {
 	_u.mutation.SetServerRegion(v)
@@ -195,6 +215,12 @@ func (_u *MysekaigateUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(mysekaigate.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.MysekaiGateType(); ok {
+		_spec.SetField(mysekaigate.FieldMysekaiGateType, field.TypeString, value)
+	}
+	if _u.mutation.MysekaiGateTypeCleared() {
+		_spec.ClearField(mysekaigate.FieldMysekaiGateType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaigate.FieldServerRegion, field.TypeString, value)
@@ -303,6 +329,26 @@ func (_u *MysekaigateUpdateOne) SetNillableAssetbundleName(v *string) *Mysekaiga
 // ClearAssetbundleName clears the value of the "assetbundle_name" field.
 func (_u *MysekaigateUpdateOne) ClearAssetbundleName() *MysekaigateUpdateOne {
 	_u.mutation.ClearAssetbundleName()
+	return _u
+}
+
+// SetMysekaiGateType sets the "mysekai_gate_type" field.
+func (_u *MysekaigateUpdateOne) SetMysekaiGateType(v string) *MysekaigateUpdateOne {
+	_u.mutation.SetMysekaiGateType(v)
+	return _u
+}
+
+// SetNillableMysekaiGateType sets the "mysekai_gate_type" field if the given value is not nil.
+func (_u *MysekaigateUpdateOne) SetNillableMysekaiGateType(v *string) *MysekaigateUpdateOne {
+	if v != nil {
+		_u.SetMysekaiGateType(*v)
+	}
+	return _u
+}
+
+// ClearMysekaiGateType clears the value of the "mysekai_gate_type" field.
+func (_u *MysekaigateUpdateOne) ClearMysekaiGateType() *MysekaigateUpdateOne {
+	_u.mutation.ClearMysekaiGateType()
 	return _u
 }
 
@@ -417,6 +463,12 @@ func (_u *MysekaigateUpdateOne) sqlSave(ctx context.Context) (_node *Mysekaigate
 	}
 	if _u.mutation.AssetbundleNameCleared() {
 		_spec.ClearField(mysekaigate.FieldAssetbundleName, field.TypeString)
+	}
+	if value, ok := _u.mutation.MysekaiGateType(); ok {
+		_spec.SetField(mysekaigate.FieldMysekaiGateType, field.TypeString, value)
+	}
+	if _u.mutation.MysekaiGateTypeCleared() {
+		_spec.ClearField(mysekaigate.FieldMysekaiGateType, field.TypeString)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaigate.FieldServerRegion, field.TypeString, value)

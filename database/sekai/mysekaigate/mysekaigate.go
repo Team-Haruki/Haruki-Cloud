@@ -19,6 +19,8 @@ const (
 	FieldName = "name"
 	// FieldAssetbundleName holds the string denoting the assetbundle_name field in the database.
 	FieldAssetbundleName = "assetbundle_name"
+	// FieldMysekaiGateType holds the string denoting the mysekai_gate_type field in the database.
+	FieldMysekaiGateType = "mysekai_gate_type"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the mysekaigate in the database.
@@ -32,6 +34,7 @@ var Columns = []string{
 	FieldUnit,
 	FieldName,
 	FieldAssetbundleName,
+	FieldMysekaiGateType,
 	FieldServerRegion,
 }
 
@@ -71,6 +74,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByAssetbundleName orders the results by the assetbundle_name field.
 func ByAssetbundleName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssetbundleName, opts...).ToFunc()
+}
+
+// ByMysekaiGateType orders the results by the mysekai_gate_type field.
+func ByMysekaiGateType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMysekaiGateType, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

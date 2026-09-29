@@ -208,6 +208,33 @@ func (_u *MaterialUpdate) ClearChangeFlavorTextAt() *MaterialUpdate {
 	return _u
 }
 
+// SetExpiredAt sets the "expired_at" field.
+func (_u *MaterialUpdate) SetExpiredAt(v int64) *MaterialUpdate {
+	_u.mutation.ResetExpiredAt()
+	_u.mutation.SetExpiredAt(v)
+	return _u
+}
+
+// SetNillableExpiredAt sets the "expired_at" field if the given value is not nil.
+func (_u *MaterialUpdate) SetNillableExpiredAt(v *int64) *MaterialUpdate {
+	if v != nil {
+		_u.SetExpiredAt(*v)
+	}
+	return _u
+}
+
+// AddExpiredAt adds value to the "expired_at" field.
+func (_u *MaterialUpdate) AddExpiredAt(v int64) *MaterialUpdate {
+	_u.mutation.AddExpiredAt(v)
+	return _u
+}
+
+// ClearExpiredAt clears the value of the "expired_at" field.
+func (_u *MaterialUpdate) ClearExpiredAt() *MaterialUpdate {
+	_u.mutation.ClearExpiredAt()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *MaterialUpdate) SetServerRegion(v string) *MaterialUpdate {
 	_u.mutation.SetServerRegion(v)
@@ -319,6 +346,15 @@ func (_u *MaterialUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.ChangeFlavorTextAtCleared() {
 		_spec.ClearField(material.FieldChangeFlavorTextAt, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.ExpiredAt(); ok {
+		_spec.SetField(material.FieldExpiredAt, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedExpiredAt(); ok {
+		_spec.AddField(material.FieldExpiredAt, field.TypeInt64, value)
+	}
+	if _u.mutation.ExpiredAtCleared() {
+		_spec.ClearField(material.FieldExpiredAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(material.FieldServerRegion, field.TypeString, value)
@@ -524,6 +560,33 @@ func (_u *MaterialUpdateOne) ClearChangeFlavorTextAt() *MaterialUpdateOne {
 	return _u
 }
 
+// SetExpiredAt sets the "expired_at" field.
+func (_u *MaterialUpdateOne) SetExpiredAt(v int64) *MaterialUpdateOne {
+	_u.mutation.ResetExpiredAt()
+	_u.mutation.SetExpiredAt(v)
+	return _u
+}
+
+// SetNillableExpiredAt sets the "expired_at" field if the given value is not nil.
+func (_u *MaterialUpdateOne) SetNillableExpiredAt(v *int64) *MaterialUpdateOne {
+	if v != nil {
+		_u.SetExpiredAt(*v)
+	}
+	return _u
+}
+
+// AddExpiredAt adds value to the "expired_at" field.
+func (_u *MaterialUpdateOne) AddExpiredAt(v int64) *MaterialUpdateOne {
+	_u.mutation.AddExpiredAt(v)
+	return _u
+}
+
+// ClearExpiredAt clears the value of the "expired_at" field.
+func (_u *MaterialUpdateOne) ClearExpiredAt() *MaterialUpdateOne {
+	_u.mutation.ClearExpiredAt()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *MaterialUpdateOne) SetServerRegion(v string) *MaterialUpdateOne {
 	_u.mutation.SetServerRegion(v)
@@ -665,6 +728,15 @@ func (_u *MaterialUpdateOne) sqlSave(ctx context.Context) (_node *Material, err 
 	}
 	if _u.mutation.ChangeFlavorTextAtCleared() {
 		_spec.ClearField(material.FieldChangeFlavorTextAt, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.ExpiredAt(); ok {
+		_spec.SetField(material.FieldExpiredAt, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedExpiredAt(); ok {
+		_spec.AddField(material.FieldExpiredAt, field.TypeInt64, value)
+	}
+	if _u.mutation.ExpiredAtCleared() {
+		_spec.ClearField(material.FieldExpiredAt, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(material.FieldServerRegion, field.TypeString, value)

@@ -154,6 +154,26 @@ func (_u *HonorgroupUpdate) ClearFrameName() *HonorgroupUpdate {
 	return _u
 }
 
+// SetIsMedalDisplayed sets the "is_medal_displayed" field.
+func (_u *HonorgroupUpdate) SetIsMedalDisplayed(v bool) *HonorgroupUpdate {
+	_u.mutation.SetIsMedalDisplayed(v)
+	return _u
+}
+
+// SetNillableIsMedalDisplayed sets the "is_medal_displayed" field if the given value is not nil.
+func (_u *HonorgroupUpdate) SetNillableIsMedalDisplayed(v *bool) *HonorgroupUpdate {
+	if v != nil {
+		_u.SetIsMedalDisplayed(*v)
+	}
+	return _u
+}
+
+// ClearIsMedalDisplayed clears the value of the "is_medal_displayed" field.
+func (_u *HonorgroupUpdate) ClearIsMedalDisplayed() *HonorgroupUpdate {
+	_u.mutation.ClearIsMedalDisplayed()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *HonorgroupUpdate) SetServerRegion(v string) *HonorgroupUpdate {
 	_u.mutation.SetServerRegion(v)
@@ -247,6 +267,12 @@ func (_u *HonorgroupUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if _u.mutation.FrameNameCleared() {
 		_spec.ClearField(honorgroup.FieldFrameName, field.TypeString)
+	}
+	if value, ok := _u.mutation.IsMedalDisplayed(); ok {
+		_spec.SetField(honorgroup.FieldIsMedalDisplayed, field.TypeBool, value)
+	}
+	if _u.mutation.IsMedalDisplayedCleared() {
+		_spec.ClearField(honorgroup.FieldIsMedalDisplayed, field.TypeBool)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(honorgroup.FieldServerRegion, field.TypeString, value)
@@ -398,6 +424,26 @@ func (_u *HonorgroupUpdateOne) ClearFrameName() *HonorgroupUpdateOne {
 	return _u
 }
 
+// SetIsMedalDisplayed sets the "is_medal_displayed" field.
+func (_u *HonorgroupUpdateOne) SetIsMedalDisplayed(v bool) *HonorgroupUpdateOne {
+	_u.mutation.SetIsMedalDisplayed(v)
+	return _u
+}
+
+// SetNillableIsMedalDisplayed sets the "is_medal_displayed" field if the given value is not nil.
+func (_u *HonorgroupUpdateOne) SetNillableIsMedalDisplayed(v *bool) *HonorgroupUpdateOne {
+	if v != nil {
+		_u.SetIsMedalDisplayed(*v)
+	}
+	return _u
+}
+
+// ClearIsMedalDisplayed clears the value of the "is_medal_displayed" field.
+func (_u *HonorgroupUpdateOne) ClearIsMedalDisplayed() *HonorgroupUpdateOne {
+	_u.mutation.ClearIsMedalDisplayed()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *HonorgroupUpdateOne) SetServerRegion(v string) *HonorgroupUpdateOne {
 	_u.mutation.SetServerRegion(v)
@@ -521,6 +567,12 @@ func (_u *HonorgroupUpdateOne) sqlSave(ctx context.Context) (_node *Honorgroup, 
 	}
 	if _u.mutation.FrameNameCleared() {
 		_spec.ClearField(honorgroup.FieldFrameName, field.TypeString)
+	}
+	if value, ok := _u.mutation.IsMedalDisplayed(); ok {
+		_spec.SetField(honorgroup.FieldIsMedalDisplayed, field.TypeBool, value)
+	}
+	if _u.mutation.IsMedalDisplayedCleared() {
+		_spec.ClearField(honorgroup.FieldIsMedalDisplayed, field.TypeBool)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(honorgroup.FieldServerRegion, field.TypeString, value)

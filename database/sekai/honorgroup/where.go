@@ -83,6 +83,11 @@ func FrameName(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldEQ(FieldFrameName, v))
 }
 
+// IsMedalDisplayed applies equality check predicate on the "is_medal_displayed" field. It's identical to IsMedalDisplayedEQ.
+func IsMedalDisplayed(v bool) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldEQ(FieldIsMedalDisplayed, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldEQ(FieldServerRegion, v))
@@ -511,6 +516,26 @@ func FrameNameEqualFold(v string) predicate.Honorgroup {
 // FrameNameContainsFold applies the ContainsFold predicate on the "frame_name" field.
 func FrameNameContainsFold(v string) predicate.Honorgroup {
 	return predicate.Honorgroup(sql.FieldContainsFold(FieldFrameName, v))
+}
+
+// IsMedalDisplayedEQ applies the EQ predicate on the "is_medal_displayed" field.
+func IsMedalDisplayedEQ(v bool) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldEQ(FieldIsMedalDisplayed, v))
+}
+
+// IsMedalDisplayedNEQ applies the NEQ predicate on the "is_medal_displayed" field.
+func IsMedalDisplayedNEQ(v bool) predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldNEQ(FieldIsMedalDisplayed, v))
+}
+
+// IsMedalDisplayedIsNil applies the IsNil predicate on the "is_medal_displayed" field.
+func IsMedalDisplayedIsNil() predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldIsNull(FieldIsMedalDisplayed))
+}
+
+// IsMedalDisplayedNotNil applies the NotNil predicate on the "is_medal_displayed" field.
+func IsMedalDisplayedNotNil() predicate.Honorgroup {
+	return predicate.Honorgroup(sql.FieldNotNull(FieldIsMedalDisplayed))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

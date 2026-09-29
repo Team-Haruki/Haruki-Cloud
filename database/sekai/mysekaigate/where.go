@@ -73,6 +73,11 @@ func AssetbundleName(v string) predicate.Mysekaigate {
 	return predicate.Mysekaigate(sql.FieldEQ(FieldAssetbundleName, v))
 }
 
+// MysekaiGateType applies equality check predicate on the "mysekai_gate_type" field. It's identical to MysekaiGateTypeEQ.
+func MysekaiGateType(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldEQ(FieldMysekaiGateType, v))
+}
+
 // ServerRegion applies equality check predicate on the "server_region" field. It's identical to ServerRegionEQ.
 func ServerRegion(v string) predicate.Mysekaigate {
 	return predicate.Mysekaigate(sql.FieldEQ(FieldServerRegion, v))
@@ -351,6 +356,81 @@ func AssetbundleNameEqualFold(v string) predicate.Mysekaigate {
 // AssetbundleNameContainsFold applies the ContainsFold predicate on the "assetbundle_name" field.
 func AssetbundleNameContainsFold(v string) predicate.Mysekaigate {
 	return predicate.Mysekaigate(sql.FieldContainsFold(FieldAssetbundleName, v))
+}
+
+// MysekaiGateTypeEQ applies the EQ predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeEQ(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldEQ(FieldMysekaiGateType, v))
+}
+
+// MysekaiGateTypeNEQ applies the NEQ predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeNEQ(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldNEQ(FieldMysekaiGateType, v))
+}
+
+// MysekaiGateTypeIn applies the In predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeIn(vs ...string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldIn(FieldMysekaiGateType, vs...))
+}
+
+// MysekaiGateTypeNotIn applies the NotIn predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeNotIn(vs ...string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldNotIn(FieldMysekaiGateType, vs...))
+}
+
+// MysekaiGateTypeGT applies the GT predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeGT(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldGT(FieldMysekaiGateType, v))
+}
+
+// MysekaiGateTypeGTE applies the GTE predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeGTE(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldGTE(FieldMysekaiGateType, v))
+}
+
+// MysekaiGateTypeLT applies the LT predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeLT(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldLT(FieldMysekaiGateType, v))
+}
+
+// MysekaiGateTypeLTE applies the LTE predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeLTE(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldLTE(FieldMysekaiGateType, v))
+}
+
+// MysekaiGateTypeContains applies the Contains predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeContains(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldContains(FieldMysekaiGateType, v))
+}
+
+// MysekaiGateTypeHasPrefix applies the HasPrefix predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeHasPrefix(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldHasPrefix(FieldMysekaiGateType, v))
+}
+
+// MysekaiGateTypeHasSuffix applies the HasSuffix predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeHasSuffix(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldHasSuffix(FieldMysekaiGateType, v))
+}
+
+// MysekaiGateTypeIsNil applies the IsNil predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeIsNil() predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldIsNull(FieldMysekaiGateType))
+}
+
+// MysekaiGateTypeNotNil applies the NotNil predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeNotNil() predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldNotNull(FieldMysekaiGateType))
+}
+
+// MysekaiGateTypeEqualFold applies the EqualFold predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeEqualFold(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldEqualFold(FieldMysekaiGateType, v))
+}
+
+// MysekaiGateTypeContainsFold applies the ContainsFold predicate on the "mysekai_gate_type" field.
+func MysekaiGateTypeContainsFold(v string) predicate.Mysekaigate {
+	return predicate.Mysekaigate(sql.FieldContainsFold(FieldMysekaiGateType, v))
 }
 
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.

@@ -131,6 +131,20 @@ func (_c *MaterialCreate) SetNillableChangeFlavorTextAt(v *int64) *MaterialCreat
 	return _c
 }
 
+// SetExpiredAt sets the "expired_at" field.
+func (_c *MaterialCreate) SetExpiredAt(v int64) *MaterialCreate {
+	_c.mutation.SetExpiredAt(v)
+	return _c
+}
+
+// SetNillableExpiredAt sets the "expired_at" field if the given value is not nil.
+func (_c *MaterialCreate) SetNillableExpiredAt(v *int64) *MaterialCreate {
+	if v != nil {
+		_c.SetExpiredAt(*v)
+	}
+	return _c
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_c *MaterialCreate) SetServerRegion(v string) *MaterialCreate {
 	_c.mutation.SetServerRegion(v)
@@ -231,6 +245,10 @@ func (_c *MaterialCreate) createSpec() (*Material, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ChangeFlavorTextAt(); ok {
 		_spec.SetField(material.FieldChangeFlavorTextAt, field.TypeInt64, value)
 		_node.ChangeFlavorTextAt = value
+	}
+	if value, ok := _c.mutation.ExpiredAt(); ok {
+		_spec.SetField(material.FieldExpiredAt, field.TypeInt64, value)
+		_node.ExpiredAt = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(material.FieldServerRegion, field.TypeString, value)

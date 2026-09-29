@@ -268,6 +268,24 @@ func (_c *VirtualliveCreate) SetNillableVirtualLiveGroupID(v *int64) *Virtualliv
 	return _c
 }
 
+// SetVirtualLiveTotalCheerPointRewards sets the "virtual_live_total_cheer_point_rewards" field.
+func (_c *VirtualliveCreate) SetVirtualLiveTotalCheerPointRewards(v json.RawMessage) *VirtualliveCreate {
+	_c.mutation.SetVirtualLiveTotalCheerPointRewards(v)
+	return _c
+}
+
+// SetVirtualLiveTotalCheerPointSurplusReward sets the "virtual_live_total_cheer_point_surplus_reward" field.
+func (_c *VirtualliveCreate) SetVirtualLiveTotalCheerPointSurplusReward(v json.RawMessage) *VirtualliveCreate {
+	_c.mutation.SetVirtualLiveTotalCheerPointSurplusReward(v)
+	return _c
+}
+
+// SetVirtualLiveVirtualItemOverrideCost sets the "virtual_live_virtual_item_override_cost" field.
+func (_c *VirtualliveCreate) SetVirtualLiveVirtualItemOverrideCost(v json.RawMessage) *VirtualliveCreate {
+	_c.mutation.SetVirtualLiveVirtualItemOverrideCost(v)
+	return _c
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_c *VirtualliveCreate) SetServerRegion(v string) *VirtualliveCreate {
 	_c.mutation.SetServerRegion(v)
@@ -432,6 +450,18 @@ func (_c *VirtualliveCreate) createSpec() (*Virtuallive, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.VirtualLiveGroupID(); ok {
 		_spec.SetField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt64, value)
 		_node.VirtualLiveGroupID = value
+	}
+	if value, ok := _c.mutation.VirtualLiveTotalCheerPointRewards(); ok {
+		_spec.SetField(virtuallive.FieldVirtualLiveTotalCheerPointRewards, field.TypeJSON, value)
+		_node.VirtualLiveTotalCheerPointRewards = value
+	}
+	if value, ok := _c.mutation.VirtualLiveTotalCheerPointSurplusReward(); ok {
+		_spec.SetField(virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward, field.TypeJSON, value)
+		_node.VirtualLiveTotalCheerPointSurplusReward = value
+	}
+	if value, ok := _c.mutation.VirtualLiveVirtualItemOverrideCost(); ok {
+		_spec.SetField(virtuallive.FieldVirtualLiveVirtualItemOverrideCost, field.TypeJSON, value)
+		_node.VirtualLiveVirtualItemOverrideCost = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(virtuallive.FieldServerRegion, field.TypeString, value)

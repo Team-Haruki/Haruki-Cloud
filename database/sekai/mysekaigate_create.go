@@ -75,6 +75,20 @@ func (_c *MysekaigateCreate) SetNillableAssetbundleName(v *string) *MysekaigateC
 	return _c
 }
 
+// SetMysekaiGateType sets the "mysekai_gate_type" field.
+func (_c *MysekaigateCreate) SetMysekaiGateType(v string) *MysekaigateCreate {
+	_c.mutation.SetMysekaiGateType(v)
+	return _c
+}
+
+// SetNillableMysekaiGateType sets the "mysekai_gate_type" field if the given value is not nil.
+func (_c *MysekaigateCreate) SetNillableMysekaiGateType(v *string) *MysekaigateCreate {
+	if v != nil {
+		_c.SetMysekaiGateType(*v)
+	}
+	return _c
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_c *MysekaigateCreate) SetServerRegion(v string) *MysekaigateCreate {
 	_c.mutation.SetServerRegion(v)
@@ -159,6 +173,10 @@ func (_c *MysekaigateCreate) createSpec() (*Mysekaigate, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.AssetbundleName(); ok {
 		_spec.SetField(mysekaigate.FieldAssetbundleName, field.TypeString, value)
 		_node.AssetbundleName = value
+	}
+	if value, ok := _c.mutation.MysekaiGateType(); ok {
+		_spec.SetField(mysekaigate.FieldMysekaiGateType, field.TypeString, value)
+		_node.MysekaiGateType = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(mysekaigate.FieldServerRegion, field.TypeString, value)

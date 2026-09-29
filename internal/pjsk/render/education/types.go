@@ -238,4 +238,8 @@ type AreaItemQuery struct {
 	Attr           string                              `json:"attr,omitempty"`
 	Tree           bool                                `json:"tree,omitempty"`
 	Flower         bool                                `json:"flower,omitempty"`
+	// AllCharacter selects area items whose bonus has no single target:
+	// every-character rows or deck-conditional multi_unit rows (JP 7.0.0
+	// 想いの大樹).
+	AllCharacter bool `json:"all_character,omitempty"`
 }

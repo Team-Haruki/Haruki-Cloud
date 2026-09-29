@@ -2,6 +2,7 @@ package education
 
 import (
 	"context"
+	"errors"
 	json "haruki-cloud/internal/jsonutil"
 	"math"
 	"strings"
@@ -261,6 +262,9 @@ func TestBuildPowerBonusDetailRequestFromSnapshot(t *testing.T) {
 	if got := req.AttrBonuses[0]; got.Attr != "cute" || got.AreaItem != 1.0 || got.Total != 1.0 {
 		t.Fatalf("unexpected cute bonus: %+v", got)
 	}
+	if req.MultiUnitBonus != nil {
+		t.Fatalf("region without multi_unit rows must not send a multi-unit bonus: %v", *req.MultiUnitBonus)
+	}
 }
 
 func TestBuildPowerBonusDetailRequestFromSnapshotIgnoresShuffleGate(t *testing.T) {
@@ -431,6 +435,9 @@ func TestBuildPowerBonusDetailRequestFromSnapshotAppliesEveryAreaItemLevelRow(t 
 		if !approxEqual(got.AreaItem, want) || !approxEqual(got.Total, want) {
 			t.Fatalf("character %d bonus = %+v, want area item %v", got.CharaID, got, want)
 		}
+	}
+	if req.MultiUnitBonus == nil || !approxEqual(*req.MultiUnitBonus, 7.0) {
+		t.Fatalf("multi-unit bonus = %v, want 7.0", req.MultiUnitBonus)
 	}
 	// The multi_unit row is a deck-level condition and must not leak into any
 	// unit or attribute column.
@@ -2045,5 +2052,115 @@ func TestBuildCharacterMissionOverviewIncludesAllCharacterAreaItemMission(t *tes
 	row := req.AchievementRows[1]
 	if row.Title != "想いの大樹升级次数" || row.Current != 3 {
 		t.Fatalf("unexpected all-character row: %+v", row)
+	}
+}
+
+// jpAllCharacterAreaItemSource mirrors JP 7.0.0 area 27 / item 56: two rows
+// per level (every character, and deck-conditional multi_unit) and one
+// shop item per level found through its resource box.
+func jpAllCharacterAreaItemSource() *testSource {
+	rows := map[int][]*AreaItemLevel{}
+	boxes := map[int]*ResourceBox{}
+	shopItems := map[int]*ShopItem{}
+	for level := 1; level <= 3; level++ {
+		rate := 0.5 * float64(level)
+		rows[level] = []*AreaItemLevel{
+			{AreaItemID: 56, Level: level, TargetUnit: "any", TargetCardAttr: "any", Power1BonusRate: rate},
+			{AreaItemID: 56, Level: level, TargetUnit: "multi_unit", TargetCardAttr: "any", Power1BonusRate: rate},
+		}
+		boxID := 2100 + level
+		boxes[boxID] = &ResourceBox{ID: boxID, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 56, ResourceLevel: level}}}
+		shopItems[boxID] = &ShopItem{ID: boxID, ShopID: 13, ResourceBoxID: boxID, Costs: []ShopItemCost{
+			{ResourceType: "material", ResourceID: 283, Quantity: 100 * level},
+			{ResourceType: "coin", Quantity: 1000000 * level},
+		}}
+	}
+	return &testSource{
+		region: renderregion.JP,
+		boxes:  map[string]map[int]*ResourceBox{"shop_item": boxes},
+		areaItems: map[int]*AreaItem{
+			56:  {ID: 56, AreaID: 27, AssetbundleName: "areaitem2701"},
+			101: {ID: 101, AreaID: 5, AssetbundleName: "item_101"},
+		},
+		areaLevels: map[int]map[int]*AreaItemLevel{
+			101: {1: {AreaItemID: 101, Level: 1, TargetUnit: "light_sound", Power1BonusRate: 1.0}},
+		},
+		areaLevelRows: map[int]map[int][]*AreaItemLevel{56: rows},
+		shopItems:     shopItems,
+	}
+}
+
+func TestBuildAreaItemUpgradeMaterialsRequestFullAllCharacterItem(t *testing.T) {
+	controller := NewController(nil, nil, nil, renderregion.JP)
+	controller.RegisterSource(jpAllCharacterAreaItemSource())
+
+	req, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(AreaItemQuery{Region: renderregion.JP, AllCharacter: true})
+	if err != nil {
+		t.Fatalf("BuildAreaItemUpgradeMaterialsRequestFull(all character) error = %v", err)
+	}
+	if len(req.AreaItems) != 1 || req.AreaItems[0].ItemID != 56 {
+		t.Fatalf("expected only item 56, got %+v", req.AreaItems)
+	}
+	item := req.AreaItems[0]
+	if item.TargetIconPath != nil {
+		t.Fatalf("every-character item must not have a target icon: %q", *item.TargetIconPath)
+	}
+	if item.TargetLabel == nil || *item.TargetLabel != "全角色" {
+		t.Fatalf("target label = %v, want 全角色", item.TargetLabel)
+	}
+	if !strings.Contains(item.ItemIconPath, "areaitem2701") {
+		t.Fatalf("item icon path = %q", item.ItemIconPath)
+	}
+	if len(item.Levels) != 3 {
+		t.Fatalf("expected 3 levels, got %+v", item.Levels)
+	}
+	for _, level := range item.Levels {
+		want := 0.5 * float64(level.Level)
+		if !approxEqual(level.Bonus, want) || level.MultiUnitBonus == nil || !approxEqual(*level.MultiUnitBonus, want) {
+			t.Fatalf("level %d bonus = %v / %v, want %v for both", level.Level, level.Bonus, level.MultiUnitBonus, want)
+		}
+	}
+	// Level 3's cost comes from resource box 2103 (shop item 2103).
+	if got := item.Levels[2].Materials; len(got) != 2 || got[0].MaterialID != 283 || got[0].Quantity != 300 || got[0].SumQuantity != 600 {
+		t.Fatalf("unexpected level 3 materials: %+v", got)
+	}
+}
+
+func TestBuildAreaItemUpgradeMaterialsRequestAllCharacterMissingInRegion(t *testing.T) {
+	// A region without item 56 (CN/TW/KR/EN 6.x data) reports it instead of
+	// rendering an empty image.
+	controller := NewController(nil, nil, nil, renderregion.CN)
+	controller.RegisterSource(&testSource{
+		region:    renderregion.CN,
+		areaItems: map[int]*AreaItem{101: {ID: 101, AreaID: 5, AssetbundleName: "item_101"}},
+		areaLevels: map[int]map[int]*AreaItemLevel{
+			101: {1: {AreaItemID: 101, Level: 1, TargetUnit: "light_sound", Power1BonusRate: 1.0}},
+		},
+	})
+	_, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(AreaItemQuery{Region: renderregion.CN, AllCharacter: true})
+	if !errors.Is(err, ErrAreaItemNotInRegion) {
+		t.Fatalf("expected ErrAreaItemNotInRegion, got %v", err)
+	}
+
+	req, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(AreaItemQuery{Region: renderregion.CN, Unit: "light_sound"})
+	if err != nil {
+		t.Fatalf("unit filter error = %v", err)
+	}
+	item := req.AreaItems[0]
+	if item.TargetLabel != nil || item.TargetIconPath == nil || item.Levels[0].MultiUnitBonus != nil {
+		t.Fatalf("old-region item must render as before: %+v", item)
+	}
+}
+
+func TestAreaItemFiltersDoNotPickUpAllCharacterItem(t *testing.T) {
+	// Unit / attribute / tree filters keep their pre-7.0.0 results on JP data.
+	controller := NewController(nil, nil, nil, renderregion.JP)
+	controller.RegisterSource(jpAllCharacterAreaItemSource())
+	req, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(AreaItemQuery{Region: renderregion.JP, Unit: "light_sound"})
+	if err != nil {
+		t.Fatalf("unit filter error = %v", err)
+	}
+	if len(req.AreaItems) != 1 || req.AreaItems[0].ItemID != 101 {
+		t.Fatalf("unit filter picked up other items: %+v", req.AreaItems)
 	}
 }

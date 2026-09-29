@@ -1408,6 +1408,7 @@ func TestBuildDoorUpgradeRequestUsesGateLargeThumbnailPath(t *testing.T) {
 	})
 	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateMaterialGroups.json"), []map[string]any{
 		{"groupId": 4001, "mysekaiMaterialId": 1, "quantity": 2},
+		{"groupId": 4006, "mysekaiMaterialId": 1, "quantity": 2},
 	})
 	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{
 		{"id": 1, "iconAssetbundleName": "mat_1"},

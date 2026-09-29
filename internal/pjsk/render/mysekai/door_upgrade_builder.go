@@ -38,8 +38,6 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 	}, nil
 }
 
-const doorUpgradeMaxLevel = 40
-
 type doorUpgradeMaterial struct {
 	materialID int
 	quantity   int
@@ -80,32 +78,57 @@ func doorUpgradeGateLevels(merged map[string]any, showFull bool) map[int]int {
 	return levels
 }
 
+// loadDoorUpgradeGateMaterials indexes mysekaiGateMaterialGroups by gate and
+// level (groupId = gateId*1000 + level). Each gate's slice is sized to the
+// highest level present in the region's master data, so the per-gate max
+// level is len(gates[gateID]) — 40 on most regions, 70 on JP since 7.0.0.
 func (c *Controller) loadDoorUpgradeGateMaterials() map[int][][]doorUpgradeMaterial {
-	gates := map[int][][]doorUpgradeMaterial{}
+	byLevel := map[int]map[int][]doorUpgradeMaterial{}
+	maxLevels := map[int]int{}
 	for _, item := range c.masterdata.loadList("mysekaiGateMaterialGroups.json") {
 		groupID := intNumber(item["groupId"], 0)
 		gateID, level := groupID/1000, groupID%1000
-		if gateID == 0 || level <= 0 || level > doorUpgradeMaxLevel {
+		if gateID <= 0 || level <= 0 {
 			continue
 		}
-		if gates[gateID] == nil {
-			gates[gateID] = make([][]doorUpgradeMaterial, doorUpgradeMaxLevel)
+		if byLevel[gateID] == nil {
+			byLevel[gateID] = map[int][]doorUpgradeMaterial{}
 		}
-		gates[gateID][level-1] = append(gates[gateID][level-1], doorUpgradeMaterial{
+		byLevel[gateID][level] = append(byLevel[gateID][level], doorUpgradeMaterial{
 			materialID: intNumber(item["mysekaiMaterialId"], 0), quantity: intNumber(item["quantity"], 0),
 		})
+		maxLevels[gateID] = max(maxLevels[gateID], level)
+	}
+	gates := make(map[int][][]doorUpgradeMaterial, len(byLevel))
+	for gateID, levels := range byLevel {
+		materials := make([][]doorUpgradeMaterial, maxLevels[gateID])
+		for level, items := range levels {
+			materials[level-1] = items
+		}
+		gates[gateID] = materials
 	}
 	return gates
 }
 
+// doorUpgradeGateMaxLevel is the highest upgradable level known for a gate,
+// or 0 when the master data has no upgrade materials for it.
+func doorUpgradeGateMaxLevel(gates map[int][][]doorUpgradeMaterial, gateID int) int {
+	return len(gates[gateID])
+}
+
+func doorUpgradeGateIsMax(gates map[int][][]doorUpgradeMaterial, gateID, level int) bool {
+	maxLevel := doorUpgradeGateMaxLevel(gates, gateID)
+	return maxLevel > 0 && level >= maxLevel
+}
+
 func selectDoorUpgradeGates(gates map[int][][]doorUpgradeMaterial, levels map[int]int, requestedID int, showAll, showFull bool) (map[int][][]doorUpgradeMaterial, error) {
 	if requestedID == 0 && !showAll && !showFull {
-		requestedID = lowestIncompleteDoorUpgradeGate(levels)
+		requestedID = lowestIncompleteDoorUpgradeGate(gates, levels)
 	}
 	if requestedID == 0 {
 		return gates, nil
 	}
-	if !showFull && levels[requestedID] == doorUpgradeMaxLevel {
+	if !showFull && doorUpgradeGateIsMax(gates, requestedID, levels[requestedID]) {
 		return nil, fmt.Errorf("queried gate already max level")
 	}
 	if materials, ok := gates[requestedID]; ok {
@@ -114,10 +137,16 @@ func selectDoorUpgradeGates(gates map[int][][]doorUpgradeMaterial, levels map[in
 	return gates, nil
 }
 
-func lowestIncompleteDoorUpgradeGate(levels map[int]int) int {
+// lowestIncompleteDoorUpgradeGate picks the user's highest-levelled gate that
+// still has upgrade levels left in the region's master data. Gates without
+// upgrade materials (e.g. the JP 7.0.0 shuffle gate 6) are never selected.
+func lowestIncompleteDoorUpgradeGate(gates map[int][][]doorUpgradeMaterial, levels map[int]int) int {
 	selectedID, selectedLevel := 0, 0
 	for gateID, level := range levels {
-		if level != doorUpgradeMaxLevel && level > selectedLevel {
+		if doorUpgradeGateMaxLevel(gates, gateID) == 0 || doorUpgradeGateIsMax(gates, gateID, level) {
+			continue
+		}
+		if level > selectedLevel {
 			selectedID, selectedLevel = gateID, level
 		}
 	}

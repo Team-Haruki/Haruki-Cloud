@@ -734,6 +734,9 @@ func testLocalEducationCharacterMissionBranches(t *testing.T, education *localEd
 	if education.GetMysekaiGateLevel(ctx, 0, 0) != nil || education.GetMysekaiGateLevel(ctx, 999, 1) != nil {
 		t.Fatal("invalid gate level resolved")
 	}
+	if got := education.GetMysekaiGateMaxLevels(ctx); len(got) != 1 || got[1] != 2 {
+		t.Fatalf("gate max levels = %+v, want {1:2}", got)
+	}
 }
 
 func testLocalEducationShopBranches(t *testing.T, education *localEducationProvider, ctx context.Context) {

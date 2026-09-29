@@ -502,6 +502,10 @@ func TestDBEducationProviderLoadsAndClonesAllMasterdata(t *testing.T) {
 		testutil.RequireArgs(t, !(education.GetMysekaiGateLevel(ctx, 7, 0) != nil), "invalid or missing gate levels should return nil")
 		testutil.RequireArgs(t, !(education.GetMysekaiGateLevel(ctx, 99, 1) != nil), "invalid or missing gate levels should return nil")
 	}
+	{
+		maxLevels := education.GetMysekaiGateMaxLevels(ctx)
+		testutil.Require(t, len(maxLevels) == 1 && maxLevels[7] == 3, "gate max levels = %+v, want {7:3}", maxLevels)
+	}
 
 	shop := education.GetShopItemByResourceBoxID(ctx, 101)
 	{

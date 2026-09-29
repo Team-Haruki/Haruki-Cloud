@@ -263,6 +263,63 @@ func TestBuildPowerBonusDetailRequestFromSnapshot(t *testing.T) {
 	}
 }
 
+func TestBuildPowerBonusDetailRequestFromSnapshotIgnoresShuffleGate(t *testing.T) {
+	// JP 7.0.0: gate 1 reaches level 70 and gate 6 (unit "none", type
+	// "shuffle") appears in userMysekaiGates. Gate 6 has no unit mapping, so it
+	// must add nothing to any unit and must not raise the piapro maximum.
+	snap := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userMysekaiGates": []map[string]any{
+			{"mysekaiGateId": 1, "mysekaiGateLevel": 70},
+			{"mysekaiGateId": 2, "mysekaiGateLevel": 40},
+			{"mysekaiGateId": 6, "mysekaiGateLevel": 70},
+		},
+	})
+
+	controller := NewController(nil, nil, snap, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region: renderregion.JP,
+		gates: map[int]map[int]*MysekaiGateLevel{
+			1: {70: {GateID: 1, Level: 70, PowerBonusRate: 7.0}},
+			2: {40: {GateID: 2, Level: 40, PowerBonusRate: 4.0}},
+			6: {70: {GateID: 6, Level: 70, PowerBonusRate: 99.0}},
+		},
+	})
+
+	req, err := controller.BuildPowerBonusDetailRequestFromSnapshot(PowerBonusQuery{Region: renderregion.JP})
+	if err != nil {
+		t.Fatalf("BuildPowerBonusDetailRequestFromSnapshot() error = %v", err)
+	}
+	if got := req.UnitBonuses[0]; got.Unit != "light_sound" || got.Gate != 7.0 {
+		t.Fatalf("unexpected light_sound bonus: %+v", got)
+	}
+	if got := req.UnitBonuses[1]; got.Unit != "idol" || got.Gate != 4.0 {
+		t.Fatalf("unexpected idol bonus: %+v", got)
+	}
+	for _, unit := range req.UnitBonuses {
+		if unit.Gate > 7.0 {
+			t.Fatalf("shuffle gate leaked into unit bonus: %+v", unit)
+		}
+	}
+	if got := req.UnitBonuses[len(req.UnitBonuses)-1]; got.Unit != "piapro" || got.Gate != 7.0 {
+		t.Fatalf("unexpected piapro bonus: %+v", got)
+	}
+}
+
 func TestBuildPowerBonusDetailRequestFromSnapshotCapsUnreleasedAreaItemLevel(t *testing.T) {
 	snap := mustSnapshot(t, map[string]any{
 		"now": 100,

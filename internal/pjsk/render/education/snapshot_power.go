@@ -138,11 +138,18 @@ func (s *powerBonusState) applyFixtures(fixtures []snapshot.RawUserFixtureBonus)
 func (s *powerBonusState) applyGates(source DataSource, gates []snapshot.RawUserMysekaiGate) {
 	maximum := 0.0
 	for _, gate := range gates {
+		// Only unit gates carry a unit power bonus. JP 7.0.0 added gate 6
+		// (unit "none", mysekaiGateType "shuffle"); it has no unit mapping and
+		// must neither add a unit bonus nor feed the piapro maximum.
+		unit, ok := gateUnitByID[gate.MysekaiGateID]
+		if !ok {
+			continue
+		}
 		level := source.GetMysekaiGateLevel(gate.MysekaiGateID, gate.MysekaiGateLevel)
 		if level == nil {
 			continue
 		}
-		if bonus := s.units[gateUnitByID[gate.MysekaiGateID]]; bonus != nil {
+		if bonus := s.units[unit]; bonus != nil {
 			bonus.Gate += level.PowerBonusRate
 		}
 		maximum = max(maximum, level.PowerBonusRate)

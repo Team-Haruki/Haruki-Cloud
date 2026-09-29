@@ -28,6 +28,11 @@ type EducationProvider interface {
 	GetCharacterMissionParameterGroups(ctx context.Context, parameterGroupID int) ([]*CharacterMissionParameterGroup, error)
 	GetLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int, error)
 	GetMysekaiGateLevel(ctx context.Context, gateID, level int) *MysekaiGateLevel
+	// GetMysekaiGateMaxLevels reports, per gate ID, the highest level that has
+	// a mysekaiGateLevels row in the region's master data. Gates without any
+	// level rows are absent from the result. The cap differs per region (JP
+	// raised it from 40 to 70 in 7.0.0), so callers must not hardcode it.
+	GetMysekaiGateMaxLevels(ctx context.Context) map[int]int
 	GetShopItemByResourceBoxID(ctx context.Context, resourceBoxID int) *ShopItem
 	GetShopItems(ctx context.Context) []*ShopItem
 }

@@ -122,21 +122,21 @@ func executeStampList(rc *RequestContext, stampCtrl *stamp.Controller, region re
 	if q.All {
 		return renderAllStampPages(rc, stampCtrl, q)
 	}
-	data, err := stampCtrl.RenderStampList(q)
+	data, err := stampCtrl.RenderStampListImage(q)
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	return rc.RenderedImageMessage(data)
 }
 
 func renderAllStampPages(rc *RequestContext, stampCtrl *stamp.Controller, q stamp.ListQuery) (onebot11.Message, error) {
-	images, err := stampCtrl.RenderStampListPages(q)
+	images, err := stampCtrl.RenderStampListPagesImage(q)
 	if err != nil {
 		return nil, err
 	}
 	message := make(onebot11.Message, 0, len(images))
 	for _, img := range images {
-		segment, imageErr := imageMessage(rc.Ctx, img, rc.App, BotModulePJSK)
+		segment, imageErr := rc.RenderedImageMessage(img)
 		if imageErr != nil {
 			return nil, imageErr
 		}

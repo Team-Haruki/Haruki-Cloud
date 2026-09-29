@@ -3,9 +3,6 @@ package drawing
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"haruki-cloud/internal/observability/commandtrace"
 )
 
 // ImageResult is a rendered image: its bytes, or an artifact ref whose bytes
@@ -58,25 +55,7 @@ func (c *HarukiDrawingClient) cachedPostImage(endpoint string, body any) (ImageR
 	if c == nil {
 		return ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
-	ctx := c.withArtifactMode(c.requestCtx, endpoint)
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	finish := commandtrace.MeasureOperation(ctx, "drawing.prepare_cache")
-	prepared := prepareDrawingRequestBody(endpoint, body, time.Now(), ctx)
-	finish()
-	render := func(renderCtx context.Context) ([]byte, error) {
-		active := c.WithContext(renderCtx)
-		return active.renderWithPermit(endpoint, prepared, func(request any) ([]byte, error) { return active.postPrepared(endpoint, request) })
-	}
-	request := preparedRenderCachePayload{payload: prepared}
-	if c.cache != nil {
-		return c.cache.RenderImageSharedContext(ctx, endpoint, request, render)
-	}
-	if c.localCache != nil {
-		data, err := c.localCache.RenderSharedContext(ctx, endpoint, request, render)
-		return ImageBytes(data), err
-	}
-	data, err := render(ctx)
-	return ImageBytes(data), err
+	return c.renderImageWithCacheRequestAndPrepare(endpoint, body, body, nil, func(renderCtx context.Context, prepared any) ([]byte, error) {
+		return c.WithContext(renderCtx).postPrepared(endpoint, prepared)
+	}, true)
 }

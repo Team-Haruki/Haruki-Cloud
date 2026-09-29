@@ -631,25 +631,42 @@ func appendCostumePartRound[T any](current []T, groups map[string][]T, ordered [
 }
 
 func (c *Controller) RenderCostumeList(query ListQuery) ([]byte, error) {
-	data, _, err := c.RenderCostumeListWithRequest(query)
-	return data, err
+	image, err := c.RenderCostumeListImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.ctx)
+}
+
+func (c *Controller) RenderCostumeListImage(query ListQuery) (drawing.ImageResult, error) {
+	image, _, err := c.RenderCostumeListWithRequestImage(query)
+	return image, err
 }
 
 func (c *Controller) RenderCostumeListWithRequest(query ListQuery) ([]byte, *drawing.CostumeListRequest, error) {
+	image, payload, err := c.RenderCostumeListWithRequestImage(query)
+	if err != nil {
+		return nil, payload, err
+	}
+	data, err := image.Bytes(c.ctx)
+	return data, payload, err
+}
+
+func (c *Controller) RenderCostumeListWithRequestImage(query ListQuery) (drawing.ImageResult, *drawing.CostumeListRequest, error) {
 	if c == nil || c.drawing == nil {
-		return nil, nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, nil, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	payload, err := c.BuildCostumeListRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, nil, err
+		return drawing.ImageResult{}, nil, err
 	}
-	data, err := c.drawing.GenerateCostumeList(payload)
+	image, err := c.drawing.GenerateCostumeListImage(payload)
 	if err != nil {
-		return nil, payload, err
+		return drawing.ImageResult{}, payload, err
 	}
-	return data, payload, nil
+	return image, payload, nil
 }
 
 func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDetailRequest, error) {
@@ -811,32 +828,40 @@ func (c *Controller) ensure3DPreviewCapture(ctx context.Context, region renderre
 }
 
 func (c *Controller) RenderCostumeDetail(query Query) ([]byte, error) {
+	image, err := c.RenderCostumeDetailImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.ctx)
+}
+
+func (c *Controller) RenderCostumeDetailImage(query Query) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	region, source, err := c.resolveSource(query.Region)
 	if err != nil {
 		finishBuild()
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	costumeInfo, err := c.resolveCostumeInfo(region, source, query)
 	if err != nil {
 		finishBuild()
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	if expectedPart, ok := normalizePartType(query.ExpectedPartType); ok && costumeInfo.PartType != expectedPart {
 		finishBuild()
-		return nil, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, partTypeName(costumeInfo.PartType), partTypeName(expectedPart))
+		return drawing.ImageResult{}, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, partTypeName(costumeInfo.PartType), partTypeName(expectedPart))
 	}
 	payload, err := c.buildResolvedCostumeDetailRequest(region, source, costumeInfo, query)
 	if err != nil {
 		finishBuild()
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	cachePayload := c.costumeDetailCacheRequest(payload)
 	finishBuild()
-	return c.drawing.GenerateCostumeDetailWithContextPrepare(cachePayload, payload, func(renderCtx context.Context, prepared any) error {
+	return c.drawing.GenerateCostumeDetailWithContextPrepareImage(cachePayload, payload, func(renderCtx context.Context, prepared any) error {
 		previewPath, err := c.resolve3DPreviewPath(renderCtx, region, costumeInfo, query)
 		if err != nil {
 			costumePreview3DLogger.WarnContext(renderCtx, "3d preview skipped",
@@ -855,20 +880,32 @@ func (c *Controller) RenderCostumeDetail(query Query) ([]byte, error) {
 }
 
 func (c *Controller) RenderCostumeCombo(query ComboQuery) ([]byte, error) {
+	image, err := c.RenderCostumeComboImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.ctx)
+}
+
+func (c *Controller) RenderCostumeComboImage(query ComboQuery) (drawing.ImageResult, error) {
 	if c == nil || c.preview3D == nil {
-		return nil, fmt.Errorf("3d preview service is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("3d preview service is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	parsed, err := parseComboQuery(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	ctx := c.ctx
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return c.preview3D.CaptureTemporaryCombo(ctx, parsed.Region, parsed)
+	data, err := c.preview3D.CaptureTemporaryCombo(ctx, parsed.Region, parsed)
+	if err != nil {
+		return drawing.ImageResult{}, err
+	}
+	return drawing.ImageBytes(data), nil
 }
 
 func (c *Controller) resolveSource(regionText string) (renderregion.Value, DataSource, error) {

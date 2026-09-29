@@ -245,11 +245,11 @@ func executeStandardDeck(rc *RequestContext, recommendType string) (onebot11.Mes
 		deckCtrl = deckCtrl.WithSnapshot(snapshot)
 	}
 
-	data, err := deckCtrl.RenderAutoRecommend(q)
+	data, err := deckCtrl.RenderAutoRecommendImage(q)
 	if err != nil {
 		return nil, err
 	}
-	image, imageErr := rc.ImageMessage(data)
+	image, imageErr := rc.RenderedImageMessage(data)
 	if imageErr != nil {
 		return nil, imageErr
 	}
@@ -357,11 +357,11 @@ func renderMySekaiDeck(rc *RequestContext, query deck.AutoQuery, targetSnapshot 
 	if targetSnapshot != nil {
 		deckCtrl = deckCtrl.WithSnapshot(targetSnapshot)
 	}
-	data, err := deckCtrl.RenderAutoRecommend(query)
+	data, err := deckCtrl.RenderAutoRecommendImage(query)
 	if err != nil {
 		return nil, err
 	}
-	image, err := rc.ImageMessage(data)
+	image, err := rc.RenderedImageMessage(data)
 	if err != nil {
 		return nil, err
 	}

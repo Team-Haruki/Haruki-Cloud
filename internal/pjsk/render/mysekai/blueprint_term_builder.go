@@ -210,14 +210,22 @@ func formatBlueprintTermTime(ms int64) string {
 
 // RenderBlueprintTerm renders the limited-time blueprint view.
 func (c *Controller) RenderBlueprintTerm(query BlueprintTermQuery) ([]byte, error) {
+	image, err := c.RenderBlueprintTermImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderBlueprintTermImage(query BlueprintTermQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	request, err := c.BuildBlueprintTermRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateMysekaiBlueprintTerm(request)
+	return c.drawing.GenerateMysekaiBlueprintTermImage(request)
 }

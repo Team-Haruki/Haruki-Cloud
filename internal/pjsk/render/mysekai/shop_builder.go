@@ -224,16 +224,24 @@ func (c *Controller) buildShopItem(shop map[string]any, costs []map[string]any, 
 
 // RenderShop renders the MySekai shop view.
 func (c *Controller) RenderShop(query ShopQuery) ([]byte, error) {
+	image, err := c.RenderShopImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderShopImage(query ShopQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	request, err := c.BuildShopRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.RenderShopRequest(request)
+	return c.RenderShopRequestImage(request)
 }
 
 // mysekaiResourceResolver names and pictures the resources the JP 7.0.0
@@ -298,11 +306,19 @@ func (r mysekaiResourceResolver) tool(toolID int) (string, string) {
 
 // RenderShopRequest renders an already built, request-scoped shop payload.
 func (c *Controller) RenderShopRequest(request *drawing.MysekaiShopRequest) ([]byte, error) {
+	image, err := c.RenderShopRequestImage(request)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderShopRequestImage(request *drawing.MysekaiShopRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	if request == nil {
-		return nil, fmt.Errorf("mysekai shop request is nil")
+		return drawing.ImageResult{}, fmt.Errorf("mysekai shop request is nil")
 	}
 	cloned := *request
 	cloned.Shops = slices.Clone(request.Shops)
@@ -310,5 +326,5 @@ func (c *Controller) RenderShopRequest(request *drawing.MysekaiShopRequest) ([]b
 		cloned.Shops[i].Items = slices.Clone(cloned.Shops[i].Items)
 	}
 	decorateShopRequest(&cloned)
-	return c.drawing.GenerateMysekaiShop(&cloned)
+	return c.drawing.GenerateMysekaiShopImage(&cloned)
 }

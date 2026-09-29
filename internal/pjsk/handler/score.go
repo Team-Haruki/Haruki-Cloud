@@ -142,7 +142,7 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	return rc.RenderedImageMessage(data)
 }
 
 func scoreControllers(rc *RequestContext) (*renderscore.Controller, *rendermusic.Controller) {
@@ -160,7 +160,7 @@ func scoreControllers(rc *RequestContext) (*renderscore.Controller, *rendermusic
 	return scoreCtrl, musicCtrl
 }
 
-func executeScoreMode(rc *RequestContext, scoreCtrl *renderscore.Controller, musicCtrl *rendermusic.Controller) ([]byte, error) {
+func executeScoreMode(rc *RequestContext, scoreCtrl *renderscore.Controller, musicCtrl *rendermusic.Controller) (drawing.ImageResult, error) {
 	switch rc.Cmd.Mode {
 	case "score-control":
 		return executeScoreControl(rc, scoreCtrl)
@@ -171,11 +171,11 @@ func executeScoreMode(rc *RequestContext, scoreCtrl *renderscore.Controller, mus
 	case "score-music-board":
 		return executeScoreMusicBoard(rc, scoreCtrl, musicCtrl)
 	default:
-		return nil, unsupportedModeError("score", rc.Cmd.Mode)
+		return drawing.ImageResult{}, unsupportedModeError("score", rc.Cmd.Mode)
 	}
 }
 
-func executeScoreControl(rc *RequestContext, scoreCtrl *renderscore.Controller) ([]byte, error) {
+func executeScoreControl(rc *RequestContext, scoreCtrl *renderscore.Controller) (drawing.ImageResult, error) {
 	finishBuild := measurePayloadBuild(rc.Ctx)
 	defer finishBuild()
 	req := drawing.ScoreControlRequest{}
@@ -183,15 +183,15 @@ func executeScoreControl(rc *RequestContext, scoreCtrl *renderscore.Controller) 
 	if req.MusicID <= 0 || req.TargetPoint <= 0 || len(req.ValidScores) == 0 {
 		reqPtr, err := requestbuilder.BuildScoreControlRequest(rc.Ctx, toRequestBuilderCommandInput(rc.Cmd), rc.App)
 		if err != nil {
-			return nil, err
+			return drawing.ImageResult{}, err
 		}
 		req = *reqPtr
 	}
 	finishBuild()
-	return scoreCtrl.RenderScoreControl(req)
+	return scoreCtrl.RenderScoreControlImage(req)
 }
 
-func executeScoreCustomRoom(rc *RequestContext, scoreCtrl *renderscore.Controller) ([]byte, error) {
+func executeScoreCustomRoom(rc *RequestContext, scoreCtrl *renderscore.Controller) (drawing.ImageResult, error) {
 	finishBuild := measurePayloadBuild(rc.Ctx)
 	defer finishBuild()
 	req := drawing.CustomRoomScoreRequest{}
@@ -199,15 +199,15 @@ func executeScoreCustomRoom(rc *RequestContext, scoreCtrl *renderscore.Controlle
 	if req.TargetPoint <= 0 || len(req.CandidatePairs) == 0 {
 		reqPtr, err := requestbuilder.BuildCustomRoomScoreRequest(toRequestBuilderCommandInput(rc.Cmd), rc.App)
 		if err != nil {
-			return nil, err
+			return drawing.ImageResult{}, err
 		}
 		req = *reqPtr
 	}
 	finishBuild()
-	return scoreCtrl.RenderCustomRoomScore(req)
+	return scoreCtrl.RenderCustomRoomScoreImage(req)
 }
 
-func executeScoreMusicMeta(rc *RequestContext, scoreCtrl *renderscore.Controller, musicCtrl *rendermusic.Controller) ([]byte, error) {
+func executeScoreMusicMeta(rc *RequestContext, scoreCtrl *renderscore.Controller, musicCtrl *rendermusic.Controller) (drawing.ImageResult, error) {
 	finishBuild := measurePayloadBuild(rc.Ctx)
 	defer finishBuild()
 	var params struct {
@@ -215,7 +215,7 @@ func executeScoreMusicMeta(rc *RequestContext, scoreCtrl *renderscore.Controller
 	}
 	if rc.Cmd.Params != nil {
 		if err := json.Unmarshal(rc.Cmd.Params, &params); err != nil {
-			return nil, fmt.Errorf("bridge: unmarshal music-meta params: %w", err)
+			return drawing.ImageResult{}, fmt.Errorf("bridge: unmarshal music-meta params: %w", err)
 		}
 	}
 	if len(params.Queries) == 0 {
@@ -223,13 +223,13 @@ func executeScoreMusicMeta(rc *RequestContext, scoreCtrl *renderscore.Controller
 	}
 	req, err := musicCtrl.ResolveMusicMetaRequests(rc.Cmd.Region, params.Queries)
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	finishBuild()
-	return scoreCtrl.RenderMusicMeta(req)
+	return scoreCtrl.RenderMusicMetaImage(req)
 }
 
-func executeScoreMusicBoard(rc *RequestContext, scoreCtrl *renderscore.Controller, musicCtrl *rendermusic.Controller) ([]byte, error) {
+func executeScoreMusicBoard(rc *RequestContext, scoreCtrl *renderscore.Controller, musicCtrl *rendermusic.Controller) (drawing.ImageResult, error) {
 	finishBuild := measurePayloadBuild(rc.Ctx)
 	defer finishBuild()
 	req := drawing.MusicBoardRequest{}
@@ -237,12 +237,12 @@ func executeScoreMusicBoard(rc *RequestContext, scoreCtrl *renderscore.Controlle
 	if len(req.Items) == 0 {
 		resolved, err := resolveScoreMusicBoardRequest(rc, musicCtrl)
 		if err != nil {
-			return nil, err
+			return drawing.ImageResult{}, err
 		}
 		req = *resolved
 	}
 	finishBuild()
-	return scoreCtrl.RenderMusicBoard(req)
+	return scoreCtrl.RenderMusicBoardImage(req)
 }
 
 func resolveScoreMusicBoardRequest(rc *RequestContext, musicCtrl *rendermusic.Controller) (*drawing.MusicBoardRequest, error) {

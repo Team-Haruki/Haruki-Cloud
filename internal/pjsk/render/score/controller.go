@@ -38,16 +38,24 @@ func (c *Controller) BuildScoreControlRequest(req drawing.ScoreControlRequest) (
 }
 
 func (c *Controller) RenderScoreControl(req drawing.ScoreControlRequest) ([]byte, error) {
+	image, err := c.RenderScoreControlImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderScoreControlImage(req drawing.ScoreControlRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildScoreControlRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateScoreControl(payload)
+	return c.drawing.GenerateScoreControlImage(payload)
 }
 
 func (c *Controller) BuildCustomRoomScoreRequest(req drawing.CustomRoomScoreRequest) (*drawing.CustomRoomScoreRequest, error) {
@@ -66,16 +74,24 @@ func (c *Controller) BuildCustomRoomScoreRequest(req drawing.CustomRoomScoreRequ
 }
 
 func (c *Controller) RenderCustomRoomScore(req drawing.CustomRoomScoreRequest) ([]byte, error) {
+	image, err := c.RenderCustomRoomScoreImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderCustomRoomScoreImage(req drawing.CustomRoomScoreRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildCustomRoomScoreRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateCustomRoomScore(payload)
+	return c.drawing.GenerateCustomRoomScoreImage(payload)
 }
 
 func (c *Controller) BuildMusicMetaRequest(req []drawing.MusicMetaRequest) ([]drawing.MusicMetaRequest, error) {
@@ -89,16 +105,24 @@ func (c *Controller) BuildMusicMetaRequest(req []drawing.MusicMetaRequest) ([]dr
 }
 
 func (c *Controller) RenderMusicMeta(req []drawing.MusicMetaRequest) ([]byte, error) {
+	image, err := c.RenderMusicMetaImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderMusicMetaImage(req []drawing.MusicMetaRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildMusicMetaRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateMusicMeta(payload)
+	return c.drawing.GenerateMusicMetaImage(payload)
 }
 
 func (c *Controller) BuildMusicBoardRequest(req drawing.MusicBoardRequest) (*drawing.MusicBoardRequest, error) {
@@ -112,16 +136,24 @@ func (c *Controller) BuildMusicBoardRequest(req drawing.MusicBoardRequest) (*dra
 }
 
 func (c *Controller) RenderMusicBoard(req drawing.MusicBoardRequest) ([]byte, error) {
+	image, err := c.RenderMusicBoardImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderMusicBoardImage(req drawing.MusicBoardRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildMusicBoardRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateMusicBoard(payload)
+	return c.drawing.GenerateMusicBoardImage(payload)
 }
 
 func normalizeScoreCoverPath(raw string) string {

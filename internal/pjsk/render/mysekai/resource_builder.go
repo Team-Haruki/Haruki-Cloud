@@ -82,14 +82,22 @@ func gateSkinMasterdataFilename(skinType string) string {
 
 // RenderResource renders the MySekai resource view.
 func (c *Controller) RenderResource(query ResourceQuery) ([]byte, error) {
+	image, err := c.RenderResourceImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderResourceImage(query ResourceQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildResourceRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateMysekaiResource(payload)
+	return c.drawing.GenerateMysekaiResourceImage(payload)
 }

@@ -39,16 +39,24 @@ func (c *Controller) BuildCharaBirthdayRequest(req drawing.CharaBirthdayRequest)
 }
 
 func (c *Controller) RenderCharaBirthday(req drawing.CharaBirthdayRequest) ([]byte, error) {
+	image, err := c.RenderCharaBirthdayImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderCharaBirthdayImage(req drawing.CharaBirthdayRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	validated, err := c.BuildCharaBirthdayRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateCharacterBirthday(validated)
+	return c.drawing.GenerateCharacterBirthdayImage(validated)
 }
 
 func (c *Controller) BuildAliasListRequest(req drawing.AliasListRequest) (*drawing.AliasListRequest, error) {
@@ -71,14 +79,22 @@ func (c *Controller) BuildAliasListRequest(req drawing.AliasListRequest) (*drawi
 }
 
 func (c *Controller) RenderAliasList(req drawing.AliasListRequest) ([]byte, error) {
+	image, err := c.RenderAliasListImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderAliasListImage(req drawing.AliasListRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	validated, err := c.BuildAliasListRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateAliasList(validated)
+	return c.drawing.GenerateAliasListImage(validated)
 }

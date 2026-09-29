@@ -223,16 +223,24 @@ func (c *Controller) BuildListRequest(query ListQuery) (*drawing.VLiveListReques
 }
 
 func (c *Controller) RenderList(query ListQuery) ([]byte, error) {
+	image, err := c.RenderListImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderListImage(query ListQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildListRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateVLiveList(req)
+	return c.drawing.GenerateVLiveListImage(req)
 }
 
 func (c *Controller) RenderText(query ListQuery) (string, error) {

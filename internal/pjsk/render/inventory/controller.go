@@ -387,16 +387,24 @@ func (c *Controller) inventoryBoostItems(region renderregion.Value, raw *snapsho
 }
 
 func (c *Controller) RenderList(query Query) ([]byte, error) {
+	image, err := c.RenderListImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderListImage(query Query) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildListRequestFromSnapshot(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateInventoryList(payload)
+	return c.drawing.GenerateInventoryListImage(payload)
 }
 
 func (c *Controller) inventoryIconPath(region renderregion.Value, resourceType string, id int) drawing.AssetKey {

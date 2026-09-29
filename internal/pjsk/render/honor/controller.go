@@ -67,12 +67,20 @@ func (c *Controller) BuildHonorRequest(query Query) (*drawing.HonorRequest, erro
 }
 
 func (c *Controller) RenderHonor(query Query) ([]byte, error) {
-	if c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
-	}
-	req, err := c.BuildHonorRequest(query)
+	image, err := c.RenderHonorImage(query)
 	if err != nil {
 		return nil, err
 	}
-	return c.drawing.GenerateHonor(req)
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderHonorImage(query Query) (drawing.ImageResult, error) {
+	if c.drawing == nil {
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+	}
+	req, err := c.BuildHonorRequest(query)
+	if err != nil {
+		return drawing.ImageResult{}, err
+	}
+	return c.drawing.GenerateHonorImage(req)
 }

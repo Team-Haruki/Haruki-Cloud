@@ -71,7 +71,7 @@ func executeInventory(rc *RequestContext) (onebot11.Message, error) {
 	}
 
 	publicDetailedProfile, _ := resolveCommandDisplayProfiles(rc, suiteSnapshot)
-	data, err := rc.App.Inventory.WithContext(rc.Ctx).RenderList(renderinventory.Query{
+	data, err := rc.App.Inventory.WithContext(rc.Ctx).RenderListImage(renderinventory.Query{
 		Region:       rc.Region,
 		Profile:      publicDetailedProfile,
 		Snapshot:     suiteSnapshot,
@@ -81,7 +81,7 @@ func executeInventory(rc *RequestContext) (onebot11.Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	return rc.ImageMessage(data)
+	return rc.RenderedImageMessage(data)
 }
 
 func buildInventoryListParams(ctx HarrukiSekaiHandlerContext) (inventoryListParams, error) {

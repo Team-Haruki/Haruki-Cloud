@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
@@ -201,17 +202,17 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, fmt.Errorf("event service unavailable: sekai client not configured")
 	}
 	eventCtrl := rc.App.Events.WithContext(rc.Ctx)
-	var data []byte
+	var data drawing.ImageResult
 	switch rc.Cmd.Mode {
 	case eventDetailCommand:
 		q := event.DetailQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.AllowUnreleased = allowReadOnlyLeaks(region.String())
-		data, err = eventCtrl.RenderEventDetail(q)
+		data, err = eventCtrl.RenderEventDetailImage(q)
 	case eventListCommand:
 		q := event.ListQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
-		data, err = eventCtrl.RenderEventList(q)
+		data, err = eventCtrl.RenderEventListImage(q)
 	case "event-record":
 		finishBuild := measurePayloadBuild(rc.Ctx)
 		req, buildErr := buildEventRecordFromSnapshot(rc, region)
@@ -219,12 +220,12 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 		if buildErr != nil {
 			return nil, buildErr
 		}
-		data, err = eventCtrl.RenderEventRecord(*req)
+		data, err = eventCtrl.RenderEventRecordImage(*req)
 	default:
 		return nil, unsupportedModeError("event", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return rc.ImageMessage(data)
+	return rc.RenderedImageMessage(data)
 }

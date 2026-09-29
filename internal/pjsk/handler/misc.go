@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/requestbuilder"
 	"strconv"
@@ -66,7 +67,7 @@ func (sekaiHandlers) ProfileHandle() HarukiSekaiCommandHandler {
 
 func executeMisc(rc *RequestContext) (message onebot11.Message, err error) {
 	miscCtrl := rc.App.Misc.WithContext(rc.Ctx)
-	var data []byte
+	var data drawing.ImageResult
 	switch rc.Cmd.Mode {
 	case "misc-birthday":
 		finishBuild := measurePayloadBuild(rc.Ctx)
@@ -75,12 +76,12 @@ func executeMisc(rc *RequestContext) (message onebot11.Message, err error) {
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		data, err = miscCtrl.RenderCharaBirthday(*req)
+		data, err = miscCtrl.RenderCharaBirthdayImage(*req)
 	default:
 		return nil, unsupportedModeError("misc", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	return rc.RenderedImageMessage(data)
 }

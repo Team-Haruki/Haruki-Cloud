@@ -487,6 +487,10 @@ Bot 客户端
 
 **字节与暂存。** 渲染缓存只在 `render_index.lookup_enabled` 打开且索引可用时启用；`ImageResult` 要么携带字节，要么携带 ArtifactRef（只有字节消费者调用 `Bytes(ctx)` 时才从 `image_cache` 槽位或主机读回）。索引行出现前的暂存缓存最多 128 项、64 MiB，有效期不超过 120 秒与业务 TTL。
 
+Bot 命令和生日推送使用控制器的 `Render*Image` 与 Drawing 客户端的 `Generate*Image` 入口，将 `ImageResult` 保留到消息构建阶段；多图结果逐张选择公开 URL。旧 `[]byte` 入口保留兼容，通过 `Bytes(ctx)` 读取图片。没有可用公开主机时也会读取字节，沿用图片存储回退。活动详情与别名列表继续使用不缓存的字节响应。
+
+命令计时中，`drawing.http` 是 Drawing 请求的完整往返；`drawing.artifact_fetch` 单独统计引用转为字节时的等待与下载，`drawing.artifact_store` 与 `drawing.artifact_public` 分别统计对象存储读取和公开主机读取。共享下载的内部操作会并入各等待请求的 trace，因此这些操作时长可能重叠，不能直接相加作为总耗时。直接返回图片引用的路径没有图片下载操作。
+
 绘图缓存键准备对已规范化请求一次完成复制和字段清理，忽略字段的子树不参与复制；保留的 map/slice 与渲染请求分离，允许后续渲染准备修改原请求。标准 JSON 子树使用与 hashstructure FormatV2 相同的 FNV-1、数值表示和集合/序列组合规则直接计算哈希，特殊类型回退到原实现；外围键结构和版本保持不变，已有持久缓存键继续兼容。请求 JSON 规范化和时间/时区处理仍沿用原入口。
 
 ### 6.4 Toolbox 快照缓存

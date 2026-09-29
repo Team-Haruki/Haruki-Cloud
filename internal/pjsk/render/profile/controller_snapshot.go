@@ -110,16 +110,24 @@ func (c *Controller) moderateProfileText(region, profileID string, userID int64,
 }
 
 func (c *Controller) RenderProfile(query Query) ([]byte, error) {
+	image, err := c.RenderProfileImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderProfileImage(query Query) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildProfileRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateProfile(payload)
+	return c.drawing.GenerateProfileImage(payload)
 }
 
 func (c *Controller) SnapshotDetailedProfile(region renderregion.Value) *drawing.DetailedProfileCardRequest {

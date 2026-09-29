@@ -240,16 +240,24 @@ func (c *Controller) BuildProfileCardFromAPIWithSnapshot(query Query, resp *seka
 // RenderProfileFromAPI is a convenience wrapper that calls BuildProfileRequestFromAPI and
 // then sends the result to the drawing service.
 func (c *Controller) RenderProfileFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) ([]byte, error) {
+	image, err := c.RenderProfileFromAPIImage(query, resp, framesJSON)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderProfileFromAPIImage(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildProfileRequestFromAPI(query, resp, framesJSON)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateProfile(payload)
+	return c.drawing.GenerateProfileImage(payload)
 }
 
 func (c *Controller) RenderProfileFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot snapshot.Snapshot) ([]byte, error) {

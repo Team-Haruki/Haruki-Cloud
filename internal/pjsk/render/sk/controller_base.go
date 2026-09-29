@@ -123,14 +123,22 @@ func (c *Controller) BuildLineRequest(req LineRequest) (*LineRequest, error) {
 }
 
 func (c *Controller) RenderLine(req LineRequest) ([]byte, error) {
+	image, err := c.RenderLineImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderLineImage(req LineRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildLineRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateSKLine(&payload.SklRequest, payload.Full)
+	return c.drawing.GenerateSKLineImage(&payload.SklRequest, payload.Full)
 }

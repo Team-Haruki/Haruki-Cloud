@@ -16,16 +16,24 @@ func (c *Controller) BuildPlayerTraceRequest(req drawing.PlayerTraceRequest) (*d
 }
 
 func (c *Controller) RenderPlayerTrace(req drawing.PlayerTraceRequest) ([]byte, error) {
+	image, err := c.RenderPlayerTraceImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderPlayerTraceImage(req drawing.PlayerTraceRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildPlayerTraceRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateSKPlayerTrace(payload)
+	return c.drawing.GenerateSKPlayerTraceImage(payload)
 }
 
 // BuildPlayerTraceFromTracker builds a player-trace request by fetching trace
@@ -148,14 +156,22 @@ func (c *Controller) BuildRankTraceRequestFromTracker(req TrackerRankQuery) (*dr
 }
 
 func (c *Controller) RenderRankTrace(req drawing.RankTraceRequest) ([]byte, error) {
+	image, err := c.RenderRankTraceImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderRankTraceImage(req drawing.RankTraceRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildRankTraceRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateSKRankTrace(payload)
+	return c.drawing.GenerateSKRankTraceImage(payload)
 }

@@ -784,22 +784,22 @@ func executeStaticMysekaiMode(rc *RequestContext, region string) (onebot11.Messa
 			return nil, false, nil
 		}
 		query.Region = defaultMysekaiQueryRegion(query.Region, region)
-		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureList(query)
-		message, err := mysekaiImageResult(rc, data, err)
+		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureListImage(query)
+		message, err := mysekaiRenderedImageResult(rc, data, err)
 		return message, true, err
 	case "mysekai-fixture-detail":
 		query := rendermysekai.FixtureDetailQuery{Region: region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &query)
 		query.Region = defaultMysekaiQueryRegion(query.Region, region)
-		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureDetail(query)
-		message, err := mysekaiImageResult(rc, data, err)
+		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureDetailImage(query)
+		message, err := mysekaiRenderedImageResult(rc, data, err)
 		return message, true, err
 	case mySekaiBlueprintTermCommand:
 		query := rendermysekai.BlueprintTermQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &query)
 		query.Region = defaultMysekaiQueryRegion(query.Region, region)
-		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderBlueprintTerm(query)
-		message, err := mysekaiImageResult(rc, data, err)
+		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderBlueprintTermImage(query)
+		message, err := mysekaiRenderedImageResult(rc, data, err)
 		return message, true, err
 	case mySekaiDoorUpgradeCommand:
 		query := rendermysekai.DoorUpgradeQuery{Region: region, Query: rc.Cmd.Query}
@@ -808,8 +808,8 @@ func executeStaticMysekaiMode(rc *RequestContext, region string) (onebot11.Messa
 			return nil, false, nil
 		}
 		query.Region = defaultMysekaiQueryRegion(query.Region, region)
-		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderDoorUpgrade(query)
-		message, err := mysekaiImageResult(rc, data, err)
+		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderDoorUpgradeImage(query)
+		message, err := mysekaiRenderedImageResult(rc, data, err)
 		return message, true, err
 	default:
 		return nil, false, nil
@@ -845,7 +845,9 @@ func executeResolvedMysekaiMode(rc *RequestContext, renderCtx mySekaiRenderConte
 		query.Region = renderCtx.Region
 		query.Profile = renderCtx.Profile
 		query.ResourceBox = mysekaiShopResourceBoxes(rc, renderregion.Normalize(renderCtx.Region))
+		finishBuild := measurePayloadBuild(rc.Ctx)
 		request, err := renderCtx.Controller.BuildShopRequest(query)
+		finishBuild()
 		if err != nil {
 			return nil, err
 		}
@@ -858,8 +860,8 @@ func executeResolvedMysekaiMode(rc *RequestContext, renderCtx mySekaiRenderConte
 			}
 			return onebot11.Message{onebot11.Text("当前筛选下没有可购买的商品；可加“全部”查看商品状态")}, nil
 		}
-		data, err := renderCtx.Controller.RenderShopRequest(request)
-		return mysekaiImageResult(rc, data, err)
+		data, err := renderCtx.Controller.RenderShopRequestImage(request)
+		return mysekaiRenderedImageResult(rc, data, err)
 	case mySekaiResourceCommand:
 		return executeMysekaiResource(rc, renderCtx)
 	case mySekaiResourceMapCommand:
@@ -870,28 +872,28 @@ func executeResolvedMysekaiMode(rc *RequestContext, renderCtx mySekaiRenderConte
 		query := rendermysekai.FixtureListQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &query)
 		query.Profile = renderCtx.Profile
-		data, err := renderCtx.Controller.RenderFixtureList(query)
-		return mysekaiImageResult(rc, data, err)
+		data, err := renderCtx.Controller.RenderFixtureListImage(query)
+		return mysekaiRenderedImageResult(rc, data, err)
 	case mySekaiDoorUpgradeCommand:
 		query := rendermysekai.DoorUpgradeQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &query)
 		query.Profile = renderCtx.Profile
-		data, err := renderCtx.Controller.RenderDoorUpgrade(query)
-		return mysekaiImageResult(rc, data, err)
+		data, err := renderCtx.Controller.RenderDoorUpgradeImage(query)
+		return mysekaiRenderedImageResult(rc, data, err)
 	case mySekaiMusicRecordCommand:
 		query := rendermysekai.MusicRecordQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &query)
 		query.Profile = renderCtx.Profile
-		data, err := renderCtx.Controller.RenderMusicRecord(query)
-		return mysekaiImageResult(rc, data, err)
+		data, err := renderCtx.Controller.RenderMusicRecordImage(query)
+		return mysekaiRenderedImageResult(rc, data, err)
 	case mySekaiPhotoCommand:
 		return executeMysekaiPhoto(rc, renderCtx)
 	case mySekaiTalkListCommand:
 		query := rendermysekai.TalkListQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &query)
 		query.Profile = renderCtx.Profile
-		data, err := renderCtx.Controller.RenderTalkList(query)
-		return mysekaiImageResult(rc, data, err)
+		data, err := renderCtx.Controller.RenderTalkListImage(query)
+		return mysekaiRenderedImageResult(rc, data, err)
 	default:
 		return nil, unsupportedModeError("mysekai", rc.Cmd.Mode)
 	}
@@ -908,8 +910,8 @@ func executeMysekaiResource(rc *RequestContext, renderCtx mySekaiRenderContext) 
 	query := rendermysekai.ResourceQuery{Region: renderCtx.Region}
 	mergeParams(rc.Cmd.Params, &query)
 	query.Profile = renderCtx.Profile
-	data, err := renderCtx.Controller.RenderResource(query)
-	return mysekaiImageResult(rc, data, err)
+	data, err := renderCtx.Controller.RenderResourceImage(query)
+	return mysekaiRenderedImageResult(rc, data, err)
 }
 
 func executeMysekaiResourceMap(rc *RequestContext, renderCtx mySekaiRenderContext) (onebot11.Message, error) {
@@ -946,15 +948,15 @@ func mysekaiMapHasNoRemainingResources(query rendermysekai.MapQuery, payload *dr
 
 func mysekaiResourceMessageJob(rc *RequestContext, renderCtx mySekaiRenderContext, query rendermysekai.ResourceQuery) concurrentMessageJob {
 	return func(ctx context.Context) (onebot11.Message, error) {
-		data, err := renderCtx.Controller.WithContext(ctx).RenderResource(query)
-		return mysekaiImageResultWithContext(ctx, rc, data, err)
+		data, err := renderCtx.Controller.WithContext(ctx).RenderResourceImage(query)
+		return mysekaiRenderedImageResultWithContext(ctx, rc, data, err)
 	}
 }
 
 func mysekaiMapMessageJob(rc *RequestContext, renderCtx mySekaiRenderContext, payload *drawing.MysekaiMsrMapRequest) concurrentMessageJob {
 	return func(ctx context.Context) (onebot11.Message, error) {
-		data, err := renderCtx.Controller.WithContext(ctx).RenderMapRequest(payload)
-		return mysekaiImageResultWithContext(ctx, rc, data, err)
+		data, err := renderCtx.Controller.WithContext(ctx).RenderMapRequestImage(payload)
+		return mysekaiRenderedImageResultWithContext(ctx, rc, data, err)
 	}
 }
 
@@ -968,8 +970,8 @@ func executeMysekaiMap(rc *RequestContext, renderCtx mySekaiRenderContext) (oneb
 	if mysekaiMapHasNoRemainingResources(query, mapPayload) {
 		return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
 	}
-	data, err := renderCtx.Controller.RenderMapRequest(mapPayload)
-	message, err := mysekaiImageResult(rc, data, err)
+	data, err := renderCtx.Controller.RenderMapRequestImage(mapPayload)
+	message, err := mysekaiRenderedImageResult(rc, data, err)
 	if err != nil {
 		return nil, err
 	}
@@ -1003,17 +1005,6 @@ func mysekaiPhotoTime(rc *RequestContext, harukiUserID int, obtainedAt time.Time
 	return displaytime.FormatTime(obtainedAt.In(loc), "2006-01-02 15:04")
 }
 
-func mysekaiImageResult(rc *RequestContext, data []byte, err error) (onebot11.Message, error) {
-	return mysekaiImageResultWithContext(rc.Ctx, rc, data, err)
-}
-
-func mysekaiImageResultWithContext(ctx context.Context, rc *RequestContext, data []byte, err error) (onebot11.Message, error) {
-	if err != nil {
-		return nil, err
-	}
-	return imageMessage(ctx, data, rc.App, BotModulePJSK)
-}
-
 // mysekaiShopResourceBoxes resolves mysekai_shop resource boxes through the
 // region's education provider (the MySekai master store has no resource
 // boxes). nil when the region has no provider.
@@ -1045,4 +1036,15 @@ func mysekaiShopResourceBoxes(rc *RequestContext, region renderregion.Value) fun
 		}
 		return out
 	}
+}
+
+func mysekaiRenderedImageResult(rc *RequestContext, image drawing.ImageResult, err error) (onebot11.Message, error) {
+	return mysekaiRenderedImageResultWithContext(rc.Ctx, rc, image, err)
+}
+
+func mysekaiRenderedImageResultWithContext(ctx context.Context, rc *RequestContext, image drawing.ImageResult, err error) (onebot11.Message, error) {
+	if err != nil {
+		return nil, err
+	}
+	return renderedImageMessage(ctx, image, rc.App)
 }

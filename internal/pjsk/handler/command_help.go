@@ -36,21 +36,23 @@ func commandHelpMessage(ctx context.Context, resolved *CommandRequest, app *rend
 		Markdown: markdown,
 	}
 	finishBuild()
-	image, err := app.Drawing.WithContext(ctx).GenerateCommandHelp(request)
+	image, err := app.Drawing.WithContext(ctx).GenerateCommandHelpImage(request)
 	if err != nil {
 		return commandHelpTextMessage(markdown), nil
 	}
-	if app.ImageCache != nil {
-		finishStore := measureCommandOperation(ctx, "image.store")
-		url, err := app.ImageCache.StoreAndGetURL(ctx, image, BotModulePJSK)
-		finishStore()
+	if app.ImageCache != nil || (image.Ref() != nil && app.ImageHosts.Len() > 0) {
+		message, err := renderedImageMessage(ctx, image, app)
 		if err != nil {
 			return commandHelpTextMessage(markdown), nil
 		}
-		return onebot11.Message{onebot11.Image(url, "")}, nil
+		return message, nil
+	}
+	data, err := image.Bytes(ctx)
+	if err != nil {
+		return commandHelpTextMessage(markdown), nil
 	}
 	return onebot11.Message{
-		onebot11.Image("base64://"+base64.StdEncoding.EncodeToString(image), ""),
+		onebot11.Image("base64://"+base64.StdEncoding.EncodeToString(data), ""),
 	}, nil
 }
 

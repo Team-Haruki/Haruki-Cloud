@@ -135,6 +135,18 @@ func (c *HarukiDrawingClient) RenderWithCacheRequestAndPrepare(endpoint string, 
 }
 
 func (c *HarukiDrawingClient) renderWithCacheRequestAndPrepare(endpoint string, cacheRequest any, renderRequest any, prepare func(context.Context, any) error, render func(context.Context, any) ([]byte, error), sameRequest bool) ([]byte, error) {
+	image, err := c.renderImageWithCacheRequestAndPrepare(endpoint, cacheRequest, renderRequest, prepare, render, sameRequest)
+	if err != nil {
+		return nil, err
+	}
+	var ctx context.Context
+	if c != nil {
+		ctx = c.requestCtx
+	}
+	return image.Bytes(ctx)
+}
+
+func (c *HarukiDrawingClient) renderImageWithCacheRequestAndPrepare(endpoint string, cacheRequest any, renderRequest any, prepare func(context.Context, any) error, render func(context.Context, any) ([]byte, error), sameRequest bool) (ImageResult, error) {
 	var requestCtx context.Context
 	if c != nil {
 		requestCtx = c.requestCtx
@@ -162,10 +174,11 @@ func (c *HarukiDrawingClient) renderWithCacheRequestAndPrepare(endpoint string, 
 		body := prepareRender(requestCtx)
 		if prepare != nil {
 			if err := prepare(requestCtx, body); err != nil {
-				return nil, err
+				return ImageResult{}, err
 			}
 		}
-		return render(requestCtx, body)
+		data, err := render(requestCtx, body)
+		return ImageBytes(data), err
 	}
 	renderPrepared := func(renderCtx context.Context) ([]byte, error) {
 		body := prepareRender(renderCtx)
@@ -183,12 +196,14 @@ func (c *HarukiDrawingClient) renderWithCacheRequestAndPrepare(endpoint string, 
 		})
 	}
 	if c.cache != nil {
-		return c.cache.RenderSharedContext(requestCtx, endpoint, preparedRenderCachePayload{payload: preparedCache}, renderPrepared)
+		return c.cache.RenderImageSharedContext(requestCtx, endpoint, preparedRenderCachePayload{payload: preparedCache}, renderPrepared)
 	}
 	if c.localCache != nil {
-		return c.localCache.RenderSharedContext(requestCtx, endpoint, preparedRenderCachePayload{payload: preparedCache}, renderPrepared)
+		data, err := c.localCache.RenderSharedContext(requestCtx, endpoint, preparedRenderCachePayload{payload: preparedCache}, renderPrepared)
+		return ImageBytes(data), err
 	}
-	return renderPrepared(requestCtx)
+	data, err := renderPrepared(requestCtx)
+	return ImageBytes(data), err
 }
 
 func (c *HarukiDrawingClient) renderWithPermit(endpoint string, prepared any, render func(any) ([]byte, error)) ([]byte, error) {

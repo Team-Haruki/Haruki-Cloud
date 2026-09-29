@@ -61,16 +61,24 @@ func (c *Controller) BuildGachaListRequest(query ListQuery) (*drawing.GachaListR
 }
 
 func (c *Controller) RenderGachaList(query ListQuery) ([]byte, error) {
+	image, err := c.RenderGachaListImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderGachaListImage(query ListQuery) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildGachaListRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateGachaList(req)
+	return c.drawing.GenerateGachaListImage(req)
 }
 
 func (c *Controller) BuildGachaDetailRequest(query DetailQuery) (*drawing.GachaDetailRequest, error) {
@@ -82,16 +90,24 @@ func (c *Controller) BuildGachaDetailRequest(query DetailQuery) (*drawing.GachaD
 }
 
 func (c *Controller) RenderGachaDetail(query DetailQuery) ([]byte, error) {
+	image, err := c.RenderGachaDetailImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderGachaDetailImage(query DetailQuery) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildGachaDetailRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateGachaDetail(req)
+	return c.drawing.GenerateGachaDetailImage(req)
 }
 
 func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSource, error) {

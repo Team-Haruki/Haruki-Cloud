@@ -59,9 +59,9 @@ func executeCostume(rc *RequestContext) (onebot11.Message, error) {
 		return nil, onebot11.NewReplayError(costumeSearchHelp)
 	}
 	q = rendercostume.Query{CardID: q.CardID, ColorPosition: q.ColorPosition, Region: rc.Cmd.Region, ExpectedPartType: "body"}
-	data, err := rc.App.Costumes.WithContext(rc.Ctx).RenderCostumeDetail(q)
+	data, err := rc.App.Costumes.WithContext(rc.Ctx).RenderCostumeDetailImage(q)
 	if err != nil {
 		return nil, normalizeCostume3DError(err)
 	}
-	return rc.ImageMessage(data)
+	return rc.RenderedImageMessage(data)
 }

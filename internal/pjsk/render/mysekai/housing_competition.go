@@ -235,13 +235,21 @@ func (c *Controller) nextHousingCompetitionStatsRefresh(ctx context.Context, api
 }
 
 func (c *Controller) RenderHousingCompetitionLine(result *HousingCompetitionLineResult) ([]byte, error) {
+	image, err := c.RenderHousingCompetitionLineImage(result)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderHousingCompetitionLineImage(result *HousingCompetitionLineResult) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	if result == nil {
-		return nil, fmt.Errorf("百景榜数据为空")
+		return drawing.ImageResult{}, fmt.Errorf("百景榜数据为空")
 	}
-	return c.drawing.GenerateMysekaiHousingCompetition(&result.Request)
+	return c.drawing.GenerateMysekaiHousingCompetitionImage(&result.Request)
 }
 
 func (c *Controller) housingCompetitionDrawingEntry(api HousingCompetitionListClient, region string, entries []HousingCompetitionEntry, index int) drawing.MysekaiHousingCompetitionEntry {

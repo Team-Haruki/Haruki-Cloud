@@ -108,17 +108,41 @@ func (c *Controller) BuildStampListRequests(query ListQuery) ([]*drawing.StampLi
 }
 
 func (c *Controller) RenderStampList(query ListQuery) ([]byte, error) {
-	if c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
-	}
-	req, err := c.BuildStampListRequest(query)
+	image, err := c.RenderStampListImage(query)
 	if err != nil {
 		return nil, err
 	}
-	return c.drawing.GenerateStampList(req)
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderStampListImage(query ListQuery) (drawing.ImageResult, error) {
+	if c.drawing == nil {
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+	}
+	req, err := c.BuildStampListRequest(query)
+	if err != nil {
+		return drawing.ImageResult{}, err
+	}
+	return c.drawing.GenerateStampListImage(req)
 }
 
 func (c *Controller) RenderStampListPages(query ListQuery) ([][]byte, error) {
+	images, err := c.RenderStampListPagesImage(query)
+	if err != nil {
+		return nil, err
+	}
+	results := make([][]byte, 0, len(images))
+	for _, image := range images {
+		data, err := image.Bytes(c.requestCtx)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, data)
+	}
+	return results, nil
+}
+
+func (c *Controller) RenderStampListPagesImage(query ListQuery) ([]drawing.ImageResult, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
@@ -126,9 +150,9 @@ func (c *Controller) RenderStampListPages(query ListQuery) ([][]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	results := make([][]byte, 0, len(requests))
+	results := make([]drawing.ImageResult, 0, len(requests))
 	for _, req := range requests {
-		data, renderErr := c.drawing.GenerateStampList(req)
+		data, renderErr := c.drawing.GenerateStampListImage(req)
 		if renderErr != nil {
 			return nil, renderErr
 		}

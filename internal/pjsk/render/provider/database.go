@@ -78,6 +78,7 @@ func NewDatabaseProvider(client *sekaiDB.Client, region renderregion.Value, opts
 	p.education = &dbEducationProvider{client: client, region: region, fill: cachefill.Group{Cache: "education", Region: region.String()}}
 	p.playerFrames = &dbPlayerFrameProvider{client: client, region: region}
 	p.mysekai = newDBMySekaiProvider(client, region, cfg)
+	p.vlives.rows = p.mysekai
 	return p
 }
 

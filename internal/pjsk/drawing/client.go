@@ -572,6 +572,10 @@ func (c *HarukiDrawingClient) GenerateVLiveList(req *VLiveListRequest) ([]byte, 
 	return c.cachedPost("/api/pjsk/vlive/list", req)
 }
 
+func (c *HarukiDrawingClient) GenerateVLiveDetail(req *VLiveDetailRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/vlive/detail", req)
+}
+
 // =========================== Gacha API ===========================
 
 func (c *HarukiDrawingClient) GenerateGachaList(req *GachaListRequest) ([]byte, error) {

@@ -329,14 +329,14 @@ func (c *Controller) applyCheerPointRewards(req *drawing.VLiveDetailRequest, sou
 		box := source.GetResourceBoxByPurpose(totalCheerPointRewardPurpose, reward.ResourceBoxID)
 		req.TotalCheerPointRewards = append(req.TotalCheerPointRewards, drawing.VLiveCheerPointRewardRow{
 			Threshold: reward.Threshold,
-			Rewards:   nonNilRewards(c.buildRewardBoxItems(box)),
+			Rewards:   nonNilRewards(c.buildRewardBoxItems(source, box)),
 		})
 	}
 	if surplus := live.SurplusReward; surplus != nil {
 		box := source.GetResourceBoxByPurpose(totalCheerPointSurplusPurpose, surplus.ResourceBoxID)
 		req.SurplusReward = &drawing.VLiveSurplusReward{
 			BasePoint: surplus.BasePoint,
-			Rewards:   nonNilRewards(c.buildRewardBoxItems(box)),
+			Rewards:   nonNilRewards(c.buildRewardBoxItems(source, box)),
 		}
 	}
 }

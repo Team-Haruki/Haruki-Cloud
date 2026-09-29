@@ -37,8 +37,10 @@ func TestBuildShopRequestGroupsJPShopRows(t *testing.T) {
 			{"id": 12, "name": "ダイヤモンド", "iconAssetbundleName": "item_diamond"},
 			{"id": 5, "name": "夕桐", "iconAssetbundleName": "item_yugiri"},
 		},
-		"mysekaiTools.json": {{"id": 10, "name": "チェーンソー", "assetbundleName": "ax0005"}},
+		"mysekaiMaterialPossessions.json": {{"id": 1, "level": 1, "possessionLimit": 1000}},
+		"mysekaiTools.json":               {{"id": 10, "name": "チェーンソー", "assetbundleName": "ax0005"}},
 	})
+	controller = controller.WithMySekaiData([]byte(`{"userMysekaiShops":[],"userMysekaiColorfulPass":{"expiredAt":4102444800000},"userMysekaiGamedata":{"mysekaiMaterialPossessionLevel":1},"userMysekaiMaterialPossession":{"quantity":0}}`))
 	boxes := map[int][]ShopResource{
 		1:   {{ResourceType: "mysekai_material", ResourceID: 12, Quantity: 1}},
 		2:   {{ResourceType: "mysekai_material", ResourceID: 5, Quantity: 3}},
@@ -48,10 +50,10 @@ func TestBuildShopRequestGroupsJPShopRows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildShopRequest() error = %v", err)
 	}
-	if len(req.Shops) != 2 || req.Shops[0].ShopType != "material" || req.Shops[1].ShopType != "tool" {
+	if len(req.Shops) != 2 || req.Shops[0].ShopType != "tool" || req.Shops[1].ShopType != "material" {
 		t.Fatalf("shop groups = %+v", req.Shops)
 	}
-	materials := req.Shops[0].Items
+	materials := req.Shops[1].Items
 	if len(materials) != 2 || materials[0].ID != 1 || materials[1].ID != 2 {
 		t.Fatalf("material items must follow seq: %+v", materials)
 	}
@@ -68,7 +70,7 @@ func TestBuildShopRequestGroupsJPShopRows(t *testing.T) {
 	if materials[1].Quantity != 3 || materials[1].ExchangeLimitValue != nil || materials[1].ExchangeLimitType != "none" {
 		t.Fatalf("unlimited item = %+v", materials[1])
 	}
-	tool := req.Shops[1].Items[0]
+	tool := req.Shops[0].Items[0]
 	if tool.Name == nil || *tool.Name != "チェーンソー" || !strings.Contains(tool.ImagePath.First(), "mysekai/thumbnail/tool/ax0005.png") {
 		t.Fatalf("tool item = %+v", tool)
 	}

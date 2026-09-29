@@ -2,7 +2,9 @@ package mysekai
 
 import (
 	"fmt"
+	"slices"
 	"sort"
+	"time"
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -16,66 +18,165 @@ type ShopResource struct {
 	Quantity     int
 }
 
-// ShopQuery requests the MySekai shop view (JP 7.0.0 mysekaiShops).
+// ShopQuery requests the player's current MySekai shop lineup.
 type ShopQuery struct {
-	Region string `json:"region,omitempty"`
+	Region    string                      `json:"region,omitempty"`
+	ShopType  string                      `json:"shop_type,omitempty"`
+	ShowAll   bool                        `json:"show_all,omitempty"`
+	Profile   *drawing.ProfileCardRequest `json:"-"`
+	NowMillis int64                       `json:"-"`
 	// ResourceBox resolves the contents of a mysekai_shop resource box. The
 	// MySekai master store does not hold resource boxes, so the caller wires
-	// the region's education provider in; nil lists items without contents.
+	// the region's education provider in. Required for tool/material entries.
 	ResourceBox func(resourceBoxID int) []ShopResource `json:"-"`
 }
 
-var mysekaiShopTypeOrder = map[string]int{"material": 0, "tool": 1}
+var mysekaiShopTypeOrder = map[string]int{"blueprint_daily": 0, "blueprint_weekly": 1, "tool": 2, "material": 3}
 
-var mysekaiShopTypeTitles = map[string]string{"material": "素材", "tool": "工具"}
+var mysekaiShopTypeTitles = map[string]string{"blueprint_daily": "每日蓝图", "blueprint_weekly": "每周蓝图", "material": "材料", "tool": "工具"}
 
-// BuildShopRequest lists the region's MySekai shop. A region whose master
-// data has no mysekaiShops rows (every region before JP 7.0.0) reports the
-// shop as unavailable.
+// BuildShopRequest uses the uploaded lineup, never inventing a new rotation
+// from master data when the player has not uploaded their refreshed shop.
 func (c *Controller) BuildShopRequest(query ShopQuery) (*drawing.MysekaiShopRequest, error) {
 	c = c.withRegion(query.Region)
 	if err := c.ensureMasterdata(); err != nil {
 		return nil, err
 	}
-	region := c.resolveRegion(query.Region)
+	if query.ShopType != "" && query.ShopType != "blueprint" && query.ShopType != "tool" && query.ShopType != "material" {
+		return nil, fmt.Errorf("mysekai shop invalid type: %s", query.ShopType)
+	}
 	shops := c.masterdata.loadList("mysekaiShops.json")
+	blueprintShops := c.masterdata.loadList("mysekaiBlueprintShops.json")
+	if len(shops) == 0 && len(blueprintShops) == 0 {
+		return nil, fmt.Errorf("mysekai shop is not available in region %s", c.resolveRegion(query.Region))
+	}
+	merged, region, err := c.prepareSnapshotOnly(query.Region)
+	if err != nil {
+		return nil, err
+	}
+	now := query.NowMillis
+	if now == 0 {
+		now = time.Now().UnixMilli()
+	}
+	pass, _ := merged["userMysekaiColorfulPass"].(map[string]any)
+	passActive := int64Number(pass["expiredAt"], 0) > now
+	request := &drawing.MysekaiShopRequest{
+		Title: "烤森商店（按上传数据）", PassActive: &passActive,
+		Profile: c.mysekaiProfileCard(region, merged, query.Profile, true),
+		Shops:   make([]drawing.MysekaiShopGroup, 0),
+	}
+	if !passActive {
+		request.Title += "（通行证未生效）"
+	}
+	resolver := c.newMysekaiResourceResolver(region)
+	if query.ShopType == "" || query.ShopType == "blueprint" {
+		groups, err := c.buildBlueprintShopGroups(query, merged, blueprintShops, passActive, resolver)
+		if err != nil {
+			return nil, err
+		}
+		request.Shops = append(request.Shops, groups...)
+	}
+	if query.ShopType != "blueprint" {
+		groups, err := c.buildResourceShopGroups(query, merged, shops, passActive, resolver)
+		if err != nil {
+			return nil, err
+		}
+		request.Shops = append(request.Shops, groups...)
+	}
+	sort.SliceStable(request.Shops, func(i, j int) bool {
+		return mysekaiShopTypeRank(request.Shops[i].ShopType) < mysekaiShopTypeRank(request.Shops[j].ShopType)
+	})
+	return request, nil
+}
+
+func (c *Controller) buildResourceShopGroups(query ShopQuery, merged map[string]any, shops []map[string]any, passActive bool, resolver mysekaiResourceResolver) ([]drawing.MysekaiShopGroup, error) {
 	if len(shops) == 0 {
-		return nil, fmt.Errorf("mysekai shop is not available in region %s", region)
+		return nil, nil
+	}
+	records, err := shopSnapshotList(merged, "userMysekaiShops")
+	if err != nil {
+		return nil, err
+	}
+	counts := make(map[int]int, len(records))
+	for _, raw := range records {
+		row, _ := raw.(map[string]any)
+		counts[intNumber(row["mysekaiShopId"], 0)] = max(0, intNumber(row["count"], 0))
 	}
 	costsByShop := map[int][]map[string]any{}
 	for _, cost := range c.masterdata.loadList("mysekaiShopCosts.json") {
-		shopID := intNumber(cost["mysekaiShopId"], 0)
-		costsByShop[shopID] = append(costsByShop[shopID], cost)
+		id := intNumber(cost["mysekaiShopId"], 0)
+		costsByShop[id] = append(costsByShop[id], cost)
 	}
-	resolver := c.newMysekaiResourceResolver(region)
-
 	groups := map[string]*drawing.MysekaiShopGroup{}
 	sorted := append([]map[string]any(nil), shops...)
 	sort.SliceStable(sorted, func(i, j int) bool {
-		return intNumber(sorted[i]["seq"], 0) < intNumber(sorted[j]["seq"], 0)
+		if intNumber(sorted[i]["seq"], 0) != intNumber(sorted[j]["seq"], 0) {
+			return intNumber(sorted[i]["seq"], 0) < intNumber(sorted[j]["seq"], 0)
+		}
+		return intNumber(sorted[i]["id"], 0) < intNumber(sorted[j]["id"], 0)
 	})
 	for _, shop := range sorted {
 		shopType := stringValue(shop["mysekaiShopType"])
+		if (shopType != "material" && shopType != "tool") || (query.ShopType != "" && shopType != query.ShopType) {
+			continue
+		}
+		if query.ResourceBox == nil {
+			return nil, fmt.Errorf("mysekai shop masterdata missing resource boxes")
+		}
+		contents := query.ResourceBox(intNumber(shop["resourceBoxId"], 0))
+		if len(contents) == 0 {
+			return nil, fmt.Errorf("mysekai shop masterdata missing resource box %d", intNumber(shop["resourceBoxId"], 0))
+		}
+		for _, resource := range contents {
+			if resource.ResourceType == "mysekai_tool" && resolver.tools[resource.ResourceID] == nil {
+				return nil, fmt.Errorf("mysekai shop masterdata missing tool %d", resource.ResourceID)
+			}
+		}
+		item := c.buildShopItem(shop, costsByShop[intNumber(shop["id"], 0)], func(int) []ShopResource { return contents }, resolver)
+		count := counts[item.ID]
+		item.ExchangedCount = &count
+		available := passActive
+		if item.ExchangeLimitType != "none" {
+			remaining := 0
+			if item.ExchangeLimitValue != nil {
+				remaining = max(0, *item.ExchangeLimitValue-count)
+			}
+			item.RemainingCount = &remaining
+			available = available && remaining > 0
+		}
+		capacity, err := c.shopMaterialCapacity(merged, contents, resolver)
+		if err != nil {
+			return nil, err
+		}
+		if capacity != nil {
+			available = available && *capacity > 0
+		}
+		item.MaterialCapacityCount = capacity
+		item.Available = &available
+		if !query.ShowAll && !available {
+			continue
+		}
 		group := groups[shopType]
 		if group == nil {
-			group = &drawing.MysekaiShopGroup{ShopType: shopType}
-			if title, ok := mysekaiShopTypeTitles[shopType]; ok {
-				group.Title = &title
-			}
+			title := mysekaiShopTypeTitles[shopType]
+			group = &drawing.MysekaiShopGroup{ShopType: shopType, Title: &title}
 			groups[shopType] = group
 		}
-		group.Items = append(group.Items, c.buildShopItem(shop, costsByShop[intNumber(shop["id"], 0)], query.ResourceBox, resolver))
+		group.Items = append(group.Items, item)
 	}
-
-	request := &drawing.MysekaiShopRequest{Title: "烤森商店", Shops: make([]drawing.MysekaiShopGroup, 0, len(groups))}
+	result := make([]drawing.MysekaiShopGroup, 0, len(groups))
 	for _, group := range groups {
-		request.Shops = append(request.Shops, *group)
+		result = append(result, *group)
 	}
-	sort.SliceStable(request.Shops, func(i, j int) bool {
-		return mysekaiShopTypeRank(request.Shops[i].ShopType) < mysekaiShopTypeRank(request.Shops[j].ShopType) ||
-			mysekaiShopTypeRank(request.Shops[i].ShopType) == mysekaiShopTypeRank(request.Shops[j].ShopType) && request.Shops[i].ShopType < request.Shops[j].ShopType
-	})
-	return request, nil
+	return result, nil
+}
+
+func shopSnapshotList(merged map[string]any, key string) ([]any, error) {
+	rows, ok := merged[key].([]any)
+	if !ok {
+		return nil, fmt.Errorf("mysekai shop snapshot missing %s", key)
+	}
+	return rows, nil
 }
 
 func mysekaiShopTypeRank(shopType string) int {
@@ -94,7 +195,7 @@ func (c *Controller) buildShopItem(shop map[string]any, costs []map[string]any, 
 	if item.ExchangeLimitType == "" {
 		item.ExchangeLimitType = "none"
 	}
-	if limit := intNumber(shop["mysekaiShopExchangeLimitValue"], 0); limit > 0 {
+	if limit := max(0, intNumber(shop["mysekaiShopExchangeLimitValue"], 0)); item.ExchangeLimitType != "none" {
 		item.ExchangeLimitValue = &limit
 	}
 	if resourceBox != nil {
@@ -132,7 +233,7 @@ func (c *Controller) RenderShop(query ShopQuery) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.drawing.GenerateMysekaiShop(request)
+	return c.RenderShopRequest(request)
 }
 
 // mysekaiResourceResolver names and pictures the resources the JP 7.0.0
@@ -151,9 +252,7 @@ func (c *Controller) newMysekaiResourceResolver(region renderregion.Value) mysek
 		region:    region,
 		materials: c.masterdata.loadMapByID("mysekaiMaterials.json"),
 		items:     c.masterdata.loadMapByID("mysekaiItems.json"),
-		// mysekaiTools has no database table yet; it resolves from the local
-		// master files when the fallback is on and is otherwise empty.
-		tools: c.masterdata.loadMapByID("mysekaiTools.json"),
+		tools:     c.masterdata.loadMapByID("mysekaiTools.json"),
 	}
 }
 
@@ -195,4 +294,21 @@ func (r mysekaiResourceResolver) tool(toolID int) (string, string) {
 		return name, r.c.regionPath(r.region, fmt.Sprintf("mysekai/thumbnail/tool/%s.png", bundle))
 	}
 	return name, ""
+}
+
+// RenderShopRequest renders an already built, request-scoped shop payload.
+func (c *Controller) RenderShopRequest(request *drawing.MysekaiShopRequest) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	if request == nil {
+		return nil, fmt.Errorf("mysekai shop request is nil")
+	}
+	cloned := *request
+	cloned.Shops = slices.Clone(request.Shops)
+	for i := range cloned.Shops {
+		cloned.Shops[i].Items = slices.Clone(cloned.Shops[i].Items)
+	}
+	decorateShopRequest(&cloned)
+	return c.drawing.GenerateMysekaiShop(&cloned)
 }

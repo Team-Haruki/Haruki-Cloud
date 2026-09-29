@@ -15,6 +15,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
+	"haruki-cloud/internal/pjsk/render/provider"
 )
 
 func writeMysekaiJP700JSON(t *testing.T, dir, name string, data any) {
@@ -45,8 +46,14 @@ func newMysekaiJP700App(t *testing.T, drawingURL string) *renderapp.App {
 	})
 	writeMysekaiJP700JSON(t, jp, "mysekaiMaterials.json", []map[string]any{{"id": 1, "iconAssetbundleName": "mat_1"}})
 	writeMysekaiJP700JSON(t, filepath.Join(root, "en"), "mysekaiMaterials.json", []map[string]any{{"id": 1, "iconAssetbundleName": "mat_1"}})
+	writeMysekaiJP700JSON(t, jp, "mysekaiMaterialPossessions.json", []map[string]any{{"id": 1, "level": 1, "possessionLimit": 100}})
+	writeMysekaiJP700JSON(t, jp, "resourceBoxes.json", []map[string]any{
+		{"id": 1, "resourceBoxPurpose": "mysekai_shop", "details": []map[string]any{{"resourceType": "mysekai_material", "resourceId": 1, "resourceQuantity": 1}}},
+		{"id": 1, "resourceBoxPurpose": "mysekai_recycle", "details": []map[string]any{{"resourceType": "coin", "resourceQuantity": 999}}},
+	})
 	return &renderapp.App{
-		MySekai: rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingURL), nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{LocalDir: root, AllowFallback: true}),
+		Provider: provider.NewLocalProvider(jp, renderregion.JP),
+		MySekai:  rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingURL), nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{LocalDir: root, AllowFallback: true}),
 	}
 }
 
@@ -73,12 +80,16 @@ func TestExecuteMysekaiShopRendersJPShop(t *testing.T) {
 	}))
 	defer server.Close()
 	app := newMysekaiJP700App(t, server.URL)
+	app.MySekai = app.MySekai.WithMySekaiData([]byte(`{"userMysekaiShops":[],"userMysekaiColorfulPass":{"expiredAt":4102444800000},"userMysekaiGamedata":{"mysekaiMaterialPossessionLevel":1},"userMysekaiMaterialPossession":{"quantity":0}}`))
 
 	// Drawing without the endpoint yet: a clear message instead of a raw 404.
 	err := executeMysekaiJP700(app, mySekaiShopCommand, "jp")
 	assertReplayErrorText(t, err, "绘图服务暂不支持该功能，请稍后再试")
 	if len(got.Shops) != 1 || got.Shops[0].ShopType != "material" || len(got.Shops[0].Items) != 1 || got.Shops[0].Items[0].Costs[0].Quantity != 100 {
 		t.Fatalf("shop request = %+v", got)
+	}
+	if got.Shops[0].Items[0].Quantity != 1 || !strings.Contains(got.Shops[0].Items[0].ImagePath.First(), "mat_1.png") {
+		t.Fatal("resource box purpose mismatch")
 	}
 }
 
@@ -109,5 +120,60 @@ func TestMysekaiJP700CommandsParse(t *testing.T) {
 	req, err := sekaiHandlers{}.MysekaiBlueprintTermHandle().handleFunc(mysekaiEdgeContext("all"))
 	if err != nil || !strings.Contains(string(req.Params), `"show_all":true`) {
 		t.Fatalf("blueprint term all = %+v, %v", req, err)
+	}
+}
+
+func TestMysekaiShopParameters(t *testing.T) {
+	for _, tc := range []struct {
+		args, kind string
+		all        bool
+	}{
+		{"", "", false}, {"ALL", "", true}, {"工具 全部", "tool", true}, {"full BLUEPRINT", "blueprint", true}, {"素材", "material", false}, {"材料 all", "material", true}, {"tool", "tool", false}, {"material", "material", false}, {"蓝图", "blueprint", false},
+	} {
+		req, err := sekaiHandlers{}.MysekaiShopHandle().handleFunc(mysekaiEdgeContext(tc.args))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var query rendermysekai.ShopQuery
+		if err := json.Unmarshal(req.Params, &query); err != nil {
+			t.Fatal(err)
+		}
+		if query.ShopType != tc.kind || query.ShowAll != tc.all {
+			t.Fatalf("%q: %+v", tc.args, query)
+		}
+	}
+	for _, args := range []string{"unknown", "工具 材料", "alltool", "全部 蓝图 material"} {
+		if _, err := parseMysekaiShopArgs(args); err == nil {
+			t.Fatalf("accepted %q", args)
+		}
+	}
+}
+
+func TestMysekaiShopRequiresPlayerData(t *testing.T) {
+	app := newMysekaiJP700App(t, "")
+	assertReplayErrorText(t, executeMysekaiJP700(app, mySekaiShopCommand, "jp"), newMySekaiDataNotFoundReplayError().Error())
+	app.MySekai = app.MySekai.WithMySekaiData([]byte(`{"userMysekaiColorfulPass":null}`))
+	assertReplayErrorText(t, executeMysekaiJP700(app, mySekaiShopCommand, "jp"), "上传的数据缺少烤森商店信息，请重新上传完整游戏数据后再试")
+}
+
+func TestMysekaiShopResolvesMergedSnapshot(t *testing.T) {
+	app := newMysekaiJP700App(t, "")
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(context.Background(), "qq", "42", "12345678901234"); err != nil {
+		t.Fatal(err)
+	}
+	source := &runtimeSnapshotProviderStub{snapshot: &runtimeSnapshotStub{
+		rawBytes: []byte(`{"userMysekaiShops":[],"userMysekaiColorfulPass":null,"userMysekaiGamedata":{"mysekaiMaterialPossessionLevel":1},"userMysekaiMaterialPossession":{"quantity":0}}`),
+	}}
+	app.Bindings = service
+	app.Config.UserSnapshot.AllowFallback = true
+	app.Snapshots = source
+	rc := NewRequestContext(context.Background(), &CommandRequest{Module: parser.ModuleMysekai, Mode: mySekaiShopCommand, Region: "jp", Params: []byte(`{"mode":"self","platform":"qq","platform_user_id":"42"}`)}, app)
+	message, err := executeMysekai(rc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(message) == 0 || source.resolveCount != 1 || len(source.resolveNeedFlags) != 1 || !source.resolveNeedFlags[0] {
+		t.Fatalf("merged routing: count=%d flags=%v message=%v", source.resolveCount, source.resolveNeedFlags, message)
 	}
 }

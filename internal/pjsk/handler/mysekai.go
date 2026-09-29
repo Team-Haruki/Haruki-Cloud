@@ -340,7 +340,14 @@ func (sekaiHandlers) MysekaiShopHandle() HarukiSekaiCommandHandler {
 			"/pjsk mysekai shop", "/mysekai-shop", "/mysekai商店", "/烤森商店", "/msshop",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiShopCommand, map[string]any{}), nil
+			params, err := parseMysekaiShopArgs(ctx.GetArgs())
+			if err != nil {
+				return nil, err
+			}
+			if err := embedSelfQuery(params, ctx); err != nil {
+				return nil, err
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiShopCommand, params), nil
 		},
 	}, executeMysekai)
 }
@@ -787,12 +794,6 @@ func executeStaticMysekaiMode(rc *RequestContext, region string) (onebot11.Messa
 		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureDetail(query)
 		message, err := mysekaiImageResult(rc, data, err)
 		return message, true, err
-	case mySekaiShopCommand:
-		query := rendermysekai.ShopQuery{Region: regionWithDefault(region)}
-		query.ResourceBox = mysekaiShopResourceBoxes(rc, renderregion.Normalize(query.Region))
-		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderShop(query)
-		message, err := mysekaiImageResult(rc, data, err)
-		return message, true, err
 	case mySekaiBlueprintTermCommand:
 		query := rendermysekai.BlueprintTermQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &query)
@@ -838,6 +839,27 @@ func validateMysekaiSnapshotExpiry(rc *RequestContext, renderCtx mySekaiRenderCo
 
 func executeResolvedMysekaiMode(rc *RequestContext, renderCtx mySekaiRenderContext) (onebot11.Message, error) {
 	switch rc.Cmd.Mode {
+	case mySekaiShopCommand:
+		query := rendermysekai.ShopQuery{}
+		mergeParams(rc.Cmd.Params, &query)
+		query.Region = renderCtx.Region
+		query.Profile = renderCtx.Profile
+		query.ResourceBox = mysekaiShopResourceBoxes(rc, renderregion.Normalize(renderCtx.Region))
+		request, err := renderCtx.Controller.BuildShopRequest(query)
+		if err != nil {
+			return nil, err
+		}
+		if len(request.Shops) == 0 {
+			if query.ShowAll {
+				return onebot11.Message{onebot11.Text("当前筛选下没有商店商品")}, nil
+			}
+			if request.PassActive != nil && !*request.PassActive && !query.ShowAll {
+				return onebot11.Message{onebot11.Text("当前 MySekai 通行证未生效，暂无可购买商品；可加“全部”查看商品状态")}, nil
+			}
+			return onebot11.Message{onebot11.Text("当前筛选下没有可购买的商品；可加“全部”查看商品状态")}, nil
+		}
+		data, err := renderCtx.Controller.RenderShopRequest(request)
+		return mysekaiImageResult(rc, data, err)
 	case mySekaiResourceCommand:
 		return executeMysekaiResource(rc, renderCtx)
 	case mySekaiResourceMapCommand:

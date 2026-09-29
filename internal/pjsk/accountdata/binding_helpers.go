@@ -3,6 +3,7 @@ package accountdata
 import (
 	"context"
 	"fmt"
+	"haruki-cloud/internal/observability/commandtrace"
 	"slices"
 	"strconv"
 	"strings"
@@ -259,6 +260,8 @@ func (s *BindingService) ResolveUserBinding(ctx context.Context, platform, platf
 // ResolveUserBindingBySelector resolves a binding using a u[i] selector (e.g. "u1", "u2")
 // or a raw game UID. For u[i], the selector is scoped to the given server when provided.
 func (s *BindingService) ResolveUserBindingBySelector(ctx context.Context, platform, platformUserID, server, selector string) (int, *ResolvedBinding, error) {
+	finish := commandtrace.MeasureOperation(ctx, "binding.selector_resolve")
+	defer finish()
 	if err := s.requireReady(platform, platformUserID); err != nil {
 		return 0, nil, err
 	}

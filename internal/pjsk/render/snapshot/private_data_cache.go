@@ -2,12 +2,14 @@ package snapshot
 
 import (
 	"container/list"
+	"context"
 	"fmt"
 	"slices"
 	"sync"
 	"time"
 
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/observability/commandtrace"
 )
 
 // PrivateDataCache is a process-wide cache of Toolbox private-data payloads
@@ -54,8 +56,17 @@ type privateDataPayload struct {
 }
 
 func newPrivateDataPayload(data []byte) privateDataPayload {
+	return newPrivateDataPayloadContext(context.TODO(), data)
+}
+
+func newPrivateDataPayloadContext(ctx context.Context, data []byte) privateDataPayload {
+	finishStamp := commandtrace.MeasureOperation(ctx, "snapshot.payload_stamp")
 	uploadTime, _ := parseTopLevelUploadTime(data)
-	return privateDataPayload{data: slices.Clone(data), uploadTime: uploadTime}
+	finishStamp()
+	finishCopy := commandtrace.MeasureOperation(ctx, "snapshot.payload_copy")
+	copied := slices.Clone(data)
+	finishCopy()
+	return privateDataPayload{data: copied, uploadTime: uploadTime}
 }
 
 func (p privateDataPayload) cloneBytes() []byte {
@@ -133,12 +144,25 @@ func (c *PrivateDataCache) fetchPayload(
 	key PrivateDataKey,
 	fetch func(knownUploadTime int64) (data []byte, notModified bool, err error),
 ) (privateDataPayload, bool, error) {
+	return c.fetchPayloadContext(context.TODO(), key, fetch)
+}
+
+func (c *PrivateDataCache) fetchPayloadContext(
+	ctx context.Context,
+	key PrivateDataKey,
+	fetch func(knownUploadTime int64) (data []byte, notModified bool, err error),
+) (privateDataPayload, bool, error) {
 	var cached *privateDataStoreEntry
 	known := int64(0)
 	if c != nil {
-		if cached = c.load(key); cached != nil {
+		finishLookup := commandtrace.MeasureOperation(ctx, "snapshot.raw_cache_lookup")
+		cached = c.load(key)
+		finishLookup()
+		if cached != nil {
 			known = cached.uploadTime
 		}
+	} else {
+		commandtrace.RecordOperation(ctx, "snapshot.raw_cache_bypass", 0)
 	}
 
 	data, notModified, err := fetch(known)
@@ -150,9 +174,13 @@ func (c *PrivateDataCache) fetchPayload(
 			// Upstream cannot validate a timestamp this request never sent.
 			return privateDataPayload{}, false, fmt.Errorf("snapshot: upstream reported not-modified without a cached payload")
 		}
+		commandtrace.RecordOperation(ctx, "snapshot.raw_cache_hit", 0)
 		return cached.privateDataPayload, true, nil
 	}
-	payload := newPrivateDataPayload(data)
+	if c != nil {
+		commandtrace.RecordOperation(ctx, "snapshot.raw_cache_miss", 0)
+	}
+	payload := newPrivateDataPayloadContext(ctx, data)
 	if c != nil && payload.uploadTime > 0 {
 		c.storePayload(key, payload)
 	}

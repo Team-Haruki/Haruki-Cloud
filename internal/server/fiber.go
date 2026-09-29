@@ -127,9 +127,12 @@ func accessLogMiddleware(accessLogger *harukiLogger.Logger) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		startedAt := time.Now()
 		requestBytes := len(c.Request().Body())
+		ctx, trace := commandtrace.WithTrace(c.Context())
+		c.SetContext(ctx)
 		var observedErr error
 		errorType := ""
 		defer func() {
+			snapshot := trace.Snapshot()
 			statusCode := c.Response().StatusCode()
 			attrs := []any{
 				"event", "http_request",
@@ -141,9 +144,14 @@ func accessLogMiddleware(accessLogger *harukiLogger.Logger) fiber.Handler {
 				"duration_scope", "fiber_handler",
 				"request_bytes", requestBytes,
 				"response_bytes", len(c.Response().Body()),
+				"operation_stats_kind", "inclusive",
+				"operation_stats", snapshot.OperationValue(),
 			}
 			if botID := strings.TrimSpace(c.Params("botId")); botID != "" {
 				attrs = append(attrs, "bot_id", botID)
+			}
+			if errorType == "" {
+				errorType = snapshot.ErrorType
 			}
 			if errorType != "" {
 				attrs = append(attrs, "error_type", errorType)

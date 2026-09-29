@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"haruki-cloud/internal/core/secevent"
+	"haruki-cloud/internal/observability/commandtrace"
 	"strings"
 	"time"
 
@@ -77,6 +78,8 @@ func newReplayGuard(rc *redis.Client, window time.Duration, requireNonce bool, s
 // requests must be dropped silently (empty OK response), indistinguishable
 // from a dedup drop.
 func (g *replayGuard) allow(ctx context.Context, botID string, req BotCommandRequest) bool {
+	finish := commandtrace.MeasureOperation(ctx, "request.replay_check")
+	defer finish()
 	if g == nil || g.nonces == nil {
 		return true
 	}

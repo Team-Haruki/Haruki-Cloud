@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"haruki-cloud/internal/observability/commandtrace"
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
@@ -40,17 +41,22 @@ func PrepareExecutionRuntime(ctx context.Context, resolved *CommandRequest, app 
 
 	if platform := strings.TrimSpace(resolved.RequesterPlatform); platform != "" {
 		if userID := strings.TrimSpace(resolved.RequesterUserID); userID != "" {
-			if err := app.BanChecker.CheckBan(ctx, platform, userID, resolved.Module); err != nil {
+			finishBan := commandtrace.MeasureOperation(ctx, "runtime.ban_check")
+			err := app.BanChecker.CheckBan(ctx, platform, userID, resolved.Module)
+			finishBan()
+			if err != nil {
 				return nil, onebot11.Message{onebot11.Text(sanitizeUserFacingText(err.Error()))}, nil
 			}
 		}
 	}
 
+	finishRegion := commandtrace.MeasureOperation(ctx, "runtime.region_resolve")
 	resolved.Region = resolveRegionFromDefaultBinding(ctx, resolved, app)
-	ctx = displaytime.WithRequestTimeZone(
-		ctx,
-		resolveRequesterHarukiUserTimeZone(ctx, app, resolved.RequesterPlatform, resolved.RequesterUserID),
-	)
+	finishRegion()
+	finishTimeZone := commandtrace.MeasureOperation(ctx, "runtime.timezone_resolve")
+	timeZone := resolveRequesterHarukiUserTimeZone(ctx, app, resolved.RequesterPlatform, resolved.RequesterUserID)
+	finishTimeZone()
+	ctx = displaytime.WithRequestTimeZone(ctx, timeZone)
 	ctx = rendersnapshot.WithRequestCache(ctx)
 
 	return &ExecutionRuntime{

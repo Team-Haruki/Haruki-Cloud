@@ -28,12 +28,15 @@ func (c *BuiltSnapshotCache) getOrBuild(ctx context.Context, key builtSnapshotKe
 		return nil, false, err
 	}
 	if c == nil {
+		commandtrace.RecordOperation(ctx, "snapshot.built_cache_bypass", 0)
 		snapshot, err := build(ctx)
 		return snapshot, false, err
 	}
 	if snapshot := c.Get(key); snapshot != nil {
+		commandtrace.RecordOperation(ctx, "snapshot.built_cache_hit", 0)
 		return snapshot, true, nil
 	}
+	commandtrace.RecordOperation(ctx, "snapshot.built_cache_miss", 0)
 	flightKey := fmt.Sprintf("%s:%d:%d:%t:%d:%s", key.Region, key.UID, key.SuiteUploadTime, key.NeedMySekai, key.MySekaiUploadTime, key.SuiteProjection)
 	// Keep only logging attributes, not request caches or the initiating request's
 	// cancellation. Every waiter still selects on its own context below.
@@ -58,10 +61,15 @@ func (c *BuiltSnapshotCache) getOrBuild(ctx context.Context, key builtSnapshotKe
 	defer finishWait()
 	select {
 	case <-ctx.Done():
+		commandtrace.RecordOperation(ctx, "snapshot.build_wait_canceled", 0)
 		return nil, false, ctx.Err()
 	case result := <-result:
 		if err := ctx.Err(); err != nil {
+			commandtrace.RecordOperation(ctx, "snapshot.build_wait_canceled", 0)
 			return nil, false, err
+		}
+		if result.Shared {
+			commandtrace.RecordOperation(ctx, "snapshot.build_shared", 0)
 		}
 		built := result.Val.(builtSnapshotFlightResult)
 		commandtrace.MergeOperations(ctx, built.operations)

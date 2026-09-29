@@ -21,6 +21,7 @@ import (
 
 	"golang.org/x/sync/singleflight"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 )
 
@@ -97,9 +98,19 @@ func (g *Group) Do(ctx context.Context, key string, fill func(ctx context.Contex
 		ctx = context.Background()
 	}
 	if err := g.backoffError(key); err != nil {
+		commandtrace.RecordOperation(ctx, "masterdata.cachefill_backoff", 0)
 		return err
 	}
-	_, err, _ := g.flights.Do(key, func() (any, error) {
+	finishWait := commandtrace.MeasureOperation(ctx, "masterdata.cachefill_wait")
+	defer finishWait()
+	// Preserve the synchronous wait contract, including canceled callers. Only
+	// measure this caller's wait; do not attach a new timer to detached work.
+	defer func() {
+		if ctx.Err() != nil {
+			commandtrace.RecordOperation(ctx, "masterdata.cachefill_canceled", 0)
+		}
+	}()
+	_, err, shared := g.flights.Do(key, func() (any, error) {
 		g.mu.Lock()
 		generation := g.generation
 		g.mu.Unlock()
@@ -111,6 +122,9 @@ func (g *Group) Do(ctx context.Context, key string, fill func(ctx context.Contex
 		}
 		return nil, err
 	})
+	if shared {
+		commandtrace.RecordOperation(ctx, "masterdata.cachefill_shared", 0)
+	}
 	return err
 }
 

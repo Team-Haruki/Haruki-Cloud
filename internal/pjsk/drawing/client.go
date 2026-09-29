@@ -319,7 +319,9 @@ func (c *HarukiDrawingClient) successBody(d *renderDirective, resp *resty.Respon
 		d.outcome.ContentType = contentType
 		return resp.Body(), nil
 	case d != nil && d.Artifact && strings.HasPrefix(strings.ToLower(strings.TrimSpace(contentType)), "application/json"):
+		finishDecode := commandtrace.MeasureOperation(c.requestCtx, "drawing.decode")
 		ref, err := parseArtifactRef(resp.Body())
+		finishDecode()
 		if err != nil {
 			return nil, errDrawingBadArtifact(err)
 		}

@@ -150,8 +150,10 @@ func (c *Controller) resolveAutoRecommendResources(ctx context.Context, query Au
 		return autoRecommendResources{}, err
 	}
 
+	finishMeta := commandtrace.MeasureOperation(ctx, "deck.music_meta_lookup")
 	musicMeta := c.resolveMusicMeta(region)
 	musicMetaPath := c.resolveMusicMetaFilePath()
+	finishMeta()
 	if len(musicMeta) == 0 && musicMetaPath == "" {
 		return autoRecommendResources{}, fmt.Errorf("deck recommend requires music meta data")
 	}

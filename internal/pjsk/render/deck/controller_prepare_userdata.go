@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"fmt"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/observability/commandtrace"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func (c *Controller) prepareRecommendUserData(region renderregion.Value, recType string, query AutoQuery, option map[string]any) (*snapshot.RawUserData, []byte, error) {
+	finishCopy := commandtrace.MeasureOperation(c.ctx, "deck.userdata_copy")
+	defer finishCopy()
 	original := c.snapshot.RawData()
 	if original == nil {
 		return nil, nil, fmt.Errorf("raw user snapshot is unavailable")
@@ -31,6 +34,9 @@ func (c *Controller) prepareRecommendUserData(region renderregion.Value, recType
 		return nil, nil, fmt.Errorf("raw user snapshot is unavailable")
 	}
 
+	finishCopy()
+	finishPrepare := commandtrace.MeasureOperation(c.ctx, "deck.userdata_prepare")
+	defer finishPrepare()
 	if err := c.applyProfilePreset(region, raw, query); err != nil {
 		return nil, nil, err
 	}

@@ -91,7 +91,9 @@ func VerifyBotSessionTokenWithPolicy(ctx context.Context, redisClient *redis.Cli
 	if botID == "" || sessionToken == "" {
 		return &BotSessionFailure{Status: fiber.StatusUnauthorized, Message: ErrBotSessionMissing}
 	}
+	finishClaims := commandtrace.MeasureOperation(ctx, "session.jwt_verify")
 	claims, failure := parseBotSessionClaims(sessionToken)
+	finishClaims()
 	if failure != nil {
 		return failure
 	}
@@ -105,6 +107,8 @@ func VerifyBotSessionTokenWithPolicy(ctx context.Context, redisClient *redis.Cli
 }
 
 func checkSessionPolicy(ctx context.Context, policy SessionPolicy, reporter secevent.Reporter, claims botSessionClaims) *BotSessionFailure {
+	finish := commandtrace.MeasureOperation(ctx, "session.policy_check")
+	defer finish()
 	if policy == nil {
 		return nil
 	}
@@ -175,6 +179,8 @@ func botSessionSigningKey(token *jwt.Token) (any, error) {
 }
 
 func validateStoredBotSession(ctx context.Context, redisClient *redis.Client, botID, sessionToken string) *botSessionFailure {
+	finish := commandtrace.MeasureOperation(ctx, "session.store_lookup")
+	defer finish()
 	stored, err := redisClient.Get(ctx, fmt.Sprintf(RedisKeyBotSession, botID)).Result()
 	if errors.Is(err, redis.Nil) {
 		return &botSessionFailure{Status: fiber.StatusUnauthorized, Message: "会话已过期或不存在"}

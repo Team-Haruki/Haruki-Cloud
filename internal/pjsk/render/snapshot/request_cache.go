@@ -56,6 +56,7 @@ func cacheFromContext(ctx context.Context) *requestCache {
 func cachedPrivateData(ctx context.Context, key privateDataCacheKey, fetch func() (privateDataPayload, error)) (privateDataPayload, error, bool) {
 	cache := cacheFromContext(ctx)
 	if cache == nil {
+		commandtrace.RecordOperation(ctx, "snapshot.request_cache_bypass", 0)
 		finishFetch := commandtrace.MeasureOperation(ctx, "snapshot.private_data")
 		data, err := fetch()
 		finishFetch()
@@ -69,6 +70,11 @@ func cachedPrivateData(ctx context.Context, key privateDataCacheKey, fetch func(
 		cache.privateData[key] = entry
 	}
 	cache.mu.Unlock()
+	if hit {
+		commandtrace.RecordOperation(ctx, "snapshot.request_cache_hit", 0)
+	} else {
+		commandtrace.RecordOperation(ctx, "snapshot.request_cache_miss", 0)
+	}
 
 	didFetch := false
 	waitStartedAt := time.Now()
@@ -80,6 +86,9 @@ func cachedPrivateData(ctx context.Context, key privateDataCacheKey, fetch func(
 	})
 	if !didFetch {
 		commandtrace.RecordOperation(ctx, "snapshot.cache_wait", time.Since(waitStartedAt))
+		if ctx.Err() != nil {
+			commandtrace.RecordOperation(ctx, "snapshot.cache_wait_canceled", 0)
+		}
 	}
 	return entry.data, entry.err, hit
 }

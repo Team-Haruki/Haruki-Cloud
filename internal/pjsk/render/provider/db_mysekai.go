@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 	"unicode"
 
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/cachefill"
 )
@@ -326,6 +328,10 @@ func (p *dbMySekaiProvider) loadDBMapByID(ctx context.Context, filename string) 
 }
 
 func (p *dbMySekaiProvider) queryTable(ctx context.Context, table string) ([]map[string]any, error) {
+	// The query duration includes iteration and the separately measured decode work.
+	finishQuery := commandtrace.MeasureOperation(ctx, "mysekai.provider_query")
+	defer finishQuery()
+
 	rows, err := queryMySekaiTable(ctx, p.db, p.dbType, table, renderregion.WithDefault(p.region).String())
 	if err != nil {
 		return nil, err
@@ -339,6 +345,11 @@ func (p *dbMySekaiProvider) queryTable(ctx context.Context, table string) ([]map
 	colTypes, _ := rows.ColumnTypes()
 
 	result := make([]map[string]any, 0)
+	hasTrace := commandtrace.FromContext(ctx) != nil
+	var decodeElapsed time.Duration
+	defer func() {
+		commandtrace.RecordOperation(ctx, "mysekai.provider_decode", decodeElapsed)
+	}()
 	for rows.Next() {
 		values := make([]any, len(cols))
 		ptrs := make([]any, len(cols))
@@ -349,6 +360,10 @@ func (p *dbMySekaiProvider) queryTable(ctx context.Context, table string) ([]map
 			return nil, err
 		}
 
+		var decodeStarted time.Time
+		if hasTrace {
+			decodeStarted = time.Now()
+		}
 		item := make(map[string]any, len(cols))
 		for i, col := range cols {
 			key := mysekaiColumnKey(col)
@@ -358,6 +373,9 @@ func (p *dbMySekaiProvider) queryTable(ctx context.Context, table string) ([]map
 			item[key] = normalizeDBMasterdataValue(values[i], colTypes, i)
 		}
 		result = append(result, item)
+		if hasTrace {
+			decodeElapsed += time.Since(decodeStarted)
+		}
 	}
 	return result, rows.Err()
 }

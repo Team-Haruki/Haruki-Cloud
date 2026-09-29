@@ -194,7 +194,8 @@ func (p *ToolboxSnapshotProvider) fetchPrivateData(
 		PlatformUserID: imUserID,
 		Projection:     projection,
 	}, func() (privateDataPayload, error) {
-		data, cross, ferr := p.privateCache.fetchPayload(
+		data, cross, ferr := p.privateCache.fetchPayloadContext(
+			ctx,
 			PrivateDataKey{Server: server, DataType: dataType, UID: uid, Projection: projection},
 			fetch,
 		)
@@ -292,6 +293,7 @@ func (p *ToolboxSnapshotProvider) resolveBuiltSnapshot(
 	if memoizable {
 		snapshot, cacheHit, err = p.builtCache.getOrBuild(ctx, memoKey, int64(len(suite.data)+len(mysekai.data)), build)
 	} else {
+		commandtrace.RecordOperation(ctx, "snapshot.built_cache_bypass", 0)
 		snapshot, err = build(ctx)
 	}
 	if err != nil {

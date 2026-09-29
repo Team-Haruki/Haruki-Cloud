@@ -37,6 +37,8 @@ func JSONResponse(c fiber.Ctx, status int, message string, data ...any) error {
 	} else {
 		resp = BuildResponseMap(status, message, nil)
 	}
+	finishEncode := commandtrace.MeasureOperation(c.Context(), "response.json_encode")
+	defer finishEncode()
 	return c.Status(status).JSON(resp)
 }
 
@@ -51,7 +53,12 @@ func MsgPackResponse(c fiber.Ctx, status int, message string, data ...any) error
 	} else {
 		resp = BuildResponseMap(status, message, nil)
 	}
+	finishEncode := commandtrace.MeasureOperation(c.Context(), "response.msgpack_encode")
+	defer finishEncode()
 	encoded, err := msgpack.Marshal(resp)
+	finishEncode()
+	finishBody := commandtrace.MeasureOperation(c.Context(), "response.body_set")
+	defer finishBody()
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
@@ -80,12 +87,18 @@ func CachedJSONResponse(
 	finish := commandtrace.MeasurePhase(c.Context(), "response_encode")
 	defer finish()
 	resp := BuildResponseMap(status, message, data)
+	finishEncode := commandtrace.MeasureOperation(c.Context(), "response.json_encode")
+	defer finishEncode()
 	encoded, err := c.App().Config().JSONEncoder(resp)
+	finishEncode()
 	if err != nil {
 		return err
 	}
 	if redisClient != nil {
+		finishWrite := commandtrace.MeasureOperation(ctx, "api.cache_write")
+		defer finishWrite()
 		_ = redisClient.Set(ctx, key, encoded, ttl).Err() // best-effort cache write
+		finishWrite()
 	}
 	return SendCachedJSON(c, status, encoded)
 }
@@ -132,13 +145,18 @@ func CacheQuery(ctx context.Context, c fiber.Ctx, redisClient *redis.Client, nam
 	if redisClient == nil {
 		return key, nil, false, nil
 	}
+	finishRead := commandtrace.MeasureOperation(ctx, "api.cache_read")
+	defer finishRead()
 	cached, err := redisClient.Get(ctx, key).Bytes()
+	finishRead()
 	if errors.Is(err, redis.Nil) {
 		return key, nil, false, nil
 	}
 	if err != nil {
 		return key, nil, false, err
 	}
+	finishValidate := commandtrace.MeasureOperation(ctx, "api.cache_validate")
+	defer finishValidate()
 	trimmed := bytes.TrimSpace(cached)
 	if !json.Valid(trimmed) || (trimmed[0] != '{' && !bytes.Equal(trimmed, []byte("null"))) {
 		return key, nil, false, fmt.Errorf("invalid cached JSON response")
@@ -147,6 +165,8 @@ func CacheQuery(ctx context.Context, c fiber.Ctx, redisClient *redis.Client, nam
 }
 
 func SendCachedJSON(c fiber.Ctx, status int, encoded []byte) error {
+	finishBody := commandtrace.MeasureOperation(c.Context(), "response.body_set")
+	defer finishBody()
 	c.Set(fiber.HeaderContentType, ContentTypeJSON)
 	return c.Status(status).Send(encoded)
 }
@@ -165,7 +185,10 @@ func WithCache(c fiber.Ctx, redisClient *redis.Client, namespace string, fetchFn
 	if hit {
 		return SendCachedJSON(c, fiber.StatusOK, cached)
 	}
+	finishFetch := commandtrace.MeasureOperation(ctx, "api.data_fetch")
+	defer finishFetch()
 	data, err := fetchFn(key)
+	finishFetch()
 	if err != nil {
 		var bypass *CacheBypassError
 		if errors.As(err, &bypass) {

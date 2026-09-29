@@ -3,6 +3,7 @@ package chunithm
 import (
 	"haruki-cloud/api"
 	"haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
 	"sort"
 	"time"
 
@@ -193,7 +194,10 @@ func (h *MusicHandler) QueryBatch(c fiber.Ctx) error {
 		MusicIDs []int  `json:"music_ids"`
 		Version  string `json:"version"`
 	}
-	if err := c.Bind().Body(&req); err != nil {
+	finishDecode := commandtrace.MeasureOperation(ctx, "request.body_decode")
+	err := c.Bind().Body(&req)
+	finishDecode()
+	if err != nil {
 		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 	}
 	// Bound the unauthenticated batch so a huge music_ids list cannot amplify

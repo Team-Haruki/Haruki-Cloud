@@ -3,6 +3,8 @@ package drawing
 import (
 	"context"
 	"fmt"
+
+	"haruki-cloud/internal/observability/commandtrace"
 )
 
 // ImageResult is a rendered image: its bytes, or an artifact ref whose bytes
@@ -26,6 +28,8 @@ func (r ImageResult) Bytes(ctx context.Context) ([]byte, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	finish := commandtrace.MeasureOperation(ctx, "image.result_bytes")
+	defer finish()
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}

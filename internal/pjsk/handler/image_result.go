@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"haruki-cloud/internal/observability/commandtrace"
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -19,9 +20,14 @@ func renderedImageMessage(ctx context.Context, image drawing.ImageResult, app *r
 		return nil, err
 	}
 	if ref := image.Ref(); ref != nil && app != nil {
-		if url, ok := app.ImageHosts.URL(ref.NodeName, ref.EscapedCDNPath()); ok {
-			return onebot11.Message{onebot11.Image(url, "")}, nil
+		finishURL := commandtrace.MeasureOperation(ctx, "image.result_url")
+		url, ok := app.ImageHosts.URL(ref.NodeName, ref.EscapedCDNPath())
+		if ok {
+			message := onebot11.Message{onebot11.Image(url, "")}
+			finishURL()
+			return message, nil
 		}
+		finishURL()
 	}
 	data, err := image.Bytes(ctx)
 	if err != nil {

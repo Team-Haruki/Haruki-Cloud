@@ -27,6 +27,7 @@ type bindingLookup interface {
 // Toolbox deployments without conditional read support).
 type privateDataClient interface {
 	GetSuiteDataConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error)
+	GetSuiteDataFieldsConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64, fields []string) ([]byte, bool, error)
 	GetMySekaiDataConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error)
 }
 
@@ -107,6 +108,13 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		return nil, fmt.Errorf("snapshot: snapshot selector is incomplete")
 	}
 
+	fields, err := normalizeSuiteFields(opts.SuiteFields)
+	if err != nil {
+		return nil, err
+	}
+	opts.SuiteFields = fields
+	projection := strings.Join(fields, ",")
+
 	tResolve := time.Now()
 	region := renderregion.WithDefault(selector.Region)
 	binding, uid, err := p.resolveAccount(ctx, selector, opts, platform, imUserID, region)
@@ -114,7 +122,10 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		return nil, err
 	}
 
-	suiteResult, err := p.fetchPrivateData(ctx, binding.Server, "suite", uid, platform, imUserID, func(knownUploadTime int64) ([]byte, bool, error) {
+	suiteResult, err := p.fetchPrivateData(ctx, binding.Server, "suite", uid, platform, imUserID, projection, func(knownUploadTime int64) ([]byte, bool, error) {
+		if len(fields) > 0 {
+			return p.client.GetSuiteDataFieldsConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime, fields)
+		}
 		return p.client.GetSuiteDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
 	})
 	if err != nil {
@@ -170,6 +181,7 @@ func (p *ToolboxSnapshotProvider) fetchPrivateData(
 	server, dataType string,
 	uid int64,
 	platform, imUserID string,
+	projection string,
 	fetch conditionalPrivateDataFetcher,
 ) (toolboxPrivateDataResult, error) {
 	started := time.Now()
@@ -180,9 +192,10 @@ func (p *ToolboxSnapshotProvider) fetchPrivateData(
 		UserID:         uid,
 		Platform:       platform,
 		PlatformUserID: imUserID,
+		Projection:     projection,
 	}, func() (privateDataPayload, error) {
 		data, cross, ferr := p.privateCache.fetchPayload(
-			PrivateDataKey{Server: server, DataType: dataType, UID: uid},
+			PrivateDataKey{Server: server, DataType: dataType, UID: uid, Projection: projection},
 			fetch,
 		)
 		result.crossRequestCacheHit = cross
@@ -225,7 +238,7 @@ func (p *ToolboxSnapshotProvider) resolveMySekaiData(ctx context.Context, server
 	if !needed {
 		return privateDataPayload{}, nil
 	}
-	result, err := p.fetchPrivateData(ctx, server, "mysekai", uid, platform, imUserID, func(knownUploadTime int64) ([]byte, bool, error) {
+	result, err := p.fetchPrivateData(ctx, server, "mysekai", uid, platform, imUserID, "", func(knownUploadTime int64) ([]byte, bool, error) {
 		return p.client.GetMySekaiDataConditionalContext(ctx, server, uid, platform, imUserID, knownUploadTime)
 	})
 	return result.privateDataPayload, err
@@ -258,6 +271,7 @@ func (p *ToolboxSnapshotProvider) resolveBuiltSnapshot(
 		Region:            region.String(),
 		UID:               uid,
 		SuiteUploadTime:   suite.uploadTime,
+		SuiteProjection:   strings.Join(opts.SuiteFields, ","),
 		NeedMySekai:       opts.NeedMySekai,
 		MySekaiUploadTime: mysekai.uploadTime,
 	}

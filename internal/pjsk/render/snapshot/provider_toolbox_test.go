@@ -10,6 +10,7 @@ import (
 	"time"
 
 	sekaienttest "haruki-cloud/database/sekai/enttest"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 
@@ -116,6 +117,23 @@ func (f *fakePrivateDataClient) GetSuiteDataConditionalContext(ctx context.Conte
 	}
 	f.suiteCalls = append(f.suiteCalls, server+":"+platform+":"+platformUserID)
 	return append([]byte(nil), f.suiteJSON...), false, nil
+}
+
+func (f *fakePrivateDataClient) GetSuiteDataFieldsConditionalContext(ctx context.Context, server string, uid int64, platform, requester string, known int64, fields []string) ([]byte, bool, error) {
+	data, unchanged, err := f.GetSuiteDataConditionalContext(ctx, server, uid, platform, requester, known)
+	if err != nil || unchanged {
+		return data, unchanged, err
+	}
+	var document map[string]json.RawMessage
+	if err := json.Unmarshal(data, &document); err != nil {
+		return nil, false, err
+	}
+	projected := make(map[string]json.RawMessage, len(fields))
+	for _, field := range fields {
+		projected[field] = document[field]
+	}
+	data, err = json.Marshal(projected)
+	return data, false, err
 }
 
 func (f *fakePrivateDataClient) GetMySekaiDataConditionalContext(ctx context.Context, server string, _ int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {

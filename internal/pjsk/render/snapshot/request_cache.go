@@ -21,6 +21,7 @@ type privateDataCacheKey struct {
 	UserID         int64
 	Platform       string
 	PlatformUserID string
+	Projection     string
 }
 
 type privateDataCacheEntry struct {

@@ -108,6 +108,19 @@ GET /api/private/game-data/{server}/{data_type}/{user_id}
 - `200 OK`（指定 `key`）：该 key 的原始值（如整数 `1774339266`），不是 JSON 对象；若指定多个 key，则返回 JSON 对象。响应同样支持 `Content-Encoding: zstd` 自动解压。
 - `304 Not Modified`（携带 `known_upload_time` 且一致）：空响应体 + `X-Upload-Time` 头。条件判断在完整鉴权之后运行；参数非法按未携带处理；同秒内的时间戳不给 304（覆盖窗口守卫）。完整响应（200）的时间戳一律以响应体 `upload_time` 字段为准。
 
+#### Suite 字段投影
+
+`GetSuiteDataFieldsConditionalContext` 在同一请求中组合 `key` 和
+`known_upload_time`。字段用逗号连接，始终包含 `userGamedata` 和 `upload_time`，
+保证返回对象并保留身份与版本。私有接口按字面字段名读取，缺失字段为 `null`，
+不执行公开接口的字段白名单或 compact 字段恢复；嵌套字段不用于此接口。
+
+快照 `ResolveOptions.SuiteFields` 为空时读取完整 Suite；非空字段集会排序、去重，
+并参与请求缓存、跨请求原始数据缓存、构建缓存和并发构建的缓存键。
+每个独立请求仍携带自己的平台身份完成上游鉴权，304 只能复用相同字段集的数据。
+当前已核对依赖的烤森商店、对话列表和大门升级使用各自字段集，其余命令保持全量。
+MySekai 始终完整读取，合并时仍保留 `updatedResources` 中尚未建模的字段。
+
 #### 条件拉取（Cloud 侧行为）
 
 - 由 `toolbox.conditional_fetch`（env `HARUKI_TOOLBOX_CONDITIONAL_FETCH`）控制，默认关闭。

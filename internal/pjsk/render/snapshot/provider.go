@@ -46,6 +46,9 @@ type Selector struct {
 type ResolveOptions struct {
 	PreferGlobalDefault bool
 	NeedMySekai         bool
+	// SuiteFields selects an audited command-specific subset of top-level Suite
+	// fields. Empty means full Suite. MySekai is always fetched in full.
+	SuiteFields []string
 	// NeedMusicMeta is reserved for consumers that cannot access the shared
 	// metadata loader directly. Normal suite/profile commands leave it false so
 	// a large, process-wide payload is not copied into every live snapshot.

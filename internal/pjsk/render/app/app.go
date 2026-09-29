@@ -555,6 +555,9 @@ func (a *App) Close() error {
 		return nil
 	}
 	var err error
+	if a.Toolbox != nil {
+		err = errors.Join(err, a.Toolbox.Close())
+	}
 	if a.Drawing != nil {
 		err = errors.Join(err, a.Drawing.Close())
 	}

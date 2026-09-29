@@ -408,7 +408,7 @@ Toolbox 服务端根据这个信息做授权校验（该调用方是否有权查
 ## 9. 底层行为备注
 
 - **zstd 解压**：`GetPrivateData`、`GetPrivateDataValue` 和 `GetPrivateDataValues` 都发送
-  `Accept-Encoding: zstd`，并在响应头含 `Content-Encoding: zstd` 时自动解压。调用方收到的始终是解压后的原始 bytes。
+  `Accept-Encoding: zstd`，并在响应头含 `Content-Encoding: zstd` 时自动解压。调用方收到的始终是解压后的原始 bytes。每个 Toolbox 客户端最多保留两个空闲解码器，每次请求独占借用；解压输出仍有大小限制并响应取消。异步读取结束后解除响应与请求上下文引用，客户端随 App 关闭时释放空闲资源。超过保留窗口上限的帧使用一次性解码器，继续兼容原窗口限制。
 - **`key` 参数**：单 key 通常很小，服务端可能不会压缩；多 key 返回 JSON 对象时也走同一套自动解压逻辑。
 - **重试策略**：网络错误和 HTTP 5xx 均会触发重试，4xx 不重试。
 

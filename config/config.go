@@ -429,6 +429,8 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_SECURITY_ALERT_WEBHOOK_URL", &cfg.Security.AlertWebhookURL)
 	envInt("HARUKI_SECURITY_ALERT_THRESHOLD", &cfg.Security.AlertThreshold)
 	envDuration("HARUKI_SECURITY_ALERT_WINDOW", &cfg.Security.AlertWindow)
+	envStr("HARUKI_DIAGNOSTICS_LISTEN_ADDR", &cfg.Diagnostics.ListenAddr)
+	envBool("HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK", &cfg.Diagnostics.AllowNonLoopback)
 	envDuration("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", &cfg.HarukiBotDB.ResponseElectionWindow)
 	envBool("HARUKI_BOT_RESPONSE_ELECTION_ROSTER", &cfg.HarukiBotDB.ResponseElectionRoster)
 	envBool("HARUKI_BOT_ALLOW_REQUESTS_WITHOUT_NONCE", &cfg.HarukiBotDB.AllowRequestsWithoutNonce)
@@ -1005,6 +1007,20 @@ type SecurityConfig struct {
 	AlertWindow time.Duration `yaml:"alert_window"`
 }
 
+// DiagnosticsConfig is diagnostics: an opt-in plain-HTTP listener, separate
+// from the public Fiber server, that serves net/http/pprof, expvar and a
+// runtime/GC summary for operators. It carries no authentication, so it must
+// stay on a loopback address and be reached via docker exec, an SSH tunnel or
+// a 127.0.0.1-only port publish.
+type DiagnosticsConfig struct {
+	// ListenAddr is host:port for the diagnostics server. Empty disables it.
+	ListenAddr string `yaml:"listen_addr"`
+	// AllowNonLoopback permits a non-loopback host in ListenAddr. Without it a
+	// non-loopback address is refused at startup and the service runs on
+	// without diagnostics.
+	AllowNonLoopback bool `yaml:"allow_non_loopback"`
+}
+
 type UsersDBConfig struct {
 	DBType string `yaml:"db_type"`
 	DBURL  string `yaml:"db_url"`
@@ -1068,6 +1084,7 @@ type Config struct {
 	Censor      CensorConfig      `yaml:"censor"`
 	HarukiBotDB HarukiBotDBConfig `yaml:"haruki_bot"`
 	Security    SecurityConfig    `yaml:"security"`
+	Diagnostics DiagnosticsConfig `yaml:"diagnostics"`
 	UsersDB     UsersDBConfig     `yaml:"users_db"`
 	Moderation  ModerationConfig  `yaml:"moderation"`
 	Redis       RedisConfig       `yaml:"redis"`

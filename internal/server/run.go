@@ -23,6 +23,8 @@ func Run(ctx context.Context) {
 	defer closeMainLogFile(mainLogger)
 	defer closeAccessLogFile(mainLogger)
 	logStartupInfo(mainLogger)
+	stopDiagnostics := startDiagnosticsServer(mainLogger, harukiConfig.Cfg.Diagnostics)
+	defer stopDiagnostics()
 	redisClient := initRedis(ctx, mainLogger)
 	app := createFiberApp(mainLogger)
 	usersClient := initUsers(ctx, mainLogger)

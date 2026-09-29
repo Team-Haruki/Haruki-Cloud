@@ -1989,3 +1989,61 @@ func mustSnapshot(t *testing.T, payload map[string]any) *snapshot.Service {
 func approxEqual(a, b float64) bool {
 	return math.Abs(a-b) < 1e-9
 }
+
+func TestBuildCharacterMissionOverviewIncludesAllCharacterAreaItemMission(t *testing.T) {
+	snap := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userCharacters": []map[string]any{
+			{"characterId": 1, "characterRank": 1, "totalExp": 0},
+		},
+		"userCharacterMissionV2s": []map[string]any{
+			{"characterMissionType": "area_item_level_up_all_character", "characterId": 1, "progress": 3},
+			{"characterMissionType": "area_item_level_up_reality_world", "characterId": 1, "progress": 5},
+		},
+	})
+
+	controller := NewController(nil, nil, snap, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region:          renderregion.JP,
+		characterLevels: []*CharacterLevel{{Level: 1, TotalExp: 0}},
+		characterMissions: map[int][]*CharacterMission{
+			1: {
+				{ID: 1023, CharacterID: 1, CharacterMissionType: "area_item_level_up_all_character", ParameterGroupID: 23, IsAchievementMission: true},
+				{ID: 1011, CharacterID: 1, CharacterMissionType: "area_item_level_up_reality_world", ParameterGroupID: 13, IsAchievementMission: true},
+			},
+		},
+		missionGroups: map[int][]*CharacterMissionParameterGroup{
+			23: {{Seq: 1, Requirement: 1, Exp: 1}, {Seq: 2, Requirement: 5, Exp: 1}},
+			13: {{Seq: 1, Requirement: 10, Exp: 1}},
+		},
+	})
+
+	req, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{Region: renderregion.JP, Cid: 1})
+	if err != nil {
+		t.Fatalf("BuildCharacterMissionOverviewRequestFromSnapshot() error = %v", err)
+	}
+	if len(req.AchievementRows) != 2 {
+		t.Fatalf("achievement rows = %+v", req.AchievementRows)
+	}
+	if req.AchievementRows[0].MissionType != "area_item_level_up_reality_world" || req.AchievementRows[1].MissionType != "area_item_level_up_all_character" {
+		t.Fatalf("unexpected achievement order: %q, %q", req.AchievementRows[0].MissionType, req.AchievementRows[1].MissionType)
+	}
+	row := req.AchievementRows[1]
+	if row.Title != "想いの大樹升级次数" || row.Current != 3 {
+		t.Fatalf("unexpected all-character row: %+v", row)
+	}
+}

@@ -130,6 +130,7 @@ func TestMySekaiHousingAndMessageBranches(t *testing.T) {
 		"sekaiapi profile fetch failed: client not configured",
 		"sekaiapi profile build failed: invalid",
 		"queried gate already max level",
+		"queried gate has no upgrade materials: 6",
 		"decode mysekai data:",
 		"decode mysekai data: invalid json",
 	}

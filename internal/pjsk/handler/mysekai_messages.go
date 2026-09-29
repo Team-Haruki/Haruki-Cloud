@@ -87,6 +87,9 @@ func normalizeMySekaiUserFacingError(err error, mode string) error {
 	case strings.HasPrefix(message, "queried gate already max level"):
 		return onebot11.NewReplayError("指定的大门已经满级")
 
+	case strings.HasPrefix(message, "queried gate has no upgrade materials"):
+		return onebot11.NewReplayError("指定的大门没有升级材料")
+
 	case strings.HasPrefix(message, "decode mysekai data:"):
 		detail := strings.TrimSpace(strings.TrimPrefix(message, "decode mysekai data:"))
 		if detail == "" {

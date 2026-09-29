@@ -239,9 +239,8 @@ func (c *Controller) buildAreaItemDrawingRows(opts areaItemBuildOptions, states 
 		areaItem := drawing.AreaItemInfo{
 			ItemID:       state.itemID,
 			CurrentLevel: state.currentLevel,
-			ItemIconPath: assets.ResolveRegionAssetPath(c.assets, opts.region.String(),
-				filepath.Join("areaitem", state.master.AssetbundleName, state.master.AssetbundleName+".png")),
-			Levels: c.buildAreaItemLevelRows(opts, state, minCurrentLevel),
+			ItemIconPath: areaItemIconPath(c.assets, opts.region, state.master.AssetbundleName),
+			Levels:       c.buildAreaItemLevelRows(opts, state, minCurrentLevel),
 		}
 		if state.targetIconPath != "" {
 			areaItem.TargetIconPath = &state.targetIconPath
@@ -252,6 +251,16 @@ func (c *Controller) buildAreaItemDrawingRows(opts areaItemBuildOptions, states 
 		result = append(result, areaItem)
 	}
 	return result
+}
+
+// areaItemIconPath prefers the area item bundle's own image and falls back to
+// its thumbnail: some items (JP 7.0.0 想いの大樹 areaitem2701) ship only
+// thumbnail/areaitem/<bundle>.png.
+func areaItemIconPath(helper *assets.AssetHelper, region renderregion.Value, bundle string) string {
+	return assets.ResolveRegionAssetPath(helper, region.String(),
+		filepath.Join("areaitem", bundle, bundle+".png"),
+		filepath.Join("thumbnail", "areaitem", bundle+".png"),
+	)
 }
 
 func (c *Controller) buildAreaItemLevelRows(opts areaItemBuildOptions, state areaItemRenderState, minCurrentLevel int) []drawing.AreaItemLevel {

@@ -24,7 +24,6 @@ const (
 	mySekaiMusicRecordCommand     = "mysekai-music-record"
 	mySekaiPhotoCommand           = "mysekai-photo"
 	mySekaiShopCommand            = "mysekai-shop"
-	mySekaiBulkHarvestCommand     = "mysekai-bulk-harvest"
 	mySekaiBlueprintTermCommand   = "mysekai-blueprint-term"
 	formattedUsage                = "使用方式:\n%s"
 	drawingClientNotConfigured    = "drawing client is not configured"

@@ -19,8 +19,6 @@ func canonicalMySekaiTrigger(mode string) string {
 		return "/msg"
 	case "mysekai-shop":
 		return "/烤森商店"
-	case "mysekai-bulk-harvest":
-		return "/烤森一键采集"
 	case "mysekai-blueprint-term":
 		return "/烤森限时蓝图"
 	default:
@@ -99,9 +97,6 @@ func normalizeMySekaiUserFacingError(err error, mode string) error {
 	case strings.HasPrefix(message, "mysekai shop is not available in region"):
 		return onebot11.NewReplayError("该区服暂未开放烤森商店")
 
-	case strings.HasPrefix(message, "mysekai bulk harvest is not available in region"):
-		return onebot11.NewReplayError("该区服暂未开放烤森一键采集")
-
 	case strings.HasPrefix(message, "mysekai blueprint terms are not available in region"):
 		return onebot11.NewReplayError("该区服暂无限时蓝图数据")
 
@@ -126,7 +121,7 @@ func normalizeMySekaiUserFacingError(err error, mode string) error {
 // may not be deployed yet.
 func isMySekaiNewViewMode(mode string) bool {
 	switch strings.TrimSpace(mode) {
-	case "mysekai-shop", "mysekai-bulk-harvest", "mysekai-blueprint-term":
+	case "mysekai-shop", "mysekai-blueprint-term":
 		return true
 	default:
 		return false

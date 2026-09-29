@@ -90,7 +90,6 @@ func TestExecuteMysekaiNewViewsOnOldRegionReplyNotOpen(t *testing.T) {
 	app := newMysekaiJP700App(t, server.URL)
 
 	assertReplayErrorText(t, executeMysekaiJP700(app, mySekaiShopCommand, "en"), "该区服暂未开放烤森商店")
-	assertReplayErrorText(t, executeMysekaiJP700(app, mySekaiBulkHarvestCommand, "en"), "该区服暂未开放烤森一键采集")
 	assertReplayErrorText(t, executeMysekaiJP700(app, mySekaiBlueprintTermCommand, "en"), "该区服暂无限时蓝图数据")
 }
 
@@ -100,7 +99,6 @@ func TestMysekaiJP700CommandsParse(t *testing.T) {
 		mode    string
 	}{
 		{sekaiHandlers{}.MysekaiShopHandle(), mySekaiShopCommand},
-		{sekaiHandlers{}.MysekaiBulkHarvestHandle(), mySekaiBulkHarvestCommand},
 		{sekaiHandlers{}.MysekaiBlueprintTermHandle(), mySekaiBlueprintTermCommand},
 	} {
 		req, err := tc.handler.handleFunc(mysekaiEdgeContext(""))

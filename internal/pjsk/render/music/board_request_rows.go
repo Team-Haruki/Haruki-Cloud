@@ -24,7 +24,7 @@ func (c *Controller) buildMusicBoardRows(region renderregion.Value, source DataS
 			continue
 		}
 		for _, meta := range metas {
-			if row, ok := buildMusicBoardMetaRow(builder, region, musicInfo, musicID, meta, query, sortedSkills); ok {
+			if row, ok := buildMusicBoardMetaRow(builder, musicInfo, musicID, meta, query, sortedSkills); ok {
 				rows = append(rows, row)
 			}
 		}
@@ -59,7 +59,7 @@ func resolveMusicBoardSkills(query musicBoardResolvedQuery) []float64 {
 	return sortedSkills
 }
 
-func buildMusicBoardMetaRow(builder *Builder, region renderregion.Value, musicInfo *masterdata.Music, musicID int, meta drawing.MusicMetaInfo, query musicBoardResolvedQuery, sortedSkills []float64) (musicBoardRow, bool) {
+func buildMusicBoardMetaRow(builder *Builder, musicInfo *masterdata.Music, musicID int, meta drawing.MusicMetaInfo, query musicBoardResolvedQuery, sortedSkills []float64) (musicBoardRow, bool) {
 	level := builder.GetDifficultyLevel(musicID, meta.Difficulty)
 	if level <= 0 {
 		return musicBoardRow{}, false
@@ -77,14 +77,13 @@ func buildMusicBoardMetaRow(builder *Builder, region renderregion.Value, musicIn
 	multiScore := meta.BaseScore + multiSkill + meta.FeverScore*0.5 + 0.01875
 
 	row := musicBoardRow{
-		MusicID:        musicID,
-		Difficulty:     normalizeDifficulty(meta.Difficulty),
-		Level:          level,
-		MusicTitle:     builder.buildDisplayMusicTitle(musicInfo, region),
-		MusicCoverPath: builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region),
-		EventRate:      meta.EventRate,
-		MusicTime:      meta.MusicTime,
-		Tps:            tps,
+		MusicID:    musicID,
+		Difficulty: normalizeDifficulty(meta.Difficulty),
+		Level:      level,
+		music:      musicInfo,
+		EventRate:  meta.EventRate,
+		MusicTime:  meta.MusicTime,
+		Tps:        tps,
 	}
 	populateMusicBoardLiveMetrics(&row, "solo", soloScore, musicBoardSkillAccount(soloSkill, soloScore), query.Power, query.DeckBonus, query.PlayInterval)
 	populateMusicBoardLiveMetrics(&row, "auto", autoScore, musicBoardSkillAccount(autoSkill, autoScore), query.Power, query.DeckBonus, query.PlayInterval)
@@ -100,4 +99,25 @@ func rankedMusicBoardRows(rows []musicBoardRow) []musicBoardRow {
 		}
 	}
 	return filtered
+}
+
+func populateMusicBoardDisplay(rows []musicBoardRow, builder *Builder, region renderregion.Value) {
+	type display struct {
+		title string
+		cover string
+	}
+	byMusic := make(map[int]display, len(rows))
+	for index := range rows {
+		row := &rows[index]
+		item, ok := byMusic[row.MusicID]
+		if !ok {
+			item = display{
+				title: builder.buildDisplayMusicTitle(row.music, region),
+				cover: builder.BuildMusicJacketPath(row.music.AssetBundleName, region),
+			}
+			byMusic[row.MusicID] = item
+		}
+		row.MusicTitle = item.title
+		row.MusicCoverPath = item.cover
+	}
 }

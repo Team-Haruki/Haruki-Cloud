@@ -8,6 +8,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/common"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
 const (
@@ -41,6 +42,7 @@ var (
 )
 
 type musicBoardRow struct {
+	music             *masterdata.Music
 	Rank              int
 	MusicID           int
 	Difficulty        string
@@ -122,6 +124,7 @@ func (c *Controller) ResolveMusicBoardRequest(region string, query BoardQuery) (
 		return nil, err
 	}
 
+	populateMusicBoardDisplay(showRows, builder, resolvedRegion)
 	titleText, description := buildMusicBoardTexts(normalized, totalPage)
 	return &drawing.MusicBoardRequest{
 		LiveType:     normalized.LiveType,

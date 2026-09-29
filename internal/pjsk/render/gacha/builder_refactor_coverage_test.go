@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -15,14 +14,10 @@ func TestGachaListRefactorHelpers(t *testing.T) {
 	if page != 0 || pageSize != defaultGachaListPageSize {
 		t.Fatalf("normalized page = %d/%d", page, pageSize)
 	}
-	briefs := []drawing.GachaBrief{{ID: 1}, {ID: 2}, {ID: 3}}
-	paged, current, total := paginateGachaList(briefs, 2, 99)
+	items := []*masterdata.Gacha{{ID: 1}, {ID: 2}, {ID: 3}}
+	paged, current, total := paginateGachaList(items, 2, 99)
 	if current != 2 || total != 2 || len(paged) != 1 || paged[0].ID != 3 {
 		t.Fatalf("paginated list = %#v, %d/%d", paged, current, total)
-	}
-	logos, banners := selectGachaListAssets(paged, map[int]string{3: "logo"}, map[int]string{3: "banner"})
-	if logos[3] != "logo" || banners[3] != "banner" {
-		t.Fatalf("selected assets = %#v / %#v", logos, banners)
 	}
 }
 

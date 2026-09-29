@@ -3,6 +3,7 @@ package vlive
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -39,6 +40,17 @@ func liveFromProvider(pv *provider.VLive) *Live {
 		AssetBundleName: pv.AssetBundleName,
 		StartAt:         pv.StartAt,
 		EndAt:           pv.EndAt,
+		VirtualLiveType: pv.VirtualLiveType,
+		GroupID:         pv.VirtualLiveGroupID,
+	}
+	for _, item := range pv.TotalCheerPointRewards {
+		live.TotalCheerPointRewards = append(live.TotalCheerPointRewards, CheerPointReward{Threshold: item.Threshold, ResourceBoxID: item.ResourceBoxID})
+	}
+	if item := pv.TotalCheerPointSurplusReward; item != nil {
+		live.SurplusReward = &SurplusReward{BasePoint: item.BasePoint, ResourceBoxID: item.ResourceBoxID}
+	}
+	if item := pv.VirtualItemOverrideCost; item != nil {
+		live.OverrideCost = &OverrideCost{ResourceType: item.CostResourceType, ResourceID: item.CostResourceID, AssetBundleName: item.AssetBundleName}
 	}
 	for _, item := range pv.Schedules {
 		live.Schedules = append(live.Schedules, Schedule{StartAt: item.StartAt, EndAt: item.EndAt})
@@ -75,4 +87,42 @@ func (a *ProviderAdapter) GetEventByVirtualLiveID(id int) (*masterdata.Event, er
 
 func (a *ProviderAdapter) GetResourceBoxByPurpose(purpose string, id int) *provider.ResourceBox {
 	return a.P.Education().GetResourceBoxByPurpose(a.Context(), purpose, id)
+}
+
+// GetGroups implements groupDataSource.
+func (a *ProviderAdapter) GetGroups(region renderregion.Value) (map[int]*Group, bool) {
+	groupProvider, ok := a.P.VLives().(provider.VLiveGroupProvider)
+	if !ok {
+		return nil, false
+	}
+	pvGroups, ok := groupProvider.GetGroups(a.Context(), region)
+	if !ok {
+		return nil, false
+	}
+	groups := make(map[int]*Group, len(pvGroups))
+	for id, pv := range pvGroups {
+		if pv == nil {
+			continue
+		}
+		groups[id] = &Group{ID: pv.ID, Name: pv.Name, Type: pv.VirtualLiveGroupType, AssetBundleName: pv.AssetBundleName}
+	}
+	return groups, true
+}
+
+// GetMaterialName implements materialNameSource through the raw row store.
+func (a *ProviderAdapter) GetMaterialName(id int) string {
+	store := a.P.MySekai()
+	if id <= 0 || store == nil {
+		return ""
+	}
+	rowSource, ok := store.(provider.MasterRowSource)
+	if !ok {
+		return ""
+	}
+	rows, ok := rowSource.LoadMasterRows(a.Context(), "materials.json")
+	if !ok {
+		return ""
+	}
+	name, _ := rows[id]["name"].(string)
+	return strings.TrimSpace(name)
 }

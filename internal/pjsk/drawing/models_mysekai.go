@@ -276,14 +276,21 @@ type MysekaiShopCost struct {
 }
 
 type MysekaiShopItem struct {
-	ID                 int               `json:"id"`
-	Name               *string           `json:"name,omitempty"`
-	ImagePath          AssetKey          `json:"image_path"`
-	Quantity           int               `json:"quantity"`
-	Costs              []MysekaiShopCost `json:"costs,omitempty"`
-	ExchangeLimitType  string            `json:"exchange_limit_type"`
-	ExchangeLimitValue *int              `json:"exchange_limit_value,omitempty"`
-	ExchangedCount     *int              `json:"exchanged_count,omitempty"`
+	// Optional state for Drawing's player-shop adaptation. Older drawers ignore
+	// these fields; RenderShop also provides readable labels through Name.
+	MaterialCapacityCount *int              `json:"material_capacity_count,omitempty"`
+	Available             *bool             `json:"available,omitempty"`
+	Owned                 *bool             `json:"owned,omitempty"`
+	IsBought              *bool             `json:"is_bought,omitempty"`
+	RemainingCount        *int              `json:"remaining_count,omitempty"`
+	ID                    int               `json:"id"`
+	Name                  *string           `json:"name,omitempty"`
+	ImagePath             AssetKey          `json:"image_path"`
+	Quantity              int               `json:"quantity"`
+	Costs                 []MysekaiShopCost `json:"costs,omitempty"`
+	ExchangeLimitType     string            `json:"exchange_limit_type"`
+	ExchangeLimitValue    *int              `json:"exchange_limit_value,omitempty"`
+	ExchangedCount        *int              `json:"exchanged_count,omitempty"`
 }
 
 type MysekaiShopGroup struct {

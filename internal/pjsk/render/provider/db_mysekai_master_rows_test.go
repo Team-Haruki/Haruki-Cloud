@@ -123,3 +123,31 @@ func TestMasterRowsTolerateMissingNewTable(t *testing.T) {
 	rows, ok = p.mysekai.LoadMasterRows(ctx, "honorWords.json")
 	testutil.Require(t, ok && len(rows) == 1 && rows[10101]["assetbundleName"] == "honor_word_01_01", "missing table with local = %#v ok=%v", rows, ok)
 }
+
+func TestPlayerShopRawTablesWithoutEntSchema(t *testing.T) {
+	p := openMasterRowsProvider(t, "player_shop")
+	for _, statement := range []string{
+		`CREATE TABLE mysekaitools (game_id INTEGER, server_region TEXT, name TEXT, assetbundle_name TEXT)`,
+		`INSERT INTO mysekaitools VALUES (10,'jp','Chainsaw','ax0005'),(10,'tw','Other','other')`,
+		`CREATE TABLE mysekaiblueprintshops (server_region TEXT, mysekai_blueprint_shop_item_lottery_type TEXT, consume_jewel_quantity INTEGER, purchase_limit INTEGER)`,
+		`INSERT INTO mysekaiblueprintshops VALUES ('jp','daily',100,5),('jp','weekly',100,3),('tw','daily',200,5)`,
+		`CREATE TABLE mysekaimaterialpossessions (game_id INTEGER, server_region TEXT, level INTEGER, possession_limit INTEGER)`,
+		`INSERT INTO mysekaimaterialpossessions VALUES (1,'jp',1,10000)`,
+	} {
+		if _, err := p.mysekai.db.ExecContext(context.Background(), statement); err != nil {
+			t.Fatal(err)
+		}
+	}
+	tools := p.mysekai.LoadListContext(context.Background(), "mysekaiTools.json")
+	if len(tools) != 1 || tools[0]["assetbundleName"] != "ax0005" {
+		t.Fatal(tools)
+	}
+	rules := p.mysekai.LoadListContext(context.Background(), "mysekaiBlueprintShops.json")
+	if len(rules) != 2 || rules[0]["consumeJewelQuantity"] != int64(100) {
+		t.Fatal(rules)
+	}
+	capacity := p.mysekai.LoadListContext(context.Background(), "mysekaiMaterialPossessions.json")
+	if len(capacity) != 1 || capacity[0]["possessionLimit"] != int64(10000) {
+		t.Fatal(capacity)
+	}
+}

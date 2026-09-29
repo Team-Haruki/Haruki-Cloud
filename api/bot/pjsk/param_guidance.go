@@ -61,7 +61,7 @@ var commandParameterGuidance = map[string]parameterGuidance{
 	"mysekai/overview":            {"烤森总览参数", "仅使用帮助中支持的账号选择参数"},
 	"mysekai/photo":               {"烤森照片参数", "使用有效的照片序号"},
 	"mysekai/resource":            {"烤森资源参数", "使用资源分类、地图编号或帮助中列出的筛选条件"},
-	"mysekai/shop":                {"烤森商店参数", "无需参数"},
+	"mysekai/shop":                {"烤森商店参数", "[蓝图/blueprint/工具/tool/素材/材料/material] [全部/full/all]"},
 	"mysekai/talk-list":           {"烤森对话参数", "使用角色名或帮助中列出的筛选条件"},
 	"profile":                     {"个人信息参数", "使用自己的绑定账号、游戏 UID 或 u序号"},
 	"profile/arrest-difficulty":   {"抓捕难度参数", "使用支持的难度名，并填写开启或关闭"},

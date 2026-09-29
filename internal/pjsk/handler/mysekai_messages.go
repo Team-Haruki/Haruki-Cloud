@@ -94,6 +94,14 @@ func normalizeMySekaiUserFacingError(err error, mode string) error {
 	case strings.HasPrefix(message, "queried gate has no upgrade materials"):
 		return onebot11.NewReplayError("指定的大门没有升级材料")
 
+	case strings.HasPrefix(message, "mysekai shop snapshot missing"):
+		return onebot11.NewReplayError("上传的数据缺少烤森商店信息，请重新上传完整游戏数据后再试")
+	case mode == mySekaiShopCommand && strings.Contains(message, "user snapshot is not available"):
+		return newMySekaiDataNotFoundReplayError()
+	case strings.HasPrefix(message, "mysekai shop masterdata missing"):
+		return onebot11.NewReplayError("烤森商店主数据尚未同步完整，请稍后再试")
+	case strings.HasPrefix(message, "mysekai shop invalid type"):
+		return onebot11.NewReplayError("商品类型请使用：蓝图、工具、材料")
 	case strings.HasPrefix(message, "mysekai shop is not available in region"):
 		return onebot11.NewReplayError("该区服暂未开放烤森商店")
 

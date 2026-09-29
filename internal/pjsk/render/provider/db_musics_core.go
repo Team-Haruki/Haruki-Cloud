@@ -179,51 +179,17 @@ func (p *dbMusicProvider) GetLocalizedTitles(ctx context.Context, musicID int) (
 	if musicID <= 0 {
 		return nil, fmt.Errorf("invalid music id: %d", musicID)
 	}
-	p.init()
 	if p.local != nil {
 		if titles, err := p.local.GetLocalizedTitles(ctx, musicID); err == nil && len(titles) > 0 {
-			p.mu.Lock()
-			p.localizedByID[musicID] = slices.Clone(titles)
-			p.mu.Unlock()
 			return slices.Clone(titles), nil
 		}
 	}
-
-	p.mu.RLock()
-	if titles, ok := p.localizedByID[musicID]; ok {
-		p.mu.RUnlock()
-		return slices.Clone(titles), nil
-	}
-	p.mu.RUnlock()
-
-	items, err := p.client.Music.Query().
-		Where(music.GameIDEQ(int64(musicID))).
-		All(ctx)
+	index, err := p.localizedTitleIndex(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query localized titles for music %d: %w", musicID, err)
 	}
-
-	unique := make(map[string]struct{}, len(items)*2)
-	titles := make([]string, 0, len(items)*2)
-	appendTitle := func(raw string) {
-		title := strings.TrimSpace(raw)
-		if title == "" {
-			return
-		}
-		key := strings.ToLower(title)
-		if _, ok := unique[key]; ok {
-			return
-		}
-		unique[key] = struct{}{}
-		titles = append(titles, title)
+	if titles := index[musicID]; titles != nil {
+		return slices.Clone(titles), nil
 	}
-	for _, item := range items {
-		appendTitle(item.Title)
-		appendTitle(item.Pronunciation)
-	}
-
-	p.mu.Lock()
-	p.localizedByID[musicID] = slices.Clone(titles)
-	p.mu.Unlock()
-	return titles, nil
+	return []string{}, nil
 }

@@ -188,7 +188,8 @@ func TestDatabaseProviderResetMasterdataCacheClearsAllCachesAndFallbacks(t *test
 	musics.musicByID[1] = &masterdata.Music{ID: 1}
 	musics.musicList = []*masterdata.Music{{ID: 1}}
 	musics.outsideByID[1] = "outside"
-	musics.localizedByID[1] = []string{"localized"}
+	musics.localizedTitles.value = map[int][]string{1: {"localized"}}
+	musics.localizedTitles.loaded = true
 	musics.difficultiesByID[1] = []*masterdata.MusicDifficulty{{ID: 1}}
 	musics.limitedByMusic = map[int][]*masterdata.LimitedTimeMusic{1: {{ID: 1}}}
 	musics.limitedLoaded = true
@@ -315,7 +316,9 @@ func TestDatabaseProviderResetMasterdataCacheClearsAllCachesAndFallbacks(t *test
 	resetTestRequireStoreReset(t, "music fallback", musicStore)
 	resetTestRequireEmptyMap(t, "musics.musicByID", musics.musicByID)
 	resetTestRequireEmptyMap(t, "musics.outsideByID", musics.outsideByID)
-	resetTestRequireEmptyMap(t, "musics.localizedByID", musics.localizedByID)
+	if len(musics.localizedTitles.value) != 0 || musics.localizedTitles.loaded || !musics.localizedTitles.loadedAt.IsZero() {
+		t.Error("localized titles index was not reset")
+	}
 	resetTestRequireEmptyMap(t, "musics.difficultiesByID", musics.difficultiesByID)
 	resetTestRequireEmptyMap(t, "musics.limitedByMusic", musics.limitedByMusic)
 	if musics.musicList != nil || musics.limitedLoaded || !musics.limitedLoadedAt.IsZero() {

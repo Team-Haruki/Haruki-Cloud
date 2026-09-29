@@ -45,16 +45,15 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 		region = b.source.DefaultRegion()
 	}
 
-	briefs, logos, banners := b.buildGachaListItems(filtered, region)
-	briefs, currentPage, totalPages := paginateGachaList(briefs, pageSize, page)
-	pagedLogos, pagedBanners := selectGachaListAssets(briefs, logos, banners)
+	paged, currentPage, totalPages := paginateGachaList(filtered, pageSize, page)
+	briefs, logos, banners := b.buildGachaListItems(paged, region)
 
 	return &drawing.GachaListRequest{
 		Gachas:       briefs,
 		PageSize:     pageSize,
 		Region:       region.String(),
-		GachaLogos:   pagedLogos,
-		GachaBanners: pagedBanners,
+		GachaLogos:   logos,
+		GachaBanners: banners,
 		CurrentPage:  currentPage,
 		TotalPage:    totalPages,
 		PrePaginated: true,
@@ -134,26 +133,16 @@ func (b *Builder) buildGachaListItems(items []*masterdata.Gacha, region renderre
 	return briefs, logos, banners
 }
 
-func paginateGachaList(briefs []drawing.GachaBrief, pageSize, page int) ([]drawing.GachaBrief, int, int) {
-	totalPages := max(1, (len(briefs)+pageSize-1)/pageSize)
+func paginateGachaList(items []*masterdata.Gacha, pageSize, page int) ([]*masterdata.Gacha, int, int) {
+	totalPages := max(1, (len(items)+pageSize-1)/pageSize)
 	currentPage := page
 	if currentPage <= 0 {
 		currentPage = totalPages
 	}
 	currentPage = min(currentPage, totalPages)
 	startIndex := (currentPage - 1) * pageSize
-	endIndex := min(startIndex+pageSize, len(briefs))
-	return briefs[startIndex:endIndex], currentPage, totalPages
-}
-
-func selectGachaListAssets(briefs []drawing.GachaBrief, logos, banners map[int]string) (map[int]string, map[int]string) {
-	pagedLogos := make(map[int]string, len(briefs))
-	pagedBanners := make(map[int]string, len(briefs))
-	for _, brief := range briefs {
-		pagedLogos[brief.ID] = logos[brief.ID]
-		pagedBanners[brief.ID] = banners[brief.ID]
-	}
-	return pagedLogos, pagedBanners
+	endIndex := min(startIndex+pageSize, len(items))
+	return items[startIndex:endIndex], currentPage, totalPages
 }
 
 func hasAnyPrefixFold(text string, prefixes []string) bool {

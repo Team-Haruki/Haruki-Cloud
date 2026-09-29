@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"haruki-cloud/internal/pjsk/drawing"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -34,12 +33,12 @@ func TestBuildMusicBoardMetaRowBranches(t *testing.T) {
 	builder := NewBuilder(source, nil, nil)
 	query := musicBoardResolvedQuery{Skills: []float64{1, 1, 1, 1, 1}, Power: 100, DeckBonus: 10, PlayInterval: 5}
 	meta := drawing.MusicMetaInfo{Difficulty: "master", EventRate: 100, BaseScore: 1, BaseScoreAuto: 1}
-	row, ok := buildMusicBoardMetaRow(builder, renderregion.JP, source.musics[1], 1, meta, query, query.Skills)
+	row, ok := buildMusicBoardMetaRow(builder, source.musics[1], 1, meta, query, query.Skills)
 	if !ok || row.Level != 31 || row.Tps != 0 || row.SoloScore == nil || row.MultiScore == nil {
 		t.Fatalf("built row = %+v, %v", row, ok)
 	}
 	meta.Difficulty = "append"
-	if _, ok := buildMusicBoardMetaRow(builder, renderregion.JP, source.musics[1], 1, meta, query, query.Skills); ok {
+	if _, ok := buildMusicBoardMetaRow(builder, source.musics[1], 1, meta, query, query.Skills); ok {
 		t.Fatal("missing difficulty unexpectedly built a row")
 	}
 	if got := rankedMusicBoardRows([]musicBoardRow{{Rank: 0}, {Rank: 2}}); len(got) != 1 || got[0].Rank != 2 {

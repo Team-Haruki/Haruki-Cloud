@@ -662,7 +662,7 @@ func sharedCommandPanicResult(ctx context.Context) sharedCommandResult {
 	finishEncode := commandtrace.MeasureOperation(ctx, "response_payload_encode")
 	defer finishEncode()
 	envelope := newBotResponseEnvelope(fiber.StatusInternalServerError, api.ErrInternalServer)
-	encoded, err := encodeBotResponseEnvelope(envelope)
+	encoded, err := encodeBotResponseEnvelopeContext(ctx, envelope)
 	if err != nil {
 		return sharedCommandResult{Metadata: sharedCommandMetadata{Outcome: "error", ErrorType: "panic"}}
 	}

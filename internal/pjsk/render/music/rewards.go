@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
@@ -75,7 +76,9 @@ func (c *Controller) BuildMusicRewardsDetailRequestFromAchievements(query Reward
 		return nil, err
 	}
 
+	finishDecode := commandtrace.MeasureOperation(c.contextOrBackground(), "music.achievement_decode")
 	achievements, err := decodeUserMusicAchievements(achievementsJSON)
+	finishDecode()
 	if err != nil {
 		return nil, fmt.Errorf("decode userMusicAchievements: %w", err)
 	}
@@ -172,7 +175,9 @@ func (c *Controller) BuildMusicRewardsDetailRequestFromSnapshot(query RewardsDet
 	if err := snapshot.Require(); err != nil {
 		return nil, err
 	}
+	finishLookup := commandtrace.MeasureOperation(c.contextOrBackground(), "music.achievement_lookup")
 	achievementsJSON, err := resolveSnapshotAchievementsJSON(snapshot)
+	finishLookup()
 	if err != nil {
 		return nil, err
 	}

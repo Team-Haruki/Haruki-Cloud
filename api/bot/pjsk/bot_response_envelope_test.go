@@ -2,17 +2,26 @@ package pjsk
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http/httptest"
+	"reflect"
+	"strings"
 	"testing"
 
 	"haruki-cloud/api"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/onebot11"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/shamaton/msgpack/v3"
 )
+
+func encodeBotResponseEnvelope(envelope botResponseEnvelope) (encodedBotResponse, error) {
+	return encodeBotResponseEnvelopeContext(context.Background(), envelope)
+}
 
 type botResponseEnvelopeWire[T any] struct {
 	Status  int    `json:"status" msgpack:"status"`
@@ -176,6 +185,81 @@ func TestWriteEncodedBotResponseSelectsCurrentRequestTransport(t *testing.T) {
 			}
 			if !bytes.Equal(body, tt.wantBody) {
 				t.Fatalf("body = %x, want %x", body, tt.wantBody)
+			}
+		})
+	}
+}
+
+type botResponseJSONOnly func()
+
+func (botResponseJSONOnly) MarshalJSON() ([]byte, error) {
+	return []byte(`"JSON-only value"`), nil
+}
+
+func TestEncodeBotResponseEnvelopeTraceMeasuresAttemptedFormats(t *testing.T) {
+	tests := []struct {
+		name    string
+		data    any
+		wantErr string
+		wantOps map[string]int
+	}{
+		{name: "both formats", data: "data", wantOps: map[string]int{"response.json_encode": 1, "response.msgpack_encode": 1}},
+		{name: "JSON error", data: make(chan int), wantErr: "as JSON", wantOps: map[string]int{"response.json_encode": 1}},
+		{name: "MsgPack error", data: botResponseJSONOnly(nil), wantErr: "as MsgPack", wantOps: map[string]int{"response.json_encode": 1, "response.msgpack_encode": 1}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, trace := commandtrace.WithTrace(context.Background())
+			_, err := encodeBotResponseEnvelopeContext(ctx, newBotResponseEnvelope(200, "ok", tt.data))
+			if tt.wantErr == "" {
+				if err != nil {
+					t.Fatalf("encode: %v", err)
+				}
+			} else if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+				t.Fatalf("error = %v, want %q", err, tt.wantErr)
+			}
+			snapshot := trace.Snapshot()
+			if len(snapshot.Phases) != 0 {
+				t.Fatalf("encoding introduced phases: %+v", snapshot.Phases)
+			}
+			gotOps := make(map[string]int, len(snapshot.Operations))
+			for _, op := range snapshot.Operations {
+				gotOps[op.Name] = op.Count
+			}
+			if !reflect.DeepEqual(gotOps, tt.wantOps) {
+				t.Fatalf("operations = %v, want %v", gotOps, tt.wantOps)
+			}
+		})
+	}
+}
+
+func TestWriteEncodedBotResponseTraceDoesNotReencode(t *testing.T) {
+	encoded, err := encodeBotResponseEnvelope(newBotResponseEnvelope(200, "ok", "data"))
+	if err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+	for _, secure := range []bool{false, true} {
+		t.Run(fmt.Sprintf("secure=%t", secure), func(t *testing.T) {
+			ctx, trace := commandtrace.WithTrace(context.Background())
+			app := fiber.New()
+			app.Get("/response", func(c fiber.Ctx) error {
+				c.SetContext(ctx)
+				if secure {
+					c.Locals("secure_noise", true)
+				}
+				return writeEncodedBotResponse(c, encoded)
+			})
+			response, err := app.Test(httptest.NewRequest("GET", "/response", nil))
+			if err != nil {
+				t.Fatalf("request: %v", err)
+			}
+			_ = response.Body.Close()
+			snapshot := trace.Snapshot()
+			if len(snapshot.Phases) != 1 || snapshot.Phases[0].Name != "response_encode" || snapshot.Phases[0].Count != 1 {
+				t.Fatalf("phases = %+v", snapshot.Phases)
+			}
+			if len(snapshot.Operations) != 1 || snapshot.Operations[0].Name != "response.body_set" || snapshot.Operations[0].Count != 1 {
+				t.Fatalf("operations = %+v; writing preencoded data must not encode it again", snapshot.Operations)
 			}
 		})
 	}

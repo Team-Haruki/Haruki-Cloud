@@ -230,6 +230,8 @@ func registerBotCommandRoutes(
 
 func verifyBotOwnerNotBanned(botDBClient *botDB.Client, checker *accountdata.BanService) fiber.Handler {
 	return func(c fiber.Ctx) error {
+		finish := commandtrace.MeasureOperation(c.Context(), "request.owner_check")
+		defer finish()
 		botID, err := strconv.Atoi(strings.TrimSpace(c.Params("botId")))
 		if err != nil {
 			return botResponse(c, fiber.StatusUnauthorized, "Bot 会话无效")
@@ -250,6 +252,7 @@ func verifyBotOwnerNotBanned(botDBClient *botDB.Client, checker *accountdata.Ban
 		if banned {
 			return botResponse(c, fiber.StatusForbidden, botauth.ErrOwnerBanned)
 		}
+		finish()
 		return c.Next()
 	}
 }
@@ -488,12 +491,12 @@ func failedSharedBotCommand(
 func encodeSharedCommandResult(ctx context.Context, envelope botResponseEnvelope, metadata sharedCommandMetadata, forceExecutor bool) sharedCommandResult {
 	finishEncode := commandtrace.MeasureOperation(ctx, "response_payload_encode")
 	defer finishEncode()
-	encoded, err := encodeBotResponseEnvelope(envelope)
+	encoded, err := encodeBotResponseEnvelopeContext(ctx, envelope)
 	if err == nil {
 		return sharedCommandResult{Response: encoded, Metadata: metadata, ForceExecutor: forceExecutor}
 	}
 	logger.Error("bot response encoding failed", "error_type", fmt.Sprintf("%T", err))
-	fallback, fallbackErr := encodeBotResponseEnvelope(newBotResponseEnvelope(fiber.StatusInternalServerError, api.ErrInternalServer))
+	fallback, fallbackErr := encodeBotResponseEnvelopeContext(ctx, newBotResponseEnvelope(fiber.StatusInternalServerError, api.ErrInternalServer))
 	if fallbackErr != nil {
 		return sharedCommandResult{Metadata: sharedCommandMetadata{Outcome: "error", ErrorType: fmt.Sprintf("%T", fallbackErr)}}
 	}
@@ -619,6 +622,8 @@ func parseBotRequest(c fiber.Ctx) (BotCommandRequest, error) {
 	finish := commandtrace.MeasurePhase(c.Context(), "request_decode")
 	defer finish()
 	var req BotCommandRequest
+	finishDecode := commandtrace.MeasureOperation(c.Context(), "request.body_decode")
+	defer finishDecode()
 	ct := string(c.Request().Header.ContentType())
 	if strings.Contains(ct, "msgpack") {
 		if err := msgpack.Unmarshal(c.Body(), &req); err != nil {
@@ -627,7 +632,12 @@ func parseBotRequest(c fiber.Ctx) (BotCommandRequest, error) {
 	} else if err := c.Bind().Body(&req); err != nil {
 		return BotCommandRequest{}, err
 	}
+	finishDecode()
+	finishMessage := commandtrace.MeasureOperation(c.Context(), "request.message_parse")
 	req.Message = onebot11.ParseMessage(req.Message)
+	finishMessage()
+	finishDetach := commandtrace.MeasureOperation(c.Context(), "request.detach")
+	defer finishDetach()
 	return detachBotCommandRequest(req), nil
 }
 
@@ -774,10 +784,14 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 		GroupId:     req.PlatformGroupID,
 	}
 
+	finishContext := commandtrace.MeasureOperation(requestCtx, "command.context_build")
 	ctx, err := commandhandler.BuildContext(requestCtx, event)
+	finishContext()
 	if err != nil {
 		return nil, fmt.Errorf("构建指令上下文失败: %w", err)
 	}
+	finishMatch := commandtrace.MeasureOperation(requestCtx, "command.match")
+	defer finishMatch()
 	matched, expectedPath, err := selectBotCommandMatch(requestCtx, ctx.GetArgs(), expectedPath, req.MatchedCommand)
 	if err != nil {
 		return nil, err
@@ -793,6 +807,7 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 		return nil, err
 	}
 
+	finishMatch()
 	ctx.TriggerCmd = triggerCmd
 	ctx.ArgText = args
 	ctx.MessageType = messageType
@@ -800,7 +815,9 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	if !ok {
 		return nil, fmt.Errorf("注册的指令处理器未实现 PJSK 指令接口: %T", matched.Handler)
 	}
+	finishParse := commandtrace.MeasureOperation(requestCtx, "command.parse")
 	resolved, err := executable.Handle(ctx)
+	finishParse()
 	if err != nil {
 		return nil, err
 	}

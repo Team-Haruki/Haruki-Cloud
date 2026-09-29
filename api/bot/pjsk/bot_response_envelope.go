@@ -1,6 +1,7 @@
 package pjsk
 
 import (
+	"context"
 	"fmt"
 
 	"haruki-cloud/api"
@@ -41,13 +42,19 @@ func newBotResponseEnvelope(status int, message string, data ...any) botResponse
 	}
 }
 
-func encodeBotResponseEnvelope(envelope botResponseEnvelope) (encodedBotResponse, error) {
+func encodeBotResponseEnvelopeContext(ctx context.Context, envelope botResponseEnvelope) (encodedBotResponse, error) {
 	payload := api.BuildResponseMap(envelope.HTTPStatus, envelope.Message, envelope.Data)
+	finishJSON := commandtrace.MeasureOperation(ctx, "response.json_encode")
+	defer finishJSON()
 	jsonBody, err := json.Marshal(payload)
+	finishJSON()
 	if err != nil {
 		return encodedBotResponse{}, fmt.Errorf("encode bot response as JSON: %w", err)
 	}
+	finishMsgPack := commandtrace.MeasureOperation(ctx, "response.msgpack_encode")
+	defer finishMsgPack()
 	msgPackBody, err := msgpack.Marshal(payload)
+	finishMsgPack()
 	if err != nil {
 		return encodedBotResponse{}, fmt.Errorf("encode bot response as MsgPack: %w", err)
 	}
@@ -67,6 +74,8 @@ func writeEncodedBotResponse(c fiber.Ctx, response encodedBotResponse) error {
 		contentType = api.ContentTypeMsgPack
 		body = response.MsgPackBody
 	}
+	finishBody := commandtrace.MeasureOperation(c.Context(), "response.body_set")
+	defer finishBody()
 	c.Set(fiber.HeaderContentType, contentType)
 	return c.Status(response.HTTPStatus).Send(body)
 }

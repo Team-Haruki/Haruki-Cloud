@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -151,14 +152,19 @@ func (c *Controller) decodeSnapshot(region string) (map[string]any, renderregion
 	if len(c.rawMySekaiJSON) > 0 {
 		rawBytes = c.rawMySekaiJSON
 	} else {
+		finishCopy := commandtrace.MeasureOperation(c.requestCtx, "mysekai.snapshot_copy")
 		rawBytes, err = c.snapshot.RawBytes()
+		finishCopy()
 		if err != nil {
 			return nil, renderregion.Unknown, err
 		}
 	}
 
 	var merged map[string]any
-	if err := decodeJSONUseNumber(rawBytes, &merged); err != nil {
+	finishDecode := commandtrace.MeasureOperation(c.requestCtx, "mysekai.snapshot_decode")
+	err = decodeJSONUseNumber(rawBytes, &merged)
+	finishDecode()
+	if err != nil {
 		return nil, renderregion.Unknown, fmt.Errorf("decode mysekai data: %w", err)
 	}
 
@@ -166,11 +172,13 @@ func (c *Controller) decodeSnapshot(region string) (map[string]any, renderregion
 	// flatten updatedResources so that keys like userMysekaiFixtures are
 	// accessible at the top level, matching the merged-snapshot layout.
 	if len(c.rawMySekaiJSON) > 0 {
+		finishFlatten := commandtrace.MeasureOperation(c.requestCtx, "mysekai.snapshot_flatten")
 		if updated, ok := merged["updatedResources"].(map[string]any); ok {
 			for key, value := range updated {
 				merged[key] = value
 			}
 		}
+		finishFlatten()
 	}
 
 	return merged, c.resolveRegion(region), nil

@@ -291,6 +291,8 @@ func (p *storeProbe) dirIndex(ctx context.Context, parent string, staleBefore ti
 	if cached, ok := p.dirs.lookup(parent, p.now()); ok && cached.listedAt.After(staleBefore) {
 		return cached, nil
 	}
+	finishWait := commandtrace.MeasureOperation(ctx, "asset.store_directory_wait")
+	defer finishWait()
 	generation := p.dirs.currentGeneration()
 	value, err, _ := p.dirFlights.Do(flightKey(parent, generation), func() (any, error) {
 		if cached, ok := p.dirs.lookup(parent, p.now()); ok && cached.listedAt.After(staleBefore) {

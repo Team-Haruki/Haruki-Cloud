@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -51,7 +52,9 @@ func (p *ToolboxMySekaiPayloadProvider) Resolve(ctx context.Context, selector Se
 	}
 
 	region := renderregion.WithDefault(selector.Region)
+	finishBinding := commandtrace.MeasureOperation(ctx, "snapshot.binding")
 	binding, err := resolveMySekaiPayloadBinding(ctx, p.bindings, platform, imUserID, region, selector.PJSKUserID, preferGlobalDefault)
+	finishBinding()
 	if err != nil {
 		return nil, err
 	}
@@ -61,19 +64,25 @@ func (p *ToolboxMySekaiPayloadProvider) Resolve(ctx context.Context, selector Se
 		return nil, fmt.Errorf("snapshot: invalid bound pjsk user id %q: %w", binding.PJSKUserID, err)
 	}
 
-	payload, _, err := p.privateCache.fetchPayload(
+	finishFetch := commandtrace.MeasureOperation(ctx, "snapshot.private_data")
+	payload, _, err := p.privateCache.fetchPayloadContext(
+		ctx,
 		PrivateDataKey{Server: binding.Server, DataType: "mysekai", UID: uid},
 		func(knownUploadTime int64) ([]byte, bool, error) {
 			return p.client.GetMySekaiDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
 		},
 	)
+	finishFetch()
 	if err != nil {
 		return nil, err
 	}
 	if len(payload.data) == 0 {
 		return nil, ErrSnapshotUnavailable
 	}
-	return payload.cloneBytes(), nil
+	finishCopy := commandtrace.MeasureOperation(ctx, "snapshot.payload_copy")
+	data := payload.cloneBytes()
+	finishCopy()
+	return data, nil
 }
 
 type FallbackMySekaiPayloadProvider struct {

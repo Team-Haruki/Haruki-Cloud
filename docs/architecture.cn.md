@@ -473,6 +473,29 @@ Bot 客户端
 2. 渲染控制器仍然存在，但仅作为代码内部执行层
 3. 图片命令最终通过 Drawing API + ImageCache 返回 OneBot11 `image` segment
 
+#### 请求耗时日志
+
+`internal/observability/commandtrace` 将固定名称的计时聚合到请求 context。访问日志开启时，共用 Fiber 入口创建 trace，并在既有 `http_request` 日志的 `operation_stats` 中输出各环节的 `count`、`total_ms`、`max_ms`；因此 CHUNITHM 和 PJSK 的公开查询也能关联 Redis、数据库与响应编码耗时。Bot 指令继续输出 `bot_command` 汇总，并复用同一 trace；关联两种日志应使用 `request_id`，不能将它们当成两次执行相加。
+
+Bot 的 `phase_stats` 表示互不重叠的顶层阶段，可与 `server_duration_ms` 比较；`operation_stats` 是包含子操作的诊断计时，并行或嵌套的总值不能相加作为请求总耗时。`http_request` 的 `duration_scope=fiber_handler` 到响应体设置结束，不包含 Bot 下载图片、平台发图或客户端接收完成的时间。`response.body_set` 仅测 Fiber 响应体设置，`drawing.http` 是上游请求完整往返，不是 Drawing 的纯绘制时间。
+
+主要诊断层次如下（仅经过相应路径时出现）：
+
+| 环节 | operation 前缀或名称 |
+|---|---|
+| 请求与指令解析 | `request.*`、`command.context_build`、`command.match`、`command.parse` |
+| 运行时与绑定 | `runtime.*`、`binding.*`、`target.resolve` |
+| 用户快照 | `snapshot.*`、`toolbox.http`、`toolbox.decompress`、`mysekai.snapshot_*` |
+| 数据库与主数据等待 | `db.query`、`db.mutate`、`masterdata.cachefill_*`、`mysekai.provider_*` |
+| 卡组与歌曲数据准备 | `deck.userdata_*`、`deck.music_meta_lookup`、`music.achievement_*` |
+| 资源读取 | `asset.store_get`、`asset.read_file`、`asset.store_stat`、`asset.stat`、`asset.store_directory_wait` |
+| 绘图与图片结果 | `drawing.*`、`image.result_url`、`image.result_bytes`、`image.*` |
+| 公开查询缓存与响应 | `api.cache_*`、`api.data_fetch`、`response.*` |
+
+Bot 的共享执行会给内部操作添加 `command.shared.operation.` 前缀；内部阶段以 `command.shared.phase.` 进入 operations，它们同样是包含式诊断数据，不能再加到外层 `phase_stats`。上表列出的是加前缀之前的名称。
+
+缓存命中、未命中、绕过、共享等待与取消等固定事件也聚合为 operation；这类事件的 `count` 有意义，耗时为零。原始快照的缓存命中只在 Toolbox 鉴权成功并确认版本未变后记录。快照共享构建、绘图和图片下载使用独立 trace，完成后才把操作统计合入仍在等待的请求；取消的等待者不接收后续完成统计。`cachefill.Group` 保留同步等待约定：每个调用者记录 `masterdata.cachefill_wait`，内部查询与解码归首发请求，其他等待者不重复记录内部工作；取消也须等待这一同步调用结束。计时名称不包含账号、查询内容、缓存键、SQL 或资源路径，也不为每次子操作单独写日志。
+
 ### 6.3 图片缓存与图片结果
 
 渲染缓存键由 `internal/pjsk/drawing` 的受保护文件（`cache_helpers.go`、`cache_hash.go`、`cache_rules.go` 等）计算，Phase-2 不改变任何已有键（`cache_key_golden_test.go` 固定）。

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/storage"
 )
 
@@ -67,7 +68,9 @@ func (r *AssetReader) ReadFirst(ctx context.Context, drawingPaths ...string) ([]
 		if !ok {
 			continue
 		}
+		finishGet := commandtrace.MeasureOperation(ctx, "asset.store_get")
 		data, err := r.store.Get(ctx, key)
+		finishGet()
 		if err == nil {
 			r.memo.store(key, true)
 			return data, string(key), nil
@@ -84,7 +87,9 @@ func (r *AssetReader) readLegacy(ctx context.Context, drawingPaths []string) ([]
 	if resolved == "" {
 		return nil, "", storage.ErrNotExist
 	}
+	finishRead := commandtrace.MeasureOperation(ctx, "asset.read_file")
 	data, err := os.ReadFile(resolved)
+	finishRead()
 	if err != nil {
 		return nil, "", err
 	}
@@ -120,7 +125,9 @@ func (r *AssetReader) Stat(ctx context.Context, drawingPaths ...string) (string,
 			}
 			continue
 		}
+		finishStat := commandtrace.MeasureOperation(ctx, "asset.store_stat")
 		_, err := r.store.Stat(ctx, key)
+		finishStat()
 		switch {
 		case err == nil:
 			r.memo.store(key, true)
@@ -137,7 +144,10 @@ func (r *AssetReader) statLegacy(ctx context.Context, drawingPaths []string) (st
 	if resolved == "" {
 		return "", false
 	}
-	if _, err := os.Stat(resolved); err != nil {
+	finishStat := commandtrace.MeasureOperation(ctx, "asset.stat")
+	_, err := os.Stat(resolved)
+	finishStat()
+	if err != nil {
 		return "", false
 	}
 	return resolved, true

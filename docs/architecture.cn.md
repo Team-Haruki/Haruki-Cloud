@@ -491,11 +491,13 @@ Bot 客户端
 
 ### 6.4 Toolbox 快照缓存
 
-Toolbox 在内容变化时推进 `upload_time`，Cloud 沿用该值标识版本。原始数据缓存按区服、数据类型和游戏账号共享；每个独立请求仍携带自己的平台身份向 Toolbox 发起条件读取，只有鉴权成功并确认版本未变后才复用数据。读取失败不会返回缓存中的私有数据。
+Toolbox 在内容变化时推进 `upload_time`，Cloud 沿用该值标识版本。原始数据缓存按区服、数据类型、游戏账号和 Suite 字段集共享；每个独立请求仍携带自己的平台身份向 Toolbox 发起条件读取，只有鉴权成功并确认版本未变后才复用数据。读取失败不会返回缓存中的私有数据。
 
 原始 JSON 在接收时复制为内部不可变 payload，并保存一次解析的 `upload_time`。请求缓存和构建缓存查询共享该 payload，热命中不再复制完整 JSON 或重新扫描时间戳。对外返回可修改字节的接口仍返回独立副本；Snapshot 工厂将输入 JSON 视为只读，现有模型访问器的复制约定保持不变。
 
-构建缓存按区服、游戏账号、suite 版本以及是否需要 MySekai 和其版本保存 Snapshot。同一键的并发构建通过 singleflight 合并，合并范围不包括绑定查询和 Toolbox 鉴权。等待者可独立取消；共享构建使用独立的 30 秒超时上下文，构建错误不进入缓存。需要 music meta 或缺少有效源版本时仍直接构建。原始数据和已构建 Snapshot 的容量、TTL 与淘汰边界保持原有配置。
+构建缓存按区服、游戏账号、Suite 字段集与版本以及是否需要 MySekai 和其版本保存 Snapshot。同一键的并发构建通过 singleflight 合并，合并范围不包括绑定查询和 Toolbox 鉴权。等待者可独立取消；共享构建使用独立的 30 秒超时上下文，构建错误不进入缓存。需要 music meta 或缺少有效源版本时仍直接构建。原始数据和已构建 Snapshot 的容量、TTL 与淘汰边界保持原有配置。
+
+商店、对话列表和大门升级通过 `ResolveOptions.SuiteFields` 选择已核对的 Suite 顶层字段；其他命令读取完整 Suite，MySekai 始终完整读取。字段集排序去重，并包含身份和 `upload_time`，参与请求缓存和共享构建键。普通 Suite + MySekai JSON 以 `RawMessage` 按字段合并，保留既有覆盖和空数组规则；Extended JSON、数组导出及重复键文档仍使用原规范化路径。
 
 ### 6.5 卡牌全集与 Deck 上传缓存
 

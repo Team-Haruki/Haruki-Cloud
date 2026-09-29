@@ -654,7 +654,10 @@ func mysekaiRenderContextOptionsForMode(mode string) mySekaiRenderContextOptions
 		return mySekaiRenderContextOptions{
 			NeedProfile:       true,
 			SuiteOnlySnapshot: true,
+			SuiteFields:       mysekaiSuiteFields(mode),
 		}
+	case mySekaiShopCommand, mySekaiTalkListCommand:
+		return mySekaiRenderContextOptions{NeedProfile: true, SuiteFields: mysekaiSuiteFields(mode)}
 	default:
 		return mySekaiRenderContextOptions{NeedProfile: true}
 	}

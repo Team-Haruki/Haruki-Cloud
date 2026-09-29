@@ -122,6 +122,16 @@ func resolveTargetSnapshotWithError(
 	pjskUserID string,
 	needMySekai bool,
 ) (snapshot.Snapshot, error) {
+	return resolveTargetSnapshotWithSuiteFields(ctx, app, regionStr, platform, platformUserID, pjskUserID, needMySekai, nil)
+}
+
+func resolveTargetSnapshotWithSuiteFields(
+	ctx context.Context,
+	app *renderapp.App,
+	regionStr, platform, platformUserID, pjskUserID string,
+	needMySekai bool,
+	suiteFields []string,
+) (snapshot.Snapshot, error) {
 	return resolveSnapshotBySelectorWithError(ctx, app, snapshot.Selector{
 		IMPlatform: strings.TrimSpace(platform),
 		IMUserID:   strings.TrimSpace(platformUserID),
@@ -130,6 +140,7 @@ func resolveTargetSnapshotWithError(
 	}, snapshot.ResolveOptions{
 		PreferGlobalDefault: false,
 		NeedMySekai:         needMySekai,
+		SuiteFields:         suiteFields,
 	})
 }
 

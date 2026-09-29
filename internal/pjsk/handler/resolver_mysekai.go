@@ -17,6 +17,7 @@ type mySekaiRenderContextOptions struct {
 	PreferMySekaiPayload bool
 	MySekaiPayloadOnly   bool
 	SuiteOnlySnapshot    bool
+	SuiteFields          []string
 }
 
 func resolveMySekaiPayloadBySelector(ctx context.Context, app *renderapp.App, selector snapshot.Selector, preferGlobalDefault bool) ([]byte, error) {
@@ -75,7 +76,7 @@ func resolveMySekaiRenderContextWithOptions(
 		return preferredResult, preferredErr
 	}
 
-	snap, snapshotErr := resolveTargetSnapshotWithError(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, !opts.SuiteOnlySnapshot)
+	snap, snapshotErr := resolveTargetSnapshotWithSuiteFields(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, !opts.SuiteOnlySnapshot, opts.SuiteFields)
 	if snapshotErr != nil {
 		return mySekaiRenderContext{}, normalizeToolboxDataFetchError(snapshotErr, mySekaiSnapshotLabel(opts), target.Binding)
 	}

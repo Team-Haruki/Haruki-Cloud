@@ -61,6 +61,10 @@ func (c *authorizedSnapshotClient) GetSuiteDataConditionalContext(_ context.Cont
 	return []byte(minimalSuiteJSON), false, nil
 }
 
+func (c *authorizedSnapshotClient) GetSuiteDataFieldsConditionalContext(ctx context.Context, server string, uid int64, platform, requester string, known int64, _ []string) ([]byte, bool, error) {
+	return c.GetSuiteDataConditionalContext(ctx, server, uid, platform, requester, known)
+}
+
 func (c *authorizedSnapshotClient) GetMySekaiDataConditionalContext(context.Context, string, int64, string, string, int64) ([]byte, bool, error) {
 	return []byte(`{"upload_time":1710000000,"updatedResources":{}}`), false, nil
 }

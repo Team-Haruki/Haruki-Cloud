@@ -14,7 +14,7 @@ import (
 // transforms.
 //
 // Correctness comes from the key: a built snapshot is fully determined by its
-// region, account, and the upload_time of each source payload, so an entry can
+// region, account, Suite field set, and the upload_time of each source payload, so an entry can
 // only ever be reused for byte-identical inputs. Freshness is inherited from the
 // private-data layer — the caller reaches this cache only after an authorized
 // upload_time probe validated those same upload_times for this request, so a
@@ -41,6 +41,7 @@ type builtSnapshotKey struct {
 	Region            string
 	UID               int64
 	SuiteUploadTime   int64
+	SuiteProjection   string
 	NeedMySekai       bool
 	MySekaiUploadTime int64
 }

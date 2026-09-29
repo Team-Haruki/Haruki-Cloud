@@ -224,8 +224,19 @@ func (c *HarukiToolboxClient) GetPrivateDataContext(ctx context.Context, server 
 // timestamp and reports notModified. A knownUploadTime of 0 always performs a
 // plain full fetch.
 func (c *HarukiToolboxClient) GetPrivateDataConditionalContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
+	return c.getPrivateDataConditionalContext(ctx, server, dataType, userID, platform, platformUserID, knownUploadTime, "")
+}
+
+// GetSuiteDataFieldsConditionalContext reads a Suite projection. Fields must be
+// top-level keys and include upload_time so a 200 body owns its cache version.
+// The snapshot provider supplies a normalized field set, including userGamedata.
+func (c *HarukiToolboxClient) GetSuiteDataFieldsConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64, fields []string) ([]byte, bool, error) {
+	return c.getPrivateDataConditionalContext(ctx, server, ToolboxDataTypeSuite, userID, platform, platformUserID, knownUploadTime, strings.Join(fields, ","))
+}
+
+func (c *HarukiToolboxClient) getPrivateDataConditionalContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64, key string) ([]byte, bool, error) {
 	if knownUploadTime > 0 && c != nil && c.config != nil && c.config.ConditionalFetch {
-		data, notModified, err := c.getPrivateData(ctx, server, dataType, userID, platform, platformUserID, knownUploadTime)
+		data, notModified, err := c.getPrivateDataWithKey(ctx, server, dataType, userID, platform, platformUserID, knownUploadTime, key)
 		if err == nil {
 			if notModified {
 				commandtrace.RecordOperation(ctx, "toolbox.conditional_not_modified", 0)
@@ -248,7 +259,7 @@ func (c *HarukiToolboxClient) GetPrivateDataConditionalContext(ctx context.Conte
 			return nil, true, nil
 		}
 	}
-	data, _, err := c.getPrivateData(ctx, server, dataType, userID, platform, platformUserID, 0)
+	data, _, err := c.getPrivateDataWithKey(ctx, server, dataType, userID, platform, platformUserID, 0, key)
 	return data, false, err
 }
 
@@ -266,6 +277,10 @@ func (c *HarukiToolboxClient) GetMySekaiDataConditionalContext(ctx context.Conte
 // knownUploadTime is forwarded as the known_upload_time query parameter, in
 // which case a 304 response reports notModified=true with no payload.
 func (c *HarukiToolboxClient) getPrivateData(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
+	return c.getPrivateDataWithKey(ctx, server, dataType, userID, platform, platformUserID, knownUploadTime, "")
+}
+
+func (c *HarukiToolboxClient) getPrivateDataWithKey(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64, key string) ([]byte, bool, error) {
 	r, err := c.internalRequest(ctx)
 	if err != nil {
 		return nil, false, err
@@ -277,6 +292,9 @@ func (c *HarukiToolboxClient) getPrivateData(ctx context.Context, server string,
 	}
 	if knownUploadTime > 0 {
 		params["known_upload_time"] = strconv.FormatInt(knownUploadTime, 10)
+	}
+	if key != "" {
+		params["key"] = key
 	}
 
 	finishHTTP := commandtrace.MeasureOperation(ctx, toolboxHTTPStage)

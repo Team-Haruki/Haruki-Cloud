@@ -48,6 +48,13 @@ func Unmarshal(data []byte, target any) error {
 	return jsonv2.Unmarshal(data, target, defaultOptions)
 }
 
+// UnmarshalUniqueNames preserves Unmarshal semantics while rejecting duplicate
+// names, including names inside RawMessage values. Callers that retain raw fields
+// can use this to avoid changing how a later typed decode handles duplicates.
+func UnmarshalUniqueNames(data []byte, target any) error {
+	return jsonv2.Unmarshal(data, target, defaultOptions, jsontext.AllowDuplicateNames(false))
+}
+
 func Valid(data []byte) bool {
 	return jsontext.Value(data).IsValid(defaultOptions)
 }

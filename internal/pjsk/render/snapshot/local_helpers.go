@@ -14,10 +14,9 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 )
 
-func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
-	// Decode straight to the document maps instead of normalize-encode-decode:
-	// the merge needs maps anyway, and reusing the normalization decode saves
-	// two full-tree passes over multi-MB payloads per merge.
+func mergeMySekaiDataDecoded(userData []byte, mySekaiData []byte) ([]byte, error) {
+	// Keep the original normalization and duplicate-name semantics for exports
+	// and unusual payloads that cannot use the raw-field merge.
 	baseMap, err := normalizeSnapshotDocument(userData)
 	if err != nil {
 		return nil, fmt.Errorf("decode user snapshot for mysekai merge: %w", err)

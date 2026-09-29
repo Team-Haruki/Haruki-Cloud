@@ -12,7 +12,7 @@ import (
 
 // PrivateDataCache is a process-wide cache of Toolbox private-data payloads
 // (suite / mysekai), shared across bot commands and keyed by game account
-// (server, data type, uid) rather than by requester identity.
+// (server, data type, uid, projection) rather than by requester identity.
 //
 // Freshness and authorization are both enforced per request by the caller's
 // own upstream read (see Fetch): a cached payload is only served after the
@@ -37,11 +37,13 @@ type PrivateDataCache struct {
 
 // PrivateDataKey identifies a private-data payload by game account. It
 // deliberately excludes the requester identity so authorized callers share one
-// cached payload per account.
+// cached payload per account and field set.
 type PrivateDataKey struct {
 	Server   string
 	DataType string
 	UID      int64
+	// Projection is the normalized comma-separated field set; empty is full.
+	Projection string
 }
 
 // privateDataPayload is immutable after creation. Internal consumers may read

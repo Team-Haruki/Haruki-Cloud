@@ -27,6 +27,8 @@ const (
 	FieldFlavorText2 = "flavor_text2"
 	// FieldChangeFlavorTextAt holds the string denoting the change_flavor_text_at field in the database.
 	FieldChangeFlavorTextAt = "change_flavor_text_at"
+	// FieldExpiredAt holds the string denoting the expired_at field in the database.
+	FieldExpiredAt = "expired_at"
 	// FieldServerRegion holds the string denoting the server_region field in the database.
 	FieldServerRegion = "server_region"
 	// Table holds the table name of the material in the database.
@@ -44,6 +46,7 @@ var Columns = []string{
 	FieldMaterialType,
 	FieldFlavorText2,
 	FieldChangeFlavorTextAt,
+	FieldExpiredAt,
 	FieldServerRegion,
 }
 
@@ -103,6 +106,11 @@ func ByFlavorText2(opts ...sql.OrderTermOption) OrderOption {
 // ByChangeFlavorTextAt orders the results by the change_flavor_text_at field.
 func ByChangeFlavorTextAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldChangeFlavorTextAt, opts...).ToFunc()
+}
+
+// ByExpiredAt orders the results by the expired_at field.
+func ByExpiredAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldExpiredAt, opts...).ToFunc()
 }
 
 // ByServerRegion orders the results by the server_region field.

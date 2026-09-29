@@ -103,6 +103,20 @@ func (_c *HonorgroupCreate) SetNillableFrameName(v *string) *HonorgroupCreate {
 	return _c
 }
 
+// SetIsMedalDisplayed sets the "is_medal_displayed" field.
+func (_c *HonorgroupCreate) SetIsMedalDisplayed(v bool) *HonorgroupCreate {
+	_c.mutation.SetIsMedalDisplayed(v)
+	return _c
+}
+
+// SetNillableIsMedalDisplayed sets the "is_medal_displayed" field if the given value is not nil.
+func (_c *HonorgroupCreate) SetNillableIsMedalDisplayed(v *bool) *HonorgroupCreate {
+	if v != nil {
+		_c.SetIsMedalDisplayed(*v)
+	}
+	return _c
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_c *HonorgroupCreate) SetServerRegion(v string) *HonorgroupCreate {
 	_c.mutation.SetServerRegion(v)
@@ -195,6 +209,10 @@ func (_c *HonorgroupCreate) createSpec() (*Honorgroup, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.FrameName(); ok {
 		_spec.SetField(honorgroup.FieldFrameName, field.TypeString, value)
 		_node.FrameName = value
+	}
+	if value, ok := _c.mutation.IsMedalDisplayed(); ok {
+		_spec.SetField(honorgroup.FieldIsMedalDisplayed, field.TypeBool, value)
+		_node.IsMedalDisplayed = value
 	}
 	if value, ok := _c.mutation.ServerRegion(); ok {
 		_spec.SetField(honorgroup.FieldServerRegion, field.TypeString, value)

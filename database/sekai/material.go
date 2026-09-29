@@ -32,6 +32,8 @@ type Material struct {
 	FlavorText2 string `json:"flavor_text2,omitempty"`
 	// ChangeFlavorTextAt holds the value of the "change_flavor_text_at" field.
 	ChangeFlavorTextAt int64 `json:"change_flavor_text_at,omitempty"`
+	// ExpiredAt holds the value of the "expired_at" field.
+	ExpiredAt int64 `json:"expired_at,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -44,7 +46,7 @@ func (*Material) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case material.FieldCanUse:
 			values[i] = new(sql.NullBool)
-		case material.FieldID, material.FieldGameID, material.FieldSeq, material.FieldChangeFlavorTextAt:
+		case material.FieldID, material.FieldGameID, material.FieldSeq, material.FieldChangeFlavorTextAt, material.FieldExpiredAt:
 			values[i] = new(sql.NullInt64)
 		case material.FieldName, material.FieldFlavorText, material.FieldMaterialType, material.FieldFlavorText2, material.FieldServerRegion:
 			values[i] = new(sql.NullString)
@@ -117,6 +119,12 @@ func (_m *Material) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ChangeFlavorTextAt = value.Int64
 			}
+		case material.FieldExpiredAt:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field expired_at", values[i])
+			} else if value.Valid {
+				_m.ExpiredAt = value.Int64
+			}
 		case material.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field server_region", values[i])
@@ -182,6 +190,9 @@ func (_m *Material) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("change_flavor_text_at=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ChangeFlavorTextAt))
+	builder.WriteString(", ")
+	builder.WriteString("expired_at=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ExpiredAt))
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

@@ -1345,6 +1345,7 @@ var (
 		{Name: "honor_type", Type: field.TypeString, Nullable: true},
 		{Name: "background_assetbundle_name", Type: field.TypeString, Nullable: true},
 		{Name: "frame_name", Type: field.TypeString, Nullable: true},
+		{Name: "is_medal_displayed", Type: field.TypeBool, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// HonorgroupsTable holds the schema information for the "honorgroups" table.
@@ -1356,7 +1357,7 @@ var (
 			{
 				Name:    "honorgroup_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{HonorgroupsColumns[1], HonorgroupsColumns[7]},
+				Columns: []*schema.Column{HonorgroupsColumns[1], HonorgroupsColumns[8]},
 			},
 		},
 	}
@@ -1442,6 +1443,7 @@ var (
 		{Name: "material_type", Type: field.TypeString, Nullable: true},
 		{Name: "flavor_text2", Type: field.TypeString, Nullable: true},
 		{Name: "change_flavor_text_at", Type: field.TypeInt64, Nullable: true},
+		{Name: "expired_at", Type: field.TypeInt64, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// MaterialsTable holds the schema information for the "materials" table.
@@ -1453,7 +1455,7 @@ var (
 			{
 				Name:    "material_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{MaterialsColumns[1], MaterialsColumns[9]},
+				Columns: []*schema.Column{MaterialsColumns[1], MaterialsColumns[10]},
 			},
 		},
 	}
@@ -2021,6 +2023,7 @@ var (
 		{Name: "unit", Type: field.TypeString, Nullable: true},
 		{Name: "name", Type: field.TypeString, Nullable: true},
 		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "mysekai_gate_type", Type: field.TypeString, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// MysekaigatesTable holds the schema information for the "mysekaigates" table.
@@ -2032,7 +2035,7 @@ var (
 			{
 				Name:    "mysekaigate_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{MysekaigatesColumns[1], MysekaigatesColumns[5]},
+				Columns: []*schema.Column{MysekaigatesColumns[1], MysekaigatesColumns[6]},
 			},
 		},
 	}
@@ -2802,6 +2805,9 @@ var (
 		{Name: "archive_release_condition_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "sub_game_character_penlight_color_group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "virtual_live_group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "virtual_live_total_cheer_point_rewards", Type: field.TypeJSON, Nullable: true},
+		{Name: "virtual_live_total_cheer_point_surplus_reward", Type: field.TypeJSON, Nullable: true},
+		{Name: "virtual_live_virtual_item_override_cost", Type: field.TypeJSON, Nullable: true},
 		{Name: "server_region", Type: field.TypeString},
 	}
 	// VirtuallivesTable holds the schema information for the "virtuallives" table.
@@ -2813,7 +2819,7 @@ var (
 			{
 				Name:    "virtuallive_game_id_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{VirtuallivesColumns[1], VirtuallivesColumns[25]},
+				Columns: []*schema.Column{VirtuallivesColumns[1], VirtuallivesColumns[28]},
 			},
 		},
 	}

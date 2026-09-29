@@ -54199,6 +54199,7 @@ type HonorgroupMutation struct {
 	honor_type                  *string
 	background_assetbundle_name *string
 	frame_name                  *string
+	is_medal_displayed          *bool
 	server_region               *string
 	clearedFields               map[string]struct{}
 	done                        bool
@@ -54619,6 +54620,55 @@ func (m *HonorgroupMutation) ResetFrameName() {
 	delete(m.clearedFields, honorgroup.FieldFrameName)
 }
 
+// SetIsMedalDisplayed sets the "is_medal_displayed" field.
+func (m *HonorgroupMutation) SetIsMedalDisplayed(b bool) {
+	m.is_medal_displayed = &b
+}
+
+// IsMedalDisplayed returns the value of the "is_medal_displayed" field in the mutation.
+func (m *HonorgroupMutation) IsMedalDisplayed() (r bool, exists bool) {
+	v := m.is_medal_displayed
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsMedalDisplayed returns the old "is_medal_displayed" field's value of the Honorgroup entity.
+// If the Honorgroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HonorgroupMutation) OldIsMedalDisplayed(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsMedalDisplayed is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsMedalDisplayed requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsMedalDisplayed: %w", err)
+	}
+	return oldValue.IsMedalDisplayed, nil
+}
+
+// ClearIsMedalDisplayed clears the value of the "is_medal_displayed" field.
+func (m *HonorgroupMutation) ClearIsMedalDisplayed() {
+	m.is_medal_displayed = nil
+	m.clearedFields[honorgroup.FieldIsMedalDisplayed] = struct{}{}
+}
+
+// IsMedalDisplayedCleared returns if the "is_medal_displayed" field was cleared in this mutation.
+func (m *HonorgroupMutation) IsMedalDisplayedCleared() bool {
+	_, ok := m.clearedFields[honorgroup.FieldIsMedalDisplayed]
+	return ok
+}
+
+// ResetIsMedalDisplayed resets all changes to the "is_medal_displayed" field.
+func (m *HonorgroupMutation) ResetIsMedalDisplayed() {
+	m.is_medal_displayed = nil
+	delete(m.clearedFields, honorgroup.FieldIsMedalDisplayed)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *HonorgroupMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -54689,7 +54739,7 @@ func (m *HonorgroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *HonorgroupMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.game_id != nil {
 		fields = append(fields, honorgroup.FieldGameID)
 	}
@@ -54707,6 +54757,9 @@ func (m *HonorgroupMutation) Fields() []string {
 	}
 	if m.frame_name != nil {
 		fields = append(fields, honorgroup.FieldFrameName)
+	}
+	if m.is_medal_displayed != nil {
+		fields = append(fields, honorgroup.FieldIsMedalDisplayed)
 	}
 	if m.server_region != nil {
 		fields = append(fields, honorgroup.FieldServerRegion)
@@ -54731,6 +54784,8 @@ func (m *HonorgroupMutation) Field(name string) (ent.Value, bool) {
 		return m.BackgroundAssetbundleName()
 	case honorgroup.FieldFrameName:
 		return m.FrameName()
+	case honorgroup.FieldIsMedalDisplayed:
+		return m.IsMedalDisplayed()
 	case honorgroup.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -54754,6 +54809,8 @@ func (m *HonorgroupMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldBackgroundAssetbundleName(ctx)
 	case honorgroup.FieldFrameName:
 		return m.OldFrameName(ctx)
+	case honorgroup.FieldIsMedalDisplayed:
+		return m.OldIsMedalDisplayed(ctx)
 	case honorgroup.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -54806,6 +54863,13 @@ func (m *HonorgroupMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetFrameName(v)
+		return nil
+	case honorgroup.FieldIsMedalDisplayed:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsMedalDisplayed(v)
 		return nil
 	case honorgroup.FieldServerRegion:
 		v, ok := value.(string)
@@ -54877,6 +54941,9 @@ func (m *HonorgroupMutation) ClearedFields() []string {
 	if m.FieldCleared(honorgroup.FieldFrameName) {
 		fields = append(fields, honorgroup.FieldFrameName)
 	}
+	if m.FieldCleared(honorgroup.FieldIsMedalDisplayed) {
+		fields = append(fields, honorgroup.FieldIsMedalDisplayed)
+	}
 	return fields
 }
 
@@ -54909,6 +54976,9 @@ func (m *HonorgroupMutation) ClearField(name string) error {
 	case honorgroup.FieldFrameName:
 		m.ClearFrameName()
 		return nil
+	case honorgroup.FieldIsMedalDisplayed:
+		m.ClearIsMedalDisplayed()
+		return nil
 	}
 	return fmt.Errorf("unknown Honorgroup nullable field %s", name)
 }
@@ -54934,6 +55004,9 @@ func (m *HonorgroupMutation) ResetField(name string) error {
 		return nil
 	case honorgroup.FieldFrameName:
 		m.ResetFrameName()
+		return nil
+	case honorgroup.FieldIsMedalDisplayed:
+		m.ResetIsMedalDisplayed()
 		return nil
 	case honorgroup.FieldServerRegion:
 		m.ResetServerRegion()
@@ -57720,6 +57793,8 @@ type MaterialMutation struct {
 	flavor_text2             *string
 	change_flavor_text_at    *int64
 	addchange_flavor_text_at *int64
+	expired_at               *int64
+	addexpired_at            *int64
 	server_region            *string
 	clearedFields            map[string]struct{}
 	done                     bool
@@ -58280,6 +58355,76 @@ func (m *MaterialMutation) ResetChangeFlavorTextAt() {
 	delete(m.clearedFields, material.FieldChangeFlavorTextAt)
 }
 
+// SetExpiredAt sets the "expired_at" field.
+func (m *MaterialMutation) SetExpiredAt(i int64) {
+	m.expired_at = &i
+	m.addexpired_at = nil
+}
+
+// ExpiredAt returns the value of the "expired_at" field in the mutation.
+func (m *MaterialMutation) ExpiredAt() (r int64, exists bool) {
+	v := m.expired_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpiredAt returns the old "expired_at" field's value of the Material entity.
+// If the Material object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MaterialMutation) OldExpiredAt(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpiredAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpiredAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpiredAt: %w", err)
+	}
+	return oldValue.ExpiredAt, nil
+}
+
+// AddExpiredAt adds i to the "expired_at" field.
+func (m *MaterialMutation) AddExpiredAt(i int64) {
+	if m.addexpired_at != nil {
+		*m.addexpired_at += i
+	} else {
+		m.addexpired_at = &i
+	}
+}
+
+// AddedExpiredAt returns the value that was added to the "expired_at" field in this mutation.
+func (m *MaterialMutation) AddedExpiredAt() (r int64, exists bool) {
+	v := m.addexpired_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearExpiredAt clears the value of the "expired_at" field.
+func (m *MaterialMutation) ClearExpiredAt() {
+	m.expired_at = nil
+	m.addexpired_at = nil
+	m.clearedFields[material.FieldExpiredAt] = struct{}{}
+}
+
+// ExpiredAtCleared returns if the "expired_at" field was cleared in this mutation.
+func (m *MaterialMutation) ExpiredAtCleared() bool {
+	_, ok := m.clearedFields[material.FieldExpiredAt]
+	return ok
+}
+
+// ResetExpiredAt resets all changes to the "expired_at" field.
+func (m *MaterialMutation) ResetExpiredAt() {
+	m.expired_at = nil
+	m.addexpired_at = nil
+	delete(m.clearedFields, material.FieldExpiredAt)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *MaterialMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -58350,7 +58495,7 @@ func (m *MaterialMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MaterialMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.game_id != nil {
 		fields = append(fields, material.FieldGameID)
 	}
@@ -58374,6 +58519,9 @@ func (m *MaterialMutation) Fields() []string {
 	}
 	if m.change_flavor_text_at != nil {
 		fields = append(fields, material.FieldChangeFlavorTextAt)
+	}
+	if m.expired_at != nil {
+		fields = append(fields, material.FieldExpiredAt)
 	}
 	if m.server_region != nil {
 		fields = append(fields, material.FieldServerRegion)
@@ -58402,6 +58550,8 @@ func (m *MaterialMutation) Field(name string) (ent.Value, bool) {
 		return m.FlavorText2()
 	case material.FieldChangeFlavorTextAt:
 		return m.ChangeFlavorTextAt()
+	case material.FieldExpiredAt:
+		return m.ExpiredAt()
 	case material.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -58429,6 +58579,8 @@ func (m *MaterialMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldFlavorText2(ctx)
 	case material.FieldChangeFlavorTextAt:
 		return m.OldChangeFlavorTextAt(ctx)
+	case material.FieldExpiredAt:
+		return m.OldExpiredAt(ctx)
 	case material.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -58496,6 +58648,13 @@ func (m *MaterialMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetChangeFlavorTextAt(v)
 		return nil
+	case material.FieldExpiredAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpiredAt(v)
+		return nil
 	case material.FieldServerRegion:
 		v, ok := value.(string)
 		if !ok {
@@ -58520,6 +58679,9 @@ func (m *MaterialMutation) AddedFields() []string {
 	if m.addchange_flavor_text_at != nil {
 		fields = append(fields, material.FieldChangeFlavorTextAt)
 	}
+	if m.addexpired_at != nil {
+		fields = append(fields, material.FieldExpiredAt)
+	}
 	return fields
 }
 
@@ -58534,6 +58696,8 @@ func (m *MaterialMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedSeq()
 	case material.FieldChangeFlavorTextAt:
 		return m.AddedChangeFlavorTextAt()
+	case material.FieldExpiredAt:
+		return m.AddedExpiredAt()
 	}
 	return nil, false
 }
@@ -58563,6 +58727,13 @@ func (m *MaterialMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddChangeFlavorTextAt(v)
+		return nil
+	case material.FieldExpiredAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddExpiredAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Material numeric field %s", name)
@@ -58595,6 +58766,9 @@ func (m *MaterialMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(material.FieldChangeFlavorTextAt) {
 		fields = append(fields, material.FieldChangeFlavorTextAt)
+	}
+	if m.FieldCleared(material.FieldExpiredAt) {
+		fields = append(fields, material.FieldExpiredAt)
 	}
 	return fields
 }
@@ -58634,6 +58808,9 @@ func (m *MaterialMutation) ClearField(name string) error {
 	case material.FieldChangeFlavorTextAt:
 		m.ClearChangeFlavorTextAt()
 		return nil
+	case material.FieldExpiredAt:
+		m.ClearExpiredAt()
+		return nil
 	}
 	return fmt.Errorf("unknown Material nullable field %s", name)
 }
@@ -58665,6 +58842,9 @@ func (m *MaterialMutation) ResetField(name string) error {
 		return nil
 	case material.FieldChangeFlavorTextAt:
 		m.ResetChangeFlavorTextAt()
+		return nil
+	case material.FieldExpiredAt:
+		m.ResetExpiredAt()
 		return nil
 	case material.FieldServerRegion:
 		m.ResetServerRegion()
@@ -80680,19 +80860,20 @@ func (m *MysekaigamecharacterunitgroupMutation) ResetEdge(name string) error {
 // MysekaigateMutation represents an operation that mutates the Mysekaigate nodes in the graph.
 type MysekaigateMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int
-	game_id          *int64
-	addgame_id       *int64
-	unit             *string
-	name             *string
-	assetbundle_name *string
-	server_region    *string
-	clearedFields    map[string]struct{}
-	done             bool
-	oldValue         func(context.Context) (*Mysekaigate, error)
-	predicates       []predicate.Mysekaigate
+	op                Op
+	typ               string
+	id                *int
+	game_id           *int64
+	addgame_id        *int64
+	unit              *string
+	name              *string
+	assetbundle_name  *string
+	mysekai_gate_type *string
+	server_region     *string
+	clearedFields     map[string]struct{}
+	done              bool
+	oldValue          func(context.Context) (*Mysekaigate, error)
+	predicates        []predicate.Mysekaigate
 }
 
 var _ ent.Mutation = (*MysekaigateMutation)(nil)
@@ -81010,6 +81191,55 @@ func (m *MysekaigateMutation) ResetAssetbundleName() {
 	delete(m.clearedFields, mysekaigate.FieldAssetbundleName)
 }
 
+// SetMysekaiGateType sets the "mysekai_gate_type" field.
+func (m *MysekaigateMutation) SetMysekaiGateType(s string) {
+	m.mysekai_gate_type = &s
+}
+
+// MysekaiGateType returns the value of the "mysekai_gate_type" field in the mutation.
+func (m *MysekaigateMutation) MysekaiGateType() (r string, exists bool) {
+	v := m.mysekai_gate_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMysekaiGateType returns the old "mysekai_gate_type" field's value of the Mysekaigate entity.
+// If the Mysekaigate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaigateMutation) OldMysekaiGateType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMysekaiGateType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMysekaiGateType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMysekaiGateType: %w", err)
+	}
+	return oldValue.MysekaiGateType, nil
+}
+
+// ClearMysekaiGateType clears the value of the "mysekai_gate_type" field.
+func (m *MysekaigateMutation) ClearMysekaiGateType() {
+	m.mysekai_gate_type = nil
+	m.clearedFields[mysekaigate.FieldMysekaiGateType] = struct{}{}
+}
+
+// MysekaiGateTypeCleared returns if the "mysekai_gate_type" field was cleared in this mutation.
+func (m *MysekaigateMutation) MysekaiGateTypeCleared() bool {
+	_, ok := m.clearedFields[mysekaigate.FieldMysekaiGateType]
+	return ok
+}
+
+// ResetMysekaiGateType resets all changes to the "mysekai_gate_type" field.
+func (m *MysekaigateMutation) ResetMysekaiGateType() {
+	m.mysekai_gate_type = nil
+	delete(m.clearedFields, mysekaigate.FieldMysekaiGateType)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *MysekaigateMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -81080,7 +81310,7 @@ func (m *MysekaigateMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MysekaigateMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.game_id != nil {
 		fields = append(fields, mysekaigate.FieldGameID)
 	}
@@ -81092,6 +81322,9 @@ func (m *MysekaigateMutation) Fields() []string {
 	}
 	if m.assetbundle_name != nil {
 		fields = append(fields, mysekaigate.FieldAssetbundleName)
+	}
+	if m.mysekai_gate_type != nil {
+		fields = append(fields, mysekaigate.FieldMysekaiGateType)
 	}
 	if m.server_region != nil {
 		fields = append(fields, mysekaigate.FieldServerRegion)
@@ -81112,6 +81345,8 @@ func (m *MysekaigateMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case mysekaigate.FieldAssetbundleName:
 		return m.AssetbundleName()
+	case mysekaigate.FieldMysekaiGateType:
+		return m.MysekaiGateType()
 	case mysekaigate.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -81131,6 +81366,8 @@ func (m *MysekaigateMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldName(ctx)
 	case mysekaigate.FieldAssetbundleName:
 		return m.OldAssetbundleName(ctx)
+	case mysekaigate.FieldMysekaiGateType:
+		return m.OldMysekaiGateType(ctx)
 	case mysekaigate.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -81169,6 +81406,13 @@ func (m *MysekaigateMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAssetbundleName(v)
+		return nil
+	case mysekaigate.FieldMysekaiGateType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMysekaiGateType(v)
 		return nil
 	case mysekaigate.FieldServerRegion:
 		v, ok := value.(string)
@@ -81234,6 +81478,9 @@ func (m *MysekaigateMutation) ClearedFields() []string {
 	if m.FieldCleared(mysekaigate.FieldAssetbundleName) {
 		fields = append(fields, mysekaigate.FieldAssetbundleName)
 	}
+	if m.FieldCleared(mysekaigate.FieldMysekaiGateType) {
+		fields = append(fields, mysekaigate.FieldMysekaiGateType)
+	}
 	return fields
 }
 
@@ -81260,6 +81507,9 @@ func (m *MysekaigateMutation) ClearField(name string) error {
 	case mysekaigate.FieldAssetbundleName:
 		m.ClearAssetbundleName()
 		return nil
+	case mysekaigate.FieldMysekaiGateType:
+		m.ClearMysekaiGateType()
+		return nil
 	}
 	return fmt.Errorf("unknown Mysekaigate nullable field %s", name)
 }
@@ -81279,6 +81529,9 @@ func (m *MysekaigateMutation) ResetField(name string) error {
 		return nil
 	case mysekaigate.FieldAssetbundleName:
 		m.ResetAssetbundleName()
+		return nil
+	case mysekaigate.FieldMysekaiGateType:
+		m.ResetMysekaiGateType()
 		return nil
 	case mysekaigate.FieldServerRegion:
 		m.ResetServerRegion()
@@ -108652,58 +108905,64 @@ func (m *UnitstoryepisodegroupMutation) ResetEdge(name string) error {
 // VirtualliveMutation represents an operation that mutates the Virtuallive nodes in the graph.
 type VirtualliveMutation struct {
 	config
-	op                                            Op
-	typ                                           string
-	id                                            *int
-	game_id                                       *int64
-	addgame_id                                    *int64
-	virtual_live_type                             *string
-	virtual_live_platform                         *string
-	seq                                           *int64
-	addseq                                        *int64
-	name                                          *string
-	assetbundle_name                              *string
-	screen_mv_music_vocal_id                      *int64
-	addscreen_mv_music_vocal_id                   *int64
-	start_at                                      *int64
-	addstart_at                                   *int64
-	end_at                                        *int64
-	addend_at                                     *int64
-	ranking_announce_at                           *int64
-	addranking_announce_at                        *int64
-	virtual_live_setlists                         *json.RawMessage
-	appendvirtual_live_setlists                   json.RawMessage
-	virtual_live_beginner_schedules               *json.RawMessage
-	appendvirtual_live_beginner_schedules         json.RawMessage
-	virtual_live_schedules                        *json.RawMessage
-	appendvirtual_live_schedules                  json.RawMessage
-	virtual_live_characters                       *json.RawMessage
-	appendvirtual_live_characters                 json.RawMessage
-	virtual_live_rewards                          *json.RawMessage
-	appendvirtual_live_rewards                    json.RawMessage
-	virtual_live_cheer_point_rewards              *json.RawMessage
-	appendvirtual_live_cheer_point_rewards        json.RawMessage
-	virtual_live_waiting_room                     *json.RawMessage
-	appendvirtual_live_waiting_room               json.RawMessage
-	virtual_items                                 *json.RawMessage
-	appendvirtual_items                           json.RawMessage
-	virtual_live_appeals                          *json.RawMessage
-	appendvirtual_live_appeals                    json.RawMessage
-	virtual_live_background_musics                *json.RawMessage
-	appendvirtual_live_background_musics          json.RawMessage
-	virtual_live_information                      *json.RawMessage
-	appendvirtual_live_information                json.RawMessage
-	archive_release_condition_id                  *int64
-	addarchive_release_condition_id               *int64
-	sub_game_character_penlight_color_group_id    *int64
-	addsub_game_character_penlight_color_group_id *int64
-	virtual_live_group_id                         *int64
-	addvirtual_live_group_id                      *int64
-	server_region                                 *string
-	clearedFields                                 map[string]struct{}
-	done                                          bool
-	oldValue                                      func(context.Context) (*Virtuallive, error)
-	predicates                                    []predicate.Virtuallive
+	op                                                  Op
+	typ                                                 string
+	id                                                  *int
+	game_id                                             *int64
+	addgame_id                                          *int64
+	virtual_live_type                                   *string
+	virtual_live_platform                               *string
+	seq                                                 *int64
+	addseq                                              *int64
+	name                                                *string
+	assetbundle_name                                    *string
+	screen_mv_music_vocal_id                            *int64
+	addscreen_mv_music_vocal_id                         *int64
+	start_at                                            *int64
+	addstart_at                                         *int64
+	end_at                                              *int64
+	addend_at                                           *int64
+	ranking_announce_at                                 *int64
+	addranking_announce_at                              *int64
+	virtual_live_setlists                               *json.RawMessage
+	appendvirtual_live_setlists                         json.RawMessage
+	virtual_live_beginner_schedules                     *json.RawMessage
+	appendvirtual_live_beginner_schedules               json.RawMessage
+	virtual_live_schedules                              *json.RawMessage
+	appendvirtual_live_schedules                        json.RawMessage
+	virtual_live_characters                             *json.RawMessage
+	appendvirtual_live_characters                       json.RawMessage
+	virtual_live_rewards                                *json.RawMessage
+	appendvirtual_live_rewards                          json.RawMessage
+	virtual_live_cheer_point_rewards                    *json.RawMessage
+	appendvirtual_live_cheer_point_rewards              json.RawMessage
+	virtual_live_waiting_room                           *json.RawMessage
+	appendvirtual_live_waiting_room                     json.RawMessage
+	virtual_items                                       *json.RawMessage
+	appendvirtual_items                                 json.RawMessage
+	virtual_live_appeals                                *json.RawMessage
+	appendvirtual_live_appeals                          json.RawMessage
+	virtual_live_background_musics                      *json.RawMessage
+	appendvirtual_live_background_musics                json.RawMessage
+	virtual_live_information                            *json.RawMessage
+	appendvirtual_live_information                      json.RawMessage
+	archive_release_condition_id                        *int64
+	addarchive_release_condition_id                     *int64
+	sub_game_character_penlight_color_group_id          *int64
+	addsub_game_character_penlight_color_group_id       *int64
+	virtual_live_group_id                               *int64
+	addvirtual_live_group_id                            *int64
+	virtual_live_total_cheer_point_rewards              *json.RawMessage
+	appendvirtual_live_total_cheer_point_rewards        json.RawMessage
+	virtual_live_total_cheer_point_surplus_reward       *json.RawMessage
+	appendvirtual_live_total_cheer_point_surplus_reward json.RawMessage
+	virtual_live_virtual_item_override_cost             *json.RawMessage
+	appendvirtual_live_virtual_item_override_cost       json.RawMessage
+	server_region                                       *string
+	clearedFields                                       map[string]struct{}
+	done                                                bool
+	oldValue                                            func(context.Context) (*Virtuallive, error)
+	predicates                                          []predicate.Virtuallive
 }
 
 var _ ent.Mutation = (*VirtualliveMutation)(nil)
@@ -110345,6 +110604,201 @@ func (m *VirtualliveMutation) ResetVirtualLiveGroupID() {
 	delete(m.clearedFields, virtuallive.FieldVirtualLiveGroupID)
 }
 
+// SetVirtualLiveTotalCheerPointRewards sets the "virtual_live_total_cheer_point_rewards" field.
+func (m *VirtualliveMutation) SetVirtualLiveTotalCheerPointRewards(jm json.RawMessage) {
+	m.virtual_live_total_cheer_point_rewards = &jm
+	m.appendvirtual_live_total_cheer_point_rewards = nil
+}
+
+// VirtualLiveTotalCheerPointRewards returns the value of the "virtual_live_total_cheer_point_rewards" field in the mutation.
+func (m *VirtualliveMutation) VirtualLiveTotalCheerPointRewards() (r json.RawMessage, exists bool) {
+	v := m.virtual_live_total_cheer_point_rewards
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVirtualLiveTotalCheerPointRewards returns the old "virtual_live_total_cheer_point_rewards" field's value of the Virtuallive entity.
+// If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VirtualliveMutation) OldVirtualLiveTotalCheerPointRewards(ctx context.Context) (v json.RawMessage, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVirtualLiveTotalCheerPointRewards is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVirtualLiveTotalCheerPointRewards requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVirtualLiveTotalCheerPointRewards: %w", err)
+	}
+	return oldValue.VirtualLiveTotalCheerPointRewards, nil
+}
+
+// AppendVirtualLiveTotalCheerPointRewards adds jm to the "virtual_live_total_cheer_point_rewards" field.
+func (m *VirtualliveMutation) AppendVirtualLiveTotalCheerPointRewards(jm json.RawMessage) {
+	m.appendvirtual_live_total_cheer_point_rewards = append(m.appendvirtual_live_total_cheer_point_rewards, jm...)
+}
+
+// AppendedVirtualLiveTotalCheerPointRewards returns the list of values that were appended to the "virtual_live_total_cheer_point_rewards" field in this mutation.
+func (m *VirtualliveMutation) AppendedVirtualLiveTotalCheerPointRewards() (json.RawMessage, bool) {
+	if len(m.appendvirtual_live_total_cheer_point_rewards) == 0 {
+		return nil, false
+	}
+	return m.appendvirtual_live_total_cheer_point_rewards, true
+}
+
+// ClearVirtualLiveTotalCheerPointRewards clears the value of the "virtual_live_total_cheer_point_rewards" field.
+func (m *VirtualliveMutation) ClearVirtualLiveTotalCheerPointRewards() {
+	m.virtual_live_total_cheer_point_rewards = nil
+	m.appendvirtual_live_total_cheer_point_rewards = nil
+	m.clearedFields[virtuallive.FieldVirtualLiveTotalCheerPointRewards] = struct{}{}
+}
+
+// VirtualLiveTotalCheerPointRewardsCleared returns if the "virtual_live_total_cheer_point_rewards" field was cleared in this mutation.
+func (m *VirtualliveMutation) VirtualLiveTotalCheerPointRewardsCleared() bool {
+	_, ok := m.clearedFields[virtuallive.FieldVirtualLiveTotalCheerPointRewards]
+	return ok
+}
+
+// ResetVirtualLiveTotalCheerPointRewards resets all changes to the "virtual_live_total_cheer_point_rewards" field.
+func (m *VirtualliveMutation) ResetVirtualLiveTotalCheerPointRewards() {
+	m.virtual_live_total_cheer_point_rewards = nil
+	m.appendvirtual_live_total_cheer_point_rewards = nil
+	delete(m.clearedFields, virtuallive.FieldVirtualLiveTotalCheerPointRewards)
+}
+
+// SetVirtualLiveTotalCheerPointSurplusReward sets the "virtual_live_total_cheer_point_surplus_reward" field.
+func (m *VirtualliveMutation) SetVirtualLiveTotalCheerPointSurplusReward(jm json.RawMessage) {
+	m.virtual_live_total_cheer_point_surplus_reward = &jm
+	m.appendvirtual_live_total_cheer_point_surplus_reward = nil
+}
+
+// VirtualLiveTotalCheerPointSurplusReward returns the value of the "virtual_live_total_cheer_point_surplus_reward" field in the mutation.
+func (m *VirtualliveMutation) VirtualLiveTotalCheerPointSurplusReward() (r json.RawMessage, exists bool) {
+	v := m.virtual_live_total_cheer_point_surplus_reward
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVirtualLiveTotalCheerPointSurplusReward returns the old "virtual_live_total_cheer_point_surplus_reward" field's value of the Virtuallive entity.
+// If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VirtualliveMutation) OldVirtualLiveTotalCheerPointSurplusReward(ctx context.Context) (v json.RawMessage, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVirtualLiveTotalCheerPointSurplusReward is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVirtualLiveTotalCheerPointSurplusReward requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVirtualLiveTotalCheerPointSurplusReward: %w", err)
+	}
+	return oldValue.VirtualLiveTotalCheerPointSurplusReward, nil
+}
+
+// AppendVirtualLiveTotalCheerPointSurplusReward adds jm to the "virtual_live_total_cheer_point_surplus_reward" field.
+func (m *VirtualliveMutation) AppendVirtualLiveTotalCheerPointSurplusReward(jm json.RawMessage) {
+	m.appendvirtual_live_total_cheer_point_surplus_reward = append(m.appendvirtual_live_total_cheer_point_surplus_reward, jm...)
+}
+
+// AppendedVirtualLiveTotalCheerPointSurplusReward returns the list of values that were appended to the "virtual_live_total_cheer_point_surplus_reward" field in this mutation.
+func (m *VirtualliveMutation) AppendedVirtualLiveTotalCheerPointSurplusReward() (json.RawMessage, bool) {
+	if len(m.appendvirtual_live_total_cheer_point_surplus_reward) == 0 {
+		return nil, false
+	}
+	return m.appendvirtual_live_total_cheer_point_surplus_reward, true
+}
+
+// ClearVirtualLiveTotalCheerPointSurplusReward clears the value of the "virtual_live_total_cheer_point_surplus_reward" field.
+func (m *VirtualliveMutation) ClearVirtualLiveTotalCheerPointSurplusReward() {
+	m.virtual_live_total_cheer_point_surplus_reward = nil
+	m.appendvirtual_live_total_cheer_point_surplus_reward = nil
+	m.clearedFields[virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward] = struct{}{}
+}
+
+// VirtualLiveTotalCheerPointSurplusRewardCleared returns if the "virtual_live_total_cheer_point_surplus_reward" field was cleared in this mutation.
+func (m *VirtualliveMutation) VirtualLiveTotalCheerPointSurplusRewardCleared() bool {
+	_, ok := m.clearedFields[virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward]
+	return ok
+}
+
+// ResetVirtualLiveTotalCheerPointSurplusReward resets all changes to the "virtual_live_total_cheer_point_surplus_reward" field.
+func (m *VirtualliveMutation) ResetVirtualLiveTotalCheerPointSurplusReward() {
+	m.virtual_live_total_cheer_point_surplus_reward = nil
+	m.appendvirtual_live_total_cheer_point_surplus_reward = nil
+	delete(m.clearedFields, virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward)
+}
+
+// SetVirtualLiveVirtualItemOverrideCost sets the "virtual_live_virtual_item_override_cost" field.
+func (m *VirtualliveMutation) SetVirtualLiveVirtualItemOverrideCost(jm json.RawMessage) {
+	m.virtual_live_virtual_item_override_cost = &jm
+	m.appendvirtual_live_virtual_item_override_cost = nil
+}
+
+// VirtualLiveVirtualItemOverrideCost returns the value of the "virtual_live_virtual_item_override_cost" field in the mutation.
+func (m *VirtualliveMutation) VirtualLiveVirtualItemOverrideCost() (r json.RawMessage, exists bool) {
+	v := m.virtual_live_virtual_item_override_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVirtualLiveVirtualItemOverrideCost returns the old "virtual_live_virtual_item_override_cost" field's value of the Virtuallive entity.
+// If the Virtuallive object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VirtualliveMutation) OldVirtualLiveVirtualItemOverrideCost(ctx context.Context) (v json.RawMessage, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVirtualLiveVirtualItemOverrideCost is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVirtualLiveVirtualItemOverrideCost requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVirtualLiveVirtualItemOverrideCost: %w", err)
+	}
+	return oldValue.VirtualLiveVirtualItemOverrideCost, nil
+}
+
+// AppendVirtualLiveVirtualItemOverrideCost adds jm to the "virtual_live_virtual_item_override_cost" field.
+func (m *VirtualliveMutation) AppendVirtualLiveVirtualItemOverrideCost(jm json.RawMessage) {
+	m.appendvirtual_live_virtual_item_override_cost = append(m.appendvirtual_live_virtual_item_override_cost, jm...)
+}
+
+// AppendedVirtualLiveVirtualItemOverrideCost returns the list of values that were appended to the "virtual_live_virtual_item_override_cost" field in this mutation.
+func (m *VirtualliveMutation) AppendedVirtualLiveVirtualItemOverrideCost() (json.RawMessage, bool) {
+	if len(m.appendvirtual_live_virtual_item_override_cost) == 0 {
+		return nil, false
+	}
+	return m.appendvirtual_live_virtual_item_override_cost, true
+}
+
+// ClearVirtualLiveVirtualItemOverrideCost clears the value of the "virtual_live_virtual_item_override_cost" field.
+func (m *VirtualliveMutation) ClearVirtualLiveVirtualItemOverrideCost() {
+	m.virtual_live_virtual_item_override_cost = nil
+	m.appendvirtual_live_virtual_item_override_cost = nil
+	m.clearedFields[virtuallive.FieldVirtualLiveVirtualItemOverrideCost] = struct{}{}
+}
+
+// VirtualLiveVirtualItemOverrideCostCleared returns if the "virtual_live_virtual_item_override_cost" field was cleared in this mutation.
+func (m *VirtualliveMutation) VirtualLiveVirtualItemOverrideCostCleared() bool {
+	_, ok := m.clearedFields[virtuallive.FieldVirtualLiveVirtualItemOverrideCost]
+	return ok
+}
+
+// ResetVirtualLiveVirtualItemOverrideCost resets all changes to the "virtual_live_virtual_item_override_cost" field.
+func (m *VirtualliveMutation) ResetVirtualLiveVirtualItemOverrideCost() {
+	m.virtual_live_virtual_item_override_cost = nil
+	m.appendvirtual_live_virtual_item_override_cost = nil
+	delete(m.clearedFields, virtuallive.FieldVirtualLiveVirtualItemOverrideCost)
+}
+
 // SetServerRegion sets the "server_region" field.
 func (m *VirtualliveMutation) SetServerRegion(s string) {
 	m.server_region = &s
@@ -110415,7 +110869,7 @@ func (m *VirtualliveMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *VirtualliveMutation) Fields() []string {
-	fields := make([]string, 0, 25)
+	fields := make([]string, 0, 28)
 	if m.game_id != nil {
 		fields = append(fields, virtuallive.FieldGameID)
 	}
@@ -110488,6 +110942,15 @@ func (m *VirtualliveMutation) Fields() []string {
 	if m.virtual_live_group_id != nil {
 		fields = append(fields, virtuallive.FieldVirtualLiveGroupID)
 	}
+	if m.virtual_live_total_cheer_point_rewards != nil {
+		fields = append(fields, virtuallive.FieldVirtualLiveTotalCheerPointRewards)
+	}
+	if m.virtual_live_total_cheer_point_surplus_reward != nil {
+		fields = append(fields, virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward)
+	}
+	if m.virtual_live_virtual_item_override_cost != nil {
+		fields = append(fields, virtuallive.FieldVirtualLiveVirtualItemOverrideCost)
+	}
 	if m.server_region != nil {
 		fields = append(fields, virtuallive.FieldServerRegion)
 	}
@@ -110547,6 +111010,12 @@ func (m *VirtualliveMutation) Field(name string) (ent.Value, bool) {
 		return m.SubGameCharacterPenlightColorGroupID()
 	case virtuallive.FieldVirtualLiveGroupID:
 		return m.VirtualLiveGroupID()
+	case virtuallive.FieldVirtualLiveTotalCheerPointRewards:
+		return m.VirtualLiveTotalCheerPointRewards()
+	case virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward:
+		return m.VirtualLiveTotalCheerPointSurplusReward()
+	case virtuallive.FieldVirtualLiveVirtualItemOverrideCost:
+		return m.VirtualLiveVirtualItemOverrideCost()
 	case virtuallive.FieldServerRegion:
 		return m.ServerRegion()
 	}
@@ -110606,6 +111075,12 @@ func (m *VirtualliveMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldSubGameCharacterPenlightColorGroupID(ctx)
 	case virtuallive.FieldVirtualLiveGroupID:
 		return m.OldVirtualLiveGroupID(ctx)
+	case virtuallive.FieldVirtualLiveTotalCheerPointRewards:
+		return m.OldVirtualLiveTotalCheerPointRewards(ctx)
+	case virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward:
+		return m.OldVirtualLiveTotalCheerPointSurplusReward(ctx)
+	case virtuallive.FieldVirtualLiveVirtualItemOverrideCost:
+		return m.OldVirtualLiveVirtualItemOverrideCost(ctx)
 	case virtuallive.FieldServerRegion:
 		return m.OldServerRegion(ctx)
 	}
@@ -110784,6 +111259,27 @@ func (m *VirtualliveMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetVirtualLiveGroupID(v)
+		return nil
+	case virtuallive.FieldVirtualLiveTotalCheerPointRewards:
+		v, ok := value.(json.RawMessage)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVirtualLiveTotalCheerPointRewards(v)
+		return nil
+	case virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward:
+		v, ok := value.(json.RawMessage)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVirtualLiveTotalCheerPointSurplusReward(v)
+		return nil
+	case virtuallive.FieldVirtualLiveVirtualItemOverrideCost:
+		v, ok := value.(json.RawMessage)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVirtualLiveVirtualItemOverrideCost(v)
 		return nil
 	case virtuallive.FieldServerRegion:
 		v, ok := value.(string)
@@ -111005,6 +111501,15 @@ func (m *VirtualliveMutation) ClearedFields() []string {
 	if m.FieldCleared(virtuallive.FieldVirtualLiveGroupID) {
 		fields = append(fields, virtuallive.FieldVirtualLiveGroupID)
 	}
+	if m.FieldCleared(virtuallive.FieldVirtualLiveTotalCheerPointRewards) {
+		fields = append(fields, virtuallive.FieldVirtualLiveTotalCheerPointRewards)
+	}
+	if m.FieldCleared(virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward) {
+		fields = append(fields, virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward)
+	}
+	if m.FieldCleared(virtuallive.FieldVirtualLiveVirtualItemOverrideCost) {
+		fields = append(fields, virtuallive.FieldVirtualLiveVirtualItemOverrideCost)
+	}
 	return fields
 }
 
@@ -111091,6 +111596,15 @@ func (m *VirtualliveMutation) ClearField(name string) error {
 	case virtuallive.FieldVirtualLiveGroupID:
 		m.ClearVirtualLiveGroupID()
 		return nil
+	case virtuallive.FieldVirtualLiveTotalCheerPointRewards:
+		m.ClearVirtualLiveTotalCheerPointRewards()
+		return nil
+	case virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward:
+		m.ClearVirtualLiveTotalCheerPointSurplusReward()
+		return nil
+	case virtuallive.FieldVirtualLiveVirtualItemOverrideCost:
+		m.ClearVirtualLiveVirtualItemOverrideCost()
+		return nil
 	}
 	return fmt.Errorf("unknown Virtuallive nullable field %s", name)
 }
@@ -111170,6 +111684,15 @@ func (m *VirtualliveMutation) ResetField(name string) error {
 		return nil
 	case virtuallive.FieldVirtualLiveGroupID:
 		m.ResetVirtualLiveGroupID()
+		return nil
+	case virtuallive.FieldVirtualLiveTotalCheerPointRewards:
+		m.ResetVirtualLiveTotalCheerPointRewards()
+		return nil
+	case virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward:
+		m.ResetVirtualLiveTotalCheerPointSurplusReward()
+		return nil
+	case virtuallive.FieldVirtualLiveVirtualItemOverrideCost:
+		m.ResetVirtualLiveVirtualItemOverrideCost()
 		return nil
 	case virtuallive.FieldServerRegion:
 		m.ResetServerRegion()

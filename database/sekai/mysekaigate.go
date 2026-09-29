@@ -24,6 +24,8 @@ type Mysekaigate struct {
 	Name string `json:"name,omitempty"`
 	// AssetbundleName holds the value of the "assetbundle_name" field.
 	AssetbundleName string `json:"assetbundle_name,omitempty"`
+	// MysekaiGateType holds the value of the "mysekai_gate_type" field.
+	MysekaiGateType string `json:"mysekai_gate_type,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -36,7 +38,7 @@ func (*Mysekaigate) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case mysekaigate.FieldID, mysekaigate.FieldGameID:
 			values[i] = new(sql.NullInt64)
-		case mysekaigate.FieldUnit, mysekaigate.FieldName, mysekaigate.FieldAssetbundleName, mysekaigate.FieldServerRegion:
+		case mysekaigate.FieldUnit, mysekaigate.FieldName, mysekaigate.FieldAssetbundleName, mysekaigate.FieldMysekaiGateType, mysekaigate.FieldServerRegion:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -82,6 +84,12 @@ func (_m *Mysekaigate) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field assetbundle_name", values[i])
 			} else if value.Valid {
 				_m.AssetbundleName = value.String
+			}
+		case mysekaigate.FieldMysekaiGateType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field mysekai_gate_type", values[i])
+			} else if value.Valid {
+				_m.MysekaiGateType = value.String
 			}
 		case mysekaigate.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -136,6 +144,9 @@ func (_m *Mysekaigate) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("assetbundle_name=")
 	builder.WriteString(_m.AssetbundleName)
+	builder.WriteString(", ")
+	builder.WriteString("mysekai_gate_type=")
+	builder.WriteString(_m.MysekaiGateType)
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

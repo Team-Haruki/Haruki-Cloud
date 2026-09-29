@@ -550,6 +550,60 @@ func (_u *VirtualliveUpdate) ClearVirtualLiveGroupID() *VirtualliveUpdate {
 	return _u
 }
 
+// SetVirtualLiveTotalCheerPointRewards sets the "virtual_live_total_cheer_point_rewards" field.
+func (_u *VirtualliveUpdate) SetVirtualLiveTotalCheerPointRewards(v json.RawMessage) *VirtualliveUpdate {
+	_u.mutation.SetVirtualLiveTotalCheerPointRewards(v)
+	return _u
+}
+
+// AppendVirtualLiveTotalCheerPointRewards appends value to the "virtual_live_total_cheer_point_rewards" field.
+func (_u *VirtualliveUpdate) AppendVirtualLiveTotalCheerPointRewards(v json.RawMessage) *VirtualliveUpdate {
+	_u.mutation.AppendVirtualLiveTotalCheerPointRewards(v)
+	return _u
+}
+
+// ClearVirtualLiveTotalCheerPointRewards clears the value of the "virtual_live_total_cheer_point_rewards" field.
+func (_u *VirtualliveUpdate) ClearVirtualLiveTotalCheerPointRewards() *VirtualliveUpdate {
+	_u.mutation.ClearVirtualLiveTotalCheerPointRewards()
+	return _u
+}
+
+// SetVirtualLiveTotalCheerPointSurplusReward sets the "virtual_live_total_cheer_point_surplus_reward" field.
+func (_u *VirtualliveUpdate) SetVirtualLiveTotalCheerPointSurplusReward(v json.RawMessage) *VirtualliveUpdate {
+	_u.mutation.SetVirtualLiveTotalCheerPointSurplusReward(v)
+	return _u
+}
+
+// AppendVirtualLiveTotalCheerPointSurplusReward appends value to the "virtual_live_total_cheer_point_surplus_reward" field.
+func (_u *VirtualliveUpdate) AppendVirtualLiveTotalCheerPointSurplusReward(v json.RawMessage) *VirtualliveUpdate {
+	_u.mutation.AppendVirtualLiveTotalCheerPointSurplusReward(v)
+	return _u
+}
+
+// ClearVirtualLiveTotalCheerPointSurplusReward clears the value of the "virtual_live_total_cheer_point_surplus_reward" field.
+func (_u *VirtualliveUpdate) ClearVirtualLiveTotalCheerPointSurplusReward() *VirtualliveUpdate {
+	_u.mutation.ClearVirtualLiveTotalCheerPointSurplusReward()
+	return _u
+}
+
+// SetVirtualLiveVirtualItemOverrideCost sets the "virtual_live_virtual_item_override_cost" field.
+func (_u *VirtualliveUpdate) SetVirtualLiveVirtualItemOverrideCost(v json.RawMessage) *VirtualliveUpdate {
+	_u.mutation.SetVirtualLiveVirtualItemOverrideCost(v)
+	return _u
+}
+
+// AppendVirtualLiveVirtualItemOverrideCost appends value to the "virtual_live_virtual_item_override_cost" field.
+func (_u *VirtualliveUpdate) AppendVirtualLiveVirtualItemOverrideCost(v json.RawMessage) *VirtualliveUpdate {
+	_u.mutation.AppendVirtualLiveVirtualItemOverrideCost(v)
+	return _u
+}
+
+// ClearVirtualLiveVirtualItemOverrideCost clears the value of the "virtual_live_virtual_item_override_cost" field.
+func (_u *VirtualliveUpdate) ClearVirtualLiveVirtualItemOverrideCost() *VirtualliveUpdate {
+	_u.mutation.ClearVirtualLiveVirtualItemOverrideCost()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *VirtualliveUpdate) SetServerRegion(v string) *VirtualliveUpdate {
 	_u.mutation.SetServerRegion(v)
@@ -830,6 +884,39 @@ func (_u *VirtualliveUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.VirtualLiveGroupIDCleared() {
 		_spec.ClearField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.VirtualLiveTotalCheerPointRewards(); ok {
+		_spec.SetField(virtuallive.FieldVirtualLiveTotalCheerPointRewards, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedVirtualLiveTotalCheerPointRewards(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveTotalCheerPointRewards, value)
+		})
+	}
+	if _u.mutation.VirtualLiveTotalCheerPointRewardsCleared() {
+		_spec.ClearField(virtuallive.FieldVirtualLiveTotalCheerPointRewards, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.VirtualLiveTotalCheerPointSurplusReward(); ok {
+		_spec.SetField(virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedVirtualLiveTotalCheerPointSurplusReward(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward, value)
+		})
+	}
+	if _u.mutation.VirtualLiveTotalCheerPointSurplusRewardCleared() {
+		_spec.ClearField(virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.VirtualLiveVirtualItemOverrideCost(); ok {
+		_spec.SetField(virtuallive.FieldVirtualLiveVirtualItemOverrideCost, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedVirtualLiveVirtualItemOverrideCost(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveVirtualItemOverrideCost, value)
+		})
+	}
+	if _u.mutation.VirtualLiveVirtualItemOverrideCostCleared() {
+		_spec.ClearField(virtuallive.FieldVirtualLiveVirtualItemOverrideCost, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(virtuallive.FieldServerRegion, field.TypeString, value)
@@ -1375,6 +1462,60 @@ func (_u *VirtualliveUpdateOne) ClearVirtualLiveGroupID() *VirtualliveUpdateOne 
 	return _u
 }
 
+// SetVirtualLiveTotalCheerPointRewards sets the "virtual_live_total_cheer_point_rewards" field.
+func (_u *VirtualliveUpdateOne) SetVirtualLiveTotalCheerPointRewards(v json.RawMessage) *VirtualliveUpdateOne {
+	_u.mutation.SetVirtualLiveTotalCheerPointRewards(v)
+	return _u
+}
+
+// AppendVirtualLiveTotalCheerPointRewards appends value to the "virtual_live_total_cheer_point_rewards" field.
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveTotalCheerPointRewards(v json.RawMessage) *VirtualliveUpdateOne {
+	_u.mutation.AppendVirtualLiveTotalCheerPointRewards(v)
+	return _u
+}
+
+// ClearVirtualLiveTotalCheerPointRewards clears the value of the "virtual_live_total_cheer_point_rewards" field.
+func (_u *VirtualliveUpdateOne) ClearVirtualLiveTotalCheerPointRewards() *VirtualliveUpdateOne {
+	_u.mutation.ClearVirtualLiveTotalCheerPointRewards()
+	return _u
+}
+
+// SetVirtualLiveTotalCheerPointSurplusReward sets the "virtual_live_total_cheer_point_surplus_reward" field.
+func (_u *VirtualliveUpdateOne) SetVirtualLiveTotalCheerPointSurplusReward(v json.RawMessage) *VirtualliveUpdateOne {
+	_u.mutation.SetVirtualLiveTotalCheerPointSurplusReward(v)
+	return _u
+}
+
+// AppendVirtualLiveTotalCheerPointSurplusReward appends value to the "virtual_live_total_cheer_point_surplus_reward" field.
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveTotalCheerPointSurplusReward(v json.RawMessage) *VirtualliveUpdateOne {
+	_u.mutation.AppendVirtualLiveTotalCheerPointSurplusReward(v)
+	return _u
+}
+
+// ClearVirtualLiveTotalCheerPointSurplusReward clears the value of the "virtual_live_total_cheer_point_surplus_reward" field.
+func (_u *VirtualliveUpdateOne) ClearVirtualLiveTotalCheerPointSurplusReward() *VirtualliveUpdateOne {
+	_u.mutation.ClearVirtualLiveTotalCheerPointSurplusReward()
+	return _u
+}
+
+// SetVirtualLiveVirtualItemOverrideCost sets the "virtual_live_virtual_item_override_cost" field.
+func (_u *VirtualliveUpdateOne) SetVirtualLiveVirtualItemOverrideCost(v json.RawMessage) *VirtualliveUpdateOne {
+	_u.mutation.SetVirtualLiveVirtualItemOverrideCost(v)
+	return _u
+}
+
+// AppendVirtualLiveVirtualItemOverrideCost appends value to the "virtual_live_virtual_item_override_cost" field.
+func (_u *VirtualliveUpdateOne) AppendVirtualLiveVirtualItemOverrideCost(v json.RawMessage) *VirtualliveUpdateOne {
+	_u.mutation.AppendVirtualLiveVirtualItemOverrideCost(v)
+	return _u
+}
+
+// ClearVirtualLiveVirtualItemOverrideCost clears the value of the "virtual_live_virtual_item_override_cost" field.
+func (_u *VirtualliveUpdateOne) ClearVirtualLiveVirtualItemOverrideCost() *VirtualliveUpdateOne {
+	_u.mutation.ClearVirtualLiveVirtualItemOverrideCost()
+	return _u
+}
+
 // SetServerRegion sets the "server_region" field.
 func (_u *VirtualliveUpdateOne) SetServerRegion(v string) *VirtualliveUpdateOne {
 	_u.mutation.SetServerRegion(v)
@@ -1685,6 +1826,39 @@ func (_u *VirtualliveUpdateOne) sqlSave(ctx context.Context) (_node *Virtuallive
 	}
 	if _u.mutation.VirtualLiveGroupIDCleared() {
 		_spec.ClearField(virtuallive.FieldVirtualLiveGroupID, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.VirtualLiveTotalCheerPointRewards(); ok {
+		_spec.SetField(virtuallive.FieldVirtualLiveTotalCheerPointRewards, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedVirtualLiveTotalCheerPointRewards(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveTotalCheerPointRewards, value)
+		})
+	}
+	if _u.mutation.VirtualLiveTotalCheerPointRewardsCleared() {
+		_spec.ClearField(virtuallive.FieldVirtualLiveTotalCheerPointRewards, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.VirtualLiveTotalCheerPointSurplusReward(); ok {
+		_spec.SetField(virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedVirtualLiveTotalCheerPointSurplusReward(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward, value)
+		})
+	}
+	if _u.mutation.VirtualLiveTotalCheerPointSurplusRewardCleared() {
+		_spec.ClearField(virtuallive.FieldVirtualLiveTotalCheerPointSurplusReward, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.VirtualLiveVirtualItemOverrideCost(); ok {
+		_spec.SetField(virtuallive.FieldVirtualLiveVirtualItemOverrideCost, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedVirtualLiveVirtualItemOverrideCost(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, virtuallive.FieldVirtualLiveVirtualItemOverrideCost, value)
+		})
+	}
+	if _u.mutation.VirtualLiveVirtualItemOverrideCostCleared() {
+		_spec.ClearField(virtuallive.FieldVirtualLiveVirtualItemOverrideCost, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.ServerRegion(); ok {
 		_spec.SetField(virtuallive.FieldServerRegion, field.TypeString, value)

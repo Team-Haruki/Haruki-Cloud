@@ -28,6 +28,8 @@ type Honorgroup struct {
 	BackgroundAssetbundleName string `json:"background_assetbundle_name,omitempty"`
 	// FrameName holds the value of the "frame_name" field.
 	FrameName string `json:"frame_name,omitempty"`
+	// IsMedalDisplayed holds the value of the "is_medal_displayed" field.
+	IsMedalDisplayed bool `json:"is_medal_displayed,omitempty"`
 	// ServerRegion holds the value of the "server_region" field.
 	ServerRegion string `json:"server_region,omitempty"`
 	selectValues sql.SelectValues
@@ -38,6 +40,8 @@ func (*Honorgroup) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case honorgroup.FieldIsMedalDisplayed:
+			values[i] = new(sql.NullBool)
 		case honorgroup.FieldID, honorgroup.FieldGameID:
 			values[i] = new(sql.NullInt64)
 		case honorgroup.FieldName, honorgroup.FieldPronunciation, honorgroup.FieldHonorType, honorgroup.FieldBackgroundAssetbundleName, honorgroup.FieldFrameName, honorgroup.FieldServerRegion:
@@ -99,6 +103,12 @@ func (_m *Honorgroup) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.FrameName = value.String
 			}
+		case honorgroup.FieldIsMedalDisplayed:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_medal_displayed", values[i])
+			} else if value.Valid {
+				_m.IsMedalDisplayed = value.Bool
+			}
 		case honorgroup.FieldServerRegion:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field server_region", values[i])
@@ -158,6 +168,9 @@ func (_m *Honorgroup) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("frame_name=")
 	builder.WriteString(_m.FrameName)
+	builder.WriteString(", ")
+	builder.WriteString("is_medal_displayed=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsMedalDisplayed))
 	builder.WriteString(", ")
 	builder.WriteString("server_region=")
 	builder.WriteString(_m.ServerRegion)

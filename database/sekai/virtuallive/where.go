@@ -983,6 +983,36 @@ func VirtualLiveGroupIDNotNil() predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldNotNull(FieldVirtualLiveGroupID))
 }
 
+// VirtualLiveTotalCheerPointRewardsIsNil applies the IsNil predicate on the "virtual_live_total_cheer_point_rewards" field.
+func VirtualLiveTotalCheerPointRewardsIsNil() predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldIsNull(FieldVirtualLiveTotalCheerPointRewards))
+}
+
+// VirtualLiveTotalCheerPointRewardsNotNil applies the NotNil predicate on the "virtual_live_total_cheer_point_rewards" field.
+func VirtualLiveTotalCheerPointRewardsNotNil() predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldNotNull(FieldVirtualLiveTotalCheerPointRewards))
+}
+
+// VirtualLiveTotalCheerPointSurplusRewardIsNil applies the IsNil predicate on the "virtual_live_total_cheer_point_surplus_reward" field.
+func VirtualLiveTotalCheerPointSurplusRewardIsNil() predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldIsNull(FieldVirtualLiveTotalCheerPointSurplusReward))
+}
+
+// VirtualLiveTotalCheerPointSurplusRewardNotNil applies the NotNil predicate on the "virtual_live_total_cheer_point_surplus_reward" field.
+func VirtualLiveTotalCheerPointSurplusRewardNotNil() predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldNotNull(FieldVirtualLiveTotalCheerPointSurplusReward))
+}
+
+// VirtualLiveVirtualItemOverrideCostIsNil applies the IsNil predicate on the "virtual_live_virtual_item_override_cost" field.
+func VirtualLiveVirtualItemOverrideCostIsNil() predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldIsNull(FieldVirtualLiveVirtualItemOverrideCost))
+}
+
+// VirtualLiveVirtualItemOverrideCostNotNil applies the NotNil predicate on the "virtual_live_virtual_item_override_cost" field.
+func VirtualLiveVirtualItemOverrideCostNotNil() predicate.Virtuallive {
+	return predicate.Virtuallive(sql.FieldNotNull(FieldVirtualLiveVirtualItemOverrideCost))
+}
+
 // ServerRegionEQ applies the EQ predicate on the "server_region" field.
 func ServerRegionEQ(v string) predicate.Virtuallive {
 	return predicate.Virtuallive(sql.FieldEQ(FieldServerRegion, v))

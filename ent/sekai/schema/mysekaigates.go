@@ -19,6 +19,7 @@ func (Mysekaigate) Fields() []ent.Field {
 		field.String("unit").Optional(),
 		field.String("name").Optional(),
 		field.String("assetbundle_name").Optional(),
+		field.String("mysekai_gate_type").Optional(),
 		field.String("server_region"),
 	}
 }

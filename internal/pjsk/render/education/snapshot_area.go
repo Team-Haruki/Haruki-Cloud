@@ -20,6 +20,22 @@ const maxAreaItemShopTimestampMs int64 = 1<<63 - 1
 // data does not have (e.g. 想いの大樹 before a region adopts JP 7.0.0).
 var ErrAreaItemNotInRegion = errors.New("area item is not available in this region")
 
+// ErrAreaItemNotReleased reports that none of the requested area items has a
+// level to show: the user does not own them and none of their upgrade shop
+// items is on sale yet (e.g. 想いの大樹 before its upgrade shop opens).
+var ErrAreaItemNotReleased = errors.New("area item upgrades are not released yet")
+
+// AreaItemNotReleasedError is ErrAreaItemNotReleased with the time the
+// earliest upcoming upgrade shop item of the requested area items goes on
+// sale, or 0 when none is scheduled.
+type AreaItemNotReleasedError struct {
+	OpensAtMs int64
+}
+
+func (e *AreaItemNotReleasedError) Error() string { return ErrAreaItemNotReleased.Error() }
+
+func (e *AreaItemNotReleasedError) Unwrap() error { return ErrAreaItemNotReleased }
+
 type areaItemBuildOptions struct {
 	region         renderregion.Value
 	source         DataSource
@@ -142,6 +158,9 @@ func (c *Controller) buildAreaItemUpgradeMaterialsRequest(opts areaItemBuildOpti
 	}
 
 	states, minCurrentLevel := c.buildAreaItemRenderStates(opts, itemIDs, levelShopItems, releasedLevelCaps)
+	if len(states) == 0 {
+		return nil, &AreaItemNotReleasedError{OpensAtMs: c.nextAreaItemShopStartAt(opts.source, itemIDs, nowMs)}
+	}
 	areaItems := c.buildAreaItemDrawingRows(opts, states, minCurrentLevel)
 
 	return c.BuildAreaItemUpgradeMaterialsRequest(drawing.AreaItemUpgradeMaterialsRequest{
@@ -345,6 +364,20 @@ func (c *Controller) resolveAreaItemShopItems(source DataSource, itemIDs []int, 
 
 	c.fillAreaItemShopItemsByShopSequence(source, itemIDs, result, nowMs)
 	return result
+}
+
+// nextAreaItemShopStartAt returns the earliest upgrade shop start time after
+// nowMs among the given area items, or 0 when none is scheduled.
+func (c *Controller) nextAreaItemShopStartAt(source DataSource, itemIDs []int, nowMs int64) int64 {
+	next := int64(0)
+	for _, shopLevels := range c.resolveAreaItemShopItems(source, itemIDs, maxAreaItemShopTimestampMs) {
+		for _, shopItem := range shopLevels {
+			if shopItem != nil && shopItem.StartAt > nowMs && (next == 0 || shopItem.StartAt < next) {
+				next = shopItem.StartAt
+			}
+		}
+	}
+	return next
 }
 
 func areaItemIDSet(itemIDs []int) map[int]struct{} {

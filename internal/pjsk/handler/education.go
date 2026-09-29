@@ -95,6 +95,9 @@ func educationAreaParams(ctx HarrukiSekaiHandlerContext, query education.AreaIte
 	if query.Flower {
 		params["flower"] = true
 	}
+	if query.AllCharacter {
+		params["all_character"] = true
+	}
 	return params, nil
 }
 
@@ -207,6 +210,7 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 		return education.AreaItemQuery{}, educationAreaUsageError(triggerCmd)
 	}
 
+	allCharacter, args := extractEducationAreaFlag(args, educationAreaAllCharacterAliases...)
 	plant, args := extractEducationAreaFlag(args, "花树", "树花", "植物")
 	tree, args := extractEducationAreaFlag(args, "树", "tree")
 	flower, args := extractEducationAreaFlag(args, "花", "flower")
@@ -226,7 +230,21 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 		Attr:           attr,
 		Tree:           tree || plant,
 		Flower:         flower || plant,
+		AllCharacter:   allCharacter,
 	}, nil
+}
+
+// educationAreaAllCharacterAliases select the every-character area item
+// (JP 7.0.0 想いの大樹).
+var educationAreaAllCharacterAliases = []string{"大树", "大樹", "想いの大樹", "想いの大树", "思念之树", "全角色", "全员"}
+
+// normalizeEducationAreaError turns a filter for an area item the region
+// does not have yet into a user-facing reply.
+func normalizeEducationAreaError(err error) error {
+	if errors.Is(err, education.ErrAreaItemNotInRegion) {
+		return onebot11.NewReplayError("当前区服暂未开放「想いの大樹」（大树）区域道具")
+	}
+	return err
 }
 
 func educationAreaUsageError(triggerCmd string) error {
@@ -368,7 +386,7 @@ func renderFullEducationArea(rc *RequestContext, controller *education.Controlle
 	}
 	request, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(query)
 	if err != nil {
-		return nil, true, err
+		return nil, true, normalizeEducationAreaError(err)
 	}
 	data, err := controller.RenderAreaItemUpgradeMaterials(*request)
 	return data, true, err
@@ -524,7 +542,7 @@ func (e *educationExecution) renderArea() ([]byte, error) {
 	query.Snapshot = e.snapshot
 	request, err := e.controller.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query)
 	if err != nil {
-		return nil, err
+		return nil, normalizeEducationAreaError(err)
 	}
 	return e.controller.RenderAreaItemUpgradeMaterials(*request)
 }

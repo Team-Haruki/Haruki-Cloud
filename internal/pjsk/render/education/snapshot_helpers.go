@@ -15,7 +15,8 @@ func hasAreaItemFilter(query AreaItemQuery) bool {
 		normalizeAttr(query.Attr) != "" ||
 		query.Cid > 0 ||
 		query.Tree ||
-		query.Flower
+		query.Flower ||
+		query.AllCharacter
 }
 
 func areaItemMatchesFilter(
@@ -27,6 +28,7 @@ func areaItemMatchesFilter(
 	filterTree bool,
 	filterFlower bool,
 	filterPiapro bool,
+	filterAllCharacter bool,
 ) bool {
 	if item == nil {
 		return false
@@ -37,6 +39,9 @@ func areaItemMatchesFilter(
 		matched = true
 	}
 	if filterFlower && item.AreaID == areaFlowerAreaID {
+		matched = true
+	}
+	if filterAllCharacter && areaItemHasUntargetedLevels(levels) {
 		matched = true
 	}
 	if filterUnit != "" {
@@ -93,6 +98,50 @@ func (c *Controller) areaItemTargetIcon(levels []*AreaItemLevel) string {
 		}
 	}
 	return ""
+}
+
+// areaItemTargetLabelAllCharacters is shown instead of a target icon for an
+// item whose unconditional rows boost every character.
+const areaItemTargetLabelAllCharacters = "全角色"
+
+// areaItemTargetLabel names the target of an item that has no target icon:
+// an every-character item (JP 7.0.0 想いの大樹). Empty otherwise.
+func areaItemTargetLabel(levels []*AreaItemLevel, targetIconPath string) string {
+	if targetIconPath != "" {
+		return ""
+	}
+	for _, level := range levels {
+		if isAllTargetAreaItemLevel(level) && !isMultiUnitAreaItemLevel(level) {
+			return areaItemTargetLabelAllCharacters
+		}
+	}
+	return ""
+}
+
+// areaItemHasUntargetedLevels reports whether any row of the item boosts
+// every character or depends on the deck's unit mix rather than a single
+// character, unit or attribute.
+func areaItemHasUntargetedLevels(levels []*AreaItemLevel) bool {
+	for _, level := range levels {
+		if isMultiUnitAreaItemLevel(level) || isAllTargetAreaItemLevel(level) {
+			return true
+		}
+	}
+	return false
+}
+
+// multiUnitAreaItemLevelByLevel indexes the deck-conditional multi_unit rows
+// by level; empty for items without them.
+func multiUnitAreaItemLevelByLevel(levels []*AreaItemLevel) map[int]*AreaItemLevel {
+	result := make(map[int]*AreaItemLevel)
+	for _, level := range levels {
+		if isMultiUnitAreaItemLevel(level) {
+			if _, exists := result[level.Level]; !exists {
+				result[level.Level] = level
+			}
+		}
+	}
+	return result
 }
 
 func (c *Controller) unitIconPath(unit string) string {

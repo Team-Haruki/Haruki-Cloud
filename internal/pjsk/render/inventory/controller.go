@@ -77,6 +77,7 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 		return nil, err
 	}
 	items := c.inventoryItems(region, raw, md)
+	items = c.applyMaterialExpiry(items, query.MaterialRows)
 	items = filterInventoryItems(items, filter)
 	sections := buildInventorySections(items)
 	if filter == FilterBoost {

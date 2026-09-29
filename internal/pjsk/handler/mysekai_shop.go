@@ -28,6 +28,9 @@ func parseMysekaiShopArgs(args string) (map[string]any, error) {
 		}
 		shopType = value
 	}
+	if shopType == "" && params["show_all"] != true {
+		shopType = "blueprint"
+	}
 	if shopType != "" {
 		params["shop_type"] = shopType
 	}

@@ -73,7 +73,7 @@ func TestPlayerShopAvailabilityAndOwnership(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(request.Shops) != 4 {
+	if len(request.Shops) != 2 {
 		t.Fatalf("groups: %+v", request.Shops)
 	}
 	daily := request.Shops[0]
@@ -83,7 +83,12 @@ func TestPlayerShopAvailabilityAndOwnership(t *testing.T) {
 	if daily.Items[0].Costs[0].Quantity != 100 || request.Shops[1].Items[0].Costs[0].Quantity != 200 {
 		t.Fatal("blueprint prices must follow period rules")
 	}
-	tool := request.Shops[2].Items
+	q.ShopType = "tool"
+	toolRequest, err := shopWithData(t, c, data).BuildShopRequest(q)
+	if err != nil || len(toolRequest.Shops) != 1 {
+		t.Fatalf("tool request: %+v, %v", toolRequest, err)
+	}
+	tool := toolRequest.Shops[0].Items
 	if len(tool) != 1 || tool[0].ID != 101 || *tool[0].RemainingCount != 1 || *tool[0].ExchangedCount != 98 {
 		t.Fatalf("tool: %+v", tool)
 	}
@@ -98,6 +103,23 @@ func TestPlayerShopAvailabilityAndOwnership(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestPlayerShopDefaultDoesNotReadOtherTypes(t *testing.T) {
+	c, q, data := playerShopFixture(t)
+	delete(data, "userMysekaiShops")
+	delete(data, "userMysekaiMaterialPossession")
+	q.ResourceBox = func(int) []ShopResource {
+		t.Fatal("default blueprints must not resolve tool or material resources")
+		return nil
+	}
+	request, err := shopWithData(t, c, data).BuildShopRequest(q)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(request.Shops) != 2 || request.Shops[0].ShopType != "blueprint_daily" || request.Shops[1].ShopType != "blueprint_weekly" {
+		t.Fatalf("default groups: %+v", request.Shops)
 	}
 }
 
@@ -119,7 +141,7 @@ func TestPlayerShopFiltersAndFull(t *testing.T) {
 					}
 					total += len(g.Items)
 				}
-				want := map[string]int{"": 4, "blueprint": 2, "tool": 1, "material": 1}[kind]
+				want := map[string]int{"": 2, "blueprint": 2, "tool": 1, "material": 1}[kind]
 				if all {
 					want = map[string]int{"": 6, "blueprint": 3, "tool": 2, "material": 1}[kind]
 				}
@@ -177,6 +199,7 @@ func TestPlayerShopPassBoundaryAndCapacity(t *testing.T) {
 func TestPlayerShopMissingDataAndBlueprintOnlyRegion(t *testing.T) {
 	c, q, data := playerShopFixture(t)
 	delete(data, "userMysekaiShops")
+	q.ShopType = "tool"
 	if _, err := shopWithData(t, c, data).BuildShopRequest(q); err == nil || !strings.Contains(err.Error(), "snapshot missing") {
 		t.Fatal(err)
 	}
@@ -232,6 +255,7 @@ func TestShopDrawingCompatibilityLabels(t *testing.T) {
 
 func TestShopSuiteSnapshotPreservesUserFields(t *testing.T) {
 	c, q, data := playerShopFixture(t)
+	q.ShowAll = true
 	data["userGamedata"] = map[string]any{"userId": 12345678901234}
 	raw, err := json.Marshal(data)
 	if err != nil {
@@ -247,6 +271,11 @@ func TestShopSuiteSnapshotPreservesUserFields(t *testing.T) {
 	}
 	if len(req.Shops) != 4 || req.Profile == nil {
 		t.Fatalf("suite fields/profile lost: %+v", req)
+	}
+	tool := req.Shops[2].Items[0]
+	material := req.Shops[3].Items[0]
+	if tool.ExchangedCount == nil || *tool.ExchangedCount != 98 || tool.RemainingCount == nil || *tool.RemainingCount != 1 || material.MaterialCapacityCount == nil || *material.MaterialCapacityCount != 1 {
+		t.Fatalf("suite shop state lost: tool=%+v material=%+v", tool, material)
 	}
 }
 
@@ -267,6 +296,7 @@ func TestShopCharacterMaterialsIgnoreWarehouseLimit(t *testing.T) {
 func TestShopMissingMasterDataFailsExplicitly(t *testing.T) {
 	for _, file := range []string{"mysekaiTools.json", "mysekaiBlueprintShops.json", "mysekaiMaterialPossessions.json"} {
 		c, q, data := playerShopFixture(t)
+		q.ShowAll = true
 		source := c.masterdata.(*sonarMasterdataSource)
 		delete(source.maps, file)
 		delete(source.lists, file)

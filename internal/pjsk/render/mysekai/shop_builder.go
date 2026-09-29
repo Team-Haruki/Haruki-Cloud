@@ -38,6 +38,9 @@ var mysekaiShopTypeTitles = map[string]string{"blueprint_daily": "每日蓝图",
 // BuildShopRequest uses the uploaded lineup, never inventing a new rotation
 // from master data when the player has not uploaded their refreshed shop.
 func (c *Controller) BuildShopRequest(query ShopQuery) (*drawing.MysekaiShopRequest, error) {
+	if query.ShopType == "" && !query.ShowAll {
+		query.ShopType = "blueprint"
+	}
 	c = c.withRegion(query.Region)
 	if err := c.ensureMasterdata(); err != nil {
 		return nil, err

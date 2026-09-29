@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/filteralias"
 	"haruki-cloud/internal/pjsk/parser"
@@ -239,10 +241,21 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 var educationAreaAllCharacterAliases = []string{"大树", "大樹", "想いの大樹", "想いの大树", "思念之树", "全角色", "全员"}
 
 // normalizeEducationAreaError turns a filter for an area item the region
-// does not have yet into a user-facing reply.
-func normalizeEducationAreaError(err error) error {
+// does not have yet, or whose upgrades are not on sale yet, into a
+// user-facing reply.
+func normalizeEducationAreaError(ctx context.Context, err error) error {
 	if errors.Is(err, education.ErrAreaItemNotInRegion) {
 		return onebot11.NewReplayError("当前区服暂未开放「想いの大樹」（大树）区域道具")
+	}
+	if notReleased, ok := errors.AsType[*education.AreaItemNotReleasedError](err); ok {
+		const fullHint = "可在指令后加 full 查看全部等级所需材料"
+		if notReleased.OpensAtMs <= 0 {
+			return onebot11.NewReplayError("所查询的区域道具暂未开放升级\n%s", fullHint)
+		}
+		timeZone := displaytime.RequestTimeZoneFromContext(ctx)
+		opensAt := displaytime.TimeFromUnixMillis(notReleased.OpensAtMs, timeZone)
+		return onebot11.NewReplayError("所查询的区域道具将于 %s (%s) 开放升级\n%s",
+			displaytime.FormatTime(opensAt, "2006-01-02 15:04"), timeZone, fullHint)
 	}
 	return err
 }
@@ -386,7 +399,7 @@ func renderFullEducationArea(rc *RequestContext, controller *education.Controlle
 	}
 	request, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(query)
 	if err != nil {
-		return drawing.ImageResult{}, true, normalizeEducationAreaError(err)
+		return drawing.ImageResult{}, true, normalizeEducationAreaError(rc.Ctx, err)
 	}
 	data, err := controller.RenderAreaItemUpgradeMaterialsImage(*request)
 	return data, true, err
@@ -542,7 +555,7 @@ func (e *educationExecution) renderArea() (drawing.ImageResult, error) {
 	query.Snapshot = e.snapshot
 	request, err := e.controller.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query)
 	if err != nil {
-		return drawing.ImageResult{}, normalizeEducationAreaError(err)
+		return drawing.ImageResult{}, normalizeEducationAreaError(e.rc.Ctx, err)
 	}
 	return e.controller.RenderAreaItemUpgradeMaterialsImage(*request)
 }

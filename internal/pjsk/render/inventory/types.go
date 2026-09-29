@@ -3,6 +3,7 @@ package inventory
 import (
 	"context"
 	"sync"
+	"time"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -26,6 +27,16 @@ type Query struct {
 	Profile  *drawing.DetailedProfileCardRequest
 	Snapshot snapshot.Snapshot
 	Filter   Filter
+	// MaterialRows serves the region's materials rows as whole master rows
+	// (SELECT *), which carry columns the typed query does not read yet,
+	// such as expiredAt (JP 7.0.0). Nil or unserved: no expiry handling.
+	MaterialRows MaterialRowSource
+}
+
+// MaterialRowSource is the region's generic master row store
+// (provider.MasterRowSource).
+type MaterialRowSource interface {
+	LoadMasterRows(ctx context.Context, filename string) (map[int]map[string]any, bool)
 }
 
 type Filter string
@@ -45,6 +56,8 @@ type Controller struct {
 	defaultRegion renderregion.Value
 	masterdata    *masterdataStore
 	requestCtx    context.Context
+	// now is the clock for material expiry; nil means time.Now.
+	now func() time.Time
 }
 
 type materialMeta struct {

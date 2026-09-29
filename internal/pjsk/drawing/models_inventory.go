@@ -13,6 +13,9 @@ type InventoryItem struct {
 	Quantity      int      `json:"quantity"`
 	Seq           int      `json:"seq"`
 	RecoveryValue *int     `json:"recovery_value,omitempty"`
+	// ExpiredAt is the unix-millisecond expiry of a time-limited material
+	// (materials.expiredAt, JP 7.0.0); expired materials are not sent.
+	ExpiredAt *int64 `json:"expired_at,omitempty"`
 }
 
 type InventorySection struct {

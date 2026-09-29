@@ -186,6 +186,12 @@ func (g *Group) logFailure(ctx context.Context, key string, generation uint64, e
 	if g.Region != "" {
 		attrs = append(attrs, "region", g.Region)
 	}
+	if IsMissingTable(err) {
+		// A table a newer game client introduced that this region's
+		// database does not have yet is an expected state, not an outage.
+		log.DebugContext(ctx, "master data table not present", attrs...)
+		return
+	}
 	log.WarnContext(ctx, "master data fill failed", attrs...)
 }
 

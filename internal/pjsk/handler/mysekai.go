@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 
 	"golang.org/x/sync/errgroup"
@@ -328,6 +329,46 @@ func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
 			resolved := makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiTalkListCommand, selfParams)
 			resolved.Query = buildMysekaiTalkQuery(unit, query)
 			return resolved, nil
+		},
+	}, executeMysekai)
+}
+
+func (sekaiHandlers) MysekaiShopHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		Path: "mysekai/shop",
+		Commands: []string{
+			"/pjsk mysekai shop", "/mysekai-shop", "/mysekai商店", "/烤森商店", "/msshop",
+		},
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiShopCommand, map[string]any{}), nil
+		},
+	}, executeMysekai)
+}
+
+func (sekaiHandlers) MysekaiBulkHarvestHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		Path: "mysekai/bulk-harvest",
+		Commands: []string{
+			"/pjsk mysekai bulkharvest", "/mysekai-bulk-harvest", "/mysekai一键采集", "/烤森一键采集", "/烤森批量采集", "/msbulk",
+		},
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiBulkHarvestCommand, map[string]any{}), nil
+		},
+	}, executeMysekai)
+}
+
+func (sekaiHandlers) MysekaiBlueprintTermHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		Path: "mysekai/blueprint-term",
+		Commands: []string{
+			"/pjsk mysekai blueprintterm", "/mysekai-blueprint-term", "/mysekai限时蓝图", "/烤森限时蓝图", "/msterm",
+		},
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			params := map[string]any{}
+			if showAll, _ := extractMysekaiAllFlag(strings.TrimSpace(ctx.GetArgs())); showAll {
+				params["show_all"] = true
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiBlueprintTermCommand, params), nil
 		},
 	}, executeMysekai)
 }
@@ -758,6 +799,24 @@ func executeStaticMysekaiMode(rc *RequestContext, region string) (onebot11.Messa
 		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureDetail(query)
 		message, err := mysekaiImageResult(rc, data, err)
 		return message, true, err
+	case mySekaiShopCommand:
+		query := rendermysekai.ShopQuery{Region: regionWithDefault(region)}
+		query.ResourceBox = mysekaiShopResourceBoxes(rc, renderregion.Normalize(query.Region))
+		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderShop(query)
+		message, err := mysekaiImageResult(rc, data, err)
+		return message, true, err
+	case mySekaiBulkHarvestCommand:
+		query := rendermysekai.BulkHarvestQuery{Region: regionWithDefault(region)}
+		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderBulkHarvest(query)
+		message, err := mysekaiImageResult(rc, data, err)
+		return message, true, err
+	case mySekaiBlueprintTermCommand:
+		query := rendermysekai.BlueprintTermQuery{Region: region}
+		mergeParams(rc.Cmd.Params, &query)
+		query.Region = defaultMysekaiQueryRegion(query.Region, region)
+		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderBlueprintTerm(query)
+		message, err := mysekaiImageResult(rc, data, err)
+		return message, true, err
 	case mySekaiDoorUpgradeCommand:
 		query := rendermysekai.DoorUpgradeQuery{Region: region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &query)
@@ -948,4 +1007,37 @@ func mysekaiImageResultWithContext(ctx context.Context, rc *RequestContext, data
 		return nil, err
 	}
 	return imageMessage(ctx, data, rc.App, BotModulePJSK)
+}
+
+// mysekaiShopResourceBoxes resolves mysekai_shop resource boxes through the
+// region's education provider (the MySekai master store has no resource
+// boxes). nil when the region has no provider.
+func mysekaiShopResourceBoxes(rc *RequestContext, region renderregion.Value) func(int) []rendermysekai.ShopResource {
+	if rc == nil || rc.App == nil {
+		return nil
+	}
+	source := rc.App.ProviderForRegion(region)
+	if source == nil {
+		return nil
+	}
+	education := source.Education()
+	if education == nil {
+		return nil
+	}
+	ctx := rc.Ctx
+	return func(resourceBoxID int) []rendermysekai.ShopResource {
+		box := education.GetResourceBoxByPurpose(ctx, "mysekai_shop", resourceBoxID)
+		if box == nil {
+			return nil
+		}
+		out := make([]rendermysekai.ShopResource, 0, len(box.Details))
+		for _, detail := range box.Details {
+			out = append(out, rendermysekai.ShopResource{
+				ResourceType: detail.ResourceType,
+				ResourceID:   detail.ResourceID,
+				Quantity:     detail.ResourceQuantity,
+			})
+		}
+		return out
+	}
 }

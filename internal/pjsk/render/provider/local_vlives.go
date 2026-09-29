@@ -39,7 +39,7 @@ func (p *localVLiveProvider) ensureLoaded() error {
 }
 
 func buildLocalVLive(item localVirtualLiveJSON) *VLive {
-	return &VLive{
+	live := &VLive{
 		ID:              item.ID,
 		Name:            item.Name,
 		AssetBundleName: item.AssetBundleName,
@@ -48,7 +48,37 @@ func buildLocalVLive(item localVirtualLiveJSON) *VLive {
 		Schedules:       decodeLocalVLiveSchedules(item.VirtualLiveSchedules),
 		Rewards:         decodeLocalVLiveRewards(item.VirtualLiveRewards),
 		Characters:      decodeLocalVLiveCharacters(item.VirtualLiveCharacters),
+
+		VirtualLiveType:    item.VirtualLiveType,
+		VirtualLiveGroupID: item.VirtualLiveGroupID,
 	}
+	if item.VirtualLiveType == VLiveTypeSolo {
+		row := map[string]any{}
+		for key, raw := range map[string]json.RawMessage{
+			"virtualLiveTotalCheerPointRewards":       item.VirtualLiveTotalCheerPointRewards,
+			"virtualLiveTotalCheerPointSurplusReward": item.VirtualLiveTotalCheerPointSurplusReward,
+			"virtualLiveVirtualItemOverrideCost":      item.VirtualLiveVirtualItemOverrideCost,
+		} {
+			var value any
+			if len(raw) > 0 && decodeJSONUseNumber(raw, &value) == nil {
+				row[key] = value
+			}
+		}
+		applyVLiveSoloFields(live, row)
+	}
+	return live
+}
+
+// GetGroups implements VLiveGroupProvider from virtualLiveGroups.json.
+func (p *localVLiveProvider) GetGroups(_ context.Context, _ renderregion.Value) (map[int]*VLiveGroup, bool) {
+	if p == nil || p.store == nil {
+		return nil, false
+	}
+	rows := (&localMySekaiProvider{store: p.store}).LoadMapByID("virtualLiveGroups.json")
+	if rows == nil {
+		return nil, false
+	}
+	return vliveGroupsFromRows(rows), true
 }
 
 func decodeLocalVLiveSchedules(raw json.RawMessage) []VLiveSchedule {
@@ -107,6 +137,7 @@ func (p *localVLiveProvider) GetLives(_ context.Context, _ renderregion.Value) (
 		c.Schedules = slices.Clone(live.Schedules)
 		c.Rewards = slices.Clone(live.Rewards)
 		c.Characters = slices.Clone(live.Characters)
+		c.TotalCheerPointRewards = slices.Clone(live.TotalCheerPointRewards)
 		result = append(result, &c)
 	}
 	return result, nil

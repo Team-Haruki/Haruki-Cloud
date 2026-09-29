@@ -42,3 +42,12 @@ func (a *ProviderAdapter) GetBondsHonorWordByID(id int) (*masterdata.BondsHonorW
 func (a *ProviderAdapter) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
 	return a.P.Honors().GetGameCharacterUnitByID(a.Context(), id)
 }
+
+// HonorMasterRows implements MasterRowSource through the provider's generic
+// row store.
+func (a *ProviderAdapter) HonorMasterRows(filename string) (map[int]map[string]any, bool) {
+	if a == nil {
+		return nil, false
+	}
+	return provider.LoadMasterRows(a.Context(), a.P, filename)
+}

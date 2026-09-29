@@ -49,6 +49,7 @@ func buildCustomProfileResources(ctx context.Context, app *renderapp.App, region
 	if err := collectCustomProfileHonorResources(ctx, app, regionValue, collector, resources); err != nil {
 		return nil, err
 	}
+	collectCustomProfileHonorLayerResources(ctx, app, regionValue, collector, resources)
 
 	return resources, nil
 }
@@ -82,6 +83,8 @@ type customProfileResourceCollector struct {
 	userInterfaceIDs  map[int]struct{}
 	cardIDs           map[int]struct{}
 	honorQueries      map[string]renderhonor.Query
+	honorBgIDs        map[int]struct{}
+	honorWordIDs      map[int]struct{}
 	profileHonors     map[string]renderhonor.Query
 	bondsHonorQueries map[string]renderhonor.Query
 	storyFavorites    []sekaiapi.UserStoryFavorite
@@ -117,6 +120,8 @@ func newEmptyCustomProfileResourceCollector() customProfileResourceCollector {
 		userInterfaceIDs:  make(map[int]struct{}),
 		cardIDs:           make(map[int]struct{}),
 		honorQueries:      make(map[string]renderhonor.Query),
+		honorBgIDs:        make(map[int]struct{}),
+		honorWordIDs:      make(map[int]struct{}),
 		profileHonors:     make(map[string]renderhonor.Query),
 		bondsHonorQueries: make(map[string]renderhonor.Query),
 	}
@@ -186,13 +191,16 @@ func collectCustomProfileResponseResources(c *customProfileResourceCollector, re
 			BondsHonorViewType:  row.BondsHonorViewType,
 			BondsHonorWordID:    row.BondsHonorWordID,
 			FcOrApLevelOverride: fcApLevels[row.HonorID],
+			HonorBackgroundID:   row.HonorBackgroundID,
+			HonorWordID:         row.HonorWordID,
 		}
 		if query.HonorID <= 0 {
 			continue
 		}
 		c.profileHonors[fmt.Sprintf("profile:%d", row.Seq)] = query
 		c.profileHonors[fmt.Sprintf("profile:%d:%d", row.HonorID, row.Seq)] = query
-		c.profileHonors[customProfileHonorRequestKey(row.HonorID, row.HonorLevel, query.IsMain)] = query
+		addCustomProfileHonorQuery(c.profileHonors, row.HonorID, row.HonorLevel, query)
+		c.addHonorLayerIDs(query)
 	}
 }
 
@@ -204,9 +212,12 @@ func collectCustomProfileCardHonors(c *customProfileResourceCollector, card seka
 			HonorLevel:          level,
 			IsMain:              item.FullSize,
 			FcOrApLevelOverride: fcApLevels[item.ID],
+			HonorBackgroundID:   item.HonorBackgroundID,
+			HonorWordID:         item.HonorWordID,
 		}
 		if query.HonorID > 0 {
-			c.honorQueries[customProfileHonorRequestKey(item.ID, level, item.FullSize)] = query
+			addCustomProfileHonorQuery(c.honorQueries, item.ID, level, query)
+			c.addHonorLayerIDs(query)
 		}
 	}
 	for _, item := range card.CustomProfileCard.BondsHonors {
@@ -523,6 +534,38 @@ func collectCustomProfileHonorResources(ctx context.Context, app *renderapp.App,
 		resources["bondsHonorRequests"] = items
 	}
 	return nil
+}
+
+// collectCustomProfileHonorLayerResources forwards the honorBackgrounds /
+// honorWords rows the card references (JP 7.0.0). A region or database
+// without the tables simply sends nothing: Drawing then uses the prebuilt
+// honor requests, which already fell back to the classic honor art.
+func collectCustomProfileHonorLayerResources(ctx context.Context, app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, resources drawing.CustomProfileResources) {
+	for _, table := range []struct {
+		key      string
+		filename string
+		ids      map[int]struct{}
+	}{
+		{"honorBackgrounds", "honorBackgrounds.json", c.honorBgIDs},
+		{"honorWords", "honorWords.json", c.honorWordIDs},
+	} {
+		if len(table.ids) == 0 {
+			continue
+		}
+		rows, ok := customProfileMasterRows(ctx, app, region, table.filename)
+		if !ok {
+			continue
+		}
+		items := make(map[int]map[string]any, len(table.ids))
+		for id := range table.ids {
+			if row := rows[id]; row != nil {
+				items[id] = cloneCustomProfileMasterRow(row)
+			}
+		}
+		if len(items) > 0 {
+			resources[table.key] = items
+		}
+	}
 }
 
 // loadCustomProfileMasterTable returns the requested rows of a custom profile
@@ -927,6 +970,47 @@ func customProfileUserBondsHonorLevel(resp *sekaiapi.GetAnotherProfileResponse, 
 		}
 	}
 	return 0
+}
+
+// addCustomProfileHonorQuery stores a normal-honor query under the plain
+// "id:level:mode" key Drawing has always looked up and, for a JP 7.0.0
+// customized honor, also under "id:level:mode:bgID:wordID" (0 for unset),
+// which Drawing looks up first. An uncustomized query wins the plain key so
+// two slots of the same honor with different customizations stay distinct.
+func addCustomProfileHonorQuery(queries map[string]renderhonor.Query, honorID, level int, query renderhonor.Query) {
+	plain := customProfileHonorRequestKey(honorID, level, query.IsMain)
+	if !customProfileHonorCustomized(query) {
+		queries[plain] = query
+		return
+	}
+	queries[customProfileCustomizedHonorRequestKey(honorID, level, query.IsMain, query.HonorBackgroundID, query.HonorWordID)] = query
+	if _, ok := queries[plain]; !ok {
+		queries[plain] = query
+	}
+}
+
+func customProfileHonorCustomized(query renderhonor.Query) bool {
+	return positiveIntPtr(query.HonorBackgroundID) > 0 || positiveIntPtr(query.HonorWordID) > 0
+}
+
+func customProfileCustomizedHonorRequestKey(honorID, level int, fullSize bool, backgroundID, wordID *int) string {
+	return fmt.Sprintf("%s:%d:%d", customProfileHonorRequestKey(honorID, level, fullSize), positiveIntPtr(backgroundID), positiveIntPtr(wordID))
+}
+
+func positiveIntPtr(value *int) int {
+	if value == nil || *value < 0 {
+		return 0
+	}
+	return *value
+}
+
+func (c *customProfileResourceCollector) addHonorLayerIDs(query renderhonor.Query) {
+	if id := positiveIntPtr(query.HonorBackgroundID); id > 0 {
+		c.honorBgIDs[id] = struct{}{}
+	}
+	if id := positiveIntPtr(query.HonorWordID); id > 0 {
+		c.honorWordIDs[id] = struct{}{}
+	}
 }
 
 func customProfileHonorRequestKey(honorID, level int, fullSize bool) string {

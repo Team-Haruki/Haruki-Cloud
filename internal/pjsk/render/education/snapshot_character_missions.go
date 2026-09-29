@@ -63,6 +63,37 @@ func (c *Controller) RenderCharacterMissionAll(req drawing.CharacterMissionAllRe
 	return c.drawing.GenerateCharacterMissionAll(&req)
 }
 
+var characterMissionBasicTypes = []string{
+	"collect_member",
+	"collect_stamp",
+	"collect_costume_3d",
+	"collect_character_archive_voice",
+	"collect_another_vocal",
+	"read_mysekai_fixture_unique_character_talk",
+	"read_area_talk",
+}
+
+// Types absent from a region's master data (e.g. area_item_level_up_all_character
+// before JP 7.0.0) simply produce no row.
+var characterMissionAchievementTypes = []string{
+	"play_live",
+	"play_live_ex",
+	"waiting_room",
+	"waiting_room_ex",
+	"read_card_episode_first",
+	"read_card_episode_second",
+	"area_item_level_up_character",
+	"area_item_level_up_unit",
+	"area_item_level_up_reality_world",
+	"area_item_level_up_all_character",
+	"skill_level_up_rare",
+	"skill_level_up_standard",
+	"master_rank_up_rare",
+	"master_rank_up_standard",
+	"collect_mysekai_fixture",
+	"collect_mysekai_canvas",
+}
+
 func (c *Controller) buildCharacterMissionOverview(
 	ctx *resolvedSnapshotContext,
 	cid int,
@@ -78,38 +109,14 @@ func (c *Controller) buildCharacterMissionOverview(
 	}
 
 	basicRows := make([]drawing.CharacterMissionOverviewRow, 0)
-	for _, missionType := range []string{
-		"collect_member",
-		"collect_stamp",
-		"collect_costume_3d",
-		"collect_character_archive_voice",
-		"collect_another_vocal",
-		"read_mysekai_fixture_unique_character_talk",
-		"read_area_talk",
-	} {
+	for _, missionType := range characterMissionBasicTypes {
 		if row, ok := byType[missionType]; ok {
 			basicRows = append(basicRows, characterMissionOverviewRowClone(row))
 		}
 	}
 
 	achievementRows := make([]drawing.CharacterMissionOverviewRow, 0)
-	for _, missionType := range []string{
-		"play_live",
-		"play_live_ex",
-		"waiting_room",
-		"waiting_room_ex",
-		"read_card_episode_first",
-		"read_card_episode_second",
-		"area_item_level_up_character",
-		"area_item_level_up_unit",
-		"area_item_level_up_reality_world",
-		"skill_level_up_rare",
-		"skill_level_up_standard",
-		"master_rank_up_rare",
-		"master_rank_up_standard",
-		"collect_mysekai_fixture",
-		"collect_mysekai_canvas",
-	} {
+	for _, missionType := range characterMissionAchievementTypes {
 		if row, ok := byType[missionType]; ok {
 			achievementRows = append(achievementRows, characterMissionOverviewRowClone(row))
 		}

@@ -25,7 +25,7 @@ func gateMaterialGroups(maxLevelByGate map[int]int) []map[string]any {
 	return rows
 }
 
-func newDoorUpgradeGateCapController(t *testing.T, maxLevelByGate map[int]int, userGates []map[string]any) *Controller {
+func newDoorUpgradeGateCapController(t *testing.T, maxLevelByGate map[int]int, userGates []map[string]any, gatesWithoutMaterials ...int) *Controller {
 	t.Helper()
 	masterdataDir := filepath.Join(t.TempDir(), "masterdata")
 	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
@@ -34,6 +34,9 @@ func newDoorUpgradeGateCapController(t *testing.T, maxLevelByGate map[int]int, u
 	gates := make([]map[string]any, 0, len(maxLevelByGate))
 	for gateID := range maxLevelByGate {
 		gates = append(gates, map[string]any{"id": gateID, "assetbundleName": fmt.Sprintf("gate_%d", gateID)})
+	}
+	for _, gateID := range gatesWithoutMaterials {
+		gates = append(gates, map[string]any{"id": gateID, "assetbundleName": fmt.Sprintf("gate_%d", gateID), "mysekaiGateType": "shuffle"})
 	}
 	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGates.json"), gates)
 	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateMaterialGroups.json"), gateMaterialGroups(maxLevelByGate))
@@ -193,5 +196,29 @@ func TestLowestIncompleteDoorUpgradeGateUsesPerGateCap(t *testing.T) {
 	}
 	if got := lowestIncompleteDoorUpgradeGate(gates, map[int]int{1: 30, 2: 39}); got != 2 {
 		t.Fatalf("expected the highest incomplete gate, got %d", got)
+	}
+}
+
+func TestBuildDoorUpgradeRequestGateWithoutMaterialsReportsIt(t *testing.T) {
+	// JP 7.0.0 lists shuffle gate 6 in mysekaiGates without material groups.
+	controller := newDoorUpgradeGateCapController(t, map[int]int{1: 70, 2: 70},
+		[]map[string]any{{"id": 1, "level": 40}, {"id": 6, "level": 1}}, 6)
+	_, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{Region: "jp", Query: "6", Profile: &drawing.ProfileCardRequest{}})
+	if err == nil || !strings.Contains(err.Error(), "queried gate has no upgrade materials: 6") {
+		t.Fatalf("expected gate 6 to be reported as having no materials, got err=%v", err)
+	}
+}
+
+func TestBuildDoorUpgradeRequestUnknownGateKeepsAllGatesFallback(t *testing.T) {
+	// A region without gate 6 (pre-7.0.0 data) keeps the old behaviour for an
+	// id it does not know: every gate is listed.
+	controller := newDoorUpgradeGateCapController(t, map[int]int{1: 40, 2: 40},
+		[]map[string]any{{"id": 1, "level": 10}, {"id": 2, "level": 10}})
+	req, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{Region: "jp", Query: "6", Profile: &drawing.ProfileCardRequest{}})
+	if err != nil {
+		t.Fatalf("BuildDoorUpgradeRequest() error = %v", err)
+	}
+	if len(req.GateMaterials) != 2 {
+		t.Fatalf("expected both gates for an unknown id, got %+v", req.GateMaterials)
 	}
 }

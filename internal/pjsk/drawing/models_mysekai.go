@@ -266,3 +266,91 @@ type MysekaiTalkListRequest struct {
 	SingleMainGenres []MysekaiSingleTalkMainGenre `json:"single_main_genres"`
 	MultiReads       []MysekaiTalkFixtures        `json:"multi_reads"`
 }
+
+// ---- JP 7.0.0: MySekai shop / bulk harvest / blueprint terms ----
+
+type MysekaiShopCost struct {
+	ImagePath    AssetKey `json:"image_path"`
+	Quantity     int      `json:"quantity"`
+	HaveQuantity *int     `json:"have_quantity,omitempty"`
+}
+
+type MysekaiShopItem struct {
+	ID                 int               `json:"id"`
+	Name               *string           `json:"name,omitempty"`
+	ImagePath          AssetKey          `json:"image_path"`
+	Quantity           int               `json:"quantity"`
+	Costs              []MysekaiShopCost `json:"costs,omitempty"`
+	ExchangeLimitType  string            `json:"exchange_limit_type"`
+	ExchangeLimitValue *int              `json:"exchange_limit_value,omitempty"`
+	ExchangedCount     *int              `json:"exchanged_count,omitempty"`
+}
+
+type MysekaiShopGroup struct {
+	ShopType string            `json:"shop_type"`
+	Title    *string           `json:"title,omitempty"`
+	Items    []MysekaiShopItem `json:"items"`
+}
+
+type MysekaiShopRequest struct {
+	Profile    *ProfileCardRequest `json:"profile,omitempty"`
+	Title      string              `json:"title,omitempty"`
+	PassActive *bool               `json:"pass_active,omitempty"`
+	Shops      []MysekaiShopGroup  `json:"shops"`
+}
+
+type MysekaiBulkHarvestTarget struct {
+	ID           int      `json:"id"`
+	Name         string   `json:"name"`
+	ImagePath    AssetKey `json:"image_path,omitempty"`
+	Checked      *bool    `json:"checked,omitempty"`
+	FixtureCount *int     `json:"fixture_count,omitempty"`
+}
+
+type MysekaiBulkHarvestGroup struct {
+	ID                    int                        `json:"id"`
+	Name                  string                     `json:"name"`
+	RequiredToolName      *string                    `json:"required_tool_name,omitempty"`
+	RequiredToolImagePath AssetKey                   `json:"required_tool_image_path,omitempty"`
+	Targets               []MysekaiBulkHarvestTarget `json:"targets"`
+}
+
+type MysekaiBulkHarvestSite struct {
+	SiteID    int                       `json:"site_id"`
+	Name      string                    `json:"name,omitempty"`
+	ImagePath AssetKey                  `json:"image_path,omitempty"`
+	Groups    []MysekaiBulkHarvestGroup `json:"groups"`
+}
+
+type MysekaiBulkHarvestRequest struct {
+	Profile *ProfileCardRequest      `json:"profile,omitempty"`
+	Sites   []MysekaiBulkHarvestSite `json:"sites"`
+}
+
+type MysekaiBlueprintTermMaterial struct {
+	ImagePath    AssetKey `json:"image_path"`
+	Quantity     int      `json:"quantity"`
+	HaveQuantity *int     `json:"have_quantity,omitempty"`
+}
+
+type MysekaiBlueprintTermBlueprint struct {
+	ID            int                            `json:"id"`
+	Name          string                         `json:"name,omitempty"`
+	ImagePath     AssetKey                       `json:"image_path,omitempty"`
+	StartAt       int64                          `json:"start_at,omitempty"`
+	EndAt         int64                          `json:"end_at,omitempty"`
+	CraftLimit    *int                           `json:"craft_limit,omitempty"`
+	CraftCount    *int                           `json:"craft_count,omitempty"`
+	CostMaterials []MysekaiBlueprintTermMaterial `json:"cost_materials,omitempty"`
+}
+
+type MysekaiBlueprintTermTab struct {
+	TabType    string                          `json:"tab_type"`
+	Title      string                          `json:"title,omitempty"`
+	Blueprints []MysekaiBlueprintTermBlueprint `json:"blueprints"`
+}
+
+type MysekaiBlueprintTermRequest struct {
+	Profile *ProfileCardRequest       `json:"profile,omitempty"`
+	Tabs    []MysekaiBlueprintTermTab `json:"tabs"`
+}

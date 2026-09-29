@@ -354,6 +354,11 @@ func TestDBMySekaiQueryWhitelistsMatchFileMapping(t *testing.T) {
 		}
 		wantPostgres := `SELECT * FROM "` + table + `" WHERE server_region = $1`
 		wantQuestion := `SELECT * FROM ` + table + ` WHERE server_region = ?`
+		if table == "virtuallives_solo" {
+			// The solo slice of virtuallives, not a table of its own.
+			wantPostgres = `SELECT * FROM "virtuallives" WHERE server_region = $1 AND virtual_live_type = 'solo_virtual_live'`
+			wantQuestion = `SELECT * FROM virtuallives WHERE server_region = ? AND virtual_live_type = 'solo_virtual_live'`
+		}
 		testutil.Check(t, !(postgresQuery != wantPostgres || questionQuery != wantQuestion), "fixed queries for table %q = (%q, %q), want (%q, %q)", table, postgresQuery, questionQuery, wantPostgres, wantQuestion)
 
 	}

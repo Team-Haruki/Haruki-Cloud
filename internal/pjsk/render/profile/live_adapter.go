@@ -64,6 +64,8 @@ func adaptAPIProfileHonors(honors []sekai.UserProfileHonor) []snapshot.RawUserPr
 			HonorLevel:         h.HonorLevel,
 			BondsHonorViewType: h.BondsHonorViewType,
 			BondsHonorWordId:   h.BondsHonorWordID,
+			HonorBackgroundID:  h.HonorBackgroundID,
+			HonorWordID:        h.HonorWordID,
 		}
 	}
 	return result

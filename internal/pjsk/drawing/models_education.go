@@ -48,6 +48,10 @@ type PowerBonusDetailRequest struct {
 	CharaBonuses []CharacterBonus           `json:"chara_bonuses"`
 	UnitBonuses  []UnitBonus                `json:"unit_bonuses"`
 	AttrBonuses  []AttrBonus                `json:"attr_bonuses"`
+	// MultiUnitBonus is the area-item bonus that only applies to decks with
+	// two or more units (targetUnit "multi_unit", JP 7.0.0 item 56). Nil when
+	// the region has no such rows.
+	MultiUnitBonus *float64 `json:"multi_unit_bonus,omitempty"`
 }
 
 type AreaItemMaterial struct {
@@ -64,14 +68,20 @@ type AreaItemLevel struct {
 	Bonus      float64            `json:"bonus"`
 	CanUpgrade bool               `json:"can_upgrade"`
 	Materials  []AreaItemMaterial `json:"materials"`
+	// MultiUnitBonus is the level's targetUnit "multi_unit" rate (applies to
+	// decks with two or more units); nil for items without such rows.
+	MultiUnitBonus *float64 `json:"multi_unit_bonus,omitempty"`
 }
 
 type AreaItemInfo struct {
-	ItemID         int             `json:"item_id"`
-	CurrentLevel   int             `json:"current_level"`
-	ItemIconPath   string          `json:"item_icon_path"`
-	TargetIconPath *string         `json:"target_icon_path,omitempty"`
-	Levels         []AreaItemLevel `json:"levels"`
+	ItemID         int     `json:"item_id"`
+	CurrentLevel   int     `json:"current_level"`
+	ItemIconPath   string  `json:"item_icon_path"`
+	TargetIconPath *string `json:"target_icon_path,omitempty"`
+	// TargetLabel names a target that has no single unit/attr/character
+	// icon, e.g. "全角色" for an item boosting every character.
+	TargetLabel *string         `json:"target_label,omitempty"`
+	Levels      []AreaItemLevel `json:"levels"`
 }
 
 type AreaItemUpgradeMaterialsRequest struct {

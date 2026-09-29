@@ -53,6 +53,13 @@ var fileToTable = map[string]string{
 	"mysekaiFixtureGameCharacterGroups.json":                  "mysekaifixturegamecharactergroups",
 	"mysekaiFixtureGameCharacterGroupPerformanceBonuses.json": "mysekaifixturegamecharactergroupperformancebonuses",
 	"mysekaiMaterialGameCharacterRelations.json":              "mysekaimaterialgamecharacterrelations",
+	"mysekaiBlueprintTermMysekaiMaterialCosts.json":           "mysekaiblueprinttermmysekaimaterialcosts",
+	"mysekaiBlueprintTerms.json":                              "mysekaiblueprintterms",
+	"mysekaiShopCosts.json":                                   "mysekaishopcosts",
+	"mysekaiShops.json":                                       "mysekaishops",
+	"mysekaiSiteBulkHarvestTargetGroups.json":                 "mysekaisitebulkharvesttargetgroups",
+	"mysekaiSiteBulkHarvestTargets.json":                      "mysekaisitebulkharvesttargets",
+	"mysekaiSiteBulkHarvests.json":                            "mysekaisitebulkharvests",
 }
 
 // dbMasterdataStore queries the sekai PostgreSQL database instead of reading
@@ -369,6 +376,13 @@ var masterdataTableQueries = map[string]string{
 	"mysekaisiteharvestfixtures":                         `SELECT * FROM "mysekaisiteharvestfixtures" WHERE server_region = $1`,
 	"mysekaisitelayouts":                                 `SELECT * FROM "mysekaisitelayouts" WHERE server_region = $1`,
 	"mysekaisitelevels":                                  `SELECT * FROM "mysekaisitelevels" WHERE server_region = $1`,
+	"mysekaiblueprinttermmysekaimaterialcosts":           `SELECT * FROM "mysekaiblueprinttermmysekaimaterialcosts" WHERE server_region = $1`,
+	"mysekaiblueprintterms":                              `SELECT * FROM "mysekaiblueprintterms" WHERE server_region = $1`,
+	"mysekaishopcosts":                                   `SELECT * FROM "mysekaishopcosts" WHERE server_region = $1`,
+	"mysekaishops":                                       `SELECT * FROM "mysekaishops" WHERE server_region = $1`,
+	"mysekaisitebulkharvests":                            `SELECT * FROM "mysekaisitebulkharvests" WHERE server_region = $1`,
+	"mysekaisitebulkharvesttargetgroups":                 `SELECT * FROM "mysekaisitebulkharvesttargetgroups" WHERE server_region = $1`,
+	"mysekaisitebulkharvesttargets":                      `SELECT * FROM "mysekaisitebulkharvesttargets" WHERE server_region = $1`,
 }
 
 func queryMasterdataTable(ctx context.Context, db *sql.DB, table, region string) (*sql.Rows, error) {

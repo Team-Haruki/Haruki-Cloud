@@ -14,6 +14,9 @@ import (
 type dbVLiveProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
+	// rows serves the columns and tables the ent schema does not model yet
+	// (solo cheer-point columns, virtualLiveGroups); nil disables them.
+	rows MasterRowSource
 }
 
 func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Value) ([]*VLive, error) {
@@ -33,6 +36,7 @@ func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Valu
 	for _, entity := range entities {
 		lives = append(lives, convertDBVLive(entity))
 	}
+	p.applySoloFields(ctx, lives)
 
 	sort.Slice(lives, func(i, j int) bool {
 		if lives[i].StartAt == lives[j].StartAt {
@@ -53,7 +57,40 @@ func convertDBVLive(entity *sekaiDB.Virtuallive) *VLive {
 		Schedules:       decodeVLiveSchedules(entity.VirtualLiveSchedules),
 		Rewards:         decodeVLiveRewards(entity.VirtualLiveRewards),
 		Characters:      decodeVLiveCharacters(entity.VirtualLiveCharacters),
+
+		VirtualLiveType:    entity.VirtualLiveType,
+		VirtualLiveGroupID: int(entity.VirtualLiveGroupID),
 	}
+}
+
+// applySoloFields merges the solo cheer-point columns, read through the raw
+// row store, into the region's solo lives. Regions without solo lives never
+// query them.
+func (p *dbVLiveProvider) applySoloFields(ctx context.Context, lives []*VLive) {
+	if p.rows == nil || !hasSoloVLive(lives) {
+		return
+	}
+	rows, ok := p.rows.LoadMasterRows(ctx, soloVirtualLivesFile)
+	if !ok {
+		return
+	}
+	for _, live := range lives {
+		if live.VirtualLiveType == VLiveTypeSolo {
+			applyVLiveSoloFields(live, rows[live.ID])
+		}
+	}
+}
+
+// GetGroups implements VLiveGroupProvider through the raw row store.
+func (p *dbVLiveProvider) GetGroups(ctx context.Context, _ renderregion.Value) (map[int]*VLiveGroup, bool) {
+	if p == nil || p.rows == nil {
+		return nil, false
+	}
+	rows, ok := p.rows.LoadMasterRows(ctx, "virtualLiveGroups.json")
+	if !ok {
+		return nil, false
+	}
+	return vliveGroupsFromRows(rows), true
 }
 
 func decodeVLiveSchedules(data []byte) []VLiveSchedule {

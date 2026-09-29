@@ -189,6 +189,9 @@ type HonorData struct {
 	ID         int        `json:"id"`
 	Rarity     int        `json:"rarity"`
 	FullSize   bool       `json:"fullSize"`
+	// JP 7.0.0 character-honor customizations (GenerateHonorData keys 8/9).
+	HonorBackgroundID *int `json:"honorBackgroundId,omitempty"`
+	HonorWordID       *int `json:"honorWordId,omitempty"`
 }
 
 // BondsHonorData is a bonds-honor element on a custom profile card.
@@ -265,6 +268,9 @@ type UserProfileHonor struct {
 	BondsHonorViewType string `json:"bondsHonorViewType"`
 	BondsHonorWordID   int    `json:"bondsHonorWordId"`
 	HonorLevel         int    `json:"honorLevel"`
+	// JP 7.0.0 character-honor customizations; nil on older clients.
+	HonorBackgroundID *int `json:"honorBackgroundId,omitempty"`
+	HonorWordID       *int `json:"honorWordId,omitempty"`
 }
 
 // UserBondsHonor is a bonds honor (unit-pair badge) owned by the player.

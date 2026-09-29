@@ -129,6 +129,8 @@ type FixtureListQuery struct {
 type FixtureDetailQuery struct {
 	Region string `json:"region,omitempty"`
 	Query  string `json:"query"`
+	// NowMillis overrides the clock for the blueprint term lines (tests).
+	NowMillis int64 `json:"-"`
 }
 
 type DoorUpgradeQuery struct {

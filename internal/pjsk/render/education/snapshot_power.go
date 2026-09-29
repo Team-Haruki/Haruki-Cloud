@@ -38,10 +38,11 @@ func (c *Controller) BuildPowerBonusDetailRequestFromSnapshot(query PowerBonusQu
 	bonuses.applyGates(ctx.source, ctx.raw.UserMysekaiGates)
 
 	return c.BuildPowerBonusDetailRequest(drawing.PowerBonusDetailRequest{
-		Profile:      *ctx.profile,
-		CharaBonuses: bonuses.characterList(),
-		UnitBonuses:  bonuses.unitList(),
-		AttrBonuses:  bonuses.attrList(),
+		Profile:        *ctx.profile,
+		CharaBonuses:   bonuses.characterList(),
+		UnitBonuses:    bonuses.unitList(),
+		AttrBonuses:    bonuses.attrList(),
+		MultiUnitBonus: bonuses.multiUnitBonus(),
 	})
 }
 
@@ -49,6 +50,10 @@ type powerBonusState struct {
 	characters map[int]*drawing.CharacterBonus
 	units      map[string]*drawing.UnitBonus
 	attrs      map[string]*drawing.AttrBonus
+	// multiUnit sums the deck-conditional multi_unit rows; hasMultiUnit
+	// records that the region's data has any, so older regions send nothing.
+	multiUnit    float64
+	hasMultiUnit bool
 }
 
 func (c *Controller) newPowerBonusState() *powerBonusState {
@@ -94,8 +99,10 @@ func minReleasedAreaItemLevel(level, releasedCap int) int {
 func (s *powerBonusState) applyAreaItemLevel(level *AreaItemLevel) {
 	// "multi_unit" rows only pay out when the deck mixes two or more units.
 	// That is a deck-composition condition, not a per-character/unit/attr
-	// bonus, so this overview (which has no deck context) leaves them out.
+	// bonus, so it is reported on its own instead of in any column.
 	if isMultiUnitAreaItemLevel(level) {
+		s.multiUnit += level.Power1BonusRate
+		s.hasMultiUnit = true
 		return
 	}
 	// A row with no character, unit or attribute target (unit "any", attr
@@ -157,6 +164,13 @@ func (s *powerBonusState) applyGates(source DataSource, gates []snapshot.RawUser
 	if bonus := s.units["piapro"]; bonus != nil {
 		bonus.Gate += maximum
 	}
+}
+
+func (s *powerBonusState) multiUnitBonus() *float64 {
+	if !s.hasMultiUnit {
+		return nil
+	}
+	return new(s.multiUnit)
 }
 
 func (s *powerBonusState) characterList() []drawing.CharacterBonus {

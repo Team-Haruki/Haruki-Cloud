@@ -572,6 +572,10 @@ func (c *HarukiDrawingClient) GenerateVLiveList(req *VLiveListRequest) ([]byte, 
 	return c.cachedPost("/api/pjsk/vlive/list", req)
 }
 
+func (c *HarukiDrawingClient) GenerateVLiveDetail(req *VLiveDetailRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/vlive/detail", req)
+}
+
 // =========================== Gacha API ===========================
 
 func (c *HarukiDrawingClient) GenerateGachaList(req *GachaListRequest) ([]byte, error) {
@@ -632,6 +636,18 @@ func (c *HarukiDrawingClient) GenerateMysekaiMusicRecord(req *MysekaiMusicrecord
 
 func (c *HarukiDrawingClient) GenerateMysekaiTalkList(req *MysekaiTalkListRequest) ([]byte, error) {
 	return c.cachedPost("/api/pjsk/mysekai/talk-list", req)
+}
+
+func (c *HarukiDrawingClient) GenerateMysekaiShop(req *MysekaiShopRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/mysekai/shop", req)
+}
+
+func (c *HarukiDrawingClient) GenerateMysekaiBulkHarvest(req *MysekaiBulkHarvestRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/mysekai/bulk-harvest", req)
+}
+
+func (c *HarukiDrawingClient) GenerateMysekaiBlueprintTerm(req *MysekaiBlueprintTermRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/mysekai/blueprint-term", req)
 }
 
 func (c *HarukiDrawingClient) GenerateMysekaiHousingCompetition(req *MysekaiHousingCompetitionRequest) ([]byte, error) {

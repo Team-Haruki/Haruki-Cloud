@@ -1,6 +1,7 @@
 package education
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -14,6 +15,10 @@ import (
 )
 
 const maxAreaItemShopTimestampMs int64 = 1<<63 - 1
+
+// ErrAreaItemNotInRegion reports a filter for area items the region's master
+// data does not have (e.g. 想いの大樹 before a region adopts JP 7.0.0).
+var ErrAreaItemNotInRegion = errors.New("area item is not available in this region")
 
 type areaItemBuildOptions struct {
 	region         renderregion.Value
@@ -32,10 +37,12 @@ type areaItemRenderState struct {
 	master          *AreaItem
 	levels          []*AreaItemLevel
 	levelMap        map[int]*AreaItemLevel
+	multiUnitLevels map[int]*AreaItemLevel
 	shopLevels      map[int]*ShopItem
 	currentLevel    int
 	maxVisibleLevel int
 	targetIconPath  string
+	targetLabel     string
 }
 
 func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFull(query AreaItemQuery) (*drawing.AreaItemUpgradeMaterialsRequest, error) {
@@ -118,6 +125,9 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 func (c *Controller) buildAreaItemUpgradeMaterialsRequest(opts areaItemBuildOptions) (*drawing.AreaItemUpgradeMaterialsRequest, error) {
 	itemIDs := c.resolveAreaItemIDs(opts.source, opts.userAreaLevels, opts.query)
 	if len(itemIDs) == 0 {
+		if opts.query.AllCharacter {
+			return nil, ErrAreaItemNotInRegion
+		}
 		return nil, fmt.Errorf("area item masterdata is not available")
 	}
 
@@ -179,15 +189,18 @@ func (c *Controller) newAreaItemRenderState(opts areaItemBuildOptions, itemID in
 	if maxVisibleLevel <= 0 {
 		return areaItemRenderState{}, false
 	}
+	targetIconPath := c.areaItemTargetIcon(levels)
 	return areaItemRenderState{
 		itemID:          itemID,
 		master:          master,
 		levels:          levels,
 		levelMap:        levelMap,
+		multiUnitLevels: multiUnitAreaItemLevelByLevel(levels),
 		shopLevels:      shopLevels,
 		currentLevel:    currentLevel,
 		maxVisibleLevel: maxVisibleLevel,
-		targetIconPath:  c.areaItemTargetIcon(levels),
+		targetIconPath:  targetIconPath,
+		targetLabel:     areaItemTargetLabel(levels, targetIconPath),
 	}, true
 }
 
@@ -214,6 +227,9 @@ func (c *Controller) buildAreaItemDrawingRows(opts areaItemBuildOptions, states 
 		if state.targetIconPath != "" {
 			areaItem.TargetIconPath = &state.targetIconPath
 		}
+		if state.targetLabel != "" {
+			areaItem.TargetLabel = &state.targetLabel
+		}
 		result = append(result, areaItem)
 	}
 	return result
@@ -238,6 +254,9 @@ func (c *Controller) buildAreaItemLevelRow(opts areaItemBuildOptions, state area
 		Bonus:      levelMaster.Power1BonusRate,
 		CanUpgrade: true,
 		Materials:  []drawing.AreaItemMaterial{},
+	}
+	if multiUnit := state.multiUnitLevels[level]; multiUnit != nil {
+		row.MultiUnitBonus = new(multiUnit.Power1BonusRate)
 	}
 	if level <= state.currentLevel {
 		return row
@@ -305,7 +324,7 @@ func (c *Controller) resolveAreaItemIDs(source DataSource, userAreaLevels map[in
 		if len(levels) == 0 {
 			continue
 		}
-		if areaItemMatchesFilter(item, levels, filterUnit, filterAttr, query.Cid, query.Tree, query.Flower, filterPiapro) {
+		if areaItemMatchesFilter(item, levels, filterUnit, filterAttr, query.Cid, query.Tree, query.Flower, filterPiapro, query.AllCharacter) {
 			matched = append(matched, item.ID)
 		}
 	}

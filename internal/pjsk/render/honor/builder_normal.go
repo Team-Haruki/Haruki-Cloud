@@ -12,8 +12,9 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
-func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, honorLevel int, fcOrApLevelOverride *int, region renderregion.Value) error {
-	visual, honorLevel, err := b.resolveNormalHonorVisual(req, honorID, honorLevel)
+func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, query Query, region renderregion.Value) error {
+	honorID := query.HonorID
+	visual, honorLevel, err := b.resolveNormalHonorVisual(req, honorID, query.HonorLevel)
 	if err != nil {
 		return err
 	}
@@ -24,9 +25,50 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	req.HonorImgPath = normalHonorImagePath(visual, resolveGameAsset)
 	b.setNormalHonorRankImage(req, visual, resolveGameAsset)
 	b.setNormalHonorFrame(req, visual, resolveGameAsset)
-	b.setNormalHonorProgress(req, visual, honorID, honorLevel, fcOrApLevelOverride, resolveGameAsset)
+	b.setNormalHonorProgress(req, visual, honorID, honorLevel, query.FcOrApLevelOverride, resolveGameAsset)
 	setNormalHonorLevelIcons(req, visual.groupType)
+	b.applyNormalHonorLayers(req, visual, query, resolveGameAsset)
+	b.setNormalHonorMedal(req, honorID, honorLevel, visual, resolveGameAsset)
 	return nil
+}
+
+// applyNormalHonorLayers applies the JP 7.0.0 character-honor background and
+// word (honorBackgrounds / honorWords). Only character groups have them, and
+// only regions whose master rows list the group change anything. The
+// background goes first in the honor_img_path candidates so Drawing falls
+// back to the classic honor art while the asset is missing; the word is sent
+// for the main slot only (the client hides it on sub slots, like the bonds
+// word).
+func (b *Builder) applyNormalHonorLayers(req *drawing.HonorRequest, visual normalHonorVisual, query Query, resolveGameAsset func(...string) string) {
+	if visual.group == nil || visual.group.HonorType != "character" {
+		return
+	}
+	if layer, ok := b.resolveHonorLayer("honorBackgrounds.json", visual.group.ID, query.HonorBackgroundID); ok {
+		candidates := append(drawing.AssetKey{resolveGameAsset(honorBackgroundImagePath(layer, visual.mode))}, req.HonorImgPath...)
+		req.HonorImgPath = drawing.AssetCandidates(candidates...)
+	}
+	if !req.IsMainHonor {
+		return
+	}
+	if layer, ok := b.resolveHonorLayer("honorWords.json", visual.group.ID, query.HonorWordID); ok {
+		req.WordImgPath = new(resolveGameAsset(honorWordImagePath(layer, visual.rarity)))
+	}
+}
+
+// setNormalHonorMedal sets medal_img_path for groups with isMedalDisplayed.
+func (b *Builder) setNormalHonorMedal(req *drawing.HonorRequest, honorID, honorLevel int, visual normalHonorVisual, resolveGameAsset func(...string) string) {
+	if visual.group == nil {
+		return
+	}
+	honorInfo, err := b.source.GetHonorByID(honorID)
+	if err != nil {
+		return
+	}
+	tier := honorMedalTier(honorInfo, honorLevel, b.honorGroupMedalDisplayed(visual.group.ID))
+	if tier <= 0 {
+		return
+	}
+	req.MedalImgPath = new(resolveGameAsset(fmt.Sprintf("honor_medal/medal/icon_degree_medal%d.png", tier)))
 }
 
 type normalHonorVisual struct {

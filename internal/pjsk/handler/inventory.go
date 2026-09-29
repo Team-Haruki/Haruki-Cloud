@@ -72,10 +72,11 @@ func executeInventory(rc *RequestContext) (onebot11.Message, error) {
 
 	publicDetailedProfile, _ := resolveCommandDisplayProfiles(rc, suiteSnapshot)
 	data, err := rc.App.Inventory.WithContext(rc.Ctx).RenderList(renderinventory.Query{
-		Region:   rc.Region,
-		Profile:  publicDetailedProfile,
-		Snapshot: suiteSnapshot,
-		Filter:   params.Filter,
+		Region:       rc.Region,
+		Profile:      publicDetailedProfile,
+		Snapshot:     suiteSnapshot,
+		Filter:       params.Filter,
+		MaterialRows: inventoryMaterialRows(rc),
 	})
 	if err != nil {
 		return nil, err
@@ -136,4 +137,18 @@ func validateInventoryFilterForRegion(region renderregion.Value, filter renderin
 	default:
 		return nil
 	}
+}
+
+// inventoryMaterialRows is the region's generic master row store, which
+// serves materials columns the typed query does not read (expiredAt).
+func inventoryMaterialRows(rc *RequestContext) renderinventory.MaterialRowSource {
+	if rc == nil || rc.App == nil {
+		return nil
+	}
+	src := rc.App.ProviderForRegion(rc.Region)
+	if src == nil {
+		return nil
+	}
+	rows, _ := src.MySekai().(renderinventory.MaterialRowSource)
+	return rows
 }

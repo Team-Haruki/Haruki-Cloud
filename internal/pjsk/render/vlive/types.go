@@ -69,6 +69,58 @@ type Live struct {
 	Schedules       []Schedule  `json:"schedules,omitempty"`
 	Rewards         []Reward    `json:"rewards,omitempty"`
 	Characters      []Character `json:"characters,omitempty"`
+
+	VirtualLiveType string `json:"virtual_live_type,omitempty"`
+	GroupID         int    `json:"group_id,omitempty"`
+
+	TotalCheerPointRewards []CheerPointReward `json:"total_cheer_point_rewards,omitempty"`
+	SurplusReward          *SurplusReward     `json:"surplus_reward,omitempty"`
+	OverrideCost           *OverrideCost      `json:"override_cost,omitempty"`
+}
+
+// CheerPointReward is one virtualLiveTotalCheerPointRewards threshold.
+type CheerPointReward struct {
+	Threshold     int `json:"threshold"`
+	ResourceBoxID int `json:"resource_box_id"`
+}
+
+// SurplusReward is virtualLiveTotalCheerPointSurplusReward.
+type SurplusReward struct {
+	BasePoint     int `json:"base_point"`
+	ResourceBoxID int `json:"resource_box_id"`
+}
+
+// OverrideCost is virtualLiveVirtualItemOverrideCost.
+type OverrideCost struct {
+	ResourceType    string `json:"resource_type"`
+	ResourceID      int    `json:"resource_id"`
+	AssetBundleName string `json:"asset_bundle_name,omitempty"`
+}
+
+// Group is a virtualLiveGroups row.
+type Group struct {
+	ID              int
+	Name            string
+	Type            string
+	AssetBundleName string
+}
+
+// groupDataSource is implemented by sources that can serve
+// virtualLiveGroups; ok is false when the region has no such table.
+type groupDataSource interface {
+	GetGroups(region renderregion.Value) (map[int]*Group, bool)
+}
+
+// materialNameSource resolves material names for the override-cost item.
+type materialNameSource interface {
+	GetMaterialName(id int) string
+}
+
+type DetailQuery struct {
+	Region   string    `json:"region,omitempty"`
+	TimeZone string    `json:"timezone,omitempty"`
+	Query    string    `json:"query,omitempty"`
+	Now      time.Time `json:"-"`
 }
 
 type Window struct {
@@ -87,4 +139,12 @@ type ResolvedLive struct {
 	RestCount       int
 	Rewards         []Reward
 	Characters      []Character
+
+	VirtualLiveType string
+	GroupID         int
+	// GroupName and Members are set on a list entry that stands for a whole
+	// solo virtual live group.
+	GroupName        string
+	GroupBannerAsset string
+	Members          []ResolvedLive
 }

@@ -18,6 +18,7 @@ type HonorRequest struct {
 	EmptyHonorPath          *string  `json:"empty_honor_path,omitempty"`
 	ScrollImgPath           *string  `json:"scroll_img_path,omitempty"`
 	WordImgPath             *string  `json:"word_img_path,omitempty"`
+	MedalImgPath            *string  `json:"medal_img_path,omitempty"`
 	CharaIconPath           *string  `json:"chara_icon_path,omitempty"`
 	CharaIconPath2          *string  `json:"chara_icon_path2,omitempty"`
 	CharaID                 *string  `json:"chara_id,omitempty"`

@@ -45,6 +45,9 @@ func TestCharacterMissionQueryHelpers(t *testing.T) {
 	}{
 		{input: "一歌 四星技能", wantType: "skill_level_up_rare"},
 		{input: "一歌 ANVO", wantType: "collect_another_vocal"},
+		{input: "一歌 大树", wantType: "area_item_level_up_all_character"},
+		{input: "一歌 想いの大樹", wantType: "area_item_level_up_all_character"},
+		{input: "一歌 花树", wantType: "area_item_level_up_reality_world"},
 		{input: "  一歌  ", wantQuery: "一歌"},
 	}
 	for _, tt := range typeTests {

@@ -291,6 +291,8 @@ type RawUserProfileHonor struct {
 	HonorId2           int    `json:"honorId2"`
 	BondsHonorViewType string `json:"bondsHonorViewType"`
 	BondsHonorWordId   int    `json:"bondsHonorWordId"`
+	HonorBackgroundID  *int   `json:"honorBackgroundId,omitempty"`
+	HonorWordID        *int   `json:"honorWordId,omitempty"`
 }
 
 type ChallengeLiveData struct {

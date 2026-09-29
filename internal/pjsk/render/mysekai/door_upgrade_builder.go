@@ -25,7 +25,7 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 	userMaterials := doorUpgradeUserMaterials(merged, showFull)
 	specLevels := doorUpgradeGateLevels(merged, showFull)
 	gateTemp := c.loadDoorUpgradeGateMaterials()
-	gateTemp, err = selectDoorUpgradeGates(gateTemp, specLevels, specGateID, showAll, showFull)
+	gateTemp, err = selectDoorUpgradeGates(gateTemp, specLevels, specGateID, showAll, showFull, c.loadDoorUpgradeGateIDs())
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func doorUpgradeGateIsMax(gates map[int][][]doorUpgradeMaterial, gateID, level i
 	return maxLevel > 0 && level >= maxLevel
 }
 
-func selectDoorUpgradeGates(gates map[int][][]doorUpgradeMaterial, levels map[int]int, requestedID int, showAll, showFull bool) (map[int][][]doorUpgradeMaterial, error) {
+func selectDoorUpgradeGates(gates map[int][][]doorUpgradeMaterial, levels map[int]int, requestedID int, showAll, showFull bool, knownGates map[int]struct{}) (map[int][][]doorUpgradeMaterial, error) {
 	if requestedID == 0 && !showAll && !showFull {
 		requestedID = lowestIncompleteDoorUpgradeGate(gates, levels)
 	}
@@ -134,7 +134,24 @@ func selectDoorUpgradeGates(gates map[int][][]doorUpgradeMaterial, levels map[in
 	if materials, ok := gates[requestedID]; ok {
 		return map[int][][]doorUpgradeMaterial{requestedID: materials}, nil
 	}
+	if _, ok := knownGates[requestedID]; ok {
+		// A gate the region has but that is never upgraded with materials
+		// (JP 7.0.0 shuffle gate 6).
+		return nil, fmt.Errorf("queried gate has no upgrade materials: %d", requestedID)
+	}
 	return gates, nil
+}
+
+// loadDoorUpgradeGateIDs lists the region's mysekaiGates ids; empty when the
+// table is not available.
+func (c *Controller) loadDoorUpgradeGateIDs() map[int]struct{} {
+	ids := map[int]struct{}{}
+	for _, item := range c.masterdata.loadList("mysekaiGates.json") {
+		if id := intNumber(item["id"], 0); id > 0 {
+			ids[id] = struct{}{}
+		}
+	}
+	return ids
 }
 
 // lowestIncompleteDoorUpgradeGate picks the user's highest-levelled gate that

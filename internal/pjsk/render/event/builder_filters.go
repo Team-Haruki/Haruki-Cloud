@@ -12,20 +12,47 @@ import (
 func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 	events := b.source.GetEvents()
 	filter := newEventListFilter(b, events, query, time.Now())
-	result := make([]*masterdata.Event, 0, len(events))
+	candidates := make([]*masterdata.Event, 0, len(events))
 	for _, eventInfo := range events {
-		if filter.matches(eventInfo) {
+		if filter.matchesMetadata(eventInfo) {
+			candidates = append(candidates, eventInfo)
+		}
+	}
+	if !filter.needsRelations() {
+		result := eventListWindow(candidates, query.Limit)
+		b.preloadEventList(result)
+		return result
+	}
+	b.preloadEventList(candidates)
+	result := make([]*masterdata.Event, 0, len(candidates))
+	for _, eventInfo := range candidates {
+		if filter.matchesRelations(eventInfo) {
 			result = append(result, eventInfo)
 		}
 	}
 
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].StartAt < result[j].StartAt
+	return eventListWindow(result, query.Limit)
+}
+
+func eventListWindow(events []*masterdata.Event, limit int) []*masterdata.Event {
+	sort.Slice(events, func(i, j int) bool {
+		return events[i].StartAt < events[j].StartAt
 	})
-	if query.Limit > 0 && len(result) > query.Limit {
-		result = result[:query.Limit]
+	if limit > 0 && len(events) > limit {
+		return events[:limit]
 	}
-	return result
+	return events
+}
+
+func (b *Builder) preloadEventList(events []*masterdata.Event) {
+	if loader, ok := b.source.(interface{ PreloadEventList([]int) error }); ok {
+		ids := make([]int, len(events))
+		for i, event := range events {
+			ids[i] = event.ID
+		}
+		// Preserve existing per-event fallback when prefetch cannot complete.
+		_ = loader.PreloadEventList(ids)
+	}
 }
 
 type eventListFilter struct {
@@ -62,7 +89,12 @@ func eventListTimeSelection(query ListQuery) (bool, bool) {
 	return query.IncludePast, query.IncludeFuture
 }
 
-func (f eventListFilter) matches(eventInfo *masterdata.Event) bool {
+func (f eventListFilter) needsRelations() bool {
+	q := f.query
+	return q.Unit != "" || q.OnlyUnit || q.Blend || q.Attr != "" || q.CharacterID != 0 || len(q.CharacterIDs) > 0 || q.BannerCharID != nil
+}
+
+func (f eventListFilter) matchesMetadata(eventInfo *masterdata.Event) bool {
 	start := time.UnixMilli(eventInfo.StartAt)
 	end := time.UnixMilli(eventutil.EffectiveClosedAt(eventInfo.AggregateAt, eventInfo.ClosedAt))
 	if !f.includePast && end.Before(f.now) {
@@ -77,6 +109,10 @@ func (f eventListFilter) matches(eventInfo *masterdata.Event) bool {
 	if !f.matchesWorldBloomTurn(eventInfo) || (f.query.Year != 0 && start.Year() != f.query.Year) {
 		return false
 	}
+	return true
+}
+
+func (f eventListFilter) matchesRelations(eventInfo *masterdata.Event) bool {
 	if !f.matchesBonus(eventInfo) || !f.matchesOnlyUnit(eventInfo) {
 		return false
 	}

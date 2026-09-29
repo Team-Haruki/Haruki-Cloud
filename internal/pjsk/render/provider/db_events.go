@@ -13,7 +13,6 @@ import (
 	"haruki-cloud/database/sekai/cardsupplie"
 	"haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventcard"
-	"haruki-cloud/database/sekai/eventdeckbonuse"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	"haruki-cloud/database/sekai/worldbloom"
 	"haruki-cloud/database/sekai/worldbloomchapterrankingrewardrange"
@@ -34,8 +33,12 @@ type dbEventProvider struct {
 	eventMu    sync.RWMutex
 	eventCache map[int]*masterdata.Event
 
-	cardMu    sync.RWMutex
-	cardCache map[int]*masterdata.Card
+	cardMu         sync.RWMutex
+	cardCache      map[int]*masterdata.Card
+	cardGeneration uint64
+
+	cardLinks   dbMasterIndex[map[int][]int64]
+	deckBonuses dbMasterIndex[map[int][]*masterdata.EventDeckBonus]
 
 	unitMu    sync.RWMutex
 	unitCache map[int]string
@@ -147,10 +150,7 @@ func (p *dbEventProvider) GetAll(ctx context.Context) []*masterdata.Event {
 
 func (p *dbEventProvider) GetCards(ctx context.Context, eventID int) ([]*masterdata.Card, error) {
 	p.init()
-	links, err := p.client.Eventcard.Query().
-		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.EventIDEQ(int64(eventID))).
-		Order(eventcard.ByCardID()).
-		All(ctx)
+	linksByEvent, err := p.eventCardIDs(ctx)
 	if err != nil {
 		if p.local != nil {
 			if fallback, fallbackErr := p.local.GetCards(ctx, eventID); fallbackErr == nil && len(fallback) > 0 {
@@ -159,7 +159,8 @@ func (p *dbEventProvider) GetCards(ctx context.Context, eventID int) ([]*masterd
 		}
 		return nil, fmt.Errorf("query event cards for event %d: %w", eventID, err)
 	}
-	if len(links) == 0 {
+	cardIDs := linksByEvent[eventID]
+	if len(cardIDs) == 0 {
 		if p.local != nil {
 			if fallback, fallbackErr := p.local.GetCards(ctx, eventID); fallbackErr == nil && len(fallback) > 0 {
 				return fallback, nil
@@ -168,10 +169,6 @@ func (p *dbEventProvider) GetCards(ctx context.Context, eventID int) ([]*masterd
 		return nil, fmt.Errorf("no cards found for event %d", eventID)
 	}
 
-	cardIDs := make([]int64, 0, len(links))
-	for _, link := range links {
-		cardIDs = append(cardIDs, link.CardID)
-	}
 	return p.getCardsByIDs(ctx, cardIDs)
 }
 
@@ -221,9 +218,7 @@ func (p *dbEventProvider) GetBannerCharacterID(ctx context.Context, eventID int)
 }
 
 func (p *dbEventProvider) GetDeckBonuses(ctx context.Context, eventID int) ([]*masterdata.EventDeckBonus, error) {
-	items, err := p.client.Eventdeckbonuse.Query().
-		Where(eventdeckbonuse.ServerRegionEQ(p.region.String()), eventdeckbonuse.EventIDEQ(int64(eventID))).
-		All(ctx)
+	byEvent, err := p.eventDeckBonuses(ctx)
 	if err != nil {
 		if p.local != nil {
 			if fallback, fallbackErr := p.local.GetDeckBonuses(ctx, eventID); fallbackErr == nil && fallback != nil {
@@ -233,16 +228,7 @@ func (p *dbEventProvider) GetDeckBonuses(ctx context.Context, eventID int) ([]*m
 		return nil, fmt.Errorf("query deck bonuses for event %d: %w", eventID, err)
 	}
 
-	result := make([]*masterdata.EventDeckBonus, 0, len(items))
-	for _, item := range items {
-		result = append(result, &masterdata.EventDeckBonus{
-			ID:                  item.ID,
-			EventID:             int(item.EventID),
-			GameCharacterUnitID: int(item.GameCharacterUnitID),
-			CardAttr:            item.CardAttr,
-			BonusRate:           item.BonusRate,
-		})
-	}
+	result := cloneEventDeckBonuses(byEvent[eventID])
 	if len(result) == 0 && p.local != nil {
 		if fallback, fallbackErr := p.local.GetDeckBonuses(ctx, eventID); fallbackErr == nil && fallback != nil {
 			return fallback, nil
@@ -452,16 +438,19 @@ func (p *dbEventProvider) loadWorldBloomChapterRankingRewardRanges(ctx context.C
 func (p *dbEventProvider) getCardsByIDs(ctx context.Context, ids []int64) ([]*masterdata.Card, error) {
 	result := make([]*masterdata.Card, len(ids))
 	var missing []int64
-	missingIndex := make(map[int64]int)
+	missingIndex := make(map[int64][]int)
 
 	p.cardMu.RLock()
+	generation := p.cardGeneration
 	for idx, id := range ids {
 		if cached, ok := p.cardCache[int(id)]; ok {
 			result[idx] = common.CloneCard(cached)
 			continue
 		}
-		missing = append(missing, id)
-		missingIndex[id] = idx
+		if len(missingIndex[id]) == 0 {
+			missing = append(missing, id)
+		}
+		missingIndex[id] = append(missingIndex[id], idx)
 	}
 	p.cardMu.RUnlock()
 
@@ -483,8 +472,10 @@ func (p *dbEventProvider) getCardsByIDs(ctx context.Context, ids []int64) ([]*ma
 			p.cardMu.Unlock()
 			return nil, err
 		}
-		p.cardCache[model.ID] = model
-		if idx, ok := missingIndex[int64(model.ID)]; ok {
+		if p.cardGeneration == generation {
+			p.cardCache[model.ID] = model
+		}
+		for _, idx := range missingIndex[int64(model.ID)] {
 			result[idx] = common.CloneCard(model)
 		}
 	}

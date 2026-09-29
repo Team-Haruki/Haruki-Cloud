@@ -22,8 +22,9 @@ type dbMusicProvider struct {
 	musicByID        map[int]*masterdata.Music
 	musicList        []*masterdata.Music
 	outsideByID      map[int]string
-	localizedByID    map[int][]string
 	difficultiesByID map[int][]*masterdata.MusicDifficulty
+
+	localizedTitles dbMasterIndex[map[int][]string]
 
 	difficultyMu         sync.RWMutex
 	difficultyLoads      singleflight.Group
@@ -56,7 +57,6 @@ func (p *dbMusicProvider) init() {
 	p.once.Do(func() {
 		p.musicByID = make(map[int]*masterdata.Music)
 		p.outsideByID = make(map[int]string)
-		p.localizedByID = make(map[int][]string)
 		p.difficultiesByID = make(map[int][]*masterdata.MusicDifficulty)
 	})
 }

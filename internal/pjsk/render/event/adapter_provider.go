@@ -88,3 +88,12 @@ func (a *ProviderAdapter) GetWorldBloomChapterRankingHonorRewards(eventID, chara
 	}
 	return rewards, nil
 }
+
+func (a *ProviderAdapter) PreloadEventList(eventIDs []int) error {
+	if loader, ok := a.P.Events().(interface {
+		PreloadList(context.Context, []int) error
+	}); ok {
+		return loader.PreloadList(a.Context(), eventIDs)
+	}
+	return nil
+}

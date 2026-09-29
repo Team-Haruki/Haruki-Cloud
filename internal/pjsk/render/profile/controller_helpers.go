@@ -223,6 +223,8 @@ func buildSelectedProfileHonors(
 			BondsHonorViewType:  item.BondsHonorViewType,
 			BondsHonorWordID:    item.BondsHonorWordId,
 			FcOrApLevelOverride: fcApLevels[honorID],
+			HonorBackgroundID:   item.HonorBackgroundID,
+			HonorWordID:         item.HonorWordID,
 		})
 		if err == nil && req != nil {
 			requests = append(requests, *req)

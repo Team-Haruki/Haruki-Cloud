@@ -89,6 +89,7 @@ var mysekaiFileToTable = map[string]string{
 	"virtualItems.json":                                       "virtualitems",
 	"virtualLiveGroups.json":                                  "virtuallivegroups",
 	"virtualLives.json":                                       "virtuallives",
+	soloVirtualLivesFile:                                      "virtuallives_solo",
 }
 
 // MasterRowSource is implemented by row stores that can say whether a master
@@ -430,6 +431,7 @@ var mysekaiPostgresTableQueries = map[string]string{
 	"virtualitems":                                       `SELECT * FROM "virtualitems" WHERE server_region = $1`,
 	"virtuallivegroups":                                  `SELECT * FROM "virtuallivegroups" WHERE server_region = $1`,
 	"virtuallives":                                       `SELECT * FROM "virtuallives" WHERE server_region = $1`,
+	"virtuallives_solo":                                  `SELECT * FROM "virtuallives" WHERE server_region = $1 AND virtual_live_type = 'solo_virtual_live'`,
 }
 
 var mysekaiQuestionMarkTableQueries = map[string]string{
@@ -502,6 +504,7 @@ var mysekaiQuestionMarkTableQueries = map[string]string{
 	"virtualitems":                                       `SELECT * FROM virtualitems WHERE server_region = ?`,
 	"virtuallivegroups":                                  `SELECT * FROM virtuallivegroups WHERE server_region = ?`,
 	"virtuallives":                                       `SELECT * FROM virtuallives WHERE server_region = ?`,
+	"virtuallives_solo":                                  `SELECT * FROM virtuallives WHERE server_region = ? AND virtual_live_type = 'solo_virtual_live'`,
 }
 
 func queryMySekaiTable(ctx context.Context, db *sql.DB, dbType, table, region string) (*sql.Rows, error) {

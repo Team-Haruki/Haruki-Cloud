@@ -235,6 +235,12 @@ type localVirtualLiveJSON struct {
 	VirtualLiveSchedules  json.RawMessage `json:"virtualLiveSchedules"`
 	VirtualLiveCharacters json.RawMessage `json:"virtualLiveCharacters"`
 	VirtualLiveRewards    json.RawMessage `json:"virtualLiveRewards"`
+
+	VirtualLiveType                         string          `json:"virtualLiveType"`
+	VirtualLiveGroupID                      int             `json:"virtualLiveGroupId"`
+	VirtualLiveTotalCheerPointRewards       json.RawMessage `json:"virtualLiveTotalCheerPointRewards"`
+	VirtualLiveTotalCheerPointSurplusReward json.RawMessage `json:"virtualLiveTotalCheerPointSurplusReward"`
+	VirtualLiveVirtualItemOverrideCost      json.RawMessage `json:"virtualLiveVirtualItemOverrideCost"`
 }
 
 type localCostume3dJSON struct {

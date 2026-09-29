@@ -122,6 +122,8 @@ func resolveLiveAt(live *Live, now time.Time) (ResolvedLive, bool) {
 		EndAt:           endAt,
 		Rewards:         append([]Reward(nil), live.Rewards...),
 		Characters:      append([]Character(nil), live.Characters...),
+		VirtualLiveType: strings.TrimSpace(live.VirtualLiveType),
+		GroupID:         live.GroupID,
 	}
 	applyLiveSchedules(&resolved, normalizeSchedules(live.Schedules), now)
 	applyLiveWindowFallback(&resolved, now)
@@ -192,7 +194,7 @@ func (c *Controller) BuildListRequest(query ListQuery) (*drawing.VLiveListReques
 		req.DT = query.Now.UnixMilli()
 	}
 
-	for _, live := range lives {
+	for _, live := range collapseSoloGroups(lives, c.groupsFor(source, region, lives)) {
 		item := drawing.VLiveBrief{
 			ID:         live.ID,
 			Name:       fallbackLiveName(live.Name, live.ID),
@@ -207,6 +209,12 @@ func (c *Controller) BuildListRequest(query ListQuery) (*drawing.VLiveListReques
 		if live.Current != nil {
 			item.CurrentStartAt = live.Current.StartAt.UnixMilli()
 			item.CurrentEndAt = live.Current.EndAt.UnixMilli()
+		}
+		if len(live.Members) > 0 {
+			item.VirtualLiveType = live.VirtualLiveType
+			item.GroupID = new(live.GroupID)
+			item.GroupName = live.GroupName
+			item.GroupCount = new(len(live.Members))
 		}
 		req.Lives = append(req.Lives, item)
 	}
@@ -238,11 +246,19 @@ func (c *Controller) RenderText(query ListQuery) (string, error) {
 
 	loc, timeZone := displaytime.LoadLocation(query.TimeZone)
 
+	var groups map[int]*Group
+	if source, ok := c.sources.SourceForRegion(region); ok {
+		groups = c.groupsFor(source, region, lives)
+	}
+
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf("%s 虚拟Live列表", strings.ToUpper(region.String())))
-	for _, live := range lives {
+	for _, live := range collapseSoloGroups(lives, groups) {
 		builder.WriteString("\n\n")
 		builder.WriteString(fmt.Sprintf("【%d】%s\n", live.ID, fallbackLiveName(live.Name, live.ID)))
+		if len(live.Members) > 0 {
+			builder.WriteString(fmt.Sprintf("共%d场个人Live\n", len(live.Members)))
+		}
 		builder.WriteString(fmt.Sprintf("开始: %s\n", displaytime.FormatTime(live.StartAt.In(loc), virtualLiveTimeLayout)))
 		builder.WriteString(fmt.Sprintf("结束: %s\n", displaytime.FormatTime(live.EndAt.In(loc), virtualLiveTimeLayout)))
 		builder.WriteString("状态: ")
@@ -276,6 +292,13 @@ func (c *Controller) bannerPath(source DataSource, region renderregion.Value, li
 }
 
 func (c *Controller) bannerCandidates(source DataSource, live ResolvedLive) []string {
+	if len(live.Members) > 0 {
+		candidates := make([]string, 0, 2)
+		if group := strings.TrimSpace(live.GroupBannerAsset); group != "" {
+			candidates = append(candidates, filepath.Join("virtual_live", "select", "banner", group, group+".png"))
+		}
+		return append(candidates, c.bannerCandidates(source, live.Members[0])...)
+	}
 	if assetBundleName := strings.TrimSpace(live.AssetBundleName); assetBundleName != "" {
 		return []string{filepath.Join("virtual_live", "select", "banner", assetBundleName, assetBundleName+".png")}
 	}
@@ -314,7 +337,7 @@ func (c *Controller) buildRewardItems(source DataSource, live ResolvedLive) []dr
 			continue
 		}
 		box := source.GetResourceBoxByPurpose("virtual_live_reward", reward.ResourceBoxID)
-		items := c.buildRewardBoxItems(box)
+		items := c.buildRewardBoxItems(source, box)
 		if len(items) > 0 {
 			return items
 		}
@@ -327,13 +350,16 @@ func isNormalVLiveReward(reward Reward) bool {
 	return kind == "" || kind == "normal"
 }
 
-func (c *Controller) buildRewardBoxItems(box *provider.ResourceBox) []drawing.VLiveRewardItem {
+func (c *Controller) buildRewardBoxItems(source DataSource, box *provider.ResourceBox) []drawing.VLiveRewardItem {
 	if box == nil {
 		return nil
 	}
 	items := make([]drawing.VLiveRewardItem, 0, len(box.Details))
 	for _, detail := range box.Details {
 		imagePath := c.rewardImagePath(detail.ResourceType, detail.ResourceID)
+		if strings.TrimSpace(imagePath) == "" {
+			imagePath = c.newResourceRewardImagePath(source, detail.ResourceType, detail.ResourceID)
+		}
 		if strings.TrimSpace(imagePath) == "" {
 			continue
 		}

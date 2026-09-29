@@ -41,7 +41,9 @@ func TestToolboxDecompressionRejectsOversizedPayload(t *testing.T) {
 		t.Fatalf("GET compressed response: %v", err)
 	}
 
-	if _, err := decompressContextLimit(context.Background(), resp, 8); err == nil || !strings.Contains(err.Error(), "exceeds") {
+	client := NewToolboxClient(nil)
+	defer client.Close()
+	if _, err := client.decompressContextLimit(context.Background(), resp, 8); err == nil || !strings.Contains(err.Error(), "exceeds") {
 		t.Fatalf("oversized decompression error = %v", err)
 	}
 }

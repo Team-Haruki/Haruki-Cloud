@@ -1,10 +1,8 @@
 package sekai
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,13 +12,13 @@ import (
 	"haruki-cloud/version"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/klauspost/compress/zstd"
 	json "haruki-cloud/internal/jsonutil"
 )
 
 type HarukiToolboxClient struct {
-	http   *resty.Client
-	config *config.ToolboxConfig
+	http     *resty.Client
+	config   *config.ToolboxConfig
+	decoders toolboxDecoderPool
 }
 
 const (
@@ -294,7 +292,7 @@ func (c *HarukiToolboxClient) getPrivateData(ctx context.Context, server string,
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		data, err := decompressContext(ctx, resp)
+		data, err := c.decompressContext(ctx, resp)
 		return data, false, err
 	case http.StatusNotModified:
 		if knownUploadTime <= 0 {
@@ -302,16 +300,16 @@ func (c *HarukiToolboxClient) getPrivateData(ctx context.Context, server string,
 		}
 		return nil, true, nil
 	default:
-		return nil, false, mapPrivateDataStatusError(ctx, resp)
+		return nil, false, c.mapPrivateDataStatusError(ctx, resp)
 	}
 }
 
 // mapPrivateDataStatusError converts a non-2xx private game-data response into
 // the package's typed errors, mirroring the Toolbox API's error vocabulary.
-func mapPrivateDataStatusError(ctx context.Context, resp *resty.Response) error {
+func (c *HarukiToolboxClient) mapPrivateDataStatusError(ctx context.Context, resp *resty.Response) error {
 	switch resp.StatusCode() {
 	case http.StatusForbidden:
-		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
+		msg := parseMessage(c.toolboxResponseBodyContext(ctx, resp))
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
 			return ErrInvalidPlatformUser
@@ -322,7 +320,7 @@ func mapPrivateDataStatusError(ctx context.Context, resp *resty.Response) error 
 		}
 
 	case http.StatusNotFound:
-		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
+		msg := parseMessage(c.toolboxResponseBodyContext(ctx, resp))
 		switch {
 		case strings.Contains(msg, "account binding not found"):
 			return ErrAccountBindingNotFound
@@ -333,10 +331,10 @@ func mapPrivateDataStatusError(ctx context.Context, resp *resty.Response) error 
 		}
 
 	case http.StatusServiceUnavailable:
-		return &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
+		return &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: c.parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
 
 	default:
-		return &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(toolboxResponseBodyContext(ctx, resp))}
+		return &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(c.toolboxResponseBodyContext(ctx, resp))}
 	}
 }
 
@@ -399,9 +397,9 @@ func (c *HarukiToolboxClient) GetPrivateDataValueContext(ctx context.Context, se
 	}
 
 	if resp.StatusCode() == http.StatusOK {
-		return decompressContext(ctx, resp)
+		return c.decompressContext(ctx, resp)
 	}
-	return nil, mapPrivateDataStatusError(ctx, resp)
+	return nil, c.mapPrivateDataStatusError(ctx, resp)
 }
 
 // GetPrivateDataValues queries multiple top-level keys from a private data snapshot.
@@ -519,7 +517,7 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindingsC
 	switch resp.StatusCode() {
 	case http.StatusOK:
 		var bindings []UserGameBinding
-		body, err := decompressContext(ctx, resp)
+		body, err := c.decompressContext(ctx, resp)
 		if err != nil {
 			return nil, err
 		}
@@ -532,7 +530,7 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindingsC
 		return bindings, nil
 
 	case http.StatusForbidden:
-		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
+		msg := parseMessage(c.toolboxResponseBodyContext(ctx, resp))
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
 			return nil, ErrInvalidPlatformUser
@@ -543,72 +541,33 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindingsC
 		}
 
 	case http.StatusNotFound:
-		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
+		msg := parseMessage(c.toolboxResponseBodyContext(ctx, resp))
 		if strings.Contains(msg, "account binding not found") {
 			return nil, ErrAccountBindingNotFound
 		}
 		return nil, &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
 
 	case http.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
+		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: c.parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
 
 	default:
-		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
+		msg := parseMessage(c.toolboxResponseBodyContext(ctx, resp))
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
 	}
 }
 
-func toolboxResponseBodyContext(ctx context.Context, resp *resty.Response) []byte {
-	body, err := decompressContext(ctx, resp)
+func (c *HarukiToolboxClient) toolboxResponseBodyContext(ctx context.Context, resp *resty.Response) []byte {
+	body, err := c.decompressContext(ctx, resp)
 	if err != nil {
 		return resp.Body()
 	}
 	return body
 }
 
-func parseToolboxErrorMessageContext(ctx context.Context, resp *resty.Response, fallback string) string {
-	msg := strings.TrimSpace(parseMessage(toolboxResponseBodyContext(ctx, resp)))
+func (c *HarukiToolboxClient) parseToolboxErrorMessageContext(ctx context.Context, resp *resty.Response, fallback string) string {
+	msg := strings.TrimSpace(parseMessage(c.toolboxResponseBodyContext(ctx, resp)))
 	if msg == "" {
 		return fallback
 	}
 	return msg
-}
-
-// decompressContext handles transparent zstd decompression when the server indicates it.
-func decompressContext(ctx context.Context, resp *resty.Response) ([]byte, error) {
-	return decompressContextLimit(ctx, resp, toolboxMaxDecompressedResponseBytes)
-}
-
-func decompressContextLimit(ctx context.Context, resp *resty.Response, limit int64) ([]byte, error) {
-	if resp == nil {
-		return nil, fmt.Errorf("toolbox: response is nil")
-	}
-	body := resp.Body()
-	if resp.Header().Get("Content-Encoding") != "zstd" {
-		if limit > 0 && int64(len(body)) > limit {
-			return nil, fmt.Errorf("toolbox: response exceeds %d-byte limit", limit)
-		}
-		return body, nil
-	}
-	finishDecompress := commandtrace.MeasureOperation(ctx, "toolbox.decompress")
-	defer finishDecompress()
-
-	decoder, err := zstd.NewReader(bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("toolbox: zstd reader init failed: %w", err)
-	}
-	defer decoder.Close()
-
-	reader := io.Reader(decoder)
-	if limit > 0 {
-		reader = io.LimitReader(decoder, limit+1)
-	}
-	out, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, fmt.Errorf("toolbox: zstd decompression failed: %w", err)
-	}
-	if limit > 0 && int64(len(out)) > limit {
-		return nil, fmt.Errorf("toolbox: decompressed response exceeds %d-byte limit", limit)
-	}
-	return out, nil
 }

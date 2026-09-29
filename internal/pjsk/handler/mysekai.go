@@ -650,7 +650,7 @@ func mysekaiRenderContextOptionsForMode(mode string) mySekaiRenderContextOptions
 			PreferMySekaiPayload: true,
 			MySekaiPayloadOnly:   true,
 		}
-	case mySekaiDoorUpgradeCommand, mySekaiShopCommand:
+	case mySekaiDoorUpgradeCommand:
 		return mySekaiRenderContextOptions{
 			NeedProfile:       true,
 			SuiteOnlySnapshot: true,

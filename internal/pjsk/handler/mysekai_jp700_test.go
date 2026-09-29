@@ -156,7 +156,7 @@ func TestMysekaiShopRequiresPlayerData(t *testing.T) {
 	assertReplayErrorText(t, executeMysekaiJP700(app, mySekaiShopCommand, "jp"), "上传的数据缺少烤森商店信息，请重新上传完整游戏数据后再试")
 }
 
-func TestMysekaiShopResolvesSuiteSnapshot(t *testing.T) {
+func TestMysekaiShopResolvesMergedSnapshot(t *testing.T) {
 	app := newMysekaiJP700App(t, "")
 	service := newHandlerTestBindingService(t)
 	if _, err := service.Bind(context.Background(), "qq", "42", "12345678901234"); err != nil {
@@ -173,7 +173,7 @@ func TestMysekaiShopResolvesSuiteSnapshot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(message) == 0 || source.resolveCount != 1 || len(source.resolveNeedFlags) != 1 || source.resolveNeedFlags[0] {
-		t.Fatalf("suite routing: count=%d flags=%v message=%v", source.resolveCount, source.resolveNeedFlags, message)
+	if len(message) == 0 || source.resolveCount != 1 || len(source.resolveNeedFlags) != 1 || !source.resolveNeedFlags[0] {
+		t.Fatalf("merged routing: count=%d flags=%v message=%v", source.resolveCount, source.resolveNeedFlags, message)
 	}
 }

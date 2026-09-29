@@ -275,3 +275,34 @@ func TestShopMissingMasterDataFailsExplicitly(t *testing.T) {
 		}
 	}
 }
+
+func TestShopUsesMysekaiUpdatedResourcesWithSuitePass(t *testing.T) {
+	c, q, data := playerShopFixture(t)
+	data["userGamedata"] = map[string]any{"userId": 12345678901234}
+	records := data["userMysekaiShops"]
+	delete(data, "userMysekaiShops")
+	suite, err := json.Marshal(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mysekai, err := json.Marshal(map[string]any{"updatedResources": map[string]any{"userMysekaiShops": records}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	snap, err := snapshot.NewFromBytes(nil, nil, renderregion.JP, suite, mysekai, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q.ShopType = "tool"
+	req, err := c.WithSnapshot(snap).BuildShopRequest(q)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if req.PassActive == nil || !*req.PassActive || len(req.Shops) != 1 || len(req.Shops[0].Items) != 1 {
+		t.Fatalf("merged shop missing pass or available tool: %+v", req)
+	}
+	item := req.Shops[0].Items[0]
+	if item.ID != 101 || item.ExchangedCount == nil || *item.ExchangedCount != 98 || item.RemainingCount == nil || *item.RemainingCount != 1 {
+		t.Fatalf("wrong updatedResources exchange state: %+v", item)
+	}
+}

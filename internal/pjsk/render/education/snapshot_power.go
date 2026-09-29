@@ -73,9 +73,12 @@ func (s *powerBonusState) applyAreaItems(source DataSource, areas []snapshot.Raw
 	for _, area := range areas {
 		for _, item := range area.AreaItems {
 			itemLevel := minReleasedAreaItemLevel(item.Level, releasedLevelCaps[item.AreaItemID])
-			level := source.GetAreaItemLevel(item.AreaItemID, itemLevel)
-			if level != nil {
-				s.applyAreaItemLevel(level)
+			// A level may have several master rows (JP 7.0.0 areaItemId 56);
+			// every row contributes on its own.
+			for _, level := range source.GetAreaItemLevelRows(item.AreaItemID, itemLevel) {
+				if level != nil {
+					s.applyAreaItemLevel(level)
+				}
 			}
 		}
 	}
@@ -89,6 +92,20 @@ func minReleasedAreaItemLevel(level, releasedCap int) int {
 }
 
 func (s *powerBonusState) applyAreaItemLevel(level *AreaItemLevel) {
+	// "multi_unit" rows only pay out when the deck mixes two or more units.
+	// That is a deck-composition condition, not a per-character/unit/attr
+	// bonus, so this overview (which has no deck context) leaves them out.
+	if isMultiUnitAreaItemLevel(level) {
+		return
+	}
+	// A row with no character, unit or attribute target (unit "any", attr
+	// "any", character 0) boosts every character.
+	if isAllTargetAreaItemLevel(level) {
+		for _, bonus := range s.characters {
+			bonus.AreaItem += level.Power1BonusRate
+		}
+		return
+	}
 	if bonus := s.characters[level.TargetGameCharacterID]; bonus != nil {
 		bonus.AreaItem += level.Power1BonusRate
 	}

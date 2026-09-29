@@ -8,7 +8,7 @@ type boxIndex struct {
 type areaIndex struct {
 	byID         map[int]*AreaItem
 	levelsByItem map[int][]*AreaItemLevel
-	levelByItem  map[int]map[int]*AreaItemLevel
+	levelByItem  map[int]map[int][]*AreaItemLevel
 }
 
 type bondData struct {

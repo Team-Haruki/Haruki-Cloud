@@ -33,7 +33,7 @@ type dbEducationProvider struct {
 	areaMu           sync.RWMutex
 	areaByID         map[int]*AreaItem
 	areaLevelsByItem map[int][]*AreaItemLevel
-	areaLevelByItem  map[int]map[int]*AreaItemLevel
+	areaLevelByItem  map[int]map[int][]*AreaItemLevel
 	areaMasterLoaded bool
 
 	levelMu               sync.RWMutex
@@ -77,7 +77,7 @@ func (p *dbEducationProvider) init() {
 		p.boxByPurpose = make(map[string]map[int]*ResourceBox)
 		p.areaByID = make(map[int]*AreaItem)
 		p.areaLevelsByItem = make(map[int][]*AreaItemLevel)
-		p.areaLevelByItem = make(map[int]map[int]*AreaItemLevel)
+		p.areaLevelByItem = make(map[int]map[int][]*AreaItemLevel)
 		p.rankByChar = make(map[int]map[int]*CharacterRank)
 		p.stylesByGameID = make(map[int]*GameCharacterStyle)
 		p.characterMissionsByCharacter = make(map[int][]*CharacterMission)

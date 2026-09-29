@@ -360,7 +360,7 @@ func (p *dbEducationProvider) resetLocalMasterdataCache() {
 	p.areaMu.Lock()
 	p.areaByID = make(map[int]*AreaItem)
 	p.areaLevelsByItem = make(map[int][]*AreaItemLevel)
-	p.areaLevelByItem = make(map[int]map[int]*AreaItemLevel)
+	p.areaLevelByItem = make(map[int]map[int][]*AreaItemLevel)
 	p.areaMasterLoaded = false
 	p.areaMu.Unlock()
 

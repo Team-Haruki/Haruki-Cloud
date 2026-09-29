@@ -166,8 +166,13 @@ func TestDoorUpgradeFullRequestCoverage(t *testing.T) {
 	if request.Profile != nil || len(request.GateMaterials) != 2 {
 		t.Fatalf("full request = %#v", request)
 	}
-	if request.GateMaterials[0].Level != nil || len(request.GateMaterials[0].LevelMaterials) != 2 {
+	// Levels above 40 are no longer dropped: the cap is derived from the
+	// material groups themselves (JP 7.0.0 raised it to 70).
+	if request.GateMaterials[0].Level != nil || len(request.GateMaterials[0].LevelMaterials) != 3 {
 		t.Fatalf("first gate = %#v", request.GateMaterials[0])
+	}
+	if got := request.GateMaterials[0].LevelMaterials[2].Level; got != 41 {
+		t.Fatalf("expected level 41 materials to be kept, got level %d", got)
 	}
 }
 

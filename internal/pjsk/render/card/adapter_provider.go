@@ -138,21 +138,29 @@ func (a *ProviderAdapter) GetMaxProfileMysekaiGates() []snapshot.RawUserMysekaiG
 		return nil
 	}
 
-	result := make([]snapshot.RawUserMysekaiGate, 0, 5)
-	for gateID := 1; gateID <= 5; gateID++ {
-		for level := 40; level >= 1; level-- {
-			if a.P.Education().GetMysekaiGateLevel(a.Context(), gateID, level) == nil {
-				continue
-			}
-			result = append(result, snapshot.RawUserMysekaiGate{
-				MysekaiGateID:    gateID,
-				MysekaiGateLevel: level,
-			})
-			break
+	// The gate cap is region specific (JP 7.0.0 raised it from 40 to 70), so
+	// take the highest level that exists in the region's mysekaiGateLevels
+	// rather than assuming five gates at level 40.
+	maxLevels := a.P.Education().GetMysekaiGateMaxLevels(a.Context())
+	if len(maxLevels) == 0 {
+		return nil
+	}
+	gateIDs := make([]int, 0, len(maxLevels))
+	for gateID, level := range maxLevels {
+		if gateID > 0 && level > 0 {
+			gateIDs = append(gateIDs, gateID)
 		}
 	}
-	if len(result) == 0 {
+	if len(gateIDs) == 0 {
 		return nil
+	}
+	sort.Ints(gateIDs)
+	result := make([]snapshot.RawUserMysekaiGate, 0, len(gateIDs))
+	for _, gateID := range gateIDs {
+		result = append(result, snapshot.RawUserMysekaiGate{
+			MysekaiGateID:    gateID,
+			MysekaiGateLevel: maxLevels[gateID],
+		})
 	}
 	return result
 }

@@ -22,6 +22,40 @@ func (p *dbEducationProvider) GetMysekaiGateLevel(ctx context.Context, gateID, l
 	return nil
 }
 
+func (p *dbEducationProvider) GetMysekaiGateMaxLevels(ctx context.Context) map[int]int {
+	if !p.ensureGateLevelsLoaded(ctx) {
+		return nil
+	}
+
+	p.gateMu.RLock()
+	defer p.gateMu.RUnlock()
+	return mysekaiGateMaxLevels(p.gateByID)
+}
+
+// mysekaiGateMaxLevels reduces a gate -> level -> row index to the highest
+// level present per gate. Gates with no rows are omitted.
+func mysekaiGateMaxLevels(byID map[int]map[int]*MysekaiGateLevel) map[int]int {
+	if len(byID) == 0 {
+		return nil
+	}
+	result := make(map[int]int, len(byID))
+	for gateID, levels := range byID {
+		maxLevel := 0
+		for level, row := range levels {
+			if row != nil && level > maxLevel {
+				maxLevel = level
+			}
+		}
+		if maxLevel > 0 {
+			result[gateID] = maxLevel
+		}
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
 func (p *dbEducationProvider) GetShopItemByResourceBoxID(ctx context.Context, resourceBoxID int) *ShopItem {
 	if resourceBoxID <= 0 || !p.ensureShopItemsLoaded(ctx) {
 		return nil

@@ -73,6 +73,9 @@ func (populatedEducationProvider) GetLeaderMissionRequirements(context.Context) 
 func (populatedEducationProvider) GetMysekaiGateLevel(context.Context, int, int) *provider.MysekaiGateLevel {
 	return &provider.MysekaiGateLevel{GateID: 34, Level: 35, PowerBonusRate: 0.36}
 }
+func (populatedEducationProvider) GetMysekaiGateMaxLevels(context.Context) map[int]int {
+	return map[int]int{34: 35}
+}
 func (populatedEducationProvider) GetShopItemByResourceBoxID(context.Context, int) *provider.ShopItem {
 	return &provider.ShopItem{ID: 37}
 }

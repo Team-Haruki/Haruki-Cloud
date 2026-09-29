@@ -77,6 +77,13 @@ func (p *localEducationProvider) GetMysekaiGateLevel(_ context.Context, gateID, 
 	return nil
 }
 
+func (p *localEducationProvider) GetMysekaiGateMaxLevels(_ context.Context) map[int]int {
+	if err := p.ensureGateLevels(); err != nil {
+		return nil
+	}
+	return mysekaiGateMaxLevels(p.gates.v())
+}
+
 func (p *localEducationProvider) GetShopItemByResourceBoxID(_ context.Context, resourceBoxID int) *ShopItem {
 	if resourceBoxID <= 0 {
 		return nil

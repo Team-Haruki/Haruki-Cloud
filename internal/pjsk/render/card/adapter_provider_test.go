@@ -230,6 +230,28 @@ func TestProviderAdapterBuildsMaxProfileMySekaiData(t *testing.T) {
 	}
 }
 
+func TestProviderAdapterMaxProfileGatesFollowRegionCap(t *testing.T) {
+	root := t.TempDir()
+	// JP 7.0.0: gate 1 goes to 70, gate 2 still ends at 40 in this fixture and
+	// the new shuffle gate 6 has no level rows at all.
+	rows := make([]map[string]any, 0, 110)
+	for level := 1; level <= 70; level++ {
+		rows = append(rows, map[string]any{"id": 1000 + level, "mysekaiGateId": 1, "level": level, "powerBonusRate": float64(level) / 10})
+	}
+	for level := 1; level <= 40; level++ {
+		rows = append(rows, map[string]any{"id": 2000 + level, "mysekaiGateId": 2, "level": level, "powerBonusRate": float64(level) / 10})
+	}
+	writeAdapterProviderJSON(t, filepath.Join(root, "mysekaiGateLevels.json"), rows)
+
+	adapter := NewProviderAdapter(provider.NewLocalProvider(root, renderregion.JP))
+	if got := adapter.GetMaxProfileMysekaiGates(); !reflect.DeepEqual(got, []snapshot.RawUserMysekaiGate{
+		{MysekaiGateID: 1, MysekaiGateLevel: 70},
+		{MysekaiGateID: 2, MysekaiGateLevel: 40},
+	}) {
+		t.Fatalf("unexpected max profile mysekai gates: %+v", got)
+	}
+}
+
 func writeAdapterProviderJSON(t *testing.T, path string, value any) {
 	t.Helper()
 

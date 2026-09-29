@@ -139,16 +139,16 @@ func (s *handlerTestEducationSource) GetAreaItemLevels(areaItemID int) []*educat
 	}
 	return out
 }
-func (s *handlerTestEducationSource) GetAreaItemLevel(areaItemID, level int) *education.AreaItemLevel {
+func (s *handlerTestEducationSource) GetAreaItemLevelRows(areaItemID, level int) []*education.AreaItemLevel {
 	if areaItemID != 1 || level <= 0 || level > s.maxLevel {
 		return nil
 	}
-	return &education.AreaItemLevel{
+	return []*education.AreaItemLevel{{
 		AreaItemID:      1,
 		Level:           level,
 		TargetUnit:      "light_sound",
 		Power1BonusRate: float64(level),
-	}
+	}}
 }
 func (s *handlerTestEducationSource) GetCharacterLevels() []*education.CharacterLevel {
 	return nil

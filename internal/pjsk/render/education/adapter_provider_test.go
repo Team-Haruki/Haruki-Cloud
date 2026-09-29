@@ -43,8 +43,8 @@ func (populatedEducationProvider) GetAreaItem(context.Context, int) *provider.Ar
 func (populatedEducationProvider) GetAreaItemLevels(context.Context, int) []*provider.AreaItemLevel {
 	return []*provider.AreaItemLevel{{AreaItemID: 9, Level: 1}}
 }
-func (populatedEducationProvider) GetAreaItemLevel(context.Context, int, int) *provider.AreaItemLevel {
-	return &provider.AreaItemLevel{AreaItemID: 10, Level: 2}
+func (populatedEducationProvider) GetAreaItemLevelRows(context.Context, int, int) []*provider.AreaItemLevel {
+	return []*provider.AreaItemLevel{{AreaItemID: 10, Level: 2, TargetUnit: "any"}, {AreaItemID: 10, Level: 2, TargetUnit: "multi_unit"}}
 }
 func (populatedEducationProvider) GetCharacterLevels(context.Context) []*provider.CharacterLevel {
 	return []*provider.CharacterLevel{nil, {Level: 11, TotalExp: 12}}
@@ -109,7 +109,7 @@ func assertEmptyEducationCore(t *testing.T, a *ProviderAdapter) {
 	if a.GetResourceBoxByPurpose("test", 1) != nil || len(a.GetResourceBoxesByPurpose("test")) != 0 {
 		t.Fatal("empty resource boxes returned data")
 	}
-	if len(a.GetAreaItems()) != 0 || a.GetAreaItem(1) != nil || len(a.GetAreaItemLevels(1)) != 0 || a.GetAreaItemLevel(1, 1) != nil {
+	if len(a.GetAreaItems()) != 0 || a.GetAreaItem(1) != nil || len(a.GetAreaItemLevels(1)) != 0 || len(a.GetAreaItemLevelRows(1, 1)) != 0 {
 		t.Fatal("empty area masterdata returned data")
 	}
 }
@@ -186,8 +186,11 @@ func assertPopulatedEducationCore(t *testing.T, adapter *ProviderAdapter) {
 		t.Fatal("resource box conversion failed")
 	}
 	if adapter.GetAreaItems()[0].ID != 7 || adapter.GetAreaItem(8).ID != 8 ||
-		adapter.GetAreaItemLevels(9)[0].AreaItemID != 9 || adapter.GetAreaItemLevel(10, 2).AreaItemID != 10 {
+		adapter.GetAreaItemLevels(9)[0].AreaItemID != 9 {
 		t.Fatal("area conversion failed")
+	}
+	if rows := adapter.GetAreaItemLevelRows(10, 2); len(rows) != 2 || rows[0].AreaItemID != 10 || rows[0].TargetUnit != "any" || rows[1].TargetUnit != "multi_unit" {
+		t.Fatalf("area level rows conversion failed: %+v", rows)
 	}
 }
 

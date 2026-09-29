@@ -79,7 +79,7 @@ func areaItemLevelMatchesFilter(level *AreaItemLevel, filterAttr string, filterC
 
 func (c *Controller) areaItemTargetIcon(levels []*AreaItemLevel) string {
 	for _, level := range levels {
-		if level == nil {
+		if level == nil || isMultiUnitAreaItemLevel(level) {
 			continue
 		}
 		if level.TargetGameCharacterID > 0 {
@@ -158,6 +158,43 @@ func normalizeAttr(attr string) string {
 		return ""
 	}
 	return attr
+}
+
+// areaItemTargetUnitMultiUnit is the targetUnit of area item level rows whose
+// bonus is conditional on the deck containing two or more units (JP 7.0.0
+// areaItemId 56). It is not a real unit and never maps onto one.
+const areaItemTargetUnitMultiUnit = "multi_unit"
+
+// isMultiUnitAreaItemLevel reports whether the row is a deck-composition
+// conditional bonus rather than a character/unit/attribute one.
+func isMultiUnitAreaItemLevel(level *AreaItemLevel) bool {
+	return level != nil && strings.EqualFold(strings.TrimSpace(level.TargetUnit), areaItemTargetUnitMultiUnit)
+}
+
+// isAllTargetAreaItemLevel reports whether the row targets every character
+// (unit "any", attribute "any" and no game character).
+func isAllTargetAreaItemLevel(level *AreaItemLevel) bool {
+	return level != nil &&
+		level.TargetGameCharacterID <= 0 &&
+		normalizeUnit(level.TargetUnit) == "" &&
+		normalizeAttr(level.TargetCardAttr) == ""
+}
+
+// unconditionalAreaItemLevelByLevel picks one row per level for displays
+// that show a single bonus value, preferring the first row that is not a
+// deck-conditional "multi_unit" row.
+func unconditionalAreaItemLevelByLevel(levels []*AreaItemLevel) map[int]*AreaItemLevel {
+	result := make(map[int]*AreaItemLevel, len(levels))
+	for _, level := range levels {
+		if level == nil {
+			continue
+		}
+		current, exists := result[level.Level]
+		if !exists || (isMultiUnitAreaItemLevel(current) && !isMultiUnitAreaItemLevel(level)) {
+			result[level.Level] = level
+		}
+	}
+	return result
 }
 
 func defaultBondColor() []int {

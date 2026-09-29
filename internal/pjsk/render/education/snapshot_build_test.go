@@ -43,6 +43,7 @@ type testSource struct {
 	boxes              map[string]map[int]*ResourceBox
 	areaItems          map[int]*AreaItem
 	areaLevels         map[int]map[int]*AreaItemLevel
+	areaLevelRows      map[int]map[int][]*AreaItemLevel
 	characterLevels    []*CharacterLevel
 	ranks              map[int]map[int]*CharacterRank
 	bonds              []*Bond
@@ -97,18 +98,28 @@ func (s *testSource) GetAreaItems() []*AreaItem {
 
 func (s *testSource) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
 	levels := s.areaLevels[areaItemID]
-	if len(levels) == 0 {
+	rows := s.areaLevelRows[areaItemID]
+	if len(levels) == 0 && len(rows) == 0 {
 		return nil
 	}
-	out := make([]*AreaItemLevel, 0, len(levels))
+	out := make([]*AreaItemLevel, 0, len(levels)+len(rows))
 	for _, level := range levels {
 		out = append(out, level)
+	}
+	for _, levelRows := range rows {
+		out = append(out, levelRows...)
 	}
 	return out
 }
 
-func (s *testSource) GetAreaItemLevel(areaItemID, level int) *AreaItemLevel {
-	return s.areaLevels[areaItemID][level]
+func (s *testSource) GetAreaItemLevelRows(areaItemID, level int) []*AreaItemLevel {
+	if rows := s.areaLevelRows[areaItemID][level]; len(rows) > 0 {
+		return rows
+	}
+	if row := s.areaLevels[areaItemID][level]; row != nil {
+		return []*AreaItemLevel{row}
+	}
+	return nil
 }
 
 func (s *testSource) GetCharacterLevels() []*CharacterLevel {
@@ -302,6 +313,113 @@ func TestBuildPowerBonusDetailRequestFromSnapshotCapsUnreleasedAreaItemLevel(t *
 	}
 	if got := req.CharaBonuses[0]; got.AreaItem != 2.0 || got.Total != 2.0 {
 		t.Fatalf("unexpected capped char bonus: %+v", got)
+	}
+}
+
+func TestBuildPowerBonusDetailRequestFromSnapshotAppliesEveryAreaItemLevelRow(t *testing.T) {
+	snap := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userAreas": []map[string]any{
+			{"areaItems": []map[string]any{
+				{"areaItemId": 56, "level": 3},
+				{"areaItemId": 101, "level": 1},
+			}},
+		},
+	})
+
+	controller := NewController(nil, nil, snap, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region: renderregion.JP,
+		areaLevels: map[int]map[int]*AreaItemLevel{
+			101: {1: {AreaItemID: 101, Level: 1, TargetGameCharacterID: 1, Power1BonusRate: 3.0}},
+		},
+		// JP 7.0.0 areaItemId 56: two rows per level, one all-target row and
+		// one deck-conditional "multi_unit" row.
+		areaLevelRows: map[int]map[int][]*AreaItemLevel{
+			56: {
+				3: {
+					{AreaItemID: 56, Level: 3, TargetUnit: "any", TargetCardAttr: "any", Power1BonusRate: 1.5},
+					{AreaItemID: 56, Level: 3, TargetUnit: "multi_unit", TargetCardAttr: "any", Power1BonusRate: 7.0},
+				},
+			},
+		},
+	})
+
+	req, err := controller.BuildPowerBonusDetailRequestFromSnapshot(PowerBonusQuery{Region: renderregion.JP})
+	if err != nil {
+		t.Fatalf("BuildPowerBonusDetailRequestFromSnapshot() error = %v", err)
+	}
+	if len(req.CharaBonuses) != 26 {
+		t.Fatalf("expected 26 character bonuses, got %d", len(req.CharaBonuses))
+	}
+	for _, got := range req.CharaBonuses {
+		want := 1.5
+		if got.CharaID == 1 {
+			want = 4.5
+		}
+		if !approxEqual(got.AreaItem, want) || !approxEqual(got.Total, want) {
+			t.Fatalf("character %d bonus = %+v, want area item %v", got.CharaID, got, want)
+		}
+	}
+	// The multi_unit row is a deck-level condition and must not leak into any
+	// unit or attribute column.
+	for _, got := range req.UnitBonuses {
+		if got.AreaItem != 0 {
+			t.Fatalf("unit %s picked up an area item bonus: %+v", got.Unit, got)
+		}
+	}
+	for _, got := range req.AttrBonuses {
+		if got.AreaItem != 0 {
+			t.Fatalf("attr %s picked up an area item bonus: %+v", got.Attr, got)
+		}
+	}
+}
+
+func TestAreaItemLevelRowHelpers(t *testing.T) {
+	allTarget := &AreaItemLevel{AreaItemID: 56, Level: 1, TargetUnit: "any", TargetCardAttr: "any", Power1BonusRate: 0.5}
+	multiUnit := &AreaItemLevel{AreaItemID: 56, Level: 1, TargetUnit: "multi_unit", TargetCardAttr: "any", Power1BonusRate: 1}
+	unitRow := &AreaItemLevel{AreaItemID: 1, Level: 2, TargetUnit: "light_sound", Power1BonusRate: 2}
+	charRow := &AreaItemLevel{AreaItemID: 2, Level: 2, TargetGameCharacterID: 3}
+
+	if !isMultiUnitAreaItemLevel(multiUnit) || isMultiUnitAreaItemLevel(allTarget) || isMultiUnitAreaItemLevel(unitRow) || isMultiUnitAreaItemLevel(nil) {
+		t.Fatal("isMultiUnitAreaItemLevel misclassified a row")
+	}
+	if !isAllTargetAreaItemLevel(allTarget) || isAllTargetAreaItemLevel(multiUnit) || isAllTargetAreaItemLevel(unitRow) || isAllTargetAreaItemLevel(charRow) || isAllTargetAreaItemLevel(nil) {
+		t.Fatal("isAllTargetAreaItemLevel misclassified a row")
+	}
+	// multi_unit is not a real unit and must never map onto one.
+	if got := normalizeUnit("multi_unit"); got == "" || got != "multi_unit" {
+		t.Fatalf("normalizeUnit(multi_unit) = %q", got)
+	}
+	for _, unit := range powerBonusUnitOrder {
+		if unit == normalizeUnit("multi_unit") {
+			t.Fatalf("multi_unit collides with power bonus unit %q", unit)
+		}
+	}
+
+	byLevel := unconditionalAreaItemLevelByLevel([]*AreaItemLevel{multiUnit, allTarget, nil, unitRow})
+	if byLevel[1] != allTarget {
+		t.Fatalf("level 1 picked %+v, want the all-target row", byLevel[1])
+	}
+	if byLevel[2] != unitRow {
+		t.Fatalf("level 2 picked %+v, want the unit row", byLevel[2])
+	}
+	if only := unconditionalAreaItemLevelByLevel([]*AreaItemLevel{multiUnit}); only[1] != multiUnit {
+		t.Fatalf("a level with only a multi_unit row should still be kept, got %+v", only[1])
 	}
 }
 

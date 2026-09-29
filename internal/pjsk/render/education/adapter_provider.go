@@ -66,8 +66,13 @@ func (a *ProviderAdapter) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
 	return result
 }
 
-func (a *ProviderAdapter) GetAreaItemLevel(areaItemID, level int) *AreaItemLevel {
-	return convertAreaItemLevel(a.P.Education().GetAreaItemLevel(a.Context(), areaItemID, level))
+func (a *ProviderAdapter) GetAreaItemLevelRows(areaItemID, level int) []*AreaItemLevel {
+	pvLevels := a.P.Education().GetAreaItemLevelRows(a.Context(), areaItemID, level)
+	result := make([]*AreaItemLevel, len(pvLevels))
+	for i, l := range pvLevels {
+		result[i] = convertAreaItemLevel(l)
+	}
+	return result
 }
 
 func (a *ProviderAdapter) GetCharacterLevels() []*CharacterLevel {

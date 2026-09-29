@@ -11,7 +11,7 @@ func (p *localEducationProvider) ensureAreaItems() error {
 		idx := areaIndex{
 			byID:         make(map[int]*AreaItem, len(items)),
 			levelsByItem: make(map[int][]*AreaItemLevel),
-			levelByItem:  make(map[int]map[int]*AreaItemLevel),
+			levelByItem:  make(map[int]map[int][]*AreaItemLevel),
 		}
 		for i := range items {
 			idx.byID[items[i].ID] = &items[i]
@@ -25,9 +25,9 @@ func (p *localEducationProvider) ensureAreaItems() error {
 			lv := &levels[i]
 			idx.levelsByItem[lv.AreaItemID] = append(idx.levelsByItem[lv.AreaItemID], lv)
 			if _, ok := idx.levelByItem[lv.AreaItemID]; !ok {
-				idx.levelByItem[lv.AreaItemID] = make(map[int]*AreaItemLevel)
+				idx.levelByItem[lv.AreaItemID] = make(map[int][]*AreaItemLevel)
 			}
-			idx.levelByItem[lv.AreaItemID][lv.Level] = lv
+			idx.levelByItem[lv.AreaItemID][lv.Level] = append(idx.levelByItem[lv.AreaItemID][lv.Level], lv)
 		}
 		return idx, nil
 	})
@@ -86,7 +86,7 @@ func (p *localEducationProvider) GetAreaItemLevels(_ context.Context, areaItemID
 	return cloneEdAreaItemLevels(p.areas.v().levelsByItem[areaItemID])
 }
 
-func (p *localEducationProvider) GetAreaItemLevel(_ context.Context, areaItemID, level int) *AreaItemLevel {
+func (p *localEducationProvider) GetAreaItemLevelRows(_ context.Context, areaItemID, level int) []*AreaItemLevel {
 	if areaItemID <= 0 || level <= 0 {
 		return nil
 	}
@@ -94,7 +94,7 @@ func (p *localEducationProvider) GetAreaItemLevel(_ context.Context, areaItemID,
 		return nil
 	}
 	if levels, ok := p.areas.v().levelByItem[areaItemID]; ok {
-		return cloneEdAreaItemLevel(levels[level])
+		return cloneEdAreaItemLevels(levels[level])
 	}
 	return nil
 }

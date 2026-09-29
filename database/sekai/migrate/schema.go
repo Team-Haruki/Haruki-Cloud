@@ -90,9 +90,9 @@ var (
 		PrimaryKey: []*schema.Column{AreaitemlevelsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "areaitemlevel_area_item_id_level_server_region",
+				Name:    "areaitemlevel_area_item_id_level_target_unit_server_region",
 				Unique:  true,
-				Columns: []*schema.Column{AreaitemlevelsColumns[1], AreaitemlevelsColumns[2], AreaitemlevelsColumns[13]},
+				Columns: []*schema.Column{AreaitemlevelsColumns[1], AreaitemlevelsColumns[2], AreaitemlevelsColumns[3], AreaitemlevelsColumns[13]},
 			},
 		},
 	}

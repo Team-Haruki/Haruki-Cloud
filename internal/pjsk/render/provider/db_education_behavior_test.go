@@ -121,6 +121,19 @@ func TestDBEducationProviderLoadsAndClonesAllMasterdata(t *testing.T) {
 
 	}
 	{
+		// JP 7.0.0 style: a second row on the same level that only differs
+		// by target_unit.
+		_, err := client.Areaitemlevel.Create().
+			SetAreaItemID(10).
+			SetLevel(2).
+			SetTargetUnit("multi_unit").
+			SetTargetCardAttr("any").
+			SetPower1BonusRate(9).
+			SetServerRegion(renderregion.JP.String()).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create multi_unit area item level: %v", err)
+	}
+	{
 
 		_, err := client.Characterrank.Create().
 			SetGameID(1).
@@ -333,23 +346,35 @@ func TestDBEducationProviderLoadsAndClonesAllMasterdata(t *testing.T) {
 
 	levels := education.GetAreaItemLevels(ctx, 10)
 	{
-		testutil.Require(t, !(len(levels) != 2), "area item levels = %+v", levels)
+		testutil.Require(t, !(len(levels) != 3), "area item levels = %+v", levels)
 		testutil.Require(t, !(levels[1].Level != 2), "area item levels = %+v", levels)
+		testutil.Require(t, !(levels[2].Level != 2 || levels[2].TargetUnit != "multi_unit"), "area item levels = %+v", levels)
 	}
 
 	levels[0].Power1BonusRate = -1
 	{
-		cached := education.GetAreaItemLevel(ctx, 10, 1)
+		cached := education.GetAreaItemLevelRows(ctx, 10, 1)
 		{
-			testutil.Require(t, !(cached == nil), "cached area item level = %+v", cached)
-			testutil.Require(t, !(cached.Power1BonusRate != 0.5), "cached area item level = %+v", cached)
+			testutil.Require(t, !(len(cached) != 1), "cached area item level = %+v", cached)
+			testutil.Require(t, !(cached[0].Power1BonusRate != 0.5), "cached area item level = %+v", cached)
 		}
 	}
 	{
+		// Both rows of level 2 are returned, in insertion (id) order.
+		rows := education.GetAreaItemLevelRows(ctx, 10, 2)
+		testutil.Require(t, !(len(rows) != 2), "area item level 2 rows = %+v", rows)
+		testutil.Require(t, !(rows[0].TargetUnit != "idol" || rows[0].Power1BonusRate != 1.0), "area item level 2 rows = %+v", rows)
+		testutil.Require(t, !(rows[1].TargetUnit != "multi_unit" || rows[1].Power1BonusRate != 9), "area item level 2 rows = %+v", rows)
+		rows[1].Power1BonusRate = -1
+		again := education.GetAreaItemLevelRows(ctx, 10, 2)
+		testutil.RequireArgs(t, !(again[1].Power1BonusRate != 9), "area item level rows alias the provider cache")
+	}
+	{
 		testutil.RequireArgs(t, !(education.GetAreaItemLevels(ctx, 0) != nil), "invalid or missing area-item levels should return nil")
-		testutil.RequireArgs(t, !(education.GetAreaItemLevel(ctx, 0, 1) != nil), "invalid or missing area-item levels should return nil")
-		testutil.RequireArgs(t, !(education.GetAreaItemLevel(ctx, 10, 0) != nil), "invalid or missing area-item levels should return nil")
-		testutil.RequireArgs(t, !(education.GetAreaItemLevel(ctx, 99, 1) != nil), "invalid or missing area-item levels should return nil")
+		testutil.RequireArgs(t, !(education.GetAreaItemLevelRows(ctx, 0, 1) != nil), "invalid or missing area-item levels should return nil")
+		testutil.RequireArgs(t, !(education.GetAreaItemLevelRows(ctx, 10, 0) != nil), "invalid or missing area-item levels should return nil")
+		testutil.RequireArgs(t, !(education.GetAreaItemLevelRows(ctx, 10, 3) != nil), "invalid or missing area-item levels should return nil")
+		testutil.RequireArgs(t, !(education.GetAreaItemLevelRows(ctx, 99, 1) != nil), "invalid or missing area-item levels should return nil")
 	}
 
 	rank := education.GetCharacterRank(ctx, 5, 10)

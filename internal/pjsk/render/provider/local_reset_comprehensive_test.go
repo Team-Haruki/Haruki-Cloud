@@ -216,7 +216,7 @@ func TestDatabaseProviderResetMasterdataCacheClearsAllCachesAndFallbacks(t *test
 	education.boxesLoaded = true
 	education.areaByID[1] = &AreaItem{}
 	education.areaLevelsByItem[1] = []*AreaItemLevel{{}}
-	education.areaLevelByItem[1] = map[int]*AreaItemLevel{1: {}}
+	education.areaLevelByItem[1] = map[int][]*AreaItemLevel{1: {{}}}
 	education.areaMasterLoaded = true
 	education.characterLevels = []*CharacterLevel{{}}
 	education.characterLevelsLoaded = true

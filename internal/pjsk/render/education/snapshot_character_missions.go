@@ -50,17 +50,33 @@ func (c *Controller) BuildCharacterMissionAllRequestFromSnapshot(query Character
 }
 
 func (c *Controller) RenderCharacterMissionOverview(req drawing.CharacterMissionOverviewRequest) ([]byte, error) {
-	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+	image, err := c.RenderCharacterMissionOverviewImage(req)
+	if err != nil {
+		return nil, err
 	}
-	return c.drawing.GenerateCharacterMissionOverview(&req)
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderCharacterMissionOverviewImage(req drawing.CharacterMissionOverviewRequest) (drawing.ImageResult, error) {
+	if c == nil || c.drawing == nil {
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+	}
+	return c.drawing.GenerateCharacterMissionOverviewImage(&req)
 }
 
 func (c *Controller) RenderCharacterMissionAll(req drawing.CharacterMissionAllRequest) ([]byte, error) {
-	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+	image, err := c.RenderCharacterMissionAllImage(req)
+	if err != nil {
+		return nil, err
 	}
-	return c.drawing.GenerateCharacterMissionAll(&req)
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderCharacterMissionAllImage(req drawing.CharacterMissionAllRequest) (drawing.ImageResult, error) {
+	if c == nil || c.drawing == nil {
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+	}
+	return c.drawing.GenerateCharacterMissionAllImage(&req)
 }
 
 var characterMissionBasicTypes = []string{

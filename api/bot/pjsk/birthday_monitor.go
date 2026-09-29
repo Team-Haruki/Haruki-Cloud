@@ -8,6 +8,7 @@ import (
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/onebot11"
+	pjskhandler "haruki-cloud/internal/pjsk/handler"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	"haruki-cloud/internal/pjsk/subscription"
@@ -224,30 +225,26 @@ func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 			setCommandTraceOutcome(c, "rejected", nil)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("订阅事件缺少可绘制数据")})
 		}
-		if renderApp.MySekai == nil || renderApp.ImageCache == nil {
+		if renderApp.MySekai == nil || (renderApp.ImageCache == nil && renderApp.ImageHosts.Len() == 0) {
 			finishExecute()
 			setCommandTraceOutcome(c, "error", nil)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("烤森服务未就绪，请稍后再试")})
 		}
-		data, err := renderApp.MySekai.WithContext(c.Context()).WithMySekaiData(event.FilteredPayload).RenderMap(rendermysekai.MapQuery{Region: event.Region})
+		data, err := renderApp.MySekai.WithContext(c.Context()).WithMySekaiData(event.FilteredPayload).RenderMapImage(rendermysekai.MapQuery{Region: event.Region})
 		if err != nil {
 			finishExecute()
 			setCommandTraceOutcome(c, "error", err)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
 		}
-		finishStore := commandtrace.MeasureOperation(c.Context(), "image.store")
-		url, err := renderApp.ImageCache.StoreAndGetURL(c.Context(), data, "pjsk")
-		finishStore()
+		renderContext := &pjskhandler.RequestContext{Ctx: c.Context(), App: renderApp}
+		images, err := renderContext.RenderedImageMessage(data)
 		finishExecute()
 		if err != nil {
 			setCommandTraceOutcome(c, "error", err)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
 		}
 		setCommandTraceOutcome(c, "ok", nil)
-		return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{
-			onebot11.At(event.PlatformUserID),
-			onebot11.Image(url, ""),
-		})
+		return botResponse(c, fiber.StatusOK, api.ResponseOK, append(onebot11.Message{onebot11.At(event.PlatformUserID)}, images...))
 	}
 }
 

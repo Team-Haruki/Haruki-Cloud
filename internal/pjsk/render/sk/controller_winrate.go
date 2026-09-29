@@ -15,14 +15,22 @@ func (c *Controller) BuildWinRateRequest(req drawing.WinRateRequest) (*drawing.W
 }
 
 func (c *Controller) RenderWinRate(req drawing.WinRateRequest) ([]byte, error) {
+	image, err := c.RenderWinRateImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderWinRateImage(req drawing.WinRateRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildWinRateRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateSKWinRate(payload)
+	return c.drawing.GenerateSKWinRateImage(payload)
 }

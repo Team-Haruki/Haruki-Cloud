@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
@@ -154,22 +155,22 @@ func executeGacha(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, fmt.Errorf("gacha service unavailable: sekai client not configured")
 	}
 	gachaCtrl := rc.App.Gachas.WithContext(rc.Ctx)
-	var data []byte
+	var data drawing.ImageResult
 	region := renderregion.Value(rc.Cmd.Region)
 	switch rc.Cmd.Mode {
 	case "gacha", gachaListCommand:
 		q := gacha.ListQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
-		data, err = gachaCtrl.RenderGachaList(q)
+		data, err = gachaCtrl.RenderGachaListImage(q)
 	case "gacha-detail":
 		q := gacha.DetailQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
-		data, err = gachaCtrl.RenderGachaDetail(q)
+		data, err = gachaCtrl.RenderGachaDetailImage(q)
 	default:
 		return nil, unsupportedModeError("gacha", rc.Cmd.Mode)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	return rc.RenderedImageMessage(data)
 }

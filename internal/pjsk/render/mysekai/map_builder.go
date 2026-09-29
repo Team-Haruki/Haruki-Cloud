@@ -243,25 +243,41 @@ func MapRequestHasRemainingHarvestResources(payload *drawing.MysekaiMsrMapReques
 
 // RenderMapRequest renders a map request that has already been built.
 func (c *Controller) RenderMapRequest(payload *drawing.MysekaiMsrMapRequest) ([]byte, error) {
+	image, err := c.RenderMapRequestImage(payload)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderMapRequestImage(payload *drawing.MysekaiMsrMapRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	if payload == nil {
-		return nil, fmt.Errorf("mysekai map request is nil")
+		return drawing.ImageResult{}, fmt.Errorf("mysekai map request is nil")
 	}
-	return c.drawing.GenerateMysekaiMap(payload)
+	return c.drawing.GenerateMysekaiMapImage(payload)
 }
 
 // RenderMap renders the MySekai map view.
 func (c *Controller) RenderMap(query MapQuery) ([]byte, error) {
+	image, err := c.RenderMapImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderMapImage(query MapQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildMapRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.RenderMapRequest(payload)
+	return c.RenderMapRequestImage(payload)
 }

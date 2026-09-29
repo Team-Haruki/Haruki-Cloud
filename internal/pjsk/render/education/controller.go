@@ -159,16 +159,24 @@ func (c *Controller) applyChallengeRewardIcons(request *drawing.ChallengeLiveDet
 }
 
 func (c *Controller) RenderChallengeLiveDetails(query ChallengeLiveQuery) ([]byte, error) {
+	image, err := c.RenderChallengeLiveDetailsImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderChallengeLiveDetailsImage(query ChallengeLiveQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildChallengeLiveDetailsRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateChallengeLiveDetails(payload)
+	return c.drawing.GenerateChallengeLiveDetailsImage(payload)
 }
 
 func (c *Controller) BuildPowerBonusDetailRequest(req drawing.PowerBonusDetailRequest) (*drawing.PowerBonusDetailRequest, error) {
@@ -179,16 +187,24 @@ func (c *Controller) BuildPowerBonusDetailRequest(req drawing.PowerBonusDetailRe
 }
 
 func (c *Controller) RenderPowerBonusDetail(req drawing.PowerBonusDetailRequest) ([]byte, error) {
+	image, err := c.RenderPowerBonusDetailImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderPowerBonusDetailImage(req drawing.PowerBonusDetailRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildPowerBonusDetailRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GeneratePowerBonusDetail(payload)
+	return c.drawing.GeneratePowerBonusDetailImage(payload)
 }
 
 func (c *Controller) BuildAreaItemUpgradeMaterialsRequest(req drawing.AreaItemUpgradeMaterialsRequest) (*drawing.AreaItemUpgradeMaterialsRequest, error) {
@@ -199,16 +215,24 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequest(req drawing.AreaItemUp
 }
 
 func (c *Controller) RenderAreaItemUpgradeMaterials(req drawing.AreaItemUpgradeMaterialsRequest) ([]byte, error) {
+	image, err := c.RenderAreaItemUpgradeMaterialsImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderAreaItemUpgradeMaterialsImage(req drawing.AreaItemUpgradeMaterialsRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildAreaItemUpgradeMaterialsRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateAreaItemUpgradeMaterials(payload)
+	return c.drawing.GenerateAreaItemUpgradeMaterialsImage(payload)
 }
 
 func (c *Controller) BuildBondsRequest(req drawing.BondsRequest) (*drawing.BondsRequest, error) {
@@ -219,16 +243,24 @@ func (c *Controller) BuildBondsRequest(req drawing.BondsRequest) (*drawing.Bonds
 }
 
 func (c *Controller) RenderBonds(req drawing.BondsRequest) ([]byte, error) {
+	image, err := c.RenderBondsImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderBondsImage(req drawing.BondsRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildBondsRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateBonds(payload)
+	return c.drawing.GenerateBondsImage(payload)
 }
 
 func (c *Controller) BuildLeaderCountRequest(req drawing.LeaderCountRequest) (*drawing.LeaderCountRequest, error) {
@@ -239,16 +271,24 @@ func (c *Controller) BuildLeaderCountRequest(req drawing.LeaderCountRequest) (*d
 }
 
 func (c *Controller) RenderLeaderCount(req drawing.LeaderCountRequest) ([]byte, error) {
+	image, err := c.RenderLeaderCountImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderLeaderCountImage(req drawing.LeaderCountRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildLeaderCountRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateLeaderCount(payload)
+	return c.drawing.GenerateLeaderCountImage(payload)
 }
 
 func (c *Controller) pickChallengeRewards(source DataSource, charID int, claimed map[int]struct{}) (int, int) {

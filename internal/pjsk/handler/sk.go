@@ -23,7 +23,7 @@ import (
 var skTrackerDebugLogger = logger.NewLoggerFromGlobal("SKTracker")
 
 type skExecutionResult struct {
-	image   []byte
+	image   drawing.ImageResult
 	warning string
 }
 
@@ -244,7 +244,7 @@ func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
 	if err != nil {
 		return nil, err
 	}
-	message, err = imageMessage(rc.Ctx, result.image, rc.App, BotModulePJSK)
+	message, err = rc.RenderedImageMessage(result.image)
 	if err != nil {
 		return nil, err
 	}
@@ -279,28 +279,28 @@ func executeSKMode(rc *RequestContext, skCtrl *sk.Controller) (skExecutionResult
 	}
 }
 
-func skImageResult(data []byte, err error) (skExecutionResult, error) {
+func skImageResult(data drawing.ImageResult, err error) (skExecutionResult, error) {
 	if err != nil {
 		return skExecutionResult{}, err
 	}
 	return skExecutionResult{image: data}, nil
 }
 
-func executeSKLine(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
+func executeSKLine(rc *RequestContext, skCtrl *sk.Controller) (drawing.ImageResult, error) {
 	if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
 		selfQuery := isSKSelfTrackerQuery(rc, trackerReq)
 		if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
-			return nil, err
+			return drawing.ImageResult{}, err
 		}
 		payload, err := skCtrl.BuildLineRequestFromTracker(trackerReq)
 		if err != nil {
-			return nil, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
+			return drawing.ImageResult{}, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
 		}
-		return skCtrl.RenderLine(*payload)
+		return skCtrl.RenderLineImage(*payload)
 	}
 	req := sk.LineRequest{}
 	mergeParams(rc.Cmd.Params, &req)
-	return skCtrl.RenderLine(req)
+	return skCtrl.RenderLineImage(req)
 }
 
 func executeSKQuery(rc *RequestContext, skCtrl *sk.Controller) (skExecutionResult, error) {
@@ -313,7 +313,7 @@ func executeSKQuery(rc *RequestContext, skCtrl *sk.Controller) (skExecutionResul
 		if err != nil {
 			return skExecutionResult{}, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
 		}
-		data, err := skCtrl.RenderQuery(*payload)
+		data, err := skCtrl.RenderQueryImage(*payload)
 		if err != nil {
 			return skExecutionResult{}, err
 		}
@@ -325,7 +325,7 @@ func executeSKQuery(rc *RequestContext, skCtrl *sk.Controller) (skExecutionResul
 	}
 	req := drawing.SKRequest{}
 	mergeParams(rc.Cmd.Params, &req)
-	return skImageResult(skCtrl.RenderQuery(req))
+	return skImageResult(skCtrl.RenderQueryImage(req))
 }
 
 func executeSKCheckRoom(rc *RequestContext, skCtrl *sk.Controller) (skExecutionResult, error) {
@@ -338,7 +338,7 @@ func executeSKCheckRoom(rc *RequestContext, skCtrl *sk.Controller) (skExecutionR
 		if err != nil {
 			return skExecutionResult{}, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
 		}
-		data, err := skCtrl.RenderCheckRoom(*payload)
+		data, err := skCtrl.RenderCheckRoomImage(*payload)
 		if err != nil {
 			return skExecutionResult{}, err
 		}
@@ -350,7 +350,7 @@ func executeSKCheckRoom(rc *RequestContext, skCtrl *sk.Controller) (skExecutionR
 	}
 	req := drawing.CFRequest{}
 	mergeParams(rc.Cmd.Params, &req)
-	return skImageResult(skCtrl.RenderCheckRoom(req))
+	return skImageResult(skCtrl.RenderCheckRoomImage(req))
 }
 
 func executeSKCSB(rc *RequestContext, skCtrl *sk.Controller) (skExecutionResult, error) {
@@ -363,7 +363,7 @@ func executeSKCSB(rc *RequestContext, skCtrl *sk.Controller) (skExecutionResult,
 		if err != nil {
 			return skExecutionResult{}, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
 		}
-		data, err := skCtrl.RenderCSB(*payload)
+		data, err := skCtrl.RenderCSBImage(*payload)
 		if err != nil {
 			return skExecutionResult{}, err
 		}
@@ -375,26 +375,26 @@ func executeSKCSB(rc *RequestContext, skCtrl *sk.Controller) (skExecutionResult,
 	}
 	req := drawing.CSBRequest{}
 	mergeParams(rc.Cmd.Params, &req)
-	return skImageResult(skCtrl.RenderCSB(req))
+	return skImageResult(skCtrl.RenderCSBImage(req))
 }
 
-func executeSKSpeed(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
+func executeSKSpeed(rc *RequestContext, skCtrl *sk.Controller) (drawing.ImageResult, error) {
 	if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
 		if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
-			return nil, err
+			return drawing.ImageResult{}, err
 		}
 		payload, err := skCtrl.BuildSpeedRequestFromTracker(trackerReq)
 		if err != nil {
-			return nil, err
+			return drawing.ImageResult{}, err
 		}
-		return skCtrl.RenderSpeed(*payload)
+		return skCtrl.RenderSpeedImage(*payload)
 	}
 	req := drawing.SpeedRequest{}
 	mergeParams(rc.Cmd.Params, &req)
-	return skCtrl.RenderSpeed(req)
+	return skCtrl.RenderSpeedImage(req)
 }
 
-func executeSKPlayerTrace(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
+func executeSKPlayerTrace(rc *RequestContext, skCtrl *sk.Controller) (drawing.ImageResult, error) {
 	trackerReq, ok := trackerRankQueryFromParams(rc.Cmd)
 	if !ok {
 		trackerReq = sk.TrackerRankQuery{Region: rc.Cmd.Region}
@@ -404,13 +404,13 @@ func executeSKPlayerTrace(rc *RequestContext, skCtrl *sk.Controller) ([]byte, er
 	}
 	selfQuery := isSKSelfTrackerQuery(rc, trackerReq)
 	if err := resolveTrackerCharacterSelection(rc.Ctx, rc.App, &trackerReq); err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	hasExplicitTarget := strings.TrimSpace(trackerReq.TargetUserID) != ""
 	if trackerReq.UserID == nil {
 		targetErr := resolveTrackerTargetUser(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID)
 		if targetErr != nil && hasExplicitTarget {
-			return nil, targetErr
+			return drawing.ImageResult{}, targetErr
 		}
 		if trackerReq.UserID == nil && len(trackerReq.Ranks) == 0 && !hasExplicitTarget {
 			if uid := resolveRequesterGameUID(rc); uid > 0 {
@@ -421,37 +421,37 @@ func executeSKPlayerTrace(rc *RequestContext, skCtrl *sk.Controller) ([]byte, er
 	if trackerReq.UserID != nil || len(trackerReq.Ranks) > 0 {
 		payload, err := skCtrl.BuildPlayerTraceFromTracker(trackerReq)
 		if err != nil {
-			return nil, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
+			return drawing.ImageResult{}, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
 		}
-		data, err := skCtrl.RenderPlayerTrace(*payload)
+		data, err := skCtrl.RenderPlayerTraceImage(*payload)
 		if err != nil {
-			return nil, normalizeSKPlayerTraceDrawingError(err)
+			return drawing.ImageResult{}, normalizeSKPlayerTraceDrawingError(err)
 		}
 		return data, nil
 	}
 	req := drawing.PlayerTraceRequest{}
 	mergeParams(rc.Cmd.Params, &req)
-	data, err := skCtrl.RenderPlayerTrace(req)
+	data, err := skCtrl.RenderPlayerTraceImage(req)
 	if err != nil {
-		return nil, normalizeSKPlayerTraceDrawingError(err)
+		return drawing.ImageResult{}, normalizeSKPlayerTraceDrawingError(err)
 	}
 	return data, nil
 }
 
-func executeSKRankTrace(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
+func executeSKRankTrace(rc *RequestContext, skCtrl *sk.Controller) (drawing.ImageResult, error) {
 	if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
 		if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
-			return nil, err
+			return drawing.ImageResult{}, err
 		}
 		payload, err := skCtrl.BuildRankTraceRequestFromTracker(trackerReq)
 		if err != nil {
-			return nil, err
+			return drawing.ImageResult{}, err
 		}
-		return skCtrl.RenderRankTrace(*payload)
+		return skCtrl.RenderRankTraceImage(*payload)
 	}
 	req := drawing.RankTraceRequest{}
 	mergeParams(rc.Cmd.Params, &req)
-	return skCtrl.RenderRankTrace(req)
+	return skCtrl.RenderRankTraceImage(req)
 }
 
 func isSKSelfTrackerQuery(rc *RequestContext, req sk.TrackerRankQuery) bool {
@@ -481,22 +481,22 @@ func normalizeSKSelfRankingNotFoundError(selfQuery bool, region string, err erro
 	)
 }
 
-func executeSKPredict(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
+func executeSKPredict(rc *RequestContext, skCtrl *sk.Controller) (drawing.ImageResult, error) {
 	if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
 		if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
-			return nil, err
+			return drawing.ImageResult{}, err
 		}
-		return skCtrl.RenderPredictLineFromTracker(trackerReq)
+		return skCtrl.RenderPredictLineFromTrackerImage(trackerReq)
 	}
 	req := sk.LineRequest{}
 	mergeParams(rc.Cmd.Params, &req)
-	return skCtrl.RenderLine(req)
+	return skCtrl.RenderLineImage(req)
 }
 
-func executeSKWinRate(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
+func executeSKWinRate(rc *RequestContext, skCtrl *sk.Controller) (drawing.ImageResult, error) {
 	req := drawing.WinRateRequest{}
 	mergeParams(rc.Cmd.Params, &req)
-	return skCtrl.RenderWinRate(req)
+	return skCtrl.RenderWinRateImage(req)
 }
 
 func trackerRankQueryFromParams(r *CommandRequest) (sk.TrackerRankQuery, bool) {

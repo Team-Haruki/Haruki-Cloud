@@ -35,16 +35,24 @@ func (c *Controller) BuildQueryRequest(req drawing.SKRequest) (*drawing.SKReques
 }
 
 func (c *Controller) RenderQuery(req drawing.SKRequest) ([]byte, error) {
+	image, err := c.RenderQueryImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderQueryImage(req drawing.SKRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildQueryRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateSKQuery(payload)
+	return c.drawing.GenerateSKQueryImage(payload)
 }
 
 func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawing.SKRequest, error) {
@@ -306,16 +314,24 @@ func (c *Controller) populateCheckRoomAdjacentRanks(payload *drawing.CFRequest, 
 }
 
 func (c *Controller) RenderCheckRoom(req drawing.CFRequest) ([]byte, error) {
+	image, err := c.RenderCheckRoomImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderCheckRoomImage(req drawing.CFRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildCheckRoomRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateSKCheckRoom(payload)
+	return c.drawing.GenerateSKCheckRoomImage(payload)
 }
 
 func (c *Controller) BuildCSBRequest(req drawing.CSBRequest) (*drawing.CSBRequest, error) {
@@ -407,16 +423,24 @@ func (c *Controller) resolveCSBRankTrace(query TrackerRankQuery) ([]drawing.Rank
 }
 
 func (c *Controller) RenderCSB(req drawing.CSBRequest) ([]byte, error) {
+	image, err := c.RenderCSBImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderCSBImage(req drawing.CSBRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildCSBRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateSKCSB(payload)
+	return c.drawing.GenerateSKCSBImage(payload)
 }
 
 func validateSKCheckRoomSupportedRanks(ranks []drawing.RankInfo) error {

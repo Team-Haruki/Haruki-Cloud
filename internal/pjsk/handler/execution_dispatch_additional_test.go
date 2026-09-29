@@ -14,6 +14,7 @@ import (
 	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -211,11 +212,15 @@ func TestSKModeDispatchWithoutExternalServices(t *testing.T) {
 		t.Fatalf("unsupported SK mode error = %v", err)
 	}
 
-	if result, err := skImageResult([]byte("image"), nil); err != nil || string(result.image) != "image" {
-		t.Fatalf("skImageResult success = %+v, %v", result, err)
+	result, err := skImageResult(drawing.ImageBytes([]byte("image")), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if data, err := result.image.Bytes(t.Context()); err != nil || string(data) != "image" {
+		t.Fatalf("skImageResult success = %q, %v", data, err)
 	}
 	wantErr := errors.New("failed")
-	if _, err := skImageResult(nil, wantErr); err != wantErr {
+	if _, err := skImageResult(drawing.ImageResult{}, wantErr); err != wantErr {
 		t.Fatalf("skImageResult error = %v", err)
 	}
 

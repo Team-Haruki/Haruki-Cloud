@@ -194,18 +194,26 @@ func (c *Controller) applyForecastWorldBloomFields(line *LineRequest, req Tracke
 }
 
 func (c *Controller) RenderPredictLineFromTracker(req TrackerRankQuery) ([]byte, error) {
-	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
-	}
-	return c.renderPredictLineFromTracker(req)
-}
-
-func (c *Controller) renderPredictLineFromTracker(req TrackerRankQuery) ([]byte, error) {
-	payload, err := c.BuildPredictLineRequestFromTracker(req)
+	image, err := c.RenderPredictLineFromTrackerImage(req)
 	if err != nil {
 		return nil, err
 	}
-	return c.RenderLine(*payload)
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderPredictLineFromTrackerImage(req TrackerRankQuery) (drawing.ImageResult, error) {
+	if c == nil || c.drawing == nil {
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+	}
+	return c.renderPredictLineFromTrackerImage(req)
+}
+
+func (c *Controller) renderPredictLineFromTrackerImage(req TrackerRankQuery) (drawing.ImageResult, error) {
+	payload, err := c.BuildPredictLineRequestFromTracker(req)
+	if err != nil {
+		return drawing.ImageResult{}, err
+	}
+	return c.RenderLineImage(*payload)
 }
 
 func buildForecastQuery(req TrackerRankQuery) ForecastQuery {

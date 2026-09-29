@@ -344,7 +344,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		if renderErr != nil {
 			return nil, renderErr
 		}
-		return rc.ImageMessage(data)
+		return rc.RenderedImageMessage(data)
 	}
 
 	binding, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
@@ -368,27 +368,27 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 	if err != nil {
 		return nil, err
 	}
-	return rc.ImageMessage(data)
+	return rc.RenderedImageMessage(data)
 }
 
-func renderFullEducationArea(rc *RequestContext, controller *education.Controller) ([]byte, bool, error) {
+func renderFullEducationArea(rc *RequestContext, controller *education.Controller) (drawing.ImageResult, bool, error) {
 	if rc.Cmd.Mode != educationAreaCommand {
-		return nil, false, nil
+		return drawing.ImageResult{}, false, nil
 	}
 	query := education.AreaItemQuery{Region: rc.Region}
 	mergeParams(rc.Cmd.Params, &query)
 	setDefaultEducationRegion(&query.Region, rc.Region)
 	if !query.ShowFull {
-		return nil, false, nil
+		return drawing.ImageResult{}, false, nil
 	}
 	if err := resolveEducationAreaQueryCharacter(rc, &query); err != nil {
-		return nil, true, err
+		return drawing.ImageResult{}, true, err
 	}
 	request, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(query)
 	if err != nil {
-		return nil, true, normalizeEducationAreaError(err)
+		return drawing.ImageResult{}, true, normalizeEducationAreaError(err)
 	}
-	data, err := controller.RenderAreaItemUpgradeMaterials(*request)
+	data, err := controller.RenderAreaItemUpgradeMaterialsImage(*request)
 	return data, true, err
 }
 
@@ -403,7 +403,7 @@ type educationExecution struct {
 	hasMySekaiData bool
 }
 
-func (e *educationExecution) render() ([]byte, error) {
+func (e *educationExecution) render() (drawing.ImageResult, error) {
 	switch e.rc.Cmd.Mode {
 	case "education-challenge":
 		return e.renderChallenge()
@@ -418,25 +418,25 @@ func (e *educationExecution) render() ([]byte, error) {
 	case educationAreaCommand:
 		return e.renderArea()
 	default:
-		return nil, unsupportedModeError("education", e.rc.Cmd.Mode)
+		return drawing.ImageResult{}, unsupportedModeError("education", e.rc.Cmd.Mode)
 	}
 }
 
-func (e *educationExecution) renderChallenge() ([]byte, error) {
+func (e *educationExecution) renderChallenge() (drawing.ImageResult, error) {
 	query := education.ChallengeLiveQuery{Region: e.rc.Region}
 	mergeParams(e.rc.Cmd.Params, &query)
 	setDefaultEducationRegion(&query.Region, e.rc.Region)
 	query.Profile = e.profile
 	query.Snapshot = e.snapshot
-	return e.controller.RenderChallengeLiveDetails(query)
+	return e.controller.RenderChallengeLiveDetailsImage(query)
 }
 
-func (e *educationExecution) renderBonds() ([]byte, error) {
+func (e *educationExecution) renderBonds() (drawing.ImageResult, error) {
 	query := education.BondsQuery{Region: e.rc.Region}
 	mergeParams(e.rc.Cmd.Params, &query)
 	setDefaultEducationRegion(&query.Region, e.rc.Region)
 	if err := resolveEducationBondsQueryCharacter(e.rc, &query); err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	request := drawing.BondsRequest{}
 	mergeParams(e.rc.Cmd.Params, &request)
@@ -447,10 +447,10 @@ func (e *educationExecution) renderBonds() ([]byte, error) {
 			request = *built
 		}
 	}
-	return e.controller.RenderBonds(request)
+	return e.controller.RenderBondsImage(request)
 }
 
-func (e *educationExecution) renderLeader() ([]byte, error) {
+func (e *educationExecution) renderLeader() (drawing.ImageResult, error) {
 	request := drawing.LeaderCountRequest{}
 	mergeParams(e.rc.Cmd.Params, &request)
 	if len(request.LeaderCounts) == 0 && e.snapshot != nil {
@@ -463,44 +463,44 @@ func (e *educationExecution) renderLeader() ([]byte, error) {
 		case err == nil:
 			request = *built
 		case errors.Is(err, cachefill.ErrUnavailable):
-			return nil, err
+			return drawing.ImageResult{}, err
 		}
 	}
-	return e.controller.RenderLeaderCount(request)
+	return e.controller.RenderLeaderCountImage(request)
 }
 
-func (e *educationExecution) renderCharacterMission() ([]byte, error) {
+func (e *educationExecution) renderCharacterMission() (drawing.ImageResult, error) {
 	query := education.CharacterMissionQuery{Region: e.rc.Region}
 	mergeParams(e.rc.Cmd.Params, &query)
 	setDefaultEducationRegion(&query.Region, e.rc.Region)
 	if err := resolveEducationMissionQueryCharacter(e.rc, &query); err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	query.Profile = e.profile
 	query.Snapshot = e.snapshot
 	if query.ShowAll {
 		request, err := e.controller.BuildCharacterMissionAllRequestFromSnapshot(query)
 		if err != nil {
-			return nil, err
+			return drawing.ImageResult{}, err
 		}
-		return e.controller.RenderCharacterMissionAll(*request)
+		return e.controller.RenderCharacterMissionAllImage(*request)
 	}
 	request, err := e.controller.BuildCharacterMissionOverviewRequestFromSnapshot(query)
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return e.controller.RenderCharacterMissionOverview(*request)
+	return e.controller.RenderCharacterMissionOverviewImage(*request)
 }
 
-func (e *educationExecution) renderPower() ([]byte, error) {
+func (e *educationExecution) renderPower() (drawing.ImageResult, error) {
 	request := drawing.PowerBonusDetailRequest{}
 	mergeParams(e.rc.Cmd.Params, &request)
 	if powerRequestPopulated(request) {
-		return e.controller.RenderPowerBonusDetail(request)
+		return e.controller.RenderPowerBonusDetailImage(request)
 	}
 	snap := e.powerSnapshot()
 	if snap == nil {
-		return e.controller.RenderPowerBonusDetail(request)
+		return e.controller.RenderPowerBonusDetailImage(request)
 	}
 	built, err := e.controller.BuildPowerBonusDetailRequestFromSnapshot(education.PowerBonusQuery{
 		Region:   e.rc.Region,
@@ -508,9 +508,9 @@ func (e *educationExecution) renderPower() ([]byte, error) {
 		Snapshot: snap,
 	})
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return e.controller.RenderPowerBonusDetail(*built)
+	return e.controller.RenderPowerBonusDetailImage(*built)
 }
 
 func powerRequestPopulated(request drawing.PowerBonusDetailRequest) bool {
@@ -528,23 +528,23 @@ func (e *educationExecution) powerSnapshot() snapshot.Snapshot {
 	return e.snapshot
 }
 
-func (e *educationExecution) renderArea() ([]byte, error) {
+func (e *educationExecution) renderArea() (drawing.ImageResult, error) {
 	query := education.AreaItemQuery{Region: e.rc.Region}
 	mergeParams(e.rc.Cmd.Params, &query)
 	setDefaultEducationRegion(&query.Region, e.rc.Region)
 	if err := resolveEducationAreaQueryCharacter(e.rc, &query); err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	query.Profile = e.profile
 	if e.snapshot == nil {
-		return e.controller.RenderAreaItemUpgradeMaterials(drawing.AreaItemUpgradeMaterialsRequest{})
+		return e.controller.RenderAreaItemUpgradeMaterialsImage(drawing.AreaItemUpgradeMaterialsRequest{})
 	}
 	query.Snapshot = e.snapshot
 	request, err := e.controller.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query)
 	if err != nil {
-		return nil, normalizeEducationAreaError(err)
+		return drawing.ImageResult{}, normalizeEducationAreaError(err)
 	}
-	return e.controller.RenderAreaItemUpgradeMaterials(*request)
+	return e.controller.RenderAreaItemUpgradeMaterialsImage(*request)
 }
 
 func setDefaultEducationRegion(region *renderregion.Value, fallback renderregion.Value) {

@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/internal/core/urlhost"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
 
@@ -310,23 +311,45 @@ func newArtifactFetcher(objects storage.Store, hosts *urlhost.Set, timeout time.
 	}
 }
 
+type artifactFetchResult struct {
+	data       []byte
+	err        error
+	operations []commandtrace.Stats
+}
+
 func (f *artifactFetcher) fetch(ctx context.Context, ref *ArtifactRef) ([]byte, error) {
+	finish := commandtrace.MeasureOperation(ctx, "drawing.artifact_fetch")
+	defer finish()
 	if f == nil || ref == nil {
+		commandtrace.RecordOperation(ctx, "drawing.artifact_fetch_error", 0)
 		return nil, ErrArtifactBytesUnavailable
+	}
+	if err := ctx.Err(); err != nil {
+		commandtrace.RecordOperation(ctx, "drawing.artifact_fetch_canceled", 0)
+		return nil, err
 	}
 	result := f.flight.DoChan(ref.Hash+"|"+ref.CDNPath, func() (any, error) {
 		flightCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), f.timeout)
 		defer cancel()
-		return f.fetchOnce(flightCtx, ref)
+		flightCtx, trace := commandtrace.WithNewTrace(flightCtx)
+		data, err := f.fetchOnce(flightCtx, ref)
+		return artifactFetchResult{data: data, err: err, operations: trace.Snapshot().Operations}, nil
 	})
 	select {
 	case completed := <-result:
 		if completed.Err != nil {
+			commandtrace.RecordOperation(ctx, "drawing.artifact_fetch_error", 0)
 			return nil, completed.Err
 		}
-		data, _ := completed.Val.([]byte)
-		return cloneRenderBytes(data), nil
+		fetched := completed.Val.(artifactFetchResult)
+		commandtrace.MergeOperations(ctx, fetched.operations)
+		if fetched.err != nil {
+			commandtrace.RecordOperation(ctx, "drawing.artifact_fetch_error", 0)
+			return nil, fetched.err
+		}
+		return cloneRenderBytes(fetched.data), nil
 	case <-ctx.Done():
+		commandtrace.RecordOperation(ctx, "drawing.artifact_fetch_canceled", 0)
 		return nil, ctx.Err()
 	}
 }
@@ -334,7 +357,9 @@ func (f *artifactFetcher) fetch(ctx context.Context, ref *ArtifactRef) ([]byte, 
 func (f *artifactFetcher) fetchOnce(ctx context.Context, ref *ArtifactRef) ([]byte, error) {
 	var storeErr error
 	if f.objects != nil {
+		finishStore := commandtrace.MeasureOperation(ctx, "drawing.artifact_store")
 		data, err := f.objects.Get(ctx, storage.Key(ref.CDNPath))
+		finishStore()
 		if err == nil && len(data) <= drawingMaxResponseBytes {
 			return data, nil
 		}
@@ -342,11 +367,15 @@ func (f *artifactFetcher) fetchOnce(ctx context.Context, ref *ArtifactRef) ([]by
 			err = fmt.Errorf("artifact exceeds %d bytes", drawingMaxResponseBytes)
 		}
 		storeErr = err
+		commandtrace.RecordOperation(ctx, "drawing.artifact_store_error", 0)
 		f.logger.DebugContext(ctx, "artifact store read failed, trying public hosts",
 			"cdn_path", ref.CDNPath, "error", err)
 	}
 	if f.hosts.Len() == 0 {
 		return nil, unavailableArtifact(storeErr)
+	}
+	if storeErr != nil {
+		commandtrace.RecordOperation(ctx, "drawing.artifact_public_fallback", 0)
 	}
 	prefer := ref.NodeName
 	var lastErr error
@@ -357,6 +386,7 @@ func (f *artifactFetcher) fetchOnce(ctx context.Context, ref *ArtifactRef) ([]by
 			return data, nil
 		}
 		lastErr = err
+		commandtrace.RecordOperation(ctx, "drawing.artifact_public_error", 0)
 		if transportErr {
 			f.hosts.MarkFailure(hostNameFor(f.hosts, base))
 		}
@@ -379,6 +409,8 @@ func unavailableArtifact(cause error) error {
 // reach the host (the only case that puts it into cooldown); a non-200 answer
 // such as a 404 inside the replication window is not a host fault.
 func (f *artifactFetcher) fetchHost(ctx context.Context, base, cdnPath string) (data []byte, transportErr bool, err error) {
+	finish := commandtrace.MeasureOperation(ctx, "drawing.artifact_public")
+	defer finish()
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, base+"/"+escapeCDNPath(cdnPath), nil)
 	if err != nil {
 		return nil, false, err

@@ -28,9 +28,9 @@ func executeMysekaiHousingSK(rc *RequestContext, region string) (onebot11.Messag
 	if err != nil {
 		return nil, err
 	}
-	lineImage, err := controller.RenderHousingCompetitionLine(result)
+	lineImage, err := controller.RenderHousingCompetitionLineImage(result)
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(rc.Ctx, lineImage, rc.App, BotModulePJSK)
+	return rc.RenderedImageMessage(lineImage)
 }

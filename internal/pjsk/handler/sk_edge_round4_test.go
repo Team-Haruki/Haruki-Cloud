@@ -163,8 +163,8 @@ func TestSKRound4TrackerSuccessBranches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("executeSKMode(%s): %v", tc.mode, err)
 			}
-			if len(result.image) == 0 {
-				t.Fatalf("executeSKMode(%s) returned no image", tc.mode)
+			if data, err := result.image.Bytes(t.Context()); err != nil || len(data) == 0 {
+				t.Fatalf("executeSKMode(%s) returned no image: %v", tc.mode, err)
 			}
 		})
 	}
@@ -186,8 +186,11 @@ func TestSKRound4PlayerTraceFallbackAndWarning(t *testing.T) {
 		Cmd: &CommandRequest{Mode: "sk-player-trace", Region: "jp", Params: raw},
 		App: app,
 	}
-	data, err := executeSKPlayerTrace(rc, app.SK)
-	if err != nil || len(data) == 0 {
+	image, err := executeSKPlayerTrace(rc, app.SK)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if data, err := image.Bytes(t.Context()); err != nil || len(data) == 0 {
 		t.Fatalf("fallback player trace = %q, %v", data, err)
 	}
 

@@ -365,16 +365,24 @@ func (c *Controller) buildOverrideCost(source DataSource, live *Live) *drawing.V
 
 // RenderDetail renders the solo virtual live detail view.
 func (c *Controller) RenderDetail(query DetailQuery) ([]byte, error) {
+	image, err := c.RenderDetailImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderDetailImage(query DetailQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildDetailRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateVLiveDetail(req)
+	return c.drawing.GenerateVLiveDetailImage(req)
 }
 
 // nonNilRewards keeps a required reward list a JSON array.

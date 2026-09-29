@@ -78,7 +78,7 @@ func TestSKHandlerFactoriesAndTrackerExecutionBranches(t *testing.T) {
 	}
 	{
 
-		_, err := skImageResult(nil, errors.New("boom"))
+		_, err := skImageResult(drawing.ImageResult{}, errors.New("boom"))
 		testutil.RequireArgs(t, !(err == nil), "skImageResult dropped error")
 	}
 

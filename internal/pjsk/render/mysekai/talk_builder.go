@@ -439,14 +439,22 @@ func sortSingleTalkFixtures(items []drawing.MysekaiTalkFixtures) {
 
 // RenderTalkList renders the MySekai talk list view.
 func (c *Controller) RenderTalkList(query TalkListQuery) ([]byte, error) {
+	image, err := c.RenderTalkListImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderTalkListImage(query TalkListQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildTalkListRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateMysekaiTalkList(payload)
+	return c.drawing.GenerateMysekaiTalkListImage(payload)
 }

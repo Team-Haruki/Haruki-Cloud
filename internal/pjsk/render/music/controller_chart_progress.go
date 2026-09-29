@@ -39,14 +39,22 @@ func (c *Controller) BuildMusicChartRequest(query ChartQuery) (*drawing.Generate
 }
 
 func (c *Controller) RenderMusicChart(query ChartQuery) ([]byte, error) {
-	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
-	}
-	payload, err := c.BuildMusicChartRequest(query)
+	image, err := c.RenderMusicChartImage(query)
 	if err != nil {
 		return nil, err
 	}
-	return c.RenderMusicChartRequest(payload)
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderMusicChartImage(query ChartQuery) (drawing.ImageResult, error) {
+	if c == nil || c.drawing == nil {
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildMusicChartRequest(query)
+	if err != nil {
+		return drawing.ImageResult{}, err
+	}
+	return c.RenderMusicChartRequestImage(payload)
 }
 
 func (c *Controller) RenderMusicChartRequest(payload *drawing.GenerateMusicChartRequest) ([]byte, error) {
@@ -95,16 +103,24 @@ func (c *Controller) BuildMusicProgressRequest(query ProgressQuery) (*drawing.Pl
 }
 
 func (c *Controller) RenderMusicProgress(query ProgressQuery) ([]byte, error) {
+	image, err := c.RenderMusicProgressImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderMusicProgressImage(query ProgressQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicProgressRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GeneratePlayProgress(payload)
+	return c.drawing.GeneratePlayProgressImage(payload)
 }
 
 func (c *Controller) BuildMusicProgressRequestFromSnapshot(query ProgressQuery, snapshot snapshot.Snapshot, fallbackProfile *drawing.ProfileCardRequest) (*drawing.PlayProgressRequest, error) {

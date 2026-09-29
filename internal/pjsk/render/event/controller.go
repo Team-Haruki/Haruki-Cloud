@@ -61,16 +61,24 @@ func (c *Controller) BuildEventDetailRequest(query DetailQuery) (*drawing.EventD
 }
 
 func (c *Controller) RenderEventDetail(query DetailQuery) ([]byte, error) {
+	image, err := c.RenderEventDetailImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderEventDetailImage(query DetailQuery) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	req, err := c.BuildEventDetailRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateEventDetail(req)
+	return c.drawing.GenerateEventDetailImage(req)
 }
 
 func (c *Controller) BuildEventListRequest(query ListQuery) (*drawing.EventListRequest, error) {
@@ -83,16 +91,24 @@ func (c *Controller) BuildEventListRequest(query ListQuery) (*drawing.EventListR
 }
 
 func (c *Controller) RenderEventList(query ListQuery) ([]byte, error) {
+	image, err := c.RenderEventListImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderEventListImage(query ListQuery) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	req, err := c.BuildEventListRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateEventList(req)
+	return c.drawing.GenerateEventListImage(req)
 }
 
 func (c *Controller) BuildEventRecordRequest(req drawing.EventRecordRequest) (*drawing.EventRecordRequest, error) {
@@ -112,16 +128,24 @@ func (c *Controller) BuildEventRecordRequest(req drawing.EventRecordRequest) (*d
 }
 
 func (c *Controller) RenderEventRecord(req drawing.EventRecordRequest) ([]byte, error) {
+	image, err := c.RenderEventRecordImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderEventRecordImage(req drawing.EventRecordRequest) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildEventRecordRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateEventRecord(payload)
+	return c.drawing.GenerateEventRecordImage(payload)
 }
 
 func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSource, error) {

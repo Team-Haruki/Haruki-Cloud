@@ -33,14 +33,14 @@ func executeVLive(rc *RequestContext) (onebot11.Message, error) {
 		TimeZone: timeZone,
 	}
 	mergeParams(rc.Cmd.Params, &query)
-	data, err := rc.App.VLive.WithContext(rc.Ctx).RenderList(query)
+	data, err := rc.App.VLive.WithContext(rc.Ctx).RenderListImage(query)
 	if err != nil {
 		if errors.Is(err, vlive.ErrNoLives) {
 			return onebot11.Message{onebot11.Text("当前没有虚拟Live")}, nil
 		}
 		return nil, err
 	}
-	return rc.ImageMessage(data)
+	return rc.RenderedImageMessage(data)
 }
 
 func executeVLiveDetail(rc *RequestContext, timeZone string) (onebot11.Message, error) {
@@ -49,7 +49,7 @@ func executeVLiveDetail(rc *RequestContext, timeZone string) (onebot11.Message, 
 		TimeZone: timeZone,
 		Query:    strings.TrimSpace(rc.Cmd.Query),
 	}
-	data, err := rc.App.VLive.WithContext(rc.Ctx).RenderDetail(query)
+	data, err := rc.App.VLive.WithContext(rc.Ctx).RenderDetailImage(query)
 	switch {
 	case errors.Is(err, vlive.ErrNoSoloLives):
 		return onebot11.Message{onebot11.Text("该区服暂无个人虚拟Live")}, nil
@@ -58,5 +58,5 @@ func executeVLiveDetail(rc *RequestContext, timeZone string) (onebot11.Message, 
 	case err != nil:
 		return nil, err
 	}
-	return rc.ImageMessage(data)
+	return rc.RenderedImageMessage(data)
 }

@@ -182,16 +182,24 @@ func (c *Controller) BuildRecommendRequest(req drawing.DeckRequest) (*drawing.De
 }
 
 func (c *Controller) RenderRecommend(req drawing.DeckRequest) ([]byte, error) {
+	image, err := c.RenderRecommendImage(req)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderRecommendImage(req drawing.DeckRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildRecommendRequest(req)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateDeckRecommendation(payload)
+	return c.drawing.GenerateDeckRecommendationImage(payload)
 }
 
 func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRequest, error) {
@@ -223,14 +231,22 @@ func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRe
 }
 
 func (c *Controller) RenderAutoRecommend(query AutoQuery) ([]byte, error) {
-	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
-	}
-	payload, err := c.BuildAutoRecommendRequest(query)
+	image, err := c.RenderAutoRecommendImage(query)
 	if err != nil {
 		return nil, err
 	}
-	return c.drawing.GenerateDeckRecommendation(payload)
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderAutoRecommendImage(query AutoQuery) (drawing.ImageResult, error) {
+	if c == nil || c.drawing == nil {
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildAutoRecommendRequest(query)
+	if err != nil {
+		return drawing.ImageResult{}, err
+	}
+	return c.drawing.GenerateDeckRecommendationImage(payload)
 }
 
 func (c *Controller) normalizeAutoQuery(query AutoQuery) (renderregion.Value, string, error) {

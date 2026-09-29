@@ -233,11 +233,11 @@ func executeEventPlanner(rc *RequestContext) (onebot11.Message, error) {
 	}
 
 	finishBuild()
-	data, err := rc.App.Drawing.WithContext(rc.Ctx).GenerateEventPlanner(req)
+	data, err := rc.App.Drawing.WithContext(rc.Ctx).GenerateEventPlannerImage(req)
 	if err != nil {
 		return nil, err
 	}
-	return rc.ImageMessage(data)
+	return rc.RenderedImageMessage(data)
 }
 
 func buildEventPlannerDrawingRequest(

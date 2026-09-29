@@ -256,14 +256,22 @@ func (c *Controller) doorUpgradeProfile(region renderregion.Value, merged map[st
 
 // RenderDoorUpgrade renders the MySekai door upgrade view.
 func (c *Controller) RenderDoorUpgrade(query DoorUpgradeQuery) ([]byte, error) {
+	image, err := c.RenderDoorUpgradeImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderDoorUpgradeImage(query DoorUpgradeQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildDoorUpgradeRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateMysekaiDoorUpgrade(payload)
+	return c.drawing.GenerateMysekaiDoorUpgradeImage(payload)
 }

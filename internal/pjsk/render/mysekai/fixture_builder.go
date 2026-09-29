@@ -305,16 +305,24 @@ func (c *Controller) fixtureListObtainedIDs(source string, merged map[string]any
 
 // RenderFixtureList renders the MySekai fixture list view.
 func (c *Controller) RenderFixtureList(query FixtureListQuery) ([]byte, error) {
+	image, err := c.RenderFixtureListImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderFixtureListImage(query FixtureListQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildFixtureListRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateMysekaiFixtureList(payload)
+	return c.drawing.GenerateMysekaiFixtureListImage(payload)
 }
 
 // BuildFixtureDetailRequests builds the requests for rendering MySekai fixture detail views.
@@ -399,19 +407,27 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 
 // RenderFixtureDetail renders the MySekai fixture detail view.
 func (c *Controller) RenderFixtureDetail(query FixtureDetailQuery) ([]byte, error) {
+	image, err := c.RenderFixtureDetailImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.requestCtx)
+}
+
+func (c *Controller) RenderFixtureDetailImage(query FixtureDetailQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	requests, err := c.BuildFixtureDetailRequests(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	if len(requests) != 1 {
-		return nil, fmt.Errorf("mysekai fixture detail render requires exactly one fixture id")
+		return drawing.ImageResult{}, fmt.Errorf("mysekai fixture detail render requires exactly one fixture id")
 	}
-	return c.drawing.GenerateMysekaiFixtureDetail(&requests[0])
+	return c.drawing.GenerateMysekaiFixtureDetailImage(&requests[0])
 }
 
 // fixtureCostMaterials builds the cost materials list for a fixture blueprint.

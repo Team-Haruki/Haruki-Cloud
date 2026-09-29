@@ -17,6 +17,12 @@ func canonicalMySekaiTrigger(mode string) string {
 		return "/烤森地图"
 	case "mysekai-door-upgrade":
 		return "/msg"
+	case "mysekai-shop":
+		return "/烤森商店"
+	case "mysekai-bulk-harvest":
+		return "/烤森一键采集"
+	case "mysekai-blueprint-term":
+		return "/烤森限时蓝图"
 	default:
 		return "/mysekai"
 	}
@@ -90,6 +96,21 @@ func normalizeMySekaiUserFacingError(err error, mode string) error {
 	case strings.HasPrefix(message, "queried gate has no upgrade materials"):
 		return onebot11.NewReplayError("指定的大门没有升级材料")
 
+	case strings.HasPrefix(message, "mysekai shop is not available in region"):
+		return onebot11.NewReplayError("该区服暂未开放烤森商店")
+
+	case strings.HasPrefix(message, "mysekai bulk harvest is not available in region"):
+		return onebot11.NewReplayError("该区服暂未开放烤森一键采集")
+
+	case strings.HasPrefix(message, "mysekai blueprint terms are not available in region"):
+		return onebot11.NewReplayError("该区服暂无限时蓝图数据")
+
+	case strings.HasPrefix(message, "mysekai blueprint terms have no current term in region"):
+		return onebot11.NewReplayError("当前没有进行中或即将开始的限时蓝图\n查看全部请使用：%s all", trigger)
+
+	case isMySekaiNewViewMode(mode) && strings.Contains(message, "drawing request failed with status 404"):
+		return onebot11.NewReplayError("绘图服务暂不支持该功能，请稍后再试")
+
 	case strings.HasPrefix(message, "decode mysekai data:"):
 		detail := strings.TrimSpace(strings.TrimPrefix(message, "decode mysekai data:"))
 		if detail == "" {
@@ -99,4 +120,15 @@ func normalizeMySekaiUserFacingError(err error, mode string) error {
 	}
 
 	return err
+}
+
+// isMySekaiNewViewMode reports the JP 7.0.0 views whose Drawing endpoints
+// may not be deployed yet.
+func isMySekaiNewViewMode(mode string) bool {
+	switch strings.TrimSpace(mode) {
+	case "mysekai-shop", "mysekai-bulk-harvest", "mysekai-blueprint-term":
+		return true
+	default:
+		return false
+	}
 }

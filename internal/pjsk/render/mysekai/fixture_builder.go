@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -336,6 +337,10 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 	onlyDisassemble := c.masterdata.loadList("mysekaiFixtureOnlyDisassembleMaterials.json")
 	tags := c.masterdata.loadMapByID("mysekaiFixtureTags.json")
 	region := c.resolveRegion(query.Region)
+	now := query.NowMillis
+	if now == 0 {
+		now = time.Now().UnixMilli()
+	}
 
 	requests := make([]drawing.MysekaiFixtureDetailRequest, 0, len(fixtureIDs))
 	for _, fixtureID := range fixtureIDs {
@@ -374,6 +379,7 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 		}
 		if blueprint := findFixtureBlueprint(blueprints, fixtureID); blueprint != nil {
 			request.BasicInfo = append(request.BasicInfo, fixtureBlueprintInfo(blueprint)...)
+			request.BasicInfo = append(request.BasicInfo, c.fixtureBlueprintTermInfo(intNumber(blueprint["id"], 0), now)...)
 			request.CostMaterials = c.fixtureCostMaterials(region, intNumber(blueprint["id"], 0), blueprintCosts)
 			request.Friendcodes, request.FriendcodeSource = c.fixtureFriendcodes(
 				region,

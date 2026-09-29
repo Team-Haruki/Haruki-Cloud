@@ -638,6 +638,18 @@ func (c *HarukiDrawingClient) GenerateMysekaiTalkList(req *MysekaiTalkListReques
 	return c.cachedPost("/api/pjsk/mysekai/talk-list", req)
 }
 
+func (c *HarukiDrawingClient) GenerateMysekaiShop(req *MysekaiShopRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/mysekai/shop", req)
+}
+
+func (c *HarukiDrawingClient) GenerateMysekaiBulkHarvest(req *MysekaiBulkHarvestRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/mysekai/bulk-harvest", req)
+}
+
+func (c *HarukiDrawingClient) GenerateMysekaiBlueprintTerm(req *MysekaiBlueprintTermRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/mysekai/blueprint-term", req)
+}
+
 func (c *HarukiDrawingClient) GenerateMysekaiHousingCompetition(req *MysekaiHousingCompetitionRequest) ([]byte, error) {
 	return c.cachedPost("/api/pjsk/mysekai/housing-competition", req)
 }

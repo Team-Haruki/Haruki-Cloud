@@ -59,7 +59,7 @@ func TestMysekaiSuiteScopePreservesShopRequest(t *testing.T) {
 				t.Fatal(err)
 			}
 			request, err := app.MySekai.WithSnapshot(snap).BuildShopRequest(rendermysekai.ShopQuery{
-				Region: "jp", NowMillis: 1800000000000, ShowAll: true,
+				Region: "jp", ShopType: "material", NowMillis: 1800000000000, ShowAll: true,
 				ResourceBox: func(int) []rendermysekai.ShopResource {
 					return []rendermysekai.ShopResource{{ResourceType: "mysekai_material", ResourceID: 1, Quantity: 1}}
 				},

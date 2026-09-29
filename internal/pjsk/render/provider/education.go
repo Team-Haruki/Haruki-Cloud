@@ -11,7 +11,11 @@ type EducationProvider interface {
 	GetAreaItems(ctx context.Context) []*AreaItem
 	GetAreaItem(ctx context.Context, id int) *AreaItem
 	GetAreaItemLevels(ctx context.Context, areaItemID int) []*AreaItemLevel
-	GetAreaItemLevel(ctx context.Context, areaItemID, level int) *AreaItemLevel
+	// GetAreaItemLevelRows returns every master row for one (areaItemID,
+	// level) pair in master order. Since JP 7.0.0 a level may carry more
+	// than one row (areaItemId 56 has an all-target row plus a
+	// "multi_unit" row per level), so callers must apply each row.
+	GetAreaItemLevelRows(ctx context.Context, areaItemID, level int) []*AreaItemLevel
 	GetCharacterLevels(ctx context.Context) []*CharacterLevel
 	GetCharacterRank(ctx context.Context, characterID, rank int) *CharacterRank
 	GetBonds(ctx context.Context) []*Bond

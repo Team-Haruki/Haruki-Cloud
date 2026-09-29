@@ -174,12 +174,7 @@ func (c *Controller) newAreaItemRenderState(opts areaItemBuildOptions, itemID in
 	if master == nil || len(levels) == 0 {
 		return areaItemRenderState{}, false
 	}
-	levelMap := make(map[int]*AreaItemLevel, len(levels))
-	for _, level := range levels {
-		if level != nil {
-			levelMap[level.Level] = level
-		}
-	}
+	levelMap := unconditionalAreaItemLevelByLevel(levels)
 	currentLevel, maxVisibleLevel := areaItemVisibleLevels(opts.showFull, opts.userAreaLevels[itemID], releasedCap, levels)
 	if maxVisibleLevel <= 0 {
 		return areaItemRenderState{}, false

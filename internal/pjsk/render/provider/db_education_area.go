@@ -44,7 +44,7 @@ func (p *dbEducationProvider) GetAreaItemLevels(ctx context.Context, areaItemID 
 	return cloneEdAreaItemLevels(p.areaLevelsByItem[areaItemID])
 }
 
-func (p *dbEducationProvider) GetAreaItemLevel(ctx context.Context, areaItemID, level int) *AreaItemLevel {
+func (p *dbEducationProvider) GetAreaItemLevelRows(ctx context.Context, areaItemID, level int) []*AreaItemLevel {
 	if areaItemID <= 0 || level <= 0 || !p.ensureAreaMasterLoaded(ctx) {
 		return nil
 	}
@@ -52,7 +52,7 @@ func (p *dbEducationProvider) GetAreaItemLevel(ctx context.Context, areaItemID, 
 	p.areaMu.RLock()
 	defer p.areaMu.RUnlock()
 	if levels, ok := p.areaLevelByItem[areaItemID]; ok {
-		return cloneEdAreaItemLevel(levels[level])
+		return cloneEdAreaItemLevels(levels[level])
 	}
 	return nil
 }
@@ -111,8 +111,10 @@ func (p *dbEducationProvider) ensureAreaMasterLoaded(ctx context.Context) bool {
 		}
 	}
 
+	// Order by row id so multi-row levels keep the master (ingest) order.
 	levels, err := p.client.Areaitemlevel.Query().
 		Where(areaitemlevel.ServerRegionEQ(p.region.String())).
+		Order(areaitemlevel.ByID()).
 		All(ctx)
 	if err != nil {
 		return false
@@ -128,9 +130,9 @@ func (p *dbEducationProvider) ensureAreaMasterLoaded(ctx context.Context) bool {
 		}
 		p.areaLevelsByItem[level.AreaItemID] = append(p.areaLevelsByItem[level.AreaItemID], level)
 		if _, ok := p.areaLevelByItem[level.AreaItemID]; !ok {
-			p.areaLevelByItem[level.AreaItemID] = make(map[int]*AreaItemLevel)
+			p.areaLevelByItem[level.AreaItemID] = make(map[int][]*AreaItemLevel)
 		}
-		p.areaLevelByItem[level.AreaItemID][level.Level] = level
+		p.areaLevelByItem[level.AreaItemID][level.Level] = append(p.areaLevelByItem[level.AreaItemID][level.Level], level)
 	}
 
 	p.areaMasterLoaded = true

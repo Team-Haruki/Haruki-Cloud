@@ -137,7 +137,8 @@ func newLocalCoverageProvider(t *testing.T) *LocalProvider {
 		]`,
 		"areaItemLevels.json": `[
 			{"AreaItemID":1,"Level":1,"TargetUnit":"light_sound","Power1BonusRate":0.1},
-			{"AreaItemID":1,"Level":2,"TargetUnit":"light_sound","Power1BonusRate":0.2}
+			{"AreaItemID":1,"Level":2,"TargetUnit":"light_sound","Power1BonusRate":0.2},
+			{"AreaItemID":1,"Level":2,"TargetUnit":"multi_unit","TargetCardAttr":"any","Power1BonusRate":0.3}
 		]`,
 		"characterRanks.json": `[
 			{"characterId":1,"characterRank":5,"power1BonusRate":0.05}
@@ -653,16 +654,28 @@ func testLocalEducationAreaBranches(t *testing.T, education *localEducationProvi
 	if education.GetAreaItem(ctx, 0) != nil || education.GetAreaItem(ctx, 999) != nil {
 		t.Fatal("invalid area item resolved")
 	}
-	if levels := education.GetAreaItemLevels(ctx, 1); len(levels) != 2 {
+	if levels := education.GetAreaItemLevels(ctx, 1); len(levels) != 3 {
 		t.Fatalf("area levels = %+v", levels)
 	}
 	if education.GetAreaItemLevels(ctx, 0) != nil {
 		t.Fatal("zero area item levels resolved")
 	}
-	if level := education.GetAreaItemLevel(ctx, 1, 2); level == nil || level.Power1BonusRate != 0.2 {
-		t.Fatalf("area level = %+v", level)
+	if rows := education.GetAreaItemLevelRows(ctx, 1, 1); len(rows) != 1 || rows[0].Power1BonusRate != 0.1 {
+		t.Fatalf("area level 1 rows = %+v", rows)
 	}
-	if education.GetAreaItemLevel(ctx, 0, 0) != nil || education.GetAreaItemLevel(ctx, 999, 1) != nil {
+	// Level 2 has two master rows (JP 7.0.0 style); both must survive in
+	// file order.
+	rows := education.GetAreaItemLevelRows(ctx, 1, 2)
+	if len(rows) != 2 || rows[0].TargetUnit != "light_sound" || rows[0].Power1BonusRate != 0.2 ||
+		rows[1].TargetUnit != "multi_unit" || rows[1].Power1BonusRate != 0.3 {
+		t.Fatalf("area level 2 rows = %+v", rows)
+	}
+	rows[0].Power1BonusRate = -1
+	if again := education.GetAreaItemLevelRows(ctx, 1, 2); again[0].Power1BonusRate != 0.2 {
+		t.Fatal("area level rows alias the provider cache")
+	}
+	if education.GetAreaItemLevelRows(ctx, 0, 0) != nil || education.GetAreaItemLevelRows(ctx, 999, 1) != nil ||
+		education.GetAreaItemLevelRows(ctx, 1, 3) != nil {
 		t.Fatal("invalid area level resolved")
 	}
 	if rank := education.GetCharacterRank(ctx, 1, 5); rank == nil || rank.Power1BonusRate != 0.05 {

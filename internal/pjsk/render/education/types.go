@@ -21,7 +21,7 @@ type DataSource interface {
 	GetAreaItems() []*AreaItem
 	GetAreaItem(id int) *AreaItem
 	GetAreaItemLevels(areaItemID int) []*AreaItemLevel
-	GetAreaItemLevel(areaItemID, level int) *AreaItemLevel
+	GetAreaItemLevelRows(areaItemID, level int) []*AreaItemLevel
 	GetCharacterLevels() []*CharacterLevel
 	GetCharacterRank(characterID, rank int) *CharacterRank
 	GetBonds() []*Bond

@@ -54,4 +54,9 @@ type Query struct {
 	BondsHonorWordID     int                `json:"bonds_honor_word_id,omitempty"`
 	UseUnitVirtualSinger bool               `json:"use_unit_virtual_singer,omitempty"`
 	FcOrApLevelOverride  *int               `json:"fc_or_ap_level_override,omitempty"`
+	// HonorBackgroundID / HonorWordID are the JP 7.0.0 character-honor
+	// customizations (UserProfileHonor / custom profile HonorData); nil
+	// means the client default (the group's first row).
+	HonorBackgroundID *int `json:"honor_background_id,omitempty"`
+	HonorWordID       *int `json:"honor_word_id,omitempty"`
 }

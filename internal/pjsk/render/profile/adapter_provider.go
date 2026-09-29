@@ -45,6 +45,15 @@ func (a *ProviderAdapter) GetGameCharacterUnitByID(id int) (*masterdata.GameChar
 	return a.P.Honors().GetGameCharacterUnitByID(a.Context(), id)
 }
 
+// HonorMasterRows implements renderhonor.MasterRowSource (honor background,
+// word and medal rows).
+func (a *ProviderAdapter) HonorMasterRows(filename string) (map[int]map[string]any, bool) {
+	if a == nil {
+		return nil, false
+	}
+	return provider.LoadMasterRows(a.Context(), a.P, filename)
+}
+
 // profile-specific methods
 
 func (a *ProviderAdapter) GetPlayerFrameByID(id int) (*masterdata.PlayerFrame, error) {

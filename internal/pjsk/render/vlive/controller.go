@@ -314,7 +314,7 @@ func (c *Controller) buildRewardItems(source DataSource, live ResolvedLive) []dr
 			continue
 		}
 		box := source.GetResourceBoxByPurpose("virtual_live_reward", reward.ResourceBoxID)
-		items := c.buildRewardBoxItems(box)
+		items := c.buildRewardBoxItems(source, box)
 		if len(items) > 0 {
 			return items
 		}
@@ -327,13 +327,16 @@ func isNormalVLiveReward(reward Reward) bool {
 	return kind == "" || kind == "normal"
 }
 
-func (c *Controller) buildRewardBoxItems(box *provider.ResourceBox) []drawing.VLiveRewardItem {
+func (c *Controller) buildRewardBoxItems(source DataSource, box *provider.ResourceBox) []drawing.VLiveRewardItem {
 	if box == nil {
 		return nil
 	}
 	items := make([]drawing.VLiveRewardItem, 0, len(box.Details))
 	for _, detail := range box.Details {
 		imagePath := c.rewardImagePath(detail.ResourceType, detail.ResourceID)
+		if strings.TrimSpace(imagePath) == "" {
+			imagePath = c.newResourceRewardImagePath(source, detail.ResourceType, detail.ResourceID)
+		}
 		if strings.TrimSpace(imagePath) == "" {
 			continue
 		}

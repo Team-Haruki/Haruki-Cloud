@@ -52,7 +52,6 @@ var commandParameterGuidance = map[string]parameterGuidance{
 	"music/rewards":               {"歌曲奖励参数", musicDifficultyGuidance},
 	"mysekai/blueprint":           {"烤森蓝图参数", "使用蓝图分类、名称、角色或帮助中列出的筛选条件"},
 	"mysekai/blueprint-term":      {"烤森限时蓝图参数", "无需参数，可加 all 显示已结束的限时蓝图"},
-	"mysekai/bulk-harvest":        {"烤森一键采集参数", "无需参数"},
 	"mysekai/door-upgrade":        {"烤森大门升级参数", "使用支持的大门等级或目标等级"},
 	"mysekai/fixture-detail":      {"烤森家具参数", "使用一个或多个家具 ID，或 full 加分类/关键词"},
 	"mysekai/fixture-list":        {"烤森家具列表参数", "使用家具分类、来源或名称关键词"},

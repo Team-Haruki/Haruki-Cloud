@@ -299,34 +299,6 @@ type MysekaiShopRequest struct {
 	Shops      []MysekaiShopGroup  `json:"shops"`
 }
 
-type MysekaiBulkHarvestTarget struct {
-	ID           int      `json:"id"`
-	Name         string   `json:"name"`
-	ImagePath    AssetKey `json:"image_path,omitempty"`
-	Checked      *bool    `json:"checked,omitempty"`
-	FixtureCount *int     `json:"fixture_count,omitempty"`
-}
-
-type MysekaiBulkHarvestGroup struct {
-	ID                    int                        `json:"id"`
-	Name                  string                     `json:"name"`
-	RequiredToolName      *string                    `json:"required_tool_name,omitempty"`
-	RequiredToolImagePath AssetKey                   `json:"required_tool_image_path,omitempty"`
-	Targets               []MysekaiBulkHarvestTarget `json:"targets"`
-}
-
-type MysekaiBulkHarvestSite struct {
-	SiteID    int                       `json:"site_id"`
-	Name      string                    `json:"name,omitempty"`
-	ImagePath AssetKey                  `json:"image_path,omitempty"`
-	Groups    []MysekaiBulkHarvestGroup `json:"groups"`
-}
-
-type MysekaiBulkHarvestRequest struct {
-	Profile *ProfileCardRequest      `json:"profile,omitempty"`
-	Sites   []MysekaiBulkHarvestSite `json:"sites"`
-}
-
 type MysekaiBlueprintTermMaterial struct {
 	ImagePath    AssetKey `json:"image_path"`
 	Quantity     int      `json:"quantity"`

@@ -136,7 +136,7 @@ func (c *Controller) RenderShop(query ShopQuery) ([]byte, error) {
 }
 
 // mysekaiResourceResolver names and pictures the resources the JP 7.0.0
-// MySekai views list (shop goods and costs, bulk-harvest tools).
+// MySekai views list (shop goods and costs).
 type mysekaiResourceResolver struct {
 	c         *Controller
 	region    renderregion.Value

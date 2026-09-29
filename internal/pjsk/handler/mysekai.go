@@ -345,18 +345,6 @@ func (sekaiHandlers) MysekaiShopHandle() HarukiSekaiCommandHandler {
 	}, executeMysekai)
 }
 
-func (sekaiHandlers) MysekaiBulkHarvestHandle() HarukiSekaiCommandHandler {
-	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		Path: "mysekai/bulk-harvest",
-		Commands: []string{
-			"/pjsk mysekai bulkharvest", "/mysekai-bulk-harvest", "/mysekai一键采集", "/烤森一键采集", "/烤森批量采集", "/msbulk",
-		},
-		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiBulkHarvestCommand, map[string]any{}), nil
-		},
-	}, executeMysekai)
-}
-
 func (sekaiHandlers) MysekaiBlueprintTermHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path: "mysekai/blueprint-term",
@@ -803,11 +791,6 @@ func executeStaticMysekaiMode(rc *RequestContext, region string) (onebot11.Messa
 		query := rendermysekai.ShopQuery{Region: regionWithDefault(region)}
 		query.ResourceBox = mysekaiShopResourceBoxes(rc, renderregion.Normalize(query.Region))
 		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderShop(query)
-		message, err := mysekaiImageResult(rc, data, err)
-		return message, true, err
-	case mySekaiBulkHarvestCommand:
-		query := rendermysekai.BulkHarvestQuery{Region: regionWithDefault(region)}
-		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderBulkHarvest(query)
 		message, err := mysekaiImageResult(rc, data, err)
 		return message, true, err
 	case mySekaiBlueprintTermCommand:

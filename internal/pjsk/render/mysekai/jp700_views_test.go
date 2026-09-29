@@ -46,7 +46,7 @@ func TestBuildShopRequestGroupsJPShopRows(t *testing.T) {
 		2:   {{ResourceType: "mysekai_material", ResourceID: 5, Quantity: 3}},
 		101: {{ResourceType: "mysekai_tool", ResourceID: 10, Quantity: 1}},
 	}
-	req, err := controller.BuildShopRequest(ShopQuery{Region: "jp", ResourceBox: func(id int) []ShopResource { return boxes[id] }})
+	req, err := controller.BuildShopRequest(ShopQuery{Region: "jp", ShowAll: true, ResourceBox: func(id int) []ShopResource { return boxes[id] }})
 	if err != nil {
 		t.Fatalf("BuildShopRequest() error = %v", err)
 	}

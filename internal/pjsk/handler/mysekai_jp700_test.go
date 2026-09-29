@@ -41,6 +41,10 @@ func newMysekaiJP700App(t *testing.T, drawingURL string) *renderapp.App {
 	writeMysekaiJP700JSON(t, jp, "mysekaiShops.json", []map[string]any{
 		{"id": 1, "mysekaiShopType": "material", "seq": 1, "resourceBoxId": 1, "mysekaiShopExchangeLimitType": "none"},
 	})
+	writeMysekaiJP700JSON(t, jp, "mysekaiBlueprintShops.json", []map[string]any{
+		{"mysekaiBlueprintShopItemLotteryType": "daily", "consumeJewelQuantity": 100, "purchaseLimit": 5},
+		{"mysekaiBlueprintShopItemLotteryType": "weekly", "consumeJewelQuantity": 200, "purchaseLimit": 3},
+	})
 	writeMysekaiJP700JSON(t, jp, "mysekaiShopCosts.json", []map[string]any{
 		{"id": 1, "mysekaiShopId": 1, "seq": 1, "resourceType": "jewel", "quantity": 100},
 	})
@@ -83,7 +87,9 @@ func TestExecuteMysekaiShopRendersJPShop(t *testing.T) {
 	app.MySekai = app.MySekai.WithMySekaiData([]byte(`{"userMysekaiShops":[],"userMysekaiColorfulPass":{"expiredAt":4102444800000},"userMysekaiGamedata":{"mysekaiMaterialPossessionLevel":1},"userMysekaiMaterialPossession":{"quantity":0}}`))
 
 	// Drawing without the endpoint yet: a clear message instead of a raw 404.
-	err := executeMysekaiJP700(app, mySekaiShopCommand, "jp")
+	_, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleMysekai, Mode: mySekaiShopCommand, Region: "jp", Params: []byte(`{"shop_type":"material"}`),
+	}, app))
 	assertReplayErrorText(t, err, "绘图服务暂不支持该功能，请稍后再试")
 	if len(got.Shops) != 1 || got.Shops[0].ShopType != "material" || len(got.Shops[0].Items) != 1 || got.Shops[0].Items[0].Costs[0].Quantity != 100 {
 		t.Fatalf("shop request = %+v", got)
@@ -128,7 +134,7 @@ func TestMysekaiShopParameters(t *testing.T) {
 		args, kind string
 		all        bool
 	}{
-		{"", "", false}, {"ALL", "", true}, {"工具 全部", "tool", true}, {"full BLUEPRINT", "blueprint", true}, {"素材", "material", false}, {"材料 all", "material", true}, {"tool", "tool", false}, {"material", "material", false}, {"蓝图", "blueprint", false},
+		{"", "blueprint", false}, {"ALL", "", true}, {"全部", "", true}, {"full", "", true}, {"工具 全部", "tool", true}, {"full BLUEPRINT", "blueprint", true}, {"素材", "material", false}, {"材料 all", "material", true}, {"tool", "tool", false}, {"material", "material", false}, {"蓝图", "blueprint", false},
 	} {
 		req, err := sekaiHandlers{}.MysekaiShopHandle().handleFunc(mysekaiEdgeContext(tc.args))
 		if err != nil {
@@ -163,7 +169,7 @@ func TestMysekaiShopResolvesMergedSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	source := &runtimeSnapshotProviderStub{snapshot: &runtimeSnapshotStub{
-		rawBytes: []byte(`{"userMysekaiShops":[],"userMysekaiColorfulPass":null,"userMysekaiGamedata":{"mysekaiMaterialPossessionLevel":1},"userMysekaiMaterialPossession":{"quantity":0}}`),
+		rawBytes: []byte(`{"userMysekaiBlueprintShopItems":[],"userMysekaiBlueprints":[],"userMysekaiShops":[],"userMysekaiColorfulPass":null,"userMysekaiGamedata":{"mysekaiMaterialPossessionLevel":1},"userMysekaiMaterialPossession":{"quantity":0}}`),
 	}}
 	app.Bindings = service
 	app.Config.UserSnapshot.AllowFallback = true

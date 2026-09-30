@@ -29,21 +29,27 @@ func TestHousingStatsCacheStoreOnLocalWritesTheOldPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	cache := newHousingCompetitionStatsCacheWithStore(store, DefaultHousingCompetitionStatsCacheKey, time.Second)
+	if err := cache.configurePersistence(t.Context(), "test-node"); err != nil {
+		t.Fatal(err)
+	}
 	seedHousingStatsForPersist(cache)
 	cache.persistLatest(context.Background(), 1)
+	if err := cache.closePersistence(t.Context()); err != nil {
+		t.Fatal(err)
+	}
 	if cache.persistedGeneration != 1 {
 		t.Fatalf("persisted generation = %d", cache.persistedGeneration)
 	}
-	stored, err := store.Get(context.Background(), DefaultHousingCompetitionStatsCacheKey)
+	stored, err := store.Get(context.Background(), cache.storeKey)
 	if err != nil {
 		t.Fatal(err)
 	}
-	onDisk, err := os.ReadFile(filepath.Join(dir, "mysekai_housing_competition_stats.json"))
+	onDisk, err := os.ReadFile(filepath.Join(dir, string(cache.storeKey)))
 	if err != nil || !bytes.Equal(onDisk, stored) {
 		t.Fatalf("file at old path = %q, %v", onDisk, err)
 	}
 
-	reloaded := newHousingCompetitionStatsCache(filepath.Join(dir, "mysekai_housing_competition_stats.json"), time.Second)
+	reloaded := newHousingCompetitionStatsCache(filepath.Join(dir, string(cache.storeKey)), time.Second)
 	if bucket := reloaded.buckets[housingCompetitionStatsCacheKey{Region: "jp", HousingID: 3}]; bucket == nil || bucket.entries["a"].ReviewCount != 9 {
 		t.Fatalf("reloaded buckets = %+v", reloaded.buckets)
 	}
@@ -51,8 +57,14 @@ func TestHousingStatsCacheStoreOnLocalWritesTheOldPath(t *testing.T) {
 
 func TestHousingStatsCacheStoreDisabledAndFailing(t *testing.T) {
 	disabled := newHousingCompetitionStatsCacheWithStore(storage.Disabled(), DefaultHousingCompetitionStatsCacheKey, time.Second)
+	if err := disabled.configurePersistence(t.Context(), "test-node"); err != nil {
+		t.Fatal(err)
+	}
 	seedHousingStatsForPersist(disabled)
 	disabled.persistLatest(context.Background(), 1)
+	if err := disabled.closePersistence(t.Context()); err == nil {
+		t.Fatal("disabled persistence should report error")
+	}
 	if disabled.persistedGeneration != 0 {
 		t.Fatal("disabled store recorded a persisted generation")
 	}
@@ -61,9 +73,15 @@ func TestHousingStatsCacheStoreDisabledAndFailing(t *testing.T) {
 	memory.FailGet = func(storage.Key) error { return errors.New("get down") }
 	memory.FailPut = func(storage.Key) error { return errors.New("put down") }
 	failing := newHousingCompetitionStatsCacheWithStore(memory, "stats.json", time.Second)
+	if err := failing.configurePersistence(t.Context(), "test-node"); err != nil {
+		t.Fatal(err)
+	}
 	seedHousingStatsForPersist(failing)
 	failing.persistLatest(context.Background(), 1)
-	if failing.persistedGeneration != 0 || len(memory.Calls()) != 2 {
+	if err := failing.closePersistence(t.Context()); err == nil {
+		t.Fatal("failed persistence should report error")
+	}
+	if failing.persistedGeneration != 0 || len(memory.Calls()) != 3 {
 		t.Fatalf("failing store generation=%d calls=%+v", failing.persistedGeneration, memory.Calls())
 	}
 

@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -171,6 +172,9 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		list, jackets = buildFilteredMusicListEntries(source, builder, region, options, filterMusicID, keyword)
 	}
 
+	if err := c.contextOrBackground().Err(); err != nil {
+		return nil, err
+	}
 	if len(list) == 0 {
 		return nil, fmt.Errorf("no music matched the current filters")
 	}
@@ -264,6 +268,8 @@ func buildFilteredMusicListEntries(source DataSource, builder *Builder, region r
 	if keyword == "" && len(candidates) > 1 {
 		preloadMusicDifficulties(source)
 	}
+	tasks := make([]func(*assets.AssetHelper), 0, len(candidates))
+	visible := make([]*masterdata.Music, 0, len(candidates))
 	for _, musicInfo := range candidates {
 		level := builder.GetDifficultyLevel(musicInfo.ID, options.difficulty)
 		if !matchesMusicListOptions(musicInfo.ID, level, options) {
@@ -273,6 +279,17 @@ func buildFilteredMusicListEntries(source DataSource, builder *Builder, region r
 			"id": musicInfo.ID, "difficulty": level, "difficulty_type": options.difficulty,
 			"release_at": musicListDisplayOrder(musicInfo),
 		})
+		visible = append(visible, musicInfo)
+		tasks = append(tasks, func(helper *assets.AssetHelper) {
+			clone := *builder
+			clone.assets = helper
+			clone.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
+		})
+	}
+	if err := builder.assets.Prefetch(tasks); err != nil {
+		return nil, nil
+	}
+	for _, musicInfo := range visible {
 		jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
 	}
 	return list, jackets
@@ -334,9 +351,13 @@ func (c *Controller) buildMusicListEntriesFromItems(source DataSource, builder *
 	list := make([]map[string]any, 0, len(items))
 	jackets := make(map[int]string, len(items))
 	seen := make(map[string]struct{}, len(items))
+	metadataBuilder := *builder
+	metadataBuilder.assets = nil
+	tasks := make([]func(*assets.AssetHelper), 0, len(items))
+	visible := make([]*masterdata.Music, 0, len(items))
 
 	for _, item := range items {
-		entry, jacket, seenKey, ok := buildMusicListItemEntry(source, builder, region, difficulty, item, includeLeaks, now)
+		entry, _, seenKey, ok := buildMusicListItemEntry(source, &metadataBuilder, region, difficulty, item, includeLeaks, now)
 		if !ok {
 			continue
 		}
@@ -346,9 +367,23 @@ func (c *Controller) buildMusicListEntriesFromItems(source DataSource, builder *
 
 		seen[seenKey] = struct{}{}
 		list = append(list, entry)
-		jackets[item.MusicID] = jacket
+		musicInfo, err := source.GetMusicByID(item.MusicID)
+		if err != nil || musicInfo == nil {
+			continue
+		}
+		visible = append(visible, musicInfo)
+		tasks = append(tasks, func(helper *assets.AssetHelper) {
+			clone := *builder
+			clone.assets = helper
+			clone.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
+		})
 	}
-
+	if err := builder.assets.Prefetch(tasks); err != nil {
+		return nil, nil
+	}
+	for _, musicInfo := range visible {
+		jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
+	}
 	return list, jackets
 }
 

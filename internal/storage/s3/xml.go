@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"bytes"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -28,9 +29,13 @@ type ResponseError struct {
 	Key        storage.Key
 	Endpoint   string
 	StatusCode int
+	RetryAfter time.Duration
 	Code       string
 	Message    string
+	bodyErr    error
 }
+
+func (e *ResponseError) Unwrap() error { return e.bodyErr }
 
 func (e *ResponseError) Error() string {
 	var b strings.Builder
@@ -41,6 +46,9 @@ func (e *ResponseError) Error() string {
 	if e.Message != "" {
 		b.WriteString(": " + e.Message)
 	}
+	if e.bodyErr != nil {
+		b.WriteString(": unreadable error body")
+	}
 	return b.String()
 }
 
@@ -50,14 +58,24 @@ type errorResponse struct {
 	Message string   `xml:"Message"`
 }
 
-// decodeError reads the S3 <Error> document from body; a missing or malformed
-// document yields empty strings.
-func decodeError(body io.Reader) (code, message string) {
-	var doc errorResponse
-	if err := xml.NewDecoder(io.LimitReader(body, errorBodyLimit)).Decode(&doc); err != nil {
-		return "", ""
+// decodeError distinguishes an ordinary empty error body from a truncated
+// response. A broken 404 must not certify that an object is absent.
+func decodeError(body io.Reader) (code, message string, err error) {
+	data, err := io.ReadAll(io.LimitReader(body, errorBodyLimit+1))
+	if err != nil {
+		return "", "", err
 	}
-	return strings.TrimSpace(doc.Code), strings.TrimSpace(doc.Message)
+	if len(data) > errorBodyLimit {
+		return "", "", errors.New("s3: error response exceeds size limit")
+	}
+	if len(bytes.TrimSpace(data)) == 0 {
+		return "", "", nil
+	}
+	var doc errorResponse
+	if err := xml.Unmarshal(data, &doc); err != nil {
+		return "", "", err
+	}
+	return strings.TrimSpace(doc.Code), strings.TrimSpace(doc.Message), nil
 }
 
 type listBucketResult struct {

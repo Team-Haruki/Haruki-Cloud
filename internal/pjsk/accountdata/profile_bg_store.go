@@ -41,11 +41,14 @@ const (
 	profileBGContentType       = "image/jpeg"
 )
 
-// randomHex8 returns 8 random lowercase hex characters for use in filenames.
-func randomHex8() string {
-	var b [4]byte
-	_, _ = rand.Read(b[:])
-	return hex.EncodeToString(b[:])
+// randomProfileBGToken uses an independent 128-bit object identity. Keys are
+// never reused, so a retired key cannot become a later background reference.
+func randomProfileBGToken() (string, error) {
+	var token [16]byte
+	if _, err := rand.Read(token[:]); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(token[:]), nil
 }
 
 // flattenToRGB composites src onto a white background so that transparent
@@ -191,6 +194,12 @@ func (s *ProfileBGStore) configured() bool {
 }
 
 func (s *ProfileBGStore) SaveProfileBackground(ctx context.Context, server string, userID string, imageURL string) (*drawing.ProfileBgSettings, error) {
+	return s.SaveProfileBackgroundTracked(ctx, server, userID, imageURL, nil)
+}
+
+// SaveProfileBackgroundTracked reserves the immutable key before any object PUT.
+// A failed reservation must not create an untracked object.
+func (s *ProfileBGStore) SaveProfileBackgroundTracked(ctx context.Context, server, userID, imageURL string, beforePut func(*drawing.ProfileBgSettings) error) (*drawing.ProfileBgSettings, error) {
 	if !s.configured() {
 		return nil, errProfileBGNotConfigured(storage.ErrNotConfigured)
 	}
@@ -252,8 +261,21 @@ func (s *ProfileBGStore) SaveProfileBackground(ctx context.Context, server strin
 
 	server = strings.TrimSpace(strings.ToLower(server))
 	userID = strings.TrimSpace(userID)
-	filename := fmt.Sprintf("uid_%s_%s.jpg", userID, randomHex8())
+	token, err := randomProfileBGToken()
+	if err != nil {
+		return nil, fmt.Errorf("create background object identity: %w", err)
+	}
+	filename := fmt.Sprintf("uid_%s_%s.jpg", userID, token)
 	relativePath := path.Join(s.relativeDir, server, filename)
+	settings := &drawing.ProfileBgSettings{
+		ImgPath: &relativePath, Blur: defaultProfileBGBlur, Alpha: defaultProfileBGAlpha,
+		Vertical: img.Bounds().Dy() > img.Bounds().Dx(),
+	}
+	if beforePut != nil {
+		if err := beforePut(cloneProfileBGSettings(settings)); err != nil {
+			return nil, err
+		}
+	}
 	finishStore := commandtrace.MeasureOperation(ctx, "profile_bg.store")
 	err = s.put(ctx, relativePath, data)
 	finishStore()
@@ -261,12 +283,7 @@ func (s *ProfileBGStore) SaveProfileBackground(ctx context.Context, server strin
 		return nil, err
 	}
 
-	return &drawing.ProfileBgSettings{
-		ImgPath:  &relativePath,
-		Blur:     defaultProfileBGBlur,
-		Alpha:    defaultProfileBGAlpha,
-		Vertical: img.Bounds().Dy() > img.Bounds().Dx(),
-	}, nil
+	return settings, nil
 }
 
 func (s *ProfileBGStore) put(ctx context.Context, relativePath string, data []byte) error {

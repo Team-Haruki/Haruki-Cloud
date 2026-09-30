@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 )
 
 const (
@@ -129,6 +130,7 @@ func (s *localStore) Put(ctx context.Context, key Key, data []byte, _ PutOptions
 		return err
 	}
 	committed = true
+	ReportWriteReceipt(ctx, WriteReceipt{WrittenAt: time.Now().UTC()})
 	return nil
 }
 

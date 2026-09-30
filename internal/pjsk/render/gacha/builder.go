@@ -46,6 +46,18 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 	}
 
 	paged, currentPage, totalPages := paginateGachaList(filtered, pageSize, page)
+	tasks := make([]func(*assets.AssetHelper), 0, len(paged))
+	for _, item := range paged {
+		tasks = append(tasks, func(helper *assets.AssetHelper) {
+			clone := *b
+			clone.assets = helper
+			clone.buildGachaLogoPath(item, region)
+			clone.buildGachaBannerPath(item, region)
+		})
+	}
+	if err := b.assets.Prefetch(tasks); err != nil {
+		return nil, err
+	}
 	briefs, logos, banners := b.buildGachaListItems(paged, region)
 
 	return &drawing.GachaListRequest{

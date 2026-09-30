@@ -43,6 +43,14 @@ func (s *fakeProfileBGStore) SaveProfileBackground(ctx context.Context, server s
 	}, nil
 }
 
+func (s *fakeProfileBGStore) SaveProfileBackgroundTracked(ctx context.Context, server, userID, imageURL string, beforePut func(*drawing.ProfileBgSettings) error) (*drawing.ProfileBgSettings, error) {
+	settings, err := s.SaveProfileBackground(ctx, server, userID, imageURL)
+	if err == nil && beforePut != nil {
+		err = beforePut(settings)
+	}
+	return settings, err
+}
+
 func (s *fakeProfileBGStore) DeleteProfileBackground(ctx context.Context, settings *drawing.ProfileBgSettings) error {
 	if settings != nil && settings.ImgPath != nil {
 		s.deleted = append(s.deleted, *settings.ImgPath)

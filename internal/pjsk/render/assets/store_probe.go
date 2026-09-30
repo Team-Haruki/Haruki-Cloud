@@ -20,6 +20,8 @@ import (
 // StoreProbeConfig tunes the store-backed path probe (pjsk_render.asset_probe).
 // Non-positive durations take the defaults.
 type StoreProbeConfig struct {
+	// Lifecycle cancels detached shared and speculative work on shutdown.
+	Lifecycle context.Context
 	// PositiveTTL is how long a resolved key stays cached.
 	PositiveTTL time.Duration
 	// ListingTTL is how long a directory listing stays cached.
@@ -101,6 +103,9 @@ func (c StoreProbeConfig) withDefaults() StoreProbeConfig {
 // keeps failing.
 type storeProbe struct {
 	store           storage.Store
+	lifecycle       context.Context
+	cancel          context.CancelFunc
+	metadata        MetadataIndex
 	cfg             StoreProbeConfig
 	log             *logger.Logger
 	now             func() time.Time
@@ -127,11 +132,14 @@ type storeProbeResult struct {
 	key        storage.Key
 	found      bool
 	err        error
-	operations []commandtrace.Stats
+	operations *sharedAssetOperations
 }
 
 func newStoreProbe(store storage.Store, cfg StoreProbeConfig, log *logger.Logger) *storeProbe {
+	lifecycle, cancel := context.WithCancel(readerContext(cfg.Lifecycle))
 	return &storeProbe{
+		lifecycle:       lifecycle,
+		cancel:          cancel,
 		store:           store,
 		cfg:             cfg.withDefaults(),
 		log:             log,
@@ -155,6 +163,18 @@ func (p *storeProbe) resolve(ctx context.Context, key storage.Key) (resolved sto
 	if p == nil || key == "" {
 		return "", false, nil
 	}
+	if err := ctx.Err(); err != nil {
+		return "", false, err
+	}
+	if err := p.lifecycle.Err(); err != nil {
+		return "", false, err
+	}
+	if p.metadata != nil {
+		if resolved, found, authoritative := p.metadata.Lookup(key); authoritative {
+			commandtrace.RecordOperation(ctx, "asset.metadata_index_hit", 0)
+			return resolved, found, nil
+		}
+	}
 	now := p.now()
 	if cached, ok := p.keys.lookup(string(key), now); ok {
 		commandtrace.RecordOperation(ctx, "asset.store_probe_cache_hit", 0)
@@ -169,7 +189,7 @@ func (p *storeProbe) resolve(ctx context.Context, key storage.Key) (resolved sto
 	defer finishWait()
 	generation := p.keys.currentGeneration()
 	results := p.keyFlights.DoChan(flightKey(string(key), generation), func() (any, error) {
-		return p.resolveUncached(key, generation), nil
+		return p.resolveUncached(ctx, key, generation), nil
 	})
 	select {
 	case flight := <-results:
@@ -177,7 +197,7 @@ func (p *storeProbe) resolve(ctx context.Context, key storage.Key) (resolved sto
 		if flight.Shared {
 			commandtrace.RecordOperation(ctx, "asset.store_probe_shared", 0)
 		}
-		commandtrace.MergeOperations(ctx, result.operations)
+		result.operations.merge(ctx)
 		return result.key, result.found, result.err
 	case <-ctx.Done():
 		return "", false, ctx.Err()
@@ -188,13 +208,19 @@ func flightKey(name string, generation uint64) string {
 	return name + "\x00" + strconv.FormatUint(generation, 10)
 }
 
-func (p *storeProbe) resolveUncached(key storage.Key, generation uint64) storeProbeResult {
+func (p *storeProbe) resolveUncached(ctx context.Context, key storage.Key, generation uint64) storeProbeResult {
 	if cached, ok := p.keys.lookup(string(key), p.now()); ok {
 		return cached
 	}
-	sharedCtx, trace := commandtrace.WithNewTrace(context.Background())
+	sharedCtx, cancel := context.WithTimeout(p.lifecycle, 30*time.Second)
+	defer cancel()
+	if storage.IsBackgroundIO(ctx) {
+		sharedCtx = storage.WithBackgroundIO(sharedCtx)
+	}
+	sharedCtx, trace := commandtrace.WithNewTrace(sharedCtx)
+	sharedCtx, collector := collectAssetOperations(sharedCtx)
 	result := p.probe(sharedCtx, key)
-	result.operations = trace.Snapshot().Operations
+	result.operations = collector.finish(trace)
 	if !errors.Is(result.err, errStoreProbeOpen) {
 		p.remember(key, result, generation)
 	}
@@ -296,25 +322,41 @@ func (p *storeProbe) dirIndex(ctx context.Context, parent string, staleBefore ti
 	finishWait := commandtrace.MeasureOperation(ctx, "asset.store_directory_wait")
 	defer finishWait()
 	generation := p.dirs.currentGeneration()
-	value, err, _ := p.dirFlights.Do(flightKey(parent, generation), func() (any, error) {
+	results := p.dirFlights.DoChan(flightKey(parent, generation), func() (any, error) {
+		sharedCtx, cancel := context.WithTimeout(p.lifecycle, 30*time.Second)
+		defer cancel()
+		if storage.IsBackgroundIO(ctx) {
+			sharedCtx = storage.WithBackgroundIO(sharedCtx)
+		}
+		sharedCtx, trace := commandtrace.WithNewTrace(sharedCtx)
 		if cached, ok := p.dirs.lookup(parent, p.now()); ok && cached.listedAt.After(staleBefore) {
 			return cached, nil
 		}
 		if staleBefore.IsZero() {
 			p.startBulkList(parent, generation)
 		}
-		index := p.listDir(ctx, parent)
-		if index.err != nil {
-			return nil, index.err
+		index := p.listDir(sharedCtx, parent)
+		if index.err == nil {
+			p.rememberDir(parent, index, generation)
 		}
-		p.rememberDir(parent, index, generation)
-		return index, nil
+		return storeDirectoryResult{index: index, operations: &sharedAssetOperations{stats: trace.Snapshot().Operations}}, nil
 	})
-	if err != nil {
-		return nil, err
+	select {
+	case flight := <-results:
+		if cached, ok := flight.Val.(*storeDirIndex); ok {
+			return cached, nil
+		}
+		result, _ := flight.Val.(storeDirectoryResult)
+		result.operations.merge(ctx)
+		return result.index, result.index.err
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
-	index, _ := value.(*storeDirIndex)
-	return index, nil
+}
+
+type storeDirectoryResult struct {
+	index      *storeDirIndex
+	operations *sharedAssetOperations
 }
 
 func (p *storeProbe) rememberDir(parent string, index *storeDirIndex, generation uint64) {
@@ -343,7 +385,7 @@ func (p *storeProbe) listDir(ctx context.Context, parent string) *storeDirIndex 
 	switch {
 	case err == nil || errors.Is(err, storage.ErrNotExist):
 		return index
-	case errors.Is(err, errStoreProbeOpen):
+	case errors.Is(err, errStoreProbeOpen), ctx.Err() != nil:
 		return &storeDirIndex{err: err}
 	case errors.Is(err, errStoreListCapped):
 		return &storeDirIndex{listedAt: index.listedAt, unavailable: true}
@@ -390,10 +432,18 @@ func (p *storeProbe) startBulkList(parent string, generation uint64) {
 	if !ok {
 		return
 	}
+	p.bulkMu.Lock()
+	if _, running := p.bulkRunning[grand]; running || len(p.bulkRunning) >= 2 || p.lifecycle.Err() != nil {
+		p.bulkMu.Unlock()
+		return
+	}
+	p.bulkRunning[grand] = struct{}{}
+	p.bulkMu.Unlock()
 	p.bulkWait.Add(1)
 	go func() {
 		defer p.bulkWait.Done()
-		p.runBulkList(context.Background(), grand, generation)
+		defer p.releaseBulk(grand)
+		p.runBulkListReserved(storage.WithBackgroundIO(p.lifecycle), grand, generation)
 	}()
 }
 
@@ -405,11 +455,17 @@ func (p *storeProbe) runBulkList(ctx context.Context, grand string, generation u
 	}
 	p.bulkRunning[grand] = struct{}{}
 	p.bulkMu.Unlock()
-	defer func() {
-		p.bulkMu.Lock()
-		delete(p.bulkRunning, grand)
-		p.bulkMu.Unlock()
-	}()
+	defer p.releaseBulk(grand)
+	p.runBulkListReserved(storage.WithBackgroundIO(ctx), grand, generation)
+}
+
+func (p *storeProbe) releaseBulk(grand string) {
+	p.bulkMu.Lock()
+	delete(p.bulkRunning, grand)
+	p.bulkMu.Unlock()
+}
+
+func (p *storeProbe) runBulkListReserved(ctx context.Context, grand string, generation uint64) {
 	if _, done := p.dirs.lookup(bulkMarker(grand), p.now()); done {
 		return
 	}
@@ -508,6 +564,7 @@ func parentDir(dir string) (string, bool) {
 // bulk listing of a wide prefix synchronously, so the first renders after a
 // restart find their listings cached.
 func (p *storeProbe) warm(ctx context.Context) {
+	ctx = storage.WithBackgroundIO(ctx)
 	for _, raw := range p.cfg.WarmPrefixes {
 		prefix, err := storage.CleanDirPrefix(raw)
 		if err != nil || ctx.Err() != nil {

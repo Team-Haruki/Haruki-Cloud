@@ -2,7 +2,9 @@ package imagecache
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -15,17 +17,16 @@ const (
 	DefaultGCInterval            = time.Hour
 	DefaultGCBatch               = 500
 	DefaultGCObjectRetentionDays = 30
-	// maxGCPendingObjectDeletes bounds the in-memory retry list; the oldest
-	// entries are dropped first.
-	maxGCPendingObjectDeletes = 10000
-	gcSampleKeys              = 10
+	gcSampleKeys                 = 10
 )
 
 // GCConfig is the image_cache.gc_* block. Zero Interval, Batch and
 // ObjectRetentionDays select the defaults.
 type GCConfig struct {
-	Enabled             bool
-	DryRun              bool
+	Enabled bool
+	DryRun  bool
+	// Enable only after every content writer implements ContentLockSQL.
+	ObjectDeleteEnabled bool
 	Interval            time.Duration
 	Batch               int
 	ObjectRetentionDays int
@@ -41,6 +42,7 @@ func (c GCConfig) normalized() GCConfig {
 	if c.ObjectRetentionDays <= 0 {
 		c.ObjectRetentionDays = DefaultGCObjectRetentionDays
 	}
+	c.Batch = min(c.Batch, 1000)
 	return c
 }
 
@@ -72,8 +74,6 @@ type GC struct {
 	now     func() time.Time
 
 	mu sync.Mutex
-	// pending holds object deletes still owed after their row was deleted.
-	pending []pendingObjectDelete
 }
 
 // pendingObjectDelete is an object delete owed for a collected row.
@@ -106,6 +106,7 @@ func (g *GC) Start(ctx context.Context) {
 	ticker := time.NewTicker(g.cfg.Interval)
 	g.log.InfoContext(ctx, "image cache gc started",
 		"interval", g.cfg.Interval.String(), "dry_run", g.cfg.DryRun,
+		"object_delete_enabled", g.cfg.ObjectDeleteEnabled,
 		"batch", g.cfg.Batch, "object_retention_days", g.cfg.ObjectRetentionDays)
 	go func() {
 		defer ticker.Stop()
@@ -136,6 +137,9 @@ func (g *GC) RunOnce(ctx context.Context) (GCReport, error) {
 	}
 	g.mu.Lock()
 	defer g.mu.Unlock()
+	ctx = storage.WithBackgroundIO(ctx)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
 	report := GCReport{DryRun: g.cfg.DryRun}
 	now := g.now()
 	err := errors.Join(
@@ -143,7 +147,12 @@ func (g *GC) RunOnce(ctx context.Context) (GCReport, error) {
 		g.collectRenderRows(ctx, now, &report),
 		g.collectEntries(ctx, now, &report),
 	)
-	report.PendingObjectDeletes = len(g.pending)
+	if g.cfg.ObjectDeleteEnabled && !g.cfg.DryRun {
+		var pending int
+		countErr := g.index.executor().QueryRowContext(ctx, countObjectDeletesSQL).Scan(&pending)
+		err = errors.Join(err, countErr)
+		report.PendingObjectDeletes = pending
+	}
 	args := []any{
 		"dry_run", report.DryRun,
 		"expired_render_rows", report.ExpiredRenderRows, "deleted_render_rows", report.DeletedRenderRows,
@@ -160,48 +169,77 @@ func (g *GC) RunOnce(ctx context.Context) (GCReport, error) {
 	return report, nil
 }
 
-// retryPending retries owed object deletes. Object keys are content-addressed,
-// so between cycles Drawing or Cloud may have stored the same bytes again and
-// inserted a live row for the same cdn_path; such a delete is dropped, never
-// executed. When the live-row check fails nothing is deleted this cycle.
+// retryPending reads a bounded durable batch. Failed work survives restarts;
+// the next cycle does not re-scan the entire outstanding deletion queue.
 func (g *GC) retryPending(ctx context.Context, report *GCReport) error {
-	if len(g.pending) == 0 {
+	if g.cfg.DryRun || !g.cfg.ObjectDeleteEnabled {
 		return nil
 	}
-	live, err := g.liveRows(ctx, g.pending)
+	if g.objects == storage.Disabled() {
+		return storage.ErrNotConfigured
+	}
+	if !g.index.lifecycle.Load() {
+		return errors.New("imagecache: object deletion requires initialized content lock protocol")
+	}
+	pending, err := g.index.pendingObjects(ctx, g.now(), g.cfg.Batch)
 	if err != nil {
 		return err
 	}
-	kept := g.pending[:0]
-	for _, owed := range g.pending {
-		if _, ok := live[liveEntryKey(owed.Hash, string(owed.Key))]; ok {
-			report.SkippedLiveObjectDeletes++
-			g.log.InfoContext(ctx, "image cache gc dropped a pending object delete; a live row records it again",
-				"cdn_path", string(owed.Key))
-			continue
+	var errs []error
+	for _, owed := range pending {
+		if err := ctx.Err(); err != nil {
+			return errors.Join(append(errs, err)...)
 		}
-		if err := g.objects.Delete(ctx, owed.Key); err != nil {
-			kept = append(kept, owed)
-			continue
+		if err := g.deletePending(ctx, owed, report, true); err != nil {
+			errs = append(errs, err)
 		}
-		report.RetriedObjectDeletes++
 	}
-	clear(g.pending[len(kept):])
-	g.pending = kept
-	return nil
+	return errors.Join(errs...)
 }
 
-func (g *GC) liveRows(ctx context.Context, owed []pendingObjectDelete) (map[string]struct{}, error) {
-	hashes := make([]string, 0, len(owed))
-	seen := make(map[string]struct{}, len(owed))
-	for _, item := range owed {
-		if _, ok := seen[item.Hash]; ok {
-			continue
+// deletePending runs only after the retirement transaction committed. A crash
+// after Delete leaves an idempotent outbox retry, never a resurrected index row.
+func (g *GC) deletePending(ctx context.Context, owed pendingObjectDelete, report *GCReport, retry bool) error {
+	return g.index.WithContentLock(ctx, owed.Hash, func(ctx context.Context, index *PGStore) error {
+		var one int
+		err := index.executor().QueryRowContext(ctx, pendingObjectSQL, owed.Hash, string(owed.Key)).Scan(&one)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
 		}
-		seen[item.Hash] = struct{}{}
-		hashes = append(hashes, item.Hash)
-	}
-	return g.index.LiveEntryPaths(ctx, hashes)
+		if err != nil {
+			return err
+		}
+		live, err := index.LiveEntryPaths(ctx, []string{owed.Hash})
+		if err != nil {
+			return err
+		}
+		if _, exists := live[liveEntryKey(owed.Hash, string(owed.Key))]; exists {
+			_, err := index.executor().ExecContext(ctx, finishObjectDeleteSQL, owed.Hash, string(owed.Key))
+			if err == nil {
+				report.SkippedLiveObjectDeletes++
+			}
+			return err
+		}
+		key, err := storage.CleanKey(string(owed.Key))
+		if err == nil {
+			err = g.objects.Delete(ctx, key)
+		}
+		if err != nil && (errors.Is(err, storage.ErrNotConfigured) || !errors.Is(err, storage.ErrNotExist)) {
+			report.ObjectLeaks++
+			g.log.WarnContext(ctx, "image cache gc object delete failed; retained in durable queue", "error", err)
+			_, err = index.executor().ExecContext(ctx, retryObjectDeleteSQL, owed.Hash, string(owed.Key))
+			return err
+		}
+		if _, err := index.executor().ExecContext(ctx, finishObjectDeleteSQL, owed.Hash, string(owed.Key)); err != nil {
+			return err
+		}
+		if retry {
+			report.RetriedObjectDeletes++
+		} else {
+			report.DeletedObjects++
+		}
+		return nil
+	})
 }
 
 func (g *GC) collectRenderRows(ctx context.Context, now time.Time, report *GCReport) error {
@@ -215,7 +253,7 @@ func (g *GC) collectRenderRows(ctx context.Context, now time.Time, report *GCRep
 			"count", len(keys), "sample", sampleStrings(keys))
 		return nil
 	}
-	deleted, err := g.index.DeleteRender(ctx, keys)
+	deleted, err := g.index.DeleteExpiredRender(ctx, keys, now)
 	report.DeletedRenderRows = int(deleted)
 	return err
 }
@@ -227,17 +265,26 @@ func (g *GC) collectEntries(ctx context.Context, now time.Time, report *GCReport
 		return err
 	}
 	report.OrphanEntries = len(entries)
-	if g.cfg.DryRun {
+	if g.cfg.DryRun || !g.cfg.ObjectDeleteEnabled {
 		sample := make([]string, 0, min(len(entries), gcSampleKeys))
 		for _, entry := range entries[:min(len(entries), gcSampleKeys)] {
 			sample = append(sample, entry.CDNPath)
 		}
 		g.log.InfoContext(ctx, "image cache gc dry run: orphan garage entries",
-			"count", len(entries), "retention_cutoff", cutoff, "sample", sample)
+			"count", len(entries), "retention_cutoff", cutoff, "sample", sample, "object_delete_enabled", g.cfg.ObjectDeleteEnabled)
 		return nil
+	}
+	if g.objects == storage.Disabled() {
+		return storage.ErrNotConfigured
+	}
+	if !g.index.lifecycle.Load() {
+		return errors.New("imagecache: object deletion requires initialized content lock protocol")
 	}
 	var errs []error
 	for _, entry := range entries {
+		if err := ctx.Err(); err != nil {
+			return errors.Join(append(errs, err)...)
+		}
 		if err := g.collectEntry(ctx, entry, cutoff, report); err != nil {
 			errs = append(errs, err)
 		}
@@ -245,57 +292,30 @@ func (g *GC) collectEntries(ctx context.Context, now time.Time, report *GCReport
 	return errors.Join(errs...)
 }
 
-// collectEntry deletes the row first (re-checking the orphan predicate), then
-// the recorded cdn_path verbatim unless a live row records it again. A failed
-// object delete after the row is gone is a leak retried next cycle.
+// collectEntry durably retires ownership first. A writer may acquire the same
+// hash lock between these transactions; deletePending then keeps its object.
 func (g *GC) collectEntry(ctx context.Context, entry ImageEntry, cutoff time.Time, report *GCReport) error {
-	deleted, err := g.index.DeleteOrphanEntry(ctx, entry.Hash, cutoff)
-	if err != nil {
+	if g.objects == storage.Disabled() {
+		return storage.ErrNotConfigured
+	}
+	if !g.cfg.ObjectDeleteEnabled || !g.index.lifecycle.Load() {
+		return errors.New("imagecache: object deletion protocol not enabled")
+	}
+	var deleted int64
+	err := g.index.WithContentLock(ctx, entry.Hash, func(ctx context.Context, index *PGStore) error {
+		var err error
+		deleted, err = index.retireObject(ctx, entry, cutoff)
+		return err
+	})
+	if err != nil || deleted == 0 {
 		return err
 	}
-	if deleted == 0 {
-		return nil
-	}
 	report.DeletedEntries += int(deleted)
-	key, err := storage.CleanKey(entry.CDNPath)
-	if err != nil {
-		report.ObjectLeaks++
-		g.log.WarnContext(ctx, "image cache gc leaked an object with an invalid cdn_path",
-			"cdn_path", entry.CDNPath, "error", err)
-		return nil
+	owed := pendingObjectDelete{Hash: entry.Hash, Key: storage.Key(entry.CDNPath)}
+	if err := g.deletePending(ctx, owed, report, false); err != nil {
+		return fmt.Errorf("imagecache: durable object delete: %w", err)
 	}
-	owed := pendingObjectDelete{Hash: entry.Hash, Key: key}
-	live, err := g.liveRows(ctx, []pendingObjectDelete{owed})
-	if err != nil {
-		report.ObjectLeaks++
-		g.addPending(ctx, owed)
-		g.log.WarnContext(ctx, "image cache gc live row check failed; retrying the object delete next cycle",
-			"cdn_path", entry.CDNPath, "error", err)
-		return nil
-	}
-	if _, ok := live[liveEntryKey(owed.Hash, string(owed.Key))]; ok {
-		report.SkippedLiveObjectDeletes++
-		return nil
-	}
-	if err := g.objects.Delete(ctx, key); err != nil {
-		report.ObjectLeaks++
-		g.addPending(ctx, owed)
-		g.log.WarnContext(ctx, "image cache gc object delete failed; retrying next cycle",
-			"cdn_path", entry.CDNPath, "error", err)
-		return nil
-	}
-	report.DeletedObjects++
 	return nil
-}
-
-func (g *GC) addPending(ctx context.Context, owed pendingObjectDelete) {
-	if len(g.pending) >= maxGCPendingObjectDeletes {
-		dropped := g.pending[0]
-		g.pending = append(g.pending[:0], g.pending[1:]...)
-		g.log.WarnContext(ctx, "image cache gc pending object deletes full; dropping the oldest",
-			"cdn_path", string(dropped.Key), "limit", maxGCPendingObjectDeletes)
-	}
-	g.pending = append(g.pending, owed)
 }
 
 func sampleStrings(values []string) []string {

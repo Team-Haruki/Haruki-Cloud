@@ -37,6 +37,10 @@ func Run(ctx context.Context) {
 	censorService := initCensorIfEnabled(ctx, mainLogger, renderRuntime)
 	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, banChecker, censorService)
 	startRenderHostProbers(ctx, renderRuntime)
+	startStorageDiagnostics(ctx, renderRuntime, mainLogger)
+	if renderRuntime != nil && renderRuntime.Bindings != nil && !harukiConfig.Cfg.Node.ReadOnly {
+		go renderRuntime.Bindings.RunProfileBGCleanup(ctx)
+	}
 	startImageCacheGC(ctx, harukiConfig.Cfg.PJSKRender.ImageCache, renderRuntime, mainLogger)
 	if renderRuntime != nil {
 		groupGuardAPI.RegisterGroupGuardRoutes(app, renderRuntime.Toolbox)

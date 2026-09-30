@@ -461,6 +461,10 @@ func testHousingStatsSnapshotPersistence(t *testing.T) {
 	}
 	persistCache.generation = 2
 	persistCache.persistLatest(context.Background(), 2)
+	if err := persistCache.flushPersistence(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	defer persistCache.closePersistence(t.Context())
 	if persistCache.persistedGeneration != 2 {
 		t.Fatalf("persisted generation = %d", persistCache.persistedGeneration)
 	}
@@ -478,6 +482,9 @@ func testHousingStatsPersistenceWriteAndTime(t *testing.T) {
 	blocked := newHousingCompetitionStatsCache(filepath.Join(blockingParent, "cache.json"), time.Second)
 	blocked.generation = 1
 	blocked.persistLatest(context.Background(), 1)
+	if err := blocked.closePersistence(t.Context()); err == nil {
+		t.Fatal("blocked cache write should fail")
+	}
 	if blocked.persistedGeneration != 0 {
 		t.Fatal("cache write through a file parent should fail")
 	}

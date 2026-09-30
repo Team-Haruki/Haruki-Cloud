@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
+	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -42,22 +43,30 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 	userID := bindingUserID(binding)
 	gameAccountID := bindingGameAccountID(binding)
 
-	oldBg, err := loadProfileBackground(ctx, s.pjskDB, gameAccountID)
+	oldBg, revision, err := loadProfileBackgroundRevision(ctx, s.pjskDB, gameAccountID)
 	if err != nil {
 		return nil, err
 	}
-	uploadedSettings, err := s.bgStorage.SaveProfileBackground(ctx, server, userID, imageURL)
+	ctx, cancel := context.WithTimeout(ctx, profileBGMutationTimeout)
+	defer cancel()
+	var intentID int
+	uploadedSettings, err := s.bgStorage.SaveProfileBackgroundTracked(ctx, server, userID, imageURL, func(settings *drawing.ProfileBgSettings) error {
+		var reserveErr error
+		intentID, reserveErr = s.reserveProfileBGUpload(ctx, gameAccountID, settings)
+		return reserveErr
+	})
 	if err != nil {
 		return nil, err
+	}
+	if intentID == 0 {
+		return nil, fmt.Errorf("profile background storage did not reserve an upload")
 	}
 	settings := mergeUploadedProfileBGSettings(oldBg, uploadedSettings)
-	if err := upsertProfileBackground(ctx, s.pjskDB, gameAccountID, settings); err != nil {
+	cleanupID, err := s.commitProfileBackground(ctx, gameAccountID, revision, oldBg, settings, intentID)
+	if err != nil {
 		return nil, err
 	}
-	// Remove the old background file after the DB record is updated.
-	if oldBg != nil && !sameProfileBGPath(oldBg, settings) {
-		_ = s.bgStorage.DeleteProfileBackground(ctx, oldBg)
-	}
+	s.tryProfileBGCleanup(ctx, cleanupID)
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 }
 
@@ -101,24 +110,15 @@ func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, pl
 		return nil, unverifiedBindingProfileBGError(binding, "清除")
 	}
 	gameAccountID := bindingGameAccountID(binding)
-	settings, err := loadProfileBackground(ctx, s.pjskDB, gameAccountID)
+	settings, revision, err := loadProfileBackgroundRevision(ctx, s.pjskDB, gameAccountID)
 	if err != nil {
 		return nil, err
 	}
-	if s.bgStorage != nil {
-		if err := s.bgStorage.DeleteProfileBackground(ctx, settings); err != nil {
-			return nil, err
-		}
+	cleanupID, err := s.commitProfileBackground(ctx, gameAccountID, revision, settings, clearProfileBGImagePath(settings), 0)
+	if err != nil {
+		return nil, err
 	}
-	if settings != nil {
-		if err := upsertProfileBackground(ctx, s.pjskDB, gameAccountID, clearProfileBGImagePath(settings)); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := deleteProfileBackground(ctx, s.pjskDB, gameAccountID); err != nil {
-			return nil, err
-		}
-	}
+	s.tryProfileBGCleanup(ctx, cleanupID)
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 }
 
@@ -133,7 +133,7 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 		return nil, unverifiedBindingProfileBGError(binding, "调整")
 	}
 	gameAccountID := bindingGameAccountID(binding)
-	currentBg, err := loadProfileBackground(ctx, s.pjskDB, gameAccountID)
+	currentBg, revision, err := loadProfileBackgroundRevision(ctx, s.pjskDB, gameAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 		settings.Vertical = *vertical
 	}
 
-	if err := upsertProfileBackground(ctx, s.pjskDB, gameAccountID, settings); err != nil {
+	if _, err := s.commitProfileBackground(ctx, gameAccountID, revision, currentBg, settings, 0); err != nil {
 		return nil, err
 	}
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)

@@ -10,6 +10,7 @@ package imagecache
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -227,14 +228,48 @@ func normalizeImageGroup(group string) (string, error) {
 }
 
 func (c *Client) storeHashed(ctx context.Context, data []byte, hashHex string, group string, urlPath string) (string, error) {
+	immutable := c.localRoot == "" && c.store != nil && c.store.lifecycle.Load()
+	if immutable {
+		urlPath = path.Join(group, hashHex+"-"+rand.Text()+extFromData(data))
+	}
+	intent := immutable && c.store != nil && c.store.lifecycle.Load()
+	// Commit intent before acquiring a transaction connection: an upload that
+	// outlives its writer must remain discoverable without nesting pool leases.
+	if intent {
+		if err := c.store.registerUpload(ctx, hashHex, urlPath); err != nil {
+			return "", err
+		}
+	}
+	var url string
+	err := c.store.WithContentLock(ctx, hashHex, func(ctx context.Context, index *PGStore) error {
+		var err error
+		url, err = c.storeHashedLocked(ctx, data, hashHex, group, urlPath, index)
+		if err != nil {
+			return err
+		}
+		if intent {
+			_, err = index.executor().ExecContext(ctx, finishObjectDeleteSQL, hashHex, urlPath)
+		}
+		return err
+	})
+	return url, err
+}
+
+func (c *Client) storeHashedLocked(ctx context.Context, data []byte, hashHex string, group string, urlPath string, index *PGStore) (string, error) {
 	finishLookup := commandtrace.MeasureOperation(ctx, "image.lookup")
-	if url, ok := c.lookupIndexed(ctx, hashHex); ok {
+	if url, ok, err := c.lookupIndexedWithStore(ctx, hashHex, index); ok || err != nil {
 		finishLookup()
-		return url, nil
+		return url, err
 	}
 
+	// A timed-out old Delete may still complete remotely after its PG lock
+	// releases. Never reuse a retired garage path for a new content row.
+	immutable := c.localRoot == "" && index != nil && index.tx != nil
 	key := storage.Key(urlPath)
-	_, statErr := c.objects.Stat(ctx, key)
+	statErr := storage.ErrNotExist
+	if !immutable {
+		_, statErr = c.objects.Stat(ctx, key)
+	}
 	exists := statErr == nil
 	if statErr != nil && !errors.Is(statErr, storage.ErrNotExist) {
 		finishLookup()
@@ -242,10 +277,19 @@ func (c *Client) storeHashed(ctx context.Context, data []byte, hashHex string, g
 	}
 	finishLookup()
 
+	entry := c.entryFor(hashHex, group, urlPath, int64(len(data)))
 	if !exists {
+		if immutable {
+			if err := index.verifyUpload(ctx, hashHex, urlPath); err != nil {
+				return "", err
+			}
+		}
 		finishWrite := commandtrace.MeasureOperation(ctx, "image.write")
 		// Content type only: node Caddy owns Cache-Control for the bucket.
-		err := c.objects.Put(ctx, key, data, storage.PutOptions{ContentType: mediaTypeFromPath(urlPath)})
+		writeCtx := storage.WithWriteReceipt(ctx, func(receipt storage.WriteReceipt) {
+			entry.WriterNode, entry.WrittenAt = receipt.WriterNode, receipt.WrittenAt
+		})
+		err := c.objects.Put(writeCtx, key, data, storage.PutOptions{ContentType: mediaTypeFromPath(urlPath)})
 		finishWrite()
 		if err != nil {
 			return "", fmt.Errorf("imagecache: write %s: %w", urlPath, err)
@@ -255,46 +299,57 @@ func (c *Client) storeHashed(ctx context.Context, data []byte, hashHex string, g
 	// Record the relative path (no domain) only after the object exists:
 	// Drawing trusts an indexed row and skips its own upload. Storing only the
 	// path means changing the public hosts in config re-bases every URL.
-	if c.store != nil {
+	if index != nil {
 		finishIndex := commandtrace.MeasureOperation(ctx, "image.index")
-		err := c.store.InsertEntry(ctx, c.entryFor(hashHex, group, urlPath, int64(len(data))))
+		err := index.InsertEntry(ctx, entry)
 		finishIndex()
 		if err != nil {
 			logger.ErrorContext(ctx, "image cache index insert failed", "error", err)
+			if index.tx != nil {
+				return "", err
+			}
 		}
 	}
-	return c.url(urlPath)
+	return c.url(urlPath, entry.FreshWriterNode(c.now()))
 }
 
 // lookupIndexed returns the indexed URL for hashHex. A legacy_disk row on a
 // local slot is only trusted while its object still exists; garage rows are
 // trusted outright (GC keeps them consistent).
-func (c *Client) lookupIndexed(ctx context.Context, hashHex string) (string, bool) {
-	if c.store == nil {
-		return "", false
+func (c *Client) lookupIndexedWithStore(ctx context.Context, hashHex string, index *PGStore) (string, bool, error) {
+	if index == nil {
+		return "", false, nil
 	}
-	entry, ok, err := c.store.Lookup(ctx, hashHex)
+	entry, ok, err := index.Lookup(ctx, hashHex)
 	if err != nil {
 		logger.ErrorContext(ctx, "image cache index lookup failed", "error", err)
-		return "", false
+		if index.tx != nil {
+			return "", false, err
+		}
+		return "", false, nil
 	}
 	if !ok {
-		return "", false
+		return "", false, nil
 	}
 	if entry.StorageBackend == BackendLegacyDisk && c.localRoot != "" {
-		if _, statErr := c.objects.Stat(ctx, storage.Key(entry.CDNPath)); statErr != nil {
-			// Object was deleted (or is unreadable); fall through to re-write it.
-			return "", false
+		if _, err := c.objects.Stat(ctx, storage.Key(entry.CDNPath)); err != nil {
+			return "", false, nil
 		}
 	}
-	url, urlErr := c.url(entry.CDNPath)
-	if urlErr != nil {
-		return "", false
+	url, err := c.url(entry.CDNPath, entry.FreshWriterNode(c.now()))
+	if err != nil {
+		return "", false, err
 	}
 	if entry.StorageBackend == BackendGarage {
-		c.touchEntry(ctx, hashHex)
+		if index.tx != nil {
+			if err := index.TouchEntry(ctx, hashHex); err != nil {
+				return "", false, err
+			}
+		} else {
+			c.touchEntry(ctx, hashHex)
+		}
 	}
-	return url, true
+	return url, true, nil
 }
 
 // touchEntry bumps last_referenced_at on a garage dedup hit, at most once per
@@ -342,8 +397,8 @@ func (c *Client) entryFor(hashHex, group, urlPath string, size int64) ImageEntry
 	return entry
 }
 
-func (c *Client) url(relPath string) (string, error) {
-	url, ok := c.hosts.URL("", relPath)
+func (c *Client) url(relPath string, writerNode string) (string, error) {
+	url, ok := c.hosts.URL(writerNode, relPath)
 	if !ok {
 		return "", ErrNoHosts
 	}

@@ -194,7 +194,18 @@ func (c *Controller) BuildListRequest(query ListQuery) (*drawing.VLiveListReques
 		req.DT = query.Now.UnixMilli()
 	}
 
-	for _, live := range collapseSoloGroups(lives, c.groupsFor(source, region, lives)) {
+	visible := collapseSoloGroups(lives, c.groupsFor(source, region, lives))
+	tasks := make([]func(*assets.AssetHelper), 0, len(visible))
+	for _, live := range visible {
+		candidates := c.bannerCandidates(source, live)
+		tasks = append(tasks, func(helper *assets.AssetHelper) {
+			assets.ResolveRegionAssetPath(helper, region.String(), candidates...)
+		})
+	}
+	if err := c.assets.Prefetch(tasks); err != nil {
+		return nil, err
+	}
+	for _, live := range visible {
 		item := drawing.VLiveBrief{
 			ID:         live.ID,
 			Name:       fallbackLiveName(live.Name, live.ID),

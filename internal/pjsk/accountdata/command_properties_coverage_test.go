@@ -46,6 +46,14 @@ func (s accountCoverageBGStorage) SaveProfileBackground(context.Context, string,
 	return &drawing.ProfileBgSettings{ImgPath: &path, Blur: 1, Alpha: 50}, nil
 }
 
+func (s accountCoverageBGStorage) SaveProfileBackgroundTracked(ctx context.Context, server, userID, imageURL string, beforePut func(*drawing.ProfileBgSettings) error) (*drawing.ProfileBgSettings, error) {
+	settings, err := s.SaveProfileBackground(ctx, server, userID, imageURL)
+	if err == nil && beforePut != nil {
+		err = beforePut(settings)
+	}
+	return settings, err
+}
+
 func (s accountCoverageBGStorage) DeleteProfileBackground(context.Context, *drawing.ProfileBgSettings) error {
 	return s.deleteErr
 }
@@ -369,8 +377,8 @@ func testVerifiedProfileBackgroundDefenses(t *testing.T, ctx context.Context, se
 		t.Fatalf("clear absent background = %+v, %v", item, err)
 	}
 	service.bgStorage = accountCoverageBGStorage{deleteErr: errors.New("delete failed")}
-	if _, err := service.clearBindingProfileBG(ctx, "qq", "42", binding); err == nil || !strings.Contains(err.Error(), "delete failed") {
-		t.Fatalf("background delete failure = %v", err)
+	if _, err := service.clearBindingProfileBG(ctx, "qq", "42", binding); err != nil {
+		t.Fatalf("background clear must commit independently of deletion: %v", err)
 	}
 }
 

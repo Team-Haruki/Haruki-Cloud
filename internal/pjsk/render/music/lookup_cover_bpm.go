@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -88,8 +89,17 @@ func (c *Controller) FindMusicChartsByBPM(query BPMQuery) ([]BPMMatch, error) {
 }
 
 func (c *Controller) scanMusicChartsByBPM(ctx context.Context, source DataSource, builder *Builder, region renderregion.Value, query BPMQuery) ([]BPMMatch, error) {
+	type scanChart struct {
+		music      *masterdata.Music
+		difficulty string
+	}
+	type chartResult struct {
+		parsed *parsedChartBPM
+		found  bool
+		err    error
+	}
 	now := currentMusicVisibilityTime()
-	matches := make([]BPMMatch, 0)
+	var charts []scanChart
 	for _, musicInfo := range source.GetMusics() {
 		if err := ctx.Err(); err != nil {
 			return nil, err
@@ -97,37 +107,42 @@ func (c *Controller) scanMusicChartsByBPM(ctx context.Context, source DataSource
 		if !isMusicVisibleAt(musicInfo, now) {
 			continue
 		}
-		musicMatches, err := c.scanOneMusicChartsByBPM(ctx, source, builder, region, musicInfo, query)
-		if err != nil {
-			return nil, err
+		for _, difficulty := range c.collectBPMSearchDifficulties(source, musicInfo.ID, query.Difficulty) {
+			charts = append(charts, scanChart{music: musicInfo, difficulty: difficulty})
 		}
-		matches = append(matches, musicMatches...)
 	}
-	return matches, nil
-}
-
-func (c *Controller) scanOneMusicChartsByBPM(ctx context.Context, source DataSource, builder *Builder, region renderregion.Value, musicInfo *masterdata.Music, query BPMQuery) ([]BPMMatch, error) {
-	matches := make([]BPMMatch, 0)
-	for _, difficulty := range c.collectBPMSearchDifficulties(source, musicInfo.ID, query.Difficulty) {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
-		parsed, found, err := c.loadChartBPM(ctx, region.String(), musicInfo.ID, difficulty)
-		if !found {
-			continue
-		}
-		if err != nil {
-			if ctx.Err() != nil {
-				return nil, ctx.Err()
+	results := make([]chartResult, len(charts))
+	jobs := make(chan int)
+	var workers sync.WaitGroup
+	for range min(8, len(charts)) {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			for i := range jobs {
+				parsed, found, err := c.loadChartBPM(ctx, region.String(), charts[i].music.ID, charts[i].difficulty)
+				results[i] = chartResult{parsed: parsed, found: found, err: err}
 			}
+		}()
+	}
+submit:
+	for i := range charts {
+		select {
+		case <-ctx.Done():
+			break submit
+		case jobs <- i:
+		}
+	}
+	close(jobs)
+	workers.Wait()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	matches := make([]BPMMatch, 0)
+	for i, result := range results {
+		if result.err != nil || !result.found || !chartContainsBPM(result.parsed, query.BPM) {
 			continue
 		}
-		if chartContainsBPM(parsed, query.BPM) {
-			matches = append(matches, BPMMatch{
-				Music: buildLookupMusic(musicInfo, builder, region), Difficulty: difficulty,
-				MainBPM: parsed.MainBPM, Events: parsed.Events,
-			})
-		}
+		matches = append(matches, BPMMatch{Music: buildLookupMusic(charts[i].music, builder, region), Difficulty: charts[i].difficulty, MainBPM: result.parsed.MainBPM, Events: result.parsed.Events})
 	}
 	return matches, nil
 }
@@ -225,8 +240,8 @@ func chartScoreCandidates(region string, musicID int, difficulty string, storeOn
 }
 
 // loadChartBPM reads and parses the chart of one difficulty through the asset
-// reader. found is false when no candidate exists; err is a read or parse
-// failure of an existing chart. Parsed charts are kept in a small LRU.
+// reader when a complete resource-version index is unavailable. Concurrent
+// reads share a bounded fill; only definite misses enter the negative cache.
 func (c *Controller) loadChartBPM(ctx context.Context, region string, musicID int, difficulty string) (*parsedChartBPM, bool, error) {
 	if c == nil {
 		return nil, false, nil
@@ -236,24 +251,28 @@ func (c *Controller) loadChartBPM(ctx context.Context, region string, musicID in
 	if len(candidates) == 0 {
 		return nil, false, nil
 	}
-	cacheKey := strings.Join(candidates, "\x00")
-	if parsed, ok := c.chartBPM.get(cacheKey); ok {
-		return parsed, parsed != nil, nil
+	if err := ctx.Err(); err != nil {
+		return nil, false, err
 	}
-	data, _, err := reader.ReadFirst(ctx, candidates...)
-	if errors.Is(err, storage.ErrNotExist) {
-		c.chartBPM.putMiss(cacheKey)
-		return nil, false, nil
+	region, _ = normalizeBPMIndexRegion(region)
+	revision, indexKey, indexAvailable := c.bpmIndex.reference(region)
+	if indexAvailable && reader.StoreOnly() {
+		if parsed, found, authoritative := c.bpmIndex.lookup(ctx, region, revision, indexKey, candidates); authoritative {
+			return parsed, found, nil
+		}
 	}
-	if err != nil {
-		return nil, true, fmt.Errorf("failed to open chart file: %w", err)
-	}
-	parsed, err := parseChartBPM(ctx, bytes.NewReader(data))
-	if err != nil {
-		return nil, true, err
-	}
-	c.chartBPM.put(cacheKey, parsed)
-	return parsed, true, nil
+	cacheKey := revision + "\x00" + string(indexKey) + "\x00" + strings.Join(candidates, "\x00")
+	return c.chartBPM.load(ctx, cacheKey, func(readCtx context.Context) (*parsedChartBPM, bool, error) {
+		data, _, err := reader.ReadFirst(readCtx, candidates...)
+		if errors.Is(err, storage.ErrNotExist) {
+			return nil, false, nil
+		}
+		if err != nil {
+			return nil, true, fmt.Errorf("failed to open chart file: %w", err)
+		}
+		parsed, err := parseChartBPM(readCtx, bytes.NewReader(data))
+		return parsed, true, err
+	})
 }
 
 func (c *Controller) collectBPMSearchDifficulties(source DataSource, musicID int, preferred string) []string {
@@ -485,9 +504,12 @@ func applyChartBPMDurations(events []BPMEvent, barCount int) (float64, float64) 
 
 	mainBPM := 0.0
 	mainDuration := -1.0
-	for bpm, duration := range durationByBPM {
+	// Break equal-duration ties by first occurrence, keeping generated indexes
+	// deterministic across builds.
+	for _, event := range events {
+		duration := durationByBPM[event.BPM]
 		if duration > mainDuration {
-			mainBPM = bpm
+			mainBPM = event.BPM
 			mainDuration = duration
 		}
 	}

@@ -49,6 +49,7 @@ func runSharedRenderFlight(parent context.Context, work func(context.Context) ([
 		logger.DetachedContext(parent),
 		displaytime.RequestTimeZoneFromContext(parent),
 	)
+	detached = attachVersions(detached, versionFrom(parent))
 	// Artifact mode: the same window also covers Drawing's encode + upload.
 	if mode := artifactModeFrom(parent); mode != nil {
 		timeout += mode.artifactTimeout
@@ -57,7 +58,7 @@ func runSharedRenderFlight(parent context.Context, work func(context.Context) ([
 	detached = logger.WithContextAttrs(detached, slog.Bool("shared_work", true))
 	sharedBase, cancel := context.WithTimeout(detached, timeout)
 	defer cancel()
-	sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
+	sharedCtx, trace := commandtrace.WithNewTrace(withResponseCacheability(sharedBase))
 	data, err := work(sharedCtx)
 	return renderFlightResult{
 		data:       data,
@@ -271,7 +272,9 @@ func (lc *localRenderCache) RenderSharedContext(ctx context.Context, endpoint st
 			if err != nil {
 				return nil, err
 			}
-			lc.set(key, data, ttl, policy.Infinite)
+			if !renderNoStore(sharedCtx) {
+				lc.set(key, data, ttl, policy.Infinite)
+			}
 			return data, nil
 		})
 		flightResult.leader = callerToken
@@ -336,7 +339,7 @@ func resolveRenderCachePolicyKey(ctx context.Context, endpoint string, request a
 		return renderCachePolicy{}, "", false
 	}
 	key, err := buildRenderCacheKey(policy)
-	return policy, key, err == nil
+	return policy, versionedCacheKey(ctx, key), err == nil
 }
 
 func waitForRenderFlight(ctx context.Context, result <-chan singleflight.Result, callerToken *renderFlightToken, cacheName string) ([]byte, error) {
@@ -453,23 +456,26 @@ func (c *RenderCacheClient) renderRemoteMiss(ctx context.Context, endpoint, key 
 	if err != nil {
 		return ImageResult{}, err
 	}
+	noStore := renderNoStore(ctx) || (directive != nil && directive.outcome.NoStore)
 	if directive != nil && directive.outcome.Ref != nil {
+		if noStore {
+			return ImageResult{ref: directive.outcome.Ref, fetcher: c.fetcher}, nil
+		}
 		return c.pendingRef(key, policy, ttl, directive.outcome.Ref), nil
 	}
-	// Bytes (degraded write, Cache-Store: 0, an old Drawing, a non-allow-listed
-	// endpoint): no index row will exist, so the pending entry stays until it
-	// expires. Cloud no longer persists rendered bytes itself.
-	c.pending.set(key, image, pendingIndexTTL(policy, ttl), false)
+	// Complete bytes from an old Drawing or a degraded write can be retained
+	// briefly. An explicit no-store response (missing asset or changed renderer)
+	// must remain visible to the next request instead of poisoning this key.
+	if !noStore {
+		c.pending.set(key, image, pendingIndexTTL(policy, ttl), false)
+	}
 	return ImageBytes(image), nil
 }
 
-// pendingRef keeps a ref Drawing returned until its index row is visible:
-// it is dropped at once when Drawing reported index_written.
+// pendingRef retains the writer node briefly even after its PG row is visible.
+// Visibility of metadata does not guarantee cross-node object replication.
 func (c *RenderCacheClient) pendingRef(key string, policy renderCachePolicy, ttl time.Duration, ref *ArtifactRef) ImageResult {
-	generation := c.pending.setRef(key, ref, pendingIndexTTL(policy, ttl))
-	if ref.IndexWritten && generation != 0 {
-		c.pending.deleteGeneration(key, generation)
-	}
+	c.pending.setRef(key, ref, pendingIndexTTL(policy, ttl))
 	return ImageResult{ref: ref, fetcher: c.fetcher}
 }
 

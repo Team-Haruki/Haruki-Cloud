@@ -68,6 +68,7 @@ var (
 		{Name: "user_id", Type: field.TypeString, Size: 30},
 		{Name: "server", Type: field.TypeString, Size: 2},
 		{Name: "is_banned", Type: field.TypeBool, Default: false},
+		{Name: "bg_revision", Type: field.TypeInt64, Default: 0},
 		{Name: "bg", Type: field.TypeJSON, Nullable: true},
 	}
 	// GameAccountsTable holds the schema information for the "game_accounts" table.
@@ -257,6 +258,29 @@ var (
 			},
 		},
 	}
+	// ProfileBgCleanupsColumns holds the columns for the "profile_bg_cleanups" table.
+	ProfileBgCleanupsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "object_path", Type: field.TypeString, Unique: true, Size: 512},
+		{Name: "game_account_id", Type: field.TypeInt},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"uploading", "pending", "deleting"}},
+		{Name: "not_before", Type: field.TypeTime},
+		{Name: "attempts", Type: field.TypeInt, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// ProfileBgCleanupsTable holds the schema information for the "profile_bg_cleanups" table.
+	ProfileBgCleanupsTable = &schema.Table{
+		Name:       "profile_bg_cleanups",
+		Columns:    ProfileBgCleanupsColumns,
+		PrimaryKey: []*schema.Column{ProfileBgCleanupsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "profilebgcleanup_not_before_state",
+				Unique:  false,
+				Columns: []*schema.Column{ProfileBgCleanupsColumns[4], ProfileBgCleanupsColumns[3]},
+			},
+		},
+	}
 	// RejectedAliasColumns holds the columns for the "rejected_alias" table.
 	RejectedAliasColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -355,6 +379,7 @@ var (
 		MysekaiBirthdaySubscriptionsTable,
 		MysekaiBirthdaySubscriptionEventsTable,
 		PendingAliasTable,
+		ProfileBgCleanupsTable,
 		RejectedAliasTable,
 		UserBindingsTable,
 		UserDefaultBindingsTable,

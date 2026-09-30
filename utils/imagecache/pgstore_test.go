@@ -17,7 +17,9 @@ func newMockPGStore(t *testing.T) (*PGStore, sqlmock.Sqlmock) {
 	if err != nil {
 		t.Fatalf("create SQL mock: %v", err)
 	}
-	return &PGStore{db: db}, mock
+	store := &PGStore{db: db}
+	store.metadata.Store(true)
+	return store, mock
 }
 
 func TestPGStoreNilReceiver(t *testing.T) {
@@ -49,6 +51,7 @@ func TestPGStoreInit(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(initSQL)).WillReturnResult(sqlmock.NewResult(0, 0))
 		mock.ExpectExec(regexp.QuoteMeta(migrateSQL)).WillReturnResult(sqlmock.NewResult(0, 0))
 		mock.ExpectQuery(probe).WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
+		mock.ExpectQuery(regexp.QuoteMeta(inspectLifecycleSQL)).WillReturnRows(sqlmock.NewRows([]string{"ready"}).AddRow(true))
 		if err := store.Init(ctx); err != nil {
 			t.Fatalf("Init() error = %v", err)
 		}
@@ -150,7 +153,7 @@ func TestPGStoreLookupWidened(t *testing.T) {
 	query := regexp.QuoteMeta(lookupWidenedSQL)
 	expires := time.Date(2026, 9, 14, 0, 0, 0, 0, time.UTC)
 	mock.ExpectQuery(query).WithArgs("garage").WillReturnRows(
-		sqlmock.NewRows(widenedLookupColumns).AddRow("pjsk/api/a.png", "", int64(9), BackendGarage, "image/png", expires),
+		sqlmock.NewRows(widenedLookupColumns).AddRow("pjsk/api/a.png", "", int64(9), BackendGarage, "image/png", expires, nil, nil),
 	)
 	entry, ok, err := store.Lookup(ctx, "garage")
 	want := ImageEntry{Hash: "garage", CDNPath: "pjsk/api/a.png", StorageBackend: BackendGarage, MediaType: "image/png", SizeBytes: 9, ExpiresAt: expires}
@@ -160,7 +163,7 @@ func TestPGStoreLookupWidened(t *testing.T) {
 
 	// Before the backfill runs, storage_backend is NULL and is inferred.
 	mock.ExpectQuery(query).WithArgs("pre-backfill").WillReturnRows(
-		sqlmock.NewRows(widenedLookupColumns).AddRow("pjsk/b.png", "/cache/b.png", int64(1), nil, nil, nil),
+		sqlmock.NewRows(widenedLookupColumns).AddRow("pjsk/b.png", "/cache/b.png", int64(1), nil, nil, nil, nil, nil),
 	)
 	entry, ok, err = store.Lookup(ctx, "pre-backfill")
 	if !ok || err != nil || entry.StorageBackend != BackendLegacyDisk || !entry.ExpiresAt.IsZero() || entry.MediaType != "" {
@@ -194,8 +197,8 @@ func TestPGStoreInsertTexts(t *testing.T) {
 	t.Run("widened", func(t *testing.T) {
 		store, mock := newMockPGStore(t)
 		store.widened.Store(true)
-		mock.ExpectExec(regexp.QuoteMeta(insertWidenedSQL)).
-			WithArgs("hash", "pjsk", "pjsk/a.png", sql.NullString{String: "/cache/pjsk/a.png", Valid: true}, int64(12), BackendLegacyDisk, sql.NullString{}).
+		mock.ExpectExec(regexp.QuoteMeta(insertWidenedWithWriterSQL)).
+			WithArgs("hash", "pjsk", "pjsk/a.png", sql.NullString{String: "/cache/pjsk/a.png", Valid: true}, int64(12), BackendLegacyDisk, sql.NullString{}, sql.NullString{}, sql.NullTime{}).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		if err := store.InsertEntry(ctx, ImageEntry{Hash: "hash", GroupName: "pjsk", CDNPath: "pjsk/a.png", FilePath: "/cache/pjsk/a.png", SizeBytes: 12}); err != nil {
 			t.Fatal(err)

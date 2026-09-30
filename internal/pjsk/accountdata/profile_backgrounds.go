@@ -111,7 +111,7 @@ func upsertProfileBackground(ctx context.Context, db *pjskdb.Client, gameAccount
 		return nil
 	}
 	_, err := db.GameAccount.UpdateOneID(gameAccountID).
-		SetBg(cloneProfileBGSettings(settings)).
+		SetBg(cloneProfileBGSettings(settings)).AddBgRevision(1).
 		Save(ctx)
 	return err
 }
@@ -121,7 +121,7 @@ func deleteProfileBackground(ctx context.Context, db *pjskdb.Client, gameAccount
 		return nil
 	}
 	_, err := db.GameAccount.UpdateOneID(gameAccountID).
-		ClearBg().
+		ClearBg().AddBgRevision(1).
 		Save(ctx)
 	if pjskdb.IsNotFound(err) {
 		return nil

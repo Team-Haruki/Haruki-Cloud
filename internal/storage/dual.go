@@ -55,7 +55,7 @@ func (d *dualStore) Put(ctx context.Context, key Key, data []byte, opts PutOptio
 	if err := d.primary.Put(ctx, key, data, opts); err != nil {
 		return err
 	}
-	if err := d.mirror.Put(ctx, key, data, opts); err != nil {
+	if err := d.mirror.Put(WithWriteReceipt(ctx, nil), key, data, opts); err != nil {
 		d.log.WarnContext(ctx, "storage mirror put failed", "key", string(key), "mode", string(d.mode), "error", err)
 	}
 	return nil

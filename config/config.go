@@ -169,7 +169,7 @@ const (
 )
 
 // applyStorageProviderEnv overrides one provider block from
-// <prefix>_PROVIDER, _SCHEME, _ENDPOINT, _ENDPOINTS, _TLS, _BUCKET, _ROOT,
+// <prefix>_PROVIDER, _SCHEME, _ENDPOINT, _ENDPOINTS, _ENDPOINT_NAMES, _TLS, _BUCKET, _ROOT,
 // _PREFIX, _REGION, _ACCESS_KEY_ID, _SECRET_ACCESS_KEY, _PUBLIC_READ,
 // _PATH_STYLE, _BASE_URL and _OPTIONS.
 func applyStorageProviderEnv(prefix string, dst *storage.ProviderConfig) error {
@@ -177,6 +177,9 @@ func applyStorageProviderEnv(prefix string, dst *storage.ProviderConfig) error {
 	envStr(prefix+"_SCHEME", &dst.Scheme)
 	envStr(prefix+"_ENDPOINT", &dst.Endpoint)
 	if err := envStringSlice(prefix+"_ENDPOINTS", &dst.Endpoints); err != nil {
+		return err
+	}
+	if err := envEndpointNames(prefix+"_ENDPOINT_NAMES", &dst.EndpointNames); err != nil {
 		return err
 	}
 	envBoolPtr(prefix+"_TLS", &dst.TLS)
@@ -193,7 +196,7 @@ func applyStorageProviderEnv(prefix string, dst *storage.ProviderConfig) error {
 }
 
 // applyStorageMirrorEnv overrides the user_upload mirror block from
-// <prefix>_MIRROR_SCHEME, _MIRROR_ROOT, _MIRROR_BUCKET, _MIRROR_ENDPOINTS and
+// <prefix>_MIRROR_SCHEME, _MIRROR_ROOT, _MIRROR_BUCKET, _MIRROR_ENDPOINTS, _MIRROR_ENDPOINT_NAMES and
 // _MIRROR_MODE. The mirror is created only when one of them is set.
 func applyStorageMirrorEnv(prefix string, dst *storage.ProviderConfig) error {
 	mirror := storage.ProviderConfig{}
@@ -206,6 +209,9 @@ func applyStorageMirrorEnv(prefix string, dst *storage.ProviderConfig) error {
 	if err := envStringSlice(prefix+"_MIRROR_ENDPOINTS", &mirror.Endpoints); err != nil {
 		return err
 	}
+	if err := envEndpointNames(prefix+"_MIRROR_ENDPOINT_NAMES", &mirror.EndpointNames); err != nil {
+		return err
+	}
 	envStr(prefix+"_MIRROR_MODE", &dst.MirrorMode)
 	if dst.Mirror != nil || !mirror.IsZero() {
 		dst.Mirror = &mirror
@@ -214,6 +220,9 @@ func applyStorageMirrorEnv(prefix string, dst *storage.ProviderConfig) error {
 }
 
 func applyStorageEnvOverrides(cfg *storage.SetConfig) error {
+	envInt("HARUKI_PJSK_RENDER_STORAGE_IO_MAX_CONCURRENT", &cfg.IO.MaxConcurrent)
+	envInt("HARUKI_PJSK_RENDER_STORAGE_IO_MAX_PER_ORIGIN", &cfg.IO.MaxPerOrigin)
+	envInt("HARUKI_PJSK_RENDER_STORAGE_IO_MAX_BACKGROUND", &cfg.IO.MaxBackground)
 	for _, slot := range storage.Slots {
 		prefix := storageEnvPrefix + strings.ToUpper(string(slot))
 		provider := cfg.Provider(slot)
@@ -249,6 +258,33 @@ func envStringSlice(name string, dst *[]string) error {
 		}
 	}
 	*dst = result
+	return nil
+}
+
+// Endpoint node names are positional; unlike ordinary option lists, empty
+// entries must stay in place so an unnamed node cannot shift later mappings.
+func envEndpointNames(name string, dst *[]string) error {
+	raw, present := os.LookupEnv(name)
+	if !present {
+		return nil
+	}
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		*dst = nil
+		return nil
+	}
+	var parsed []string
+	if strings.HasPrefix(raw, "[") {
+		if err := json.Unmarshal([]byte(raw), &parsed); err != nil {
+			return fmt.Errorf("invalid %s: %w", name, err)
+		}
+	} else {
+		parsed = strings.Split(strings.NewReplacer(";", ",", "\n", ",").Replace(raw), ",")
+	}
+	for i := range parsed {
+		parsed[i] = strings.TrimSpace(parsed[i])
+	}
+	*dst = parsed
 	return nil
 }
 
@@ -468,6 +504,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	}
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_PATH", &cfg.PJSKRender.ImageCache.HostsProbePath)
 	envDuration("HARUKI_PJSK_RENDER_IMAGE_CACHE_HOSTS_PROBE_INTERVAL", &cfg.PJSKRender.ImageCache.HostsProbeInterval)
+	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_OBJECT_DELETE_ENABLED", &cfg.PJSKRender.ImageCache.GC.ObjectDeleteEnabled)
 	envBool("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_ENABLED", &cfg.PJSKRender.ImageCache.GC.Enabled)
 	envBoolPtr("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_DRY_RUN", &cfg.PJSKRender.ImageCache.GC.DryRun)
 	envDuration("HARUKI_PJSK_RENDER_IMAGE_CACHE_GC_INTERVAL", &cfg.PJSKRender.ImageCache.GC.Interval)
@@ -478,6 +515,16 @@ func ApplyEnvOverrides(cfg *Config) error {
 	if err := envStringSlice("HARUKI_PJSK_RENDER_ASSETS_BASE_URLS", &cfg.PJSKRender.AssetDirs.AssetsBaseURLs); err != nil {
 		return err
 	}
+	envBool("HARUKI_PJSK_RENDER_ASSET_INDEX_ENABLED", &cfg.PJSKRender.AssetIndex.Enabled)
+	envDuration("HARUKI_PJSK_RENDER_ASSET_INDEX_POLL_INTERVAL", &cfg.PJSKRender.AssetIndex.PollInterval)
+	envDuration("HARUKI_PJSK_RENDER_ASSET_INDEX_TIMEOUT", &cfg.PJSKRender.AssetIndex.Timeout)
+	envDuration("HARUKI_PJSK_RENDER_ASSET_INDEX_MAX_STALE", &cfg.PJSKRender.AssetIndex.MaxStale)
+	envInt("HARUKI_PJSK_RENDER_ASSET_INDEX_MAX_OBJECTS", &cfg.PJSKRender.AssetIndex.MaxObjects)
+	envBool("HARUKI_PJSK_RENDER_DRAWING_CACHE_VERSIONS_ENABLED", &cfg.PJSKRender.DrawingCacheVersions.Enabled)
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_VERSIONS_POLL_INTERVAL", &cfg.PJSKRender.DrawingCacheVersions.PollInterval)
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_VERSIONS_MAX_STALE", &cfg.PJSKRender.DrawingCacheVersions.MaxStale)
+	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_VERSIONS_RENDERER_EPOCH", &cfg.PJSKRender.DrawingCacheVersions.RendererEpoch)
+	envStr("HARUKI_PJSK_RENDER_CACHE_PERSISTENCE_NAMESPACE", &cfg.PJSKRender.CachePersistenceNamespace)
 	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_POSITIVE_TTL", &cfg.PJSKRender.AssetProbe.PositiveTTL)
 	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_NEGATIVE_TTL", &cfg.PJSKRender.AssetProbe.NegativeTTL)
 	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_LISTING_TTL", &cfg.PJSKRender.AssetProbe.ListingTTL)
@@ -603,6 +650,23 @@ type AssetProbeConfig struct {
 	WarmPrefixes []string      `yaml:"warm_prefixes"` // directories listed in the background at startup (default none)
 }
 
+// AssetIndexConfig consumes complete inventories published by Asset-Updater.
+type AssetIndexConfig struct {
+	Enabled      bool          `yaml:"enabled"`
+	PollInterval time.Duration `yaml:"poll_interval"`
+	Timeout      time.Duration `yaml:"timeout"`
+	MaxStale     time.Duration `yaml:"max_stale"`
+	MaxObjects   int           `yaml:"max_objects"`
+}
+
+// DrawingCacheVersionsConfig enables the renderer identity and resource revision contract.
+type DrawingCacheVersionsConfig struct {
+	Enabled       bool          `yaml:"enabled"`
+	PollInterval  time.Duration `yaml:"poll_interval"`
+	MaxStale      time.Duration `yaml:"max_stale"`
+	RendererEpoch string        `yaml:"renderer_epoch"`
+}
+
 type AssetDirsConfig struct {
 	Primary       string   `yaml:"primary"`
 	Legacy        []string `yaml:"legacy"`
@@ -683,7 +747,9 @@ type ImageCacheConfig struct {
 // expired render_cache_index rows, then unreferenced garage
 // image_cache_entries rows past the retention window, then their objects.
 type ImageCacheGCConfig struct {
-	Enabled bool `yaml:"gc_enabled"` // default false
+	// Enable physical deletes only after every Cloud/Drawing writer uses the shared lifecycle protocol.
+	ObjectDeleteEnabled bool `yaml:"gc_object_delete_enabled"`
+	Enabled             bool `yaml:"gc_enabled"` // default false
 	// DryRun defaults to true when unset: only the SELECTs run.
 	DryRun              *bool         `yaml:"gc_dry_run"`
 	Interval            time.Duration `yaml:"gc_interval"`              // 0 = default (1h)
@@ -776,6 +842,9 @@ type MySekaiCNWhitelistEntry struct {
 }
 
 type PJSKRenderConfig struct {
+	AssetIndex                AssetIndexConfig                `yaml:"asset_index"`
+	DrawingCacheVersions      DrawingCacheVersionsConfig      `yaml:"drawing_cache_versions"`
+	CachePersistenceNamespace string                          `yaml:"cache_persistence_namespace"`
 	Enabled                   bool                            `yaml:"enabled"`
 	DrawingBaseURL            string                          `yaml:"drawing_base_url"`
 	DrawingTargets            []upstream.TargetConfig         `yaml:"drawing_targets"`
@@ -798,6 +867,20 @@ type PJSKRenderConfig struct {
 	DeckRecommend             DeckRecommendConfig             `yaml:"deck_recommend"`
 	Storage                   StorageConfig                   `yaml:"storage"`
 	AssetProbe                AssetProbeConfig                `yaml:"asset_probe"`
+}
+
+// ValidateCacheVersions rejects a partial protocol rollout: Drawing only reads
+// resource revision headers inside its C13 artifact directive.
+func (c PJSKRenderConfig) ValidateCacheVersions() error {
+	if !c.DrawingCacheVersions.Enabled {
+		return nil
+	}
+	for _, endpoint := range c.DrawingArtifact.Endpoints {
+		if strings.TrimSpace(endpoint) == "*" {
+			return nil
+		}
+	}
+	return fmt.Errorf("pjsk_render.drawing_cache_versions.enabled requires drawing_artifact.endpoints to contain '*'")
 }
 
 // StorageConfig is pjsk_render.storage: one Asset-Updater style provider
@@ -1024,6 +1107,11 @@ func ReadConfig(path string) (Config, error) {
 	ApplyProfileDefaults(&cfg)
 	if err := ApplyEnvOverrides(&cfg); err != nil {
 		return Config{}, fmt.Errorf("invalid environment override: %w", err)
+	}
+	if cfg.PJSKRender.Enabled {
+		if err := cfg.PJSKRender.ValidateCacheVersions(); err != nil {
+			return Config{}, err
+		}
 	}
 	return cfg, nil
 }

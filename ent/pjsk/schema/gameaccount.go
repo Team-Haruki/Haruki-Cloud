@@ -21,6 +21,7 @@ func (GameAccount) Fields() []ent.Field {
 		field.Bool("is_banned").
 			Default(false).
 			Comment("Whether this PJSK game account is blocked from new bindings"),
+		field.Int64("bg_revision").Default(0).Comment("CAS version for profile background changes"),
 		field.JSON("bg", &drawing.ProfileBgSettings{}).
 			Optional().
 			Comment("Profile card background settings stored as JSONB"),

@@ -408,6 +408,7 @@ func TestApplyEnvOverridesStorageSlots(t *testing.T) {
 			t.Setenv(prefix+"_SCHEME", "s3")
 			t.Setenv(prefix+"_ENDPOINT", "http://single:3900")
 			t.Setenv(prefix+"_ENDPOINTS", "http://a:3900, http://b:3900")
+			t.Setenv(prefix+"_ENDPOINT_NAMES", "vm105,cn06")
 			t.Setenv(prefix+"_TLS", "false")
 			t.Setenv(prefix+"_BUCKET", "bucket-"+string(slot))
 			t.Setenv(prefix+"_ROOT", "root")
@@ -425,6 +426,7 @@ func TestApplyEnvOverridesStorageSlots(t *testing.T) {
 			got := cfg.PJSKRender.Storage.Provider(slot)
 			testutil.Require(t, got.Provider == "garage" && got.Scheme == "s3" && got.Endpoint == "http://single:3900", "identity = %+v", got)
 			testutil.Require(t, len(got.Endpoints) == 2 && got.Endpoints[1] == "http://b:3900", "endpoints = %#v", got.Endpoints)
+			testutil.Require(t, len(got.EndpointNames) == 2 && got.EndpointNames[1] == "cn06", "endpoint names = %#v", got.EndpointNames)
 			testutil.Require(t, got.TLS != nil && !*got.TLS, "tls = %v", got.TLS)
 			testutil.Require(t, got.Bucket == "bucket-"+string(slot) && got.Root == "root" && got.Prefix == "prefix" && got.Region == "garage", "location = %+v", got)
 			testutil.Require(t, got.AccessKeyID == "AK" && got.SecretAccessKey == "SK", "credentials not applied")
@@ -701,4 +703,33 @@ func TestImageCacheGCAndLegacyRedirectConfig(t *testing.T) {
 	var nested PJSKRenderConfig
 	err = yaml.Unmarshal([]byte("image_cache:\n  render_index:\n    gc:\n      enabled: true\n"), &nested)
 	testutil.Require(t, err == nil && !nested.ImageCache.GC.Enabled, "nested render_index.gc spelling enabled GC: %+v, %v", nested.ImageCache.GC, err)
+}
+
+func TestStorageEndpointNameEnvironmentPreservesUnnamedPositions(t *testing.T) {
+	for _, raw := range []string{`["vm105","","cn06"]`, "vm105,,cn06"} {
+		t.Run(raw, func(t *testing.T) {
+			t.Setenv("HARUKI_PJSK_RENDER_STORAGE_IMAGE_CACHE_ENDPOINT_NAMES", raw)
+			cfg := &Config{}
+			if err := ApplyEnvOverrides(cfg); err != nil {
+				t.Fatal(err)
+			}
+			names := cfg.PJSKRender.Storage.ImageCache.EndpointNames
+			if len(names) != 3 || names[0] != "vm105" || names[1] != "" || names[2] != "cn06" {
+				t.Fatalf("names=%v", names)
+			}
+		})
+	}
+	t.Setenv("HARUKI_PJSK_RENDER_STORAGE_IMAGE_CACHE_ENDPOINT_NAMES", "")
+	cfg := &Config{}
+	cfg.PJSKRender.Storage.ImageCache.EndpointNames = []string{"old"}
+	if err := ApplyEnvOverrides(cfg); err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.PJSKRender.Storage.ImageCache.EndpointNames) != 0 {
+		t.Fatal("explicit empty mapping did not clear YAML names")
+	}
+	t.Setenv("HARUKI_PJSK_RENDER_STORAGE_IMAGE_CACHE_ENDPOINT_NAMES", "[broken")
+	if err := ApplyEnvOverrides(cfg); err == nil {
+		t.Fatal("malformed mapping accepted")
+	}
 }

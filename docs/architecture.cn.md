@@ -498,25 +498,41 @@ Bot 的共享执行会给内部操作添加 `command.shared.operation.` 前缀�
 
 ### 6.3 图片缓存与图片结果
 
-渲染缓存键由 `internal/pjsk/drawing` 的受保护文件（`cache_helpers.go`、`cache_hash.go`、`cache_rules.go` 等）计算，Phase-2 不改变任何已有键（`cache_key_golden_test.go` 固定）。
+渲染缓存基础键由 `internal/pjsk/drawing` 的 `cache_helpers.go`、`cache_hash.go`、`cache_rules.go` 计算，原有算法由 `cache_key_golden_test.go` 固定。启用 `drawing_cache_versions.enabled` 后，在基础键外加入请求引用的素材分片 revision 与 Drawing 节点集合的 renderer epoch，独立形成新版本键；关闭时保留原键。
 
-**索引与对象。** 渲染索引在 PostgreSQL：`image_cache_entries`（按内容 hash 去重，记录 `cdn_path`、`storage_backend`（`garage` / `legacy_disk`）、`media_type`、`last_referenced_at`）与 `render_cache_index`（`request_key` → `content_hash`，带 `ttl_seconds` / `expires_at`）。DDL 只由 Cloud 执行（`image_cache.render_index.ddl_enabled`），Drawing 只 INSERT/SELECT。对象存放在 `image_cache` 槽位（生产为 Garage 的 `image-cache` 桶，`root=""`）；Drawing 写入 `pjsk/api/<api_path>/<sha256>.<ext>`，Cloud 自己的 `StoreAndGetURL` 写入 `pjsk/<sha256>.<ext>`，两者共用同一表与桶。只针对 Drawing 产物的运维工具必须使用前缀 `pjsk/api/`。
+**索引与对象。** 渲染索引在 PostgreSQL：`image_cache_entries`（按内容 hash 去重，记录 `cdn_path`、`storage_backend`（`garage` / `legacy_disk`）、`media_type`、`last_referenced_at`）与 `render_cache_index`（`request_key` → `content_hash`，带 `ttl_seconds` / `expires_at`）。DDL 只由 Cloud 执行（`image_cache.render_index.ddl_enabled`），Drawing 不执行 DDL，遵循事务锁与上传意图协议。对象存放在 `image_cache` 槽位（生产为 Garage 的 `image-cache` 桶，`root=""`）；启用完整生命周期 schema 的新内容写入使用带随机 generation 的对象 key：Drawing 为 `pjsk/api/<api_path>/<sha256>-<generation>.<ext>`，Cloud 为 `pjsk/<sha256>-<generation>.<ext>`；去重始终按 PG 中的内容 hash 与已记录 `cdn_path`，兼容旧路径，两者共用同一表与桶。无 PG 或旧 schema 的兼容模式保留确定性 key 与存在性探测，不能开启物理 GC。只针对 Drawing 产物的运维工具必须使用前缀 `pjsk/api/`。
 
 **请求路径。** `drawing_artifact.endpoints` 白名单内的端点发送完整 C13 指令头（`X-Haruki-Artifact: 1`、`X-Haruki-Cache-Key`、`-Key-Version`、`-TTL`、`-Group`、`-Api-Path`、`-User-Id`、`-Store`）；Drawing 返回 ArtifactRef（含 `node_name`），Cloud 用 `urlhost` 优先选该节点的公开主机输出 URL，不读取图片字节。Drawing 仍可能返回 `image/*` 字节（`Cache-Store: 0`、写入降级、未升级的 Drawing），这是永久分支。`render_index.lookup_enabled` 打开后命中直接来自 PG，命中续期（`TouchRender`）按 `touch_interval` 限流。Cloud 不再持久化渲染字节：未进入白名单的端点（以及上述字节分支）只进入进程内暂存缓存，没有索引行即视为未命中；`/cache`、`/cache/stats` 与 SQLite 绘图缓存均已删除。谱面（`/api/pjsk/chart`）不再使用 `image_cache.charts_uri` 静态缓存，而是走同一渲染路径，渲染规则 TTL 为 7 天（该规则只影响 TTL，不改变缓存键）。
 
-**GC（C6）。** `utils/imagecache.GC` 由 `internal/server/run.go` 以运行上下文启动：`image_cache.gc_enabled` 默认关闭，开启后 `gc_dry_run` 默认开启（只执行 SELECT，按阶段输出计数与最多 10 个样本）。每个周期先重试上轮未删除成功的对象，然后阶段 1 删除 `expires_at IS NOT NULL AND expires_at < now()` 的 `render_cache_index` 行（`expires_at IS NULL` 的永久行永不回收）；阶段 2 选出 `storage_backend = 'garage'`、无任何 `render_cache_index` 引用且 `last_referenced_at` 早于 `gc_object_retention_days`（默认 30 天）的 `image_cache_entries` 行，**先删行（删除语句重新套用全部条件）、再按记录的 `cdn_path` 原样删对象**；删对象前（含重试）若发现已有行重新记录同一 `cdn_path`（内容寻址 key 被重新写入），放弃删除并计入 `SkippedLiveObjectDeletes`。Cloud 在 `garage` 行去重命中（每 hash 每小时最多一次）与插入冲突时更新 `last_referenced_at`。`image_cache_entries.expires_at` 不参与判断；`legacy_disk` 行永不回收。行已删除但对象删除失败计为 `ObjectLeaks`，放入内存中的待删列表（上限 10 000）在下个周期重试。每个周期输出一行汇总。外键不带级联，误删仍被引用的行会直接失败。
+**GC。** `utils/imagecache.GC` 由应用生命周期管理，`gc_enabled` 默认关闭，`gc_dry_run` 默认开启。过期渲染索引的 DELETE 原子复核选取时的过期条件，避免删除已续期的行。物理对象回收另外受 `gc_object_delete_enabled` 控制，只有所有 Cloud 与 Drawing 写入者采用同一生命周期协议后才能开启。内容写入与回收按内容 hash 使用 PostgreSQL 事务锁；回收先提交索引退役与持久 outbox，再在新事务中复核引用并删除旧 generation 对象。删除失败的债务保存在数据库，重启后继续处理。随机 generation key 使超时后晚到的旧 DELETE 无法命中新写入的对象。上传前独立提交意图记录，上传与索引成功后消费；进程崩溃或索引失败留下的意图可在期限后回收。
+
+`cmd/image-cache-reconcile` 分页检查索引指向的对象，默认只检查；`--repair` 仅移除已确认缺失对象的索引引用，供后续请求重画，不删除对象。该工具使用只读 schema 探测，不执行 DDL；只接受无本地目录覆盖、bucket 根路径的显式 S3 槽位，避免检查错误存储目标。正常图片缓存命中仍保持零 HEAD/GET。
 
 **旧路由 `/ic/*`（E3）。** 默认仍由 `static.New(image_cache.dir)` 原样提供文件；`image_cache.legacy_redirect.enabled` 且配置了图片主机时改为 301 到同一 key 的主机 URL（非法 key 返回 404，重定向本身 `Cache-Control: public, max-age=86400`）。开启后至少保留 30 天。
 
-**字节与暂存。** 渲染缓存只在 `render_index.lookup_enabled` 打开且索引可用时启用；`ImageResult` 要么携带字节，要么携带 ArtifactRef（只有字节消费者调用 `Bytes(ctx)` 时才从 `image_cache` 槽位或主机读回）。索引行出现前的暂存缓存最多 128 项、64 MiB，有效期不超过 120 秒与业务 TTL。
+**字节与暂存。** 渲染缓存只在 `render_index.lookup_enabled` 打开且索引可用时启用；`ImageResult` 要么携带字节，要么携带 ArtifactRef（只有字节消费者调用 `Bytes(ctx)` 时才从 `image_cache` 槽位或主机读回）。暂存缓存最多 128 项、64 MiB，有效期不超过 120 秒与业务 TTL；新 ArtifactRef 暂存节点提示，即使 Drawing 已写入索引也保留到该期限。索引保存短期有效的 writer node 提示，使其他 Cloud 实例优先访问刚写入的节点。Drawing 响应明确 `Cache-Store: 0` 时不进入持久或暂存缓存。
 
 Bot 命令和生日推送使用控制器的 `Render*Image` 与 Drawing 客户端的 `Generate*Image` 入口，将 `ImageResult` 保留到消息构建阶段；多图结果逐张选择公开 URL。旧 `[]byte` 入口保留兼容，通过 `Bytes(ctx)` 读取图片。没有可用公开主机时也会读取字节，沿用图片存储回退。活动详情与别名列表继续使用不缓存的字节响应。
 
 命令计时中，`drawing.http` 是 Drawing 请求的完整往返；`drawing.artifact_fetch` 单独统计引用转为字节时的等待与下载，`drawing.artifact_store` 与 `drawing.artifact_public` 分别统计对象存储读取和公开主机读取。共享下载的内部操作会并入各等待请求的 trace，因此这些操作时长可能重叠，不能直接相加作为总耗时。直接返回图片引用的路径没有图片下载操作。
 
-绘图缓存键准备对已规范化请求一次完成复制和字段清理，忽略字段的子树不参与复制；保留的 map/slice 与渲染请求分离，允许后续渲染准备修改原请求。标准 JSON 子树使用与 hashstructure FormatV2 相同的 FNV-1、数值表示和集合/序列组合规则直接计算哈希，特殊类型回退到原实现；外围键结构和版本保持不变，已有持久缓存键继续兼容。请求 JSON 规范化和时间/时区处理仍沿用原入口。
+绘图缓存键准备对已规范化请求一次完成复制和字段清理，忽略字段的子树不参与复制；保留的 map/slice 与渲染请求分离，允许后续渲染准备修改原请求。标准 JSON 子树使用与 hashstructure FormatV2 相同的 FNV-1、数值表示和集合/序列组合规则直接计算哈希，特殊类型回退到原实现；关闭显式版本协议时，外围键结构和版本保持不变，已有持久缓存键继续兼容。请求 JSON 规范化和时间/时区处理仍沿用原入口。
 
 对象存储路径选择会按完整、有序的候选序列缓存成功结果，使用有界 LRU（最多 65,536 项、键与结果字符串共 16 MiB）。后续候选已经命中时，不再为前面的缺失路径重复列目录。成功选择从本次查找开始计时，最多保留 `min(listing_ttl, positive_ttl)`（默认 30 分钟），命中不会续期；到期重新按原优先顺序查找。`ClearResolutionCache` 同时清除选择结果，并阻止清理前的在途查询回填。全部候选缺失或查询出错不写入这层缓存，仍沿用既有负缓存/错误重试周期。更高优先级的新资源在选择缓存有效期内可能暂时不可见，可通过清缓存立即更新。`asset.store_selection_cache_hit/miss` 记录这层缓存的命中情况。
+
+### 6.3.1 资源清单、并发与后台持久化
+
+`render/assets` 的候选解析与 `AssetReader.StatResult` 共享 found / missing / unknown 元数据、目录缓存和 singleflight。活动、卡牌、扭蛋、歌曲与虚拟 Live 的列表先筛选展示范围，再以最多 8 个 worker 预热纯资源查询；DB 与业务构建仍按原顺序执行。背包直接传递有序图片候选，商店工具与材料先过滤再构建图标。
+
+`storage.Set` 持有跨槽位的 I/O runtime。`storage.io` 默认最多 16 个在途请求、每 origin 8 个、后台 2 个；后台扫描不会占满前台容量。排队可取消，单次节点尝试按剩余总预算分配时间，429/5xx 有界退避，分页检测重复 token 与页数上限。`storage.*` operation 记录逻辑操作、排队、尝试、分页、连接复用、TTFB、body 与字节数；后台无指令 trace 的操作也进入进程统计，每五分钟记录变化量。并发操作的累计耗时不是用户等待时间。
+
+Asset-Updater 在完整区域上传和谱面同步成功后、区域任务锁内发布 `indexes/assets/v1/<region>/current.json`。指针引用带 SHA-256 的不可变分片和 BPM 索引，发布前重新核对完整 inventory；取消、部分失败或数据不完整不会推进指针。Cloud 的 `asset_index` 定期读取指针，完整验证后原子安装索引并清空旧解析缓存。索引保留精确大小写；未就绪、损坏或过期时回退到有限存储查询，不能据此认定资源不存在。`cmd/asset-index` 提供人工引导工具，默认仅扫描；`--publish` 前须暂停该区域更新任务。
+
+`drawing_cache_versions.enabled` 要求 `drawing_artifact.endpoints` 包含 `"*"`；配置加载与启动会拒绝部分启用，避免字节模式跳过资源版本。开启后 Cloud 定期查询各 Drawing 节点的 `/cache/identity`。请求携带 `X-Haruki-Asset-Revision` 与所选节点的 `X-Haruki-Renderer-Epoch`；Drawing 按请求资源版本隔离文件镜像与解析缓存，并在实际 epoch 不匹配或缺素材时返回不可缓存结果。节点身份未知/过期时 Cloud 绕过缓存；稳定的异构节点可以有不同 epoch。滚动发布期间可以使用当前池中任一节点生成的图片，节点集合 epoch 更新后缓存键随之改变，可见性受配置的轮询周期约束。
+
+BPM 查询优先读发布端生成的区域索引，不在线下载整批 SUS。没有有效索引时，同谱面请求合并、读取有界并发，结果按区域资源版本隔离；不把临时读取或解析错误记成不存在。
+
+用户背景修改采用账户 revision CAS 与持久清理队列；先提交数据库状态，旧图再由主写节点回收。预测与房屋统计的可重建 JSON 缓存采用单 worker 合并后台写入，应用关闭时有界 flush。`cache_persistence_namespace` 应为每个同时运行的 Cloud 实例指定不同的稳定名称，缺省使用主机名加进程 ID，避免多个进程覆盖同一 key；首次读取可兼容旧共享 key，写入只落新命名空间。
 
 ### 6.4 Toolbox 快照缓存
 

@@ -22,8 +22,10 @@ func (controllerImageIndex) LookupRender(_ context.Context, key string) (imageca
 	}, true, nil
 }
 
-func (controllerImageIndex) TouchRender(context.Context, []string) (int64, error)  { return 0, nil }
-func (controllerImageIndex) DeleteRender(context.Context, []string) (int64, error) { return 0, nil }
+func (controllerImageIndex) TouchRender(context.Context, []string) (int64, error) { return 0, nil }
+func (controllerImageIndex) DeleteExpiredRender(context.Context, []string, time.Time) (int64, error) {
+	return 0, nil
+}
 
 func TestRecommendationImagePreservesArtifactAndLegacyBytes(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

@@ -38,6 +38,17 @@ var renderIndexDDL = []string{
 	`CREATE INDEX IF NOT EXISTS idx_rci_expires ON render_cache_index (expires_at) WHERE expires_at IS NOT NULL`,
 	`CREATE INDEX IF NOT EXISTS idx_rci_api_path_user ON render_cache_index (api_path, user_id)`,
 	`CREATE INDEX IF NOT EXISTS idx_rci_content_hash ON render_cache_index (content_hash)`,
+	`CREATE TABLE IF NOT EXISTS image_cache_object_deletions (
+    content_hash TEXT NOT NULL,
+    cdn_path TEXT NOT NULL,
+    queued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    attempts INT NOT NULL DEFAULT 0,
+    next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (content_hash, cdn_path)
+)`,
+	`CREATE INDEX IF NOT EXISTS idx_icod_next_attempt ON image_cache_object_deletions (next_attempt_at)`,
+	`ALTER TABLE image_cache_entries ADD COLUMN IF NOT EXISTS writer_node TEXT NULL`,
+	`ALTER TABLE image_cache_entries ADD COLUMN IF NOT EXISTS written_at TIMESTAMPTZ NULL`,
 }
 
 // RenderIndexDDL returns a copy of the canonical render index DDL, one

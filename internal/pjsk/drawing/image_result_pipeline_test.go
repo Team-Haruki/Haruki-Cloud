@@ -53,8 +53,10 @@ func (i *imagePipelineIndex) LookupRender(_ context.Context, key string) (imagec
 	return entry, true, nil
 }
 
-func (*imagePipelineIndex) TouchRender(context.Context, []string) (int64, error)  { return 0, nil }
-func (*imagePipelineIndex) DeleteRender(context.Context, []string) (int64, error) { return 0, nil }
+func (*imagePipelineIndex) TouchRender(context.Context, []string) (int64, error) { return 0, nil }
+func (*imagePipelineIndex) DeleteExpiredRender(context.Context, []string, time.Time) (int64, error) {
+	return 0, nil
+}
 
 type imagePipelineTransport func(*http.Request) (*http.Response, error)
 
@@ -111,11 +113,11 @@ func TestMysekaiShopImageKeepsColdAndWarmReferences(t *testing.T) {
 			if err != nil || !bytes.Equal(data, objects.data) || objects.gets.Load() != 1 {
 				t.Fatalf("legacy bytes: len=%d gets=%d err=%v", len(data), objects.gets.Load(), err)
 			}
-			wantRenders := int64(2)
+			wantRenders, wantLookups := int64(1), int64(1)
 			if warm {
-				wantRenders = 0
+				wantRenders, wantLookups = 0, 2
 			}
-			if renders.Load() != wantRenders || index.lookups.Load() != 2 {
+			if renders.Load() != wantRenders || index.lookups.Load() != wantLookups {
 				t.Fatalf("renders=%d index=%d", renders.Load(), index.lookups.Load())
 			}
 			for _, operation := range []string{"drawing.artifact_fetch", "drawing.artifact_store"} {
@@ -149,6 +151,7 @@ func TestCostumeImagePrepareRunsOnlyOnMiss(t *testing.T) {
 		t.Fatalf("warm prepare: ref=%v calls=%d renders=%d err=%v", image.Ref(), prepared.Load(), renders.Load(), err)
 	}
 	index.warm.Store(false)
+	cacheRequest = map[string]any{"variant": "uncached"}
 	want := errors.New("prepare failed")
 	_, err = client.GenerateCostumeDetailWithPrepareImage(cacheRequest, &CostumeDetailRequest{}, func(any) error { return want })
 	if !errors.Is(err, want) || renders.Load() != 1 {

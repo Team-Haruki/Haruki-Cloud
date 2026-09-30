@@ -334,7 +334,7 @@ func widenedMockStore(t *testing.T) (*PGStore, sqlmock.Sqlmock) {
 	return store, mock
 }
 
-var widenedLookupColumns = []string{"cdn_path", "file_path", "size_bytes", "storage_backend", "media_type", "expires_at"}
+var widenedLookupColumns = []string{"cdn_path", "file_path", "size_bytes", "storage_backend", "media_type", "expires_at", "writer_node", "written_at"}
 
 func TestNewClientRejectsMissingHostsOrObjects(t *testing.T) {
 	memory := storagetest.NewMemory()
@@ -370,8 +370,8 @@ func TestStoreHashedGarageSlotWritesObjectAndIndexesGarageRow(t *testing.T) {
 	memory := storagetest.NewMemory()
 	index, mock := widenedMockStore(t)
 	mock.ExpectQuery(regexp.QuoteMeta(lookupWidenedSQL)).WithArgs(contentName(data, "")).WillReturnError(sql.ErrNoRows)
-	mock.ExpectExec(regexp.QuoteMeta(insertWidenedSQL)).
-		WithArgs(contentName(data, ""), "pjsk", "pjsk/"+name, sql.NullString{}, int64(len(data)), BackendGarage, sql.NullString{String: "image/png", Valid: true}).
+	mock.ExpectExec(regexp.QuoteMeta(insertWidenedWithWriterSQL)).
+		WithArgs(contentName(data, ""), "pjsk", "pjsk/"+name, sql.NullString{}, int64(len(data)), BackendGarage, sql.NullString{String: "image/png", Valid: true}, sql.NullString{}, sql.NullTime{}).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	client, err := NewClient(ClientConfig{Hosts: testHosts(t), Objects: memory, Index: index})
 	if err != nil {
@@ -381,7 +381,7 @@ func TestStoreHashedGarageSlotWritesObjectAndIndexesGarageRow(t *testing.T) {
 	if err != nil || url != "https://ic-cn09.example/pjsk/"+name {
 		t.Fatalf("StoreAndGetURL() = %q, %v", url, err)
 	}
-	if got, err := memory.Get(context.Background(), storage.Key("pjsk/"+name)); err != nil || !bytes.Equal(got, data) {
+	if got, err := memory.Get(context.Background(), storage.Key(strings.TrimPrefix(url, "https://ic-cn09.example/"))); err != nil || !bytes.Equal(got, data) {
 		t.Fatalf("stored object = %q, %v", got, err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -395,7 +395,7 @@ func TestStoreHashedSkipsLocalStatForGarageRows(t *testing.T) {
 	memory := storagetest.NewMemory()
 	index, mock := widenedMockStore(t)
 	mock.ExpectQuery(regexp.QuoteMeta(lookupWidenedSQL)).WithArgs(hash).WillReturnRows(
-		sqlmock.NewRows(widenedLookupColumns).AddRow("pjsk/api/x/"+hash+".png", "", int64(3), BackendGarage, "image/png", nil),
+		sqlmock.NewRows(widenedLookupColumns).AddRow("pjsk/api/x/"+hash+".png", "", int64(3), BackendGarage, "image/png", nil, nil, nil),
 	)
 	mock.ExpectExec(regexp.QuoteMeta(touchEntrySQL)).WithArgs(hash).WillReturnResult(sqlmock.NewResult(0, 1))
 	client, err := NewClient(ClientConfig{Hosts: testHosts(t), Objects: memory, LocalRoot: t.TempDir(), Index: index})
@@ -521,7 +521,7 @@ func TestStoreHashedIndexErrorsAreLoggedNotFatal(t *testing.T) {
 
 func TestStoreHashedStatErrorIsReturned(t *testing.T) {
 	hooked := &hookStore{Store: storagetest.NewMemory(), statErr: errors.New("stat exploded")}
-	client, err := NewClient(ClientConfig{Hosts: testHosts(t), Objects: hooked})
+	client, err := NewClient(ClientConfig{Hosts: testHosts(t), Objects: hooked, LocalRoot: t.TempDir()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -538,5 +538,51 @@ func TestMediaTypeFromPath(t *testing.T) {
 		if got := mediaTypeFromPath(name); got != want {
 			t.Fatalf("mediaTypeFromPath(%q) = %q, want %q", name, got, want)
 		}
+	}
+}
+
+func TestNoIndexRemoteStoreKeepsContentDeduplication(t *testing.T) {
+	memory := storagetest.NewMemory()
+	client, err := NewClient(ClientConfig{Hosts: testHosts(t), Objects: memory})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := client.StoreAndGetURL(t.Context(), []byte("same"), "pjsk")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := client.StoreAndGetURL(t.Context(), []byte("same"), "pjsk")
+	if err != nil || first != second {
+		t.Fatalf("dedup URL %q %q %v", first, second, err)
+	}
+	puts := 0
+	for _, call := range memory.Calls() {
+		if call.Method == "Put" {
+			puts++
+		}
+	}
+	if puts != 1 {
+		t.Fatalf("duplicate objects: %d writes", puts)
+	}
+}
+
+func TestLockedLookupScanErrorDoesNotUploadOrConsumeIntent(t *testing.T) {
+	store, mock := newEqualMockPGStore(t, PGStoreOptions{})
+	store.widened.Store(true)
+	store.lifecycle.Store(true)
+	memory := storagetest.NewMemory()
+	client := lifecycleClient(t, store, memory)
+	data := []byte("corrupt row")
+	hash := contentName(data, "")
+	mock.ExpectExec(registerUploadSQL).WithArgs(hash, sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+	expectContentLock(mock, hash)
+	// A SQL scan error need not abort the database transaction itself.
+	mock.ExpectQuery(lookupWidenedSQL).WithArgs(hash).WillReturnRows(sqlmock.NewRows(widenedLookupColumns).AddRow(nil, "", 1, BackendGarage, "image/png", nil, nil, nil))
+	mock.ExpectRollback()
+	if _, err := client.StoreAndGetURL(t.Context(), data, "pjsk"); err == nil {
+		t.Fatal("lookup scan error accepted")
+	}
+	if len(memory.Calls()) != 0 {
+		t.Fatalf("lookup error triggered storage I/O: %v", memory.Calls())
 	}
 }

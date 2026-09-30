@@ -38,8 +38,10 @@ func (index *stampImageIndex) LookupRender(_ context.Context, key string) (image
 	return entry, true, nil
 }
 
-func (*stampImageIndex) TouchRender(context.Context, []string) (int64, error)  { return 0, nil }
-func (*stampImageIndex) DeleteRender(context.Context, []string) (int64, error) { return 0, nil }
+func (*stampImageIndex) TouchRender(context.Context, []string) (int64, error) { return 0, nil }
+func (*stampImageIndex) DeleteExpiredRender(context.Context, []string, time.Time) (int64, error) {
+	return 0, nil
+}
 
 func TestStampImageResultsKeepPageOrderAndDeferArtifactReads(t *testing.T) {
 	objects := storagetest.NewMemory()

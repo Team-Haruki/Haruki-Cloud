@@ -34,19 +34,25 @@ func TestForecastCacheStoreOnLocalWritesTheOldPath(t *testing.T) {
 		t.Fatal("controller did not use the configured cache store")
 	}
 	cache := newForecastDataCacheWithStore(forecastStoreTestProvider(), store, "sk_forecast_cache.json")
+	if err := cache.configurePersistence(t.Context(), "test-node"); err != nil {
+		t.Fatal(err)
+	}
 	if err := cache.RefreshNow(context.Background(), "jp", 7); err != nil {
 		t.Fatalf("refresh: %v", err)
 	}
-	stored, err := store.Get(context.Background(), "sk_forecast_cache.json")
+	if err := cache.closePersistence(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := store.Get(context.Background(), cache.storeKey)
 	if err != nil {
 		t.Fatalf("store get: %v", err)
 	}
-	onDisk, err := os.ReadFile(filepath.Join(dir, "sk_forecast_cache.json"))
+	onDisk, err := os.ReadFile(filepath.Join(dir, string(cache.storeKey)))
 	if err != nil || !bytes.Equal(onDisk, stored) {
 		t.Fatalf("file at old path = %q, %v; store = %q", onDisk, err, stored)
 	}
 
-	viaPath := newForecastDataCacheWithPath(&sequencedForecastProvider{}, filepath.Join(dir, "sk_forecast_cache.json"))
+	viaPath := newForecastDataCacheWithPath(&sequencedForecastProvider{}, filepath.Join(dir, string(cache.storeKey)))
 	got, err := viaPath.CachedBySource("jp", 7, []int{100})
 	if err != nil || got["local"].Scores[100].Score != 42 {
 		t.Fatalf("path wrapper did not load the store object: %+v, %v", got, err)
@@ -55,8 +61,14 @@ func TestForecastCacheStoreOnLocalWritesTheOldPath(t *testing.T) {
 
 func TestForecastCacheStoreDisabledAndFailing(t *testing.T) {
 	disabled := newForecastDataCacheWithStore(forecastStoreTestProvider(), storage.Disabled(), "sk_forecast_cache.json")
+	if err := disabled.configurePersistence(t.Context(), "test-node"); err != nil {
+		t.Fatal(err)
+	}
 	if err := disabled.RefreshNow(context.Background(), "jp", 1); err != nil {
 		t.Fatalf("refresh with disabled store: %v", err)
+	}
+	if err := disabled.closePersistence(t.Context()); err == nil {
+		t.Fatal("disabled persistence should report error")
 	}
 	if disabled.persistedGeneration != 0 {
 		t.Fatalf("disabled store recorded a persisted generation %d", disabled.persistedGeneration)
@@ -66,13 +78,19 @@ func TestForecastCacheStoreDisabledAndFailing(t *testing.T) {
 	memory.FailPut = func(storage.Key) error { return errors.New("put down") }
 	memory.FailGet = func(storage.Key) error { return errors.New("get down") }
 	failing := newForecastDataCacheWithStore(forecastStoreTestProvider(), memory, "sk_forecast_cache.json")
+	if err := failing.configurePersistence(t.Context(), "test-node"); err != nil {
+		t.Fatal(err)
+	}
 	if err := failing.RefreshNow(context.Background(), "jp", 1); err != nil {
 		t.Fatalf("refresh with failing store: %v", err)
+	}
+	if err := failing.closePersistence(t.Context()); err == nil {
+		t.Fatal("failed persistence should report error")
 	}
 	if failing.persistedGeneration != 0 {
 		t.Fatalf("failed put recorded a persisted generation %d", failing.persistedGeneration)
 	}
-	if len(memory.Calls()) != 2 {
+	if len(memory.Calls()) != 3 {
 		t.Fatalf("store calls = %+v", memory.Calls())
 	}
 }

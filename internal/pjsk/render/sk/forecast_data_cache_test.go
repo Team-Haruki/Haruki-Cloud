@@ -98,6 +98,9 @@ func TestForecastDataCacheLoadsPersistedData(t *testing.T) {
 		testutil.Require(t, !(err != nil), "initial refresh: %v", err)
 	}
 
+	if err := cache.closePersistence(t.Context()); err != nil {
+		t.Fatal(err)
+	}
 	loadedProvider := &sequencedForecastProvider{
 		errs: []error{errors.New("should not fetch while persisted cache is fresh")},
 	}
@@ -225,6 +228,9 @@ func TestForecastDataCacheConcurrentPersistenceIsCompleteAndTraced(t *testing.T)
 		testutil.Require(t, !(calls != refreshes), "provider calls = %d, want %d", calls, refreshes)
 	}
 
+	if err := cache.closePersistence(t.Context()); err != nil {
+		t.Fatal(err)
+	}
 	payload, err := os.ReadFile(cachePath)
 	testutil.Require(t, !(err != nil), "read persisted cache: %v", err)
 
@@ -242,7 +248,7 @@ func TestForecastDataCacheConcurrentPersistenceIsCompleteAndTraced(t *testing.T)
 
 	stageCounts := make(map[string]int)
 	for index, trace := range traces {
-		for _, name := range []string{"forecast_cache.fetch", "forecast_cache.merge", "forecast_cache.persist_wait"} {
+		for _, name := range []string{"forecast_cache.fetch", "forecast_cache.merge"} {
 			{
 				count := forecastCacheTraceOperationCount(trace, name)
 				testutil.Require(t, !(count != 1), "trace[%d] %s count = %d, operations=%+v", index, name, count, trace.Snapshot().Operations)
@@ -254,7 +260,7 @@ func TestForecastDataCacheConcurrentPersistenceIsCompleteAndTraced(t *testing.T)
 		}
 	}
 	for _, name := range []string{"forecast_cache.snapshot", "forecast_cache.encode", "forecast_cache.persist"} {
-		testutil.Require(t, !(stageCounts[name] == 0), "no trace recorded %s", name)
+		testutil.Require(t, stageCounts[name] == 0, "request trace contains background stage %s", name)
 
 	}
 	testutil.Require(t, !(cache.persistedGeneration != cache.generation), "persisted generation = %d, in-memory generation = %d", cache.persistedGeneration, cache.generation)

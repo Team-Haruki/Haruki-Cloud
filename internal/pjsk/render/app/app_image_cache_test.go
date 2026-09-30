@@ -36,7 +36,7 @@ func TestNewAppImageCacheOnSlot(t *testing.T) {
 	if err != nil || !strings.HasPrefix(url, "https://ic-cn09.example/pjsk/") {
 		t.Fatalf("StoreAndGetURL() = %q, %v", url, err)
 	}
-	if calls := memory.Calls(); len(calls) != 2 || calls[1].Method != "Put" {
+	if calls := memory.Calls(); len(calls) != 2 || calls[0].Method != "Stat" || calls[1].Method != "Put" || string(calls[1].Key) != strings.TrimPrefix(url, "https://ic-cn09.example/") || !strings.HasSuffix(string(calls[1].Key), ".png") {
 		t.Fatalf("slot calls = %+v", calls)
 	}
 }
@@ -113,6 +113,7 @@ func TestOpenAppImageStoreErrors(t *testing.T) {
 			mock.ExpectExec(".").WillReturnResult(sqlmock.NewResult(0, 0))
 		}
 		mock.ExpectQuery("information_schema.columns").WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
+		mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"ready"}).AddRow(true))
 	})
 	store, err = openAppImageStoreWith(ctx, "postgres://index", imagecache.PGStoreOptions{MaxOpen: 4, RenderIndexDDL: true}, open)
 	if err != nil || store == nil || !store.Widened() {

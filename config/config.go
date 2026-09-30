@@ -486,6 +486,9 @@ func ApplyEnvOverrides(cfg *Config) error {
 	if err := envStringSlice("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ENDPOINTS", &cfg.PJSKRender.DrawingArtifact.Endpoints); err != nil {
 		return err
 	}
+	if err := envStringSlice("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_NO_STORE_PATHS", &cfg.PJSKRender.DrawingArtifact.NoStorePaths); err != nil {
+		return err
+	}
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_FETCH_TIMEOUT", &cfg.PJSKRender.DrawingArtifact.FetchTimeout)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ARTIFACT_TIMEOUT", &cfg.PJSKRender.DrawingArtifact.ArtifactTimeout)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_URI", &cfg.PJSKRender.ImageCache.URI)
@@ -779,6 +782,28 @@ type DrawingArtifactConfig struct {
 	FetchTimeout time.Duration `yaml:"fetch_timeout"`
 	// ArtifactTimeout extends the render budget for Drawing's upload; 0 = default (15s).
 	ArtifactTimeout time.Duration `yaml:"artifact_timeout"`
+	// NoStorePaths lists api path prefixes ("api/pjsk/sk", matched per path
+	// segment) that skip the artifact store: X-Haruki-Cache-Store: 0, no
+	// render_cache_index lookup, image bytes sent to the bot inline. Absent =
+	// DefaultDrawingArtifactNoStorePaths; [] = none.
+	NoStorePaths []string `yaml:"no_store_paths"`
+}
+
+// DefaultDrawingArtifactNoStorePaths are the per-user renders whose render
+// index rows were almost never reused (2026-10-01: sk 1/543, mysekai
+// map/resource/talk-list/music-record/door-upgrade 1/215, deck 0/37,
+// event planner 0/2), so the artifact upload is pure latency for them.
+func DefaultDrawingArtifactNoStorePaths() []string {
+	return []string{
+		"api/pjsk/deck",
+		"api/pjsk/event/planner",
+		"api/pjsk/sk",
+		"api/pjsk/mysekai/map",
+		"api/pjsk/mysekai/resource",
+		"api/pjsk/mysekai/talk-list",
+		"api/pjsk/mysekai/music-record",
+		"api/pjsk/mysekai/door-upgrade",
+	}
 }
 
 // ImageCacheRenderIndexConfig is pjsk_render.image_cache.render_index.
@@ -1077,6 +1102,11 @@ func ApplyProfileDefaults(cfg *Config) {
 		default:
 			cfg.Backend.APICacheTTL = 10 * time.Second
 		}
+	}
+
+	// Absent (nil) keeps the default list; an explicit [] disables it.
+	if cfg.PJSKRender.DrawingArtifact.NoStorePaths == nil {
+		cfg.PJSKRender.DrawingArtifact.NoStorePaths = DefaultDrawingArtifactNoStorePaths()
 	}
 
 	// Production safety: force-disable insecure internal API regardless of YAML.

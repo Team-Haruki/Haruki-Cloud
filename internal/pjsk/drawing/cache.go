@@ -411,6 +411,12 @@ func (c *RenderCacheClient) renderRemoteFlightWork(ctx context.Context, endpoint
 }
 
 func (c *RenderCacheClient) renderRemoteImageWork(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error)) (ImageResult, error) {
+	// A no-store path is never written to the index or the pending cache, so
+	// neither lookup can hit: render straight through.
+	if artifactModeFrom(ctx).skipsStore(policy.APIPath) {
+		commandtrace.RecordOperation(ctx, "drawing.cache_no_store_path", 0)
+		return c.renderRemoteMiss(ctx, endpoint, key, policy, render)
+	}
 	if data, ref, ok := c.pending.lookupEntry(key); ok {
 		commandtrace.RecordOperation(ctx, "drawing.cache_pending_hit", 0)
 		commandtrace.RecordOperation(ctx, drawingCacheHitTraceField, 0)
@@ -449,7 +455,7 @@ func (c *RenderCacheClient) renderRemoteMiss(ctx context.Context, endpoint, key 
 	mode := artifactModeFrom(ctx)
 	var directive *renderDirective
 	if mode != nil && mode.allow.has(policy.APIPath) {
-		directive = newRenderDirective(key, policy, ttl, true)
+		directive = newRenderDirective(key, policy, ttl, !mode.skipsStore(policy.APIPath))
 		renderCtx = withDirective(ctx, directive)
 	}
 	image, err := render(renderCtx)

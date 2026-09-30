@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"embed"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -51,9 +50,7 @@ func commandHelpMessage(ctx context.Context, resolved *CommandRequest, app *rend
 	if err != nil {
 		return commandHelpTextMessage(markdown), nil
 	}
-	return onebot11.Message{
-		onebot11.Image("base64://"+base64.StdEncoding.EncodeToString(data), ""),
-	}, nil
+	return inlineImageMessage(ctx, data), nil
 }
 
 func commandHelpTextMessage(markdown string) onebot11.Message {

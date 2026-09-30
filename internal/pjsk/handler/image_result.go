@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"encoding/base64"
+
 	"haruki-cloud/internal/observability/commandtrace"
 
 	"haruki-cloud/internal/onebot11"
@@ -10,7 +12,9 @@ import (
 )
 
 // RenderedImageMessage emits a rendered image: an artifact ref as a public
-// image-cache URL (preferring the rendering node), anything else as bytes.
+// image-cache URL (preferring the rendering node), an inline result (a
+// drawing_artifact.no_store_paths render) as base64 bytes, anything else as
+// bytes stored in the image cache.
 func (rc *RequestContext) RenderedImageMessage(image drawing.ImageResult) (onebot11.Message, error) {
 	return renderedImageMessage(rc.Ctx, image, rc.App)
 }
@@ -33,5 +37,16 @@ func renderedImageMessage(ctx context.Context, image drawing.ImageResult, app *r
 	if err != nil {
 		return nil, err
 	}
+	if image.Inline() {
+		return inlineImageMessage(ctx, data), nil
+	}
 	return imageMessage(ctx, data, app, BotModulePJSK)
+}
+
+// inlineImageMessage sends the bytes themselves (base64://) instead of an
+// image-cache URL: no upload, more bytes on the bot link.
+func inlineImageMessage(ctx context.Context, data []byte) onebot11.Message {
+	finish := commandtrace.MeasureOperation(ctx, "image.inline")
+	defer finish()
+	return onebot11.Message{onebot11.Image("base64://"+base64.StdEncoding.EncodeToString(data), "")}
 }

@@ -122,10 +122,7 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 		userMaterials[item.MaterialID] = item.Quantity
 	}
 
-	nowMs := ctx.raw.Now
-	if nowMs <= 0 {
-		nowMs = time.Now().UnixMilli()
-	}
+	nowMs := c.currentTimeMillis()
 	return c.buildAreaItemUpgradeMaterialsRequest(areaItemBuildOptions{
 		region:         ctx.region,
 		source:         ctx.source,

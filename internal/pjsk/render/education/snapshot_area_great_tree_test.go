@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -139,6 +140,7 @@ func greatTreeController(t *testing.T, source *testSource, nowMs int64, ownedIte
 	})
 	controller := NewController(nil, nil, snap, renderregion.JP)
 	controller.RegisterSource(source)
+	controller.now = func() time.Time { return time.UnixMilli(nowMs) }
 	return controller
 }
 
@@ -232,5 +234,37 @@ func TestAreaItemWithoutAnyShopItemsReportsNothingToShow(t *testing.T) {
 	var notReleased *AreaItemNotReleasedError
 	if !errors.As(err, &notReleased) || notReleased.OpensAtMs != 0 {
 		t.Fatalf("expected AreaItemNotReleasedError without opening time, got %T %v", err, err)
+	}
+}
+
+func TestGreatTreeReleaseUsesQueryTimeWithOldSnapshot(t *testing.T) {
+	for _, queryTime := range []int64{greatTreeShopStartAt - 1, greatTreeShopStartAt, greatTreeAfterOpenNow} {
+		t.Run(time.UnixMilli(queryTime).UTC().Format(time.RFC3339Nano), func(t *testing.T) {
+			controller := greatTreeController(t, jpGreatTreeSource(t), greatTreeBeforeOpenNow, map[int]int{55: 20})
+			controller.now = func() time.Time { return time.UnixMilli(queryTime) }
+			req, err := controller.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(AreaItemQuery{Region: renderregion.JP, AllCharacter: true})
+			if queryTime < greatTreeShopStartAt {
+				var notReleased *AreaItemNotReleasedError
+				if !errors.As(err, &notReleased) || notReleased.OpensAtMs != greatTreeShopStartAt {
+					t.Fatalf("expected future opening, got %v", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(req.AreaItems) != 1 || req.AreaItems[0].ItemID != 56 || len(req.AreaItems[0].Levels) != 20 {
+				t.Fatalf("unexpected unlocked tree: %+v", req.AreaItems)
+			}
+		})
+	}
+}
+
+func TestGreatTreeFutureSnapshotDoesNotUnlockEarly(t *testing.T) {
+	controller := greatTreeController(t, jpGreatTreeSource(t), greatTreeAfterOpenNow, map[int]int{55: 20})
+	controller.now = func() time.Time { return time.UnixMilli(greatTreeBeforeOpenNow) }
+	_, err := controller.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(AreaItemQuery{Region: renderregion.JP, AllCharacter: true})
+	if !errors.Is(err, ErrAreaItemNotReleased) {
+		t.Fatalf("expected unreleased tree, got %v", err)
 	}
 }

@@ -2,6 +2,7 @@ package education
 
 import (
 	"context"
+	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -158,6 +159,7 @@ type Controller struct {
 	sources    *rendersource.Registry[DataSource]
 	snapshot   snapshot.Snapshot
 	requestCtx context.Context
+	now        func() time.Time
 }
 
 // ProviderAdapter bridges provider.MasterDataProvider to education.DataSource.

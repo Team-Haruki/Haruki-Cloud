@@ -47,6 +47,9 @@ func inheritSnapshotProfileMetadata(detail *drawing.DetailedProfileCardRequest, 
 		detail.UpdateTime = snapshotDetail.UpdateTime
 	}
 	detail.Mode = common.CloneStringPtr(snapshotDetail.Mode)
+	// The game-account rank chip only comes from Suite data; public-API-only
+	// profiles leave it unset.
+	detail.Rank = common.CloneIntPtr(snapshotDetail.Rank)
 }
 
 func buildProfileCardDataSources(detail *drawing.DetailedProfileCardRequest, snapshot snapshot.Snapshot, region renderregion.Value) []drawing.ProfileDataSource {
@@ -214,6 +217,7 @@ func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnother
 			FramePath:       common.CloneStringPtr(detail.FramePath),
 		},
 		DataSources: buildProfileCardDataSources(detail, nil, renderregion.Normalize(query.Region)),
+		Rank:        common.CloneIntPtr(detail.Rank),
 	}, nil
 }
 
@@ -234,6 +238,7 @@ func (c *Controller) BuildProfileCardFromAPIWithSnapshot(query Query, resp *seka
 			FramePath:       common.CloneStringPtr(detail.FramePath),
 		},
 		DataSources: buildProfileCardDataSources(detail, snapshot, region),
+		Rank:        common.CloneIntPtr(detail.Rank),
 	}, nil
 }
 

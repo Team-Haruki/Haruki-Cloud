@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/common"
 )
 
 func (c *Controller) ResolvePhoto(query PhotoQuery) (*PhotoResult, error) {
@@ -195,6 +196,7 @@ func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[st
 		if len(override.DataSources) > 0 {
 			cloned.DataSources = slices.Clone(override.DataSources)
 		}
+		cloned.Rank = common.CloneIntPtr(override.Rank)
 		profile = &cloned
 	} else {
 		if c.snapshot == nil {

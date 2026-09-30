@@ -101,6 +101,7 @@ func (s *Service) DetailedProfile(region renderregion.Value) *drawing.DetailedPr
 	}
 	profile.Mode = common.CloneStringPtr(s.baseProfile.Mode)
 	profile.FramePath = common.CloneStringPtr(s.baseProfile.FramePath)
+	profile.Rank = common.CloneIntPtr(s.baseProfile.Rank)
 	profile.UserCards = slices.Clone(s.baseProfile.UserCards)
 	return &profile
 }
@@ -128,6 +129,7 @@ func (s *Service) ProfileCard(region renderregion.Value) *drawing.ProfileCardReq
 				Mode:       common.CloneStringPtr(detail.Mode),
 			},
 		},
+		Rank: common.CloneIntPtr(detail.Rank),
 	}
 }
 

@@ -10,6 +10,22 @@ func CloneStringPtr(value *string) *string {
 	return new(*value)
 }
 
+// CloneIntPtr returns a copy of a *int, or nil if the input is nil.
+func CloneIntPtr(value *int) *int {
+	if value == nil {
+		return nil
+	}
+	return new(*value)
+}
+
+// PositiveIntPtr returns a pointer to value when it is positive, or nil.
+func PositiveIntPtr(value int) *int {
+	if value <= 0 {
+		return nil
+	}
+	return &value
+}
+
 // BoolPtr returns a pointer to the given bool value.
 func BoolPtr(value bool) *bool {
 	return &value

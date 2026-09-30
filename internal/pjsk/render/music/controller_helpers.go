@@ -114,6 +114,7 @@ func convertDetailedProfileToCard(detail drawing.DetailedProfileCardRequest) dra
 				Mode:       common.CloneStringPtr(detail.Mode),
 			},
 		},
+		Rank:    common.CloneIntPtr(detail.Rank),
 		BgAlpha: &bgAlpha,
 	}
 }

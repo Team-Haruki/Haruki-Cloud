@@ -28,6 +28,8 @@ type Tx struct {
 	MysekaiBirthdaySubscriptionEvent *MysekaiBirthdaySubscriptionEventClient
 	// PendingAlias is the client for interacting with the PendingAlias builders.
 	PendingAlias *PendingAliasClient
+	// ProfileBGCleanup is the client for interacting with the ProfileBGCleanup builders.
+	ProfileBGCleanup *ProfileBGCleanupClient
 	// RejectedAlias is the client for interacting with the RejectedAlias builders.
 	RejectedAlias *RejectedAliasClient
 	// UserBinding is the client for interacting with the UserBinding builders.
@@ -175,6 +177,7 @@ func (tx *Tx) init() {
 	tx.MysekaiBirthdaySubscription = NewMysekaiBirthdaySubscriptionClient(tx.config)
 	tx.MysekaiBirthdaySubscriptionEvent = NewMysekaiBirthdaySubscriptionEventClient(tx.config)
 	tx.PendingAlias = NewPendingAliasClient(tx.config)
+	tx.ProfileBGCleanup = NewProfileBGCleanupClient(tx.config)
 	tx.RejectedAlias = NewRejectedAliasClient(tx.config)
 	tx.UserBinding = NewUserBindingClient(tx.config)
 	tx.UserDefaultBinding = NewUserDefaultBindingClient(tx.config)

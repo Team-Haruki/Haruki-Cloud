@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/cachepersist"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/storage"
 )
@@ -38,7 +39,11 @@ type forecastDataCache struct {
 	maxEntries    int
 	generation    uint64
 
+	refreshTasks        cachepersist.Tasks
+	persistenceDisabled bool
+	persistenceMu       sync.Mutex
 	persistMu           sync.Mutex
+	persistence         *cachepersist.Writer
 	persistedGeneration uint64
 }
 
@@ -88,7 +93,9 @@ func newForecastDataCacheWithPath(provider ForecastProvider, cachePath string) *
 	if err != nil {
 		return newForecastDataCache(provider)
 	}
-	return newForecastDataCacheWithStore(provider, store, storage.Key(filepath.Base(cachePath)))
+	cache := newForecastDataCacheWithStore(provider, store, storage.Key(filepath.Base(cachePath)))
+	cache.persistenceDisabled = false // Explicit local file has a single owner.
+	return cache
 }
 
 // newForecastDataCacheWithStore persists the cache as one JSON object at key
@@ -98,6 +105,7 @@ func newForecastDataCacheWithStore(provider ForecastProvider, store storage.Stor
 	if store != nil && key != "" {
 		cache.store = store
 		cache.storeKey = key
+		cache.persistenceDisabled = true
 	}
 	cache.loadPersisted()
 	return cache
@@ -176,11 +184,15 @@ func (c *forecastDataCache) StartRefresh(region string, eventID int) {
 }
 
 func (c *forecastDataCache) StartRefreshQuery(query ForecastQuery) {
-	if c == nil {
+	c.startRefreshQuery(context.TODO(), query)
+}
+
+func (c *forecastDataCache) startRefreshQuery(ctx context.Context, query ForecastQuery) {
+	if c == nil || ctx.Err() != nil {
 		return
 	}
 	go func() {
-		ctx, cancel := context.WithTimeout(context.TODO(), config.SKForecastRefreshTimeout)
+		ctx, cancel := context.WithTimeout(ctx, config.SKForecastRefreshTimeout)
 		defer cancel()
 		_ = c.RefreshNowQuery(ctx, query)
 	}()
@@ -211,9 +223,29 @@ func (c *forecastDataCache) RefreshNowQuery(ctx context.Context, query ForecastQ
 }
 
 func (c *forecastDataCache) refreshNowWithProvider(ctx context.Context, provider ForecastProvider, key forecastDataCacheKey, normalizedQuery ForecastQuery) error {
+	lifeCtx, finish, err := c.refreshTasks.Start()
+	if err != nil {
+		c.finishFailure(ctx, key, time.Now().UTC(), err)
+		return err
+	}
+	defer finish()
+	if ctx == nil {
+		ctx = lifeCtx
+	}
+	ctx, cancel := context.WithCancel(ctx)
+	stop := context.AfterFunc(lifeCtx, cancel)
+	defer stop()
+	defer cancel()
+	if lifeCtx.Err() != nil {
+		cancel()
+	}
+
 	finishFetch := commandtrace.MeasureOperation(ctx, "forecast_cache.fetch")
 	data, refreshErr := fetchForecastDataWithRetry(ctx, provider, normalizedQuery, c.retryLimit, c.retryInterval)
 	finishFetch()
+	if refreshErr == nil {
+		refreshErr = ctx.Err()
+	}
 	now := time.Now().UTC()
 	if refreshErr != nil {
 		c.finishFailure(ctx, key, now, refreshErr)

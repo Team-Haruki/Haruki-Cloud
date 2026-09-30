@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/storage"
 )
@@ -68,15 +70,41 @@ func (r *AssetReader) ReadFirst(ctx context.Context, drawingPaths ...string) ([]
 		if !ok {
 			continue
 		}
+		if probe := r.sharedProbe(); probe != nil {
+			if probe.metadata != nil {
+				resolved, found, authoritative := probe.metadata.Lookup(key)
+				if authoritative {
+					if !found {
+						continue
+					}
+					key = resolved
+				}
+			}
+			if known, cached := probe.keys.lookup(string(key), probe.now()); cached && known.found {
+				key = known.key
+			}
+		}
+		generation := r.memo.currentGeneration()
+		var probeGeneration uint64
+		if probe := r.sharedProbe(); probe != nil {
+			probeGeneration = probe.keys.currentGeneration()
+		}
 		finishGet := commandtrace.MeasureOperation(ctx, "asset.store_get")
 		data, err := r.store.Get(ctx, key)
 		finishGet()
 		if err == nil {
-			r.memo.store(key, true)
+			r.memo.storeGeneration(key, true, generation)
+			if probe := r.sharedProbe(); probe != nil {
+				probe.remember(key, storeProbeResult{key: key, found: true}, probeGeneration)
+			}
 			return data, string(key), nil
 		}
 		if !errors.Is(err, storage.ErrNotExist) {
 			return nil, "", err
+		}
+		r.memo.storeGeneration(key, false, generation)
+		if probe := r.sharedProbe(); probe != nil {
+			probe.remember(key, storeProbeResult{}, probeGeneration)
 		}
 	}
 	return nil, "", storage.ErrNotExist
@@ -103,15 +131,42 @@ func (r *AssetReader) firstExistingLegacy(ctx context.Context, drawingPaths []st
 	return r.helper.WithContext(ctx).FirstExisting(drawingPaths...)
 }
 
-// Stat answers "does this asset exist?" through the same seam as ReadFirst:
-// store branch -> store.Stat(ObjectKey(path)) with a bounded positive+negative
-// memo; legacy branch -> AssetHelper.FirstExisting + os.Stat. resolved is the
-// object key or the absolute path of the first existing candidate.
+// Stat keeps the legacy bool API. A store-backed helper shares its published
+// metadata, directory and key caches with the reader. A standalone reader uses
+// a bounded HEAD memo. Call StatResult to distinguish unavailable storage from
+// a confirmed absent asset.
 func (r *AssetReader) Stat(ctx context.Context, drawingPaths ...string) (string, bool) {
+	resolved, found, _ := r.StatResult(ctx, drawingPaths...)
+	return resolved, found
+}
+
+func (r *AssetReader) sharedProbe() *storeProbe {
+	if r == nil || r.helper == nil {
+		return nil
+	}
+	return r.helper.store
+}
+
+// ClearMetadataCache is called when a resource publication replaces metadata.
+// In-flight pre-publication HEAD/Get results cannot repopulate the new memo.
+func (r *AssetReader) ClearMetadataCache() {
+	if r == nil {
+		return
+	}
+	r.memo.clear()
+	r.helper.ClearResolutionCache()
+}
+
+// StatResult distinguishes a confirmed missing object from an unavailable
+// metadata source. The first unknown candidate stops the ordered search.
+func (r *AssetReader) StatResult(ctx context.Context, drawingPaths ...string) (string, bool, error) {
 	ctx = readerContext(ctx)
+	if err := ctx.Err(); err != nil {
+		return "", false, err
+	}
 	if !r.usesStore() || r.hasLocalRoots() {
 		if resolved, ok := r.statLegacy(ctx, drawingPaths); ok || !r.usesStore() {
-			return resolved, ok
+			return resolved, ok, nil
 		}
 	}
 	for _, candidate := range drawingPaths {
@@ -119,24 +174,63 @@ func (r *AssetReader) Stat(ctx context.Context, drawingPaths ...string) (string,
 		if !ok {
 			continue
 		}
-		if exists, cached := r.memo.lookup(key); cached {
-			if exists {
-				return string(key), true
+		if probe := r.sharedProbe(); probe != nil {
+			resolved, found, err := probe.resolve(ctx, key)
+			if err != nil {
+				return "", false, err
+			}
+			if found {
+				return string(resolved), true, nil
 			}
 			continue
 		}
-		finishStat := commandtrace.MeasureOperation(ctx, "asset.store_stat")
-		_, err := r.store.Stat(ctx, key)
-		finishStat()
-		switch {
-		case err == nil:
-			r.memo.store(key, true)
-			return string(key), true
-		case errors.Is(err, storage.ErrNotExist):
-			r.memo.store(key, false)
+		exists, err := r.statKey(ctx, key)
+		if err != nil {
+			return "", false, err
+		}
+		if exists {
+			return string(key), true, nil
 		}
 	}
-	return "", false
+	return "", false, nil
+}
+
+func (r *AssetReader) statKey(ctx context.Context, key storage.Key) (bool, error) {
+	if exists, cached := r.memo.lookup(key); cached {
+		return exists, nil
+	}
+	generation := r.memo.currentGeneration()
+	results := r.memo.loads.DoChan(flightKey(string(key), generation), func() (any, error) {
+		if exists, cached := r.memo.lookup(key); cached {
+			return readerStatResult{exists: exists}, nil
+		}
+		sharedCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), DefaultStoreProbeTimeout)
+		defer cancel()
+		sharedCtx, trace := commandtrace.WithNewTrace(sharedCtx)
+		finish := commandtrace.MeasureOperation(sharedCtx, "asset.store_stat")
+		_, err := r.store.Stat(sharedCtx, key)
+		finish()
+		result := readerStatResult{exists: err == nil, err: err, operations: &sharedAssetOperations{stats: trace.Snapshot().Operations}}
+		if err == nil || errors.Is(err, storage.ErrNotExist) {
+			r.memo.storeGeneration(key, err == nil, generation)
+			result.err = nil
+		}
+		return result, nil
+	})
+	select {
+	case flight := <-results:
+		result := flight.Val.(readerStatResult)
+		result.operations.merge(ctx)
+		return result.exists, result.err
+	case <-ctx.Done():
+		return false, ctx.Err()
+	}
+}
+
+type readerStatResult struct {
+	exists     bool
+	err        error
+	operations *sharedAssetOperations
 }
 
 func (r *AssetReader) statLegacy(ctx context.Context, drawingPaths []string) (string, bool) {
@@ -202,6 +296,8 @@ type assetStatEntry struct {
 // always records a hit, so the memo never keeps reporting a miss for an
 // object that has since been read.
 type assetStatMemo struct {
+	loads      singleflight.Group
+	generation uint64
 	mu         sync.Mutex
 	entries    map[storage.Key]assetStatEntry
 	ttl        time.Duration
@@ -232,9 +328,29 @@ func (m *assetStatMemo) lookup(key storage.Key) (exists, cached bool) {
 	return entry.exists, true
 }
 
-func (m *assetStatMemo) store(key storage.Key, exists bool) {
+func (m *assetStatMemo) currentGeneration() uint64 {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	return m.generation
+}
+
+func (m *assetStatMemo) clear() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	clear(m.entries)
+	m.generation++
+}
+
+func (m *assetStatMemo) store(key storage.Key, exists bool) {
+	m.storeGeneration(key, exists, m.currentGeneration())
+}
+
+func (m *assetStatMemo) storeGeneration(key storage.Key, exists bool, generation uint64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.generation != generation {
+		return
+	}
 	now := m.now()
 	if _, ok := m.entries[key]; !ok && len(m.entries) >= m.maxEntries {
 		for existing, entry := range m.entries {

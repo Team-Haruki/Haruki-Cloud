@@ -31,6 +31,7 @@ type AssetHelper struct {
 	directoryCache  *assetDirectoryCache
 	resolutionCache *assetResolutionCache
 	store           *storeProbe
+	metadata        MetadataIndex
 }
 
 type assetFileSystem interface {
@@ -171,6 +172,7 @@ func (h *AssetHelper) WithStore(store storage.Store, cfg StoreProbeConfig, log *
 		return h
 	}
 	h.store = newStoreProbe(store, cfg, log)
+	h.store.metadata = h.metadata
 	return h
 }
 
@@ -205,7 +207,17 @@ func (h *AssetHelper) resolveStorePath(candidates []string) (string, bool) {
 	// fallback hit makes rechecking its known-missing predecessors unnecessary.
 	selectionKey := assetResolutionKey(candidates)
 	generation := h.store.selections.currentGeneration()
-	if resolved, ok := h.store.selections.lookup(selectionKey, h.store.now()); ok {
+	indexed := false
+	if h.store.metadata != nil {
+		for _, candidate := range candidates {
+			key, valid := candidateKey(candidate)
+			if valid {
+				_, _, authoritative := h.store.metadata.Lookup(key)
+				indexed = indexed || authoritative
+			}
+		}
+	}
+	if resolved, ok := h.store.selections.lookup(selectionKey, h.store.now()); ok && !indexed {
 		commandtrace.RecordOperation(ctx, "asset.store_selection_cache_hit", 0)
 		return resolved, true
 	}
@@ -222,7 +234,7 @@ func (h *AssetHelper) resolveStorePath(candidates []string) (string, bool) {
 		}
 		if found {
 			path := replaceDrawingKey(candidate, key, resolved)
-			if ctx.Err() == nil {
+			if !indexed && ctx.Err() == nil {
 				h.store.selections.store(selectionKey, path, len(selectionKey)+len(path), expiresAt, generation)
 			}
 			return path, true
@@ -874,6 +886,17 @@ func ResolveRegionAssetPath(helper *AssetHelper, region string, relPaths ...stri
 	if len(relPaths) == 0 {
 		return ""
 	}
+	candidates := RegionAssetCandidates(region, relPaths...)
+	if len(candidates) == 0 {
+		return ""
+	}
+	return resolveRegionAssetCandidates(helper, candidates)
+}
+
+// RegionAssetCandidates constructs the same ordered paths as region resolution
+// without probing storage. Drawing endpoints accepting AssetKey can resolve the
+// candidates once at the point where the image bytes are needed.
+func RegionAssetCandidates(region string, relPaths ...string) []string {
 	candidates := make([]string, 0, len(relPaths)*2)
 	for _, rel := range relPaths {
 		cleanRel := filepath.ToSlash(strings.TrimSpace(rel))
@@ -885,9 +908,10 @@ func ResolveRegionAssetPath(helper *AssetHelper, region string, relPaths ...stri
 			candidates = append(candidates, filepath.ToSlash(filepath.Join(base, cleanRel)))
 		}
 	}
-	if len(candidates) == 0 {
-		return ""
-	}
+	return candidates
+}
+
+func resolveRegionAssetCandidates(helper *AssetHelper, candidates []string) string {
 	// Probe local existence to choose the right candidate, but keep the returned
 	// path relative for DrawingAPI callers that cannot access host-local absolute paths.
 	// A store-backed helper without local roots skips the (cwd-relative) disk probe.

@@ -16,6 +16,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/meta"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assetindex"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/card"
 	"haruki-cloud/internal/pjsk/render/costume"
@@ -41,7 +42,13 @@ import (
 )
 
 func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *App {
-	initCtx := normalizeAppConfig(&cfg)
+	parent := cfg.InitContext
+	if parent == nil {
+		parent = context.Background()
+	}
+	initCtx, lifecycleCancel := context.WithCancel(parent)
+	cfg.InitContext = initCtx
+	normalizeAppConfig(&cfg)
 	dependencies := newAppDependencies(initCtx, sekaiClient, cfg)
 	assetHelper := dependencies.assets
 	snapshotService := dependencies.snapshots
@@ -97,6 +104,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 	if musicController != nil {
 		musicController.SetAliasResolver(aliasService)
+		musicController.SetBPMIndexSource(dependencies.assetIndex, cfg.Stores.Assets)
 	}
 	if cardController != nil && aliasService != nil {
 		if nicknames, err := aliasService.ListApprovedCharacterAliasMap(initCtx); err != nil {
@@ -116,46 +124,56 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		}
 	}
 
-	skController.StartDefaultPredictWarmup()
+	for name, configure := range map[string]func(context.Context, string) error{
+		"sk":      skController.ConfigureCachePersistence,
+		"mysekai": mysekaiController.ConfigureCachePersistence,
+	} {
+		if err := configure(initCtx, cfg.CachePersistenceNamespace); err != nil {
+			logger.WarnContext(initCtx, "cache persistence configuration failed", "cache", name, "error_type", fmt.Sprintf("%T", err))
+		}
+	}
+	skController.StartDefaultPredictWarmupContext(initCtx)
 
 	runtime := &App{
-		Sekai:       sekaiClient,
-		PJSK:        pjskClient,
-		Drawing:     drawingClient,
-		Assets:      assetHelper,
-		MetaLoader:  cfg.MetaLoader,
-		Provider:    masterProvider,
-		Providers:   providersByRegion,
-		Cards:       cardController,
-		Costumes:    costumeController,
-		Decks:       deckController,
-		Edu:         educationController,
-		Events:      eventController,
-		Gachas:      gachaController,
-		Honors:      honorController,
-		Inventory:   inventoryController,
-		Misc:        miscController,
-		MySekai:     mysekaiController,
-		Music:       musicController,
-		Aliases:     aliasService,
-		Profiles:    profileController,
-		Score:       scoreController,
-		SK:          skController,
-		Stamps:      stampController,
-		VLive:       vliveController,
-		Snapshots:   staticSnapshotProvider,
-		ImageCache:  newAppImageCache(initCtx, cfg, imgStore),
-		ImageIndex:  imgStore,
-		Censor:      cfg.CensorService,
-		SekaiAPI:    cfg.SekaiAPI,
-		Toolbox:     cfg.Toolbox,
-		Tracker:     cfg.Tracker,
-		Stores:      cfg.Stores,
-		ImageHosts:  cfg.ImageHosts,
-		AssetHosts:  cfg.AssetHosts,
-		AssetReader: dependencies.assetReader,
-		Config:      cfg,
-		initErr:     dependencies.initErr,
+		Sekai:           sekaiClient,
+		PJSK:            pjskClient,
+		Drawing:         drawingClient,
+		Assets:          assetHelper,
+		MetaLoader:      cfg.MetaLoader,
+		Provider:        masterProvider,
+		Providers:       providersByRegion,
+		Cards:           cardController,
+		Costumes:        costumeController,
+		Decks:           deckController,
+		Edu:             educationController,
+		Events:          eventController,
+		Gachas:          gachaController,
+		Honors:          honorController,
+		Inventory:       inventoryController,
+		Misc:            miscController,
+		MySekai:         mysekaiController,
+		Music:           musicController,
+		Aliases:         aliasService,
+		Profiles:        profileController,
+		Score:           scoreController,
+		SK:              skController,
+		Stamps:          stampController,
+		VLive:           vliveController,
+		Snapshots:       staticSnapshotProvider,
+		ImageCache:      newAppImageCache(initCtx, cfg, imgStore),
+		ImageIndex:      imgStore,
+		Censor:          cfg.CensorService,
+		SekaiAPI:        cfg.SekaiAPI,
+		Toolbox:         cfg.Toolbox,
+		Tracker:         cfg.Tracker,
+		Stores:          cfg.Stores,
+		ImageHosts:      cfg.ImageHosts,
+		AssetHosts:      cfg.AssetHosts,
+		AssetReader:     dependencies.assetReader,
+		AssetIndex:      dependencies.assetIndex,
+		lifecycleCancel: lifecycleCancel,
+		Config:          cfg,
+		initErr:         dependencies.initErr,
 	}
 	if localMasterdataFallback {
 		runtime.startLocalMasterdataRefresh(initCtx, localMasterdataDir, cfg.LocalMasterdata.RefreshInterval)
@@ -168,6 +186,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 type appDependencies struct {
 	assets                  *assets.AssetHelper
 	assetReader             *assets.AssetReader
+	assetIndex              *assetindex.Manager
 	snapshots               snapshot.Snapshot
 	staticSnapshots         snapshot.HarukiSnapshotProvider
 	drawing                 *drawing.HarukiDrawingClient
@@ -324,17 +343,26 @@ func normalizeAppConfig(cfg *Config) context.Context {
 }
 
 func newAppDependencies(initCtx context.Context, sekaiClient *sekaiDB.Client, cfg Config) appDependencies {
+	cfg.AssetProbe.Lifecycle = initCtx
 	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs).
 		WithStore(cfg.Stores.Assets, cfg.AssetProbe, logger.NewLoggerFromGlobal("PJSKAssets"))
 	assetReader := assets.NewAssetReader(assetHelper, cfg.Stores.Assets)
+	index := assetindex.New(cfg.Stores.Assets, cfg.AssetIndex, func() {
+		assetHelper.ClearResolutionCache()
+		assetReader.ClearMetadataCache()
+	})
+	if index != nil {
+		assetHelper = assetHelper.WithMetadataIndex(index)
+		index.Start(initCtx)
+	}
 	if len(cfg.AssetProbe.WarmPrefixes) > 0 {
 		go assetHelper.WarmUp(initCtx)
 	}
 	snapshotService, staticSnapshotProvider := newAppSnapshotServices(initCtx, sekaiClient, assetHelper, cfg)
-	drawingClient, imageStore, imageStoreErr := newAppDrawingClient(initCtx, cfg)
+	drawingClient, imageStore, imageStoreErr := newAppDrawingClient(initCtx, cfg, index)
 	localFallback, localDir, inventoryDir := appMasterdataDirs(cfg)
 	return appDependencies{
-		assets: assetHelper, assetReader: assetReader, snapshots: snapshotService, staticSnapshots: staticSnapshotProvider,
+		assets: assetHelper, assetReader: assetReader, assetIndex: index, snapshots: snapshotService, staticSnapshots: staticSnapshotProvider,
 		drawing: drawingClient, imageStore: imageStore, initErr: imageStoreErr, localMasterdataFallback: localFallback,
 		localMasterdataDir: localDir, inventoryMasterdataDir: inventoryDir,
 	}
@@ -351,14 +379,16 @@ func newAppSnapshotServices(initCtx context.Context, sekaiClient *sekaiDB.Client
 	return service, snapshot.NewStaticSnapshotProvider(service)
 }
 
-func newAppDrawingClient(initCtx context.Context, cfg Config) (*drawing.HarukiDrawingClient, *imagecache.PGStore, error) {
+func newAppDrawingClient(initCtx context.Context, cfg Config, resources drawing.ResourceVersionSource) (*drawing.HarukiDrawingClient, *imagecache.PGStore, error) {
 	imageStore, imageStoreErr := openAppImageStore(initCtx, cfg.ImageCachePGURL, imagecache.PGStoreOptions{
 		MaxOpen: cfg.ImageCachePGMaxOpen, RenderIndexDDL: cfg.ImageCacheRenderIndexDDL,
 	})
 	cacheConfig := cfg.DrawingCache
 	configureRenderIndex(initCtx, &cacheConfig, imageStore, cfg)
+	options := appDrawingOptions(cfg)
+	options = append(options, drawing.WithCacheVersions(initCtx, cfg.DrawingCacheVersions, resources, upstream.ResolveTargets(cfg.DrawingBaseURL, cfg.DrawingTargets, "drawing")))
 	client := drawing.NewHarukiDrawingClientWithTargetsAndResources(
-		cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, appDrawingOptions(cfg)...,
+		cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, options...,
 	)
 	if client != nil {
 		client.SetRenderCache(drawing.NewRenderCacheClient(cacheConfig))
@@ -555,6 +585,17 @@ func (a *App) Close() error {
 		return nil
 	}
 	var err error
+	if a.lifecycleCancel != nil {
+		a.lifecycleCancel()
+	}
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if a.MySekai != nil {
+		a.MySekai.Close()
+	}
+	err = errors.Join(err, a.SK.CloseCachePersistence(shutdownCtx), a.MySekai.CloseCachePersistence(shutdownCtx))
+	a.AssetIndex.Close()
+	a.Assets.Close()
 	if a.Toolbox != nil {
 		err = errors.Join(err, a.Toolbox.Close())
 	}
@@ -564,9 +605,9 @@ func (a *App) Close() error {
 	if a.ImageCache != nil {
 		err = errors.Join(err, a.ImageCache.Close())
 	}
-	if a.MySekai != nil {
-		a.MySekai.Close()
-	}
+	// The index can be configured even when no object client could be built.
+	// sql.DB.Close is idempotent when ImageCache already closed the shared pool.
+	err = errors.Join(err, a.ImageIndex.Close())
 	closeProvider := func(p provider.MasterDataProvider) {
 		if closer, ok := p.(interface{ Close() error }); ok {
 			err = errors.Join(err, closer.Close())

@@ -7,7 +7,9 @@ import (
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/storage/storagetest"
 )
 
 const shopTestNow int64 = 1800000000000
@@ -334,5 +336,34 @@ func TestShopUsesMysekaiUpdatedResourcesWithSuitePass(t *testing.T) {
 	item := req.Shops[0].Items[0]
 	if item.ID != 101 || item.ExchangedCount == nil || *item.ExchangedCount != 98 || item.RemainingCount == nil || *item.RemainingCount != 1 {
 		t.Fatalf("wrong updatedResources exchange state: %+v", item)
+	}
+}
+
+func TestShopExcludedResourceItemsDoNotResolveImages(t *testing.T) {
+	c, q, data := playerShopFixture(t)
+	store := storagetest.NewMemory()
+	helper := assets.NewAssetHelper("", nil).WithStore(store, assets.StoreProbeConfig{}, nil)
+	defer helper.Close()
+	c.assets = helper
+	q.ShopType = "tool"
+	data["userMysekaiColorfulPass"] = map[string]any{"expiredAt": shopTestNow}
+	resolver := c.newMysekaiResourceResolver(renderregion.JP)
+	groups, err := c.buildResourceShopGroups(q, data, c.masterdata.loadList("mysekaiShops.json"), false, resolver)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(groups) != 0 {
+		t.Fatalf("excluded groups = %v", groups)
+	}
+	if len(store.Calls()) != 0 {
+		t.Fatalf("excluded resource goods/costs queried storage: %v", store.Calls())
+	}
+	q.ShowAll = true
+	groups, err = c.buildResourceShopGroups(q, data, c.masterdata.loadList("mysekaiShops.json"), false, resolver)
+	if err != nil || len(groups) != 1 || len(groups[0].Items) != 2 {
+		t.Fatalf("all-mode = %v %v", groups, err)
+	}
+	if len(store.Calls()) == 0 {
+		t.Fatal("visible all-mode items did not resolve their images")
 	}
 }

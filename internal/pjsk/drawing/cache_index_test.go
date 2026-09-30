@@ -42,7 +42,7 @@ func (f *fakeRenderIndex) TouchRender(_ context.Context, keys []string) (int64, 
 	return int64(len(keys)), f.touchErr
 }
 
-func (f *fakeRenderIndex) DeleteRender(_ context.Context, keys []string) (int64, error) {
+func (f *fakeRenderIndex) DeleteExpiredRender(_ context.Context, keys []string, _ time.Time) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.deleted = append(f.deleted, append([]string(nil), keys...))
@@ -234,11 +234,19 @@ func TestIndexModeRefPendingUntilIndexed(t *testing.T) {
 			t.Fatalf("image=%+v err=%v", image, err)
 		}
 		_, pendingRef, pending := client.pending.lookupEntry(key)
-		if written && pending {
-			t.Fatal("index_written ref kept a pending entry")
-		}
-		if !written && (!pending || pendingRef != ref) {
+		if !pending || pendingRef != ref {
 			t.Fatalf("unindexed ref not pending: %v %v", pendingRef, pending)
+		}
+
+		image, err = client.renderRemoteImageFlight(artifactCtx(t), "/api/pjsk/card/list", key, testIndexPolicy, failRender(t))
+		if err != nil || image.Ref() == nil || image.Ref().NodeName != "cn09" {
+			t.Fatalf("fresh writer hint lost: ref=%+v err=%v", image.Ref(), err)
+		}
+		client.pending.mu.Lock()
+		client.pending.entries[key].expiresAt = time.Now().Add(-time.Second)
+		client.pending.mu.Unlock()
+		if _, _, found := client.pending.lookupEntry(key); found {
+			t.Fatal("writer hint outlived bounded pending TTL")
 		}
 		if _, hit := client.pending.get(key); hit {
 			t.Fatal("pending ref leaked through the bytes getter")

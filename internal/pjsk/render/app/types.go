@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/meta"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assetindex"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/card"
 	"haruki-cloud/internal/pjsk/render/costume"
@@ -48,6 +49,7 @@ type Config struct {
 	DrawingTimeout          time.Duration
 	DrawingRetryCount       int
 	DrawingCache            drawing.RenderCacheConfig
+	DrawingCacheVersions    drawing.CacheVersionConfig
 	DrawingSKMaxConcurrency int
 	DrawingSKAcquireTimeout time.Duration
 	DrawingMaxConcurrency   int
@@ -71,14 +73,16 @@ type Config struct {
 	AssetLegacyDirs     []string
 	// AssetProbe tunes the store-backed path probe the asset helper runs
 	// against Stores.Assets when no local root answers.
-	AssetProbe               assets.StoreProbeConfig
-	LocalMasterdata          LocalMasterdataConfig
-	MasterdataRegistry       MasterdataRegistryConfig
-	SekaiDBType              string
-	SekaiDSN                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
-	UserSnapshot             UserSnapshotConfig
-	MusicMetaRefreshInterval time.Duration
-	MusicMetaOutputDir       string
+	AssetProbe                assets.StoreProbeConfig
+	AssetIndex                assetindex.Config
+	CachePersistenceNamespace string
+	LocalMasterdata           LocalMasterdataConfig
+	MasterdataRegistry        MasterdataRegistryConfig
+	SekaiDBType               string
+	SekaiDSN                  string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
+	UserSnapshot              UserSnapshotConfig
+	MusicMetaRefreshInterval  time.Duration
+	MusicMetaOutputDir        string
 	// MusicMetaStore, when non-nil, replaces MusicMetaOutputDir for the
 	// loader New builds when MetaLoader is nil.
 	MusicMetaStore                     storage.Store
@@ -197,16 +201,18 @@ type App struct {
 	ImageCache         *imagecache.Client
 	// ImageIndex is the image cache index (image_cache.pg_url), nil when it
 	// is not configured or failed to open. Image cache GC runs on it.
-	ImageIndex  *imagecache.PGStore
-	Censor      *censor.Service
-	SekaiAPI    *sekaiapi.HarukiSekaiAPIClient
-	Toolbox     *sekaiapi.HarukiToolboxClient
-	Tracker     *sekaiapi.TrackerClient
-	Stores      storage.Set
-	ImageHosts  *urlhost.Set
-	AssetHosts  *urlhost.Set
-	AssetReader *assets.AssetReader
-	Config      Config
+	ImageIndex      *imagecache.PGStore
+	Censor          *censor.Service
+	SekaiAPI        *sekaiapi.HarukiSekaiAPIClient
+	Toolbox         *sekaiapi.HarukiToolboxClient
+	Tracker         *sekaiapi.TrackerClient
+	Stores          storage.Set
+	ImageHosts      *urlhost.Set
+	AssetHosts      *urlhost.Set
+	AssetReader     *assets.AssetReader
+	AssetIndex      *assetindex.Manager
+	lifecycleCancel context.CancelFunc
+	Config          Config
 
 	// initErr records a non-fatal initialisation failure (today: the image
 	// cache index) for startup to classify.

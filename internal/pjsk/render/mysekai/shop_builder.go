@@ -135,7 +135,7 @@ func (c *Controller) buildResourceShopGroups(query ShopQuery, merged map[string]
 				return nil, fmt.Errorf("mysekai shop masterdata missing tool %d", resource.ResourceID)
 			}
 		}
-		item := c.buildShopItem(shop, costsByShop[intNumber(shop["id"], 0)], func(int) []ShopResource { return contents }, resolver)
+		item := shopItemMetadata(shop)
 		count := counts[item.ID]
 		item.ExchangedCount = &count
 		available := passActive
@@ -159,6 +159,10 @@ func (c *Controller) buildResourceShopGroups(query ShopQuery, merged map[string]
 		if !query.ShowAll && !available {
 			continue
 		}
+		resolved := c.buildShopItem(shop, costsByShop[item.ID], func(int) []ShopResource { return contents }, resolver)
+		resolved.ExchangedCount, resolved.RemainingCount = item.ExchangedCount, item.RemainingCount
+		resolved.MaterialCapacityCount, resolved.Available = item.MaterialCapacityCount, item.Available
+		item = resolved
 		group := groups[shopType]
 		if group == nil {
 			title := mysekaiShopTypeTitles[shopType]
@@ -189,7 +193,7 @@ func mysekaiShopTypeRank(shopType string) int {
 	return len(mysekaiShopTypeOrder)
 }
 
-func (c *Controller) buildShopItem(shop map[string]any, costs []map[string]any, resourceBox func(int) []ShopResource, resolver mysekaiResourceResolver) drawing.MysekaiShopItem {
+func shopItemMetadata(shop map[string]any) drawing.MysekaiShopItem {
 	item := drawing.MysekaiShopItem{
 		ID:                intNumber(shop["id"], 0),
 		Quantity:          1,
@@ -201,6 +205,11 @@ func (c *Controller) buildShopItem(shop map[string]any, costs []map[string]any, 
 	if limit := max(0, intNumber(shop["mysekaiShopExchangeLimitValue"], 0)); item.ExchangeLimitType != "none" {
 		item.ExchangeLimitValue = &limit
 	}
+	return item
+}
+
+func (c *Controller) buildShopItem(shop map[string]any, costs []map[string]any, resourceBox func(int) []ShopResource, resolver mysekaiResourceResolver) drawing.MysekaiShopItem {
+	item := shopItemMetadata(shop)
 	if resourceBox != nil {
 		if contents := resourceBox(intNumber(shop["resourceBoxId"], 0)); len(contents) > 0 {
 			first := contents[0]

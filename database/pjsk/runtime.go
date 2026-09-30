@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/pendingalias"
+	"haruki-cloud/database/pjsk/profilebgcleanup"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -67,6 +68,10 @@ func init() {
 	gameaccountDescIsBanned := gameaccountFields[3].Descriptor()
 	// gameaccount.DefaultIsBanned holds the default value on creation for the is_banned field.
 	gameaccount.DefaultIsBanned = gameaccountDescIsBanned.Default.(bool)
+	// gameaccountDescBgRevision is the schema descriptor for bg_revision field.
+	gameaccountDescBgRevision := gameaccountFields[4].Descriptor()
+	// gameaccount.DefaultBgRevision holds the default value on creation for the bg_revision field.
+	gameaccount.DefaultBgRevision = gameaccountDescBgRevision.Default.(int64)
 	groupaliasFields := schema.GroupAlias{}.Fields()
 	_ = groupaliasFields
 	// groupaliasDescPlatform is the schema descriptor for platform field.
@@ -185,6 +190,20 @@ func init() {
 	pendingaliasDescSubmittedBy := pendingaliasFields[4].Descriptor()
 	// pendingalias.SubmittedByValidator is a validator for the "submitted_by" field. It is called by the builders before save.
 	pendingalias.SubmittedByValidator = pendingaliasDescSubmittedBy.Validators[0].(func(string) error)
+	profilebgcleanupFields := schema.ProfileBGCleanup{}.Fields()
+	_ = profilebgcleanupFields
+	// profilebgcleanupDescObjectPath is the schema descriptor for object_path field.
+	profilebgcleanupDescObjectPath := profilebgcleanupFields[1].Descriptor()
+	// profilebgcleanup.ObjectPathValidator is a validator for the "object_path" field. It is called by the builders before save.
+	profilebgcleanup.ObjectPathValidator = profilebgcleanupDescObjectPath.Validators[0].(func(string) error)
+	// profilebgcleanupDescAttempts is the schema descriptor for attempts field.
+	profilebgcleanupDescAttempts := profilebgcleanupFields[5].Descriptor()
+	// profilebgcleanup.DefaultAttempts holds the default value on creation for the attempts field.
+	profilebgcleanup.DefaultAttempts = profilebgcleanupDescAttempts.Default.(int)
+	// profilebgcleanupDescCreatedAt is the schema descriptor for created_at field.
+	profilebgcleanupDescCreatedAt := profilebgcleanupFields[6].Descriptor()
+	// profilebgcleanup.DefaultCreatedAt holds the default value on creation for the created_at field.
+	profilebgcleanup.DefaultCreatedAt = profilebgcleanupDescCreatedAt.Default.(func() time.Time)
 	rejectedaliasFields := schema.RejectedAlias{}.Fields()
 	_ = rejectedaliasFields
 	// rejectedaliasDescAliasType is the schema descriptor for alias_type field.

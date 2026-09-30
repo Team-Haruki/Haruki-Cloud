@@ -35,7 +35,7 @@ const (
 type RenderIndex interface {
 	LookupRender(ctx context.Context, requestKey string) (imagecache.RenderIndexEntry, bool, error)
 	TouchRender(ctx context.Context, keys []string) (int64, error)
-	DeleteRender(ctx context.Context, keys []string) (int64, error)
+	DeleteExpiredRender(ctx context.Context, keys []string, cutoff time.Time) (int64, error)
 }
 
 // usableRenderIndex rejects nil and typed-nil indexes.
@@ -85,15 +85,16 @@ type renderIndexWriter struct {
 	now           func() time.Time
 	flushEvery    time.Duration
 
-	mu         sync.Mutex
-	lastTouch  map[string]time.Time
-	touches    keyBatch
-	expires    keyBatch
-	started    bool
-	closed     bool
-	stop       chan struct{}
-	done       chan struct{}
-	lastErrLog atomic.Int64
+	mu           sync.Mutex
+	lastTouch    map[string]time.Time
+	touches      keyBatch
+	expires      keyBatch
+	expireCutoff time.Time
+	started      bool
+	closed       bool
+	stop         chan struct{}
+	done         chan struct{}
+	lastErrLog   atomic.Int64
 }
 
 func newRenderIndexWriter(index RenderIndex, touchInterval time.Duration) *renderIndexWriter {
@@ -133,6 +134,9 @@ func (w *renderIndexWriter) expire(key string) {
 		return
 	}
 	delete(w.lastTouch, key)
+	if w.expireCutoff.IsZero() {
+		w.expireCutoff = w.now()
+	}
 	w.expires.add(key)
 	w.startLocked()
 }
@@ -167,6 +171,8 @@ func (w *renderIndexWriter) flush() {
 	w.mu.Lock()
 	touches := w.touches.drain()
 	expires := w.expires.drain()
+	expireCutoff := w.expireCutoff
+	w.expireCutoff = time.Time{}
 	for key, last := range w.lastTouch {
 		if now.Sub(last) >= w.touchInterval {
 			delete(w.lastTouch, key)
@@ -185,7 +191,7 @@ func (w *renderIndexWriter) flush() {
 		}
 	}
 	if len(expires) > 0 {
-		if _, err := w.index.DeleteRender(ctx, expires); err != nil {
+		if _, err := w.index.DeleteExpiredRender(ctx, expires, expireCutoff); err != nil {
 			w.logError(ctx, "render index expired row delete failed", len(expires), err)
 		}
 	}
@@ -265,13 +271,14 @@ func (c *RenderCacheClient) lookupIndexContext(ctx context.Context, key string) 
 }
 
 // refFromIndexEntry builds a synthetic ref from a joined index row. It carries
-// no node name: an indexed object is not fresh, so round-robin is correct.
+// the recorded writer node briefly after upload, including cross-Cloud hits.
 func refFromIndexEntry(entry imagecache.RenderIndexEntry) (*ArtifactRef, bool) {
 	if validateArtifactCDNPath(entry.Entry.CDNPath) != nil {
 		return nil, false
 	}
 	ref := &ArtifactRef{
 		Kind:           artifactRefKind,
+		NodeName:       entry.Entry.FreshWriterNode(time.Now()),
 		Hash:           entry.ContentHash,
 		CDNPath:        entry.Entry.CDNPath,
 		StorageBackend: entry.Entry.StorageBackend,
@@ -313,5 +320,6 @@ func (c *HarukiDrawingClient) Close() error {
 	if c == nil {
 		return nil
 	}
+	c.versions.Close()
 	return c.cache.Close()
 }

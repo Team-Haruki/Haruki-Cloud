@@ -50,8 +50,10 @@ type handlerFakeIndex struct{ entry imagecache.RenderIndexEntry }
 func (f handlerFakeIndex) LookupRender(context.Context, string) (imagecache.RenderIndexEntry, bool, error) {
 	return f.entry, true, nil
 }
-func (handlerFakeIndex) TouchRender(context.Context, []string) (int64, error)  { return 0, nil }
-func (handlerFakeIndex) DeleteRender(context.Context, []string) (int64, error) { return 0, nil }
+func (handlerFakeIndex) TouchRender(context.Context, []string) (int64, error) { return 0, nil }
+func (handlerFakeIndex) DeleteExpiredRender(context.Context, []string, time.Time) (int64, error) {
+	return 0, nil
+}
 
 func TestRenderedImageMessageIndexHitEmitsHostURL(t *testing.T) {
 	index := handlerFakeIndex{entry: imagecache.RenderIndexEntry{

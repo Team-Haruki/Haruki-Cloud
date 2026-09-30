@@ -575,17 +575,24 @@ func TestStoreProbeCancelledCallerFallsBackWithoutAbortingTheFlight(t *testing.T
 	memory := storagetest.NewMemory()
 	memory.Seed(map[string][]byte{"jp-assets/startapp/music/jacket/j/j.png": []byte("x")})
 	release := make(chan struct{})
+	entered := make(chan struct{}, 1)
 	memory.FailListDir = func(storage.Key) error {
+		select {
+		case entered <- struct{}{}:
+		default:
+		}
 		<-release
 		return nil
 	}
 	helper := storeOnlyHelper(t, memory, StoreProbeConfig{})
 	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+	defer cancel()
 	rel := filepath.Join("music", "jacket", "j", "j.png")
 
 	done := make(chan string, 1)
 	go func() { done <- ResolveRegionAssetPath(helper.WithContext(ctx), "jp", rel) }()
+	<-entered
+	cancel()
 	select {
 	case got := <-done:
 		if got != "asset/jp-assets/startapp/music/jacket/j/j.png" {

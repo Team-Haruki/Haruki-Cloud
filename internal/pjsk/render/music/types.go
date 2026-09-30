@@ -55,6 +55,7 @@ type Controller struct {
 	assets                *assets.AssetHelper
 	assetReader           *assets.AssetReader
 	chartBPM              *chartBPMCache
+	bpmIndex              *bpmIndexReader
 	banCharacterNicknames map[string]int
 	aliases               musicAliasResolver
 	snapshot              snapshot.Snapshot

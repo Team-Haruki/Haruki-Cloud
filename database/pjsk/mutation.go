@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/pjsk/predicate"
+	"haruki-cloud/database/pjsk/profilebgcleanup"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -45,6 +46,7 @@ const (
 	TypeMysekaiBirthdaySubscription      = "MysekaiBirthdaySubscription"
 	TypeMysekaiBirthdaySubscriptionEvent = "MysekaiBirthdaySubscriptionEvent"
 	TypePendingAlias                     = "PendingAlias"
+	TypeProfileBGCleanup                 = "ProfileBGCleanup"
 	TypeRejectedAlias                    = "RejectedAlias"
 	TypeUserBinding                      = "UserBinding"
 	TypeUserDefaultBinding               = "UserDefaultBinding"
@@ -1440,6 +1442,8 @@ type GameAccountMutation struct {
 	user_id         *string
 	server          *string
 	is_banned       *bool
+	bg_revision     *int64
+	addbg_revision  *int64
 	bg              **drawing.ProfileBgSettings
 	clearedFields   map[string]struct{}
 	bindings        map[int]struct{}
@@ -1662,6 +1666,62 @@ func (m *GameAccountMutation) ResetIsBanned() {
 	m.is_banned = nil
 }
 
+// SetBgRevision sets the "bg_revision" field.
+func (m *GameAccountMutation) SetBgRevision(i int64) {
+	m.bg_revision = &i
+	m.addbg_revision = nil
+}
+
+// BgRevision returns the value of the "bg_revision" field in the mutation.
+func (m *GameAccountMutation) BgRevision() (r int64, exists bool) {
+	v := m.bg_revision
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBgRevision returns the old "bg_revision" field's value of the GameAccount entity.
+// If the GameAccount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GameAccountMutation) OldBgRevision(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBgRevision is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBgRevision requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBgRevision: %w", err)
+	}
+	return oldValue.BgRevision, nil
+}
+
+// AddBgRevision adds i to the "bg_revision" field.
+func (m *GameAccountMutation) AddBgRevision(i int64) {
+	if m.addbg_revision != nil {
+		*m.addbg_revision += i
+	} else {
+		m.addbg_revision = &i
+	}
+}
+
+// AddedBgRevision returns the value that was added to the "bg_revision" field in this mutation.
+func (m *GameAccountMutation) AddedBgRevision() (r int64, exists bool) {
+	v := m.addbg_revision
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBgRevision resets all changes to the "bg_revision" field.
+func (m *GameAccountMutation) ResetBgRevision() {
+	m.bg_revision = nil
+	m.addbg_revision = nil
+}
+
 // SetBg sets the "bg" field.
 func (m *GameAccountMutation) SetBg(dbs *drawing.ProfileBgSettings) {
 	m.bg = &dbs
@@ -1799,7 +1859,7 @@ func (m *GameAccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GameAccountMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.user_id != nil {
 		fields = append(fields, gameaccount.FieldUserID)
 	}
@@ -1808,6 +1868,9 @@ func (m *GameAccountMutation) Fields() []string {
 	}
 	if m.is_banned != nil {
 		fields = append(fields, gameaccount.FieldIsBanned)
+	}
+	if m.bg_revision != nil {
+		fields = append(fields, gameaccount.FieldBgRevision)
 	}
 	if m.bg != nil {
 		fields = append(fields, gameaccount.FieldBg)
@@ -1826,6 +1889,8 @@ func (m *GameAccountMutation) Field(name string) (ent.Value, bool) {
 		return m.Server()
 	case gameaccount.FieldIsBanned:
 		return m.IsBanned()
+	case gameaccount.FieldBgRevision:
+		return m.BgRevision()
 	case gameaccount.FieldBg:
 		return m.Bg()
 	}
@@ -1843,6 +1908,8 @@ func (m *GameAccountMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldServer(ctx)
 	case gameaccount.FieldIsBanned:
 		return m.OldIsBanned(ctx)
+	case gameaccount.FieldBgRevision:
+		return m.OldBgRevision(ctx)
 	case gameaccount.FieldBg:
 		return m.OldBg(ctx)
 	}
@@ -1875,6 +1942,13 @@ func (m *GameAccountMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetIsBanned(v)
 		return nil
+	case gameaccount.FieldBgRevision:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBgRevision(v)
+		return nil
 	case gameaccount.FieldBg:
 		v, ok := value.(*drawing.ProfileBgSettings)
 		if !ok {
@@ -1889,13 +1963,21 @@ func (m *GameAccountMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *GameAccountMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addbg_revision != nil {
+		fields = append(fields, gameaccount.FieldBgRevision)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *GameAccountMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case gameaccount.FieldBgRevision:
+		return m.AddedBgRevision()
+	}
 	return nil, false
 }
 
@@ -1904,6 +1986,13 @@ func (m *GameAccountMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *GameAccountMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case gameaccount.FieldBgRevision:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBgRevision(v)
+		return nil
 	}
 	return fmt.Errorf("unknown GameAccount numeric field %s", name)
 }
@@ -1948,6 +2037,9 @@ func (m *GameAccountMutation) ResetField(name string) error {
 		return nil
 	case gameaccount.FieldIsBanned:
 		m.ResetIsBanned()
+		return nil
+	case gameaccount.FieldBgRevision:
+		m.ResetBgRevision()
 		return nil
 	case gameaccount.FieldBg:
 		m.ResetBg()
@@ -5513,6 +5605,677 @@ func (m *PendingAliasMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *PendingAliasMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown PendingAlias edge %s", name)
+}
+
+// ProfileBGCleanupMutation represents an operation that mutates the ProfileBGCleanup nodes in the graph.
+type ProfileBGCleanupMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *int
+	object_path        *string
+	game_account_id    *int
+	addgame_account_id *int
+	state              *profilebgcleanup.State
+	not_before         *time.Time
+	attempts           *int
+	addattempts        *int
+	created_at         *time.Time
+	clearedFields      map[string]struct{}
+	done               bool
+	oldValue           func(context.Context) (*ProfileBGCleanup, error)
+	predicates         []predicate.ProfileBGCleanup
+}
+
+var _ ent.Mutation = (*ProfileBGCleanupMutation)(nil)
+
+// profilebgcleanupOption allows management of the mutation configuration using functional options.
+type profilebgcleanupOption func(*ProfileBGCleanupMutation)
+
+// newProfileBGCleanupMutation creates new mutation for the ProfileBGCleanup entity.
+func newProfileBGCleanupMutation(c config, op Op, opts ...profilebgcleanupOption) *ProfileBGCleanupMutation {
+	m := &ProfileBGCleanupMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeProfileBGCleanup,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withProfileBGCleanupID sets the ID field of the mutation.
+func withProfileBGCleanupID(id int) profilebgcleanupOption {
+	return func(m *ProfileBGCleanupMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ProfileBGCleanup
+		)
+		m.oldValue = func(ctx context.Context) (*ProfileBGCleanup, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ProfileBGCleanup.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withProfileBGCleanup sets the old ProfileBGCleanup of the mutation.
+func withProfileBGCleanup(node *ProfileBGCleanup) profilebgcleanupOption {
+	return func(m *ProfileBGCleanupMutation) {
+		m.oldValue = func(context.Context) (*ProfileBGCleanup, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ProfileBGCleanupMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ProfileBGCleanupMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("pjsk: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ProfileBGCleanup entities.
+func (m *ProfileBGCleanupMutation) SetID(id int) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ProfileBGCleanupMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ProfileBGCleanupMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ProfileBGCleanup.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetObjectPath sets the "object_path" field.
+func (m *ProfileBGCleanupMutation) SetObjectPath(s string) {
+	m.object_path = &s
+}
+
+// ObjectPath returns the value of the "object_path" field in the mutation.
+func (m *ProfileBGCleanupMutation) ObjectPath() (r string, exists bool) {
+	v := m.object_path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldObjectPath returns the old "object_path" field's value of the ProfileBGCleanup entity.
+// If the ProfileBGCleanup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileBGCleanupMutation) OldObjectPath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldObjectPath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldObjectPath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldObjectPath: %w", err)
+	}
+	return oldValue.ObjectPath, nil
+}
+
+// ResetObjectPath resets all changes to the "object_path" field.
+func (m *ProfileBGCleanupMutation) ResetObjectPath() {
+	m.object_path = nil
+}
+
+// SetGameAccountID sets the "game_account_id" field.
+func (m *ProfileBGCleanupMutation) SetGameAccountID(i int) {
+	m.game_account_id = &i
+	m.addgame_account_id = nil
+}
+
+// GameAccountID returns the value of the "game_account_id" field in the mutation.
+func (m *ProfileBGCleanupMutation) GameAccountID() (r int, exists bool) {
+	v := m.game_account_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameAccountID returns the old "game_account_id" field's value of the ProfileBGCleanup entity.
+// If the ProfileBGCleanup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileBGCleanupMutation) OldGameAccountID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameAccountID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameAccountID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameAccountID: %w", err)
+	}
+	return oldValue.GameAccountID, nil
+}
+
+// AddGameAccountID adds i to the "game_account_id" field.
+func (m *ProfileBGCleanupMutation) AddGameAccountID(i int) {
+	if m.addgame_account_id != nil {
+		*m.addgame_account_id += i
+	} else {
+		m.addgame_account_id = &i
+	}
+}
+
+// AddedGameAccountID returns the value that was added to the "game_account_id" field in this mutation.
+func (m *ProfileBGCleanupMutation) AddedGameAccountID() (r int, exists bool) {
+	v := m.addgame_account_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetGameAccountID resets all changes to the "game_account_id" field.
+func (m *ProfileBGCleanupMutation) ResetGameAccountID() {
+	m.game_account_id = nil
+	m.addgame_account_id = nil
+}
+
+// SetState sets the "state" field.
+func (m *ProfileBGCleanupMutation) SetState(pr profilebgcleanup.State) {
+	m.state = &pr
+}
+
+// State returns the value of the "state" field in the mutation.
+func (m *ProfileBGCleanupMutation) State() (r profilebgcleanup.State, exists bool) {
+	v := m.state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldState returns the old "state" field's value of the ProfileBGCleanup entity.
+// If the ProfileBGCleanup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileBGCleanupMutation) OldState(ctx context.Context) (v profilebgcleanup.State, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldState: %w", err)
+	}
+	return oldValue.State, nil
+}
+
+// ResetState resets all changes to the "state" field.
+func (m *ProfileBGCleanupMutation) ResetState() {
+	m.state = nil
+}
+
+// SetNotBefore sets the "not_before" field.
+func (m *ProfileBGCleanupMutation) SetNotBefore(t time.Time) {
+	m.not_before = &t
+}
+
+// NotBefore returns the value of the "not_before" field in the mutation.
+func (m *ProfileBGCleanupMutation) NotBefore() (r time.Time, exists bool) {
+	v := m.not_before
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNotBefore returns the old "not_before" field's value of the ProfileBGCleanup entity.
+// If the ProfileBGCleanup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileBGCleanupMutation) OldNotBefore(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNotBefore is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNotBefore requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNotBefore: %w", err)
+	}
+	return oldValue.NotBefore, nil
+}
+
+// ResetNotBefore resets all changes to the "not_before" field.
+func (m *ProfileBGCleanupMutation) ResetNotBefore() {
+	m.not_before = nil
+}
+
+// SetAttempts sets the "attempts" field.
+func (m *ProfileBGCleanupMutation) SetAttempts(i int) {
+	m.attempts = &i
+	m.addattempts = nil
+}
+
+// Attempts returns the value of the "attempts" field in the mutation.
+func (m *ProfileBGCleanupMutation) Attempts() (r int, exists bool) {
+	v := m.attempts
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAttempts returns the old "attempts" field's value of the ProfileBGCleanup entity.
+// If the ProfileBGCleanup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileBGCleanupMutation) OldAttempts(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAttempts is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAttempts requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAttempts: %w", err)
+	}
+	return oldValue.Attempts, nil
+}
+
+// AddAttempts adds i to the "attempts" field.
+func (m *ProfileBGCleanupMutation) AddAttempts(i int) {
+	if m.addattempts != nil {
+		*m.addattempts += i
+	} else {
+		m.addattempts = &i
+	}
+}
+
+// AddedAttempts returns the value that was added to the "attempts" field in this mutation.
+func (m *ProfileBGCleanupMutation) AddedAttempts() (r int, exists bool) {
+	v := m.addattempts
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAttempts resets all changes to the "attempts" field.
+func (m *ProfileBGCleanupMutation) ResetAttempts() {
+	m.attempts = nil
+	m.addattempts = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ProfileBGCleanupMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ProfileBGCleanupMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the ProfileBGCleanup entity.
+// If the ProfileBGCleanup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileBGCleanupMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ProfileBGCleanupMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// Where appends a list predicates to the ProfileBGCleanupMutation builder.
+func (m *ProfileBGCleanupMutation) Where(ps ...predicate.ProfileBGCleanup) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ProfileBGCleanupMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ProfileBGCleanupMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ProfileBGCleanup, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ProfileBGCleanupMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ProfileBGCleanupMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ProfileBGCleanup).
+func (m *ProfileBGCleanupMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ProfileBGCleanupMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.object_path != nil {
+		fields = append(fields, profilebgcleanup.FieldObjectPath)
+	}
+	if m.game_account_id != nil {
+		fields = append(fields, profilebgcleanup.FieldGameAccountID)
+	}
+	if m.state != nil {
+		fields = append(fields, profilebgcleanup.FieldState)
+	}
+	if m.not_before != nil {
+		fields = append(fields, profilebgcleanup.FieldNotBefore)
+	}
+	if m.attempts != nil {
+		fields = append(fields, profilebgcleanup.FieldAttempts)
+	}
+	if m.created_at != nil {
+		fields = append(fields, profilebgcleanup.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ProfileBGCleanupMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case profilebgcleanup.FieldObjectPath:
+		return m.ObjectPath()
+	case profilebgcleanup.FieldGameAccountID:
+		return m.GameAccountID()
+	case profilebgcleanup.FieldState:
+		return m.State()
+	case profilebgcleanup.FieldNotBefore:
+		return m.NotBefore()
+	case profilebgcleanup.FieldAttempts:
+		return m.Attempts()
+	case profilebgcleanup.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ProfileBGCleanupMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case profilebgcleanup.FieldObjectPath:
+		return m.OldObjectPath(ctx)
+	case profilebgcleanup.FieldGameAccountID:
+		return m.OldGameAccountID(ctx)
+	case profilebgcleanup.FieldState:
+		return m.OldState(ctx)
+	case profilebgcleanup.FieldNotBefore:
+		return m.OldNotBefore(ctx)
+	case profilebgcleanup.FieldAttempts:
+		return m.OldAttempts(ctx)
+	case profilebgcleanup.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown ProfileBGCleanup field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ProfileBGCleanupMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case profilebgcleanup.FieldObjectPath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetObjectPath(v)
+		return nil
+	case profilebgcleanup.FieldGameAccountID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameAccountID(v)
+		return nil
+	case profilebgcleanup.FieldState:
+		v, ok := value.(profilebgcleanup.State)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetState(v)
+		return nil
+	case profilebgcleanup.FieldNotBefore:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNotBefore(v)
+		return nil
+	case profilebgcleanup.FieldAttempts:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAttempts(v)
+		return nil
+	case profilebgcleanup.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ProfileBGCleanup field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ProfileBGCleanupMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_account_id != nil {
+		fields = append(fields, profilebgcleanup.FieldGameAccountID)
+	}
+	if m.addattempts != nil {
+		fields = append(fields, profilebgcleanup.FieldAttempts)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ProfileBGCleanupMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case profilebgcleanup.FieldGameAccountID:
+		return m.AddedGameAccountID()
+	case profilebgcleanup.FieldAttempts:
+		return m.AddedAttempts()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ProfileBGCleanupMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case profilebgcleanup.FieldGameAccountID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameAccountID(v)
+		return nil
+	case profilebgcleanup.FieldAttempts:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAttempts(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ProfileBGCleanup numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ProfileBGCleanupMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ProfileBGCleanupMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ProfileBGCleanupMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ProfileBGCleanup nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ProfileBGCleanupMutation) ResetField(name string) error {
+	switch name {
+	case profilebgcleanup.FieldObjectPath:
+		m.ResetObjectPath()
+		return nil
+	case profilebgcleanup.FieldGameAccountID:
+		m.ResetGameAccountID()
+		return nil
+	case profilebgcleanup.FieldState:
+		m.ResetState()
+		return nil
+	case profilebgcleanup.FieldNotBefore:
+		m.ResetNotBefore()
+		return nil
+	case profilebgcleanup.FieldAttempts:
+		m.ResetAttempts()
+		return nil
+	case profilebgcleanup.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown ProfileBGCleanup field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ProfileBGCleanupMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ProfileBGCleanupMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ProfileBGCleanupMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ProfileBGCleanupMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ProfileBGCleanupMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ProfileBGCleanupMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ProfileBGCleanupMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown ProfileBGCleanup unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ProfileBGCleanupMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown ProfileBGCleanup edge %s", name)
 }
 
 // RejectedAliasMutation represents an operation that mutates the RejectedAlias nodes in the graph.

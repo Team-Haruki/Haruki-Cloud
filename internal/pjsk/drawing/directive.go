@@ -37,7 +37,7 @@ const drawingMaxCacheTTLSeconds int64 = 30 * 86400
 // on the context from the attach point down to postPrepared.
 type renderDirective struct {
 	Key        string // 64 hex; always set
-	KeyVersion int    // 3, or 5 for api/pjsk/event/list
+	KeyVersion int    // legacy 3/5; versioned resource/renderer keys use 6
 	APIPath    string // normalised api path
 	UserID     string // "public" or a sanitised user id
 	Group      string // "pjsk"
@@ -52,6 +52,7 @@ type renderDirective struct {
 type renderOutcome struct {
 	Ref         *ArtifactRef
 	Degraded    bool
+	NoStore     bool
 	ContentType string
 	Node        string
 }
@@ -148,11 +149,14 @@ func (c *HarukiDrawingClient) postUncached(endpoint string, body any) ([]byte, e
 	}
 	finishPrepare := commandtrace.MeasureOperation(requestCtx, "drawing.prepare_render")
 	prepared := prepareDrawingRequestBody(endpoint, body, time.Now(), requestCtx)
+	if c != nil {
+		requestCtx = attachVersions(requestCtx, c.versions.snapshot(prepared))
+	}
 	finishPrepare()
 	// The same prepared body is keyed and sent, so the key describes the bytes on the wire.
-	d, ok := c.newUncachedDirective(endpoint, prepared)
+	d, ok := c.WithContext(requestCtx).newUncachedDirective(endpoint, prepared)
 	if !ok {
-		return c.postPrepared(endpoint, prepared)
+		return c.WithContext(requestCtx).postPrepared(endpoint, prepared)
 	}
 	data, err := c.WithContext(withDirective(requestCtx, d)).postPrepared(endpoint, prepared)
 	if err != nil {
@@ -179,7 +183,7 @@ func (c *HarukiDrawingClient) newUncachedDirective(endpoint string, prepared any
 	if err == nil {
 		var key string
 		if key, err = buildRenderCacheKey(policy); err == nil {
-			return newRenderDirective(key, policy, policy.TTL, false), true
+			return newRenderDirective(versionedCacheKey(c.requestCtx, key), policy, policy.TTL, false), true
 		}
 	}
 	cacheLogger.DebugContext(c.requestCtx, "drawing directive dropped: request is not keyable",

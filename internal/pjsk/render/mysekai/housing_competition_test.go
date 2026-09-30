@@ -278,6 +278,7 @@ func TestHousingCompetitionStatsCachePersistsWithoutOwnerUserID(t *testing.T) {
 		AllowFallback:                    true,
 		HousingCompetitionStatsCachePath: cachePath,
 	})
+	controller.housingCompetitionStats.persistenceDisabled = false // This test explicitly owns its local file.
 	{
 		_, err := controller.BuildHousingCompetitionLine(context.Background(), api, HousingCompetitionLineQuery{
 			Region: "jp",
@@ -289,6 +290,9 @@ func TestHousingCompetitionStatsCachePersistsWithoutOwnerUserID(t *testing.T) {
 
 	testutil.Require(t, !(len(api.calls) != 1), "initial api calls = %+v", api.calls)
 
+	if err := controller.CloseCachePersistence(t.Context()); err != nil {
+		t.Fatal(err)
+	}
 	payload, err := os.ReadFile(cachePath)
 	testutil.Require(t, !(err != nil), "read cache file: %v", err)
 	{
@@ -381,13 +385,15 @@ func TestHousingCompetitionStatsCacheSharesRefreshAndTrace(t *testing.T) {
 
 	}
 
+	if err := cache.closePersistence(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
 	shared := 0
 	for index, trace := range traces {
 		for _, name := range []string{
 			"housing_cache.fetch",
 			"housing_cache.merge",
-			"housing_cache.encode",
-			"housing_cache.persist",
 		} {
 			{
 				count := housingCacheTraceOperationCount(trace, name)
@@ -400,6 +406,11 @@ func TestHousingCompetitionStatsCacheSharesRefreshAndTrace(t *testing.T) {
 			testutil.Require(t, !(count < 1), "trace[%d] housing_cache.snapshot count = %d, operations=%+v", index, count, trace.Snapshot().Operations)
 		}
 
+		for _, name := range []string{"housing_cache.encode", "housing_cache.persist"} {
+			if housingCacheTraceOperationCount(trace, name) != 0 {
+				t.Fatalf("request trace contains background stage %s", name)
+			}
+		}
 		shared += housingCacheTraceOperationCount(trace, "housing_cache.shared")
 	}
 	testutil.Require(t, !(shared != callers-1), "shared trace count = %d, want %d", shared, callers-1)
@@ -556,6 +567,9 @@ func TestHousingCompetitionStatsCacheConcurrentPersistenceIsComplete(t *testing.
 
 	}
 
+	if err := cache.closePersistence(t.Context()); err != nil {
+		t.Fatal(err)
+	}
 	payload, err := os.ReadFile(cachePath)
 	testutil.Require(t, !(err != nil), "read cache file: %v", err)
 

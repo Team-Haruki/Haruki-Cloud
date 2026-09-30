@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
+	json "haruki-cloud/internal/jsonutil"
 	"log/slog"
 	"path/filepath"
 	"sort"
@@ -15,7 +15,9 @@ import (
 
 	"golang.org/x/sync/singleflight"
 
+	"haruki-cloud/internal/cachepersist"
 	"haruki-cloud/internal/observability/commandtrace"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
 )
@@ -42,7 +44,11 @@ type housingCompetitionStatsCache struct {
 	generation       uint64
 
 	refreshes           singleflight.Group
+	refreshTasks        cachepersist.Tasks
+	persistenceDisabled bool
+	persistenceMu       sync.Mutex
 	persistMu           sync.Mutex
+	persistence         *cachepersist.Writer
 	persistedGeneration uint64
 }
 
@@ -99,7 +105,9 @@ type persistedHousingCompetitionEntry struct {
 // no persistence). It is a wrapper over newHousingCompetitionStatsCacheWithStore.
 func newHousingCompetitionStatsCache(cachePath string, refreshInterval time.Duration) *housingCompetitionStatsCache {
 	store, key := localHousingCompetitionCacheStore(cachePath)
-	return newHousingCompetitionStatsCacheWithStore(store, key, refreshInterval)
+	cache := newHousingCompetitionStatsCacheWithStore(store, key, refreshInterval)
+	cache.persistenceDisabled = false // Explicit local file has a single owner.
+	return cache
 }
 
 // localHousingCompetitionCacheStore opens a local store at the directory of
@@ -127,14 +135,15 @@ func newHousingCompetitionStatsCacheWithStore(store storage.Store, key storage.K
 		store, key = nil, ""
 	}
 	cache := &housingCompetitionStatsCache{
-		store:            store,
-		storeKey:         key,
-		refreshInterval:  refreshInterval,
-		buckets:          make(map[housingCompetitionStatsCacheKey]*housingCompetitionStatsBucket),
-		entryTTL:         housingCompetitionStatsEntryTTL,
-		maxEntries:       housingCompetitionStatsMaxEntries,
-		maxBucketEntries: housingCompetitionStatsMaxEntriesPerBucket,
-		maxBuckets:       housingCompetitionStatsMaxBuckets,
+		store:               store,
+		storeKey:            key,
+		persistenceDisabled: true,
+		refreshInterval:     refreshInterval,
+		buckets:             make(map[housingCompetitionStatsCacheKey]*housingCompetitionStatsBucket),
+		entryTTL:            housingCompetitionStatsEntryTTL,
+		maxEntries:          housingCompetitionStatsMaxEntries,
+		maxBucketEntries:    housingCompetitionStatsMaxEntriesPerBucket,
+		maxBuckets:          housingCompetitionStatsMaxBuckets,
 	}
 	cache.loadPersisted()
 	return cache
@@ -208,7 +217,12 @@ func (c *housingCompetitionStatsCache) Refresh(ctx context.Context, api HousingC
 	callerToken := new(housingCompetitionRefreshToken)
 	finishWait := commandtrace.MeasureOperation(ctx, "housing_cache.refresh_wait")
 	resultCh := c.refreshes.DoChan(flightKey, func() (any, error) {
-		background := logger.WithContextAttrs(context.Background(), slog.Bool("shared_work", true))
+		lifeCtx, finish, err := c.refreshTasks.Start()
+		if err != nil {
+			return housingCompetitionRefreshResult{err: err, leader: callerToken}, nil
+		}
+		defer finish()
+		background := logger.WithContextAttrs(lifeCtx, slog.Bool("shared_work", true))
 		sharedBase, cancel := context.WithTimeout(background, housingCompetitionStatsSharedRefreshTimeout)
 		defer cancel()
 		sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
@@ -216,6 +230,9 @@ func (c *housingCompetitionStatsCache) Refresh(ctx context.Context, api HousingC
 		finishFetch := commandtrace.MeasureOperation(sharedCtx, "housing_cache.fetch")
 		entries, sampledAt, refreshedCount, err := fetchHousingCompetitionSamples(sharedCtx, api, region, housingID, sampleCount, 0)
 		finishFetch()
+		if err == nil {
+			err = sharedCtx.Err()
+		}
 		if err != nil {
 			return housingCompetitionRefreshResult{
 				err:        err,
@@ -302,6 +319,12 @@ func fetchHousingCompetitionSamples(ctx context.Context, api HousingCompetitionL
 }
 
 func collectHousingCompetitionSamples(ctx context.Context, api HousingCompetitionListClient, region string, housingID, sampleCount, sampleIntervalMillis int) ([]HousingCompetitionEntry, time.Time, int, error) {
+	if contextual, ok := api.(interface {
+		WithContext(context.Context) *sekaiapi.HarukiSekaiAPIClient
+	}); ok {
+		api = contextual.WithContext(ctx)
+	}
+
 	merged := make(map[string]HousingCompetitionEntry)
 	var sampledAt time.Time
 	for i := 0; i < sampleCount; i++ {
@@ -710,20 +733,28 @@ func (c *housingCompetitionStatsCache) loadPersisted() {
 	if c == nil || c.store == nil {
 		return
 	}
-	data, err := c.store.Get(context.Background(), c.storeKey)
-	if err != nil || len(data) == 0 {
-		return
+	ctx, cancel := context.WithTimeout(storage.WithBackgroundIO(context.Background()), 10*time.Second)
+	defer cancel()
+	_ = c.loadPersistedContext(ctx, c.storeKey, false)
+}
+
+func (c *housingCompetitionStatsCache) loadPersistedContext(ctx context.Context, key storage.Key, replace bool) error {
+	data, err := c.store.Get(ctx, key)
+	if err != nil {
+		return err
 	}
 	var persisted persistedHousingCompetitionStatsCache
 	if err := json.Unmarshal(data, &persisted); err != nil {
-		return
+		return err
 	}
 	if persisted.Version != housingCompetitionStatsCacheVersion {
-		return
+		return fmt.Errorf("unsupported cache snapshot version %d", persisted.Version)
 	}
-
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if replace {
+		c.buckets = make(map[housingCompetitionStatsCacheKey]*housingCompetitionStatsBucket)
+	}
 	for _, item := range persisted.Buckets {
 		key, ok := newHousingCompetitionStatsCacheKey(item.Key.Region, item.Key.HousingID)
 		if !ok {
@@ -748,6 +779,7 @@ func (c *housingCompetitionStatsCache) loadPersisted() {
 		c.buckets[key] = bucket
 	}
 	c.pruneLocked(time.Now().UTC())
+	return nil
 }
 
 func (c *housingCompetitionStatsCache) snapshotForPersistenceLocked() persistedHousingCompetitionStatsCache {
@@ -806,17 +838,26 @@ func (p persistedHousingCompetitionEntry) toEntry() HousingCompetitionEntry {
 	}
 }
 
-func (c *housingCompetitionStatsCache) persistLatest(ctx context.Context, requestedGeneration uint64) {
+func (c *housingCompetitionStatsCache) persistLatest(_ context.Context, requestedGeneration uint64) {
 	if c == nil || c.store == nil {
 		return
 	}
-	finishWait := commandtrace.MeasureOperation(ctx, "housing_cache.persist_wait")
-	c.persistMu.Lock()
-	finishWait()
-	defer c.persistMu.Unlock()
-	if c.persistedGeneration >= requestedGeneration {
+	c.persistenceMu.Lock()
+	if c.persistenceDisabled {
+		c.persistenceMu.Unlock()
 		return
 	}
+	if c.persistence == nil {
+		c.persistence = cachepersist.New("housing_cache", c.persistSnapshot, cachepersist.Options{})
+	}
+	writer := c.persistence
+	c.persistenceMu.Unlock()
+	writer.Schedule(requestedGeneration)
+}
+
+func (c *housingCompetitionStatsCache) persistSnapshot(ctx context.Context) (uint64, error) {
+	c.persistMu.Lock()
+	defer c.persistMu.Unlock()
 
 	finishSnapshot := commandtrace.MeasureOperation(ctx, housingCacheSnapshotStage)
 	c.mu.Lock()
@@ -830,16 +871,15 @@ func (c *housingCompetitionStatsCache) persistLatest(ctx context.Context, reques
 	payload, err := json.Marshal(persisted)
 	finishEncode()
 	if err != nil {
-		return
+		return 0, err
 	}
 	finishPersist := commandtrace.MeasureOperation(ctx, "housing_cache.persist")
-	// Persistence outlives the refresh that triggered it, as the old file
-	// write did: a cancelled caller must not drop the snapshot.
-	err = c.store.Put(context.WithoutCancel(ctx), c.storeKey, payload, storage.PutOptions{ContentType: "application/json"})
+	err = c.store.Put(ctx, c.storeKey, payload, storage.PutOptions{ContentType: "application/json"})
 	finishPersist()
 	if err == nil {
 		c.persistedGeneration = generation
 	}
+	return generation, err
 }
 
 func timeFromUnixMilli(value int64) time.Time {

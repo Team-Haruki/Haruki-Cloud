@@ -47,6 +47,20 @@ func (_c *GameAccountCreate) SetNillableIsBanned(v *bool) *GameAccountCreate {
 	return _c
 }
 
+// SetBgRevision sets the "bg_revision" field.
+func (_c *GameAccountCreate) SetBgRevision(v int64) *GameAccountCreate {
+	_c.mutation.SetBgRevision(v)
+	return _c
+}
+
+// SetNillableBgRevision sets the "bg_revision" field if the given value is not nil.
+func (_c *GameAccountCreate) SetNillableBgRevision(v *int64) *GameAccountCreate {
+	if v != nil {
+		_c.SetBgRevision(*v)
+	}
+	return _c
+}
+
 // SetBg sets the "bg" field.
 func (_c *GameAccountCreate) SetBg(v *drawing.ProfileBgSettings) *GameAccountCreate {
 	_c.mutation.SetBg(v)
@@ -113,6 +127,10 @@ func (_c *GameAccountCreate) defaults() {
 		v := gameaccount.DefaultIsBanned
 		_c.mutation.SetIsBanned(v)
 	}
+	if _, ok := _c.mutation.BgRevision(); !ok {
+		v := gameaccount.DefaultBgRevision
+		_c.mutation.SetBgRevision(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -135,6 +153,9 @@ func (_c *GameAccountCreate) check() error {
 	}
 	if _, ok := _c.mutation.IsBanned(); !ok {
 		return &ValidationError{Name: "is_banned", err: errors.New(`pjsk: missing required field "GameAccount.is_banned"`)}
+	}
+	if _, ok := _c.mutation.BgRevision(); !ok {
+		return &ValidationError{Name: "bg_revision", err: errors.New(`pjsk: missing required field "GameAccount.bg_revision"`)}
 	}
 	return nil
 }
@@ -179,6 +200,10 @@ func (_c *GameAccountCreate) createSpec() (*GameAccount, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.IsBanned(); ok {
 		_spec.SetField(gameaccount.FieldIsBanned, field.TypeBool, value)
 		_node.IsBanned = value
+	}
+	if value, ok := _c.mutation.BgRevision(); ok {
+		_spec.SetField(gameaccount.FieldBgRevision, field.TypeInt64, value)
+		_node.BgRevision = value
 	}
 	if value, ok := _c.mutation.Bg(); ok {
 		_spec.SetField(gameaccount.FieldBg, field.TypeJSON, value)

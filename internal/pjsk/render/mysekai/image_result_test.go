@@ -30,7 +30,7 @@ func (shopImageResultIndex) TouchRender(context.Context, []string) (int64, error
 	return 0, nil
 }
 
-func (shopImageResultIndex) DeleteRender(context.Context, []string) (int64, error) {
+func (shopImageResultIndex) DeleteExpiredRender(context.Context, []string, time.Time) (int64, error) {
 	return 0, nil
 }
 

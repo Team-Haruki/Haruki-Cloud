@@ -169,6 +169,20 @@ func (b *Builder) BuildCardListRequest(cardIDs []int, region renderregion.Value)
 }
 
 func (b *Builder) buildCardListRequestFromCards(resolved []*masterdata.Card, region renderregion.Value) (*drawing.CardListRequest, error) {
+	tasks := make([]func(*assets.AssetHelper), 0, len(resolved))
+	for _, card := range resolved {
+		if card == nil {
+			continue
+		}
+		tasks = append(tasks, func(helper *assets.AssetHelper) {
+			clone := *b
+			clone.assets = helper
+			clone.buildThumbnailInfo(card, region)
+		})
+	}
+	if err := b.assets.Prefetch(tasks); err != nil {
+		return nil, err
+	}
 	cards := make([]drawing.CardBasic, 0, len(resolved))
 	for _, card := range resolved {
 		if card == nil {
@@ -198,6 +212,28 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 	}
 
 	ownedCards := extractOwnedCards(detailedProfile)
+	tasks := make([]func(*assets.AssetHelper), 0, len(cards))
+	for _, card := range cards {
+		if card == nil {
+			continue
+		}
+		userCard, owned := ownedCards[card.ID]
+		if normalizeCardBoxGroupBy(groupBy) == CardBoxGroupByTime && !owned {
+			continue
+		}
+		tasks = append(tasks, func(helper *assets.AssetHelper) {
+			clone := *b
+			clone.assets = helper
+			if owned {
+				clone.buildBoxThumbnailInfo(card, region, &userCard, useAfterTraining)
+			} else {
+				clone.buildBoxThumbnailInfo(card, region, nil, useAfterTraining)
+			}
+		})
+	}
+	if err := b.assets.Prefetch(tasks); err != nil {
+		return nil, err
+	}
 	items := make([]drawing.UserCard, 0, len(cards))
 	characterIconPaths := make(map[int]string)
 	characterColorCodes := make(map[int]string)

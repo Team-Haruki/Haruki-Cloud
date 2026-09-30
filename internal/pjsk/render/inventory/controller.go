@@ -79,6 +79,7 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 	items := c.inventoryItems(region, raw, md)
 	items = c.applyMaterialExpiry(items, query.MaterialRows)
 	items = filterInventoryItems(items, filter)
+	c.resolveInventoryIcons(region, items, md)
 	sections := buildInventorySections(items)
 	if filter == FilterBoost {
 		var total int64
@@ -143,6 +144,23 @@ func (c *Controller) inventoryItems(region renderregion.Value, raw *snapshot.Raw
 	return append(items, c.inventoryBoostItems(region, raw, md)...)
 }
 
+// Resolve only icons which survive expiry, type and quantity filtering.
+func (c *Controller) resolveInventoryIcons(region renderregion.Value, items []drawing.InventoryItem, md *regionMasterdata) {
+	for i := range items {
+		item := &items[i]
+		switch item.ResourceType {
+		case "gacha_ticket":
+			item.IconPath = c.inventoryIconByAssetName(region, item.ResourceType, md.gachaTickets[item.ID].AssetbundleName)
+		case "gacha_ceil_item":
+			item.IconPath = c.inventoryIconByAssetName(region, item.ResourceType, md.gachaCeilItems[item.ID].AssetbundleName)
+		case "mysekai_material":
+			item.IconPath = c.inventoryIconByAssetName(region, item.ResourceType, md.mysekaiMaterials[item.ID].IconAssetbundleName)
+		default:
+			item.IconPath = c.inventoryIconPath(region, item.ResourceType, item.ID)
+		}
+	}
+}
+
 func inventoryItemCapacity(raw *snapshot.RawUserData) int {
 	return len(raw.UserMaterials) + len(raw.UserBoostItems) + len(raw.UserEventItems) +
 		len(raw.UserGachaTickets) + len(raw.UserPracticeTickets) +
@@ -157,7 +175,6 @@ func (c *Controller) inventoryCurrencyItems(region renderregion.Value, raw *snap
 		Description:  "游戏内基础货币，可用于成员育成等消耗。",
 		Category:     "currency",
 		ResourceType: "coin",
-		IconPath:     c.inventoryIconPath(region, "coin", 0),
 		Quantity:     raw.UserGamedata.Coin,
 		Seq:          0,
 	}}
@@ -168,7 +185,6 @@ func (c *Controller) inventoryCurrencyItems(region renderregion.Value, raw *snap
 			Description:  "免费获得的水晶，可用于招募等用途。",
 			Category:     "currency",
 			ResourceType: "jewel",
-			IconPath:     c.inventoryIconPath(region, "jewel", 0),
 			Quantity:     raw.UserChargedCurrency.Free,
 			Seq:          1,
 		})
@@ -180,7 +196,6 @@ func (c *Controller) inventoryCurrencyItems(region renderregion.Value, raw *snap
 			Description:  "购买获得的付费水晶，可用于招募等用途。",
 			Category:     "currency",
 			ResourceType: "jewel",
-			IconPath:     c.inventoryIconPath(region, "jewel", 0),
 			Quantity:     raw.UserChargedCurrency.Paid,
 			Seq:          2,
 		})
@@ -192,7 +207,6 @@ func (c *Controller) inventoryCurrencyItems(region renderregion.Value, raw *snap
 			Description:  "虚拟演唱会等玩法中使用的货币。",
 			Category:     "currency",
 			ResourceType: "virtual_coin",
-			IconPath:     c.inventoryIconPath(region, "virtual_coin", 0),
 			Quantity:     raw.UserGamedata.VirtualCoin,
 			Seq:          3,
 		})
@@ -218,7 +232,6 @@ func (c *Controller) inventoryMaterialItems(region renderregion.Value, raw *snap
 			Description:  cleanInventoryDescription(meta.FlavorText),
 			Category:     category,
 			ResourceType: "material",
-			IconPath:     c.inventoryIconPath(region, "material", mat.MaterialID),
 			Quantity:     mat.Quantity,
 			Seq:          fallbackSeq(meta.Seq, mat.MaterialID),
 		})
@@ -243,7 +256,6 @@ func (c *Controller) inventoryGachaTicketItems(region renderregion.Value, raw *s
 			Description:  cleanInventoryDescription(meta.FlavorText),
 			Category:     "tickets",
 			ResourceType: "gacha_ticket",
-			IconPath:     c.inventoryIconByAssetName(region, "gacha_ticket", meta.AssetbundleName),
 			Quantity:     ticket.Quantity,
 			Seq:          fallbackSeq(meta.Seq, ticket.GachaTicketID),
 		})
@@ -268,7 +280,6 @@ func (c *Controller) inventoryPracticeTicketItems(region renderregion.Value, raw
 			Description:  cleanInventoryDescription(meta.FlavorText),
 			Category:     "training",
 			ResourceType: "practice_ticket",
-			IconPath:     c.inventoryIconPath(region, "practice_ticket", ticket.PracticeTicketID),
 			Quantity:     ticket.Quantity,
 			Seq:          fallbackSeq(meta.CharacterID*1000+meta.Exp, ticket.PracticeTicketID),
 		})
@@ -293,7 +304,6 @@ func (c *Controller) inventorySkillTicketItems(region renderregion.Value, raw *s
 			Description:  cleanInventoryDescription(meta.FlavorText),
 			Category:     "training",
 			ResourceType: "skill_practice_ticket",
-			IconPath:     c.inventoryIconPath(region, "skill_practice_ticket", ticket.SkillPracticeTicketID),
 			Quantity:     ticket.Quantity,
 			Seq:          fallbackSeq(meta.CharacterID*1000+meta.Exp, ticket.SkillPracticeTicketID),
 		})
@@ -318,7 +328,6 @@ func (c *Controller) inventoryGachaCeilItems(region renderregion.Value, raw *sna
 			Description:  cleanInventoryDescription(meta.FlavorText),
 			Category:     "tickets",
 			ResourceType: "gacha_ceil_item",
-			IconPath:     c.inventoryIconByAssetName(region, "gacha_ceil_item", meta.AssetbundleName),
 			Quantity:     item.Quantity,
 			Seq:          fallbackSeq(meta.Seq, item.GachaCeilItemID),
 		})
@@ -347,7 +356,6 @@ func (c *Controller) inventoryMysekaiMaterialItems(region renderregion.Value, ra
 			Description:  cleanInventoryDescription(meta.Description),
 			Category:     category,
 			ResourceType: "mysekai_material",
-			IconPath:     c.inventoryIconByAssetName(region, "mysekai_material", meta.IconAssetbundleName),
 			Quantity:     material.Quantity,
 			Seq:          fallbackSeq(meta.Seq, material.MysekaiMaterialID),
 		})
@@ -377,7 +385,6 @@ func (c *Controller) inventoryBoostItems(region renderregion.Value, raw *snapsho
 			Description:   cleanInventoryDescription(meta.FlavorText),
 			Category:      "boost",
 			ResourceType:  "boost_item",
-			IconPath:      c.inventoryIconPath(region, "boost_item", boost.BoostItemID),
 			Quantity:      boost.Quantity,
 			Seq:           fallbackSeq(meta.Seq, boost.BoostItemID),
 			RecoveryValue: recovery,
@@ -471,23 +478,30 @@ func (c *Controller) inventoryIconByAssetName(region renderregion.Value, resourc
 	}
 }
 
-// resolveInventoryAssetPath emits the C1 candidate list Drawing probes: the
-// requested region's path first, then the JP fallback (today's hit order).
-// For JP, or when both regions resolve to the same path, it is one path and
-// the wire shape stays a plain string.
+// resolveInventoryAssetPath keeps remote candidates in Drawing's C1 format,
+// requested region first and then JP. Drawing resolves them while reading the
+// actual image, avoiding a second round of directory probes in Cloud. Local
+// deployments retain their historical resolved-path format.
 func (c *Controller) resolveInventoryAssetPath(region renderregion.Value, relPaths ...string) drawing.AssetKey {
 	regionKey := renderregion.WithDefault(region).String()
 	if strings.TrimSpace(regionKey) == "" {
 		regionKey = renderregion.JP.String()
 	}
-	var helper *assets.AssetHelper
-	if c != nil {
-		helper = c.assets
+	if c == nil || c.assets == nil || !c.assets.ProbesStore() {
+		var helper *assets.AssetHelper
+		if c != nil {
+			helper = c.assets
+		}
+		return drawing.AssetCandidates(
+			assets.ResolveRegionAssetPath(helper, regionKey, relPaths...),
+			assets.ResolveRegionAssetPath(helper, renderregion.JP.String(), relPaths...),
+		)
 	}
-	return drawing.AssetCandidates(
-		assets.ResolveRegionAssetPath(helper, regionKey, relPaths...),
-		assets.ResolveRegionAssetPath(helper, renderregion.JP.String(), relPaths...),
-	)
+	candidates := assets.RegionAssetCandidates(regionKey, relPaths...)
+	if regionKey != renderregion.JP.String() {
+		candidates = append(candidates, assets.RegionAssetCandidates(renderregion.JP.String(), relPaths...)...)
+	}
+	return drawing.AssetCandidates(candidates...)
 }
 
 func buildInventorySections(items []drawing.InventoryItem) []drawing.InventorySection {

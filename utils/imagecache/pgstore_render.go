@@ -21,6 +21,13 @@ const (
 	lookupRenderSQL = `SELECT r.content_hash, r.api_path, r.user_id, r.group_name, r.key_version, r.ttl_seconds,
        r.expires_at, r.last_used_at,
        e.group_name, e.cdn_path, e.storage_backend, e.media_type, e.size_bytes, COALESCE(e.file_path, ''),
+       e.expires_at, e.last_referenced_at, e.writer_node, e.written_at
+  FROM render_cache_index r JOIN image_cache_entries e ON e.hash = r.content_hash
+ WHERE r.request_key = $1`
+
+	lookupRenderLegacySQL = `SELECT r.content_hash, r.api_path, r.user_id, r.group_name, r.key_version, r.ttl_seconds,
+       r.expires_at, r.last_used_at,
+       e.group_name, e.cdn_path, e.storage_backend, e.media_type, e.size_bytes, COALESCE(e.file_path, ''),
        e.expires_at, e.last_referenced_at
   FROM render_cache_index r JOIN image_cache_entries e ON e.hash = r.content_hash
  WHERE r.request_key = $1`
@@ -34,6 +41,8 @@ const (
  WHERE r.request_key = ANY($1)`
 
 	deleteRenderSQL = `DELETE FROM render_cache_index WHERE request_key = ANY($1)`
+
+	deleteExpiredRenderSQL = `DELETE FROM render_cache_index WHERE request_key = ANY($1) AND expires_at IS NOT NULL AND expires_at <= $2`
 
 	expiredRenderKeysSQL = `SELECT request_key FROM render_cache_index
  WHERE expires_at IS NOT NULL AND expires_at < $1
@@ -91,15 +100,21 @@ func (s *PGStore) LookupRender(ctx context.Context, requestKey string) (RenderIn
 	}
 	out := RenderIndexEntry{RequestKey: requestKey}
 	var (
-		expiresAt, entryExpiresAt sql.NullTime
-		backend, mediaType        sql.NullString
+		expiresAt, entryExpiresAt, writtenAt sql.NullTime
+		backend, mediaType, writerNode       sql.NullString
 	)
-	err := s.db.QueryRowContext(ctx, lookupRenderSQL, requestKey).Scan(
+	fields := []any{
 		&out.ContentHash, &out.APIPath, &out.UserID, &out.GroupName, &out.KeyVersion, &out.TTLSeconds,
 		&expiresAt, &out.LastUsedAt,
 		&out.Entry.GroupName, &out.Entry.CDNPath, &backend, &mediaType, &out.Entry.SizeBytes, &out.Entry.FilePath,
 		&entryExpiresAt, &out.Entry.LastReferencedAt,
-	)
+	}
+	query := lookupRenderLegacySQL
+	if s.metadata.Load() {
+		query = lookupRenderSQL
+		fields = append(fields, &writerNode, &writtenAt)
+	}
+	err := s.executor().QueryRowContext(ctx, query, requestKey).Scan(fields...)
 	if errors.Is(err, sql.ErrNoRows) {
 		return RenderIndexEntry{}, false, nil
 	}
@@ -113,6 +128,8 @@ func (s *PGStore) LookupRender(ctx context.Context, requestKey string) (RenderIn
 		out.Entry.StorageBackend = inferBackend(out.Entry.FilePath)
 	}
 	out.Entry.MediaType = mediaType.String
+	out.Entry.WriterNode = writerNode.String
+	out.Entry.WrittenAt = nullTime(writtenAt)
 	out.Entry.ExpiresAt = nullTime(entryExpiresAt)
 	return out, true, nil
 }
@@ -128,13 +145,27 @@ func (s *PGStore) DeleteRender(ctx context.Context, keys []string) (int64, error
 	return s.execKeys(ctx, "delete render", deleteRenderSQL, keys)
 }
 
+// DeleteExpiredRender only deletes rows still expired at the observation cutoff.
+// A concurrent touch or replacement with a later expiry must survive stale cleanup.
+// DeleteRender is reserved for explicit invalidation, which has different semantics.
+func (s *PGStore) DeleteExpiredRender(ctx context.Context, keys []string, cutoff time.Time) (int64, error) {
+	if s == nil || len(keys) == 0 {
+		return 0, nil
+	}
+	res, err := s.executor().ExecContext(ctx, deleteExpiredRenderSQL, pq.Array(keys), cutoff)
+	if err != nil {
+		return 0, fmt.Errorf("imagecache pgstore: delete expired render: %w", err)
+	}
+	return res.RowsAffected()
+}
+
 // DeleteOrphanEntry deletes one garage image_cache_entries row only while it
 // is still an orphan older than retentionCutoff, and returns the rows deleted.
 func (s *PGStore) DeleteOrphanEntry(ctx context.Context, hash string, retentionCutoff time.Time) (int64, error) {
 	if s == nil || hash == "" {
 		return 0, nil
 	}
-	res, err := s.db.ExecContext(ctx, deleteOrphanEntrySQL, hash, retentionCutoff)
+	res, err := s.executor().ExecContext(ctx, deleteOrphanEntrySQL, hash, retentionCutoff)
 	if err != nil {
 		return 0, fmt.Errorf("imagecache pgstore: delete orphan entry: %w", err)
 	}
@@ -153,7 +184,7 @@ func (s *PGStore) LiveEntryPaths(ctx context.Context, hashes []string) (map[stri
 	if s == nil || len(hashes) == 0 {
 		return live, nil
 	}
-	rows, err := s.db.QueryContext(ctx, liveEntryPathsSQL, pq.Array(hashes))
+	rows, err := s.executor().QueryContext(ctx, liveEntryPathsSQL, pq.Array(hashes))
 	if err != nil {
 		return nil, fmt.Errorf("imagecache pgstore: live entry paths: %w", err)
 	}
@@ -179,7 +210,7 @@ func (s *PGStore) execKeys(ctx context.Context, op, query string, keys []string)
 	if s == nil || len(keys) == 0 {
 		return 0, nil
 	}
-	res, err := s.db.ExecContext(ctx, query, pq.Array(keys))
+	res, err := s.executor().ExecContext(ctx, query, pq.Array(keys))
 	if err != nil {
 		return 0, fmt.Errorf("imagecache pgstore: %s: %w", op, err)
 	}
@@ -196,7 +227,7 @@ func (s *PGStore) ExpiredRenderKeys(ctx context.Context, now time.Time, limit in
 	if s == nil || limit <= 0 {
 		return nil, nil
 	}
-	rows, err := s.db.QueryContext(ctx, expiredRenderKeysSQL, now, limit)
+	rows, err := s.executor().QueryContext(ctx, expiredRenderKeysSQL, now, limit)
 	if err != nil {
 		return nil, fmt.Errorf("imagecache pgstore: expired render keys: %w", err)
 	}
@@ -222,7 +253,7 @@ func (s *PGStore) OrphanGarageEntries(ctx context.Context, retentionCutoff time.
 	if s == nil || limit <= 0 {
 		return nil, nil
 	}
-	rows, err := s.db.QueryContext(ctx, orphanGarageEntriesSQL, retentionCutoff, limit)
+	rows, err := s.executor().QueryContext(ctx, orphanGarageEntriesSQL, retentionCutoff, limit)
 	if err != nil {
 		return nil, fmt.Errorf("imagecache pgstore: orphan garage entries: %w", err)
 	}

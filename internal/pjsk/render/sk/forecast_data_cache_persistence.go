@@ -2,10 +2,12 @@ package sk
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
+	json "haruki-cloud/internal/jsonutil"
 	"sort"
 	"time"
 
+	"haruki-cloud/internal/cachepersist"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/storage"
 )
@@ -27,20 +29,28 @@ func (c *forecastDataCache) loadPersisted() {
 	if c == nil || c.store == nil {
 		return
 	}
-	data, err := c.store.Get(context.Background(), c.storeKey)
-	if err != nil || len(data) == 0 {
-		return
+	ctx, cancel := context.WithTimeout(storage.WithBackgroundIO(context.Background()), 10*time.Second)
+	defer cancel()
+	_ = c.loadPersistedContext(ctx, c.storeKey, false)
+}
+
+func (c *forecastDataCache) loadPersistedContext(ctx context.Context, key storage.Key, replace bool) error {
+	data, err := c.store.Get(ctx, key)
+	if err != nil {
+		return err
 	}
 	var persisted persistedForecastDataCache
 	if err := json.Unmarshal(data, &persisted); err != nil {
-		return
+		return err
 	}
 	if persisted.Version != forecastCachePersistenceVersion {
-		return
+		return fmt.Errorf("unsupported cache snapshot version %d", persisted.Version)
 	}
-
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if replace {
+		c.entries = make(map[forecastDataCacheKey]*forecastDataCacheEntry)
+	}
 	for _, item := range persisted.Entries {
 		key, ok := item.Key.normalized()
 		if !ok || lenNonEmptyForecastData(item.Data) == 0 {
@@ -56,6 +66,7 @@ func (c *forecastDataCache) loadPersisted() {
 		c.entries[key] = entry
 	}
 	c.pruneLocked(time.Now().UTC())
+	return nil
 }
 
 func (c *forecastDataCache) snapshotForPersistenceLocked() persistedForecastDataCache {
@@ -94,17 +105,26 @@ func (c *forecastDataCache) snapshotForPersistenceLocked() persistedForecastData
 	return out
 }
 
-func (c *forecastDataCache) persistLatest(ctx context.Context, requestedGeneration uint64) {
+func (c *forecastDataCache) persistLatest(_ context.Context, requestedGeneration uint64) {
 	if c == nil || c.store == nil {
 		return
 	}
-	finishWait := commandtrace.MeasureOperation(ctx, "forecast_cache.persist_wait")
-	c.persistMu.Lock()
-	finishWait()
-	defer c.persistMu.Unlock()
-	if c.persistedGeneration >= requestedGeneration {
+	c.persistenceMu.Lock()
+	if c.persistenceDisabled {
+		c.persistenceMu.Unlock()
 		return
 	}
+	if c.persistence == nil {
+		c.persistence = cachepersist.New("forecast_cache", c.persistSnapshot, cachepersist.Options{})
+	}
+	writer := c.persistence
+	c.persistenceMu.Unlock()
+	writer.Schedule(requestedGeneration)
+}
+
+func (c *forecastDataCache) persistSnapshot(ctx context.Context) (uint64, error) {
+	c.persistMu.Lock()
+	defer c.persistMu.Unlock()
 
 	finishSnapshot := commandtrace.MeasureOperation(ctx, "forecast_cache.snapshot")
 	c.mu.Lock()
@@ -118,14 +138,13 @@ func (c *forecastDataCache) persistLatest(ctx context.Context, requestedGenerati
 	payload, err := json.Marshal(persisted)
 	finishEncode()
 	if err != nil {
-		return
+		return 0, err
 	}
 	finishPersist := commandtrace.MeasureOperation(ctx, "forecast_cache.persist")
-	// Persistence outlives the refresh that triggered it, as the old file
-	// write did: a cancelled caller must not drop the snapshot.
-	err = c.store.Put(context.WithoutCancel(ctx), c.storeKey, payload, storage.PutOptions{ContentType: "application/json"})
+	err = c.store.Put(ctx, c.storeKey, payload, storage.PutOptions{ContentType: "application/json"})
 	finishPersist()
 	if err == nil {
 		c.persistedGeneration = generation
 	}
+	return generation, err
 }

@@ -49,7 +49,7 @@ type contextFastVerificationProvider interface {
 
 // ProfileBGStorage handles storage of custom profile background images.
 type ProfileBGStorage interface {
-	SaveProfileBackground(ctx context.Context, server string, userID string, imageURL string) (*drawing.ProfileBgSettings, error)
+	SaveProfileBackgroundTracked(ctx context.Context, server, userID, imageURL string, beforePut func(*drawing.ProfileBgSettings) error) (*drawing.ProfileBgSettings, error)
 	DeleteProfileBackground(ctx context.Context, settings *drawing.ProfileBgSettings) error
 }
 

@@ -10,6 +10,8 @@ import (
 	"haruki-cloud/api"
 	"haruki-cloud/internal/core/buildpolicy"
 	"haruki-cloud/internal/core/secevent"
+	"haruki-cloud/internal/pjsk/render/assetindex"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -101,6 +103,9 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	if !harukiConfig.Cfg.PJSKRender.Enabled {
 		return nil
 	}
+	if err := harukiConfig.Cfg.PJSKRender.ValidateCacheVersions(); err != nil {
+		fatalStartup(mainLogger, "drawing cache version configuration invalid", "error", err)
+	}
 	if sekaiClient == nil {
 		fatalStartup(mainLogger, "PJSK render runtime requires Sekai database")
 	}
@@ -150,7 +155,21 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	}
 
 	runtime := renderapp.New(sekaiClient, pjskClient, renderapp.Config{
-		InitContext:             ctx,
+		InitContext:               ctx,
+		CachePersistenceNamespace: cachePersistenceNamespace(harukiConfig.Cfg.PJSKRender.CachePersistenceNamespace),
+		AssetIndex: assetindex.Config{
+			Enabled:      harukiConfig.Cfg.PJSKRender.AssetIndex.Enabled,
+			PollInterval: harukiConfig.Cfg.PJSKRender.AssetIndex.PollInterval,
+			Timeout:      harukiConfig.Cfg.PJSKRender.AssetIndex.Timeout,
+			MaxStale:     harukiConfig.Cfg.PJSKRender.AssetIndex.MaxStale,
+			MaxObjects:   harukiConfig.Cfg.PJSKRender.AssetIndex.MaxObjects,
+		},
+		DrawingCacheVersions: drawing.CacheVersionConfig{
+			Enabled:       harukiConfig.Cfg.PJSKRender.DrawingCacheVersions.Enabled,
+			PollInterval:  harukiConfig.Cfg.PJSKRender.DrawingCacheVersions.PollInterval,
+			MaxStale:      harukiConfig.Cfg.PJSKRender.DrawingCacheVersions.MaxStale,
+			RendererEpoch: harukiConfig.Cfg.PJSKRender.DrawingCacheVersions.RendererEpoch,
+		},
 		SekaiAPI:                sekaiAPIClient,
 		Toolbox:                 toolboxClient,
 		Tracker:                 trackerClient,
@@ -679,4 +698,17 @@ func (c redisSecurityCounter) Incr(ctx context.Context, key string) (int64, erro
 
 func (c redisSecurityCounter) Expire(ctx context.Context, key string, ttl time.Duration) error {
 	return c.rc.Expire(ctx, key, ttl).Err()
+}
+
+// An explicit instance name preserves warm caches across restarts. The hostname
+// fallback isolates simultaneous containers rather than sharing a writable key.
+func cachePersistenceNamespace(configured string) string {
+	if configured = strings.TrimSpace(configured); configured != "" {
+		return configured
+	}
+	hostname, _ := os.Hostname()
+	if hostname == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s-%d", hostname, os.Getpid())
 }

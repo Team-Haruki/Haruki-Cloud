@@ -201,8 +201,8 @@ func TestProfileBGImageEncodingAndSafeHTTPBranches(t *testing.T) {
 
 func testProfileBGImageEncoding(t *testing.T) {
 	t.Helper()
-	if got := randomHex8(); len(got) != 8 || strings.ToLower(got) != got {
-		t.Fatalf("randomHex8() = %q", got)
+	if got, err := randomProfileBGToken(); err != nil || len(got) != 32 || strings.ToLower(got) != got {
+		t.Fatalf("randomProfileBGToken() = %q, %v", got, err)
 	}
 	transparent := image.NewNRGBA(image.Rect(0, 0, 2, 2))
 	flattened := flattenToRGB(transparent)

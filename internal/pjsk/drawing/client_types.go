@@ -13,6 +13,7 @@ import (
 type ClientOption func(*resty.Client, *HarukiDrawingClient)
 
 type HarukiDrawingClient struct {
+	versions   *cacheVersions
 	client     *resty.Client
 	baseURL    string
 	pool       *upstream.Pool

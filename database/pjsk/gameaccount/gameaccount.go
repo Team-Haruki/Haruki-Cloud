@@ -18,6 +18,8 @@ const (
 	FieldServer = "server"
 	// FieldIsBanned holds the string denoting the is_banned field in the database.
 	FieldIsBanned = "is_banned"
+	// FieldBgRevision holds the string denoting the bg_revision field in the database.
+	FieldBgRevision = "bg_revision"
 	// FieldBg holds the string denoting the bg field in the database.
 	FieldBg = "bg"
 	// EdgeBindings holds the string denoting the bindings edge name in mutations.
@@ -39,6 +41,7 @@ var Columns = []string{
 	FieldUserID,
 	FieldServer,
 	FieldIsBanned,
+	FieldBgRevision,
 	FieldBg,
 }
 
@@ -59,6 +62,8 @@ var (
 	ServerValidator func(string) error
 	// DefaultIsBanned holds the default value on creation for the "is_banned" field.
 	DefaultIsBanned bool
+	// DefaultBgRevision holds the default value on creation for the "bg_revision" field.
+	DefaultBgRevision int64
 )
 
 // OrderOption defines the ordering options for the GameAccount queries.
@@ -82,6 +87,11 @@ func ByServer(opts ...sql.OrderTermOption) OrderOption {
 // ByIsBanned orders the results by the is_banned field.
 func ByIsBanned(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsBanned, opts...).ToFunc()
+}
+
+// ByBgRevision orders the results by the bg_revision field.
+func ByBgRevision(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBgRevision, opts...).ToFunc()
 }
 
 // ByBindingsCount orders the results by bindings count.

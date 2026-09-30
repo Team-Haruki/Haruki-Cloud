@@ -19,6 +19,7 @@ import (
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/pendingalias"
+	"haruki-cloud/database/pjsk/profilebgcleanup"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -51,6 +52,8 @@ type Client struct {
 	MysekaiBirthdaySubscriptionEvent *MysekaiBirthdaySubscriptionEventClient
 	// PendingAlias is the client for interacting with the PendingAlias builders.
 	PendingAlias *PendingAliasClient
+	// ProfileBGCleanup is the client for interacting with the ProfileBGCleanup builders.
+	ProfileBGCleanup *ProfileBGCleanupClient
 	// RejectedAlias is the client for interacting with the RejectedAlias builders.
 	RejectedAlias *RejectedAliasClient
 	// UserBinding is the client for interacting with the UserBinding builders.
@@ -78,6 +81,7 @@ func (c *Client) init() {
 	c.MysekaiBirthdaySubscription = NewMysekaiBirthdaySubscriptionClient(c.config)
 	c.MysekaiBirthdaySubscriptionEvent = NewMysekaiBirthdaySubscriptionEventClient(c.config)
 	c.PendingAlias = NewPendingAliasClient(c.config)
+	c.ProfileBGCleanup = NewProfileBGCleanupClient(c.config)
 	c.RejectedAlias = NewRejectedAliasClient(c.config)
 	c.UserBinding = NewUserBindingClient(c.config)
 	c.UserDefaultBinding = NewUserDefaultBindingClient(c.config)
@@ -182,6 +186,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		MysekaiBirthdaySubscription:      NewMysekaiBirthdaySubscriptionClient(cfg),
 		MysekaiBirthdaySubscriptionEvent: NewMysekaiBirthdaySubscriptionEventClient(cfg),
 		PendingAlias:                     NewPendingAliasClient(cfg),
+		ProfileBGCleanup:                 NewProfileBGCleanupClient(cfg),
 		RejectedAlias:                    NewRejectedAliasClient(cfg),
 		UserBinding:                      NewUserBindingClient(cfg),
 		UserDefaultBinding:               NewUserDefaultBindingClient(cfg),
@@ -213,6 +218,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		MysekaiBirthdaySubscription:      NewMysekaiBirthdaySubscriptionClient(cfg),
 		MysekaiBirthdaySubscriptionEvent: NewMysekaiBirthdaySubscriptionEventClient(cfg),
 		PendingAlias:                     NewPendingAliasClient(cfg),
+		ProfileBGCleanup:                 NewProfileBGCleanupClient(cfg),
 		RejectedAlias:                    NewRejectedAliasClient(cfg),
 		UserBinding:                      NewUserBindingClient(cfg),
 		UserDefaultBinding:               NewUserDefaultBindingClient(cfg),
@@ -248,8 +254,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Alias, c.AliasAdmin, c.AliasSubmissionBan, c.GameAccount, c.GroupAlias,
 		c.MysekaiBirthdaySubscription, c.MysekaiBirthdaySubscriptionEvent,
-		c.PendingAlias, c.RejectedAlias, c.UserBinding, c.UserDefaultBinding,
-		c.UserPreference,
+		c.PendingAlias, c.ProfileBGCleanup, c.RejectedAlias, c.UserBinding,
+		c.UserDefaultBinding, c.UserPreference,
 	} {
 		n.Use(hooks...)
 	}
@@ -261,8 +267,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Alias, c.AliasAdmin, c.AliasSubmissionBan, c.GameAccount, c.GroupAlias,
 		c.MysekaiBirthdaySubscription, c.MysekaiBirthdaySubscriptionEvent,
-		c.PendingAlias, c.RejectedAlias, c.UserBinding, c.UserDefaultBinding,
-		c.UserPreference,
+		c.PendingAlias, c.ProfileBGCleanup, c.RejectedAlias, c.UserBinding,
+		c.UserDefaultBinding, c.UserPreference,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -287,6 +293,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.MysekaiBirthdaySubscriptionEvent.mutate(ctx, m)
 	case *PendingAliasMutation:
 		return c.PendingAlias.mutate(ctx, m)
+	case *ProfileBGCleanupMutation:
+		return c.ProfileBGCleanup.mutate(ctx, m)
 	case *RejectedAliasMutation:
 		return c.RejectedAlias.mutate(ctx, m)
 	case *UserBindingMutation:
@@ -1412,6 +1420,139 @@ func (c *PendingAliasClient) mutate(ctx context.Context, m *PendingAliasMutation
 	}
 }
 
+// ProfileBGCleanupClient is a client for the ProfileBGCleanup schema.
+type ProfileBGCleanupClient struct {
+	config
+}
+
+// NewProfileBGCleanupClient returns a client for the ProfileBGCleanup from the given config.
+func NewProfileBGCleanupClient(c config) *ProfileBGCleanupClient {
+	return &ProfileBGCleanupClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `profilebgcleanup.Hooks(f(g(h())))`.
+func (c *ProfileBGCleanupClient) Use(hooks ...Hook) {
+	c.hooks.ProfileBGCleanup = append(c.hooks.ProfileBGCleanup, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `profilebgcleanup.Intercept(f(g(h())))`.
+func (c *ProfileBGCleanupClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ProfileBGCleanup = append(c.inters.ProfileBGCleanup, interceptors...)
+}
+
+// Create returns a builder for creating a ProfileBGCleanup entity.
+func (c *ProfileBGCleanupClient) Create() *ProfileBGCleanupCreate {
+	mutation := newProfileBGCleanupMutation(c.config, OpCreate)
+	return &ProfileBGCleanupCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ProfileBGCleanup entities.
+func (c *ProfileBGCleanupClient) CreateBulk(builders ...*ProfileBGCleanupCreate) *ProfileBGCleanupCreateBulk {
+	return &ProfileBGCleanupCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ProfileBGCleanupClient) MapCreateBulk(slice any, setFunc func(*ProfileBGCleanupCreate, int)) *ProfileBGCleanupCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ProfileBGCleanupCreateBulk{err: fmt.Errorf("calling to ProfileBGCleanupClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ProfileBGCleanupCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ProfileBGCleanupCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ProfileBGCleanup.
+func (c *ProfileBGCleanupClient) Update() *ProfileBGCleanupUpdate {
+	mutation := newProfileBGCleanupMutation(c.config, OpUpdate)
+	return &ProfileBGCleanupUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ProfileBGCleanupClient) UpdateOne(_m *ProfileBGCleanup) *ProfileBGCleanupUpdateOne {
+	mutation := newProfileBGCleanupMutation(c.config, OpUpdateOne, withProfileBGCleanup(_m))
+	return &ProfileBGCleanupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ProfileBGCleanupClient) UpdateOneID(id int) *ProfileBGCleanupUpdateOne {
+	mutation := newProfileBGCleanupMutation(c.config, OpUpdateOne, withProfileBGCleanupID(id))
+	return &ProfileBGCleanupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ProfileBGCleanup.
+func (c *ProfileBGCleanupClient) Delete() *ProfileBGCleanupDelete {
+	mutation := newProfileBGCleanupMutation(c.config, OpDelete)
+	return &ProfileBGCleanupDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ProfileBGCleanupClient) DeleteOne(_m *ProfileBGCleanup) *ProfileBGCleanupDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ProfileBGCleanupClient) DeleteOneID(id int) *ProfileBGCleanupDeleteOne {
+	builder := c.Delete().Where(profilebgcleanup.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ProfileBGCleanupDeleteOne{builder}
+}
+
+// Query returns a query builder for ProfileBGCleanup.
+func (c *ProfileBGCleanupClient) Query() *ProfileBGCleanupQuery {
+	return &ProfileBGCleanupQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeProfileBGCleanup},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ProfileBGCleanup entity by its id.
+func (c *ProfileBGCleanupClient) Get(ctx context.Context, id int) (*ProfileBGCleanup, error) {
+	return c.Query().Where(profilebgcleanup.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ProfileBGCleanupClient) GetX(ctx context.Context, id int) *ProfileBGCleanup {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ProfileBGCleanupClient) Hooks() []Hook {
+	return c.hooks.ProfileBGCleanup
+}
+
+// Interceptors returns the client interceptors.
+func (c *ProfileBGCleanupClient) Interceptors() []Interceptor {
+	return c.inters.ProfileBGCleanup
+}
+
+func (c *ProfileBGCleanupClient) mutate(ctx context.Context, m *ProfileBGCleanupMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ProfileBGCleanupCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ProfileBGCleanupUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ProfileBGCleanupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ProfileBGCleanupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("pjsk: unknown ProfileBGCleanup mutation op: %q", m.Op())
+	}
+}
+
 // RejectedAliasClient is a client for the RejectedAlias schema.
 type RejectedAliasClient struct {
 	config
@@ -1997,12 +2138,13 @@ type (
 	hooks struct {
 		Alias, AliasAdmin, AliasSubmissionBan, GameAccount, GroupAlias,
 		MysekaiBirthdaySubscription, MysekaiBirthdaySubscriptionEvent, PendingAlias,
-		RejectedAlias, UserBinding, UserDefaultBinding, UserPreference []ent.Hook
+		ProfileBGCleanup, RejectedAlias, UserBinding, UserDefaultBinding,
+		UserPreference []ent.Hook
 	}
 	inters struct {
 		Alias, AliasAdmin, AliasSubmissionBan, GameAccount, GroupAlias,
 		MysekaiBirthdaySubscription, MysekaiBirthdaySubscriptionEvent, PendingAlias,
-		RejectedAlias, UserBinding, UserDefaultBinding,
+		ProfileBGCleanup, RejectedAlias, UserBinding, UserDefaultBinding,
 		UserPreference []ent.Interceptor
 	}
 )

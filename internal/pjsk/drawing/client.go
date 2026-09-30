@@ -170,6 +170,15 @@ func (c *HarukiDrawingClient) renderImageWithCacheRequestAndPrepare(endpoint str
 		})
 		return preparedRender
 	}
+	if c != nil {
+		versionPayload := preparedCache
+		if c.versions != nil && !sameRequest {
+			// Cache-only inputs may omit assets sent to Drawing. Normalize both
+			// bodies, while retaining the expensive prepare hook until a miss.
+			versionPayload = []any{preparedCache, prepareRender(requestCtx)}
+		}
+		requestCtx = attachVersions(requestCtx, c.versions.snapshot(versionPayload))
+	}
 	if c == nil {
 		body := prepareRender(requestCtx)
 		if prepare != nil {
@@ -190,10 +199,19 @@ func (c *HarukiDrawingClient) renderImageWithCacheRequestAndPrepare(endpoint str
 				return nil, err
 			}
 		}
+		if state := versionFrom(renderCtx); state != nil && !state.ready {
+			if directive, ok := c.WithContext(renderCtx).newUncachedDirective(endpoint, body); ok {
+				renderCtx = withDirective(renderCtx, directive)
+			}
+		}
 		active := c.WithContext(renderCtx)
 		return active.renderWithPermit(endpoint, body, func(prepared any) ([]byte, error) {
 			return render(renderCtx, prepared)
 		})
+	}
+	if state := versionFrom(requestCtx); state != nil && !state.ready {
+		data, err := renderPrepared(requestCtx)
+		return ImageBytes(data), err
 	}
 	if c.cache != nil {
 		return c.cache.RenderImageSharedContext(requestCtx, endpoint, preparedRenderCachePayload{payload: preparedCache}, renderPrepared)
@@ -253,6 +271,7 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 	directive := c.activeDirective()
 	if directive != nil {
 		directive.apply(request)
+		c.applyVersionHeaders(requestCtx, targetBaseURL, request, directive)
 	}
 	if requestCtx != nil {
 		request.SetContext(requestCtx)
@@ -312,6 +331,14 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 func (c *HarukiDrawingClient) successBody(d *renderDirective, resp *resty.Response) ([]byte, error) {
 	node := resp.Header().Get(headerNode)
 	contentType := resp.Header().Get("Content-Type")
+	noStore := strings.TrimSpace(resp.Header().Get(headerCacheStore)) == "0" || strings.Contains(strings.ToLower(resp.Header().Get("Cache-Control")), "no-store")
+	if noStore {
+		markRenderNoStore(c.requestCtx)
+		commandtrace.RecordOperation(c.requestCtx, "drawing.response_no_store", 0)
+		if d != nil {
+			d.outcome.NoStore = true
+		}
+	}
 	switch {
 	case d != nil && resp.Header().Get(headerArtifactDegraded) == "1":
 		d.outcome.Degraded = true

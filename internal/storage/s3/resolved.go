@@ -25,14 +25,18 @@ func Open(resolved storage.Resolved) (storage.Store, error) {
 func ConfigFromResolved(resolved storage.Resolved) (Config, error) {
 	options := resolved.Options
 	cfg := Config{
-		Endpoints: resolved.Endpoints,
-		Bucket:    resolved.Bucket,
-		Root:      resolved.Root,
-		Region:    resolved.Region,
-		AccessKey: options[storage.OptionAccessKeyID],
-		SecretKey: options[storage.OptionSecretAccessKey],
-		PathStyle: resolved.PathStyle,
-		Proxy:     strings.TrimSpace(options[storage.OptionProxy]),
+		Runtime:        resolved.Runtime,
+		Slot:           resolved.Slot,
+		Endpoints:      resolved.Endpoints,
+		EndpointNames:  resolved.EndpointNames,
+		Bucket:         resolved.Bucket,
+		Root:           resolved.Root,
+		Region:         resolved.Region,
+		AccessKey:      options[storage.OptionAccessKeyID],
+		SecretKey:      options[storage.OptionSecretAccessKey],
+		PathStyle:      resolved.PathStyle,
+		Proxy:          strings.TrimSpace(options[storage.OptionProxy]),
+		EndpointPolicy: strings.TrimSpace(options[storage.OptionEndpointPolicy]),
 	}
 	if resolved.PublicRead {
 		cfg.DefaultACL = "public-read"
@@ -50,6 +54,13 @@ func ConfigFromResolved(resolved storage.Resolved) (Config, error) {
 		if err := parseDurationOption(options, item.key, item.dst); err != nil {
 			return Config{}, err
 		}
+	}
+	if raw := strings.TrimSpace(options[storage.OptionMaxListPages]); raw != "" {
+		value, err := strconv.Atoi(raw)
+		if err != nil || value <= 0 {
+			return Config{}, fmt.Errorf("option %s: %q is not a positive integer", storage.OptionMaxListPages, raw)
+		}
+		cfg.MaxListPages = value
 	}
 	if raw := strings.TrimSpace(options[storage.OptionMaxAttempts]); raw != "" {
 		value, err := strconv.Atoi(raw)

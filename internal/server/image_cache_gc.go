@@ -22,6 +22,7 @@ func startImageCacheGC(ctx context.Context, cfg harukiConfig.ImageCacheConfig, r
 	}
 	gc := imagecache.NewGC(runtime.ImageIndex, runtime.Stores.Normalized().ImageCache, imagecache.GCConfig{
 		Enabled:             true,
+		ObjectDeleteEnabled: cfg.GC.ObjectDeleteEnabled,
 		DryRun:              cfg.GC.DryRunEnabled(),
 		Interval:            cfg.GC.Interval,
 		Batch:               cfg.GC.Batch,

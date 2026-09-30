@@ -31,6 +31,8 @@ const (
 	OptionDefaultACL             = "default_acl"
 	OptionEnableVirtualHostStyle = "enable_virtual_host_style"
 
+	OptionEndpointPolicy   = "endpoint_policy"
+	OptionMaxListPages     = "max_list_pages"
 	OptionRequestTimeout   = "request_timeout"
 	OptionDialTimeout      = "dial_timeout"
 	OptionStatTimeout      = "stat_timeout"
@@ -45,7 +47,7 @@ const (
 var knownOptionKeys = []string{
 	OptionRoot, OptionBucket, OptionEndpoint, OptionRegion, OptionAccessKeyID, OptionSecretAccessKey,
 	OptionDefaultACL, OptionEnableVirtualHostStyle, OptionRequestTimeout, OptionDialTimeout,
-	OptionStatTimeout, OptionFailoverCooldown, OptionMaxAttempts, OptionMaxObjectBytes, OptionProxy,
+	OptionStatTimeout, OptionFailoverCooldown, OptionMaxAttempts, OptionMaxObjectBytes, OptionProxy, OptionEndpointPolicy, OptionMaxListPages,
 }
 
 // ProviderConfig is one storage slot's provider block. Key names follow the
@@ -57,6 +59,7 @@ type ProviderConfig struct {
 	Scheme          string            `yaml:"scheme"`
 	Endpoint        string            `yaml:"endpoint"`
 	Endpoints       []string          `yaml:"endpoints"`
+	EndpointNames   []string          `yaml:"endpoint_names"`
 	TLS             *bool             `yaml:"tls"`
 	Bucket          string            `yaml:"bucket"`
 	Root            string            `yaml:"root"`
@@ -107,7 +110,7 @@ func (c *ProviderConfig) UnmarshalYAML(value *yaml.Node) error {
 // IsZero reports whether the block configures nothing, so the slot falls back
 // to its legacy root.
 func (c ProviderConfig) IsZero() bool {
-	return c.Provider == "" && c.Scheme == "" && c.Endpoint == "" && len(c.Endpoints) == 0 &&
+	return c.Provider == "" && c.Scheme == "" && c.Endpoint == "" && len(c.Endpoints) == 0 && len(c.EndpointNames) == 0 &&
 		c.TLS == nil && c.Bucket == "" && c.Root == "" && c.Prefix == "" && c.Region == "" &&
 		c.AccessKeyID == "" && c.SecretAccessKey == "" && !c.PublicRead && c.PathStyle == nil &&
 		c.BaseURL == "" && len(c.Options) == 0 && c.Mirror == nil && c.MirrorMode == ""
@@ -117,16 +120,20 @@ func (c ProviderConfig) IsZero() bool {
 // list. Options is an opendal-shaped option map; it carries the credentials,
 // so a Resolved value must never be logged whole.
 type Resolved struct {
-	Provider   string
-	Scheme     string
-	Endpoints  []string
-	Bucket     string
-	Root       string
-	BaseURL    string
-	PublicRead bool
-	PathStyle  bool
-	Region     string
-	Options    map[string]string
+	// Runtime and Slot are injected by BuildSet, not provider configuration.
+	Runtime       *IORuntime
+	Slot          Slot
+	Provider      string
+	Scheme        string
+	Endpoints     []string
+	EndpointNames []string
+	Bucket        string
+	Root          string
+	BaseURL       string
+	PublicRead    bool
+	PathStyle     bool
+	Region        string
+	Options       map[string]string
 	// Warnings lists non-fatal findings (ignored endpoint, unknown options)
 	// for the caller to log.
 	Warnings []string
@@ -154,6 +161,12 @@ func Resolve(c ProviderConfig) (Resolved, error) {
 		options[key] = value
 	}
 	resolved.Endpoints, resolved.Warnings = resolveEndpoints(c)
+	if scheme == SchemeS3 {
+		resolved.EndpointNames, err = NormalizeEndpointNames(c.EndpointNames, len(resolved.Endpoints))
+		if err != nil {
+			return Resolved{}, err
+		}
+	}
 	root := resolveRoot(c, scheme)
 	orInsert(options, OptionRoot, root)
 	orInsert(options, OptionBucket, strings.TrimSpace(c.Bucket))
@@ -356,4 +369,29 @@ func validateProvider(c ProviderConfig) error {
 		}
 	}
 	return nil
+}
+
+// NormalizeEndpointNames validates a positional mapping to the resolved,
+// deduplicated endpoint list. Node names must match image_cache.hosts keys.
+func NormalizeEndpointNames(names []string, endpointCount int) ([]string, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+	if len(names) != endpointCount {
+		return nil, fmt.Errorf("endpoint_names: got %d names for %d resolved endpoints", len(names), endpointCount)
+	}
+	result := make([]string, len(names))
+	for i, raw := range names {
+		name := strings.TrimSpace(raw)
+		if len(name) > 64 {
+			return nil, fmt.Errorf("endpoint_names: node name exceeds 64 bytes")
+		}
+		for _, char := range name {
+			if !(char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z' || char >= '0' && char <= '9' || char == '.' || char == '_' || char == '-') {
+				return nil, fmt.Errorf("endpoint_names: node names must use letters, digits, dot, underscore or hyphen")
+			}
+		}
+		result[i] = name
+	}
+	return result, nil
 }

@@ -70,6 +70,24 @@ func (b *Builder) BuildEventListRequest(query ListQuery) (*drawing.EventListRequ
 		region = b.source.DefaultRegion()
 	}
 
+	tasks := make([]func(*assets.AssetHelper), 0, len(events)*2)
+	for _, eventInfo := range events {
+		tasks = append(tasks, func(helper *assets.AssetHelper) {
+			assets.ResolveEventBannerPath(helper, region.String(), eventInfo.AssetBundleName)
+		})
+		cards, err := b.source.GetEventCards(eventInfo.ID)
+		if err != nil {
+			continue
+		}
+		for _, card := range cards[:min(6, len(cards))] {
+			tasks = append(tasks, func(helper *assets.AssetHelper) {
+				common.BuildCardThumbnail(helper, card, region, common.ThumbnailOptions{AfterTraining: false})
+			})
+		}
+	}
+	if err := b.assets.Prefetch(tasks); err != nil {
+		return nil, err
+	}
 	briefs := make([]drawing.EventBrief, 0, len(events))
 	for _, eventInfo := range events {
 		brief, err := b.buildEventBrief(eventInfo, region)

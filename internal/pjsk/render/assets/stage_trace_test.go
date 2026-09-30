@@ -39,11 +39,11 @@ func TestAssetReaderStoreStagesCountActualIO(t *testing.T) {
 	if _, found := reader.Stat(ctx, "missing.png"); found {
 		t.Fatal("missing asset exists")
 	}
-	requireAssetStage(t, trace, "asset.store_stat", 1)
+	requireAssetStage(t, trace, "asset.store_stat", 0)
 	if _, found := reader.Stat(ctx, "missing.png"); found {
 		t.Fatal("memoized missing asset exists")
 	}
-	requireAssetStage(t, trace, "asset.store_stat", 1)
+	requireAssetStage(t, trace, "asset.store_stat", 0)
 }
 
 func TestAssetReaderStoreStagesIncludeErrorsAndCancellation(t *testing.T) {
@@ -69,7 +69,11 @@ func TestAssetReaderStoreStagesIncludeErrorsAndCancellation(t *testing.T) {
 			if _, found := reader.Stat(ctx, "asset.png"); found {
 				t.Fatal("failed stat reported found")
 			}
-			requireAssetStage(t, trace, "asset.store_stat", 1)
+			wantStats := 1
+			if canceled {
+				wantStats = 0
+			}
+			requireAssetStage(t, trace, "asset.store_stat", wantStats)
 		})
 	}
 }

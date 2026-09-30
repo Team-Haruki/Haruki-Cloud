@@ -57,11 +57,13 @@ const (
 
 // widenedProbeSQL detects the widened image_cache_entries schema. The widening
 // DDL ships in a later release, so the store reads and writes both shapes.
-const widenedProbeSQL = `SELECT 1 FROM information_schema.columns WHERE table_name = 'image_cache_entries' AND column_name = 'storage_backend'`
+const widenedProbeSQL = `SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'image_cache_entries' AND column_name = 'storage_backend'`
 
 const lookupSQL = `SELECT cdn_path, COALESCE(file_path, ''), size_bytes FROM image_cache_entries WHERE hash = $1`
 
-const lookupWidenedSQL = `SELECT cdn_path, COALESCE(file_path, ''), size_bytes, storage_backend, media_type, expires_at FROM image_cache_entries WHERE hash = $1`
+const lookupWidenedLegacySQL = `SELECT cdn_path, COALESCE(file_path, ''), size_bytes, storage_backend, media_type, expires_at FROM image_cache_entries WHERE hash = $1`
+
+const lookupWidenedSQL = `SELECT cdn_path, COALESCE(file_path, ''), size_bytes, storage_backend, media_type, expires_at, writer_node, written_at FROM image_cache_entries WHERE hash = $1`
 
 const insertSQL = `
 		INSERT INTO image_cache_entries (hash, group_name, cdn_path, file_path, size_bytes)
@@ -76,15 +78,28 @@ const insertSQL = `
 // conflict still bumps last_referenced_at, the GC retention input (addendum
 // A6), matching Drawing's UPSERT_CONTENT.
 const insertWidenedSQL = `
-		INSERT INTO image_cache_entries (hash, group_name, cdn_path, file_path, size_bytes, storage_backend, media_type)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		ON CONFLICT (hash) DO UPDATE
-			SET cdn_path           = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.cdn_path ELSE EXCLUDED.cdn_path END,
-			    file_path          = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.file_path ELSE EXCLUDED.file_path END,
-			    size_bytes         = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.size_bytes ELSE EXCLUDED.size_bytes END,
-			    storage_backend    = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.storage_backend ELSE EXCLUDED.storage_backend END,
-			    media_type         = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.media_type ELSE EXCLUDED.media_type END,
-			    last_referenced_at = NOW()`
+        INSERT INTO image_cache_entries (hash, group_name, cdn_path, file_path, size_bytes, storage_backend, media_type)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (hash) DO UPDATE
+            SET cdn_path = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.cdn_path ELSE EXCLUDED.cdn_path END,
+                file_path = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.file_path ELSE EXCLUDED.file_path END,
+                size_bytes = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.size_bytes ELSE EXCLUDED.size_bytes END,
+                storage_backend = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.storage_backend ELSE EXCLUDED.storage_backend END,
+                media_type = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.media_type ELSE EXCLUDED.media_type END,
+                last_referenced_at = NOW()`
+
+const insertWidenedWithWriterSQL = `
+        INSERT INTO image_cache_entries (hash, group_name, cdn_path, file_path, size_bytes, storage_backend, media_type, writer_node, written_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ON CONFLICT (hash) DO UPDATE
+            SET cdn_path = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.cdn_path ELSE EXCLUDED.cdn_path END,
+                file_path = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.file_path ELSE EXCLUDED.file_path END,
+                size_bytes = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.size_bytes ELSE EXCLUDED.size_bytes END,
+                storage_backend = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.storage_backend ELSE EXCLUDED.storage_backend END,
+                media_type = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.media_type ELSE EXCLUDED.media_type END,
+                writer_node = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.writer_node ELSE EXCLUDED.writer_node END,
+                written_at = CASE WHEN image_cache_entries.storage_backend = 'garage' THEN image_cache_entries.written_at ELSE EXCLUDED.written_at END,
+                last_referenced_at = NOW()`
 
 // touchEntrySQL marks a garage row as re-referenced so GC's retention window
 // restarts; Cloud runs it when a dedup hit re-emits the row's URL.
@@ -107,6 +122,17 @@ type ImageEntry struct {
 	// LastReferencedAt is written on every re-reference and drives GC. It is
 	// only read by the render index queries; Lookup leaves it zero.
 	LastReferencedAt time.Time
+	WriterNode       string
+	WrittenAt        time.Time
+}
+
+// FreshWriterNode only pins recently uploaded objects while replicas converge.
+func (e ImageEntry) FreshWriterNode(now time.Time) string {
+	age := now.Sub(e.WrittenAt)
+	if e.WriterNode != "" && !e.WrittenAt.IsZero() && age >= -30*time.Second && age < 120*time.Second {
+		return e.WriterNode
+	}
+	return ""
 }
 
 // PGStoreOptions tunes the connection pool.
@@ -125,6 +151,9 @@ type PGStore struct {
 	db         *sql.DB
 	widened    atomic.Bool
 	ddlEnabled bool
+	lifecycle  atomic.Bool
+	metadata   atomic.Bool
+	tx         *sql.Tx
 }
 
 // NewPGStore opens a PostgreSQL connection pool using the given DSN with the
@@ -171,25 +200,28 @@ func (s *PGStore) Init(ctx context.Context) error {
 	if s == nil {
 		return nil
 	}
-	if _, err := s.db.ExecContext(ctx, initSQL); err != nil {
+	if _, err := s.executor().ExecContext(ctx, initSQL); err != nil {
 		return err
 	}
-	if _, err := s.db.ExecContext(ctx, migrateSQL); err != nil {
+	if _, err := s.executor().ExecContext(ctx, migrateSQL); err != nil {
 		return err
 	}
 	if s.ddlEnabled {
 		for i, stmt := range renderIndexDDL {
-			if _, err := s.db.ExecContext(ctx, stmt); err != nil {
+			if _, err := s.executor().ExecContext(ctx, stmt); err != nil {
 				return fmt.Errorf("imagecache pgstore: render index ddl step %d: %w", i+1, err)
 			}
 		}
 	}
-	return s.probeSchema(ctx)
+	if err := s.probeSchema(ctx); err != nil {
+		return err
+	}
+	return s.probeLifecycleSchema(ctx)
 }
 
 func (s *PGStore) probeSchema(ctx context.Context) error {
 	var one int
-	err := s.db.QueryRowContext(ctx, widenedProbeSQL).Scan(&one)
+	err := s.executor().QueryRowContext(ctx, widenedProbeSQL).Scan(&one)
 	switch {
 	case err == nil:
 		s.widened.Store(true)
@@ -217,17 +249,24 @@ func (s *PGStore) Lookup(ctx context.Context, hash string) (ImageEntry, bool, er
 	entry := ImageEntry{Hash: hash}
 	var err error
 	if s.Widened() {
-		var backend, mediaType sql.NullString
-		var expiresAt sql.NullTime
-		err = s.db.QueryRowContext(ctx, lookupWidenedSQL, hash).
-			Scan(&entry.CDNPath, &entry.FilePath, &entry.SizeBytes, &backend, &mediaType, &expiresAt)
+		var backend, mediaType, writerNode sql.NullString
+		var expiresAt, writtenAt sql.NullTime
+		query := lookupWidenedLegacySQL
+		fields := []any{&entry.CDNPath, &entry.FilePath, &entry.SizeBytes, &backend, &mediaType, &expiresAt}
+		if s.metadata.Load() {
+			query = lookupWidenedSQL
+			fields = append(fields, &writerNode, &writtenAt)
+		}
+		err = s.executor().QueryRowContext(ctx, query, hash).Scan(fields...)
 		entry.StorageBackend = backend.String
 		entry.MediaType = mediaType.String
+		entry.WriterNode = writerNode.String
+		entry.WrittenAt = nullTime(writtenAt)
 		if expiresAt.Valid {
 			entry.ExpiresAt = expiresAt.Time
 		}
 	} else {
-		err = s.db.QueryRowContext(ctx, lookupSQL, hash).Scan(&entry.CDNPath, &entry.FilePath, &entry.SizeBytes)
+		err = s.executor().QueryRowContext(ctx, lookupSQL, hash).Scan(&entry.CDNPath, &entry.FilePath, &entry.SizeBytes)
 	}
 	if errors.Is(err, sql.ErrNoRows) {
 		return ImageEntry{}, false, nil
@@ -261,10 +300,15 @@ func (s *PGStore) InsertEntry(ctx context.Context, e ImageEntry) error {
 		if backend == "" {
 			backend = inferBackend(e.FilePath)
 		}
-		_, err = s.db.ExecContext(ctx, insertWidenedSQL,
-			e.Hash, e.GroupName, e.CDNPath, nullIfEmpty(e.FilePath), e.SizeBytes, backend, nullIfEmpty(e.MediaType))
+		query := insertWidenedSQL
+		args := []any{e.Hash, e.GroupName, e.CDNPath, nullIfEmpty(e.FilePath), e.SizeBytes, backend, nullIfEmpty(e.MediaType)}
+		if s.metadata.Load() {
+			query = insertWidenedWithWriterSQL
+			args = append(args, nullIfEmpty(e.WriterNode), sql.NullTime{Time: e.WrittenAt, Valid: !e.WrittenAt.IsZero()})
+		}
+		_, err = s.executor().ExecContext(ctx, query, args...)
 	} else {
-		_, err = s.db.ExecContext(ctx, insertSQL, e.Hash, e.GroupName, e.CDNPath, e.FilePath, e.SizeBytes)
+		_, err = s.executor().ExecContext(ctx, insertSQL, e.Hash, e.GroupName, e.CDNPath, e.FilePath, e.SizeBytes)
 	}
 	if err != nil {
 		return fmt.Errorf("imagecache pgstore: insert: %w", err)
@@ -278,7 +322,7 @@ func (s *PGStore) TouchEntry(ctx context.Context, hash string) error {
 	if !s.Widened() || hash == "" {
 		return nil
 	}
-	if _, err := s.db.ExecContext(ctx, touchEntrySQL, hash); err != nil {
+	if _, err := s.executor().ExecContext(ctx, touchEntrySQL, hash); err != nil {
 		return fmt.Errorf("imagecache pgstore: touch entry: %w", err)
 	}
 	return nil

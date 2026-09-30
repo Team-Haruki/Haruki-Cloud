@@ -27,7 +27,7 @@ func TestLookupIndexedGarageHitBumpsLastReferencedAtRateLimited(t *testing.T) {
 	client.now = func() time.Time { return now }
 	expectHit := func() {
 		mock.ExpectQuery(regexp.QuoteMeta(lookupWidenedSQL)).WithArgs(hash).WillReturnRows(
-			sqlmock.NewRows(widenedLookupColumns).AddRow("pjsk/"+hash+".png", "", int64(3), BackendGarage, "image/png", nil))
+			sqlmock.NewRows(widenedLookupColumns).AddRow("pjsk/"+hash+".png", "", int64(3), BackendGarage, "image/png", nil, nil, nil))
 	}
 	store := func() {
 		t.Helper()

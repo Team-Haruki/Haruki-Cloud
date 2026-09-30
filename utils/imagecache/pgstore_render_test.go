@@ -37,14 +37,25 @@ CREATE TABLE IF NOT EXISTS render_cache_index (
 );
 CREATE INDEX IF NOT EXISTS idx_rci_expires ON render_cache_index (expires_at) WHERE expires_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_rci_api_path_user ON render_cache_index (api_path, user_id);
-CREATE INDEX IF NOT EXISTS idx_rci_content_hash ON render_cache_index (content_hash);`
+CREATE INDEX IF NOT EXISTS idx_rci_content_hash ON render_cache_index (content_hash);
+CREATE TABLE IF NOT EXISTS image_cache_object_deletions (
+    content_hash TEXT NOT NULL,
+    cdn_path TEXT NOT NULL,
+    queued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    attempts INT NOT NULL DEFAULT 0,
+    next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (content_hash, cdn_path)
+);
+CREATE INDEX IF NOT EXISTS idx_icod_next_attempt ON image_cache_object_deletions (next_attempt_at);
+ALTER TABLE image_cache_entries ADD COLUMN IF NOT EXISTS writer_node TEXT NULL;
+ALTER TABLE image_cache_entries ADD COLUMN IF NOT EXISTS written_at TIMESTAMPTZ NULL;`
 
 func TestRenderIndexDDLCanonicalText(t *testing.T) {
 	if got := strings.Join(renderIndexDDL, ";\n") + ";"; got != canonicalRenderIndexDDL {
 		t.Fatalf("renderIndexDDL drifted from the canonical text:\n%s", got)
 	}
-	if len(renderIndexDDL) != 13 {
-		t.Fatalf("statement count = %d, want 13", len(renderIndexDDL))
+	if len(renderIndexDDL) != 17 {
+		t.Fatalf("statement count = %d, want 17", len(renderIndexDDL))
 	}
 	all := strings.ToUpper(strings.Join(renderIndexDDL, "\n"))
 	for _, forbidden := range []string{"SET DEFAULT", "ON DELETE CASCADE", "ON DELETE", "LAST_USED_AT)", "(STORAGE_BACKEND)"} {
@@ -52,8 +63,8 @@ func TestRenderIndexDDLCanonicalText(t *testing.T) {
 			t.Fatalf("DDL contains forbidden %q", forbidden)
 		}
 	}
-	if got := strings.Count(all, "CREATE INDEX IF NOT EXISTS"); got != 6 {
-		t.Fatalf("index count = %d, want 6", got)
+	if got := strings.Count(all, "CREATE INDEX IF NOT EXISTS"); got != 7 {
+		t.Fatalf("index count = %d, want 7", got)
 	}
 	for _, stmt := range renderIndexDDL {
 		upper := strings.ToUpper(stmt)
@@ -76,7 +87,9 @@ func newEqualMockPGStore(t *testing.T, opts PGStoreOptions) (*PGStore, sqlmock.S
 	if err != nil {
 		t.Fatalf("create SQL mock: %v", err)
 	}
-	return NewPGStoreFromDB(db, opts), mock
+	store := NewPGStoreFromDB(db, opts)
+	store.metadata.Store(true)
+	return store, mock
 }
 
 func TestPGStoreInitRunsRenderIndexDDLInOrder(t *testing.T) {
@@ -88,6 +101,7 @@ func TestPGStoreInitRunsRenderIndexDDLInOrder(t *testing.T) {
 		mock.ExpectExec(stmt).WillReturnResult(sqlmock.NewResult(0, 0))
 	}
 	mock.ExpectQuery(widenedProbeSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
+	mock.ExpectQuery(inspectLifecycleSQL).WillReturnRows(sqlmock.NewRows([]string{"ready"}).AddRow(true))
 	if err := store.Init(ctx); err != nil {
 		t.Fatalf("Init() error = %v", err)
 	}
@@ -133,7 +147,7 @@ func TestPGStoreInitRenderIndexDDLFailure(t *testing.T) {
 
 var lookupRenderColumns = []string{
 	"content_hash", "api_path", "user_id", "group_name", "key_version", "ttl_seconds", "expires_at", "last_used_at",
-	"group_name", "cdn_path", "storage_backend", "media_type", "size_bytes", "file_path", "expires_at", "last_referenced_at",
+	"group_name", "cdn_path", "storage_backend", "media_type", "size_bytes", "file_path", "expires_at", "last_referenced_at", "writer_node", "written_at",
 }
 
 func TestPGStoreLookupRender(t *testing.T) {
@@ -145,7 +159,7 @@ func TestPGStoreLookupRender(t *testing.T) {
 
 	mock.ExpectQuery(lookupRenderSQL).WithArgs("key-1").WillReturnRows(sqlmock.NewRows(lookupRenderColumns).AddRow(
 		"h1", "api/event/list", "public", "pjsk", 5, int64(3600), expires, used,
-		"pjsk", "pjsk/api/event/list/h1.png", BackendGarage, "image/png", int64(42), "", expires, referenced,
+		"pjsk", "pjsk/api/event/list/h1.png", BackendGarage, "image/png", int64(42), "", expires, referenced, nil, nil,
 	))
 	got, ok, err := store.LookupRender(ctx, "key-1")
 	want := RenderIndexEntry{
@@ -163,7 +177,7 @@ func TestPGStoreLookupRender(t *testing.T) {
 	// Infinite TTL (NULL expires_at) and a NULL file_path/backend/media_type on a legacy row.
 	mock.ExpectQuery(lookupRenderSQL).WithArgs("key-2").WillReturnRows(sqlmock.NewRows(lookupRenderColumns).AddRow(
 		"h2", "api/card", "123", "pjsk", 3, int64(0), nil, used,
-		"pjsk", "pjsk/h2.png", nil, nil, int64(1), "/cache/pjsk/h2.png", nil, referenced,
+		"pjsk", "pjsk/h2.png", nil, nil, int64(1), "/cache/pjsk/h2.png", nil, referenced, nil, nil,
 	))
 	got, ok, err = store.LookupRender(ctx, "key-2")
 	if !ok || err != nil || !got.ExpiresAt.IsZero() || !got.Entry.ExpiresAt.IsZero() ||
@@ -173,7 +187,7 @@ func TestPGStoreLookupRender(t *testing.T) {
 
 	mock.ExpectQuery(lookupRenderSQL).WithArgs("key-3").WillReturnRows(sqlmock.NewRows(lookupRenderColumns).AddRow(
 		"h3", "api/x", "public", "pjsk", 3, int64(0), nil, used,
-		"pjsk", "pjsk/api/x/h3.png", nil, nil, int64(1), "", nil, referenced,
+		"pjsk", "pjsk/api/x/h3.png", nil, nil, int64(1), "", nil, referenced, nil, nil,
 	))
 	if got, ok, err = store.LookupRender(ctx, "key-3"); !ok || err != nil || got.Entry.StorageBackend != BackendGarage {
 		t.Fatalf("LookupRender(NULL file_path) = (%+v, %v, %v)", got, ok, err)

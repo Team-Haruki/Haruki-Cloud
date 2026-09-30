@@ -69,6 +69,11 @@ func IsBanned(v bool) predicate.GameAccount {
 	return predicate.GameAccount(sql.FieldEQ(FieldIsBanned, v))
 }
 
+// BgRevision applies equality check predicate on the "bg_revision" field. It's identical to BgRevisionEQ.
+func BgRevision(v int64) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldEQ(FieldBgRevision, v))
+}
+
 // UserIDEQ applies the EQ predicate on the "user_id" field.
 func UserIDEQ(v string) predicate.GameAccount {
 	return predicate.GameAccount(sql.FieldEQ(FieldUserID, v))
@@ -207,6 +212,46 @@ func IsBannedEQ(v bool) predicate.GameAccount {
 // IsBannedNEQ applies the NEQ predicate on the "is_banned" field.
 func IsBannedNEQ(v bool) predicate.GameAccount {
 	return predicate.GameAccount(sql.FieldNEQ(FieldIsBanned, v))
+}
+
+// BgRevisionEQ applies the EQ predicate on the "bg_revision" field.
+func BgRevisionEQ(v int64) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldEQ(FieldBgRevision, v))
+}
+
+// BgRevisionNEQ applies the NEQ predicate on the "bg_revision" field.
+func BgRevisionNEQ(v int64) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldNEQ(FieldBgRevision, v))
+}
+
+// BgRevisionIn applies the In predicate on the "bg_revision" field.
+func BgRevisionIn(vs ...int64) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldIn(FieldBgRevision, vs...))
+}
+
+// BgRevisionNotIn applies the NotIn predicate on the "bg_revision" field.
+func BgRevisionNotIn(vs ...int64) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldNotIn(FieldBgRevision, vs...))
+}
+
+// BgRevisionGT applies the GT predicate on the "bg_revision" field.
+func BgRevisionGT(v int64) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldGT(FieldBgRevision, v))
+}
+
+// BgRevisionGTE applies the GTE predicate on the "bg_revision" field.
+func BgRevisionGTE(v int64) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldGTE(FieldBgRevision, v))
+}
+
+// BgRevisionLT applies the LT predicate on the "bg_revision" field.
+func BgRevisionLT(v int64) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldLT(FieldBgRevision, v))
+}
+
+// BgRevisionLTE applies the LTE predicate on the "bg_revision" field.
+func BgRevisionLTE(v int64) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldLTE(FieldBgRevision, v))
 }
 
 // BgIsNil applies the IsNil predicate on the "bg" field.

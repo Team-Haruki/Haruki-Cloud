@@ -26,6 +26,7 @@ var Slots = []Slot{SlotAssets, SlotUserUpload, SlotStatic, SlotCache, SlotImageC
 
 // SetConfig is the pjsk_render.storage block: one provider per slot.
 type SetConfig struct {
+	IO         IOConfig       `yaml:"io"`
 	Assets     ProviderConfig `yaml:"assets"`
 	UserUpload ProviderConfig `yaml:"user_upload"`
 	Static     ProviderConfig `yaml:"static"`
@@ -55,6 +56,7 @@ func (c *SetConfig) Provider(slot Slot) *ProviderConfig {
 // field: an unconfigured slot is Disabled().
 type Set struct {
 	Assets, UserUpload, Static, Cache, ImageCache Store
+	Runtime                                       *IORuntime
 }
 
 // Store returns the store of slot (nil for an unknown slot).
@@ -110,7 +112,8 @@ type Opener func(Resolved) (Store, error)
 // Backends supplies the backends that live outside this package (the s3
 // client imports storage, so it is injected by the composition root).
 type Backends struct {
-	S3 Opener
+	S3      Opener
+	runtime *IORuntime
 }
 
 // ErrBackendUnavailable is returned when a slot selects a scheme whose
@@ -168,6 +171,8 @@ func openProvider(slot Slot, keyPrefix string, c ProviderConfig, backends Backen
 	if backends.S3 == nil {
 		return nil, Resolved{}, fmt.Errorf("storage.%s.%sscheme: %w: %s", slot, keyPrefix, ErrBackendUnavailable, SchemeS3)
 	}
+	resolved.Runtime = backends.runtime
+	resolved.Slot = slot
 	store, openErr := backends.S3(resolved)
 	if openErr != nil {
 		return nil, Resolved{}, fmt.Errorf("storage.%s.%soptions: %w", slot, keyPrefix, openErr)
@@ -180,7 +185,8 @@ func openProvider(slot Slot, keyPrefix string, c ProviderConfig, backends Backen
 // root and a slot block are set and disagree, one Warn is logged and the slot
 // wins. One Info line per slot summarises the result without credentials.
 func BuildSet(cfg SetConfig, legacy LegacyRoots, backends Backends, log *logger.Logger) (Set, error) {
-	var set Set
+	set := Set{Runtime: NewIORuntime(cfg.IO)}
+	backends.runtime = set.Runtime
 	for _, slot := range Slots {
 		store, err := buildSlot(slot, *cfg.Provider(slot), legacy, backends, log)
 		if err != nil {

@@ -19,6 +19,22 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: localtest
+          POSTGRES_PASSWORD: localtest
+          POSTGRES_DB: localtest
+        ports:
+          - 127.0.0.1:5432:5432
+        options: >-
+          --health-cmd "pg_isready -U localtest -d localtest"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      HARUKI_IMAGECACHE_TEST_DSN: postgresql://localtest:localtest@127.0.0.1:5432/localtest?sslmode=disable
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

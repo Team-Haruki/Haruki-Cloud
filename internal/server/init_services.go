@@ -184,6 +184,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			Endpoints:       harukiConfig.Cfg.PJSKRender.DrawingArtifact.Endpoints,
 			FetchTimeout:    harukiConfig.Cfg.PJSKRender.DrawingArtifact.FetchTimeout,
 			ArtifactTimeout: harukiConfig.Cfg.PJSKRender.DrawingArtifact.ArtifactTimeout,
+			NoStorePaths:    harukiConfig.Cfg.PJSKRender.DrawingArtifact.NoStorePaths,
 		},
 		DrawingCache: drawing.RenderCacheConfig{
 			TTL: harukiConfig.Cfg.PJSKRender.DrawingCache.TTL,

@@ -179,6 +179,12 @@ type ArtifactConfig struct {
 	Objects storage.Store
 	// Hosts are the public image-cache hosts named by Drawing node.
 	Hosts *urlhost.Set
+	// NoStorePaths lists api path prefixes ("api/pjsk/sk", matched per path
+	// segment) whose artifact-mode renders skip the artifact store: Drawing
+	// is sent X-Haruki-Cache-Store: 0 and answers bytes, render_cache_index is
+	// not consulted, and the bytes reach the bot inline (ImageResult.Inline).
+	// It only narrows Endpoints; a path outside Endpoints is unaffected.
+	NoStorePaths []string
 }
 
 // WithArtifactConfig enables artifact mode for the allow-listed endpoints.
@@ -229,10 +235,38 @@ func (l artifactAllowList) has(apiPath string) bool {
 	return ok
 }
 
+// apiPathPrefixList matches normalised api paths by whole leading segments:
+// "api/pjsk/sk" matches "api/pjsk/sk" and "api/pjsk/sk/line", never
+// "api/pjsk/skill".
+type apiPathPrefixList []string
+
+func newAPIPathPrefixList(prefixes []string) apiPathPrefixList {
+	var list apiPathPrefixList
+	for _, raw := range prefixes {
+		if prefix := normalizeRenderCacheAPIPath(raw); prefix != "" {
+			list = append(list, prefix)
+		}
+	}
+	return list
+}
+
+func (l apiPathPrefixList) has(apiPath string) bool {
+	if apiPath == "" {
+		return false
+	}
+	for _, prefix := range l {
+		if apiPath == prefix || (strings.HasPrefix(apiPath, prefix) && apiPath[len(prefix)] == '/') {
+			return true
+		}
+	}
+	return false
+}
+
 // artifactSettings is the immutable artifact-mode state shared by every
 // clone of a drawing client.
 type artifactSettings struct {
 	allow           artifactAllowList
+	noStore         apiPathPrefixList
 	artifactTimeout time.Duration
 	fetcher         *artifactFetcher
 }
@@ -248,6 +282,7 @@ func newArtifactSettings(cfg ArtifactConfig) *artifactSettings {
 	}
 	return &artifactSettings{
 		allow:           allow,
+		noStore:         newAPIPathPrefixList(cfg.NoStorePaths),
 		artifactTimeout: artifactTimeout,
 		fetcher:         newArtifactFetcher(cfg.Objects, cfg.Hosts, cfg.FetchTimeout),
 	}
@@ -262,6 +297,23 @@ func (s *artifactSettings) allowsEndpoint(endpoint string) bool {
 		return false
 	}
 	return s.allow.has(normalizeRenderCacheAPIPath(parsed.Path))
+}
+
+// skipsStore reports an allow-listed api path whose renders bypass the
+// artifact store (no index lookup, X-Haruki-Cache-Store: 0, inline bytes).
+func (s *artifactSettings) skipsStore(apiPath string) bool {
+	return s != nil && s.allow.has(apiPath) && s.noStore.has(apiPath)
+}
+
+func (s *artifactSettings) skipsStoreEndpoint(endpoint string) bool {
+	if s == nil || len(s.noStore) == 0 {
+		return false
+	}
+	parsed, err := parseRenderCacheEndpoint(endpoint)
+	if err != nil {
+		return false
+	}
+	return s.skipsStore(normalizeRenderCacheAPIPath(parsed.Path))
 }
 
 type artifactModeCtxKey struct{}

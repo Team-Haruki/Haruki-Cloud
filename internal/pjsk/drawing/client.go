@@ -147,6 +147,16 @@ func (c *HarukiDrawingClient) renderWithCacheRequestAndPrepare(endpoint string, 
 }
 
 func (c *HarukiDrawingClient) renderImageWithCacheRequestAndPrepare(endpoint string, cacheRequest any, renderRequest any, prepare func(context.Context, any) error, render func(context.Context, any) ([]byte, error), sameRequest bool) (ImageResult, error) {
+	image, err := c.renderImageWithCacheRequestAndPrepareOnce(endpoint, cacheRequest, renderRequest, prepare, render, sameRequest)
+	// Artifact mode needs the render cache (withArtifactMode); without it no
+	// path is in artifact mode and bytes keep today's image-cache delivery.
+	if err == nil && image.ref == nil && c != nil && c.cache != nil && c.artifact.skipsStoreEndpoint(endpoint) {
+		image.inline = true
+	}
+	return image, err
+}
+
+func (c *HarukiDrawingClient) renderImageWithCacheRequestAndPrepareOnce(endpoint string, cacheRequest any, renderRequest any, prepare func(context.Context, any) error, render func(context.Context, any) ([]byte, error), sameRequest bool) (ImageResult, error) {
 	var requestCtx context.Context
 	if c != nil {
 		requestCtx = c.requestCtx

@@ -84,3 +84,15 @@ func TestRenderedImageMessageRefWithoutHostsFallsBackToBytes(t *testing.T) {
 		})
 	}
 }
+
+func TestRenderedImageMessageInlineSendsBase64WithoutImageCache(t *testing.T) {
+	// No ImageCache: the stored-URL path would fail, so success means no upload.
+	rc := &RequestContext{Ctx: t.Context(), App: &renderapp.App{ImageHosts: urlhost.Single("https://ic.example")}}
+	raw := refMessageJSON(t, rc, drawing.ImageInlineBytes([]byte("jpeg")))
+	if !strings.Contains(raw, "base64://anBlZw==") {
+		t.Fatalf("message=%s", raw)
+	}
+	if _, err := rc.RenderedImageMessage(drawing.ImageBytes([]byte("jpeg"))); err == nil {
+		t.Fatal("plain bytes skipped the image cache")
+	}
+}

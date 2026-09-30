@@ -5,11 +5,14 @@ import (
 	"errors"
 	json "haruki-cloud/internal/jsonutil"
 	"math"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
@@ -2162,5 +2165,29 @@ func TestAreaItemFiltersDoNotPickUpAllCharacterItem(t *testing.T) {
 	}
 	if len(req.AreaItems) != 1 || req.AreaItems[0].ItemID != 101 {
 		t.Fatalf("unit filter picked up other items: %+v", req.AreaItems)
+	}
+}
+
+func TestAreaItemIconPathFallsBackToThumbnail(t *testing.T) {
+	root := t.TempDir()
+	write := func(rel string) {
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte("png"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("asset/jp-assets/startapp/areaitem/areaitem1105/areaitem1105.png")
+	write("asset/jp-assets/startapp/thumbnail/areaitem/areaitem1105.png")
+	write("asset/jp-assets/startapp/thumbnail/areaitem/areaitem2701.png")
+	helper := assets.NewAssetHelper(root, nil)
+
+	if got := areaItemIconPath(helper, renderregion.JP, "areaitem1105"); got != "asset/jp-assets/startapp/areaitem/areaitem1105/areaitem1105.png" {
+		t.Fatalf("bundle image must win when present, got %q", got)
+	}
+	if got := areaItemIconPath(helper, renderregion.JP, "areaitem2701"); got != "asset/jp-assets/startapp/thumbnail/areaitem/areaitem2701.png" {
+		t.Fatalf("thumbnail-only item must use its thumbnail, got %q", got)
 	}
 }

@@ -212,19 +212,11 @@ pjsk_render:
     fetch_timeout: "10s"      # reading a ref's bytes back (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_FETCH_TIMEOUT)
     artifact_timeout: "15s"   # added to drawing_timeout for encode + upload (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ARTIFACT_TIMEOUT)
     # Low-reuse per-user renders that skip the artifact store: Cloud sends X-Haruki-Cache-Store: 0 (no Garage upload,
-    # no render index write), skips the render_cache_index lookup, and sends the image bytes to the bot as base64://
-    # instead of a URL. Prefixes match whole path segments ("api/pjsk/sk" covers api/pjsk/sk/line, ...) and only
-    # apply to paths already in `endpoints`. Omit the key for the defaults below; [] turns it off.
-    # (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_NO_STORE_PATHS, comma-separated; "[]" = none)
-    no_store_paths:
-      - "api/pjsk/deck"
-      - "api/pjsk/event/planner"
-      - "api/pjsk/sk"
-      - "api/pjsk/mysekai/map"
-      - "api/pjsk/mysekai/resource"
-      - "api/pjsk/mysekai/talk-list"
-      - "api/pjsk/mysekai/music-record"
-      - "api/pjsk/mysekai/door-upgrade"
+    # no render index write) and skips the render_cache_index lookup. Prefixes match whole path segments
+    # ("api/pjsk/sk" covers api/pjsk/sk/line, ...) and only apply to paths already in `endpoints`. Off by default.
+    # Verified candidates: api/pjsk/deck, api/pjsk/event/planner, api/pjsk/sk, api/pjsk/mysekai/{map,resource,
+    # talk-list,music-record,door-upgrade}. (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_NO_STORE_PATHS, comma-separated)
+    no_store_paths: []
   music_meta:
     refresh_interval: "30m"   # how often to re-check the upstream for music_metas updates
     output_dir: ""            # optional: persist music_metas*.json into this directory after updates

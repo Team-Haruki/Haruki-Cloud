@@ -784,15 +784,16 @@ type DrawingArtifactConfig struct {
 	ArtifactTimeout time.Duration `yaml:"artifact_timeout"`
 	// NoStorePaths lists api path prefixes ("api/pjsk/sk", matched per path
 	// segment) that skip the artifact store: X-Haruki-Cache-Store: 0, no
-	// render_cache_index lookup, image bytes sent to the bot inline. Absent =
-	// DefaultDrawingArtifactNoStorePaths; [] = none.
+	// render_cache_index lookup. Empty (the default) = none; the verified
+	// candidates are DefaultDrawingArtifactNoStorePaths.
 	NoStorePaths []string `yaml:"no_store_paths"`
 }
 
 // DefaultDrawingArtifactNoStorePaths are the per-user renders whose render
 // index rows were almost never reused (2026-10-01: sk 1/543, mysekai
 // map/resource/talk-list/music-record/door-upgrade 1/215, deck 0/37,
-// event planner 0/2), so the artifact upload is pure latency for them.
+// event planner 0/2), so the artifact upload is pure latency for them. They
+// are opt-in: no_store_paths is empty unless configured.
 func DefaultDrawingArtifactNoStorePaths() []string {
 	return []string{
 		"api/pjsk/deck",
@@ -1102,11 +1103,6 @@ func ApplyProfileDefaults(cfg *Config) {
 		default:
 			cfg.Backend.APICacheTTL = 10 * time.Second
 		}
-	}
-
-	// Absent (nil) keeps the default list; an explicit [] disables it.
-	if cfg.PJSKRender.DrawingArtifact.NoStorePaths == nil {
-		cfg.PJSKRender.DrawingArtifact.NoStorePaths = DefaultDrawingArtifactNoStorePaths()
 	}
 
 	// Production safety: force-disable insecure internal API regardless of YAML.

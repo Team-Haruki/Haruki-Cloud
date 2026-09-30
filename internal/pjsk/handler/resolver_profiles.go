@@ -122,6 +122,7 @@ func cloneDetailedProfileForTarget(detail *drawing.DetailedProfileCardRequest, t
 	cloned := *detail
 	cloned.Mode = commonCloneStringPtr(detail.Mode)
 	cloned.FramePath = commonCloneStringPtr(detail.FramePath)
+	cloned.Rank = commonCloneIntPtr(detail.Rank)
 	cloned.UserCards = append([]any(nil), detail.UserCards...)
 	cloned.IsHideUID = !target.Visible
 	if resolvedRegion := strings.TrimSpace(resolvedTargetRegion(region, target)); resolvedRegion != "" {
@@ -179,10 +180,8 @@ func cloneProfileCardForTarget(card *drawing.ProfileCardRequest, target Resolved
 			cloned.DataSources = append(cloned.DataSources, entry)
 		}
 	}
-	if card.MysekaiLevel != nil {
-		cloned.MysekaiLevel = new(int)
-		*cloned.MysekaiLevel = *card.MysekaiLevel
-	}
+	cloned.Rank = commonCloneIntPtr(card.Rank)
+	cloned.MysekaiLevel = commonCloneIntPtr(card.MysekaiLevel)
 	cloned.ErrorMessage = commonCloneStringPtr(card.ErrorMessage)
 	return &cloned
 }
@@ -210,6 +209,14 @@ func resolveCommandDisplayProfiles(rc *RequestContext, snap snapshot.Snapshot) (
 }
 
 func commonCloneStringPtr(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	cloned := *value
+	return &cloned
+}
+
+func commonCloneIntPtr(value *int) *int {
 	if value == nil {
 		return nil
 	}

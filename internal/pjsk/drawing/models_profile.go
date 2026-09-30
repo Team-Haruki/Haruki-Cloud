@@ -24,6 +24,7 @@ type ProfileDataSource struct {
 type ProfileCardRequest struct {
 	Profile      *BasicProfile       `json:"profile,omitempty"`
 	DataSources  []ProfileDataSource `json:"data_sources"`
+	Rank         *int                `json:"rank,omitempty"`
 	MysekaiLevel *int                `json:"mysekai_level,omitempty"`
 	BgAlpha      *int                `json:"bg_alpha,omitempty"`
 	ErrorMessage *string             `json:"error_message,omitempty"`
@@ -40,6 +41,7 @@ type DetailedProfileCardRequest struct {
 	LeaderImagePath string  `json:"leader_image_path"`
 	HasFrame        bool    `json:"has_frame"`
 	FramePath       *string `json:"frame_path,omitempty"`
+	Rank            *int    `json:"rank,omitempty"`
 	UserCards       []any   `json:"user_cards,omitempty"`
 }
 

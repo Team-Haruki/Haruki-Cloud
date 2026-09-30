@@ -8,6 +8,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -39,6 +40,7 @@ func sanitizeDeckProfile(profile *drawing.DetailedProfileCardRequest) *drawing.D
 	cloned := *profile
 	cloned.Source = ""
 	cloned.Mode = nil
+	cloned.Rank = common.CloneIntPtr(profile.Rank)
 	return &cloned
 }
 

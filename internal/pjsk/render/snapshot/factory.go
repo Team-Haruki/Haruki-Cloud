@@ -122,6 +122,7 @@ func (f *DefaultSnapshotFactory) buildService(ctx context.Context, input BuildIn
 		IsHideUID:       true,
 		LeaderImagePath: leaderImagePath,
 		HasFrame:        false,
+		Rank:            common.PositiveIntPtr(raw.UserGamedata.Rank),
 		UserCards:       buildUserCardEntries(raw.UserCards),
 	}
 	service.musicResult = resolveMusicResultMap(raw)

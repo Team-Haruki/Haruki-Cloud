@@ -738,7 +738,7 @@ func TestDrawingArtifactNoStorePathsDefaultsYAMLAndEnv(t *testing.T) {
 	cfg := &Config{}
 	ApplyProfileDefaults(cfg)
 	got := cfg.PJSKRender.DrawingArtifact.NoStorePaths
-	testutil.Require(t, len(got) == 0, "no_store_paths must be off by default, got %v", got)
+	testutil.Require(t, len(got) == len(DefaultDrawingArtifactNoStorePaths()) && got[0] == "api/pjsk/deck", "default no_store_paths = %v", got)
 
 	var decoded Config
 	testutil.Require(t, yaml.Unmarshal([]byte("pjsk_render:\n  drawing_artifact:\n    no_store_paths: []\n"), &decoded) == nil, "yaml")

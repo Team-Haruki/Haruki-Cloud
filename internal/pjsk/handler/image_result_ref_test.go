@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"strings"
@@ -85,14 +86,17 @@ func TestRenderedImageMessageRefWithoutHostsFallsBackToBytes(t *testing.T) {
 	}
 }
 
-func TestRenderedImageMessageInlineSendsBase64WithoutImageCache(t *testing.T) {
-	// No ImageCache: the stored-URL path would fail, so success means no upload.
-	rc := &RequestContext{Ctx: t.Context(), App: &renderapp.App{ImageHosts: urlhost.Single("https://ic.example")}}
-	raw := refMessageJSON(t, rc, drawing.ImageInlineBytes([]byte("jpeg")))
-	if !strings.Contains(raw, "base64://anBlZw==") {
-		t.Fatalf("message=%s", raw)
+func TestRenderedImageMessageBytesAreStoredNeverInline(t *testing.T) {
+	// Bytes (e.g. a drawing_artifact.no_store_paths render) must reach the
+	// bot as an image-cache URL: a bot v2 response is one Noise message.
+	dir := t.TempDir()
+	rc := &RequestContext{Ctx: t.Context(), App: &renderapp.App{ImageCache: imagecache.New("https://ic.example", dir)}}
+	data := append([]byte("\x89PNG\r\n\x1a\n"), bytes.Repeat([]byte{0xa5}, 400<<10)...)
+	raw := refMessageJSON(t, rc, drawing.ImageBytes(data))
+	if strings.Contains(raw, "base64://") || !strings.Contains(raw, "https://ic.example/pjsk/") || len(raw) > 1024 {
+		t.Fatalf("message=%.200s (len %d)", raw, len(raw))
 	}
-	if _, err := rc.RenderedImageMessage(drawing.ImageBytes([]byte("jpeg"))); err == nil {
-		t.Fatal("plain bytes skipped the image cache")
+	if _, err := (&RequestContext{Ctx: t.Context(), App: &renderapp.App{}}).RenderedImageMessage(drawing.ImageBytes(data)); err == nil {
+		t.Fatal("bytes without an image cache must fail, not fall back to inline")
 	}
 }

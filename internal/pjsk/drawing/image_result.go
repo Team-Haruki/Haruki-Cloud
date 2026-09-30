@@ -13,13 +13,9 @@ type ImageResult struct {
 	data    []byte
 	ref     *ArtifactRef
 	fetcher *artifactFetcher
-	inline  bool
 }
 
 func ImageBytes(data []byte) ImageResult { return ImageResult{data: data} }
-
-// ImageInlineBytes wraps bytes that should reach the bot as-is (see Inline).
-func ImageInlineBytes(data []byte) ImageResult { return ImageResult{data: data, inline: true} }
 
 // ImageArtifact wraps a ref without a byte reader: URL emission works, Bytes
 // reports ErrArtifactBytesUnavailable.
@@ -27,11 +23,6 @@ func ImageArtifact(ref *ArtifactRef) ImageResult { return ImageResult{ref: ref} 
 
 // Ref returns the artifact ref of a result Drawing stored, or nil.
 func (r ImageResult) Ref() *ArtifactRef { return r.ref }
-
-// Inline reports bytes rendered for a drawing_artifact.no_store_paths path:
-// nothing was stored, so they are meant to reach the bot as-is instead of
-// being uploaded to the image cache for a URL.
-func (r ImageResult) Inline() bool { return r.inline && r.ref == nil }
 
 func (r ImageResult) Bytes(ctx context.Context) ([]byte, error) {
 	if ctx == nil {

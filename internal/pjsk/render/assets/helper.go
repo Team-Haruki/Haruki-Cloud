@@ -201,6 +201,16 @@ func (h *AssetHelper) resolveStorePath(candidates []string) (string, bool) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	// Cache the successful ordered choice, not just each individual key. A
+	// fallback hit makes rechecking its known-missing predecessors unnecessary.
+	selectionKey := assetResolutionKey(candidates)
+	generation := h.store.selections.currentGeneration()
+	if resolved, ok := h.store.selections.lookup(selectionKey, h.store.now()); ok {
+		commandtrace.RecordOperation(ctx, "asset.store_selection_cache_hit", 0)
+		return resolved, true
+	}
+	commandtrace.RecordOperation(ctx, "asset.store_selection_cache_miss", 0)
+	expiresAt := h.store.now().Add(min(h.store.cfg.ListingTTL, h.store.cfg.PositiveTTL))
 	for _, candidate := range candidates {
 		key, ok := candidateKey(candidate)
 		if !ok {
@@ -211,7 +221,11 @@ func (h *AssetHelper) resolveStorePath(candidates []string) (string, bool) {
 			return "", false
 		}
 		if found {
-			return replaceDrawingKey(candidate, key, resolved), true
+			path := replaceDrawingKey(candidate, key, resolved)
+			if ctx.Err() == nil {
+				h.store.selections.store(selectionKey, path, len(selectionKey)+len(path), expiresAt, generation)
+			}
+			return path, true
 		}
 	}
 	return "", false
@@ -340,8 +354,8 @@ func assetResolutionKey(relPaths []string) string {
 }
 
 // ClearResolutionCache makes external asset updates visible immediately.
-// Without an explicit clear, positive and negative results refresh after the
-// short resolution TTL.
+// Local resolutions use the short resolution TTL. Store keys, directory
+// listings and successful candidate selections use the configured probe TTLs.
 func (h *AssetHelper) ClearResolutionCache() {
 	if h == nil {
 		return

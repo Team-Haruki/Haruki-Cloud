@@ -14,6 +14,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/playerframe"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/sekai"
 )
@@ -118,35 +119,8 @@ func profileUnknownImagePath(helper *assets.AssetHelper) string {
 }
 
 func (c *Controller) buildFramePaths(source DataSource, userFrames []snapshot.RawUserFrame) (*drawing.PlayerFramePaths, bool) {
-	equippedID := 0
-	for _, item := range userFrames {
-		if strings.EqualFold(item.PlayerFrameAttachStatus, "equipped") {
-			equippedID = item.PlayerFrameID
-			break
-		}
-	}
-	if equippedID == 0 {
-		return nil, false
-	}
-
-	frame, err := source.GetPlayerFrameByID(equippedID)
-	if err != nil {
-		return nil, false
-	}
-	group, err := source.GetPlayerFrameGroupByID(frame.PlayerFrameGroupID)
-	if err != nil || strings.TrimSpace(group.AssetBundleName) == "" {
-		return nil, false
-	}
-
-	base := filepath.ToSlash(filepath.Join("player_frame", group.AssetBundleName, strconv.Itoa(equippedID)))
-	return &drawing.PlayerFramePaths{
-		Base:        filepath.ToSlash(filepath.Join(base, "horizontal", "frame_base.png")),
-		CenterTop:   filepath.ToSlash(filepath.Join(base, "vertical", "frame_centertop.png")),
-		LeftBottom:  filepath.ToSlash(filepath.Join(base, "vertical", "frame_leftbottom.png")),
-		LeftTop:     filepath.ToSlash(filepath.Join(base, "horizontal", "frame_lefttop.png")),
-		RightBottom: filepath.ToSlash(filepath.Join(base, "horizontal", "frame_rightbottom.png")),
-		RightTop:    filepath.ToSlash(filepath.Join(base, "horizontal", "frame_righttop.png")),
-	}, true
+	paths := playerframe.Build(source, userFrames)
+	return paths, paths != nil
 }
 
 func (c *Controller) buildPCards(source DataSource, userCards []snapshot.RawUserCard, decks []snapshot.RawUserDeck, activeDeckID int, region renderregion.Value) []drawing.CardFullThumbnailRequest {

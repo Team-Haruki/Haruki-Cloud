@@ -14,6 +14,8 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
+	"haruki-cloud/internal/pjsk/render/playerframe"
+	"haruki-cloud/internal/pjsk/render/provider"
 )
 
 func NewLocalFileService(sekaiClient *sekaiDB.Client, assetHelper *assets.AssetHelper, cfg LocalFileConfig) *Service {
@@ -101,6 +103,9 @@ func (s *Service) DetailedProfile(region renderregion.Value) *drawing.DetailedPr
 	}
 	profile.Mode = common.CloneStringPtr(s.baseProfile.Mode)
 	profile.FramePath = common.CloneStringPtr(s.baseProfile.FramePath)
+	if profile.FramePaths != nil {
+		profile.FramePaths = new(*profile.FramePaths)
+	}
 	profile.Rank = common.CloneIntPtr(s.baseProfile.Rank)
 	profile.UserCards = slices.Clone(s.baseProfile.UserCards)
 	return &profile
@@ -120,6 +125,7 @@ func (s *Service) ProfileCard(region renderregion.Value) *drawing.ProfileCardReq
 			LeaderImagePath: detail.LeaderImagePath,
 			HasFrame:        detail.HasFrame,
 			FramePath:       common.CloneStringPtr(detail.FramePath),
+			FramePaths:      detail.FramePaths,
 		},
 		DataSources: []drawing.ProfileDataSource{
 			{
@@ -211,4 +217,23 @@ func (s *Service) MusicMetaPath() string {
 		return ""
 	}
 	return strings.TrimSpace(s.musicMetaPath)
+}
+
+// WithPlayerFrames returns a request-local copy; cached snapshots stay immutable.
+// Resolve against current masterdata after the snapshot-cache lookup so asset
+// and masterdata refreshes do not leave a cached snapshot permanently frameless.
+func (s *Service) WithPlayerFrames(ctx context.Context, p provider.PlayerFrameProvider) *Service {
+	if s == nil || s.baseProfile == nil || s.rawData == nil || p == nil {
+		return s
+	}
+	copy := *s
+	copy.baseProfile = new(*s.baseProfile)
+	paths := playerframe.Resolve(ctx, p, renderregion.Normalize(s.baseProfile.Region), s.rawData.UserFrames)
+	copy.baseProfile.FramePaths = paths
+	copy.baseProfile.HasFrame = paths != nil
+	copy.baseProfile.FramePath = nil
+	if paths != nil {
+		copy.baseProfile.FramePath = new(paths.Base)
+	}
+	return &copy
 }

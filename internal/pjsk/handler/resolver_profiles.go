@@ -122,6 +122,9 @@ func cloneDetailedProfileForTarget(detail *drawing.DetailedProfileCardRequest, t
 	cloned := *detail
 	cloned.Mode = commonCloneStringPtr(detail.Mode)
 	cloned.FramePath = commonCloneStringPtr(detail.FramePath)
+	if detail.FramePaths != nil {
+		cloned.FramePaths = new(*detail.FramePaths)
+	}
 	cloned.Rank = commonCloneIntPtr(detail.Rank)
 	cloned.UserCards = append([]any(nil), detail.UserCards...)
 	cloned.IsHideUID = !target.Visible
@@ -161,6 +164,9 @@ func cloneProfileCardForTarget(card *drawing.ProfileCardRequest, target Resolved
 	if card.Profile != nil {
 		profile := *card.Profile
 		profile.FramePath = commonCloneStringPtr(card.Profile.FramePath)
+		if card.Profile.FramePaths != nil {
+			profile.FramePaths = new(*card.Profile.FramePaths)
+		}
 		profile.IsHideUID = !target.Visible
 		if resolvedRegion := strings.TrimSpace(resolvedTargetRegion(region, target)); resolvedRegion != "" {
 			profile.Region = strings.ToUpper(resolvedRegion)

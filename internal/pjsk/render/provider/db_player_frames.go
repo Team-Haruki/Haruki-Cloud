@@ -15,6 +15,7 @@ import (
 type dbPlayerFrameProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
+	rows   MasterRowSource
 	once   sync.Once
 
 	frameMu    sync.RWMutex
@@ -91,6 +92,7 @@ func (p *dbPlayerFrameProvider) GetGroupByID(ctx context.Context, id int) (*mast
 		Seq:             int(entity.Seq),
 		Name:            entity.Name,
 		AssetBundleName: entity.AssetbundleName,
+		PlayerFrameType: entity.PlayerFrameType,
 	}
 
 	p.groupMu.Lock()
@@ -98,4 +100,21 @@ func (p *dbPlayerFrameProvider) GetGroupByID(ctx context.Context, id int) (*mast
 	p.groupMu.Unlock()
 
 	return new(*model), nil
+}
+
+func (p *dbPlayerFrameProvider) GetPartsByGroupID(ctx context.Context, groupID int) (map[int]int, error) {
+	if p.rows == nil {
+		return nil, fmt.Errorf("player frame parts are not configured")
+	}
+	rows, ok := p.rows.LoadMasterRows(ctx, "playerFrameParts.json")
+	if !ok {
+		return nil, fmt.Errorf("player frame parts are unavailable")
+	}
+	parts := make(map[int]int)
+	for id, row := range rows {
+		if int(vliveInt64Number(row["playerFrameGroupId"])) == groupID {
+			parts[int(vliveInt64Number(row["gameCharacterId"]))] = id
+		}
+	}
+	return parts, nil
 }

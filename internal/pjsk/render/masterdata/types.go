@@ -254,6 +254,7 @@ type PlayerFrame struct {
 }
 
 type PlayerFrameGroup struct {
+	PlayerFrameType string
 	ID              int
 	Seq             int
 	Name            string

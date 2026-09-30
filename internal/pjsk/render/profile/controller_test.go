@@ -486,7 +486,7 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesUserFrames(t *testing.T) {
 	if !payload.Profile.HasFrame {
 		t.Fatalf("expected frame to be rendered")
 	}
-	if payload.FramePaths == nil || payload.FramePaths.Base != "player_frame/frame_group_20/10/horizontal/frame_base.png" {
+	if payload.FramePaths == nil || payload.FramePaths.Base != "asset/jp-assets/startapp/player_frame/frame_group_20/10/vertical/frame_base.png" {
 		t.Fatalf("unexpected frame paths: %+v", payload.FramePaths)
 	}
 	if payload.Profile.FramePath == nil || *payload.Profile.FramePath != payload.FramePaths.Base {
@@ -941,4 +941,8 @@ func TestBuildProfileRequestRunsCensorChecksConcurrently(t *testing.T) {
 	if payload.Word != "" {
 		t.Fatalf("word = %q, want blanked by rejected bio", payload.Word)
 	}
+}
+
+func (s *testProfileSource) GetPlayerFramePartsByGroupID(groupID int) (map[int]int, error) {
+	return map[int]int{1: 20001, 2: 20002, 3: 20003, 4: 20004, 5: 20005, 6: 20006}, nil
 }

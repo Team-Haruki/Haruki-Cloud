@@ -15,6 +15,7 @@ import (
 
 type DataSource interface {
 	honor.DataSource
+	GetPlayerFramePartsByGroupID(groupID int) (map[int]int, error)
 	GetPlayerFrameByID(id int) (*masterdata.PlayerFrame, error)
 	GetPlayerFrameGroupByID(id int) (*masterdata.PlayerFrameGroup, error)
 	GetCardByID(id int) (*masterdata.Card, error)

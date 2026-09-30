@@ -151,3 +151,27 @@ func TestPlayerShopRawTablesWithoutEntSchema(t *testing.T) {
 		t.Fatal(capacity)
 	}
 }
+
+func TestPlayerFramePartsUseRegionGroupAndMasterdataRefresh(t *testing.T) {
+	p := openMasterRowsProvider(t, "player_frame_parts")
+	for _, statement := range []string{
+		`CREATE TABLE playerframeparts (game_id INTEGER, player_frame_group_id INTEGER, game_character_id INTEGER, server_region TEXT)`,
+		`INSERT INTO playerframeparts VALUES (301,2,1,'jp'),(407,2,2,'jp'),(999,2,1,'en'),(888,3,1,'jp')`,
+	} {
+		if _, err := p.mysekai.db.ExecContext(t.Context(), statement); err != nil {
+			t.Fatal(err)
+		}
+	}
+	parts, err := p.PlayerFrames().GetPartsByGroupID(t.Context(), 2)
+	if err != nil || len(parts) != 2 || parts[1] != 301 || parts[2] != 407 {
+		t.Fatalf("parts: %+v, %v", parts, err)
+	}
+	if _, err := p.mysekai.db.ExecContext(t.Context(), `UPDATE playerframeparts SET game_id=302 WHERE game_id=301`); err != nil {
+		t.Fatal(err)
+	}
+	p.ResetMasterdataCache()
+	parts, err = p.PlayerFrames().GetPartsByGroupID(t.Context(), 2)
+	if err != nil || parts[1] != 302 {
+		t.Fatalf("stale frame parts after refresh: %+v, %v", parts, err)
+	}
+}

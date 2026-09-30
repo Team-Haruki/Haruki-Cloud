@@ -72,3 +72,17 @@ func (p *localPlayerFrameProvider) GetGroupByID(_ context.Context, id int) (*mas
 	}
 	return new(*g), nil
 }
+
+func (p *localPlayerFrameProvider) GetPartsByGroupID(_ context.Context, groupID int) (map[int]int, error) {
+	items, err := p.store.loadJSON[masterdata.PlayerFrame]("playerFrameParts.json")
+	if err != nil {
+		return nil, err
+	}
+	parts := make(map[int]int)
+	for _, item := range items {
+		if item.PlayerFrameGroupID == groupID {
+			parts[item.GameCharacterID] = item.ID
+		}
+	}
+	return parts, nil
+}

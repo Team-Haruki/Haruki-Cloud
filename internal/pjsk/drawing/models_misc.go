@@ -3,12 +3,17 @@ package drawing
 // =========================== Misc Models ===========================
 
 type PlayerFramePaths struct {
-	Base        string `json:"base"`
-	CenterTop   string `json:"centertop"`
-	LeftBottom  string `json:"leftbottom"`
-	LeftTop     string `json:"lefttop"`
-	RightBottom string `json:"rightbottom"`
-	RightTop    string `json:"righttop"`
+	FrameType       string `json:"frame_type,omitempty"`
+	SideLeftTop     string `json:"side_left_top,omitempty"`
+	SideRightTop    string `json:"side_right_top,omitempty"`
+	SideLeftBottom  string `json:"side_left_bottom,omitempty"`
+	SideRightBottom string `json:"side_right_bottom,omitempty"`
+	Base            string `json:"base"`
+	CenterTop       string `json:"centertop"`
+	LeftBottom      string `json:"leftbottom"`
+	LeftTop         string `json:"lefttop"`
+	RightBottom     string `json:"rightbottom"`
+	RightTop        string `json:"righttop"`
 }
 
 type CharaBirthdayCard struct {

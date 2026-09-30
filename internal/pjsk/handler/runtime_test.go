@@ -665,3 +665,7 @@ func testRequestContextPrefersAPIPublicProfile(t *testing.T, defaultImage string
 		t.Fatalf("expected profile card leader art suffix %q, got %q", wantSuffix, card.Profile.LeaderImagePath)
 	}
 }
+
+func (runtimeProfileDataSourceStub) GetPlayerFramePartsByGroupID(int) (map[int]int, error) {
+	return nil, nil
+}

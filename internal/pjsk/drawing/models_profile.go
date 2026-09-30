@@ -5,13 +5,14 @@ import sekaiapi "haruki-cloud/internal/pjsk/sekai"
 // =========================== Profile Models ===========================
 
 type BasicProfile struct {
-	ID              string  `json:"id"`
-	Region          string  `json:"region"`
-	Nickname        string  `json:"nickname"`
-	IsHideUID       bool    `json:"is_hide_uid"`
-	LeaderImagePath string  `json:"leader_image_path"`
-	HasFrame        bool    `json:"has_frame"`
-	FramePath       *string `json:"frame_path,omitempty"`
+	ID              string            `json:"id"`
+	Region          string            `json:"region"`
+	Nickname        string            `json:"nickname"`
+	IsHideUID       bool              `json:"is_hide_uid"`
+	LeaderImagePath string            `json:"leader_image_path"`
+	HasFrame        bool              `json:"has_frame"`
+	FramePath       *string           `json:"frame_path,omitempty"`
+	FramePaths      *PlayerFramePaths `json:"frame_paths,omitempty"`
 }
 
 type ProfileDataSource struct {
@@ -31,18 +32,19 @@ type ProfileCardRequest struct {
 }
 
 type DetailedProfileCardRequest struct {
-	ID              string  `json:"id"`
-	Region          string  `json:"region"`
-	Nickname        string  `json:"nickname"`
-	Source          string  `json:"source"`
-	UpdateTime      int64   `json:"update_time"`
-	Mode            *string `json:"mode,omitempty"`
-	IsHideUID       bool    `json:"is_hide_uid"`
-	LeaderImagePath string  `json:"leader_image_path"`
-	HasFrame        bool    `json:"has_frame"`
-	FramePath       *string `json:"frame_path,omitempty"`
-	Rank            *int    `json:"rank,omitempty"`
-	UserCards       []any   `json:"user_cards,omitempty"`
+	ID              string            `json:"id"`
+	Region          string            `json:"region"`
+	Nickname        string            `json:"nickname"`
+	Source          string            `json:"source"`
+	UpdateTime      int64             `json:"update_time"`
+	Mode            *string           `json:"mode,omitempty"`
+	IsHideUID       bool              `json:"is_hide_uid"`
+	LeaderImagePath string            `json:"leader_image_path"`
+	HasFrame        bool              `json:"has_frame"`
+	FramePath       *string           `json:"frame_path,omitempty"`
+	FramePaths      *PlayerFramePaths `json:"frame_paths,omitempty"`
+	Rank            *int              `json:"rank,omitempty"`
+	UserCards       []any             `json:"user_cards,omitempty"`
 }
 
 type ProfileBgSettings struct {

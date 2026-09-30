@@ -132,6 +132,7 @@ func (c *Controller) buildProfileRequestFromAPIState(query Query, resp *sekai.Ge
 			LeaderImagePath: leaderImagePath,
 			HasFrame:        hasFrame,
 			FramePath:       framePath,
+			FramePaths:      framePaths,
 		},
 		Rank:                 resp.User.Rank,
 		TwitterID:            resp.UserProfile.TwitterID,
@@ -195,6 +196,7 @@ func (c *Controller) buildDetailedProfileCardFromAPIState(query Query, resp *sek
 		LeaderImagePath: leaderImagePath,
 		HasFrame:        hasFrame,
 		FramePath:       framePath,
+		FramePaths:      framePaths,
 		UserCards:       state.detailedUserCards,
 	}
 	inheritSnapshotProfileMetadata(detail, snapshot, region)
@@ -215,6 +217,7 @@ func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnother
 			LeaderImagePath: detail.LeaderImagePath,
 			HasFrame:        detail.HasFrame,
 			FramePath:       common.CloneStringPtr(detail.FramePath),
+			FramePaths:      detail.FramePaths,
 		},
 		DataSources: buildProfileCardDataSources(detail, nil, renderregion.Normalize(query.Region)),
 		Rank:        common.CloneIntPtr(detail.Rank),
@@ -236,6 +239,7 @@ func (c *Controller) BuildProfileCardFromAPIWithSnapshot(query Query, resp *seka
 			LeaderImagePath: detail.LeaderImagePath,
 			HasFrame:        detail.HasFrame,
 			FramePath:       common.CloneStringPtr(detail.FramePath),
+			FramePaths:      detail.FramePaths,
 		},
 		DataSources: buildProfileCardDataSources(detail, snapshot, region),
 		Rank:        common.CloneIntPtr(detail.Rank),

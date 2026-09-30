@@ -105,6 +105,7 @@ func convertDetailedProfileToCard(detail drawing.DetailedProfileCardRequest) dra
 			LeaderImagePath: detail.LeaderImagePath,
 			HasFrame:        detail.HasFrame,
 			FramePath:       common.CloneStringPtr(detail.FramePath),
+			FramePaths:      detail.FramePaths,
 		},
 		DataSources: []drawing.ProfileDataSource{
 			{

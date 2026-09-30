@@ -79,6 +79,7 @@ func NewDatabaseProvider(client *sekaiDB.Client, region renderregion.Value, opts
 	p.playerFrames = &dbPlayerFrameProvider{client: client, region: region}
 	p.mysekai = newDBMySekaiProvider(client, region, cfg)
 	p.vlives.rows = p.mysekai
+	p.playerFrames.rows = p.mysekai
 	return p
 }
 

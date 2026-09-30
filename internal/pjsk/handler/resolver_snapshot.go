@@ -51,6 +51,11 @@ func resolveSnapshotBySelectorWithError(ctx context.Context, app *renderapp.App,
 		"need_mysekai", opts.NeedMySekai,
 		"prefer_global_default", opts.PreferGlobalDefault,
 	)
+	if service, ok := snap.(*snapshot.Service); ok && app != nil {
+		if master := app.ProviderForRegion(selector.Region); master != nil {
+			snap = service.WithPlayerFrames(ctx, master.PlayerFrames())
+		}
+	}
 	return snap, nil
 }
 

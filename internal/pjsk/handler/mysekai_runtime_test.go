@@ -1380,3 +1380,7 @@ func messageTextOrder(message onebot11.Message) []string {
 	}
 	return texts
 }
+
+func (*handlerMySekaiProfileSource) GetPlayerFramePartsByGroupID(int) (map[int]int, error) {
+	return nil, nil
+}

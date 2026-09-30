@@ -176,3 +176,7 @@ func TestMysekaiSuiteScopesPreservePublicProfileFallbacks(t *testing.T) {
 		}
 	}
 }
+
+func (suiteScopeProfileSource) GetPlayerFramePartsByGroupID(int) (map[int]int, error) {
+	return nil, nil
+}

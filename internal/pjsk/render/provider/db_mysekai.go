@@ -22,7 +22,8 @@ import (
 // event stories), which need the camelCase map shape rather than a typed
 // model.
 var mysekaiFileToTable = map[string]string{
-	"cards.json": "cards",
+	"playerFrameParts.json": "playerframeparts",
+	"cards.json":            "cards",
 	"characterArchiveMysekaiCharacterTalkGroups.json":         "characterarchivemysekaicharactertalkgroups",
 	"customMusicScoreTags.json":                               "custommusicscoretags",
 	"customProfileCharacterIconResources.json":                "customprofilecharactericonresources",
@@ -383,7 +384,8 @@ func (p *dbMySekaiProvider) queryTable(ctx context.Context, table string) ([]map
 // Keep complete statements in these whitelists because SQL identifiers cannot
 // be passed as bind parameters.
 var mysekaiPostgresTableQueries = map[string]string{
-	"cards": `SELECT * FROM "cards" WHERE server_region = $1`,
+	"playerframeparts": `SELECT * FROM "playerframeparts" WHERE server_region = $1`,
+	"cards":            `SELECT * FROM "cards" WHERE server_region = $1`,
 	"characterarchivemysekaicharactertalkgroups":         `SELECT * FROM "characterarchivemysekaicharactertalkgroups" WHERE server_region = $1`,
 	"custommusicscoretags":                               `SELECT * FROM "custommusicscoretags" WHERE server_region = $1`,
 	"customprofilecharactericonresources":                `SELECT * FROM "customprofilecharactericonresources" WHERE server_region = $1`,
@@ -459,7 +461,8 @@ var mysekaiPostgresTableQueries = map[string]string{
 }
 
 var mysekaiQuestionMarkTableQueries = map[string]string{
-	"cards": `SELECT * FROM cards WHERE server_region = ?`,
+	"playerframeparts": "SELECT * FROM playerframeparts WHERE server_region = ?",
+	"cards":            `SELECT * FROM cards WHERE server_region = ?`,
 	"characterarchivemysekaicharactertalkgroups":         `SELECT * FROM characterarchivemysekaicharactertalkgroups WHERE server_region = ?`,
 	"custommusicscoretags":                               `SELECT * FROM custommusicscoretags WHERE server_region = ?`,
 	"customprofilecharactericonresources":                `SELECT * FROM customprofilecharactericonresources WHERE server_region = ?`,

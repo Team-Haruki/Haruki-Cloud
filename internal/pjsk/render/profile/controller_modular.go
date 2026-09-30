@@ -45,6 +45,7 @@ func (c *Controller) BuildModularProfileRequestFromAPIWithSnapshot(query Query, 
 		LeaderImagePath: leaderImagePath,
 		HasFrame:        hasFrame,
 		FramePath:       framePath,
+		FramePaths:      framePaths,
 	}
 	bgSettings := applyProfileBGVerticalOverride(query.BgSettings, query.VerticalOverride)
 	if bgSettings != nil && bgSettings.ImgPath != nil && *bgSettings.ImgPath != "" {
@@ -65,6 +66,7 @@ func (c *Controller) BuildModularProfileRequestFromAPIWithSnapshot(query Query, 
 		LeaderImagePath: profile.LeaderImagePath,
 		HasFrame:        profile.HasFrame,
 		FramePath:       common.CloneStringPtr(profile.FramePath),
+		FramePaths:      profile.FramePaths,
 		UserCards:       state.detailedUserCards,
 	}
 	inheritSnapshotProfileMetadata(detail, snap, region)

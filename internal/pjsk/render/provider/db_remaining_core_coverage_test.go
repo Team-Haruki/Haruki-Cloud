@@ -162,6 +162,7 @@ func TestDBCharacterPlayerFrameAndStampProviders(t *testing.T) {
 			SetSeq(3).
 			SetName("frame group").
 			SetAssetbundleName("frame_asset").
+			SetPlayerFrameType("combination").
 			SetServerRegion(renderregion.JP.String()).
 			Save(ctx)
 		testutil.Require(t, !(err != nil), "create player frame group: %v", err)
@@ -204,6 +205,10 @@ func TestDBCharacterPlayerFrameAndStampProviders(t *testing.T) {
 		testutil.Require(t, !(err != nil), "GetGroupByID(30) = %+v, %v", group, err)
 		testutil.Require(t, !(group.Name != "frame group"), "GetGroupByID(30) = %+v, %v", group, err)
 		testutil.Require(t, !(group.AssetBundleName != "frame_asset"), "GetGroupByID(30) = %+v, %v", group, err)
+	}
+
+	if group.PlayerFrameType != "combination" {
+		t.Fatalf("lost frame type: %+v", group)
 	}
 
 	group.Name = "mutated"

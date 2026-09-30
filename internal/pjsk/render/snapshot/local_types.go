@@ -1,6 +1,9 @@
 package snapshot
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"haruki-cloud/internal/pjsk/render/playerframe"
+)
 
 type RawUserData struct {
 	Now                                               int64                             `json:"now"`
@@ -278,10 +281,7 @@ type RawUserHonor struct {
 	HonorRarity   string `json:"honorRarity"`
 }
 
-type RawUserFrame struct {
-	PlayerFrameID           int    `json:"playerFrameId"`
-	PlayerFrameAttachStatus string `json:"playerFrameAttachStatus"`
-}
+type RawUserFrame = playerframe.UserFrame
 
 type RawUserProfileHonor struct {
 	Seq                int    `json:"seq"`

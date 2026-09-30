@@ -71,3 +71,7 @@ func (a *ProviderAdapter) GetCardByID(id int) (*masterdata.Card, error) {
 func (a *ProviderAdapter) GetEventIDByHonorID(honorID int) int {
 	return a.P.Honors().GetEventIDByHonorID(a.Context(), honorID)
 }
+
+func (a *ProviderAdapter) GetPlayerFramePartsByGroupID(groupID int) (map[int]int, error) {
+	return a.P.PlayerFrames().GetPartsByGroupID(a.Context(), groupID)
+}

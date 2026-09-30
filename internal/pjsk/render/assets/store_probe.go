@@ -108,6 +108,7 @@ type storeProbe struct {
 	bulkMinChildren int
 	bulkMaxObjects  int
 
+	selections *probeCache[string]
 	keys       *probeCache[storeProbeResult]
 	dirs       *probeCache[*storeDirIndex]
 	keyFlights singleflight.Group
@@ -138,6 +139,7 @@ func newStoreProbe(store storage.Store, cfg StoreProbeConfig, log *logger.Logger
 		maxListEntries:  storeProbeMaxListEntries,
 		bulkMinChildren: storeProbeBulkMinChildren,
 		bulkMaxObjects:  storeProbeBulkMaxObjects,
+		selections:      newProbeCache[string](assetResolutionMaxEntries, 16<<20),
 		keys:            newProbeCache[storeProbeResult](assetResolutionMaxEntries, 0),
 		dirs:            newProbeCache[*storeDirIndex](storeProbeMaxDirEntries, assetDirectoryMaxNames),
 		breaker:         storeBreaker{threshold: storeProbeBreakerThreshold, cooldown: storeProbeBreakerCooldown},
@@ -568,6 +570,7 @@ func (p *storeProbe) clear() {
 	}
 	p.keys.clear()
 	p.dirs.clear()
+	p.selections.clear()
 }
 
 // storeBreaker is a small circuit breaker: threshold consecutive failures

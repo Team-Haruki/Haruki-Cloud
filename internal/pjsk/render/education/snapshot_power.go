@@ -1,8 +1,6 @@
 package education
 
 import (
-	"time"
-
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/snapshot"
@@ -16,10 +14,7 @@ func (c *Controller) BuildPowerBonusDetailRequestFromSnapshot(query PowerBonusQu
 		return nil, err
 	}
 
-	nowMs := ctx.raw.Now
-	if nowMs <= 0 {
-		nowMs = time.Now().UnixMilli()
-	}
+	nowMs := c.currentTimeMillis()
 	userAreaLevels := collectUserAreaItemLevels(ctx.raw.UserAreas)
 	itemIDs := make([]int, 0, len(userAreaLevels))
 	for itemID := range userAreaLevels {

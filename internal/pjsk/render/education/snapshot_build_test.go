@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -352,10 +353,12 @@ func TestBuildPowerBonusDetailRequestFromSnapshotCapsUnreleasedAreaItemLevel(t *
 	})
 
 	controller := NewController(nil, nil, snap, renderregion.CN)
+	controller.now = func() time.Time { return time.UnixMilli(100) }
 	controller.RegisterSource(&testSource{
 		region: renderregion.CN,
 		boxes: map[string]map[int]*ResourceBox{
 			"shop_item": {
+				12: {ID: 12, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 101, ResourceLevel: 3}}},
 				11: {ID: 11, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 101, ResourceLevel: 2}}},
 			},
 		},
@@ -368,6 +371,7 @@ func TestBuildPowerBonusDetailRequestFromSnapshotCapsUnreleasedAreaItemLevel(t *
 		},
 		shopItems: map[int]*ShopItem{
 			11: {ID: 10011, ResourceBoxID: 11, StartAt: 50},
+			12: {ID: 10012, ResourceBoxID: 12, StartAt: 200},
 		},
 	})
 
@@ -378,6 +382,16 @@ func TestBuildPowerBonusDetailRequestFromSnapshotCapsUnreleasedAreaItemLevel(t *
 	if got := req.CharaBonuses[0]; got.AreaItem != 2.0 || got.Total != 2.0 {
 		t.Fatalf("unexpected capped char bonus: %+v", got)
 	}
+	// The same uploaded data gains the newly released level at the query boundary.
+	controller.now = func() time.Time { return time.UnixMilli(200) }
+	req, err = controller.BuildPowerBonusDetailRequestFromSnapshot(PowerBonusQuery{Region: renderregion.CN})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := req.CharaBonuses[0]; got.AreaItem != 3.0 || got.Total != 3.0 {
+		t.Fatalf("newly released bonus still capped by snapshot time: %+v", got)
+	}
+
 }
 
 func TestBuildPowerBonusDetailRequestFromSnapshotAppliesEveryAreaItemLevelRow(t *testing.T) {
@@ -1777,6 +1791,7 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotHidesUnreleasedFutureLe
 	})
 
 	controller := NewController(nil, nil, snap, renderregion.CN)
+	controller.now = func() time.Time { return time.UnixMilli(100) }
 	controller.RegisterSource(&testSource{
 		region: renderregion.CN,
 		boxes: map[string]map[int]*ResourceBox{

@@ -3,6 +3,7 @@ package education
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"path/filepath"
@@ -360,4 +361,12 @@ func (c *Controller) characterIconPath(charID int) string {
 
 func (c *Controller) findStaticIcon(filename string) string {
 	return assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, filename)
+}
+
+// Release windows follow the query clock, not the age of uploaded player data.
+func (c *Controller) currentTimeMillis() int64 {
+	if c != nil && c.now != nil {
+		return c.now().UnixMilli()
+	}
+	return time.Now().UnixMilli()
 }

@@ -181,9 +181,11 @@ type ArtifactConfig struct {
 	Hosts *urlhost.Set
 	// NoStorePaths lists api path prefixes ("api/pjsk/sk", matched per path
 	// segment) whose artifact-mode renders skip the artifact store: Drawing
-	// is sent X-Haruki-Cache-Store: 0 and answers bytes, render_cache_index is
-	// not consulted, and the bytes reach the bot inline (ImageResult.Inline).
-	// It only narrows Endpoints; a path outside Endpoints is unaffected.
+	// is sent X-Haruki-Cache-Store: 0 and answers bytes, and render_cache_index
+	// is not consulted. The bytes are delivered like any byte result (stored
+	// through the image cache, sent to the bot as a URL), never inline: bot v2
+	// responses are one Noise message (65535-byte cap). It only narrows
+	// Endpoints; a path outside Endpoints is unaffected.
 	NoStorePaths []string
 }
 
@@ -300,20 +302,9 @@ func (s *artifactSettings) allowsEndpoint(endpoint string) bool {
 }
 
 // skipsStore reports an allow-listed api path whose renders bypass the
-// artifact store (no index lookup, X-Haruki-Cache-Store: 0, inline bytes).
+// artifact store (no index lookup, X-Haruki-Cache-Store: 0, bytes back).
 func (s *artifactSettings) skipsStore(apiPath string) bool {
 	return s != nil && s.allow.has(apiPath) && s.noStore.has(apiPath)
-}
-
-func (s *artifactSettings) skipsStoreEndpoint(endpoint string) bool {
-	if s == nil || len(s.noStore) == 0 {
-		return false
-	}
-	parsed, err := parseRenderCacheEndpoint(endpoint)
-	if err != nil {
-		return false
-	}
-	return s.skipsStore(normalizeRenderCacheAPIPath(parsed.Path))
 }
 
 type artifactModeCtxKey struct{}

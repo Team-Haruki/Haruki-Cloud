@@ -60,7 +60,7 @@ func newNoStoreTestClient(t *testing.T, server *noStoreDrawingServer, index *fak
 	return client.WithContext(context.Background())
 }
 
-func TestNoStorePathSkipsIndexAndReturnsInlineBytes(t *testing.T) {
+func TestNoStorePathSkipsIndexAndReturnsBytes(t *testing.T) {
 	server := newNoStoreDrawingServer(t)
 	index := &fakeRenderIndex{}
 	client := newNoStoreTestClient(t, server, index, ArtifactConfig{
@@ -73,8 +73,8 @@ func TestNoStorePathSkipsIndexAndReturnsInlineBytes(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if image.Ref() != nil || !image.Inline() {
-			t.Fatalf("round %d: ref=%v inline=%v, want inline bytes", round, image.Ref(), image.Inline())
+		if image.Ref() != nil {
+			t.Fatalf("round %d: ref=%v, want bytes", round, image.Ref())
 		}
 		if data, err := image.Bytes(t.Context()); err != nil || string(data) != "inline-jpeg" {
 			t.Fatalf("round %d: bytes = %q, %v", round, data, err)
@@ -101,8 +101,8 @@ func TestNoStorePathSkipsIndexAndReturnsInlineBytes(t *testing.T) {
 
 	// Every other path keeps the storing directive, the index lookup and refs.
 	image, err := client.GenerateCardBoxImage(&CardBoxRequest{})
-	if err != nil || image.Ref() == nil || image.Inline() {
-		t.Fatalf("card box ref=%v inline=%v err=%v", image.Ref(), image.Inline(), err)
+	if err != nil || image.Ref() == nil {
+		t.Fatalf("card box ref=%v err=%v", image.Ref(), err)
 	}
 	if headers, _ := server.seen("/api/pjsk/card/box"); harukiHeaders(headers)[headerCacheStore] != "1" {
 		t.Fatalf("card box headers = %v", harukiHeaders(headers))
@@ -120,8 +120,8 @@ func TestNoStorePathOutsideAllowListIsUnaffected(t *testing.T) {
 		NoStorePaths: []string{"api/pjsk/sk"},
 	})
 	image, err := client.GenerateSKSpeedImage(&SpeedRequest{})
-	if err != nil || image.Inline() {
-		t.Fatalf("inline=%v err=%v", image.Inline(), err)
+	if err != nil || image.Ref() != nil {
+		t.Fatalf("ref=%v err=%v", image.Ref(), err)
 	}
 	if headers, _ := server.seen("/api/pjsk/sk/speed"); len(harukiHeaders(headers)) != 0 {
 		t.Fatalf("non allow-listed path sent %v", harukiHeaders(headers))
@@ -131,14 +131,14 @@ func TestNoStorePathOutsideAllowListIsUnaffected(t *testing.T) {
 	}
 }
 
-func TestNoStorePathWithoutRenderCacheIsNotInline(t *testing.T) {
+func TestNoStorePathWithoutRenderCacheSendsNoDirective(t *testing.T) {
 	server := newNoStoreDrawingServer(t)
 	client := NewHarukiDrawingClient(server.URL, WithArtifactConfig(ArtifactConfig{
 		Endpoints: []string{"*"}, NoStorePaths: []string{"api/pjsk/sk"},
 	})).WithContext(context.Background())
 	image, err := client.GenerateSKSpeedImage(&SpeedRequest{})
-	if err != nil || image.Inline() {
-		t.Fatalf("inline=%v err=%v", image.Inline(), err)
+	if err != nil || image.Ref() != nil {
+		t.Fatalf("ref=%v err=%v", image.Ref(), err)
 	}
 	if headers, _ := server.seen("/api/pjsk/sk/speed"); len(harukiHeaders(headers)) != 0 {
 		t.Fatalf("artifact mode is off without a render cache, sent %v", harukiHeaders(headers))
@@ -200,14 +200,15 @@ func TestAPIPathPrefixListMatchesWholeSegments(t *testing.T) {
 		t.Fatalf("list = %v, want the three valid prefixes", list)
 	}
 	var settings *artifactSettings
-	if settings.skipsStore("api/pjsk/sk") || settings.skipsStoreEndpoint("/api/pjsk/sk/line") {
+	if settings.skipsStore("api/pjsk/sk") {
 		t.Fatal("nil settings skip the store")
 	}
 	settings = newArtifactSettings(ArtifactConfig{Endpoints: []string{"*"}, NoStorePaths: []string{"api/pjsk/sk"}})
-	if !settings.skipsStoreEndpoint("/api/pjsk/sk/line?full=true") || settings.skipsStoreEndpoint("/api/pjsk/card/box") || settings.skipsStoreEndpoint("::") {
-		t.Fatal("skipsStoreEndpoint mismatch")
+	if !settings.skipsStore("api/pjsk/sk/line") || settings.skipsStore("api/pjsk/card/box") {
+		t.Fatal("skipsStore mismatch")
 	}
-	if ImageBytes([]byte("x")).Inline() || !ImageInlineBytes([]byte("x")).Inline() || (ImageResult{ref: &ArtifactRef{}, inline: true}).Inline() {
-		t.Fatal("Inline accessor mismatch")
+	settings = newArtifactSettings(ArtifactConfig{Endpoints: []string{"api/pjsk/card/box"}, NoStorePaths: []string{"api/pjsk/sk"}})
+	if settings.skipsStore("api/pjsk/sk/line") {
+		t.Fatal("no-store path outside the allow-list skips the store")
 	}
 }

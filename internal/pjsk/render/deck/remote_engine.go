@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/httpcoding"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 )
@@ -29,6 +30,7 @@ func newRemoteEngineProvider(cfg RecommendConfig) engineProvider {
 		targets:                   targets,
 		masterdataRefreshInterval: refreshInterval,
 		registryURL:               strings.TrimRight(strings.TrimSpace(cfg.RegistryURL), "/"),
+		coding:                    httpcoding.NewNegotiator(),
 		recommenders:              make(map[string]PjskDeckRecommender),
 	}
 	provider.startMasterdataRefreshLoop()
@@ -83,6 +85,7 @@ func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 		region:        region,
 		maxRetries:    maxRetries,
 		retryWaitTime: retryWait,
+		coding:        p.coding,
 		logger:        logger.NewLoggerFromGlobal("DeckRemote"),
 	}
 	for _, target := range p.targets {

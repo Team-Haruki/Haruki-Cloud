@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/httpcoding"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -209,8 +210,11 @@ type remoteEngineProvider struct {
 	targets                   []upstream.TargetConfig
 	masterdataRefreshInterval time.Duration
 	registryURL               string
-	mu                        sync.Mutex
-	recommenders              map[string]PjskDeckRecommender
+	// coding remembers which deck-service targets take zstd request bodies;
+	// shared by every region's recommender.
+	coding       *httpcoding.Negotiator
+	mu           sync.Mutex
+	recommenders map[string]PjskDeckRecommender
 }
 
 type RemoteDeckRecommender struct {
@@ -229,7 +233,9 @@ type RemoteDeckRecommender struct {
 	region              string
 	maxRetries          int
 	retryWaitTime       time.Duration
-	logger              *logger.Logger
+	// coding negotiates zstd request bodies per target; nil sends identity.
+	coding *httpcoding.Negotiator
+	logger *logger.Logger
 	// userDataFilePathFallbacks counts requests that sent user_data_file_path
 	// instead of user data bytes (C10 observation).
 	userDataFilePathFallbacks atomic.Int64

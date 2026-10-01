@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/httpcoding"
 	"haruki-cloud/internal/observability/commandtrace"
 
 	"github.com/klauspost/compress/zstd"
@@ -77,7 +78,7 @@ func (r *RemoteDeckRecommender) postEncoded(ctx context.Context, exec *remoteExe
 		if err := r.prepareDeckPostAttempt(ctx, path, logLabel, attempt); err != nil {
 			return err
 		}
-		outcome := r.executeDeckPostAttempt(ctx, baseURL+path, path, payload, contentType, logLabel, attempt, responseBody)
+		outcome := r.executeDeckPostAttempt(ctx, baseURL, path, payload, contentType, logLabel, attempt, responseBody)
 		lastErr = outcome.err
 		if outcome.done {
 			return outcome.err
@@ -102,32 +103,57 @@ func (r *RemoteDeckRecommender) prepareDeckPostAttempt(ctx context.Context, path
 	return nil
 }
 
-func (r *RemoteDeckRecommender) executeDeckPostAttempt(ctx context.Context, url, path string, payload []byte, contentType, logLabel string, attempt int, responseBody any) deckPostOutcome {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
+// executeDeckPostAttempt sends one POST. A JSON body goes out zstd-encoded
+// once the target has advertised support; if the target then refuses the
+// encoding (415) zstd is withdrawn and the same attempt resends identity.
+func (r *RemoteDeckRecommender) executeDeckPostAttempt(ctx context.Context, baseURL, path string, payload []byte, contentType, logLabel string, attempt int, responseBody any) deckPostOutcome {
+	body, coding := r.coding.PrepareBody(baseURL, contentType, payload)
+	outcome, refused := r.sendDeckPost(ctx, baseURL, path, body, coding, contentType, logLabel, attempt, responseBody)
+	if !refused {
+		return outcome
+	}
+	r.coding.Reject(baseURL)
+	r.logger.InfoContext(ctx, logLabel+" refused zstd body; resending identity",
+		"upstream", deckServiceName, "upstream_path", path)
+	outcome, _ = r.sendDeckPost(ctx, baseURL, path, payload, "", contentType, logLabel, attempt, responseBody)
+	return outcome
+}
+
+func (r *RemoteDeckRecommender) sendDeckPost(ctx context.Context, baseURL, path string, payload []byte, coding, contentType, logLabel string, attempt int, responseBody any) (deckPostOutcome, bool) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+path, bytes.NewReader(payload))
 	if err != nil {
-		return deckPostOutcome{err: err, done: true}
+		return deckPostOutcome{err: err, done: true}, false
 	}
 	req.Header.Set("Content-Type", contentType)
+	httpcoding.SetRequestHeaders(req.Header, coding)
 	start := time.Now()
 	finishHTTP := commandtrace.MeasureOperation(ctx, deckHTTPStage)
 	resp, err := r.client.Do(req)
 	if err != nil {
 		finishHTTP()
-		return r.deckTransportError(ctx, path, logLabel, attempt, time.Since(start), err)
+		return r.deckTransportError(ctx, path, logLabel, attempt, time.Since(start), err), false
 	}
+	r.coding.Observe(baseURL, resp.Header)
 	body, truncated, readErr := readDeckResponseBody(resp.Body)
 	resp.Body.Close()
 	finishHTTP()
 	if readErr != nil {
 		if ctxErr := ctx.Err(); ctxErr != nil {
-			return deckPostOutcome{err: ctxErr, done: true}
+			return deckPostOutcome{err: ctxErr, done: true}, false
 		}
-		return deckPostOutcome{err: readErr}
+		return deckPostOutcome{err: readErr}, false
 	}
 	if truncated {
-		return deckPostOutcome{err: fmt.Errorf("deck-service response exceeded %d bytes", maxDeckResponseBodyBytes), done: true}
+		return deckPostOutcome{err: fmt.Errorf("deck-service response exceeded %d bytes", maxDeckResponseBodyBytes), done: true}, false
 	}
-	return r.handleDeckPostResponse(ctx, path, logLabel, attempt, time.Since(start), resp.StatusCode, body, responseBody)
+	if httpcoding.RefusedEncoding(resp.StatusCode, coding) {
+		return deckPostOutcome{}, true
+	}
+	body, err = httpcoding.DecodeBody(resp.Header.Get("Content-Encoding"), body, maxDeckResponseBodyBytes)
+	if err != nil {
+		return deckPostOutcome{err: fmt.Errorf("deck-service response: %w", err), done: true}, false
+	}
+	return r.handleDeckPostResponse(ctx, path, logLabel, attempt, time.Since(start), resp.StatusCode, body, responseBody), false
 }
 
 func (r *RemoteDeckRecommender) deckTransportError(ctx context.Context, path, logLabel string, attempt int, elapsed time.Duration, err error) deckPostOutcome {
@@ -213,6 +239,7 @@ func (r *RemoteDeckRecommender) healthCheck(ctx context.Context, baseURL string)
 		return false
 	}
 	defer resp.Body.Close()
+	r.coding.Observe(baseURL, resp.Header)
 	return resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices
 }
 

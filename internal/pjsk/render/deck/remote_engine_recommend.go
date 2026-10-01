@@ -474,7 +474,7 @@ func (r *RemoteDeckRecommender) normalizeReadyInputs(ctx context.Context, region
 		return "", "", "", err
 	}
 	if hash == "" && musicMetaPath != "" {
-		hash = "path:" + musicMetaPath
+		hash = musicMetaPathHashTag + musicMetaPath
 	}
 	region = strings.ToLower(strings.TrimSpace(region))
 	if region == "" {
@@ -512,6 +512,9 @@ func (r *RemoteDeckRecommender) updateRemoteReadyState(ctx context.Context, exec
 	masterReady := state.masterdataReady
 	musicReady := hash != "" && hash == state.musicMetaHash
 	state.mu.Unlock()
+	if !masterReady || (hash != "" && !musicReady) {
+		masterReady, musicReady = r.adoptRemoteReadiness(ctx, exec, region, hash, masterReady, musicReady)
+	}
 	if !masterReady {
 		if err := r.updateRemoteMasterdata(ctx, exec, region); err != nil {
 			return err

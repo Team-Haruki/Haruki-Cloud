@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/httpcoding"
 	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
@@ -26,4 +27,7 @@ type HarukiDrawingClient struct {
 	artifact *artifactSettings
 	// directiveRejected counts drawing_directive_rejected; shared by clones.
 	directiveRejected *atomic.Int64
+	// coding remembers which Drawing nodes take zstd request bodies; shared
+	// by clones. nil sends identity.
+	coding *httpcoding.Negotiator
 }

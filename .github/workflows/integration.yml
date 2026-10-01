@@ -1,12 +1,12 @@
 name: Integration
 
+# Manual only. ./integration/... talks to a RUNNING Haruki-Cloud server (HARUKI_TEST_BASE_URL,
+# default http://127.0.0.1:6666) with a provisioned bot (HARUKI_TEST_BOT_*) and its own
+# users/pjsk databases (HARUKI_TEST_USERS_DSN / HARUKI_TEST_PJSK_DSN). This workflow starts
+# Postgres and Redis but not that server, so it only passes once a step that boots one is
+# added. It is kept out of ci.yml so it can never turn "CI OK" red.
 on:
   workflow_dispatch:
-    inputs:
-      run_integration:
-        description: Run integration tests
-        required: false
-        default: "true"
 
 permissions:
   contents: read
@@ -17,44 +17,19 @@ concurrency:
 
 jobs:
   integration:
-    name: Go integration tests
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:18.3
-        env:
-          POSTGRES_USER: haruki
-          POSTGRES_PASSWORD: changeme
-          POSTGRES_DB: haruki_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U haruki"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: Run integration tests
-        env:
-          HARUKI_RUN_INTEGRATION: "1"
-          HARUKI_TEST_DB_URL: host=localhost port=5432 user=haruki password=changeme dbname=haruki_test sslmode=disable
-          HARUKI_TEST_REDIS_URL: localhost:6379
-        run: go test -race -count=1 -timeout=10m ./integration/...
+    name: Integration
+    uses: seiunx-dev/ci-templates/.github/workflows/go-ci.yml@v1
+    with:
+      staticcheck: "off"
+      tidy-check: false
+      test-packages: ./integration/...
+      test-args: -count=1 -timeout=10m
+      postgres-image: postgres:18.3
+      redis-image: redis:7
+      # HARUKI_TEST_DB_URL / HARUKI_TEST_REDIS_URL carried over from the old integration.yml
+      # (no Go code reads them today).
+      env: |
+        HARUKI_RUN_INTEGRATION=1
+        HARUKI_IMAGECACHE_TEST_DSN=${CI_POSTGRES_URL}
+        HARUKI_TEST_DB_URL=host=localhost port=5432 user=postgres password=postgres dbname=test sslmode=disable
+        HARUKI_TEST_REDIS_URL=localhost:6379

@@ -374,18 +374,60 @@ Examples from this repo's history:
 
 ## GitHub Actions workflows
 
-Use the standardized workflow layout in `.github/workflows`:
+CI reuses the shared templates in
+[`seiunx-dev/ci-templates`](https://github.com/seiunx-dev/ci-templates) at `@v1`.
+The files in `.github/workflows` are thin callers:
 
-- `ci.yml` runs on `main` pushes, pull requests targeting `main`, and manual dispatch.
-- Go CI order: `gofmt`, `go build ./...`, `go vet ./...`, `staticcheck ./...`, then `go test -race -count=1 ./...`.
-- `release.yml` is the standard release build entrypoint. It runs on `v*` tags and manual dispatch, builds release artifacts, uploads them with `actions/upload-artifact`, and publishes GitHub Release assets on tag pushes.
-- `docker.yml` is the standard Docker entrypoint. It runs on `main` pushes, `v*` tags, PRs that touch Docker/build inputs, and manual dispatch. PRs build only; non-PR runs push GHCR images with lowercase image names and Docker metadata tags.
-- `integration.yml` is a manual integration-test workflow and stays separate from normal CI.
+- `ci.yml` (`CI`) runs on `main` pushes, pull requests targeting `main`, and manual
+  dispatch:
+  - `go-ci`: `gofmt`, `go mod tidy -diff`, `go build` / `go vet` (`-mod=readonly`),
+    staticcheck (pinned in `.github/tools/go.mod`), then the tests **once**:
+    `go test -race -count=1 ./...` with coverage (`-coverpkg` leaves out `database/` and
+    `ent/`, minimum 90%) and a Postgres service exposed as `HARUKI_IMAGECACHE_TEST_DSN`.
+  - `sonar` scans that coverage (skipped green on Dependabot/fork PRs); the suite is not
+    run a second time for Sonar.
+  - `docker` does not wait for the tests. PRs build only, and only when Go sources,
+    `go.mod`/`go.sum`, the Dockerfile or the workflows change. On `main` it runs in
+    parallel with the tests and pushes the immutable
+    `ghcr.io/team-haruki/haruki-cloud:sha-<full sha>` and `:sha-<7 chars>` as soon as the
+    build finishes. The `Docker tags` job (`docker-retag.yml`, after `CI OK`) then moves
+    `:main` to that digest without rebuilding, so `:main` only follows commits whose
+    `CI OK` passed. Main images report the version `main-<sha7>`. The registry
+    `:buildcache` keeps the module download layer.
+  - The aggregate job **`CI OK`** is the only required status check.
+- `integration.yml` (`Integration`) is manual only and stays out of `CI`.
+  `./integration/...` drives a **running** Haruki-Cloud server (`HARUKI_TEST_BASE_URL`,
+  default `http://127.0.0.1:6666`) with a provisioned bot and its own users/pjsk
+  databases. The workflow starts Postgres and Redis but not that server, so it cannot pass
+  on a hosted runner as it stands (it has never been run).
+- `release.yml` (`Release`): push a tag `v<version>` on a `main` commit whose `CI OK` is
+  green. The version comes from the tag only (`version.Version` is `dev` in source and is
+  set with `-ldflags -X`), so there is no version file to bump. `release-gate` waits for
+  `CI OK` on the tagged commit; then `go-release` cross-compiles `haruki-server` (CGO off,
+  `-trimpath`, `version.Version=v<version>`) into `haruki-server-linux-amd64.tar.gz` and
+  `haruki-server-linux-arm64.tar.gz` (binary at the archive root); the image is **built**
+  (not promoted from `main`, because the version is compiled in) with `VERSION=<version>`
+  and tagged `:<version>`, `:<major>.<minor>` and, for the highest stable tag, `:latest`
+  (production pulls `:<version>`, e.g. `3.7.5`); and the GitHub Release is published with
+  `SHA256SUMS-<tag>.txt`. Manual dispatch is a dry run: it builds the binaries as
+  `v0.0.0-dev.<sha7>` and publishes nothing, also when started on a tag.
+- Dockerfile: modules are downloaded in their own layer, `ARG VERSION` is declared right
+  before `go build` so its per-commit value does not invalidate that layer, and the binary
+  is built with `CGO_ENABLED=0` like the release binaries (the server's SQLite driver is
+  `modernc.org/sqlite`; `mattn/go-sqlite3` is only used by tests).
 
 Workflow maintenance rules:
 
-- Keep workflow filenames and top-level names aligned: `CI`, `Release`, `Docker`, and optional package-specific names.
-- Use `actions/checkout@v6`, `actions/setup-go@v6`, `actions/upload-artifact@v7`, `actions/download-artifact@v8`, `softprops/action-gh-release@v3`, and current Docker actions (`setup-buildx@v4`, `login@v4`, `metadata@v6`, `build-push@v7`).
-- Keep `permissions` minimal: `contents: read` for CI/Docker build-only work, `contents: write` for release publishing, and `packages: write` only when pushing container images.
-- Use workflow `concurrency` keyed by workflow name and ref, with release jobs using `release-${{ github.ref_name }}` and `cancel-in-progress: false`.
-- Do not reintroduce legacy workflow names such as `rust-ci.yml`, `build.yml`, `release-build.yml`, `docker-build.yml`, or `docker-release.yml` unless a package-specific workflow already exists and is intentionally preserved.
+- Use the shared templates first. Add custom jobs or steps only when a template
+  genuinely cannot meet the project's needs, keep them in the thin caller files, and
+  add a comment explaining why.
+- Template bugs and missing features are fixed upstream in `seiunx-dev/ci-templates`
+  (new `v1.x.y` tag), not worked around here.
+- Keep top-level `permissions: contents: read`; grant `packages: write` / `contents: write`
+  only on the job that needs it.
+- Do not suppress `githubactions:S7637` (full-SHA pins) in `sonar-project.properties`: the
+  template's `sonar.yml` already ignores it for the `@v1` references.
+- Third-party actions in caller-side custom steps are pinned to a full commit SHA with a
+  `# vX.Y.Z` comment; Dependabot (`github-actions`) updates them and the template refs.
+- CI uses the Go version in `go.mod` exactly (`GOTOOLCHAIN=local`); keep
+  `.github/tools/go.mod` and the Dockerfile's `golang` image on the same version.

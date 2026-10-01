@@ -9,6 +9,7 @@ import (
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	renderprovider "haruki-cloud/internal/pjsk/render/provider"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -52,9 +53,11 @@ func resolveSnapshotBySelectorWithError(ctx context.Context, app *renderapp.App,
 		"prefer_global_default", opts.PreferGlobalDefault,
 	)
 	if service, ok := snap.(*snapshot.Service); ok && app != nil {
+		var frames renderprovider.PlayerFrameProvider
 		if master := app.ProviderForRegion(selector.Region); master != nil {
-			snap = service.WithPlayerFrames(ctx, master.PlayerFrames())
+			frames = master.PlayerFrames()
 		}
+		snap = service.WithPlayerFrames(ctx, frames, app.FrameOverrides)
 	}
 	return snap, nil
 }

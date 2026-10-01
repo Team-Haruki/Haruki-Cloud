@@ -29,6 +29,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/misc"
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/mysekai"
+	"haruki-cloud/internal/pjsk/render/playerframe"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/provider"
 	"haruki-cloud/internal/pjsk/render/score"
@@ -155,6 +156,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Music:           musicController,
 		Aliases:         aliasService,
 		Profiles:        profileController,
+		FrameOverrides:  playerframe.NewOverrides(cfg.PlayerFrameOverrides),
 		Score:           scoreController,
 		SK:              skController,
 		Stamps:          stampController,

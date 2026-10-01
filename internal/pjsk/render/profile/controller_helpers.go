@@ -14,7 +14,6 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	"haruki-cloud/internal/pjsk/render/playerframe"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/sekai"
 )
@@ -116,11 +115,6 @@ func (c *Controller) buildLeaderImagePathFromSource(source DataSource, cardID in
 
 func profileUnknownImagePath(helper *assets.AssetHelper) string {
 	return assets.ResolveProfilePlaceholderPath(helper)
-}
-
-func (c *Controller) buildFramePaths(source DataSource, userFrames []snapshot.RawUserFrame) (*drawing.PlayerFramePaths, bool) {
-	paths := playerframe.Build(source, userFrames)
-	return paths, paths != nil
 }
 
 func (c *Controller) buildPCards(source DataSource, userCards []snapshot.RawUserCard, decks []snapshot.RawUserDeck, activeDeckID int, region renderregion.Value) []drawing.CardFullThumbnailRequest {

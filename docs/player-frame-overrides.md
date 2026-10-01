@@ -4,7 +4,10 @@
 an account's equipped player frame with six local sprites. Entries match the
 resolved server (`jp`, `cn`, `tw`, `en`, `kr`) and actual game UID, not the QQ user
 or request-supplied profile UID. The override applies to live, snapshot, modular
-profiles and profile cards. Other accounts keep their game-equipped frames.
+profiles and profile cards.
+Every builder resolves frames through `playerframe.ResolveAccount`, so the
+suite-backed info panel on card, deck, education, event, inventory, MySekai and
+`/信息面板` renders shows the same frame as `/profile`. Other accounts keep their game-equipped frames.
 
 ```yaml
 pjsk_render:

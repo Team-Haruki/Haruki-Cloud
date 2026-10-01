@@ -7,6 +7,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/playerframe"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 )
@@ -37,7 +38,7 @@ type censorService interface {
 }
 
 type Controller struct {
-	frameOverrides map[string]drawing.PlayerFrameParts
+	frameOverrides playerframe.Overrides
 	sources        *regionsource.Registry[DataSource]
 	drawing        *drawing.HarukiDrawingClient
 	assets         *assets.AssetHelper

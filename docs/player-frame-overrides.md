@@ -21,6 +21,13 @@ pjsk_render:
         righttop: static_images/custom_frames/another_frame/horizontal/frame_righttop.png
         leftbottom: static_images/custom_frames/my_frame/horizontal/frame_leftbottom.png
         rightbottom: static_images/custom_frames/my_frame/horizontal/frame_rightbottom.png
+      vertical: # optional
+        base: static_images/custom_frames/my_frame/vertical/frame_base.png
+        centertop: static_images/custom_frames/my_frame/vertical/frame_centertop.png
+        lefttop: static_images/custom_frames/my_frame/vertical/frame_lefttop.png
+        righttop: static_images/custom_frames/my_frame/vertical/frame_righttop.png
+        leftbottom: static_images/custom_frames/my_frame/vertical/frame_leftbottom.png
+        rightbottom: static_images/custom_frames/my_frame/vertical/frame_rightbottom.png
 ```
 
 Each part is independent: it need not share a folder or follow the game's bundle
@@ -37,6 +44,21 @@ these settings. Cloud loads the file at startup: restart Cloud after edits.
 Remove an entry (or use an empty list) to restore the game's equipped frame.
 This is a game-account setting and applies to every binding of the same server/UID.
 
-Deploy Drawing with explicit `frame_paths.horizontal` support before enabling this
-configuration in Cloud. These sprites decorate horizontal player cells; a vertical
-player-cell override is not supplied by this configuration.
+## Cells
+
+The game draws every frame in two cells, and so does Drawing:
+
+- `horizontal` — the list row (friend list, rankings; 1542×146 reference). The info panel
+  atop other pages (profile card) and `/信息面板` use it. **Required.**
+- `vertical` — the player cell (multi-live room, frame-setting preview; 340×748 reference).
+  The `/profile` info panel uses it. **Optional**: when an entry has no `vertical` block,
+  `/profile` falls back to the horizontal sprites, so a custom frame never disappears.
+
+The vertical block follows the same rules as the horizontal one (six independent, clean
+`static_images/...` paths, all required once the block is present). For the game's vertical
+format the base is 132×132, the top corner strips are 130×352, the bottom-left strip 226×352,
+the bottom-right strip 72×352 and the top-centre crown 108×90; Drawing pins them to the cell
+exactly as the client's `PlayerFrameCell` prefab does.
+
+Deploy Drawing with explicit `frame_paths.horizontal` support (and `frame_paths.vertical`
+support before adding vertical blocks) before enabling this configuration in Cloud.

@@ -202,6 +202,13 @@ pjsk_render:
   #     righttop: static_images/custom_frames/my_frame/horizontal/frame_righttop.png
   #     leftbottom: static_images/custom_frames/my_frame/horizontal/frame_leftbottom.png
   #     rightbottom: static_images/custom_frames/my_frame/horizontal/frame_rightbottom.png
+  #   vertical: # optional; /profile falls back to horizontal without it
+  #     base: static_images/custom_frames/my_frame/vertical/frame_base.png
+  #     centertop: static_images/custom_frames/my_frame/vertical/frame_centertop.png
+  #     lefttop: static_images/custom_frames/my_frame/vertical/frame_lefttop.png
+  #     righttop: static_images/custom_frames/my_frame/vertical/frame_righttop.png
+  #     leftbottom: static_images/custom_frames/my_frame/vertical/frame_leftbottom.png
+  #     rightbottom: static_images/custom_frames/my_frame/vertical/frame_rightbottom.png
   enabled: true
   drawing_base_url: "http://INTERNAL_IP_1:28000"
   # drawing_targets:

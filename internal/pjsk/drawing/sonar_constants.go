@@ -5,5 +5,6 @@ const (
 	userInfoUpdateTimePath          = "user_info.update_time"
 	profileDataSourceUpdateTimePath = "profile.data_sources.*.update_time"
 	drawingCacheHitTraceField       = "drawing.cache_hit"
+	drawingCacheForcedTraceField    = "drawing.cache_forced"
 	costumeDetailEndpoint           = "/api/pjsk/costume/detail"
 )

@@ -70,6 +70,27 @@ func TestExtractPreview(t *testing.T) {
 	}
 }
 
+func TestExtractForce(t *testing.T) {
+	e := NewExtractor(nil)
+	for _, tt := range []struct {
+		input, remaining string
+		found            bool
+	}{
+		{"--force", "", true},
+		{"miku --force u1", "miku u1", true},
+		{"强制刷新", "", true},
+		{"--FORCE", "", true},
+		{"-f", "-f", false},
+		{"--forced", "--forced", false},
+		{"强制刷新曲", "强制刷新曲", false},
+	} {
+		res := e.ExtractForce(tt.input)
+		if res.Found != tt.found || res.Value != tt.found || res.Remaining != tt.remaining {
+			t.Errorf("%q: found=%v remaining=%q", tt.input, res.Found, res.Remaining)
+		}
+	}
+}
+
 func TestExtractUid(t *testing.T) {
 	e := NewExtractor(nil)
 

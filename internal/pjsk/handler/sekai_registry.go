@@ -109,7 +109,9 @@ func (skh *HarukiSekaiCommandHandler) parseHandlerInput(ctx Context, trigger str
 	input.flags["is_verbose"] = verboseResult.Value
 	previewResult := extractor.ExtractPreview(verboseResult.Remaining)
 	input.flags["is_preview"] = previewResult.Value
-	helpResult := extractor.ExtractHelp(previewResult.Remaining)
+	forceResult := extractor.ExtractForce(previewResult.Remaining)
+	input.flags["is_force"] = forceResult.Value
+	helpResult := extractor.ExtractHelp(forceResult.Remaining)
 	input.flags["is_help"] = helpResult.Value
 	input.args = helpResult.Remaining
 	if skh.shouldParseUIDArg() {

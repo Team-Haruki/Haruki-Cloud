@@ -656,7 +656,7 @@ func mysekaiRenderContextOptionsForMode(mode string) mySekaiRenderContextOptions
 			SuiteOnlySnapshot: true,
 			SuiteFields:       mysekaiSuiteFields(mode),
 		}
-	case mySekaiShopCommand, mySekaiTalkListCommand, mySekaiInfoPanelCommand:
+	case mySekaiShopCommand, mySekaiTalkListCommand, mySekaiInfoPanelCommand, mySekaiInfoPanelAllCommand:
 		return mySekaiRenderContextOptions{NeedProfile: true, SuiteFields: mysekaiSuiteFields(mode)}
 	default:
 		return mySekaiRenderContextOptions{NeedProfile: true}
@@ -893,6 +893,8 @@ func executeResolvedMysekaiMode(rc *RequestContext, renderCtx mySekaiRenderConte
 		return executeMysekaiPhoto(rc, renderCtx)
 	case mySekaiInfoPanelCommand:
 		return executeMysekaiInfoPanel(rc, renderCtx)
+	case mySekaiInfoPanelAllCommand:
+		return executeMysekaiInfoPanelAll(rc, renderCtx)
 	case mySekaiTalkListCommand:
 		query := rendermysekai.TalkListQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &query)

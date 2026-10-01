@@ -3,10 +3,12 @@
 ## 用法
 - `/信息面板 su`
 - `/信息面板 ms`
+- `/信息面板 all`
 
 ## 参数
 - `su` `suite`：使用 Suite 数据渲染。
 - `ms` `mysekai`：使用 MySekai 数据渲染（国服 MySekai 不开放）。
+- `all`：同时显示 Suite 与 MySekai 两个数据来源和 MySekai 等级，与 MySekai 商店、对话列表顶部的面板相同；需要 Suite 公开，MySekai 部分的限制与 `ms` 相同（国服 MySekai 不开放）。
 - `u1` `u2` 等：选择自己的第几个绑定账号；不写时使用默认绑定。
 - 区服前缀：可在指令前加 `jp` `cn` `en` `tw` `kr`，例如 `/jp信息面板 su`；不写时使用默认区服。
 
@@ -17,3 +19,4 @@
 ## 示例
 - `/信息面板 su`
 - `/jp信息面板 u2 ms`
+- `/信息面板 all`

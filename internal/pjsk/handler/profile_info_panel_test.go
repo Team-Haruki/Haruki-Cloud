@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	harukiConfig "haruki-cloud/config"
 	json "haruki-cloud/internal/jsonutil"
 
 	"haruki-cloud/internal/onebot11"
@@ -48,6 +49,8 @@ func TestProfileInfoPanelHandleRoutesEachSource(t *testing.T) {
 		{"SUITE", parser.ModuleProfile, profileModeInfoPanel},
 		{"u2 ms", parser.ModuleMysekai, mySekaiInfoPanelCommand},
 		{"mysekai", parser.ModuleMysekai, mySekaiInfoPanelCommand},
+		{"all", parser.ModuleMysekai, mySekaiInfoPanelAllCommand},
+		{"u2 ALL", parser.ModuleMysekai, mySekaiInfoPanelAllCommand},
 	}
 	for _, tc := range cases {
 		request, err := h.Handle(&PjskHandlerContext{
@@ -82,7 +85,7 @@ func TestProfileInfoPanelHandleRequiresASource(t *testing.T) {
 			TriggerCmd: "/信息面板", ArgText: args,
 		})
 		var replay onebot11.ReplayError
-		if !errors.As(err, &replay) || !strings.Contains(string(replay), "/信息面板 su") {
+		if !errors.As(err, &replay) || !strings.Contains(string(replay), "/信息面板 su") || !strings.Contains(string(replay), "/信息面板 all") {
 			t.Fatalf("Handle(%q) error = %v, want usage", args, err)
 		}
 	}
@@ -238,5 +241,115 @@ func TestExecuteSuiteInfoPanelSurfacesDrawingFailures(t *testing.T) {
 	t.Cleanup(server.Close)
 	if message, err := executeSuiteInfoPanel(newSuiteInfoPanelRequestContext(t, server.URL)); err == nil || message != nil {
 		t.Fatalf("failed render = %+v, %v; want the drawing error", message, err)
+	}
+}
+
+// newAllInfoPanelController is a MySekai controller over a merged Suite+MySekai snapshot,
+// the shape the MySekai snapshot path hands the combined panel.
+func newAllInfoPanelController(t *testing.T, drawingURL string) *rendermysekai.Controller {
+	t.Helper()
+	snap, err := rendersnapshot.NewFromBytes(nil, nil, renderregion.JP, []byte(`{"upload_time":1790841600,"source":"toolbox","userGamedata":{"userId":1},"userMysekaiGamedata":{"mysekaiRank":9}}`), nil, nil)
+	if err != nil {
+		t.Fatalf("snapshot: %v", err)
+	}
+	return rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingURL), nil, renderregion.JP, nil,
+		rendermysekai.MasterdataOptions{LocalDir: t.TempDir(), AllowFallback: true}).WithSnapshot(snap)
+}
+
+func allInfoPanelRequestContext(t *testing.T, suiteVisible bool) *RequestContext {
+	t.Helper()
+	rc := &RequestContext{
+		Ctx:            context.Background(),
+		Cmd:            &CommandRequest{Module: parser.ModuleMysekai, Mode: mySekaiInfoPanelAllCommand, Region: "jp"},
+		App:            &renderapp.App{ImageCache: imagecache.New("https://example.com", t.TempDir())},
+		Platform:       "qq",
+		PlatformUserID: "42",
+		binding:        &accountdata.ResolvedBinding{PJSKUserID: "1", SuiteVisible: suiteVisible, MySekaiVisible: true},
+	}
+	rc.bindingOnce.Do(func() {})
+	return rc
+}
+
+func allInfoPanelProfile() *drawing.ProfileCardRequest {
+	suiteTime := int64(1790838000000)
+	return &drawing.ProfileCardRequest{
+		Profile:     &drawing.BasicProfile{ID: "1", Region: "JP", Nickname: "Panel", LeaderImagePath: "leader.png"},
+		DataSources: []drawing.ProfileDataSource{{Name: "Suite数据", UpdateTime: &suiteTime}},
+	}
+}
+
+func TestInfoPanelAllRendersBothSourcesWithMySekaiLevel(t *testing.T) {
+	if fields := mysekaiSuiteFields(mySekaiInfoPanelAllCommand); !containsString(fields, "userMysekaiGamedata") || !containsString(fields, "userPlayerFrames") {
+		t.Fatalf("suite fields = %v, want MySekai gamedata and the profile set", fields)
+	}
+	if opts := mysekaiRenderContextOptionsForMode(mySekaiInfoPanelAllCommand); !opts.NeedProfile || opts.MySekaiPayloadOnly || opts.PreferMySekaiPayload {
+		t.Fatalf("render options = %+v, want the merged snapshot path with a profile", opts)
+	}
+	var gotPath string
+	var body map[string]any
+	server := newInfoPanelDrawingServer(t, &gotPath, &body)
+	rc := allInfoPanelRequestContext(t, true)
+	message, err := executeResolvedMysekaiMode(rc, mySekaiRenderContext{
+		Controller: newAllInfoPanelController(t, server.URL), Region: "jp", Profile: allInfoPanelProfile(),
+	})
+	if err != nil || len(message) != 1 || message[0].Type != onebot11.TypeImage {
+		t.Fatalf("all info panel = %+v, %v; want one image", message, err)
+	}
+	if gotPath != drawing.InfoPanelEndpoint {
+		t.Fatalf("drawing path = %q", gotPath)
+	}
+	sources, _ := body["data_sources"].([]any)
+	var names []string
+	for _, source := range sources {
+		name, _ := source.(map[string]any)["name"].(string)
+		names = append(names, name)
+	}
+	if strings.Join(names, ",") != "Suite数据,Mysekai数据" {
+		t.Fatalf("data sources = %v, want Suite then MySekai", names)
+	}
+	if level, _ := body["mysekai_level"].(float64); level != 9 {
+		t.Fatalf("mysekai_level = %#v, want 9", body["mysekai_level"])
+	}
+}
+
+func TestInfoPanelAllRequiresVisibleSuite(t *testing.T) {
+	var gotPath string
+	var body map[string]any
+	server := newInfoPanelDrawingServer(t, &gotPath, &body)
+	rc := allInfoPanelRequestContext(t, false)
+	message, err := executeResolvedMysekaiMode(rc, mySekaiRenderContext{
+		Controller: newAllInfoPanelController(t, server.URL), Region: "jp", Profile: allInfoPanelProfile(),
+	})
+	var replay onebot11.ReplayError
+	if message != nil || !errors.As(err, &replay) {
+		t.Fatalf("hidden suite = %+v, %v; want the suite reply", message, err)
+	}
+	if want := newSuiteDataNotFoundReplayErrorForBinding(rc.binding); err.Error() != want.Error() {
+		t.Fatalf("reply = %q, want the /信息面板 su reply %q", err, want)
+	}
+	if gotPath != "" {
+		t.Fatalf("rendered %q although the suite is hidden", gotPath)
+	}
+}
+
+func TestInfoPanelAllFollowsTheMySekaiCNGate(t *testing.T) {
+	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
+	harukiConfig.Cfg.PJSK.AllowCNMySekai = nil
+	t.Cleanup(func() { harukiConfig.Cfg.PJSK.AllowCNMySekai = original })
+
+	run := func(mode string) onebot11.Message {
+		message, err := executeInfoPanel(NewRequestContext(context.Background(), &CommandRequest{
+			Module: parser.ModuleMysekai, Mode: mode, Region: "cn",
+		}, &renderapp.App{
+			MySekai: rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true}),
+		}))
+		if err != nil {
+			t.Fatalf("%s: error = %v", mode, err)
+		}
+		return message
+	}
+	ms, all := run(mySekaiInfoPanelCommand), run(mySekaiInfoPanelAllCommand)
+	if got := rejectionText(t, all); got != cnMySekaiNeverOpensNotice || got != rejectionText(t, ms) {
+		t.Fatalf("all = %q, ms = %q; want the same CN MySekai warning", got, rejectionText(t, ms))
 	}
 }

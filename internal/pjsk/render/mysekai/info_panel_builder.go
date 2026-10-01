@@ -8,14 +8,15 @@ import (
 )
 
 // BuildInfoPanelRequest builds the standalone info panel for MySekai data: the
-// profile card every MySekai render carries, with only the MySekai source.
+// profile card every MySekai render carries, with only the MySekai source — or,
+// with IncludeSuite, both sources as the shop and talk-list renders show them.
 func (c *Controller) BuildInfoPanelRequest(query InfoPanelQuery) (*drawing.ProfileCardRequest, error) {
 	c = c.withRegion(query.Region)
 	merged, region, err := c.prepareSnapshot(query.Region)
 	if err != nil {
 		return nil, err
 	}
-	profile := c.mysekaiProfileCard(region, merged, query.Profile, false)
+	profile := c.mysekaiProfileCard(region, merged, query.Profile, query.IncludeSuite)
 	if profile == nil {
 		return nil, fmt.Errorf("mysekai info panel requires profile data")
 	}

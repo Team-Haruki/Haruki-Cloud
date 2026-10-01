@@ -12,13 +12,28 @@ import (
 	json "haruki-cloud/internal/jsonutil"
 
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/utils/imagecache"
 )
+
+func newInfoPanelDrawingServer(t *testing.T, gotPath *string, body *map[string]any) *httptest.Server {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		*gotPath = r.URL.Path
+		raw, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(raw, body)
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte{0x89, 'P', 'N', 'G'})
+	}))
+	t.Cleanup(server.Close)
+	return server
+}
 
 func TestProfileInfoPanelHandleRoutesEachSource(t *testing.T) {
 	h := sekaiHandlers{}.ProfileInfoPanelHandle()
@@ -73,24 +88,14 @@ func TestProfileInfoPanelHandleRequiresASource(t *testing.T) {
 	}
 }
 
-func TestExecuteSuiteInfoPanelRendersTheSuiteCard(t *testing.T) {
+func newSuiteInfoPanelRequestContext(t *testing.T, drawingURL string) *RequestContext {
+	t.Helper()
 	ctx := context.Background()
 	service := newHandlerTestBindingServiceWithValidator(t, handlerEducationRegionValidator{})
 	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
 		t.Fatalf("bind: %v", err)
 	}
-	var gotPath string
-	var body map[string]any
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotPath = r.URL.Path
-		raw, _ := io.ReadAll(r.Body)
-		_ = json.Unmarshal(raw, &body)
-		w.Header().Set("Content-Type", "image/png")
-		_, _ = w.Write([]byte{0x89, 'P', 'N', 'G'})
-	}))
-	t.Cleanup(server.Close)
-
-	rc := &RequestContext{
+	return &RequestContext{
 		Ctx: ctx,
 		Cmd: &CommandRequest{
 			Module:            parser.ModuleProfile,
@@ -101,7 +106,7 @@ func TestExecuteSuiteInfoPanelRendersTheSuiteCard(t *testing.T) {
 		},
 		App: &renderapp.App{
 			Config:     renderapp.Config{UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true}},
-			Drawing:    drawing.NewHarukiDrawingClient(server.URL),
+			Drawing:    drawing.NewHarukiDrawingClient(drawingURL),
 			Bindings:   service,
 			Snapshots:  rendersnapshot.NewStaticSnapshotProvider(mustBridgeEducationSnapshot(t)),
 			ImageCache: imagecache.New("https://example.com", t.TempDir()),
@@ -111,6 +116,13 @@ func TestExecuteSuiteInfoPanelRendersTheSuiteCard(t *testing.T) {
 		Platform:       "qq",
 		PlatformUserID: "42",
 	}
+}
+
+func TestExecuteSuiteInfoPanelRendersTheSuiteCard(t *testing.T) {
+	var gotPath string
+	var body map[string]any
+	server := newInfoPanelDrawingServer(t, &gotPath, &body)
+	rc := newSuiteInfoPanelRequestContext(t, server.URL)
 
 	message, err := executeInfoPanel(rc)
 	if err != nil || len(message) != 1 || message[0].Type != onebot11.TypeImage {
@@ -135,5 +147,96 @@ func TestExecuteInfoPanelRejectsUnknownModes(t *testing.T) {
 	rc := &RequestContext{Ctx: context.Background(), Cmd: &CommandRequest{Mode: "profile-render"}}
 	if _, err := executeInfoPanel(rc); err == nil {
 		t.Fatal("executeInfoPanel(unknown mode) error = nil")
+	}
+}
+
+func TestExecuteSuiteInfoPanelRefusesWithoutDrawingOrVisibleSuite(t *testing.T) {
+	ctx := context.Background()
+	if _, err := executeSuiteInfoPanel(&RequestContext{Ctx: ctx, Cmd: &CommandRequest{}, App: &renderapp.App{}}); err == nil {
+		t.Fatal("executeSuiteInfoPanel without drawing error = nil")
+	}
+
+	service := newHandlerTestBindingServiceWithValidator(t, handlerEducationRegionValidator{})
+	rc := &RequestContext{
+		Ctx:            ctx,
+		Cmd:            &CommandRequest{Mode: profileModeInfoPanel, Region: "jp"},
+		App:            &renderapp.App{Drawing: drawing.NewHarukiDrawingClient("http://127.0.0.1:1"), Bindings: service},
+		Region:         renderregion.JP,
+		RegionStr:      "jp",
+		Platform:       "qq",
+		PlatformUserID: "1",
+		binding:        &accountdata.ResolvedBinding{PJSKUserID: "1234567890", SuiteVisible: false},
+	}
+	rc.bindingOnce.Do(func() {})
+	message, err := executeSuiteInfoPanel(rc)
+	if err == nil || message != nil {
+		t.Fatalf("hidden suite = %+v, %v; want the suite-missing error", message, err)
+	}
+}
+
+func TestMysekaiInfoPanelModeRendersTheMySekaiCard(t *testing.T) {
+	if fields := mysekaiSuiteFields(mySekaiInfoPanelCommand); !containsString(fields, "userMysekaiGamedata") || !containsString(fields, "userPlayerFrames") {
+		t.Fatalf("suite fields = %v, want MySekai gamedata and the profile set", fields)
+	}
+	if opts := mysekaiRenderContextOptionsForMode(mySekaiInfoPanelCommand); !opts.NeedProfile || opts.MySekaiPayloadOnly {
+		t.Fatalf("render options = %+v, want the snapshot path with a profile", opts)
+	}
+
+	var gotPath string
+	var body map[string]any
+	server := newInfoPanelDrawingServer(t, &gotPath, &body)
+	controller := rendermysekai.NewController(drawing.NewHarukiDrawingClient(server.URL), nil, renderregion.JP, nil,
+		rendermysekai.MasterdataOptions{LocalDir: t.TempDir(), AllowFallback: true}).
+		WithMySekaiData([]byte(`{"upload_time":1790841600,"updatedResources":{"userMysekaiGamedata":{"mysekaiRank":7}}}`))
+	rc := &RequestContext{
+		Ctx: context.Background(),
+		Cmd: &CommandRequest{Module: parser.ModuleMysekai, Mode: mySekaiInfoPanelCommand, Region: "jp"},
+		App: &renderapp.App{ImageCache: imagecache.New("https://example.com", t.TempDir())},
+	}
+	message, err := executeResolvedMysekaiMode(rc, mySekaiRenderContext{
+		Controller: controller,
+		Region:     "jp",
+		Profile: &drawing.ProfileCardRequest{
+			Profile: &drawing.BasicProfile{ID: "1", Region: "JP", Nickname: "Panel", LeaderImagePath: "leader.png"},
+		},
+	})
+	if err != nil || len(message) != 1 || message[0].Type != onebot11.TypeImage {
+		t.Fatalf("mysekai info panel = %+v, %v; want one image", message, err)
+	}
+	if gotPath != drawing.InfoPanelEndpoint {
+		t.Fatalf("drawing path = %q", gotPath)
+	}
+	if level, _ := body["mysekai_level"].(float64); level != 7 {
+		t.Fatalf("mysekai_level = %#v, want 7", body["mysekai_level"])
+	}
+}
+
+func TestInfoPanelGuards(t *testing.T) {
+	if _, err := executeInfoPanel(nil); err == nil {
+		t.Fatal("executeInfoPanel(nil) error = nil")
+	}
+	// the MySekai source runs through the MySekai executor, which needs its controller
+	rc := &RequestContext{Ctx: context.Background(), Cmd: &CommandRequest{Mode: mySekaiInfoPanelCommand}, App: &renderapp.App{}}
+	if _, err := executeInfoPanel(rc); err == nil {
+		t.Fatal("mysekai info panel without a MySekai controller error = nil")
+	}
+
+	h := sekaiHandlers{}.ProfileInfoPanelHandle()
+	h.Regions = AllRegions
+	if _, err := h.Handle(&PjskHandlerContext{
+		Context: context.Background(), Platform: "qq", UserId: "12345",
+		TriggerCmd: "/信息面板", ArgText: "12345678901234 su",
+	}); err == nil {
+		t.Fatal("another player's UID error = nil, want the self-only error")
+	}
+}
+
+func TestExecuteSuiteInfoPanelSurfacesDrawingFailures(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "boom", http.StatusInternalServerError)
+	}))
+	t.Cleanup(server.Close)
+	if message, err := executeSuiteInfoPanel(newSuiteInfoPanelRequestContext(t, server.URL)); err == nil || message != nil {
+		t.Fatalf("failed render = %+v, %v; want the drawing error", message, err)
 	}
 }

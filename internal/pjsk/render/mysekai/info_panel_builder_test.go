@@ -50,3 +50,15 @@ func TestBuildInfoPanelRequestNeedsAProfile(t *testing.T) {
 		t.Fatal("RenderInfoPanelImage() without drawing error = nil")
 	}
 }
+
+func TestRenderInfoPanelImageReportsBuildErrors(t *testing.T) {
+	withDrawing := NewController(drawing.NewHarukiDrawingClient("http://127.0.0.1:1"), nil, renderregion.JP, nil,
+		MasterdataOptions{LocalDir: t.TempDir(), AllowFallback: true}).WithMySekaiData([]byte(`{"updatedResources":{}}`))
+	if _, err := withDrawing.RenderInfoPanelImage(InfoPanelQuery{Region: "jp"}); err == nil {
+		t.Fatal("RenderInfoPanelImage() without a profile error = nil")
+	}
+	unconfigured := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{})
+	if _, err := unconfigured.BuildInfoPanelRequest(InfoPanelQuery{Region: "jp"}); err == nil {
+		t.Fatal("BuildInfoPanelRequest() without masterdata error = nil")
+	}
+}

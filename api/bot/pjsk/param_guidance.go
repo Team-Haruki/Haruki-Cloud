@@ -71,6 +71,7 @@ var commandParameterGuidance = map[string]parameterGuidance{
 	"profile/chart-style":         {"谱面样式参数", "使用帮助中列出的样式名称"},
 	"profile/custom-profile-card": {"自定义个人信息参数", "按帮助填写卡片布局、字段或开关"},
 	"profile/default":             {"默认账号参数", "使用账号 ID 或 u序号"},
+	"profile/info-panel":          {"信息面板参数", "使用 su/suite 或 ms/mysekai，可加 u序号"},
 	"profile/timezone":            {"时区参数", "使用 UTC 偏移、IANA 时区名或可识别的城市名"},
 	"profile/uid":                 {"UID 查询参数", "仅查询自己的绑定账号，可使用 u序号"},
 	"profile/unbind":              {"解绑参数", "使用账号 ID 或 u序号"},

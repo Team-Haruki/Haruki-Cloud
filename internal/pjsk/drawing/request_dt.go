@@ -54,6 +54,10 @@ func applyDrawingRequestTimeContext(endpointPath string, root map[string]any, no
 	if endpointPath == "/api/pjsk/profile" {
 		root["update_time"] = normalizeDrawingUpdateTime(root["update_time"], nowMs)
 	}
+	if endpointPath == InfoPanelEndpoint {
+		// The info panel body is a ProfileCardRequest itself, so its sources sit at the root.
+		normalizeDrawingDataSourceTimes(root, nowMs)
+	}
 
 	applyDrawingProfileDT(root, "profile", nowMs)
 	applyDrawingProfileDT(root, "user_info", nowMs)
@@ -69,7 +73,11 @@ func applyDrawingProfileDT(root map[string]any, key string, nowMs int64) {
 		profile["update_time"] = normalizeDrawingUpdateTime(profile["update_time"], nowMs)
 	}
 
-	for _, item := range sliceAt(profile, "data_sources") {
+	normalizeDrawingDataSourceTimes(profile, nowMs)
+}
+
+func normalizeDrawingDataSourceTimes(card map[string]any, nowMs int64) {
+	for _, item := range sliceAt(card, "data_sources") {
 		dataSource := mapAt(item)
 		if dataSource == nil {
 			continue

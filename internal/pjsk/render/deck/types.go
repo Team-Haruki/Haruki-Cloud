@@ -174,7 +174,10 @@ type RecommendDeck struct {
 	SupportDeckBonusRate        float64         `json:"support_deck_bonus_rate"`
 	MultiLiveScoreUp            float64         `json:"multi_live_score_up"`
 	ChallengeScoreDelta         int             `json:"challenge_score_delta"`
-	Algs                        []string        `json:"-"`
+	// ChallengeCharacterID is set only on all-character challenge results, where every
+	// deck belongs to a different challenge character.
+	ChallengeCharacterID int      `json:"-"`
+	Algs                 []string `json:"-"`
 }
 
 type RecommendCard struct {

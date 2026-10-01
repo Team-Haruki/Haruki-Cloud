@@ -5,6 +5,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func TestBuildInfoPanelRequestKeepsOnlyTheMySekaiSource(t *testing.T) {
@@ -60,5 +61,37 @@ func TestRenderInfoPanelImageReportsBuildErrors(t *testing.T) {
 	unconfigured := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{})
 	if _, err := unconfigured.BuildInfoPanelRequest(InfoPanelQuery{Region: "jp"}); err == nil {
 		t.Fatal("BuildInfoPanelRequest() without masterdata error = nil")
+	}
+}
+
+func TestBuildInfoPanelRequestIncludeSuiteKeepsBothSources(t *testing.T) {
+	snap, err := snapshot.NewFromBytes(nil, nil, renderregion.JP, []byte(`{"upload_time":1790841600,"source":"toolbox","userGamedata":{"userId":1},"userMysekaiGamedata":{"mysekaiRank":42}}`), nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: t.TempDir(), AllowFallback: true}).WithSnapshot(snap)
+	suiteTime := int64(1790838000000)
+	profile := func() *drawing.ProfileCardRequest {
+		return &drawing.ProfileCardRequest{
+			Profile:     &drawing.BasicProfile{ID: "1", Region: "JP", Nickname: "Tester", LeaderImagePath: "user/leader.png"},
+			DataSources: []drawing.ProfileDataSource{{Name: "Suite数据", UpdateTime: &suiteTime}},
+		}
+	}
+	both, err := controller.BuildInfoPanelRequest(InfoPanelQuery{Region: "jp", Profile: profile(), IncludeSuite: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(both.DataSources) != 2 || both.DataSources[0].Name != "Suite数据" || both.DataSources[1].Name != mySekaiDataLabel {
+		t.Fatalf("data sources = %+v, want Suite then MySekai", both.DataSources)
+	}
+	if both.MysekaiLevel == nil || *both.MysekaiLevel != 42 {
+		t.Fatalf("mysekai level = %v, want 42", both.MysekaiLevel)
+	}
+	only, err := controller.BuildInfoPanelRequest(InfoPanelQuery{Region: "jp", Profile: profile()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(only.DataSources) != 1 || only.DataSources[0].Name != mySekaiDataLabel {
+		t.Fatalf("ms panel data sources = %+v, want only MySekai", only.DataSources)
 	}
 }

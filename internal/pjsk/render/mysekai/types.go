@@ -144,6 +144,9 @@ type DoorUpgradeQuery struct {
 type InfoPanelQuery struct {
 	Region  string                      `json:"region,omitempty"`
 	Profile *drawing.ProfileCardRequest `json:"-"`
+	// IncludeSuite keeps the Suite source next to MySekai's (/信息面板 all),
+	// the combined panel the shop and talk-list renders carry.
+	IncludeSuite bool `json:"-"`
 }
 
 type MusicRecordQuery struct {

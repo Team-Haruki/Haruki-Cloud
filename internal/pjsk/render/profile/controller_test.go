@@ -464,7 +464,7 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesUserFrames(t *testing.T) {
 	snap := &profileSnapshotStub{
 		rawData: &snapshot.RawUserData{
 			UserFrames: []snapshot.RawUserFrame{
-				{PlayerFrameID: 10, PlayerFrameAttachStatus: "equipped"},
+				{PlayerFrameID: 10, PlayerFrameAttachStatus: "first"},
 			},
 		},
 	}

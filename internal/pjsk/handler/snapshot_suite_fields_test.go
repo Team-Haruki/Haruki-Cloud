@@ -136,7 +136,7 @@ func TestMysekaiSuiteScopesPreservePublicProfileFallbacks(t *testing.T) {
  "upload_time":1710000000,"now":1710000000000,"userGamedata":{"userId":123,"name":"fixture","deck":1},
  "userProfile":{"profileImageType":"default"},"userDecks":[{"deckId":1,"leader":1}],
  "userCards":[{"cardId":1,"defaultImage":"special_training","specialTrainingStatus":"done"}],
- "userPlayerFrames":[{"playerFrameId":2,"playerFrameAttachStatus":"equipped"}],
+ "userPlayerFrames":[{"playerFrameId":2,"playerFrameAttachStatus":"first"}],
  "userMusics":[{"musicId":99}]
  }`
 	var document map[string]json.RawMessage

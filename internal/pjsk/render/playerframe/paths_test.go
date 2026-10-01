@@ -23,12 +23,12 @@ func TestEquippedFramePaths(t *testing.T) {
 		}
 	}
 	p := provider.NewLocalProvider(root, renderregion.JP).PlayerFrames()
-	single := Resolve(t.Context(), p, renderregion.JP, []UserFrame{{PlayerFrameID: 10001, PlayerFrameAttachStatus: "equipped"}})
+	single := Resolve(t.Context(), p, renderregion.JP, []UserFrame{{PlayerFrameID: 10001, PlayerFrameAttachStatus: "first"}})
 	if single == nil || single.FrameType != "single" || single.Base != "asset/jp-assets/startapp/player_frame/frame_0001/10001/vertical/frame_base.png" || single.LeftTop != "asset/jp-assets/startapp/player_frame/frame_0001/10001/vertical/frame_lefttop.png" {
 		t.Fatalf("single: %+v", single)
 	}
 	layout := []PartLayout{{"part6", 2}, {"part3", 1}, {"part1", 2}, {"part4", 1}, {"part5", 2}, {"part2", 1}}
-	frames := []UserFrame{{PlayerFrameID: 10001, PlayerFrameAttachStatus: "unequipped"}, {PlayerFrameID: 20001, PlayerFrameAttachStatus: "equipped", PartsLayout: layout}}
+	frames := []UserFrame{{PlayerFrameID: 10001, PlayerFrameAttachStatus: "none"}, {PlayerFrameID: 20001, PlayerFrameAttachStatus: "first", PartsLayout: layout}}
 	combo := Resolve(t.Context(), p, renderregion.JP, frames)
 	if combo == nil || combo.FrameType != "combination" || combo.Base != "asset/jp-assets/startapp/player_frame/frame_0002/20001/407/vertical/frame_base.png" || combo.SideLeftTop != "asset/jp-assets/startapp/player_frame/frame_0002/20001/301/vertical/frame_parts2_left.png" || combo.LeftBottom != "asset/jp-assets/startapp/player_frame/frame_0002/20001/407/vertical/frame_parts6_left.png" {
 		t.Fatalf("combination: %+v", combo)
@@ -41,5 +41,8 @@ func TestEquippedFramePaths(t *testing.T) {
 	}
 	if got := Resolve(t.Context(), p, renderregion.JP, frames[:1]); got != nil {
 		t.Fatal("unequipped frame was rendered")
+	}
+	if got := Resolve(t.Context(), p, renderregion.JP, []UserFrame{{PlayerFrameID: 10001}}); got != nil {
+		t.Fatal("a frame without an attach status was rendered")
 	}
 }

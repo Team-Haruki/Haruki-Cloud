@@ -1419,11 +1419,31 @@ func TestBuildAutoRecommendRequestChallengeAllFansOutCharacters(t *testing.T) {
 	if len(request.DeckData) != 26 {
 		t.Fatalf("unexpected challenge-all deck count: %d", len(request.DeckData))
 	}
-	if request.DeckData[0].ChallengeScoreDelta == nil || *request.DeckData[0].ChallengeScoreDelta != 1 {
-		t.Fatalf("unexpected first challenge score delta: %+v", request.DeckData[0].ChallengeScoreDelta)
+	byCharacter := map[int]drawing.DeckData{}
+	for index, deck := range request.DeckData {
+		if deck.ChallengeCharacterID == nil {
+			t.Fatalf("deck %d has no challenge character", index)
+		}
+		byCharacter[*deck.ChallengeCharacterID] = deck
+		if index > 0 && *request.DeckData[index-1].Score < *deck.Score {
+			t.Fatalf("challenge-all decks are not ordered best first at %d", index)
+		}
 	}
-	if request.DeckData[20].ChallengeScoreDelta == nil || *request.DeckData[20].ChallengeScoreDelta != -99979 {
-		t.Fatalf("unexpected miku challenge score delta: %+v", request.DeckData[20].ChallengeScoreDelta)
+	if len(byCharacter) != challengeCharacterCount {
+		t.Fatalf("expected one deck per character, got %d", len(byCharacter))
+	}
+	// The fake service scores character N as 1,000,000+N, so the best deck is character 26, not character 1.
+	if got := *request.DeckData[0].ChallengeCharacterID; got != challengeCharacterCount {
+		t.Fatalf("best deck character = %d, want %d", got, challengeCharacterCount)
+	}
+	if request.RecommendType != "challenge_all" {
+		t.Fatalf("recommend type = %q, want challenge_all", request.RecommendType)
+	}
+	if delta := byCharacter[1].ChallengeScoreDelta; delta == nil || *delta != 1 {
+		t.Fatalf("unexpected character 1 challenge score delta: %+v", delta)
+	}
+	if delta := byCharacter[21].ChallengeScoreDelta; delta == nil || *delta != -99979 {
+		t.Fatalf("unexpected miku challenge score delta: %+v", delta)
 	}
 	if request.CharaName != nil {
 		t.Fatalf("challenge-all request should not set single character metadata: %+v", request.CharaName)

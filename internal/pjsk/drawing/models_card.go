@@ -189,6 +189,10 @@ type DeckData struct {
 	MySekaiEventPoint    *int           `json:"mysekai_event_point,omitempty"`
 	SupportDeckBonusRate *float64       `json:"support_deck_bonus_rate,omitempty"`
 	MultiLiveScoreUp     *float64       `json:"multi_live_score_up,omitempty"`
+	// All-character challenge results label every deck with its own character.
+	ChallengeCharacterID *int    `json:"challenge_character_id,omitempty"`
+	CharaIconPath        *string `json:"chara_icon_path,omitempty"`
+	CharaName            *string `json:"chara_name,omitempty"`
 }
 
 type DeckRequest struct {

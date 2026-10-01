@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"sort"
 
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
@@ -171,7 +172,9 @@ func newChallengeRecommendAccumulator() *challengeRecommendAccumulator {
 func (a *challengeRecommendAccumulator) add(result *RecommendResult, charID int, raw *snapshot.RawUserData) {
 	applyChallengeScoreDelta(result, charID, raw)
 	if len(result.Decks) > 0 {
-		a.result.Decks = append(a.result.Decks, result.Decks[0])
+		best := result.Decks[0]
+		best.ChallengeCharacterID = charID
+		a.result.Decks = append(a.result.Decks, best)
 		alg := ""
 		if len(result.DeckAlgs) > 0 {
 			alg = result.DeckAlgs[0]
@@ -196,7 +199,34 @@ func (a *challengeRecommendAccumulator) finish() (*RecommendResult, error) {
 	for alg, values := range a.waitSamples {
 		a.result.WaitTimes[alg] = averageChallengeSamples(values)
 	}
+	sortChallengeDecksByScore(a.result)
 	return a.result, nil
+}
+
+// sortChallengeDecksByScore orders the per-character decks best first, so the first deck
+// (drawn as the "best deck") is the highest-scoring character rather than character 1.
+// Ties keep character order.
+func sortChallengeDecksByScore(result *RecommendResult) {
+	order := make([]int, len(result.Decks))
+	for i := range order {
+		order[i] = i
+	}
+	sort.SliceStable(order, func(i, j int) bool {
+		return result.Decks[order[i]].Score > result.Decks[order[j]].Score
+	})
+	decks := make([]RecommendDeck, len(order))
+	for i, index := range order {
+		decks[i] = result.Decks[index]
+	}
+	// DeckAlgs is parallel to Decks; reorder it only when it really is.
+	if len(result.DeckAlgs) == len(result.Decks) {
+		algs := make([]string, len(order))
+		for i, index := range order {
+			algs[i] = result.DeckAlgs[index]
+		}
+		result.DeckAlgs = algs
+	}
+	result.Decks = decks
 }
 
 func applyChallengeScoreDelta(result *RecommendResult, charID int, raw *snapshot.RawUserData) {

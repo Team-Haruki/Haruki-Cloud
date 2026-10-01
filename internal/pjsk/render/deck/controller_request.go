@@ -47,8 +47,33 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 
 	c.applyOptionRequestFields(request, option, query)
 	c.applyCommonRecommendMetadata(request, region, recType, metadataOption(option, recType, query), query)
+	c.applyChallengeAllDeckCharacters(request, region, recType, option, result.Decks)
 	applyLimitedAutoScoreNotice(request, result.Decks)
 	return request, nil
+}
+
+// applyChallengeAllDeckCharacters marks a challenge recommendation run for every character:
+// each deck is the best one for a different character, so it carries that character and the
+// request type tells Drawing not to read the list as one character's ranking.
+func (c *Controller) applyChallengeAllDeckCharacters(request *drawing.DeckRequest, region renderregion.Value, recType string, option map[string]any, decks []RecommendDeck) {
+	if recType != "challenge" || !shouldRunChallengeAll(option) || len(decks) != len(request.DeckData) {
+		return
+	}
+	request.RecommendType = "challenge_all"
+	for index, deck := range decks {
+		charID := deck.ChallengeCharacterID
+		if charID <= 0 {
+			continue
+		}
+		item := &request.DeckData[index]
+		item.ChallengeCharacterID = drawing.IntPtr(charID)
+		if icon := c.resolveCharacterIconPath(charID); icon != "" {
+			item.CharaIconPath = drawing.StringPtr(icon)
+		}
+		if name := c.resolveCharacterName(region, charID); name != "" {
+			item.CharaName = drawing.StringPtr(name)
+		}
+	}
 }
 
 func (c *Controller) recommendUserCardMap(preparedRaw *snapshot.RawUserData) map[int]snapshot.RawUserCard {

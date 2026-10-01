@@ -32,9 +32,17 @@ type Source interface {
 	GetPlayerFramePartsByGroupID(int) (map[int]int, error)
 }
 
+// attached reports whether a userPlayerFrames entry is the one on display. The client's
+// PlayerFrameAttachStatus enum is {none = -1, first = 0}: the server sends "first" for the
+// equipped frame and "none" (or nothing) for the rest of the collection.
+func attached(status string) bool {
+	status = strings.TrimSpace(status)
+	return status != "" && !strings.EqualFold(status, "none")
+}
+
 func Build(source Source, frames []UserFrame) *drawing.PlayerFramePaths {
 	for _, equipped := range frames {
-		if !strings.EqualFold(equipped.PlayerFrameAttachStatus, "equipped") {
+		if !attached(equipped.PlayerFrameAttachStatus) {
 			continue
 		}
 		frame, err := source.GetPlayerFrameByID(equipped.PlayerFrameID)

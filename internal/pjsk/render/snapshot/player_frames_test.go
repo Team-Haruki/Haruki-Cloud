@@ -22,7 +22,7 @@ func TestSnapshotFrameEnrichmentPreservesCacheAndCardConversions(t *testing.T) {
 	}
 	snap, err := NewDefaultSnapshotFactory(nil, nil).Build(t.Context(), BuildInput{Region: renderregion.EN, SuiteJSON: []byte(`{
  "userGamedata":{"userId":123,"name":"frame test"},
- "userPlayerFrames":[{"playerFrameId":20001,"playerFrameAttachStatus":"equipped","partsLayout":[
+ "userPlayerFrames":[{"playerFrameId":20001,"playerFrameAttachStatus":"first","partsLayout":[
  {"partPosition":"part1","gameCharacterId":21},{"partPosition":"part2","gameCharacterId":21},
  {"partPosition":"part3","gameCharacterId":21},{"partPosition":"part4","gameCharacterId":21},
  {"partPosition":"part5","gameCharacterId":21},{"partPosition":"part6","gameCharacterId":21}]}]}`)})

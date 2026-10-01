@@ -222,13 +222,15 @@ func (s *Service) MusicMetaPath() string {
 // WithPlayerFrames returns a request-local copy; cached snapshots stay immutable.
 // Resolve against current masterdata after the snapshot-cache lookup so asset
 // and masterdata refreshes do not leave a cached snapshot permanently frameless.
-func (s *Service) WithPlayerFrames(ctx context.Context, p provider.PlayerFrameProvider) *Service {
-	if s == nil || s.baseProfile == nil || s.rawData == nil || p == nil {
+// Frames go through playerframe.ResolveAccount, the same resolver the profile
+// controller uses, so file-configured account overrides apply here as well.
+func (s *Service) WithPlayerFrames(ctx context.Context, p provider.PlayerFrameProvider, overrides playerframe.Overrides) *Service {
+	if s == nil || s.baseProfile == nil || s.rawData == nil || (p == nil && len(overrides) == 0) {
 		return s
 	}
 	copy := *s
 	copy.baseProfile = new(*s.baseProfile)
-	paths := playerframe.Resolve(ctx, p, renderregion.Normalize(s.baseProfile.Region), s.rawData.UserFrames)
+	paths := playerframe.ResolveAccountFromProvider(ctx, p, overrides, renderregion.Normalize(s.baseProfile.Region), s.baseProfile.ID, s.rawData.UserFrames)
 	copy.baseProfile.FramePaths = paths
 	copy.baseProfile.HasFrame = paths != nil
 	copy.baseProfile.FramePath = nil

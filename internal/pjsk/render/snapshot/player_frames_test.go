@@ -30,7 +30,7 @@ func TestSnapshotFrameEnrichmentPreservesCacheAndCardConversions(t *testing.T) {
 		t.Fatal(err)
 	}
 	original := snap.(*Service)
-	enriched := original.WithPlayerFrames(t.Context(), provider.NewLocalProvider(root, renderregion.EN).PlayerFrames())
+	enriched := original.WithPlayerFrames(t.Context(), provider.NewLocalProvider(root, renderregion.EN).PlayerFrames(), nil)
 	detail, card := enriched.DetailedProfile(renderregion.EN), enriched.ProfileCard(renderregion.EN)
 	if !detail.HasFrame || detail.FramePaths == nil || card.Profile.FramePaths == nil || card.Profile.FramePaths.SideLeftTop != "asset/en-assets/startapp/player_frame/frame_0002/20001/20021/vertical/frame_parts2_left.png" {
 		t.Fatalf("lost frame in card conversion: %+v", card.Profile)

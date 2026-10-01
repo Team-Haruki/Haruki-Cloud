@@ -27,6 +27,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/misc"
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/mysekai"
+	"haruki-cloud/internal/pjsk/render/playerframe"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/provider"
 	"haruki-cloud/internal/pjsk/render/score"
@@ -190,6 +191,7 @@ type App struct {
 	Music              *music.Controller
 	Aliases            *pjskalias.Service
 	Profiles           *profile.Controller
+	FrameOverrides     playerframe.Overrides // file-configured account frames; see playerframe.ResolveAccount
 	Score              *score.Controller
 	SK                 *sk.Controller
 	Stamps             *stamp.Controller

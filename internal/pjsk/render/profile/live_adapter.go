@@ -130,7 +130,7 @@ func adaptAPIMultiLiveTopScoreCount(count sekai.AnotherUserMultiLiveTopScoreCoun
 }
 
 // parseFramesJSON parses the raw bytes from a userPlayerFrames snapshot payload into the
-// RawUserFrame slice used by buildFramePaths. Returns nil on empty input or parse error so
+// RawUserFrame slice used by buildAccountFramePaths. Returns nil on empty input or parse error so
 // that the caller renders without a player frame.
 func parseFramesJSON(data []byte) []snapshot.RawUserFrame {
 	if len(data) == 0 {

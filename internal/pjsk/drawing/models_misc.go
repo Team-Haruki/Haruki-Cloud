@@ -4,6 +4,7 @@ package drawing
 
 type PlayerFramePaths struct {
 	Horizontal      *PlayerFrameParts `json:"horizontal,omitempty"`
+	Vertical        *PlayerFrameParts `json:"vertical,omitempty"`
 	FrameType       string            `json:"frame_type,omitempty"`
 	SideLeftTop     string            `json:"side_left_top,omitempty"`
 	SideRightTop    string            `json:"side_right_top,omitempty"`

@@ -12,20 +12,33 @@ import (
 
 // Overrides holds the file-configured account frames (pjsk_render.player_frame_overrides),
 // keyed by server and actual game UID. It is built once at startup and only read afterwards.
-type Overrides map[string]drawing.PlayerFrameParts
+type Overrides map[string]overrideParts
+
+// overrideParts is one account's sprites per cell; vertical is optional.
+type overrideParts struct {
+	horizontal drawing.PlayerFrameParts
+	vertical   *drawing.PlayerFrameParts
+}
 
 // NewOverrides copies the configured entries so later edits to the config slice cannot
 // reach rendering.
 func NewOverrides(entries []config.PlayerFrameOverride) Overrides {
 	out := make(Overrides, len(entries))
 	for _, e := range entries {
-		p := e.Horizontal
-		out[overrideKey(renderregion.Normalize(e.Server), e.UserID)] = drawing.PlayerFrameParts{
-			Base: p.Base, CenterTop: p.CenterTop, LeftTop: p.LeftTop,
-			RightTop: p.RightTop, LeftBottom: p.LeftBottom, RightBottom: p.RightBottom,
+		parts := overrideParts{horizontal: drawingParts(e.Horizontal)}
+		if e.Vertical != nil {
+			parts.vertical = new(drawingParts(*e.Vertical))
 		}
+		out[overrideKey(renderregion.Normalize(e.Server), e.UserID)] = parts
 	}
 	return out
+}
+
+func drawingParts(p config.PlayerFrameParts) drawing.PlayerFrameParts {
+	return drawing.PlayerFrameParts{
+		Base: p.Base, CenterTop: p.CenterTop, LeftTop: p.LeftTop,
+		RightTop: p.RightTop, LeftBottom: p.LeftBottom, RightBottom: p.RightBottom,
+	}
 }
 
 func overrideKey(region renderregion.Value, userID string) string {
@@ -35,16 +48,21 @@ func overrideKey(region renderregion.Value, userID string) string {
 // Lookup returns a fresh copy of the override for one account, so a request that edits
 // its paths never touches the shared configuration.
 func (o Overrides) Lookup(region renderregion.Value, userID string) (*drawing.PlayerFramePaths, bool) {
-	parts, ok := o[overrideKey(region, userID)]
+	entry, ok := o[overrideKey(region, userID)]
 	if !ok {
 		return nil, false
 	}
-	return &drawing.PlayerFramePaths{
+	parts := entry.horizontal
+	paths := &drawing.PlayerFramePaths{
 		FrameType: "single", Base: parts.Base, CenterTop: parts.CenterTop,
 		LeftTop: parts.LeftTop, RightTop: parts.RightTop,
 		LeftBottom: parts.LeftBottom, RightBottom: parts.RightBottom,
 		Horizontal: new(parts),
-	}, true
+	}
+	if entry.vertical != nil {
+		paths.Vertical = new(*entry.vertical)
+	}
+	return paths, true
 }
 
 // ResolveAccount is the one place an account's displayed frame is decided: a file override

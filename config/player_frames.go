@@ -17,10 +17,14 @@ type PlayerFrameParts struct {
 	RightBottom string `yaml:"rightbottom" json:"rightbottom"`
 }
 
+// PlayerFrameOverride replaces one account's equipped frame. Horizontal (list-row sprites) is
+// required; Vertical (player-cell sprites, used by /profile's panel) is optional — without it
+// Drawing falls back to the horizontal sprites there.
 type PlayerFrameOverride struct {
-	Server     string           `yaml:"server"`
-	UserID     string           `yaml:"user_id"`
-	Horizontal PlayerFrameParts `yaml:"horizontal"`
+	Server     string            `yaml:"server"`
+	UserID     string            `yaml:"user_id"`
+	Horizontal PlayerFrameParts  `yaml:"horizontal"`
+	Vertical   *PlayerFrameParts `yaml:"vertical,omitempty"`
 }
 
 func ValidatePlayerFrameOverrides(entries []PlayerFrameOverride) error {
@@ -40,10 +44,22 @@ func ValidatePlayerFrameOverrides(entries []PlayerFrameOverride) error {
 			return fmt.Errorf("player_frame_overrides[%d]: duplicate account", i)
 		}
 		seen[key] = true
-		for name, value := range map[string]string{"base": e.Horizontal.Base, "centertop": e.Horizontal.CenterTop, "lefttop": e.Horizontal.LeftTop, "righttop": e.Horizontal.RightTop, "leftbottom": e.Horizontal.LeftBottom, "rightbottom": e.Horizontal.RightBottom} {
-			if !strings.HasPrefix(value, "static_images/") || path.Clean(value) != value || strings.ContainsAny(value, "\\\x00\r\n") || strings.Contains(value, ":") || value == "static_images/" {
-				return fmt.Errorf("player_frame_overrides[%d].horizontal.%s: expected a clean relative local static_images path", i, name)
+		if err := validatePlayerFrameParts(i, "horizontal", e.Horizontal); err != nil {
+			return err
+		}
+		if e.Vertical != nil {
+			if err := validatePlayerFrameParts(i, "vertical", *e.Vertical); err != nil {
+				return err
 			}
+		}
+	}
+	return nil
+}
+
+func validatePlayerFrameParts(i int, cell string, p PlayerFrameParts) error {
+	for name, value := range map[string]string{"base": p.Base, "centertop": p.CenterTop, "lefttop": p.LeftTop, "righttop": p.RightTop, "leftbottom": p.LeftBottom, "rightbottom": p.RightBottom} {
+		if !strings.HasPrefix(value, "static_images/") || path.Clean(value) != value || strings.ContainsAny(value, "\\\x00\r\n") || strings.Contains(value, ":") || value == "static_images/" {
+			return fmt.Errorf("player_frame_overrides[%d].%s.%s: expected a clean relative local static_images path", i, cell, name)
 		}
 	}
 	return nil

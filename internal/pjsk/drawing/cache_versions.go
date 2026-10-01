@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/httpcoding"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
 )
@@ -38,10 +39,13 @@ type cacheVersions struct {
 	resources ResourceVersionSource
 	targets   []upstream.TargetConfig
 	http      *http.Client
-	current   atomic.Pointer[rendererIdentities]
-	cancel    context.CancelFunc
-	done      chan struct{}
-	close     sync.Once
+	// coding learns each node's zstd advertisement from the identity polls,
+	// before the first render request goes out.
+	coding  *httpcoding.Negotiator
+	current atomic.Pointer[rendererIdentities]
+	cancel  context.CancelFunc
+	done    chan struct{}
+	close   sync.Once
 }
 type versionSnapshot struct {
 	asset, scoped, renderer string
@@ -69,7 +73,7 @@ func WithCacheVersions(ctx context.Context, cfg CacheVersionConfig, resources Re
 			ctx = context.Background()
 		}
 		base, cancel := context.WithCancel(ctx)
-		v := &cacheVersions{cfg: cfg, resources: resources, targets: upstream.ResolveTargets(c.baseURL, targets, "drawing"), http: &http.Client{Transport: client.GetClient().Transport, Timeout: 3 * time.Second}, cancel: cancel, done: make(chan struct{})}
+		v := &cacheVersions{cfg: cfg, resources: resources, targets: upstream.ResolveTargets(c.baseURL, targets, "drawing"), http: &http.Client{Transport: client.GetClient().Transport, Timeout: 3 * time.Second}, coding: c.coding, cancel: cancel, done: make(chan struct{})}
 		c.versions = v
 		go func() {
 			defer close(v.done)
@@ -127,6 +131,7 @@ func (v *cacheVersions) identity(ctx context.Context, baseURL string) (string, e
 		return "", err
 	}
 	defer resp.Body.Close()
+	v.coding.Observe(baseURL, resp.Header)
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("drawing identity status %d", resp.StatusCode)
 	}

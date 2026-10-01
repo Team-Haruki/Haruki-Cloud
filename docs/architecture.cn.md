@@ -554,6 +554,10 @@ Deck 的每个远端目标状态持有独立 userdata 缓存，以最终上传�
 
 远端报告 userdata_hash 丢失时，只失效本次使用的缓存条目，重新上传并重试一次；再次失败保留原有旧协议回退。旧请求的延迟失败不会删除新上传条目。上传使用受超时约束的上下文，并关联发起请求的取消；发起请求取消后等 HTTP 清理完成再释放并发名额，其他仍有效的等待者可在自己的请求下重试上传，普通等待者可独立取消。
 
+**就绪探测。** Cloud 重启后每个目标都被视为未就绪；推送 masterdata / music metas 之前，先在就绪 singleflight 内 `GET /state/masterdata`（5 秒超时）：目标报告的 `musicMetas[region]`（旧版 deck-service 只有 registry 区服的 `regions[region].musicMetasDigest`）等于本地 music metas 的 SHA-256 时跳过推送（trace 记 `deck.ready_music_metas_current`）；registry 模式下目标已加载的 `contentHash` 与 Cloud 已知值相同（或 Cloud 尚未轮询到）时视为 masterdata 就绪并采纳该 hash（`deck.ready_masterdata_current`）。探测失败、字段缺失、按文件路径推送的 metas 一律照旧推送。
+
+**zstd 内容编码。** `internal/httpcoding` 按目标 origin 记录对方是否在响应里声明 `Accept-Encoding: zstd`（RFC 7694）：只有声明过的 deck-service / Drawing 节点才会收到 `Content-Encoding: zstd` 的 JSON 请求体（≥ 4 KiB，压缩后更小才发送）；对方回 415 时立即以 identity 重发，并在 10 分钟内不再对该节点压缩。`application/octet-stream` 的 deck 协议已在应用层 zstd，不重复编码。对 deck-service 的请求同时带 `Accept-Encoding: zstd`，响应按 `Content-Encoding` 在原有字节上限内解码；Drawing 响应是图片或小 JSON，不请求压缩。声明来自任意响应（deck 的 `/health`、`/state/masterdata`，Drawing 的 `/cache/identity` 轮询），所以首个大请求之前通常已经学到。
+
 ### 6.6 Bot 开通/登录流程
 
 ```

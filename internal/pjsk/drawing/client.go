@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/httpcoding"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 
@@ -72,6 +73,7 @@ func newHarukiDrawingClient(strict bool, legacyBaseURL string, targets []upstrea
 		logger:            newLogger,
 		localCache:        newLocalRenderCache(0),
 		directiveRejected: new(atomic.Int64),
+		coding:            httpcoding.NewNegotiator(),
 	}
 	for _, option := range options {
 		if option != nil {
@@ -265,24 +267,10 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 		return nil, fmt.Errorf("drawing request encode failed: %w", err)
 	}
 
-	request := c.client.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody(encodedBody)
 	directive := c.activeDirective()
-	if directive != nil {
-		directive.apply(request)
-		c.applyVersionHeaders(requestCtx, targetBaseURL, request, directive)
-		if ForceRenderFrom(requestCtx) {
-			request.SetHeader(headerRenderForce, "1")
-		}
-	}
-	if requestCtx != nil {
-		request.SetContext(requestCtx)
-	}
-
 	tPost := time.Now()
 	finishHTTP := commandtrace.MeasureOperation(requestCtx, "drawing.http")
-	resp, err := request.Post(targetBaseURL + endpoint)
+	resp, err := c.sendPrepared(requestCtx, targetBaseURL, endpoint, encodedBody, directive)
 	finishHTTP()
 	elapsed := time.Since(tPost)
 	if err != nil {
@@ -326,6 +314,45 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 		"response_bytes", len(resp.Body()),
 	)
 	return c.successBody(directive, resp)
+}
+
+// sendPrepared posts one encoded render request. The body goes out
+// zstd-encoded once the node has advertised support; a node that then
+// refuses the encoding (415) is withdrawn and the request resent as identity.
+func (c *HarukiDrawingClient) sendPrepared(requestCtx context.Context, targetBaseURL, endpoint string, encodedBody []byte, directive *renderDirective) (*resty.Response, error) {
+	body, coding := c.coding.PrepareBody(targetBaseURL, "application/json", encodedBody)
+	resp, err := c.postOnce(requestCtx, targetBaseURL, endpoint, body, coding, directive)
+	if err != nil || !httpcoding.RefusedEncoding(resp.StatusCode(), coding) {
+		return resp, err
+	}
+	c.coding.Reject(targetBaseURL)
+	c.logger.InfoContext(requestCtx, "drawing refused zstd body; resending identity",
+		"upstream", "drawing", "upstream_path", endpoint)
+	return c.postOnce(requestCtx, targetBaseURL, endpoint, encodedBody, "", directive)
+}
+
+func (c *HarukiDrawingClient) postOnce(requestCtx context.Context, targetBaseURL, endpoint string, body []byte, coding string, directive *renderDirective) (*resty.Response, error) {
+	request := c.client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(body)
+	if coding != "" {
+		request.SetHeader("Content-Encoding", coding)
+	}
+	if directive != nil {
+		directive.apply(request)
+		c.applyVersionHeaders(requestCtx, targetBaseURL, request, directive)
+		if ForceRenderFrom(requestCtx) {
+			request.SetHeader(headerRenderForce, "1")
+		}
+	}
+	if requestCtx != nil {
+		request.SetContext(requestCtx)
+	}
+	resp, err := request.Post(targetBaseURL + endpoint)
+	if err == nil {
+		c.coding.Observe(targetBaseURL, resp.Header())
+	}
+	return resp, err
 }
 
 // successBody branches a 200 on the directive: a degraded write and plain

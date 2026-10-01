@@ -1,89 +1,63 @@
 name: Release
+# The version comes from the tag only (version.Version is "dev" in source and set with
+# -ldflags -X), so the gate uses version-source: none and dry runs build v0.0.0-dev.<sha7>.
 
 on:
   push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
+    tags: ['v*']
+  workflow_dispatch: # dry run: builds everything, publishes nothing
 
-permissions: {}
+permissions:
+  contents: read
 
 concurrency:
-  group: release-${{ github.ref_name }}
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
-env:
-  BINARY_NAME: haruki-server
-
 jobs:
-  build:
-    name: Build ${{ matrix.name }}
-    runs-on: ubuntu-latest
+  gate:
+    name: Gate
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-            name: linux-amd64
-          - goos: linux
-            goarch: arm64
-            name: linux-arm64
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
+      checks: read
+    uses: seiunx-dev/ci-templates/.github/workflows/release-gate.yml@v1
+    with:
+      version-source: none
 
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
+  binaries:
+    name: Binaries
+    needs: gate
+    uses: seiunx-dev/ci-templates/.github/workflows/go-release.yml@v1
+    with:
+      version: ${{ needs.gate.outputs.version }}
+      tag: ${{ needs.gate.outputs.tag }}
+      binaries: haruki-server=.
+      # default ldflags: -s -w -X {module}/version.Version={tag} (v3.7.5, as before)
 
-      - name: Build binary
-        env:
-          CGO_ENABLED: 0
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-        run: |
-          mkdir -p dist
-          MODULE=$(go list -m)
-          VERSION="${{ github.ref_name }}"
-          go build -trimpath -ldflags "-s -w -X ${MODULE}/version.Version=${VERSION}" -o "dist/${{ env.BINARY_NAME }}" .
-          tar -czf "dist/${{ env.BINARY_NAME }}-${{ matrix.name }}.tar.gz" -C dist "${{ env.BINARY_NAME }}"
-
-      - name: Upload packaged artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: ${{ env.BINARY_NAME }}-${{ matrix.name }}
-          path: dist/${{ env.BINARY_NAME }}-${{ matrix.name }}.tar.gz
-          if-no-files-found: error
+  docker:
+    name: Docker
+    needs: gate
+    if: needs.gate.outputs.is-tag == 'true' # dry runs never push images
+    permissions:
+      contents: read
+      packages: write
+      pull-requests: read
+    uses: seiunx-dev/ci-templates/.github/workflows/docker.yml@v1
+    with:
+      # Built, not promoted: VERSION (the tag without "v", as before) is compiled into the
+      # binary, and the main image carries main-<sha7>. Only the final `go build` layer misses
+      # the main-written :buildcache.
+      version-build-arg: VERSION
+      cache-backend: registry
+      cache-mode: max
 
   publish:
-    name: Publish GitHub Release
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    name: GitHub Release
+    needs: [gate, binaries, docker]
+    if: needs.gate.outputs.is-tag == 'true'
     permissions:
       contents: write
-    steps:
-      - name: Download packaged artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          path: artifacts
-
-      - name: Generate checksums
-        run: |
-          cd artifacts
-          find . -type f -name "*.tar.gz" -exec sha256sum {} \; > "SHA256SUMS-${{ github.ref_name }}.txt"
-
-      - name: Upload release assets
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
-        with:
-          files: |
-            artifacts/**/*.tar.gz
-            artifacts/SHA256SUMS-${{ github.ref_name }}.txt
-          generate_release_notes: true
+    uses: seiunx-dev/ci-templates/.github/workflows/gh-release.yml@v1
+    with:
+      tag: ${{ needs.gate.outputs.tag }}
+      prerelease: ${{ needs.gate.outputs.prerelease }}

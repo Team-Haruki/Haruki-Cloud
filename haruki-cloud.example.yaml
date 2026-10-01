@@ -189,6 +189,19 @@ tracker:
   user_agent: "HarukiCloud/1.0"
 
 pjsk_render:
+  # Operator-only YAML settings, keyed by server + game UID. No DB/API/command setter.
+  # Paths are relative to Drawing's data directory; each part can use a different folder.
+  # All six files are required. Use an empty transparent PNG for an unused decoration.
+  player_frame_overrides: []
+  # - server: cn
+  #   user_id: "1234567890123456789"
+  #   horizontal:
+  #     base: static_images/custom_frames/my_frame/horizontal/frame_base.png
+  #     centertop: static_images/custom_frames/my_frame/horizontal/frame_centertop.png
+  #     lefttop: static_images/custom_frames/my_frame/horizontal/frame_lefttop.png
+  #     righttop: static_images/custom_frames/my_frame/horizontal/frame_righttop.png
+  #     leftbottom: static_images/custom_frames/my_frame/horizontal/frame_leftbottom.png
+  #     rightbottom: static_images/custom_frames/my_frame/horizontal/frame_rightbottom.png
   enabled: true
   drawing_base_url: "http://INTERNAL_IP_1:28000"
   # drawing_targets:

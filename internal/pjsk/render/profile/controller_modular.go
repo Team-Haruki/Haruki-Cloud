@@ -30,7 +30,7 @@ func (c *Controller) BuildModularProfileRequestFromAPIWithSnapshot(query Query, 
 
 	state := resolveProfileRenderState(resp, snap)
 	leaderImagePath := c.buildLeaderImagePathFromSource(source, state.leaderCardID, state.leaderTrainedArt, region)
-	framePaths, hasFrame := c.buildFramePaths(source, snapshotFrames(snap))
+	framePaths, hasFrame := c.buildAccountFramePaths(source, snapshotFrames(snap), region.String(), strconv.FormatInt(resp.User.UserID, 10))
 	var framePath *string
 	if framePaths != nil {
 		framePath = new(framePaths.Base)

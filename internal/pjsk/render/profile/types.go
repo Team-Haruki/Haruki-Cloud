@@ -37,13 +37,14 @@ type censorService interface {
 }
 
 type Controller struct {
-	sources     *regionsource.Registry[DataSource]
-	drawing     *drawing.HarukiDrawingClient
-	assets      *assets.AssetHelper
-	assetReader *assets.AssetReader
-	snapshot    snapshot.Snapshot
-	censor      censorService
-	requestCtx  context.Context
+	frameOverrides map[string]drawing.PlayerFrameParts
+	sources        *regionsource.Registry[DataSource]
+	drawing        *drawing.HarukiDrawingClient
+	assets         *assets.AssetHelper
+	assetReader    *assets.AssetReader
+	snapshot       snapshot.Snapshot
+	censor         censorService
+	requestCtx     context.Context
 }
 
 // ── Query ───────────────────────────────────────────────────────────────────

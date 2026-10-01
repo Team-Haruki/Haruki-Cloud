@@ -867,6 +867,7 @@ type MySekaiCNWhitelistEntry struct {
 }
 
 type PJSKRenderConfig struct {
+	PlayerFrameOverrides      []PlayerFrameOverride           `yaml:"player_frame_overrides"`
 	AssetIndex                AssetIndexConfig                `yaml:"asset_index"`
 	DrawingCacheVersions      DrawingCacheVersionsConfig      `yaml:"drawing_cache_versions"`
 	CachePersistenceNamespace string                          `yaml:"cache_persistence_namespace"`
@@ -1125,6 +1126,10 @@ func ReadConfig(path string) (Config, error) {
 	err = yaml.Unmarshal(data, &cfg)
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to unmarshal config file: %w", err)
+	}
+
+	if err := ValidatePlayerFrameOverrides(cfg.PJSKRender.PlayerFrameOverrides); err != nil {
+		return Config{}, err
 	}
 
 	// Normalise profile from YAML (may be empty → defaults to "dev").

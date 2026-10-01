@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"haruki-cloud/config"
 	"time"
 
 	pjskDB "haruki-cloud/database/pjsk"
@@ -42,6 +43,7 @@ import (
 // ── Config types ────────────────────────────────────────────────────────────
 
 type Config struct {
+	PlayerFrameOverrides    []config.PlayerFrameOverride
 	InitContext             context.Context
 	DefaultRegion           renderregion.Value
 	DrawingBaseURL          string

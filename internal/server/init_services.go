@@ -155,6 +155,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	}
 
 	runtime := renderapp.New(sekaiClient, pjskClient, renderapp.Config{
+		PlayerFrameOverrides:      harukiConfig.Cfg.PJSKRender.PlayerFrameOverrides,
 		InitContext:               ctx,
 		CachePersistenceNamespace: cachePersistenceNamespace(harukiConfig.Cfg.PJSKRender.CachePersistenceNamespace),
 		AssetIndex: assetindex.Config{

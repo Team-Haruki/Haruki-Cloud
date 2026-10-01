@@ -105,7 +105,7 @@ func (c *Controller) buildProfileRequestFromAPIState(query Query, resp *sekai.Ge
 	state := resolveProfileRenderState(resp, snapshot)
 	leaderImagePath := c.buildLeaderImagePathFromSource(source, state.leaderCardID, state.leaderTrainedArt, region)
 
-	framePaths, hasFrame := c.buildFramePaths(source, frames)
+	framePaths, hasFrame := c.buildAccountFramePaths(source, frames, region.String(), strconv.FormatInt(resp.User.UserID, 10))
 	var framePath *string
 	if framePaths != nil {
 		framePath = new(framePaths.Base)
@@ -180,7 +180,7 @@ func (c *Controller) buildDetailedProfileCardFromAPIState(query Query, resp *sek
 	state := resolveProfileRenderState(resp, snapshot)
 	leaderImagePath := c.buildLeaderImagePathFromSource(source, state.leaderCardID, state.leaderTrainedArt, region)
 
-	framePaths, hasFrame := c.buildFramePaths(source, frames)
+	framePaths, hasFrame := c.buildAccountFramePaths(source, frames, region.String(), strconv.FormatInt(resp.User.UserID, 10))
 	var framePath *string
 	if framePaths != nil {
 		framePath = new(framePaths.Base)

@@ -271,6 +271,7 @@ func (c *appDatabaseControllers) configureDefaultProvider(sekaiClient *sekaiDB.C
 	c.music = music.NewController(musicAdapter, drawingClient, assetHelper, snapshotService, cfg.MetaLoader)
 	c.music.SetCustomMusicScoreClient(cfg.SekaiAPI)
 	c.profiles = profile.NewController(profile.NewProviderAdapter(c.provider), drawingClient, assetHelper, snapshotService)
+	c.profiles.SetFrameOverrides(cfg.PlayerFrameOverrides)
 	c.stamps = stamp.NewController(stamp.NewProviderAdapter(c.provider), drawingClient, assetHelper)
 	c.virtual = vlive.NewControllerWithDrawing(vlive.NewProviderAdapter(c.provider), drawingClient, assetHelper, cfg.DefaultRegion)
 }

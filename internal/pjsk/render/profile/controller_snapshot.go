@@ -37,7 +37,7 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		return nil, fmt.Errorf("user snapshot is missing profile data")
 	}
 
-	framePaths, hasFrame := c.buildFramePaths(source, raw.UserFrames)
+	framePaths, hasFrame := c.buildAccountFramePaths(source, raw.UserFrames, region.String(), detail.ID)
 	var framePath *string
 	if framePaths != nil {
 		framePath = new(framePaths.Base)

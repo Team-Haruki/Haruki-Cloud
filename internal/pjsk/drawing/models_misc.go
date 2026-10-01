@@ -3,17 +3,18 @@ package drawing
 // =========================== Misc Models ===========================
 
 type PlayerFramePaths struct {
-	FrameType       string `json:"frame_type,omitempty"`
-	SideLeftTop     string `json:"side_left_top,omitempty"`
-	SideRightTop    string `json:"side_right_top,omitempty"`
-	SideLeftBottom  string `json:"side_left_bottom,omitempty"`
-	SideRightBottom string `json:"side_right_bottom,omitempty"`
-	Base            string `json:"base"`
-	CenterTop       string `json:"centertop"`
-	LeftBottom      string `json:"leftbottom"`
-	LeftTop         string `json:"lefttop"`
-	RightBottom     string `json:"rightbottom"`
-	RightTop        string `json:"righttop"`
+	Horizontal      *PlayerFrameParts `json:"horizontal,omitempty"`
+	FrameType       string            `json:"frame_type,omitempty"`
+	SideLeftTop     string            `json:"side_left_top,omitempty"`
+	SideRightTop    string            `json:"side_right_top,omitempty"`
+	SideLeftBottom  string            `json:"side_left_bottom,omitempty"`
+	SideRightBottom string            `json:"side_right_bottom,omitempty"`
+	Base            string            `json:"base"`
+	CenterTop       string            `json:"centertop"`
+	LeftBottom      string            `json:"leftbottom"`
+	LeftTop         string            `json:"lefttop"`
+	RightBottom     string            `json:"rightbottom"`
+	RightTop        string            `json:"righttop"`
 }
 
 type CharaBirthdayCard struct {
@@ -99,4 +100,14 @@ func IntPtr(i int) *int {
 
 func Int64Ptr(i int64) *int64 {
 	return &i
+}
+
+// PlayerFrameParts transports explicitly configured local sprites to Drawing.
+type PlayerFrameParts struct {
+	Base        string `json:"base"`
+	CenterTop   string `json:"centertop"`
+	LeftTop     string `json:"lefttop"`
+	RightTop    string `json:"righttop"`
+	LeftBottom  string `json:"leftbottom"`
+	RightBottom string `json:"rightbottom"`
 }

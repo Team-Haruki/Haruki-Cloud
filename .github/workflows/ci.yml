@@ -24,7 +24,9 @@ jobs:
     with:
       staticcheck-command: go run -modfile=.github/tools/go.mod honnef.co/go/tools/cmd/staticcheck
       postgres-image: postgres:17-alpine
-      env: HARUKI_IMAGECACHE_TEST_DSN=${CI_POSTGRES_URL}
+      # Spelled out instead of ${CI_POSTGRES_URL} (host "localhost"): the imagecache lifecycle
+      # tests refuse any DSN whose host is not literally 127.0.0.1 or ::1.
+      env: HARUKI_IMAGECACHE_TEST_DSN=postgres://postgres:postgres@127.0.0.1:5432/test?sslmode=disable
       # One race run produces the coverage (the old sonar.yml ran the suite a second time).
       # Same coverpkg set and 90% gate as the old Sonar job: generated ent code and the
       # database/ schemas are left out.

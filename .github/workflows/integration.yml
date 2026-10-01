@@ -30,6 +30,6 @@ jobs:
       # (no Go code reads them today).
       env: |
         HARUKI_RUN_INTEGRATION=1
-        HARUKI_IMAGECACHE_TEST_DSN=${CI_POSTGRES_URL}
+        HARUKI_IMAGECACHE_TEST_DSN=postgres://postgres:postgres@127.0.0.1:5432/test?sslmode=disable
         HARUKI_TEST_DB_URL=host=localhost port=5432 user=postgres password=postgres dbname=test sslmode=disable
         HARUKI_TEST_REDIS_URL=localhost:6379

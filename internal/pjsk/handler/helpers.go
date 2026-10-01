@@ -16,6 +16,7 @@ func makeCommandRequest(ctx HarrukiSekaiHandlerContext, module parser.TargetModu
 		IsHelp:            ctx.Flags()["is_help"],
 		IsVerbose:         ctx.Flags()["is_verbose"],
 		IsPreview:         ctx.Flags()["is_preview"],
+		IsForce:           ctx.Flags()["is_force"],
 		RequesterPlatform: ctx.Platform,
 		RequesterUserID:   ctx.UserId,
 	}

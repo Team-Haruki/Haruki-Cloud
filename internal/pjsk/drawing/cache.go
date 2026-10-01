@@ -50,6 +50,9 @@ func runSharedRenderFlight(parent context.Context, work func(context.Context) ([
 		displaytime.RequestTimeZoneFromContext(parent),
 	)
 	detached = attachVersions(detached, versionFrom(parent))
+	if ForceRenderFrom(parent) {
+		detached = WithForceRender(detached)
+	}
 	// Artifact mode: the same window also covers Drawing's encode + upload.
 	if mode := artifactModeFrom(parent); mode != nil {
 		timeout += mode.artifactTimeout
@@ -254,19 +257,26 @@ func (lc *localRenderCache) RenderSharedContext(ctx context.Context, endpoint st
 		return render(ctx)
 	}
 	ttl := policy.TTL
-	if cached, ok := lc.get(key); ok {
-		commandtrace.RecordOperation(ctx, drawingCacheHitTraceField, 0)
-		cacheLogger.DebugContext(ctx, "drawing local cache hit", "upstream_path", endpoint)
-		return cached, nil
+	forced := ForceRenderFrom(ctx)
+	if forced {
+		commandtrace.RecordOperation(ctx, drawingCacheForcedTraceField, 0)
+	} else {
+		if cached, ok := lc.get(key); ok {
+			commandtrace.RecordOperation(ctx, drawingCacheHitTraceField, 0)
+			cacheLogger.DebugContext(ctx, "drawing local cache hit", "upstream_path", endpoint)
+			return cached, nil
+		}
+		commandtrace.RecordOperation(ctx, "drawing.cache_miss", 0)
 	}
-	commandtrace.RecordOperation(ctx, "drawing.cache_miss", 0)
 	finishWait := commandtrace.MeasureOperation(ctx, "drawing.cache_wait")
 	callerToken := new(renderFlightToken)
-	result := lc.flight.DoChan(key, func() (any, error) {
+	result := lc.flight.DoChan(forceRenderFlightKey(ctx, key), func() (any, error) {
 		flightResult := runSharedRenderFlight(ctx, func(sharedCtx context.Context) ([]byte, error) {
-			if cached, ok := lc.get(key); ok {
-				commandtrace.RecordOperation(sharedCtx, drawingCacheHitTraceField, 0)
-				return cached, nil
+			if !forced {
+				if cached, ok := lc.get(key); ok {
+					commandtrace.RecordOperation(sharedCtx, drawingCacheHitTraceField, 0)
+					return cached, nil
+				}
 			}
 			data, err := render(sharedCtx)
 			if err != nil {
@@ -388,7 +398,7 @@ func (c *RenderCacheClient) renderRemoteImageFlight(ctx context.Context, endpoin
 	finishWait := commandtrace.MeasureOperation(ctx, "drawing.cache_wait")
 	defer finishWait()
 	callerToken := new(renderFlightToken)
-	result := c.flight.DoChan(key, func() (any, error) {
+	result := c.flight.DoChan(forceRenderFlightKey(ctx, key), func() (any, error) {
 		var image ImageResult
 		flightResult := runSharedRenderFlight(ctx, func(sharedCtx context.Context) ([]byte, error) {
 			var err error
@@ -415,6 +425,11 @@ func (c *RenderCacheClient) renderRemoteImageWork(ctx context.Context, endpoint,
 	// neither lookup can hit: render straight through.
 	if artifactModeFrom(ctx).skipsStore(policy.APIPath) {
 		commandtrace.RecordOperation(ctx, "drawing.cache_no_store_path", 0)
+		return c.renderRemoteMiss(ctx, endpoint, key, policy, render)
+	}
+	// Forced: skip the pending and index lookups; the miss path rewrites both.
+	if ForceRenderFrom(ctx) {
+		commandtrace.RecordOperation(ctx, drawingCacheForcedTraceField, 0)
 		return c.renderRemoteMiss(ctx, endpoint, key, policy, render)
 	}
 	if data, ref, ok := c.pending.lookupEntry(key); ok {

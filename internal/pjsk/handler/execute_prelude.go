@@ -58,6 +58,7 @@ func PrepareExecutionRuntime(ctx context.Context, resolved *CommandRequest, app 
 	finishTimeZone()
 	ctx = displaytime.WithRequestTimeZone(ctx, timeZone)
 	ctx = rendersnapshot.WithRequestCache(ctx)
+	ctx = applyForceRender(ctx, resolved, commandForceLimiter, forceRenderCooldown())
 
 	return &ExecutionRuntime{
 		Context:  ctx,

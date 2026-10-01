@@ -272,6 +272,9 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 	if directive != nil {
 		directive.apply(request)
 		c.applyVersionHeaders(requestCtx, targetBaseURL, request, directive)
+		if ForceRenderFrom(requestCtx) {
+			request.SetHeader(headerRenderForce, "1")
+		}
 	}
 	if requestCtx != nil {
 		request.SetContext(requestCtx)

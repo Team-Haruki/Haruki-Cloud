@@ -207,6 +207,20 @@ func (e *Extractor) ExtractHelp(text string) ExtractResult[bool] {
 	return ExtractResult[bool]{Value: false, Remaining: text, Found: false}
 }
 
+// reForce matches the render-cache bypass flag. `-f` is taken (music/sk use it
+// for "full"), so the flag is the long form or the Chinese 强制刷新, each a
+// whole whitespace-delimited token.
+var reForce = regexp.MustCompile(`(?i)(^|\s+)(--force|强制刷新)(\s+|$)`)
+
+// ExtractForce reports and strips the render-cache bypass flag.
+func (e *Extractor) ExtractForce(text string) ExtractResult[bool] {
+	if reForce.MatchString(text) {
+		remaining := reForce.ReplaceAllString(text, " ")
+		return ExtractResult[bool]{Value: true, Remaining: strings.TrimSpace(remaining), Found: true}
+	}
+	return ExtractResult[bool]{Value: false, Remaining: text, Found: false}
+}
+
 var reVerbose = regexp.MustCompile(`(?i)(^|\s+)(-v|--verbose)(\s+|$)`)
 
 func (e *Extractor) ExtractVerbose(text string) ExtractResult[bool] {

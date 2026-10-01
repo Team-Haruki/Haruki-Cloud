@@ -216,6 +216,7 @@ pjsk_render:
   drawing_cache:
     storage_dir: "/data/haruki/cache/drawing"  # only seeds the legacy derivation of storage.cache
     ttl: "10m"                         # endpoint rules may override this (e.g. /sk uses 10s buckets)
+    force_cooldown: "1m"               # per user+command limit for --force/强制刷新; <0 disables. env HARUKI_PJSK_RENDER_DRAWING_CACHE_FORCE_COOLDOWN
   drawing_timeout: "30s"      # env HARUKI_PJSK_RENDER_DRAWING_TIMEOUT
   drawing_retry_count: 2      # env HARUKI_PJSK_RENDER_DRAWING_RETRY_COUNT
   # Drawing artifact mode (C13 directive headers; Drawing uploads the image and answers an ArtifactRef).

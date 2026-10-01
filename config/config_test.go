@@ -400,6 +400,34 @@ func TestApplyEnvOverridesPJSKRenderImageCacheAndDrawing(t *testing.T) {
 	testutil.Require(t, render.DrawingRetryCount == 4, "drawing retry count = %d", render.DrawingRetryCount)
 }
 
+func TestReadConfigDiagnosticsDefaultsDisabled(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "haruki-cloud.yaml")
+	testutil.Require(t, os.WriteFile(configPath, []byte("profile: dev\n"), 0o600) == nil, "write config")
+	cfg, err := ReadConfig(configPath)
+	testutil.Require(t, err == nil, "ReadConfig() error = %v", err)
+	testutil.Require(t, cfg.Diagnostics.ListenAddr == "", "diagnostics listen_addr = %q, want empty (disabled)", cfg.Diagnostics.ListenAddr)
+	testutil.Require(t, !cfg.Diagnostics.AllowNonLoopback, "diagnostics allow_non_loopback must default to false")
+}
+
+func TestReadConfigDiagnostics(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "haruki-cloud.yaml")
+	data := []byte("profile: dev\ndiagnostics:\n  listen_addr: \"127.0.0.1:6060\"\n  allow_non_loopback: true\n")
+	testutil.Require(t, os.WriteFile(configPath, data, 0o600) == nil, "write config")
+	cfg, err := ReadConfig(configPath)
+	testutil.Require(t, err == nil, "ReadConfig() error = %v", err)
+	testutil.Require(t, cfg.Diagnostics.ListenAddr == "127.0.0.1:6060", "diagnostics listen_addr = %q", cfg.Diagnostics.ListenAddr)
+	testutil.Require(t, cfg.Diagnostics.AllowNonLoopback, "diagnostics allow_non_loopback = false, want true")
+}
+
+func TestApplyEnvOverridesDiagnostics(t *testing.T) {
+	t.Setenv("HARUKI_DIAGNOSTICS_LISTEN_ADDR", "127.0.0.1:6061")
+	t.Setenv("HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK", "true")
+	cfg := &Config{Diagnostics: DiagnosticsConfig{ListenAddr: "127.0.0.1:6060"}}
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	testutil.Require(t, cfg.Diagnostics.ListenAddr == "127.0.0.1:6061", "diagnostics listen_addr = %q, want env override", cfg.Diagnostics.ListenAddr)
+	testutil.Require(t, cfg.Diagnostics.AllowNonLoopback, "HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK=true not applied")
+}
+
 func TestApplyEnvOverridesStorageSlots(t *testing.T) {
 	for _, slot := range storage.Slots {
 		t.Run(string(slot), func(t *testing.T) {

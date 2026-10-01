@@ -454,3 +454,13 @@ security:
   alert_webhook_url: ""
   alert_threshold: 5
   alert_window: 10m
+
+diagnostics:
+  # Opt-in plain-HTTP listener, separate from the public server, serving
+  # /debug/pprof/*, /debug/vars (expvar) and /debug/runtime (heap, next GC,
+  # GOMEMLIMIT, GOGC, GC CPU fraction, goroutines as JSON). It has no
+  # authentication: keep it on loopback and reach it with docker exec, an SSH
+  # tunnel or a 127.0.0.1-only port publish. Empty disables it.
+  # Env: HARUKI_DIAGNOSTICS_LISTEN_ADDR / HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK.
+  listen_addr: ""             # e.g. "127.0.0.1:6060"
+  allow_non_loopback: false   # a non-loopback host is refused (logged, service keeps running) unless true

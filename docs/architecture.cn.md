@@ -238,7 +238,13 @@ sekai_api:                 # 上游 Sekai API 客户端
 
 tracker:                   # SK Tracker 客户端
   base_url: ""
+
+diagnostics:               # 可选的运维诊断监听（独立于公网 Fiber 服务的 net/http 明文端口）
+  listen_addr: ""          # 例如 "127.0.0.1:6060"；空则关闭。提供 /debug/pprof/*、/debug/vars、/debug/runtime（堆、next GC、GOMEMLIMIT、GOGC、GC CPU 占比、goroutine 数）
+  allow_non_loopback: false # 无鉴权；非 loopback 地址会被拒绝启动（记 ERROR，主服务照常运行），除非显式置 true
 ```
+
+`diagnostics` 的环境变量为 `HARUKI_DIAGNOSTICS_LISTEN_ADDR` / `HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK`。生产上在 `cloud.env` 里设 `HARUKI_DIAGNOSTICS_LISTEN_ADDR=127.0.0.1:6060`，然后 `docker exec haruki-cloud-v3 wget -qO- http://127.0.0.1:6060/debug/runtime`，或经 SSH 隧道用 `go tool pprof http://127.0.0.1:6060/debug/pprof/profile`。诊断监听随主服务一起优雅关闭。
 
 ---
 

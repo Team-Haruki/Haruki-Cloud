@@ -15,6 +15,8 @@ func mysekaiSuiteFields(mode string) []string {
 		fields = []string{"userMysekaiCharacterTalks", "userMysekaiBlueprints", "userMysekaiGamedata"}
 	case mySekaiDoorUpgradeCommand:
 		fields = []string{"userMysekaiGates", "userMysekaiMaterials", "userMysekaiGamedata"}
+	case mySekaiInfoPanelCommand:
+		fields = []string{"userMysekaiGamedata"}
 	default:
 		return nil
 	}

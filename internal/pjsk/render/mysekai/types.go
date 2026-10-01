@@ -141,6 +141,11 @@ type DoorUpgradeQuery struct {
 	Profile  *drawing.ProfileCardRequest `json:"-"`
 }
 
+type InfoPanelQuery struct {
+	Region  string                      `json:"region,omitempty"`
+	Profile *drawing.ProfileCardRequest `json:"-"`
+}
+
 type MusicRecordQuery struct {
 	Region  string                      `json:"region,omitempty"`
 	ShowID  *bool                       `json:"show_id,omitempty"`

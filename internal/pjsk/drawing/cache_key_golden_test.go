@@ -198,12 +198,13 @@ func TestRenderCacheRuleTableShape(t *testing.T) {
 	}
 	sort.Strings(endpoints)
 	// 38 rules from before the storage work, plus /api/pjsk/chart added by
-	// T16 (the chart static cache moved onto the render path).
-	if len(endpoints) != 40 {
-		t.Fatalf("rule table has %d /api/pjsk/ entries (incl. disabled), want 40: %v", len(endpoints), endpoints)
+	// T16 (the chart static cache moved onto the render path) and the
+	// standalone info panel.
+	if len(endpoints) != 41 {
+		t.Fatalf("rule table has %d /api/pjsk/ entries (incl. disabled), want 41: %v", len(endpoints), endpoints)
 	}
-	if len(renderCacheRules) != 39 {
-		t.Fatalf("renderCacheRules has %d entries, want 39", len(renderCacheRules))
+	if len(renderCacheRules) != 40 {
+		t.Fatalf("renderCacheRules has %d entries, want 40", len(renderCacheRules))
 	}
 	if rule := resolveRenderCacheRule("/api/pjsk/chart"); !rule.Enabled || rule.Infinite || rule.TTL != 7*24*time.Hour {
 		t.Fatalf("chart rule = %+v, want a 7-day TTL", rule)

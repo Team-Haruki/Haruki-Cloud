@@ -75,6 +75,13 @@ var (
 			Enabled: true,
 			TTL:     renderCacheTTLSevenDay,
 		},
+		// The watermark DT is the render time and the card shows each source's
+		// relative age, so a cached panel is only reused within the same minute.
+		InfoPanelEndpoint: {
+			Enabled:          true,
+			TTL:              renderCacheTTLTwoHour,
+			BucketFieldNames: renderCacheBucketSet(time.Minute, "dt"),
+		},
 		"/api/pjsk/costume/detail": {
 			Enabled: true,
 			TTL:     renderCacheTTLSevenDay,

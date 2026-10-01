@@ -22,6 +22,9 @@ type ProfileDataSource struct {
 	Mode       *string `json:"mode,omitempty"`
 }
 
+// InfoPanelEndpoint renders a ProfileCardRequest as the standalone info panel.
+const InfoPanelEndpoint = "/api/pjsk/profile/info-panel"
+
 type ProfileCardRequest struct {
 	Profile      *BasicProfile       `json:"profile,omitempty"`
 	DataSources  []ProfileDataSource `json:"data_sources"`

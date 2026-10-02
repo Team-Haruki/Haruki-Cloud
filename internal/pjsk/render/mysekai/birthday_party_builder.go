@@ -17,7 +17,9 @@ const userBirthdayPartiesKey = "userBirthdayParties"
 // obtainedMysekaiMaterialCount, which the client compares with
 // birthdayPartyDeliveryTotalRewards.requirement and shows as
 // "<count>/<requirement>" (it keeps counting past the last requirement). The
-// target is that party's highest requirement.
+// target is that party's highest requirement. Each party also carries when
+// 露滴 stop dropping (birthdayStartAt) and when 浇水 ends (closedAt), matching
+// the 露滴掉落 / 浇水开放 spans of the birthday command.
 //
 // Nothing is returned when the snapshot carries no userBirthdayParties (no
 // data to show) or the region's master lacks either table.
@@ -77,6 +79,8 @@ func (c *Controller) extractBirthdayParties(region renderregion.Value, merged ma
 			CharacterColor:    stringValueFrom(c.masterdata.loadMapByID("gameCharacterUnits.json")[unitID], "colorCode", "color_code"),
 			Level:             level,
 			MaxLevel:          maxLevel,
+			DropEndAt:         int64NumberFrom(party, "birthdayStartAt", "birthday_start_at"),
+			WateringEndAt:     int64NumberFrom(party, "closedAt", "closed_at"),
 		})
 	}
 	if len(result) == 0 {

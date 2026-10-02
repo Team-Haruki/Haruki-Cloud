@@ -61,7 +61,9 @@ type MysekaiResourceNumber struct {
 
 // MysekaiBirthdayPartyProgress is one running birthday party: Level is the
 // user's obtainedMysekaiMaterialCount and MaxLevel the party's highest
-// delivery total reward requirement (Level may exceed it).
+// delivery total reward requirement (Level may exceed it). DropEndAt is the
+// party's birthdayStartAt (露滴 stop dropping) and WateringEndAt its closedAt
+// (浇水 ends), both in epoch milliseconds.
 type MysekaiBirthdayPartyProgress struct {
 	BirthdayPartyID   int    `json:"birthday_party_id"`
 	CharacterUnitID   int    `json:"character_unit_id"`
@@ -70,6 +72,8 @@ type MysekaiBirthdayPartyProgress struct {
 	CharacterColor    string `json:"character_color,omitempty"`
 	Level             int    `json:"level"`
 	MaxLevel          int    `json:"max_level"`
+	DropEndAt         int64  `json:"drop_end_at,omitempty"`
+	WateringEndAt     int64  `json:"watering_end_at,omitempty"`
 }
 
 type MysekaiResourceRequest struct {

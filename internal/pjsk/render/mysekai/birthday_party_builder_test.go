@@ -14,10 +14,12 @@ import (
 
 // JP birthdayParties ids 6/7 (Rin and Len, run together) and 1 (Haruka).
 const (
-	testRinLenStart = int64(1766502000000) // 2025-12-23 15:00 UTC
-	testRinLenClose = int64(1767020399000) // 2025-12-29 14:59:59 UTC
-	testHarukaStart = int64(1759330800000)
-	testHarukaClose = int64(1759849199000)
+	testRinLenStart    = int64(1766502000000) // 2025-12-23 15:00 UTC
+	testRinLenBirthday = int64(1766761200000) // 2025-12-26 15:00 UTC
+	testRinLenClose    = int64(1767020399000) // 2025-12-29 14:59:59 UTC
+	testHarukaStart    = int64(1759330800000)
+	testHarukaBirthday = int64(1759590000000)
+	testHarukaClose    = int64(1759849199000)
 )
 
 func writeBirthdayPartyMasterdata(t *testing.T, withRewards bool) string {
@@ -27,9 +29,9 @@ func writeBirthdayPartyMasterdata(t *testing.T, withRewards bool) string {
 		t.Fatalf("mkdir masterdata: %v", err)
 	}
 	writeTestJSON(t, filepath.Join(dir, "birthdayParties.json"), []map[string]any{
-		{"id": 1, "gameCharacterUnitId": 6, "startAt": testHarukaStart, "birthdayStartAt": 1759590000000, "closedAt": testHarukaClose, "assetbundleName": "haruka_2025"},
-		{"id": 7, "gameCharacterUnitId": 39, "startAt": testRinLenStart, "birthdayStartAt": 1766761200000, "closedAt": testRinLenClose, "assetbundleName": "len_2025"},
-		{"id": 6, "gameCharacterUnitId": 33, "startAt": testRinLenStart, "birthdayStartAt": 1766761200000, "closedAt": testRinLenClose, "assetbundleName": "rin_2025"},
+		{"id": 1, "gameCharacterUnitId": 6, "startAt": testHarukaStart, "birthdayStartAt": testHarukaBirthday, "closedAt": testHarukaClose, "assetbundleName": "haruka_2025"},
+		{"id": 7, "gameCharacterUnitId": 39, "startAt": testRinLenStart, "birthdayStartAt": testRinLenBirthday, "closedAt": testRinLenClose, "assetbundleName": "len_2025"},
+		{"id": 6, "gameCharacterUnitId": 33, "startAt": testRinLenStart, "birthdayStartAt": testRinLenBirthday, "closedAt": testRinLenClose, "assetbundleName": "rin_2025"},
 	})
 	if withRewards {
 		rewards := []map[string]any{}
@@ -86,6 +88,8 @@ func TestBuildResourceRequestShowsRunningBirthdayPartyLevel(t *testing.T) {
 		CharacterColor:    "#99ccff",
 		Level:             30,
 		MaxLevel:          400,
+		DropEndAt:         testHarukaBirthday,
+		WateringEndAt:     testHarukaClose,
 	}
 	if got != want {
 		t.Fatalf("birthday party = %+v, want %+v", got, want)
@@ -201,8 +205,8 @@ func TestBirthdayPartyCharacterNameJoinsLatinNames(t *testing.T) {
 func TestDBMasterdataStoreServesBirthdayPartyTables(t *testing.T) {
 	store := newTestDBMasterdataStore(t)
 	for _, stmt := range []string{
-		`CREATE TABLE birthdayparties (id INTEGER PRIMARY KEY AUTOINCREMENT, game_id INTEGER, server_region TEXT, game_character_unit_id INTEGER, start_at INTEGER, closed_at INTEGER)`,
-		`INSERT INTO birthdayparties (game_id, server_region, game_character_unit_id, start_at, closed_at) VALUES (1, 'jp', 6, 1759330800000, 1759849199000), (1, 'cn', 6, 1, 2)`,
+		`CREATE TABLE birthdayparties (id INTEGER PRIMARY KEY AUTOINCREMENT, game_id INTEGER, server_region TEXT, game_character_unit_id INTEGER, start_at INTEGER, birthday_start_at INTEGER, closed_at INTEGER)`,
+		`INSERT INTO birthdayparties (game_id, server_region, game_character_unit_id, start_at, birthday_start_at, closed_at) VALUES (1, 'jp', 6, 1759330800000, 1759590000000, 1759849199000), (1, 'cn', 6, 1, 2, 3)`,
 		`CREATE TABLE birthdaypartydeliverytotalrewards (id INTEGER PRIMARY KEY AUTOINCREMENT, game_id INTEGER, server_region TEXT, birthday_party_id INTEGER, requirement INTEGER)`,
 		`INSERT INTO birthdaypartydeliverytotalrewards (game_id, server_region, birthday_party_id, requirement) VALUES (45, 'jp', 1, 380), (46, 'jp', 1, 400)`,
 	} {
@@ -211,10 +215,41 @@ func TestDBMasterdataStoreServesBirthdayPartyTables(t *testing.T) {
 		}
 	}
 	parties := store.loadMapByID("birthdayParties.json")
-	if len(parties) != 1 || intNumber(parties[1]["gameCharacterUnitId"], 0) != 6 || int64Number(parties[1]["closedAt"], 0) != testHarukaClose {
+	if len(parties) != 1 || intNumber(parties[1]["gameCharacterUnitId"], 0) != 6 || int64Number(parties[1]["closedAt"], 0) != testHarukaClose ||
+		int64Number(parties[1]["birthdayStartAt"], 0) != testHarukaBirthday {
 		t.Fatalf("birthday parties = %+v", parties)
 	}
 	if got := birthdayPartyMaxLevels(store.loadList("birthdayPartyDeliveryTotalRewards.json")); got[1] != 400 {
 		t.Fatalf("max levels = %+v", got)
+	}
+}
+
+func TestBuildResourceRequestCarriesBirthdayPartyDropAndWateringEnds(t *testing.T) {
+	dir := writeBirthdayPartyMasterdata(t, true)
+	data := userBirthdayPartiesJSON(`{"birthdayPartyId": 6, "obtainedMysekaiMaterialCount": 12}`)
+
+	// After the birthday the 露滴 have stopped dropping, but the end times are
+	// still sent: the drawer compares them with the render time.
+	for _, now := range []int64{testRinLenStart, testRinLenBirthday + 1} {
+		got := buildBirthdayPartyRequest(t, dir, data, now).BirthdayParties
+		if len(got) != 2 {
+			t.Fatalf("birthday parties = %+v, want two", got)
+		}
+		for _, party := range got {
+			if party.DropEndAt != testRinLenBirthday || party.WateringEndAt != testRinLenClose {
+				t.Fatalf("party %d drop/watering ends = %d/%d, want %d/%d",
+					party.BirthdayPartyID, party.DropEndAt, party.WateringEndAt, testRinLenBirthday, testRinLenClose)
+			}
+		}
+	}
+}
+
+func TestBirthdayPartyDropEndIsOmittedWithoutBirthdayStartAt(t *testing.T) {
+	body, err := json.Marshal(drawing.MysekaiBirthdayPartyProgress{BirthdayPartyID: 1, CharacterUnitID: 6, WateringEndAt: testHarukaClose})
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if strings.Contains(string(body), "drop_end_at") || !strings.Contains(string(body), `"watering_end_at":1759849199000`) {
+		t.Fatalf("payload = %s", body)
 	}
 }

@@ -14,6 +14,8 @@ import (
 )
 
 var fileToTable = map[string]string{
+	"birthdayParties.json":                                    "birthdayparties",
+	"birthdayPartyDeliveryTotalRewards.json":                  "birthdaypartydeliverytotalrewards",
 	"mysekaiFixtures.json":                                    "mysekaifixtures",
 	"customMusicScoreTags.json":                               "custommusicscoretags",
 	"mysekaiFixtureMainGenres.json":                           "mysekaifixturemaingenres",
@@ -340,7 +342,9 @@ func (s *dbMasterdataStore) queryTable(ctx context.Context, table string) ([]map
 // Keep complete statements in this whitelist because SQL identifiers cannot be
 // passed as bind parameters.
 var masterdataTableQueries = map[string]string{
-	"cards": `SELECT * FROM "cards" WHERE server_region = $1`,
+	"birthdayparties":                   `SELECT * FROM "birthdayparties" WHERE server_region = $1`,
+	"birthdaypartydeliverytotalrewards": `SELECT * FROM "birthdaypartydeliverytotalrewards" WHERE server_region = $1`,
+	"cards":                             `SELECT * FROM "cards" WHERE server_region = $1`,
 	"characterarchivemysekaicharactertalkgroups":         `SELECT * FROM "characterarchivemysekaicharactertalkgroups" WHERE server_region = $1`,
 	"custommusicscoretags":                               `SELECT * FROM "custommusicscoretags" WHERE server_region = $1`,
 	"gamecharacters":                                     `SELECT * FROM "gamecharacters" WHERE server_region = $1`,

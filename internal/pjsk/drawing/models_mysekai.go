@@ -59,15 +59,31 @@ type MysekaiResourceNumber struct {
 	MusicRecordIconPath *string `json:"music_record_icon_path,omitempty"`
 }
 
+// MysekaiBirthdayPartyProgress is one running birthday party: Level is the
+// user's obtainedMysekaiMaterialCount and MaxLevel the party's highest
+// delivery total reward requirement (Level may exceed it).
+type MysekaiBirthdayPartyProgress struct {
+	BirthdayPartyID   int    `json:"birthday_party_id"`
+	CharacterUnitID   int    `json:"character_unit_id"`
+	CharacterName     string `json:"character_name,omitempty"`
+	CharacterIconPath string `json:"character_icon_path"`
+	CharacterColor    string `json:"character_color,omitempty"`
+	Level             int    `json:"level"`
+	MaxLevel          int    `json:"max_level"`
+}
+
 type MysekaiResourceRequest struct {
-	Profile             ProfileCardRequest          `json:"profile"`
-	BackgroundImagePath *string                     `json:"background_image_path,omitempty"`
-	Phenoms             []MysekaiPhenomRequest      `json:"phenoms"`
-	GateID              int                         `json:"gate_id"`
-	GateLevel           int                         `json:"gate_level"`
-	GateIconPath        string                      `json:"gate_icon_path"`
-	VisitCharacters     []MysekaiVisitCharacter     `json:"visit_characters"`
-	SiteResourceNumbers []MysekaiSiteResourceNumber `json:"site_resource_numbers,omitempty"`
+	Profile             ProfileCardRequest      `json:"profile"`
+	BackgroundImagePath *string                 `json:"background_image_path,omitempty"`
+	Phenoms             []MysekaiPhenomRequest  `json:"phenoms"`
+	GateID              int                     `json:"gate_id"`
+	GateLevel           int                     `json:"gate_level"`
+	GateIconPath        string                  `json:"gate_icon_path"`
+	VisitCharacters     []MysekaiVisitCharacter `json:"visit_characters"`
+	// BirthdayParties is omitted when no party is running, keeping the
+	// payload (and the render cache key) unchanged outside party periods.
+	BirthdayParties     []MysekaiBirthdayPartyProgress `json:"birthday_parties,omitempty"`
+	SiteResourceNumbers []MysekaiSiteResourceNumber    `json:"site_resource_numbers,omitempty"`
 }
 
 type MysekaiMsrMapSiteInfo struct {

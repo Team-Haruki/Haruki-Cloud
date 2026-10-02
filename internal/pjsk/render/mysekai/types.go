@@ -106,6 +106,8 @@ type resettableMasterdataSource interface {
 type ResourceQuery struct {
 	Region  string                      `json:"region,omitempty"`
 	Profile *drawing.ProfileCardRequest `json:"-"`
+	// NowMillis overrides the clock (tests).
+	NowMillis int64 `json:"-"`
 }
 
 type MapQuery struct {

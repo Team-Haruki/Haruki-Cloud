@@ -2,6 +2,7 @@ package mysekai
 
 import (
 	"fmt"
+	"time"
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -23,6 +24,10 @@ func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.Mysekai
 
 	gateID, gateLevel, gateSkinID := extractMysekaiGateInfo(merged)
 	phenomIcons := c.loadIconNameMap("mysekaiPhenomenas.json", "iconAssetbundleName")
+	now := query.NowMillis
+	if now == 0 {
+		now = time.Now().UnixMilli()
+	}
 	return &drawing.MysekaiResourceRequest{
 		Profile:             *profile,
 		Phenoms:             extractMysekaiPhenoms(region, func(p string) string { return c.regionPath(region, p) }, phenomIcons, merged),
@@ -30,6 +35,7 @@ func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.Mysekai
 		GateLevel:           gateLevel,
 		GateIconPath:        c.resolveGateIconPath(region, gateID, gateSkinID),
 		VisitCharacters:     c.extractVisitCharacters(region, merged),
+		BirthdayParties:     c.extractBirthdayParties(region, merged, now),
 		SiteResourceNumbers: c.extractSiteResourceNumbers(region, merged),
 	}, nil
 }

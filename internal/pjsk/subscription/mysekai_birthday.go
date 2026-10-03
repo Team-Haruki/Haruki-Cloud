@@ -58,6 +58,18 @@ var BirthdayMaterials = []BirthdayMaterial{
 		ResourceKey: "mysekai_material_20",
 		Aliases:     []string{"四叶草", "四葉草", "四葉のクローバー", "clover"},
 	},
+	{
+		Name:        "battery",
+		ResourceID:  17,
+		ResourceKey: "mysekai_material_17",
+		Aliases:     []string{"电池", "電池", "battery"},
+	},
+	{
+		Name:        "amethyst",
+		ResourceID:  11,
+		ResourceKey: "mysekai_material_11",
+		Aliases:     []string{"紫水晶", "闪耀石英", "閃耀石英", "きらきらクォーツ", "amethyst", "quartz"},
+	},
 }
 
 var materialByName = func() map[string]BirthdayMaterial {

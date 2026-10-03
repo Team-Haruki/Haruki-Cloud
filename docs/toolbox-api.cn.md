@@ -414,7 +414,18 @@ Toolbox 服务端根据这个信息做授权校验（该调用方是否有权查
 
 ---
 
-## 10. 相关文档
+## 10. 生日材料监听
+
+`/烤森生日监听 电池 紫水晶` 可同时监听电池（`battery`，材料 ID 17）和
+紫水晶（`amethyst`，材料 ID 11，主数据名称为闪耀石英）。支持繁体名称、
+英文 `battery` / `amethyst` / `quartz`，及既有的开启、关闭参数。
+不指定材料时仍默认监听钻石。
+
+Cloud 在创建监听时将材料名转换为 ID 发送给 Toolbox，并将命中 ID 转回名称。
+Toolbox 负责掉落过滤和事件载荷存储；HMES 只转发事件 ID、订阅信息和载荷引用，
+无需维护材料名单。地图图标和基础稀有度沿用主数据。
+
+## 11. 相关文档
 
 - [PJSK 用户快照 Provider 设计](pjsk-user-snapshot-provider-design.cn.md)
 - [PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)

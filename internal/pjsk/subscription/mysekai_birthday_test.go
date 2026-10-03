@@ -192,3 +192,30 @@ func (birthdayMonitorProfileValidator) GetUserProfile(server, userID string) (*s
 	}
 	return nil, sekaiapi.ErrUserNotFound
 }
+
+func TestBirthdayMonitorBatteryAndAmethyst(t *testing.T) {
+	for _, command := range []string{
+		"/烤森生日监听 电池 紫水晶",
+		"/烤森生日监听 電池 闪耀石英",
+		"/mysekai birthday monitor battery amethyst",
+		"/烤森生日监听 电池 紫水晶 钻石关闭",
+	} {
+		cmd, err := ParseBirthdayMonitorCommand(command)
+		if err != nil {
+			t.Fatalf("%s: %v", command, err)
+		}
+		if !slices.Equal(cmd.Materials, []string{"battery", "amethyst"}) {
+			t.Fatalf("%s: materials = %v", command, cmd.Materials)
+		}
+		if got := MaterialIDs(cmd.Materials); !slices.Equal(got, []int{17, 11}) {
+			t.Fatalf("ids = %v", got)
+		}
+	}
+	if got := MaterialNamesFromIDs([]int{11, 17}); !slices.Equal(got, []string{"battery", "amethyst"}) {
+		t.Fatalf("names = %v", got)
+	}
+	cmd, err := ParseBirthdayMonitorCommand("/烤森生日监听 电池 紫水晶关闭")
+	if err != nil || !slices.Equal(cmd.Materials, []string{"battery"}) {
+		t.Fatalf("disable amethyst: %+v, %v", cmd, err)
+	}
+}

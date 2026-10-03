@@ -22,6 +22,7 @@ type groupedMysekaiResourceDrop struct {
 	Hide                bool
 	Rarity              int
 	AttachmentImagePath *string
+	BirthdayDelivery    bool
 }
 
 type mysekaiResourceGroupFlags struct {
@@ -36,24 +37,36 @@ func (c *Controller) buildMapResourceDrops(
 	region renderregion.Value,
 	merged map[string]any,
 	rawDrops []any,
-	materialMap, materialRarityMap, itemMap, fixtureMap, musicRecordMap map[int]string,
+	assets mysekaiMapAssets,
 ) []drawing.MysekaiMsrMapResourceDrop {
 	groupedDrops := c.groupMapResourceDrops(
 		region,
 		merged,
 		rawDrops,
-		materialMap,
-		materialRarityMap,
-		itemMap,
-		fixtureMap,
-		musicRecordMap,
+		assets.materials,
+		assets.materialRarity,
+		assets.items,
+		assets.fixtures,
+		assets.musicRecords,
 	)
 	resourceDrops := make([]drawing.MysekaiMsrMapResourceDrop, 0, 32)
 	for _, grouped := range groupedDrops {
+		markMapResourceGroup(grouped, assets)
 		resourceDrops = append(resourceDrops, c.buildMapResourceGroup(grouped)...)
 	}
 	slices.SortFunc(resourceDrops, compareMapResourceDrops)
 	return resourceDrops
+}
+
+// markMapResourceGroup flags birthday deliveries, which stay rare whatever
+// their delivery material ID.
+func markMapResourceGroup(grouped map[string]*groupedMysekaiResourceDrop, assets mysekaiMapAssets) {
+	for _, item := range grouped {
+		item.BirthdayDelivery = mysekaiIsBirthdayDrop(item.Type, item.ID, assets.birthdayDeliveries)
+		if item.BirthdayDelivery {
+			item.Rarity = max(item.Rarity, 2)
+		}
+	}
 }
 
 func (c *Controller) groupMapResourceDrops(
@@ -208,7 +221,7 @@ func analyzeMapResourceGroup(grouped map[string]*groupedMysekaiResourceDrop) mys
 		if item.Type == "mysekai_fixture" {
 			flags.hasFixtureDrop = true
 		}
-		if mysekaiIsBirthdayDrop(item.Type, item.ID) && item.Quantity > 16 {
+		if item.BirthdayDelivery && item.Quantity > 16 {
 			flags.isBirthdaySapling = true
 		}
 	}
@@ -248,7 +261,7 @@ func fixtureMaterialSmallIcon(
 }
 
 func applyBirthdayDropFlags(item *groupedMysekaiResourceDrop, birthdaySapling bool) {
-	isBirthdayDrop := mysekaiIsBirthdayDrop(item.Type, item.ID)
+	isBirthdayDrop := item.BirthdayDelivery
 	if birthdaySapling {
 		item.SmallIcon = new(!isBirthdayDrop)
 		return

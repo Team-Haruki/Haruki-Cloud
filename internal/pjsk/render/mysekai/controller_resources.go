@@ -396,8 +396,35 @@ func mysekaiBirthdayIconCandidates(region, imageName string, now time.Time) []st
 	return candidates
 }
 
-func mysekaiIsBirthdayDrop(resourceType string, resourceID int) bool {
-	return (resourceType == "material" || resourceType == "mysekai_material") && resourceID >= 174 && resourceID <= 199
+// mysekaiBirthdayPartyIconCandidates returns the refresh icon of one party
+// assetbundle (e.g. haruka_2026) from birthdayParties.json.
+func mysekaiBirthdayPartyIconCandidates(region, partyAsset string) []string {
+	partyAsset = strings.TrimSpace(partyAsset)
+	if partyAsset == "" {
+		return nil
+	}
+	candidate := assets.ResolveRegionAssetPath(nil, region, path.Join("mysekai", "birthday", partyAsset, refreshIconFileName))
+	if candidate == "" {
+		return nil
+	}
+	return []string{candidate}
+}
+
+// birthdayDeliveryCharacter maps a birthday party delivery material to its
+// game character. The first-year parties used 174-199 (character ID + 173);
+// that range stays as the fallback when birthdayParties.json is unavailable.
+func birthdayDeliveryCharacter(resourceID int, deliveries map[int]int) int {
+	if characterID := deliveries[resourceID]; characterID > 0 {
+		return characterID
+	}
+	if resourceID >= 174 && resourceID <= 199 {
+		return resourceID - 173
+	}
+	return 0
+}
+
+func mysekaiIsBirthdayDrop(resourceType string, resourceID int, deliveries map[int]int) bool {
+	return (resourceType == "material" || resourceType == "mysekai_material") && birthdayDeliveryCharacter(resourceID, deliveries) > 0
 }
 
 func (c *Controller) loadMusicRecordJacketMap() map[int]string {

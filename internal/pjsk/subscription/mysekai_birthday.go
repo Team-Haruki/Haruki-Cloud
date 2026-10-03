@@ -871,6 +871,15 @@ func MaterialIDs(materials []string) []int {
 	return result
 }
 
+// AllMaterialIDs returns the resource ID of every subscribable material.
+func AllMaterialIDs() []int {
+	result := make([]int, 0, len(BirthdayMaterials))
+	for _, material := range BirthdayMaterials {
+		result = append(result, material.ResourceID)
+	}
+	return result
+}
+
 func MaterialNamesFromIDs(ids []int) []string {
 	result := make([]string, 0, len(ids))
 	for _, material := range BirthdayMaterials {

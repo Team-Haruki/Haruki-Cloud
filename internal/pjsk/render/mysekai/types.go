@@ -114,6 +114,10 @@ type MapQuery struct {
 	Region        string `json:"region,omitempty"`
 	ShowHarvested *bool  `json:"show_harvested,omitempty"`
 	MapIDs        []int  `json:"map_ids,omitempty"`
+	// HighlightMaterialIDs are mysekai_material IDs whose harvest points get the
+	// rare point outline although the material itself is not rare, e.g. the
+	// birthday monitor's battery and amethyst. The drop icon stays plain.
+	HighlightMaterialIDs []int `json:"highlight_material_ids,omitempty"`
 }
 
 type FixtureListQuery struct {

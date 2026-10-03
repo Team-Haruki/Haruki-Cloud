@@ -230,7 +230,12 @@ func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 			setCommandTraceOutcome(c, "error", nil)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("烤森服务未就绪，请稍后再试")})
 		}
-		data, err := renderApp.MySekai.WithContext(c.Context()).WithMySekaiData(event.FilteredPayload).RenderMapImage(rendermysekai.MapQuery{Region: event.Region})
+		data, err := renderApp.MySekai.WithContext(c.Context()).WithMySekaiData(event.FilteredPayload).RenderMapImage(rendermysekai.MapQuery{
+			Region: event.Region,
+			// Battery and amethyst are not rare; outline their harvest
+			// points so every subscribed material stands out.
+			HighlightMaterialIDs: subscription.AllMaterialIDs(),
+		})
 		if err != nil {
 			finishExecute()
 			setCommandTraceOutcome(c, "error", err)

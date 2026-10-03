@@ -44,7 +44,7 @@ func TestMysekaiHarvestPointImageSendsCandidatesAndFallback(t *testing.T) {
 	// The builder reads the clock itself; bracket the call so a year boundary
 	// between the reads cannot flake the comparison.
 	before := time.Now()
-	image, fallback, size, offsetX, offsetZ := controller.mysekaiHarvestPointImage(renderregion.JP, "birthday_plant", "rarity_2", "plant", 3, 4, birthdays, characters)
+	image, fallback, size, offsetX, offsetZ := controller.mysekaiHarvestPointImage(renderregion.JP, "birthday_plant", "rarity_2", "plant", "", 3, 4, birthdays, characters)
 	after := time.Now()
 	now := before
 	if !slices.Equal(image, drawing.AssetKey(mysekaiBirthdayIconCandidates("jp", "haruka", before))) {
@@ -71,12 +71,12 @@ func TestMysekaiHarvestPointImageSendsCandidatesAndFallback(t *testing.T) {
 	}
 
 	// No birthday character at this position: today's single static path.
-	image, fallback, _, _, _ = controller.mysekaiHarvestPointImage(renderregion.JP, "birthday_plant", "rarity_2", "plant", 9, 9, birthdays, characters)
+	image, fallback, _, _, _ = controller.mysekaiHarvestPointImage(renderregion.JP, "birthday_plant", "rarity_2", "plant", "", 9, 9, birthdays, characters)
 	if !slices.Equal(image, drawing.AssetKey{"static_images/mysekai/harvest_fixture_icon/rarity_2/plant.png"}) || fallback == nil {
 		t.Fatalf("birthday plant without character = %v, %v", image, fallback)
 	}
 	// A character without an English given name has no candidates either.
-	image, _, _, _, _ = controller.mysekaiHarvestPointImage(renderregion.JP, "birthday_plant", "rarity_2", "plant", 3, 4, birthdays, map[int]map[string]any{})
+	image, _, _, _, _ = controller.mysekaiHarvestPointImage(renderregion.JP, "birthday_plant", "rarity_2", "plant", "", 3, 4, birthdays, map[int]map[string]any{})
 	if image.First() != "static_images/mysekai/harvest_fixture_icon/rarity_2/plant.png" || len(image) != 1 {
 		t.Fatalf("birthday plant without name = %v", image)
 	}

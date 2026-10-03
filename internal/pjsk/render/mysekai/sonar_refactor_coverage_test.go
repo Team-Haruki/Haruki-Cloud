@@ -101,7 +101,7 @@ func TestMapRefactorHelperBranches(t *testing.T) {
 		map[string]any{"resourceId": 174, "positionX": 1, "positionZ": 2},
 		map[string]any{"resourceId": 175, "positionX": 1, "positionZ": 2},
 	}
-	characters := birthdayCharactersByHarvestPosition(drops)
+	characters := birthdayCharactersByHarvestPosition(drops, nil)
 	if characters[mysekaiHarvestPosKey(1, 2)] != 1 {
 		t.Fatalf("birthday characters = %#v", characters)
 	}
@@ -118,7 +118,7 @@ func TestMapRefactorHelperBranches(t *testing.T) {
 		t.Fatal("tone gust detection is incorrect")
 	}
 	controller := &Controller{}
-	path, fallback, size, offsetX, offsetZ := controller.mysekaiHarvestPointImage(renderregion.JP, "tree", "rarity_1", "tree", 0, 0, nil, nil)
+	path, fallback, size, offsetX, offsetZ := controller.mysekaiHarvestPointImage(renderregion.JP, "tree", "rarity_1", "tree", "", 0, 0, nil, nil)
 	if path.First() == "" || fallback != nil || size != nil || offsetX != 0 || offsetZ != -48 {
 		t.Fatalf("regular harvest image = %q, %#v, %#v, %v, %v", path, fallback, size, offsetX, offsetZ)
 	}

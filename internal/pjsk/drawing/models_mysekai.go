@@ -115,6 +115,10 @@ type MysekaiMsrMapHarvestPoint struct {
 	OffsetX           float64  `json:"offset_x,omitempty"`
 	OffsetZ           float64  `json:"offset_z,omitempty"`
 	Alpha             float64  `json:"alpha,omitempty"`
+	// OutlineColor/OutlineWidth outline the point icon, e.g. red for a point
+	// that still holds a rare drop.
+	OutlineColor []int `json:"outline_color,omitempty"`
+	OutlineWidth *int  `json:"outline_width,omitempty"`
 }
 
 type MysekaiMsrMapResourceDrop struct {

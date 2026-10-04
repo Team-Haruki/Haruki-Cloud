@@ -360,3 +360,31 @@ func testEventPlannerDependencyGuards(t *testing.T) {
 		}
 	}
 }
+
+func TestEventPlannerHandleBindingSelectors(t *testing.T) {
+	for _, tc := range []struct{ args, selector string }{
+		{"u1 pt1000w", "u1"},
+		{"pt1000w 歌 虾ex 龙hd u2", "u2"},
+		{"pt1000w", ""},
+	} {
+		t.Run(tc.args, func(t *testing.T) {
+			h := sekaiHandlers{}.EventPlannerHandle()
+			cmd, err := h.Handle(&PjskHandlerContext{
+				Context: context.Background(), Platform: "qq", UserId: "42",
+				TriggerCmd: "/活动规划", ArgText: tc.args,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var params eventPlannerCommandParams
+			mergeParams(cmd.Params, &params)
+			if params.Selector != tc.selector || params.TargetPoint != 10_000_000 {
+				t.Fatalf("unexpected params: %+v", params)
+			}
+			rc := NewRequestContext(context.Background(), cmd, nil)
+			if got := rc.requestScopedSelfQuery().Selector; got != tc.selector {
+				t.Fatalf("runtime selector = %q, want %q", got, tc.selector)
+			}
+		})
+	}
+}

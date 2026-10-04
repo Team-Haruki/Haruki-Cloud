@@ -34,6 +34,7 @@ const eventPlannerHelp = `活动规划用法:
 /jp活动规划 t100 event202 wl3 mzk 总榜
 
 不写区服时使用默认绑定区服，也可以加 jp/cn/en/tw/kr 前缀指定。
+支持 u1、u2 等选择自己的绑定账号，例如 /活动规划 u2 pt1000w。
 参数: pt/目标, t排名, 当前pt, 总榜, 1-10火, 歌曲/难度, 野车, event活动ID, wl章节角色, #固定卡/角色, 当前/顶配/画布/已读/队友综合/队友实效等活动组卡参数。
 WL活动默认按章节单榜规划；加 总榜 时按活动总榜规划。
 不写歌曲时默认算虾 EXPERT、龙 HARD 和 野车；不写火数时默认算 5火 和 10火；不写卡组时默认使用最优卡组。`
@@ -42,6 +43,7 @@ const eventPlannerLostAndFoundMusicID = 226
 const eventPlannerOmakaseMusicID = deckOmakaseMusicID
 
 type eventPlannerCommandParams struct {
+	Selector        string                      `json:"selector,omitempty"`
 	EventID         int                         `json:"event_id,omitempty"`
 	TargetPoint     int64                       `json:"target_point,omitempty"`
 	TargetRank      int                         `json:"target_rank,omitempty"`
@@ -97,6 +99,11 @@ func (sekaiHandlers) EventPlannerHandle() HarukiSekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
+			query, err := resolveSelfOnlyQueryParams(ctx)
+			if err != nil {
+				return nil, err
+			}
+			params.Selector = query.Selector
 			return makeCommandRequestWithParams(ctx, parser.ModuleEvent, "event-planner", params), nil
 		},
 	}, executeEvent)
@@ -200,7 +207,7 @@ func executeEventPlanner(rc *RequestContext) (onebot11.Message, error) {
 
 	finishBuild := measureCommandOperation(rc.Ctx, "event_planner.build")
 	defer finishBuild()
-	region := renderregion.WithDefault(renderregion.Normalize(rc.Cmd.Region))
+	region := renderregion.WithDefault(renderregion.Normalize(resolvedTargetRegion(rc.RegionStr, ResolvedGameTarget{Binding: binding})))
 	baseQuery := buildEventPlannerBaseDeckQuery(region, params.Deck)
 	if err := resolveDeckCharacterSelections(rc.Ctx, &baseQuery, rc.App); err != nil {
 		return nil, err

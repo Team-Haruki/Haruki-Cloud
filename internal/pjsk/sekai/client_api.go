@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -24,6 +25,7 @@ const (
 
 type HarukiSekaiAPIClient struct {
 	http       *resty.Client
+	imageHTTP  *resty.Client
 	config     *config.SekaiAPIConfig
 	pool       *upstream.Pool
 	requestCtx context.Context
@@ -38,9 +40,10 @@ func NewSekaiAPIClient(cfg *config.SekaiAPIConfig) *HarukiSekaiAPIClient {
 		resolvedTargets = upstream.ResolveTargets(cfg.BaseURL, cfg.Targets, "sekai-api")
 	}
 	return &HarukiSekaiAPIClient{
-		http:   newRestyClient().SetTimeout(apiTimeout),
-		config: cfg,
-		pool:   upstream.NewPool(resolvedTargets),
+		http:      newRestyClient().SetTimeout(apiTimeout),
+		imageHTTP: newRestyClient().SetTimeout(apiTimeout).SetRedirectPolicy(resty.NoRedirectPolicy()),
+		config:    cfg,
+		pool:      upstream.NewPool(resolvedTargets),
 	}
 }
 
@@ -252,8 +255,43 @@ func (c *HarukiSekaiAPIClient) GetMySekaiHousingThumbnail(server, imagePath stri
 	if c == nil {
 		return nil, ErrClientNotConfigured
 	}
+	imagePath = strings.TrimSpace(imagePath)
+	if u, err := url.Parse(imagePath); err != nil {
+		return nil, fmt.Errorf("invalid housing thumbnail URL")
+	} else if u.IsAbs() || u.Host != "" {
+		return c.getHousingThumbnailURL(server, u)
+	}
 	path := fmt.Sprintf("/image/%s/mysekai-housing/%s", server, strings.TrimLeft(imagePath, "/"))
 	return c.get(path)
+}
+
+var housingThumbnailPath = regexp.MustCompile(`^/image/mysekai-housing-competition/thumbnail/[a-f0-9]{64}/[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$`)
+
+func (c *HarukiSekaiAPIClient) getHousingThumbnailURL(server string, u *url.URL) ([]byte, error) {
+	var host string
+	switch server {
+	case "cn":
+		host = "mk-prod-tos.tos-cn-shanghai.volces.com"
+	case "tw":
+		host = "mkoversea-prod-bucket.s3.ap-northeast-1.amazonaws.com"
+	case "kr":
+		host = "mkkorea-prod-bucket.s3.ap-northeast-1.amazonaws.com"
+	}
+	if host == "" || u.Scheme != "https" || u.Host != host || u.User != nil || u.Fragment != "" || !housingThumbnailPath.MatchString(u.EscapedPath()) {
+		return nil, fmt.Errorf("invalid housing thumbnail URL for region %s", server)
+	}
+	// Nuverse returns public object URLs. Never send the internal SekaiAPI token
+	// to object storage, or follow redirects outside the validated origin.
+	finishHTTP := commandtrace.MeasureOperation(c.requestContext(), "sekai.http")
+	resp, err := c.imageHTTP.R().SetContext(c.requestContext()).Get(u.String())
+	finishHTTP()
+	if err != nil {
+		if ctxErr := c.requestContext().Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
+		return nil, fmt.Errorf("housing thumbnail request failed: %w", sanitizeNetworkError(err))
+	}
+	return handleSekaiAPIResponse(resp)
 }
 
 // GetCustomProfileCardThumbnail downloads a custom profile card thumbnail image.

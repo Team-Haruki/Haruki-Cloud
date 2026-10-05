@@ -7,6 +7,7 @@ import (
 	"fmt"
 	json "haruki-cloud/internal/jsonutil"
 	"log/slog"
+	"net/url"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -428,6 +429,14 @@ func (c *housingCompetitionStatsCache) snapshotLocked(key housingCompetitionStat
 }
 
 func mergeHousingCompetitionEntries(dst map[string]HousingCompetitionEntry, entries []HousingCompetitionEntry) {
+	// Older snapshots hashed the absolute URL and intentionally omitted owner IDs.
+	// Match the same upload and submission when SekaiAPI switches to relative paths.
+	legacy := make(map[housingThumbnailIdentity]string)
+	for key, entry := range dst {
+		if identity, ok := legacyHousingThumbnailIdentity(entry); ok {
+			legacy[identity] = key
+		}
+	}
 	for _, entry := range entries {
 		key := housingCompetitionEntryCacheKey(entry)
 		if key == "" {
@@ -437,6 +446,13 @@ func mergeHousingCompetitionEntries(dst map[string]HousingCompetitionEntry, entr
 		if entry.LastSeenAt <= 0 {
 			entry.LastSeenAt = time.Now().UTC().UnixMilli()
 		}
+		identity := housingThumbnailIdentity{entry.CompetitionID, entry.SubmittedAt, entry.EntryName, entry.ThumbnailPath}
+		if oldKey, ok := legacy[identity]; ok && oldKey != key {
+			old := dst[oldKey]
+			entry = mergeHousingCompetitionEntry(old, entry)
+			delete(dst, oldKey)
+			delete(legacy, identity)
+		}
 		current, ok := dst[key]
 		if !ok {
 			dst[key] = entry
@@ -444,6 +460,28 @@ func mergeHousingCompetitionEntries(dst map[string]HousingCompetitionEntry, entr
 		}
 		dst[key] = mergeHousingCompetitionEntry(current, entry)
 	}
+}
+
+type housingThumbnailIdentity struct {
+	competitionID int
+	submittedAt   int64
+	name          string
+	path          string
+}
+
+func legacyHousingThumbnailIdentity(entry HousingCompetitionEntry) (housingThumbnailIdentity, bool) {
+	if !strings.HasPrefix(entry.ThumbnailPath, "https://") {
+		return housingThumbnailIdentity{}, false
+	}
+	u, err := url.Parse(entry.ThumbnailPath)
+	if err != nil || u.RawQuery != "" || u.Fragment != "" {
+		return housingThumbnailIdentity{}, false
+	}
+	path, ok := strings.CutPrefix(u.Path, "/image/mysekai-housing-competition/thumbnail/")
+	if !ok || path == "" {
+		return housingThumbnailIdentity{}, false
+	}
+	return housingThumbnailIdentity{entry.CompetitionID, entry.SubmittedAt, entry.EntryName, path}, true
 }
 
 func (c *housingCompetitionStatsCache) pruneLocked(now time.Time) {

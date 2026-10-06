@@ -305,7 +305,25 @@ func TestStampResolvesWithoutPrimaryRoot(t *testing.T) {
 			if err != nil {
 				t.Fatalf("BuildStampListRequest failed: %v", err)
 			}
-			want := "stamp/remote_stamp/remote_stamp.png"
+			want := "asset/jp-assets/startapp/stamp/remote_stamp/remote_stamp.png"
+			if len(req.Stamps) != 1 || req.Stamps[0].ImagePath != want {
+				t.Fatalf("stamps = %+v, want image path %q", req.Stamps, want)
+			}
+		})
+	}
+}
+
+func TestControllerBuildStampListRequestWithoutLocalAssetsUsesRegionPath(t *testing.T) {
+	for _, region := range []renderregion.Value{renderregion.JP, renderregion.CN, renderregion.EN, renderregion.TW, renderregion.KR} {
+		t.Run(region.String(), func(t *testing.T) {
+			source := newTestStampSource(region)
+			source.stamps = []masterdata.Stamp{{ID: 879, AssetBundleName: "stamp0879", CharacterID: 2}}
+			controller := NewController(source, nil, assets.NewAssetHelper("", nil))
+			req, err := controller.BuildStampListRequest(ListQuery{Region: region, CharacterIDs: []int{2}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := "asset/" + region.String() + "-assets/startapp/stamp/stamp0879/stamp0879.png"
 			if len(req.Stamps) != 1 || req.Stamps[0].ImagePath != want {
 				t.Fatalf("stamps = %+v, want image path %q", req.Stamps, want)
 			}

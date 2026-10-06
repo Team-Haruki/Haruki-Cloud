@@ -259,7 +259,7 @@ func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregio
 	}
 	// Fallback when no local asset root holds the stamp: the Drawing side
 	// resolves the relative path against its own asset mirror (E1).
-	return filepath.ToSlash(relCandidates[0]), true
+	return assets.ResolveRegionAssetPath(c.assets, region.String(), relCandidates...), true
 }
 
 func (c *Controller) makeRelativeAsset(target string) string {

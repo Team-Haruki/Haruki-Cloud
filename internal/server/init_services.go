@@ -681,10 +681,11 @@ func initSecurityMonitor(mainLogger *harukiLogger.Logger, redisClient *redis.Cli
 		counter = redisSecurityCounter{rc: redisClient}
 	}
 	monitor := secevent.New(secevent.Config{
-		WebhookURL: secCfg.AlertWebhookURL,
-		Threshold:  secCfg.AlertThreshold,
-		Window:     secCfg.AlertWindow,
-		Node:       harukiConfig.Cfg.Node.Name,
+		WebhookURL:   secCfg.AlertWebhookURL,
+		WebhookToken: secCfg.AlertWebhookToken,
+		Threshold:    secCfg.AlertThreshold,
+		Window:       secCfg.AlertWindow,
+		Node:         harukiConfig.Cfg.Node.Name,
 	}, counter)
 	if strings.TrimSpace(secCfg.AlertWebhookURL) == "" && harukiConfig.Cfg.Profile.IsProduction() {
 		mainLogger.Warn("security alert webhook is not configured; alerts are logged only")

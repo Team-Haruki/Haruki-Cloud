@@ -143,6 +143,17 @@ func TestReadConfigModerationAdminQQIDs(t *testing.T) {
 
 }
 
+func TestSecurityAlertWebhookTokenFromYAMLAndEnv(t *testing.T) {
+	var cfg Config
+	err := yaml.Unmarshal([]byte("security:\n  alert_webhook_url: https://alerts.example.com/hook\n  alert_webhook_token: yaml-token\n"), &cfg)
+	testutil.Require(t, err == nil, "unmarshal: %v", err)
+	testutil.Require(t, cfg.Security.AlertWebhookToken == "yaml-token", "yaml token = %q", cfg.Security.AlertWebhookToken)
+
+	t.Setenv("HARUKI_SECURITY_ALERT_WEBHOOK_TOKEN", "env-token")
+	testutil.Require(t, ApplyEnvOverrides(&cfg) == nil, "ApplyEnvOverrides failed")
+	testutil.Check(t, cfg.Security.AlertWebhookToken == "env-token", "env token = %q, want env-token", cfg.Security.AlertWebhookToken)
+}
+
 func TestApplyEnvOverridesResponseElectionWindow(t *testing.T) {
 	t.Setenv("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", "275ms")
 	cfg := &Config{}

@@ -452,6 +452,9 @@ security:
   # crosses alert_threshold occurrences for the same bot / source inside
   # alert_window, one JSON alert is POSTed here (ERROR log only when empty).
   alert_webhook_url: ""
+  # Sent as "Authorization: Bearer <token>" on each alert POST when set.
+  # Redirects are never followed, so the token only reaches this URL's host.
+  alert_webhook_token: ""
   alert_threshold: 5
   alert_window: 10m
 

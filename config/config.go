@@ -427,6 +427,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_BOT_BUILD_POLICY_MODE", &cfg.HarukiBotDB.BuildPolicyMode)
 	envStr("HARUKI_BOT_BUILD_POLICY_ROOT_PUBLIC_KEY", &cfg.HarukiBotDB.BuildPolicyRootPublicKey)
 	envStr("HARUKI_SECURITY_ALERT_WEBHOOK_URL", &cfg.Security.AlertWebhookURL)
+	envStr("HARUKI_SECURITY_ALERT_WEBHOOK_TOKEN", &cfg.Security.AlertWebhookToken)
 	envInt("HARUKI_SECURITY_ALERT_THRESHOLD", &cfg.Security.AlertThreshold)
 	envDuration("HARUKI_SECURITY_ALERT_WINDOW", &cfg.Security.AlertWindow)
 	envStr("HARUKI_DIAGNOSTICS_LISTEN_ADDR", &cfg.Diagnostics.ListenAddr)
@@ -1001,6 +1002,9 @@ type SecurityConfig struct {
 	// AlertThreshold occurrences for the same bot / source inside
 	// AlertWindow. Empty logs the alert at ERROR level only.
 	AlertWebhookURL string `yaml:"alert_webhook_url"`
+	// AlertWebhookToken, when set, is sent as "Authorization: Bearer <token>"
+	// on every alert POST. It is a secret: never log it.
+	AlertWebhookToken string `yaml:"alert_webhook_token"`
 	// AlertThreshold is the occurrence count that triggers an alert. 0 = 5.
 	AlertThreshold int `yaml:"alert_threshold"`
 	// AlertWindow is the counting window. 0 = 10m.

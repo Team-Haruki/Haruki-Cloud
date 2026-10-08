@@ -118,7 +118,7 @@ Haruki-Cloud/
 │       └── render/               #     渲染与执行子系统
 │
 ├── config/                       # ── 配置 ──
-│   └── config.go                 #   YAML 配置加载，18 个顶级配置块
+│   └── config.go                 #   YAML 配置加载，18 个顶级配置项
 │
 ├── database/                     # ── 数据库层（Ent 自动生成） ──
 │   ├── bot/                      #   Bot 用户、统计、Command Manifest

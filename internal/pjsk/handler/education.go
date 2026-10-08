@@ -360,6 +360,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		return rc.RenderedImageMessage(data)
 	}
 
+	rc.warmSuiteAndPublicProfile(false)
 	binding, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
 	if suiteErr != nil {
 		return nil, suiteErr

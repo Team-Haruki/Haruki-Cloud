@@ -18,6 +18,10 @@ type mySekaiRenderContextOptions struct {
 	MySekaiPayloadOnly   bool
 	SuiteOnlySnapshot    bool
 	SuiteFields          []string
+
+	// profilePrefetch carries the SekaiAPI profile fetch started next to the
+	// snapshot or payload fetch; it is set internally, never by callers.
+	profilePrefetch *sekaiProfilePrefetch
 }
 
 func resolveMySekaiPayloadBySelector(ctx context.Context, app *renderapp.App, selector snapshot.Selector, preferGlobalDefault bool) ([]byte, error) {
@@ -70,6 +74,13 @@ func resolveMySekaiRenderContextWithOptions(
 	regionStr = resolvedTargetRegion(regionStr, target)
 	result.Region = regionStr
 	result.HarukiUserID = target.HarukiUserID
+	if opts.NeedProfile && app.Profiles != nil {
+		// The profile does not depend on the snapshot or payload, only its
+		// card build does, so fetch it alongside them. Errors still surface in
+		// the old order because the result is consumed where it was fetched.
+		opts.profilePrefetch = prefetchSekaiUserProfile(ctx, app, resolvedTargetRegion(regionStr, target), target.PJSKUserID)
+		defer opts.profilePrefetch.wait()
+	}
 
 	platform, platformUserID := platformCredentials(params)
 	if handled, preferredResult, preferredErr := tryPreferredMySekaiPayload(ctx, app, result, target, platform, platformUserID, regionStr, opts); handled {
@@ -82,7 +93,7 @@ func resolveMySekaiRenderContextWithOptions(
 	}
 	if snap != nil {
 		result.Controller = result.Controller.WithSnapshot(snap)
-		if err := resolveMySekaiProfile(ctx, app, &result, target, regionStr, snap, opts.NeedProfile); err != nil {
+		if err := resolveMySekaiProfile(ctx, app, &result, target, regionStr, snap, opts); err != nil {
 			return mySekaiRenderContext{}, err
 		}
 		return result, nil
@@ -100,7 +111,7 @@ func resolveMySekaiContextWithoutSnapshot(
 	regionStr string,
 	opts mySekaiRenderContextOptions,
 ) (mySekaiRenderContext, error) {
-	if err := resolveMySekaiProfile(ctx, app, &result, target, regionStr, nil, opts.NeedProfile); err != nil {
+	if err := resolveMySekaiProfile(ctx, app, &result, target, regionStr, nil, opts); err != nil {
 		return mySekaiRenderContext{}, err
 	}
 	if !opts.PreferMySekaiPayload {
@@ -136,7 +147,7 @@ func tryPreferredMySekaiPayload(
 		return true, mySekaiRenderContext{}, err
 	}
 	if resolved {
-		err = resolveMySekaiProfile(ctx, app, &result, target, regionStr, nil, opts.NeedProfile)
+		err = resolveMySekaiProfile(ctx, app, &result, target, regionStr, nil, opts)
 		if err != nil {
 			return true, mySekaiRenderContext{}, err
 		}
@@ -183,12 +194,12 @@ func resolveMySekaiProfile(
 	target ResolvedGameTarget,
 	regionStr string,
 	snap snapshot.Snapshot,
-	needed bool,
+	opts mySekaiRenderContextOptions,
 ) error {
-	if !needed {
+	if !opts.NeedProfile {
 		return nil
 	}
-	profile, err := buildPublicProfileCardForTarget(ctx, target, regionStr, app, snap)
+	profile, err := buildPublicProfileCardForTargetWithPrefetch(ctx, target, regionStr, app, snap, opts.profilePrefetch)
 	if err != nil {
 		return normalizeSekaiAPIFetchError(err)
 	}

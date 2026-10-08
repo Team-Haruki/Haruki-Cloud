@@ -95,6 +95,29 @@ func fetchCachedSekaiUserProfile(ctx context.Context, app *renderapp.App, region
 	return response, decodeErr
 }
 
+// sekaiProfilePrefetch is a fetchCachedSekaiUserProfile call started ahead of
+// the step that consumes it, so it overlaps another upstream fetch.
+type sekaiProfilePrefetch struct {
+	done chan struct{}
+	resp *sekaiapi.GetAnotherProfileResponse
+	err  error
+}
+
+func prefetchSekaiUserProfile(ctx context.Context, app *renderapp.App, region, userID string) *sekaiProfilePrefetch {
+	prefetch := &sekaiProfilePrefetch{done: make(chan struct{})}
+	go func() {
+		defer close(prefetch.done)
+		prefetch.resp, prefetch.err = fetchCachedSekaiUserProfile(ctx, app, region, userID)
+	}()
+	return prefetch
+}
+
+// wait blocks until the fetch finishes. It is safe to call more than once.
+func (p *sekaiProfilePrefetch) wait() (*sekaiapi.GetAnotherProfileResponse, error) {
+	<-p.done
+	return p.resp, p.err
+}
+
 func startSekaiProfileFlight(
 	ctx context.Context,
 	app *renderapp.App,

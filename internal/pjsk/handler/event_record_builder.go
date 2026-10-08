@@ -71,6 +71,7 @@ func (b *eventRecordBuilder) build() (*drawing.EventRecordRequest, error) {
 func (b *eventRecordBuilder) loadSnapshot() error {
 	rc := b.rc
 	if rc.App.Bindings != nil && strings.TrimSpace(rc.Platform) != "" && strings.TrimSpace(rc.PlatformUserID) != "" {
+		rc.warmSuiteAndPublicProfile(false)
 		binding, snapshot, err := rc.requireVisibleSuiteSnapshot()
 		if err != nil {
 			return err

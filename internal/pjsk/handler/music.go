@@ -524,11 +524,13 @@ func musicListSnapshot(rc *RequestContext, full bool) (rendersnapshot.Snapshot, 
 	if full {
 		return nil, nil
 	}
+	rc.warmSuiteAndPublicProfile(false)
 	_, snapshot, err := rc.requireVisibleSuiteSnapshot()
 	return snapshot, err
 }
 
 func executeMusicProgress(rc *RequestContext, musicCtrl *rendermusic.Controller) (onebot11.Message, error) {
+	rc.warmSuiteAndPublicProfile(false)
 	_, suiteSnapshot, err := rc.requireVisibleSuiteSnapshot()
 	if err != nil {
 		return nil, err
@@ -864,6 +866,7 @@ func renderMusicRewards(rc *RequestContext) (onebot11.Message, error) {
 	if rc.App.Aliases != nil {
 		musicCtrl.SetAliasResolver(rc.App.Aliases)
 	}
+	rc.warmSuiteAndPublicProfile(false)
 	binding, snapshot, err := rc.requireVisibleSuiteSnapshot()
 	if err != nil {
 		return nil, err

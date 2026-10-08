@@ -13,6 +13,8 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+
+	"golang.org/x/sync/errgroup"
 )
 
 // RequestContext holds pre-resolved request-level data for a single command
@@ -308,6 +310,31 @@ func (rc *RequestContext) GetDetailedProfile() *drawing.DetailedProfileCardReque
 func (rc *RequestContext) GetProfileCard() *drawing.ProfileCardRequest {
 	rc.resolveProfiles()
 	return rc.profileCard
+}
+
+// warmSuiteAndPublicProfile fetches the suite snapshot (Toolbox) and the
+// public profile (SekaiAPI) concurrently for commands that need both. The
+// binding is resolved first and serially because GetBinding is the only path
+// that creates the identity on first contact. Nothing is warmed unless the
+// caller would go on to fetch both: no binding or a hidden suite keeps the old
+// serial behaviour, including its early returns before any SekaiAPI call.
+//
+// The group is a plain errgroup.Group on purpose: a failed snapshot must not
+// cancel the profile fetch, which is cached and singleflighted. Results are
+// memoized by the sync.Once accessors, so the caller's existing serial code
+// reads them back with its error precedence unchanged.
+func (rc *RequestContext) warmSuiteAndPublicProfile(needMySekai bool) {
+	if rc == nil || rc.Platform == "" || rc.PlatformUserID == "" || rc.App == nil || rc.App.Bindings == nil {
+		return
+	}
+	binding, _ := rc.GetBinding()
+	if binding == nil || !binding.SuiteVisible {
+		return
+	}
+	var warm errgroup.Group
+	warm.Go(func() error { rc.ResolveSnapshot(needMySekai); return nil })
+	warm.Go(func() error { rc.GetPublicProfileResponse(); return nil })
+	_ = warm.Wait()
 }
 
 // requireVisibleSuiteSnapshot is used by suite-dependent commands that should

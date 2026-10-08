@@ -8,6 +8,7 @@ import (
 
 	pjskDB "haruki-cloud/database/pjsk"
 	"haruki-cloud/internal/core/dbpool"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
 )
 
 func TestOpenEntDriverAppliesPoolLimits(t *testing.T) {
@@ -36,4 +37,9 @@ func TestOpenEntDriverRejectsUnsupportedDriver(t *testing.T) {
 	if _, err := openEntDriver("bad", "oracle", "dsn", dbpool.Defaults(1)); err == nil {
 		t.Fatal("unsupported driver should be rejected")
 	}
+}
+
+func TestWireAliasCacheInvalidationNilSafe(t *testing.T) {
+	wireAliasCacheInvalidation(nil, nil)
+	wireAliasCacheInvalidation(&renderapp.App{}, nil)
 }

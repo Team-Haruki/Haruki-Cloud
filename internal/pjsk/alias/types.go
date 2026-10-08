@@ -99,7 +99,19 @@ type Service struct {
 	pjsk     *pjskdb.Client
 	identity IdentityResolver
 	readOnly bool
+	onChange ChangeListener
 }
+
+// AliasChange names one approved alias that was created or deleted.
+type AliasChange struct {
+	AliasType   string
+	AliasTypeID int
+	Alias       string
+}
+
+// ChangeListener runs after a committed approve or delete, for example to
+// drop cached public alias responses. It must not block for long.
+type ChangeListener func(ctx context.Context, changes []AliasChange)
 
 type EntityRef struct {
 	AliasType string

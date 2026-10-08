@@ -20,6 +20,12 @@ backend:
   accept_user_agent: null
   allow_insecure_internal_api: false
   api_cache_ttl: "300s"
+  # Public alias lookups (/api/v2/public/pjsk/alias/*) are crawled every ~6h,
+  # so they keep their own TTL above that interval; 404s are cached shorter.
+  # Approving or deleting an alias clears the affected keys immediately.
+  # Negative alias_api_cache_ttl = api_cache_ttl; negative not-found TTL = 404s uncached.
+  alias_api_cache_ttl: "12h"            # env HARUKI_BACKEND_ALIAS_API_CACHE_TTL
+  alias_api_not_found_cache_ttl: "1h"   # env HARUKI_BACKEND_ALIAS_API_NOT_FOUND_CACHE_TTL
   enable_trust_proxy: true
   trusted_proxies:
     - "127.0.0.0/8"

@@ -378,6 +378,8 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_BACKEND_ACCEPT_USER_AGENT", &cfg.Backend.AcceptUserAgent)
 	envBool("HARUKI_BACKEND_ALLOW_INSECURE_INTERNAL_API", &cfg.Backend.AllowInsecureInternalAPI)
 	envStr("HARUKI_LATEST_CLIENT_VERSION", &cfg.Backend.LatestHarukiClientVersion)
+	envDuration("HARUKI_BACKEND_ALIAS_API_CACHE_TTL", &cfg.Backend.AliasAPICacheTTL)
+	envDuration("HARUKI_BACKEND_ALIAS_API_NOT_FOUND_CACHE_TTL", &cfg.Backend.AliasAPINotFoundCacheTTL)
 
 	// Redis
 	envStr("HARUKI_REDIS_HOST", &cfg.Redis.Host)
@@ -602,15 +604,22 @@ func ApplyEnvOverrides(cfg *Config) error {
 }
 
 type BackendConfig struct {
-	Host                      string        `yaml:"host"`
-	Port                      int           `yaml:"port"`
-	SSL                       bool          `yaml:"ssl"`
-	SSLCert                   string        `yaml:"ssl_cert"`
-	SSLKey                    string        `yaml:"ssl_key"`
-	LogLevel                  string        `yaml:"log_level"`
-	MainLogFile               string        `yaml:"main_log_file"`
-	AccessLog                 string        `yaml:"access_log"`
-	APICacheTTL               time.Duration `yaml:"api_cache_ttl"`
+	Host        string        `yaml:"host"`
+	Port        int           `yaml:"port"`
+	SSL         bool          `yaml:"ssl"`
+	SSLCert     string        `yaml:"ssl_cert"`
+	SSLKey      string        `yaml:"ssl_key"`
+	LogLevel    string        `yaml:"log_level"`
+	MainLogFile string        `yaml:"main_log_file"`
+	AccessLog   string        `yaml:"access_log"`
+	APICacheTTL time.Duration `yaml:"api_cache_ttl"`
+	// AliasAPICacheTTL caches public alias lookups (hdb:pjsk:alias). It must
+	// outlast the external crawl interval; approvals and deletions clear the
+	// affected keys. 0 = default (12h), negative = api_cache_ttl.
+	AliasAPICacheTTL time.Duration `yaml:"alias_api_cache_ttl"`
+	// AliasAPINotFoundCacheTTL caches public alias 404s, cleared on approval.
+	// 0 = default (1h), negative = not cached.
+	AliasAPINotFoundCacheTTL  time.Duration `yaml:"alias_api_not_found_cache_ttl"`
 	AccessLogPath             string        `yaml:"access_log_path"`
 	AcceptAuthorization       string        `yaml:"accept_authorization"`
 	AcceptUserAgent           string        `yaml:"accept_user_agent"`
@@ -1132,6 +1141,14 @@ type Config struct {
 
 var Cfg Config
 
+// The public alias-by-id crawler sweeps every 6 hours; a 12h TTL keeps one
+// sweep's keys alive through the next. 404s expire sooner because a pending
+// alias can be approved at any time (approvals also clear the key).
+const (
+	DefaultAliasAPICacheTTL         = 12 * time.Hour
+	DefaultAliasAPINotFoundCacheTTL = time.Hour
+)
+
 // ApplyProfileDefaults fills in zero-value fields with profile-aware defaults.
 // Called after YAML parse but before env overrides, so explicit YAML values and
 // env vars always take precedence.
@@ -1160,6 +1177,13 @@ func ApplyProfileDefaults(cfg *Config) {
 		default:
 			cfg.Backend.APICacheTTL = 10 * time.Second
 		}
+	}
+
+	if cfg.Backend.AliasAPICacheTTL == 0 {
+		cfg.Backend.AliasAPICacheTTL = DefaultAliasAPICacheTTL
+	}
+	if cfg.Backend.AliasAPINotFoundCacheTTL == 0 {
+		cfg.Backend.AliasAPINotFoundCacheTTL = DefaultAliasAPINotFoundCacheTTL
 	}
 
 	// Absent (nil) keeps the default list; an explicit [] disables it.

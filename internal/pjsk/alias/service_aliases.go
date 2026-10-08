@@ -296,5 +296,10 @@ func (s *Service) Delete(ctx context.Context, aliasType, platform, platformUserI
 		return nil, err
 	}
 	tx = nil
+	changes := make([]AliasChange, 0, len(result))
+	for _, record := range result {
+		changes = append(changes, AliasChange{AliasType: aliasType, AliasTypeID: record.Entity.ID, Alias: record.Alias})
+	}
+	s.notifyChanged(ctx, changes)
 	return result, nil
 }

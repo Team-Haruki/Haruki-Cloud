@@ -177,13 +177,63 @@ func SendCachedJSON(c fiber.Ctx, status int, encoded []byte) error {
 // returns immediately. If fetchFn returns a *CacheBypassError the handler
 // returns that error's response directly (for 404 / 400 cases).
 func WithCache(c fiber.Ctx, redisClient *redis.Client, namespace string, fetchFn func(key string) (any, error)) error {
+	return WithCacheOptions(c, redisClient, namespace, CacheOptions{}, fetchFn)
+}
+
+// CacheOptions tunes WithCacheOptions.
+type CacheOptions struct {
+	// TTL of a 200 response; <= 0 uses backend.api_cache_ttl.
+	TTL time.Duration
+	// NotFoundTTL caches a *CacheableStatusError answer under the same key;
+	// <= 0 sends it uncached.
+	NotFoundTTL time.Duration
+}
+
+// CacheableStatusError is a non-200 answer (typically 404) that
+// WithCacheOptions caches for CacheOptions.NotFoundTTL, so a repeated lookup
+// of a missing entity does not reach the database again.
+type CacheableStatusError struct {
+	Status  int
+	Message string
+}
+
+func (e *CacheableStatusError) Error() string { return e.Message }
+
+// statusEnvelope encodes a cached non-200 answer. Its first key is "status",
+// whereas a cached 200 (a fiber.Map, keys sorted) starts with "data", which
+// is how a cache hit tells them apart without decoding large bodies.
+type statusEnvelope struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
+}
+
+var statusEnvelopePrefix = []byte(`{"status":`)
+
+func cachedResponseStatus(cached []byte) int {
+	trimmed := bytes.TrimSpace(cached)
+	if !bytes.HasPrefix(trimmed, statusEnvelopePrefix) {
+		return fiber.StatusOK
+	}
+	var envelope struct {
+		Status int `json:"status"`
+	}
+	if json.Unmarshal(trimmed, &envelope) != nil || envelope.Status < 100 || envelope.Status > 599 {
+		return fiber.StatusOK
+	}
+	return envelope.Status
+}
+
+// WithCacheOptions is WithCache with per-namespace TTLs and optional
+// caching of *CacheableStatusError answers.
+func WithCacheOptions(c fiber.Ctx, redisClient *redis.Client, namespace string, opts CacheOptions, fetchFn func(key string) (any, error)) error {
 	ctx := c.Context()
 	key, cached, hit, err := CacheQuery(ctx, c, redisClient, namespace)
 	if err != nil {
 		return InternalError(c)
 	}
 	if hit {
-		return SendCachedJSON(c, fiber.StatusOK, cached)
+		return SendCachedJSON(c, cachedResponseStatus(cached), cached)
 	}
 	finishFetch := commandtrace.MeasureOperation(ctx, "api.data_fetch")
 	defer finishFetch()
@@ -194,9 +244,33 @@ func WithCache(c fiber.Ctx, redisClient *redis.Client, namespace string, fetchFn
 		if errors.As(err, &bypass) {
 			return bypass.Response
 		}
+		var status *CacheableStatusError
+		if errors.As(err, &status) {
+			return sendStatusResponse(ctx, c, redisClient, key, opts.NotFoundTTL, status)
+		}
 		return InternalError(c)
 	}
-	return CachedJSONResponse(ctx, c, redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, ResponseOK, data)
+	ttl := opts.TTL
+	if ttl <= 0 {
+		ttl = config.Cfg.Backend.APICacheTTL
+	}
+	return CachedJSONResponse(ctx, c, redisClient, ttl, key, fiber.StatusOK, ResponseOK, data)
+}
+
+func sendStatusResponse(ctx context.Context, c fiber.Ctx, redisClient *redis.Client, key string, ttl time.Duration, status *CacheableStatusError) error {
+	if ttl <= 0 {
+		return JSONResponse(c, status.Status, status.Message)
+	}
+	encoded, err := json.Marshal(statusEnvelope{Status: status.Status, Message: status.Message})
+	if err != nil {
+		return JSONResponse(c, status.Status, status.Message)
+	}
+	if redisClient != nil {
+		finishWrite := commandtrace.MeasureOperation(ctx, "api.cache_write")
+		_ = redisClient.Set(ctx, key, encoded, ttl).Err() // best-effort cache write
+		finishWrite()
+	}
+	return SendCachedJSON(c, status.Status, encoded)
 }
 
 // CacheBypassError wraps a pre-built fiber response for WithCache fetch functions

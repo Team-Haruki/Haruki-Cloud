@@ -21,6 +21,7 @@ import (
 	usersDB "haruki-cloud/database/users"
 	"haruki-cloud/internal/core/dbpool"
 	"haruki-cloud/internal/observability/commandtrace"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -165,6 +166,15 @@ func initPJSKIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app
 
 	publicPJSK.RegisterPJSKRoutes(app, pjskClient, redisClient)
 	return pjskClient
+}
+
+// wireAliasCacheInvalidation clears cached public alias responses whenever
+// the bot approves or deletes an alias.
+func wireAliasCacheInvalidation(renderRuntime *renderapp.App, redisClient *redis.Client) {
+	if renderRuntime == nil || renderRuntime.Aliases == nil {
+		return
+	}
+	renderRuntime.Aliases.SetChangeListener(publicPJSK.AliasCacheInvalidator(redisClient))
 }
 
 func initSekaiIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger) *sekaiDB.Client {

@@ -20,6 +20,9 @@ const (
 	// Match zstd's existing defaults for uncommon large-window frames.
 	toolboxMaxDecoderWindow = 512 << 20
 	toolboxMaxDecoderMemory = 64 << 30
+	// DecodeAll keeps its fast block copies when the destination has a little
+	// spare capacity past the frame content size.
+	toolboxDecodeAllSlack = 64
 )
 
 // Each stream exclusively borrows a decoder. Only a bounded number of idle,
@@ -35,6 +38,9 @@ func newToolboxDecoder(window uint64) (*zstd.Decoder, error) {
 		zstd.WithDecoderMaxWindow(window),
 		zstd.WithDecoderMaxMemory(toolboxMaxDecoderMemory),
 		zstd.WithDecodeBuffersBelow(0),
+		// DecodeAll may only fill the presized destination; see
+		// decodeToolboxZstdFrame. Streaming reads are unaffected.
+		zstd.WithDecodeAllCapLimit(true),
 	)
 }
 
@@ -123,7 +129,10 @@ func (c *HarukiToolboxClient) decompressContextLimit(ctx context.Context, resp *
 	if err != nil {
 		return nil, fmt.Errorf("toolbox: zstd reader init failed: %w", err)
 	}
-	out, err := readToolboxZstd(ctx, decoder, body, limit)
+	out, ok := decodeToolboxZstdFrame(decoder, body, limit)
+	if !ok {
+		out, err = readToolboxZstd(ctx, decoder, body, limit)
+	}
 	c.decoders.release(decoder)
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
@@ -145,6 +154,31 @@ func (c *HarukiToolboxClient) decompressContextLimit(ctx context.Context, resp *
 		return nil, fmt.Errorf("toolbox: zstd decompression failed: %w", err)
 	}
 	return out, nil
+}
+
+// decodeToolboxZstdFrame decodes a body whose frame header declares its
+// content size (Toolbox stores bodies written by EncodeAll) in one DecodeAll
+// call into a buffer of that size, instead of growing a buffer through
+// io.ReadAll. The cap limit bounds the output, any other length (a second
+// frame or a wrong size) is rejected, and every failure reports ok=false so the
+// streaming path decodes the body again and returns its usual result or error.
+//
+// DecodeAll leaves its block decoders pointing into their input until the
+// decoder is used again, so it decodes a scratch copy that is zeroed
+// afterwards: an idle pooled decoder keeps neither the response nor its bytes.
+// The frame is decoded without cancellation checks; it is bounded by limit.
+func decodeToolboxZstdFrame(decoder *zstd.Decoder, body []byte, limit int64) ([]byte, bool) {
+	var header zstd.Header
+	if err := header.Decode(body); err != nil || !header.HasFCS || header.FrameContentSize == 0 || header.FrameContentSize > uint64(limit) {
+		return nil, false
+	}
+	input := bytes.Clone(body)
+	out, err := decoder.DecodeAll(input, make([]byte, 0, header.FrameContentSize+toolboxDecodeAllSlack))
+	clear(input)
+	if err != nil || uint64(len(out)) != header.FrameContentSize {
+		return nil, false
+	}
+	return out, true
 }
 
 func readToolboxZstd(ctx context.Context, decoder *zstd.Decoder, body []byte, limit int64) ([]byte, error) {

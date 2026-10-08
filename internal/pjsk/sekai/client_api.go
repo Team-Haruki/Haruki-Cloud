@@ -16,10 +16,8 @@ import (
 )
 
 const (
-	maxRetries    = 4
-	retryWaitTime = time.Second
-	apiTimeout    = 5 * time.Second
-	tokenHeader   = "X-Haruki-Sekai-Token"
+	apiTimeout  = 5 * time.Second
+	tokenHeader = "X-Haruki-Sekai-Token"
 )
 
 type HarukiSekaiAPIClient struct {
@@ -38,7 +36,7 @@ func NewSekaiAPIClient(cfg *config.SekaiAPIConfig) *HarukiSekaiAPIClient {
 		resolvedTargets = upstream.ResolveTargets(cfg.BaseURL, cfg.Targets, "sekai-api")
 	}
 	return &HarukiSekaiAPIClient{
-		http:   newRestyClient().SetTimeout(apiTimeout),
+		http:   newRestyClient(retryConfig(cfg)).SetTimeout(apiTimeout),
 		config: cfg,
 		pool:   upstream.NewPool(resolvedTargets),
 	}
@@ -63,7 +61,7 @@ func (c *HarukiSekaiAPIClient) requestContext() context.Context {
 // authReq returns a pre-configured request with the token header set.
 func (c *HarukiSekaiAPIClient) authReq() *resty.Request {
 	if c == nil {
-		return newRestyClient().R()
+		return newRestyClient(config.UpstreamRetryConfig{}).R()
 	}
 	request := c.http.R()
 	if c.requestCtx != nil {

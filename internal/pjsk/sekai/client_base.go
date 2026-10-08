@@ -4,10 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"strings"
+	"syscall"
 	"time"
 
+	"haruki-cloud/config"
 	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
@@ -37,20 +41,73 @@ func sanitizeNetworkError(err error) error {
 	return errors.New(err.Error())
 }
 
-// newRestyClient returns a resty.Client pre-configured with common retry
-// logic shared by all Sekai HTTP clients. Each client may further configure
-// timeout, headers, etc. on the returned instance.
-func newRestyClient() *resty.Client {
-	return resty.New().
+// newRestyClient returns a resty.Client with the shared logging and the
+// retry policy. Each client may further configure timeout, headers, etc. on
+// the returned instance.
+func newRestyClient(retry config.UpstreamRetryConfig) *resty.Client {
+	retry = retry.WithDefaults()
+	client := resty.New().
 		SetTransport(upstream.NewTunedTransport(upstream.TunedTransportConfig{})).
 		SetLogger(restyLogger).
 		SetResponseBodyLimit(maxUpstreamResponseBytes).
-		SetRetryCount(maxRetries).
-		SetRetryWaitTime(retryWaitTime).
-		AddRetryHook(logRestyRetry).
 		OnAfterResponse(logRestyResponse).
-		OnError(logRestyError).
-		AddRetryCondition(isRetryable)
+		OnError(logRestyError)
+	if retry.MaxRetries <= 0 {
+		return client
+	}
+	policy := retryPolicy{budget: retry.Budget, wait: retry.Wait}
+	return client.
+		SetRetryCount(retry.MaxRetries).
+		SetRetryWaitTime(retry.Wait).
+		SetRetryMaxWaitTime(retry.MaxWait).
+		OnBeforeRequest(markFirstAttempt).
+		AddRetryHook(logRestyRetry).
+		AddRetryCondition(policy.shouldRetry)
+}
+
+// retryPolicy decides whether a failed attempt is retried: only idempotent
+// GET/HEAD requests, only on 502/503 or a refused, reset or dropped
+// connection (never a client timeout, which would just wait again), and
+// only while the next attempt would start within budget of the first one.
+type retryPolicy struct {
+	budget time.Duration
+	wait   time.Duration
+}
+
+type firstAttemptKey struct{}
+
+// markFirstAttempt stamps the request context with the first attempt's
+// start; later attempts keep it.
+func markFirstAttempt(_ *resty.Client, req *resty.Request) error {
+	if req != nil && req.Attempt <= 1 {
+		req.SetContext(context.WithValue(req.Context(), firstAttemptKey{}, time.Now()))
+	}
+	return nil
+}
+
+func (p retryPolicy) shouldRetry(r *resty.Response, err error) bool {
+	if r == nil || r.Request == nil {
+		return false
+	}
+	switch r.Request.Method {
+	case http.MethodGet, http.MethodHead:
+	default:
+		return false
+	}
+	if p.budget > 0 {
+		started, ok := r.Request.Context().Value(firstAttemptKey{}).(time.Time)
+		if !ok {
+			started = r.Request.Time
+		}
+		if time.Since(started)+p.wait > p.budget {
+			return false
+		}
+	}
+	if err != nil {
+		return isRetryableTransportError(err)
+	}
+	status := r.StatusCode()
+	return status == http.StatusBadGateway || status == http.StatusServiceUnavailable
 }
 
 func logRestyRetry(resp *resty.Response, err error) {
@@ -140,18 +197,45 @@ func restyRequestDebug(req *resty.Request) (string, int) {
 	return method, req.Attempt
 }
 
-// isRetryable returns true for transient errors that warrant an automatic
-// retry: network-level failures and 5xx server errors.
-func isRetryable(r *resty.Response, err error) bool {
-	if err != nil {
-		if _, ok := errors.AsType[net.Error](err); ok {
-			return true
-		}
-		msg := err.Error()
-		return strings.Contains(msg, "connection refused") ||
-			strings.Contains(msg, "no such host") ||
-			strings.Contains(msg, "i/o timeout") ||
-			strings.Contains(msg, "EOF")
+// isRetryableTransportError reports a connection that failed before or
+// while the upstream answered, without a timeout: the request most likely
+// never reached a healthy server, so one quick retry is cheap. Timeouts and
+// cancellations are not retried.
+func isRetryableTransportError(err error) bool {
+	if err == nil || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
 	}
-	return r.StatusCode() >= 500
+	if netErr, ok := errors.AsType[net.Error](err); ok && netErr.Timeout() {
+		return false
+	}
+	if errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) ||
+		errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		return true
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "connection refused") ||
+		strings.Contains(msg, "connection reset") ||
+		strings.Contains(msg, "broken pipe") ||
+		strings.HasSuffix(msg, "EOF")
+}
+
+func retryConfig(cfg *config.SekaiAPIConfig) config.UpstreamRetryConfig {
+	if cfg == nil {
+		return config.UpstreamRetryConfig{}
+	}
+	return cfg.Retry
+}
+
+func toolboxRetryConfig(cfg *config.ToolboxConfig) config.UpstreamRetryConfig {
+	if cfg == nil {
+		return config.UpstreamRetryConfig{}
+	}
+	return cfg.Retry
+}
+
+func trackerRetryConfig(cfg *config.TrackerConfig) config.UpstreamRetryConfig {
+	if cfg == nil {
+		return config.UpstreamRetryConfig{}
+	}
+	return cfg.Retry
 }

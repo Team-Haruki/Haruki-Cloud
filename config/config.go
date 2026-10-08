@@ -461,12 +461,14 @@ func ApplyEnvOverrides(cfg *Config) error {
 	// Sekai API
 	envStr("HARUKI_SEKAI_API_BASE_URL", &cfg.SekaiAPI.BaseURL)
 	envStr("HARUKI_SEKAI_API_TOKEN", &cfg.SekaiAPI.Token)
+	envRetry("HARUKI_SEKAI_API", &cfg.SekaiAPI.Retry)
 
 	// Toolbox
 	envStr("HARUKI_TOOLBOX_BASE_URL", &cfg.Toolbox.BaseURL)
 	envStr("HARUKI_TOOLBOX_API_TOKEN", &cfg.Toolbox.APIToken)
 	envStr("HARUKI_TOOLBOX_USER_AGENT", &cfg.Toolbox.UserAgent)
 	envBool("HARUKI_TOOLBOX_CONDITIONAL_FETCH", &cfg.Toolbox.ConditionalFetch)
+	envRetry("HARUKI_TOOLBOX", &cfg.Toolbox.Retry)
 
 	// HMES
 	envStr("HARUKI_HMES_PUBLIC_BASE_URL", &cfg.HMES.PublicBaseURL)
@@ -485,6 +487,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envInt("HARUKI_TRACKER_TRACE_LEADERBOARD_MAX_CONCURRENCY", &cfg.Tracker.TraceLeaderboardMaxConcurrency)
 	envInt("HARUKI_TRACKER_LATEST_LEADERBOARD_MAX_CONCURRENCY", &cfg.Tracker.LatestLeaderboardMaxConcurrency)
 	envDuration("HARUKI_TRACKER_ACQUIRE_TIMEOUT", &cfg.Tracker.AcquireTimeout)
+	envRetry("HARUKI_TRACKER", &cfg.Tracker.Retry)
 
 	// Censor
 	envStr("HARUKI_CENSOR_BAIDU_API_KEY", &cfg.Censor.BaiduAPIKey)
@@ -1105,19 +1108,21 @@ type SekaiAPIConfig struct {
 	BaseURL string                  `yaml:"base_url"`
 	Token   string                  `yaml:"token"`
 	Targets []upstream.TargetConfig `yaml:"targets"`
+	Retry   UpstreamRetryConfig     `yaml:"retry"`
 }
 
 type TrackerConfig struct {
-	BaseURL                         string        `yaml:"base_url"`
-	Token                           string        `yaml:"token"`
-	UserAgent                       string        `yaml:"user_agent"`
-	Timeout                         time.Duration `yaml:"timeout"`
-	TraceBatchWindow                time.Duration `yaml:"trace_batch_window"`
-	TraceBatchMaxWait               time.Duration `yaml:"trace_batch_max_wait"`
-	TraceBatchFlushRanks            int           `yaml:"trace_batch_flush_ranks"`
-	TraceLeaderboardMaxConcurrency  int           `yaml:"trace_leaderboard_max_concurrency"`
-	LatestLeaderboardMaxConcurrency int           `yaml:"latest_leaderboard_max_concurrency"`
-	AcquireTimeout                  time.Duration `yaml:"acquire_timeout"`
+	BaseURL                         string              `yaml:"base_url"`
+	Token                           string              `yaml:"token"`
+	UserAgent                       string              `yaml:"user_agent"`
+	Timeout                         time.Duration       `yaml:"timeout"`
+	TraceBatchWindow                time.Duration       `yaml:"trace_batch_window"`
+	TraceBatchMaxWait               time.Duration       `yaml:"trace_batch_max_wait"`
+	TraceBatchFlushRanks            int                 `yaml:"trace_batch_flush_ranks"`
+	TraceLeaderboardMaxConcurrency  int                 `yaml:"trace_leaderboard_max_concurrency"`
+	LatestLeaderboardMaxConcurrency int                 `yaml:"latest_leaderboard_max_concurrency"`
+	AcquireTimeout                  time.Duration       `yaml:"acquire_timeout"`
+	Retry                           UpstreamRetryConfig `yaml:"retry"`
 }
 
 type ToolboxConfig struct {
@@ -1128,7 +1133,8 @@ type ToolboxConfig struct {
 	// unchanged snapshot answers 304 without a payload. Requires a Toolbox
 	// deployment with conditional read support; when false the same semantics
 	// are emulated with the legacy upload_time probe.
-	ConditionalFetch bool `yaml:"conditional_fetch"`
+	ConditionalFetch bool                `yaml:"conditional_fetch"`
+	Retry            UpstreamRetryConfig `yaml:"retry"`
 }
 
 type HMESConfig struct {

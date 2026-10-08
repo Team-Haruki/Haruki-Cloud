@@ -161,9 +161,15 @@ func TestEventRelationIndexesDoNotCacheFailuresAndRefreshEmptyRows(t *testing.T)
 	provider.events.cardLinks.mu.Lock()
 	provider.events.cardLinks.loadedAt = time.Now().Add(-dbBulkIndexTTL)
 	provider.events.cardLinks.mu.Unlock()
-	cards, err := provider.events.GetCards(ctx, 1)
-	if err != nil || len(cards) != 1 || calls.Load() != 3 {
-		t.Fatalf("expired empty index: cards=%+v err=%v queries=%d", cards, err, calls.Load())
+	if _, err := provider.events.GetCards(ctx, 1); err == nil {
+		t.Fatal("expired index must be served while it refreshes")
+	}
+	waitForIndexRefresh(t, func() bool {
+		cards, err := provider.events.GetCards(ctx, 1)
+		return err == nil && len(cards) == 1
+	})
+	if calls.Load() != 3 {
+		t.Fatalf("expired empty index queries=%d", calls.Load())
 	}
 }
 

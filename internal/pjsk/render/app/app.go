@@ -453,9 +453,10 @@ func appArtifactConfig(initCtx context.Context, cfg Config, imageStore *imagecac
 	}
 	if len(artifact.StoreRefPaths) > 0 {
 		switch {
-		case strings.TrimSpace(cfg.ImageCacheLocalRoot) != "" || cfg.Stores.ImageCache == nil || cfg.Stores.ImageCache == storage.Disabled():
+		case strings.TrimSpace(cfg.ImageCacheLocalRoot) != "" || cfg.Stores.ImageCache == nil || cfg.Stores.ImageCache == storage.Disabled() ||
+			strings.TrimSpace(artifact.StoreRefBucket) == "":
 			// Drawing writes the bucket; a local image cache serves its own directory.
-			logger.WarnContext(initCtx, "drawing store-ref disabled: the image_cache slot is not a remote object store")
+			logger.WarnContext(initCtx, "drawing store-ref disabled: the image_cache slot is not a remote object store with a bucket")
 			artifact.StoreRefPaths = nil
 		case artifact.StoreRefIndexer == nil && imageStore != nil:
 			artifact.StoreRefIndexer = imageStore

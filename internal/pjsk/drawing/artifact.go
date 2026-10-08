@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
@@ -200,6 +201,10 @@ type ArtifactConfig struct {
 	// StoreRefIndexer records the row for a store-ref (*imagecache.PGStore).
 	// Nil writes no row, which matches a Cloud image cache without an index.
 	StoreRefIndexer StoreRefIndexer
+	// StoreRefBucket is the bucket of Cloud's image_cache slot. A store-ref
+	// naming another bucket (or another backend) is rejected and the render
+	// is requested again without the mode. Empty disables store-ref.
+	StoreRefBucket string
 }
 
 // StoreRefIndexer records the image_cache_entries row for an object Drawing
@@ -290,8 +295,11 @@ type artifactSettings struct {
 	noStore         apiPathPrefixList
 	storeRef        apiPathPrefixList
 	storeRefIndexer StoreRefIndexer
-	artifactTimeout time.Duration
-	fetcher         *artifactFetcher
+	storeRefBucket  string
+	// storeRefRejected counts drawing_store_ref_rejected; shared by clones.
+	storeRefRejected atomic.Int64
+	artifactTimeout  time.Duration
+	fetcher          *artifactFetcher
 }
 
 func newArtifactSettings(cfg ArtifactConfig) *artifactSettings {
@@ -308,6 +316,7 @@ func newArtifactSettings(cfg ArtifactConfig) *artifactSettings {
 		noStore:         newAPIPathPrefixList(cfg.NoStorePaths),
 		storeRef:        newAPIPathPrefixList(cfg.StoreRefPaths),
 		storeRefIndexer: cfg.StoreRefIndexer,
+		storeRefBucket:  strings.TrimSpace(cfg.StoreRefBucket),
 		artifactTimeout: artifactTimeout,
 		fetcher:         newArtifactFetcher(cfg.Objects, cfg.Hosts, cfg.FetchTimeout),
 	}
@@ -333,7 +342,7 @@ func (s *artifactSettings) skipsStore(apiPath string) bool {
 // storeRefFor reports an allow-listed api path whose Cache-Store: 0 renders
 // ask Drawing for a store-ref.
 func (s *artifactSettings) storeRefFor(apiPath string) bool {
-	return s != nil && s.allow.has(apiPath) && s.storeRef.has(apiPath)
+	return s != nil && s.storeRefBucket != "" && s.allow.has(apiPath) && s.storeRef.has(apiPath)
 }
 
 type artifactModeCtxKey struct{}

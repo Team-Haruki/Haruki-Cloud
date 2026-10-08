@@ -49,7 +49,7 @@ func TestAppDrawingOptionsAddsArtifactOptionOnlyWhenAllowListed(t *testing.T) {
 func TestAppArtifactConfigWiresStoreRef(t *testing.T) {
 	index := &imagecache.PGStore{}
 	base := Config{
-		DrawingArtifact: drawing.ArtifactConfig{Endpoints: []string{"*"}, StoreRefPaths: []string{"api/pjsk/sk"}},
+		DrawingArtifact: drawing.ArtifactConfig{Endpoints: []string{"*"}, StoreRefPaths: []string{"api/pjsk/sk"}, StoreRefBucket: "image-cache"},
 		Stores:          storage.Set{ImageCache: storagetest.NewMemory()},
 		ImageHosts:      urlhost.Single("https://ic.example"),
 	}
@@ -64,6 +64,11 @@ func TestAppArtifactConfigWiresStoreRef(t *testing.T) {
 	local.ImageCacheLocalRoot = "/srv/ic"
 	if got := appArtifactConfig(context.Background(), local, index); got.StoreRefPaths != nil {
 		t.Fatalf("local image cache must disable store-ref: %+v", got.StoreRefPaths)
+	}
+	noBucket := base
+	noBucket.DrawingArtifact.StoreRefBucket = ""
+	if got := appArtifactConfig(context.Background(), noBucket, index); got.StoreRefPaths != nil {
+		t.Fatalf("unknown bucket must disable store-ref: %+v", got.StoreRefPaths)
 	}
 	disabled := base
 	disabled.Stores = storage.Set{ImageCache: storage.Disabled()}

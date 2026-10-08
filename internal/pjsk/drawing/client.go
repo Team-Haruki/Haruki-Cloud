@@ -239,7 +239,46 @@ func (c *HarukiDrawingClient) renderWithPermit(endpoint string, prepared any, re
 	return render(prepared)
 }
 
+// StoreRefRejectedCount reports drawing_store_ref_rejected: store-refs Cloud
+// could not use (wrong bucket or backend, or not Cloud's key layout), each
+// answered by re-requesting the render without the store-ref mode.
+func (c *HarukiDrawingClient) StoreRefRejectedCount() int64 {
+	if c == nil || c.artifact == nil {
+		return 0
+	}
+	return c.artifact.storeRefRejected.Load()
+}
+
+// postPrepared sends one render. A store-ref Cloud cannot use carries no
+// bytes, so the render is requested once more without the store-ref mode and
+// its bytes take the ordinary image cache PUT. Re-rendering costs a render,
+// but the image is still delivered; failing the image instead would turn a
+// Drawing misconfiguration into user-visible errors.
 func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]byte, error) {
+	data, err := c.postPreparedOnce(endpoint, requestBody)
+	if !errors.Is(err, errStoreRefUnusable) {
+		return data, err
+	}
+	directive := c.activeDirective()
+	if directive == nil || !directive.StoreRef {
+		return data, err
+	}
+	c.artifact.storeRefRejected.Add(1)
+	commandtrace.RecordOperation(c.requestCtx, "drawing.store_ref_rejected", 0)
+	c.logger.WarnContext(c.requestCtx, "drawing store-ref rejected; rendering again without store-ref",
+		"upstream", "drawing",
+		"upstream_path", endpoint,
+		"api_path", directive.APIPath,
+		"error", err,
+		"rejected_total", c.artifact.storeRefRejected.Load(),
+		"metric", "drawing_store_ref_rejected",
+	)
+	directive.StoreRef = false
+	*directive.outcome = renderOutcome{}
+	return c.postPreparedOnce(endpoint, requestBody)
+}
+
+func (c *HarukiDrawingClient) postPreparedOnce(endpoint string, requestBody any) ([]byte, error) {
 	if c == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
@@ -455,8 +494,9 @@ func (c *HarukiDrawingClient) acceptStoreRef(d *renderDirective, resp *resty.Res
 		Hash: ref.Hash, Group: directiveCacheGroup, CDNPath: ref.CDNPath,
 		MediaType: ref.MediaType, SizeBytes: ref.SizeBytes, WriterNode: ref.NodeName,
 	}
-	if err := validateStoreRef(ref, object); err != nil {
-		return errDrawingBadArtifact(err)
+	if err := validateStoreRef(ref, object, c.artifact.storeRefBucket); err != nil {
+		// No row is written for an object Cloud cannot serve or collect.
+		return fmt.Errorf("%w: %w", errStoreRefUnusable, err)
 	}
 	commandtrace.RecordOperation(c.requestCtx, "drawing.store_ref", 0)
 	if indexer := c.artifact.storeRefIndexer; indexer != nil {
@@ -487,9 +527,17 @@ func (c *HarukiDrawingClient) acceptStoreRef(d *renderDirective, resp *resty.Res
 	return nil
 }
 
+// errStoreRefUnusable marks a well-formed ref that Cloud cannot adopt. The
+// render is requested again without the store-ref mode.
+var errStoreRefUnusable = errors.New("drawing store-ref is unusable")
+
 // validateStoreRef rejects a store-ref Cloud could not have written itself:
-// the image-cache key layout for its own hash, a garage object, no index row.
-func validateStoreRef(ref *ArtifactRef, object imagecache.AdoptedObject) error {
+// its own image-cache bucket and key layout for the ref's hash, a garage
+// object, no index row.
+func validateStoreRef(ref *ArtifactRef, object imagecache.AdoptedObject, bucket string) error {
+	if ref.Bucket != bucket {
+		return fmt.Errorf("store-ref bucket %q is not the image cache bucket %q", ref.Bucket, bucket)
+	}
 	if ref.ObjectKey != "" && ref.ObjectKey != ref.CDNPath {
 		return fmt.Errorf("store-ref object_key %q differs from cdn_path %q", ref.ObjectKey, ref.CDNPath)
 	}

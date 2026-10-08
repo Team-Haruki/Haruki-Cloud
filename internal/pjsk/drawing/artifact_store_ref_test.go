@@ -22,11 +22,13 @@ var (
 type storeRefMode int
 
 const (
-	storeRefServe       storeRefMode = iota // a store-ref Drawing
-	storeRefIgnore                          // a Drawing that predates the mode
-	storeRefDegrade                         // upload failed: degraded bytes
-	storeRefBadPath                         // a ref Cloud could not have written
-	storeRefIndexedPath                     // a ref claiming an index row
+	storeRefServe        storeRefMode = iota // a store-ref Drawing
+	storeRefIgnore                           // a Drawing that predates the mode
+	storeRefDegrade                          // upload failed: degraded bytes
+	storeRefBadPath                          // a ref Cloud could not have written
+	storeRefIndexedPath                      // a ref claiming an index row
+	storeRefOtherBucket                      // a ref in a bucket Cloud does not serve
+	storeRefOtherBackend                     // a ref on a backend Cloud does not collect
 )
 
 // storeRefDrawingServer answers X-Haruki-Artifact-Mode: store-ref like a
@@ -63,6 +65,13 @@ func newStoreRefDrawingServer(t *testing.T, mode storeRefMode) *storeRefDrawingS
 			} else {
 				path := storeRefPath
 				indexed := "false"
+				bucket, backend := `"image-cache"`, `"garage"`
+				if s.mode == storeRefOtherBucket {
+					bucket = `"other-bucket"`
+				}
+				if s.mode == storeRefOtherBackend {
+					backend = `"legacy_disk"`
+				}
 				if s.mode == storeRefBadPath {
 					path = "pjsk/" + strings.Repeat("d", 64) + "-ABCDEFGHIJKLMNOPQRSTUVWXYZ.jpg"
 				}
@@ -75,7 +84,7 @@ func newStoreRefDrawingServer(t *testing.T, mode storeRefMode) *storeRefDrawingS
 				_, _ = w.Write([]byte(testArtifactRefJSON(map[string]string{
 					"hash": `"` + storeRefHash + `"`, "cdn_path": `"` + path + `"`, "object_key": `"` + path + `"`,
 					"media_type": `"image/jpeg"`, "size_bytes": `270000`, "index_written": indexed, "node_name": `"gw-1"`,
-					"expires_at": `null`,
+					"expires_at": `null`, "bucket": bucket, "storage_backend": backend,
 				})))
 				return
 			}
@@ -144,6 +153,7 @@ func storeRefConfig(indexer StoreRefIndexer, paths ...string) ArtifactConfig {
 		NoStorePaths:    []string{"api/pjsk/sk", "api/pjsk/deck"},
 		StoreRefPaths:   paths,
 		StoreRefIndexer: indexer,
+		StoreRefBucket:  "image-cache",
 	}
 }
 
@@ -279,19 +289,57 @@ func TestStoreRefFallsBackToBytes(t *testing.T) {
 	}
 }
 
-func TestStoreRefRejectsARefCloudCouldNotHaveWritten(t *testing.T) {
-	for name, mode := range map[string]storeRefMode{"foreign hash": storeRefBadPath, "index row": storeRefIndexedPath} {
+func TestStoreRefRejectedRefIsRenderedAgainWithoutTheMode(t *testing.T) {
+	for name, mode := range map[string]storeRefMode{
+		"other bucket":  storeRefOtherBucket,
+		"other backend": storeRefOtherBackend,
+		"foreign hash":  storeRefBadPath,
+		"index row":     storeRefIndexedPath,
+	} {
 		t.Run(name, func(t *testing.T) {
 			server := newStoreRefDrawingServer(t, mode)
 			indexer := &fakeStoreRefIndexer{}
 			client := storeRefTestClient(t, server, &fakeRenderIndex{}, storeRefConfig(indexer, "api/pjsk/sk"))
-			if _, err := client.WithContext(t.Context()).GenerateSKSpeedImage(&SpeedRequest{}); !errors.Is(err, errDrawingBadArtifactRef) {
-				t.Fatalf("err = %v, want a bad artifact ref", err)
+			ctx, trace := commandtrace.WithNewTrace(t.Context())
+			image, err := client.WithContext(ctx).GenerateSKSpeedImage(&SpeedRequest{})
+			if err != nil || image.Ref() != nil {
+				t.Fatalf("ref = %+v, err = %v, want the bytes of a second render", image.Ref(), err)
+			}
+			if data, err := image.Bytes(t.Context()); err != nil || string(data) != "bytes-jpeg" {
+				t.Fatalf("bytes = %q, %v", data, err)
+			}
+			headers, hits := server.seen("/api/pjsk/sk/speed")
+			got := harukiHeaders(headers)
+			if hits != 2 || got[http.CanonicalHeaderKey(headerArtifactMode)] != "" || got[headerCacheStore] != "0" {
+				t.Fatalf("hits = %d, retry headers = %v", hits, got)
 			}
 			if len(indexer.adopted()) != 0 {
-				t.Fatal("invalid store-ref reached the indexer")
+				t.Fatal("rejected store-ref reached the indexer")
+			}
+			if client.StoreRefRejectedCount() != 1 {
+				t.Fatalf("rejected count = %d", client.StoreRefRejectedCount())
+			}
+			if ops := traceOps(trace); ops["drawing.store_ref_rejected"] != 1 || ops["drawing.http"] != 2 {
+				t.Fatalf("trace ops = %v", ops)
 			}
 		})
+	}
+}
+
+func TestStoreRefMalformedBodyIsARenderError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(headerArtifact, "1")
+		w.Header().Set(headerArtifactMode, artifactModeStoreRef)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"kind":"artifact_ref"}`))
+	}))
+	t.Cleanup(server.Close)
+	client := NewHarukiDrawingClient(server.URL, WithArtifactConfig(storeRefConfig(nil, "api/pjsk/sk")))
+	cache := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, Index: &fakeRenderIndex{}})
+	client.SetRenderCache(cache)
+	t.Cleanup(func() { _ = cache.Close() })
+	if _, err := client.WithContext(t.Context()).GenerateSKSpeedImage(&SpeedRequest{}); !errors.Is(err, errDrawingBadArtifactRef) {
+		t.Fatalf("err = %v, want a bad artifact ref", err)
 	}
 }
 
@@ -366,8 +414,16 @@ func TestStoreRefDirectiveHeader(t *testing.T) {
 	if settings.storeRefFor("api/pjsk/sk") {
 		t.Fatal("nil settings enable store-ref")
 	}
-	settings = newArtifactSettings(ArtifactConfig{Endpoints: []string{"api/pjsk/card/box"}, StoreRefPaths: []string{"api/pjsk/sk"}})
+	settings = newArtifactSettings(ArtifactConfig{Endpoints: []string{"api/pjsk/card/box"}, StoreRefPaths: []string{"api/pjsk/sk"}, StoreRefBucket: "image-cache"})
 	if settings.storeRefFor("api/pjsk/sk/line") {
 		t.Fatal("store-ref outside the allow-list")
+	}
+	settings = newArtifactSettings(ArtifactConfig{Endpoints: []string{"*"}, StoreRefPaths: []string{"api/pjsk/sk"}})
+	if settings.storeRefFor("api/pjsk/sk/line") {
+		t.Fatal("store-ref without a known image cache bucket")
+	}
+	var client *HarukiDrawingClient
+	if client.StoreRefRejectedCount() != 0 {
+		t.Fatal("nil client counts rejections")
 	}
 }

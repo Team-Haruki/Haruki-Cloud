@@ -531,7 +531,9 @@ Bot 的共享执行会给内部操作添加 `command.shared.operation.` 前缀�
 - 响应头带 `X-Haruki-Artifact-Mode: store-ref` 与 `Cache-Store: 0`。
 
 Cloud 的处理：
-- 校验 ref：key 必须是该 hash 的 Cloud 布局、garage、无索引行，否则按坏 ref 报渲染错误。
+- 校验 ref：`bucket` 必须等于 Cloud `image_cache` 槽位的 S3 bucket，`storage_backend` 为 garage，key 必须是该 hash 的 Cloud 布局，且无索引行。
+- 校验不通过时不写行，WARN `drawing_store_ref_rejected` 计数（`StoreRefRejectedCount`，trace 事件 `drawing.store_ref_rejected`），并对同一节点不带 store-ref 头重新请求一次渲染，取回字节后走原 PUT。ref 本身不带字节；直接报错会把 Drawing 配置错误变成用户可见失败，重渲染只多花一次渲染。JSON 本身不合法时仍按坏 ref 报渲染错误。
+- 槽位不是 S3（本地或未配置）时 bucket 为空，store-ref 自动关闭。
 - 用 `imagecache.PGStore.AdoptObject` 写与自己上传时相同的 `image_cache_entries` 行：同一内容锁、查找、插入，`writer_node`/`written_at` 照填。
 - 该 hash 已有其他路径的行时，保留原行并改用原路径，把 Drawing 的副本登记进上传意图队列，由 GC 在宽限期后删除。保留期与 GC 因此与 Cloud 自己的写入完全一致。
 - ref 不进入暂存缓存与 `render_cache_index`。handler 按 `FreshWriterNode` 语义优先选写入节点主机输出 URL，不读字节、不做 `image.store`。

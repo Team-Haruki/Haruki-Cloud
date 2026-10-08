@@ -31,6 +31,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/utils/logger"
+	"haruki-cloud/utils/usererror"
 	"haruki-cloud/version"
 
 	"entgo.io/ent/dialect/sql"
@@ -362,6 +363,36 @@ func applySharedBotCommandMetadata(c fiber.Ctx, metadata sharedCommandMetadata) 
 		c.Locals(traceErrorTypeKey, metadata.ErrorType)
 		commandtrace.SetErrorType(c.Context(), metadata.ErrorType)
 	}
+	if metadata.ErrorMessage != "" {
+		c.Locals(traceErrorMessageKey, metadata.ErrorMessage)
+	}
+}
+
+// maxErrorChainDepth bounds error_chain; wrap chains in this code base are a
+// few levels deep.
+const maxErrorChainDepth = 8
+
+// errorTypeChain lists the dynamic types along err's Unwrap chain (the first
+// branch of a joined error), outermost first, e.g.
+// "*fmt.wrapError > *pgconn.PgError".
+func errorTypeChain(err error) string {
+	types := make([]string, 0, 4)
+	for depth := 0; err != nil && depth < maxErrorChainDepth; depth++ {
+		types = append(types, fmt.Sprintf("%T", err))
+		switch wrapped := err.(type) {
+		case interface{ Unwrap() error }:
+			err = wrapped.Unwrap()
+		case interface{ Unwrap() []error }:
+			if errs := wrapped.Unwrap(); len(errs) > 0 {
+				err = errs[0]
+			} else {
+				err = nil
+			}
+		default:
+			err = nil
+		}
+	}
+	return strings.Join(types, " > ")
 }
 
 func enqueueBotCommandTelemetry(c fiber.Ctx, telemetry *botauth.CommandTelemetryDispatcher, req BotCommandRequest, botID string, metadata sharedCommandMetadata) {
@@ -481,10 +512,14 @@ func failedSharedBotCommand(
 	if isExpectedCommandError(err) {
 		metadata.Outcome = "rejected"
 	} else {
+		metadata.ErrorMessage = usererror.RedactForLog(err.Error(), usererror.DefaultLogMessageLimit)
 		logger.ErrorContext(ctx, "bot command "+stage+" failed",
 			"command_path", commandPath,
 			"command", command,
+			"region", metadata.Region,
 			"error_type", fmt.Sprintf("%T", err),
+			"error_chain", errorTypeChain(err),
+			"error_message", metadata.ErrorMessage,
 		)
 	}
 	metadata.ErrorType = fmt.Sprintf("%T", err)

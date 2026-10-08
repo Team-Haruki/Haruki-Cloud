@@ -3,29 +3,28 @@ package config
 import "time"
 
 // UpstreamRetryConfig is the retry block of sekai_api, toolbox and tracker.
-// Zero fields take the defaults below; a negative max_retries or budget
-// disables retries or the budget.
+// Zero fields take the defaults below; a negative max_retries disables
+// retries and a zero or negative budget leaves retries unbounded in time.
 type UpstreamRetryConfig struct {
 	// MaxRetries is the number of extra attempts after the first one.
 	MaxRetries int `yaml:"max_retries"`
 	// Wait is the first backoff; later waits grow up to MaxWait.
 	Wait    time.Duration `yaml:"wait"`
 	MaxWait time.Duration `yaml:"max_wait"`
-	// Budget is the time after the first attempt started past which no
-	// retry is started, so only fast failures are retried and the worst
-	// case stays near Budget plus one attempt timeout.
+	// Budget, when positive, is the time after the first attempt started
+	// past which no retry is started. Off by default.
 	Budget time.Duration `yaml:"budget"`
 }
 
-// Retries are for transient failures of idempotent GETs only: 502/503 or a
-// refused/reset connection, never a client timeout. One retry within 3 s of
-// the first attempt keeps the worst case near 3 s + one timeout instead of
-// five attempts (about 32 s for SekaiAPI/Toolbox, 107 s for the tracker).
+// The defaults are the retry behaviour Cloud ran with through 3.7.18: up to
+// four retries on any 5xx answer or transport failure (client timeouts
+// included), 1 s first backoff, 2 s maximum, no budget. 3.8.0 cut this to one
+// retry of 502/503 and refused/reset connections within 3 s, which turned
+// transient SekaiAPI and Toolbox 500/504s and timeouts into command errors.
 const (
-	DefaultUpstreamRetryMaxRetries = 1
-	DefaultUpstreamRetryWait       = 200 * time.Millisecond
-	DefaultUpstreamRetryMaxWait    = time.Second
-	DefaultUpstreamRetryBudget     = 3 * time.Second
+	DefaultUpstreamRetryMaxRetries = 4
+	DefaultUpstreamRetryWait       = time.Second
+	DefaultUpstreamRetryMaxWait    = 2 * time.Second
 )
 
 // WithDefaults fills the zero fields.
@@ -41,9 +40,6 @@ func (c UpstreamRetryConfig) WithDefaults() UpstreamRetryConfig {
 	}
 	if c.MaxWait < c.Wait {
 		c.MaxWait = c.Wait
-	}
-	if c.Budget == 0 {
-		c.Budget = DefaultUpstreamRetryBudget
 	}
 	return c
 }

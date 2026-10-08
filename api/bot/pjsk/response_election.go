@@ -345,6 +345,9 @@ type sharedCommandMetadata struct {
 	Outcome       string `msgpack:"outcome"`
 	ErrorType     string `msgpack:"error_type"`
 	ExecutorBotID string `msgpack:"executor_bot_id"`
+	// ErrorMessage is the redacted, bounded err.Error() of a failed command
+	// (usererror.RedactForLog); empty for successes and rejections.
+	ErrorMessage string `msgpack:"error_message,omitempty"`
 }
 
 type sharedCommandOperation struct {

@@ -65,10 +65,11 @@ func newRestyClient(retry config.UpstreamRetryConfig) *resty.Client {
 		AddRetryCondition(policy.shouldRetry)
 }
 
-// retryPolicy decides whether a failed attempt is retried: only idempotent
-// GET/HEAD requests, only on 502/503 or a refused, reset or dropped
-// connection (never a client timeout, which would just wait again), and
-// only while the next attempt would start within budget of the first one.
+// retryPolicy decides whether a failed attempt is retried: any 5xx answer
+// or transport failure, client timeouts included, as through 3.7.18. A
+// cancelled or expired caller context is never retried (resty also stops
+// on it). With a positive budget no retry starts once the next attempt would
+// begin more than budget after the first one.
 type retryPolicy struct {
 	budget time.Duration
 	wait   time.Duration
@@ -89,9 +90,7 @@ func (p retryPolicy) shouldRetry(r *resty.Response, err error) bool {
 	if r == nil || r.Request == nil {
 		return false
 	}
-	switch r.Request.Method {
-	case http.MethodGet, http.MethodHead:
-	default:
+	if ctxErr := r.Request.Context().Err(); ctxErr != nil {
 		return false
 	}
 	if p.budget > 0 {
@@ -106,8 +105,7 @@ func (p retryPolicy) shouldRetry(r *resty.Response, err error) bool {
 	if err != nil {
 		return isRetryableTransportError(err)
 	}
-	status := r.StatusCode()
-	return status == http.StatusBadGateway || status == http.StatusServiceUnavailable
+	return r.StatusCode() >= http.StatusInternalServerError
 }
 
 func logRestyRetry(resp *resty.Response, err error) {
@@ -197,25 +195,27 @@ func restyRequestDebug(req *resty.Request) (string, int) {
 	return method, req.Attempt
 }
 
-// isRetryableTransportError reports a connection that failed before or
-// while the upstream answered, without a timeout: the request most likely
-// never reached a healthy server, so one quick retry is cheap. Timeouts and
-// cancellations are not retried.
+// isRetryableTransportError reports a transport failure worth another
+// attempt: any network error (timeouts included), a refused, reset or
+// dropped connection, or an unknown host. Cancellation of the caller's own
+// context is not retried.
 func isRetryableTransportError(err error) bool {
-	if err == nil || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+	if err == nil || errors.Is(err, context.Canceled) {
 		return false
 	}
-	if netErr, ok := errors.AsType[net.Error](err); ok && netErr.Timeout() {
-		return false
+	if _, ok := errors.AsType[net.Error](err); ok {
+		return true
 	}
-	if errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) ||
-		errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, syscall.ECONNRESET) ||
+		errors.Is(err, syscall.EPIPE) || errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
 		return true
 	}
 	msg := err.Error()
 	return strings.Contains(msg, "connection refused") ||
 		strings.Contains(msg, "connection reset") ||
 		strings.Contains(msg, "broken pipe") ||
+		strings.Contains(msg, "no such host") ||
+		strings.Contains(msg, "i/o timeout") ||
 		strings.HasSuffix(msg, "EOF")
 }
 

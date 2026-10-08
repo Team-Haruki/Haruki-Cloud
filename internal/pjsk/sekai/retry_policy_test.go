@@ -36,7 +36,10 @@ func retryServer(t *testing.T, statuses ...int) (*httptest.Server, *atomic.Int32
 
 var fastRetry = config.UpstreamRetryConfig{Wait: time.Millisecond, MaxWait: time.Millisecond}
 
-func TestRetryPolicyRetriesTransientGETOnce(t *testing.T) {
+// Regression for 3.8.0: transient upstream failures that 3.7.18 retried
+// (any 5xx, repeated 502/503, client timeouts, any method) surfaced as
+// command errors after the retry policy was narrowed.
+func TestRetryPolicyRetriesTransientFailures(t *testing.T) {
 	cases := []struct {
 		name     string
 		method   string
@@ -46,11 +49,13 @@ func TestRetryPolicyRetriesTransientGETOnce(t *testing.T) {
 	}{
 		{"503 then ok", http.MethodGet, []int{503}, 2, 200},
 		{"502 then ok", http.MethodGet, []int{502}, 2, 200},
-		{"one retry only", http.MethodGet, []int{503, 503, 503}, 2, 503},
-		{"500 is not retried", http.MethodGet, []int{500}, 1, 500},
-		{"504 is not retried", http.MethodGet, []int{504}, 1, 504},
-		{"POST is not retried", http.MethodPost, []int{503}, 1, 503},
-		{"PUT is not retried", http.MethodPut, []int{503}, 1, 503},
+		{"500 then ok", http.MethodGet, []int{500}, 2, 200},
+		{"504 then ok", http.MethodGet, []int{504}, 2, 200},
+		{"502 twice then ok", http.MethodGet, []int{502, 502}, 3, 200},
+		{"503 three times then ok", http.MethodGet, []int{503, 503, 503}, 4, 200},
+		{"gives up after max retries", http.MethodGet, []int{500, 500, 500, 500, 500, 500}, 5, 500},
+		{"POST lookup is retried", http.MethodPost, []int{503}, 2, 200},
+		{"4xx is not retried", http.MethodGet, []int{404}, 1, 404},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -66,22 +71,41 @@ func TestRetryPolicyRetriesTransientGETOnce(t *testing.T) {
 	}
 }
 
-func TestRetryPolicyDoesNotRetryClientTimeout(t *testing.T) {
+func TestRetryPolicyRetriesClientTimeout(t *testing.T) {
 	var hits atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hits.Add(1)
-		select {
-		case <-time.After(200 * time.Millisecond):
-		case <-r.Context().Done():
+		if hits.Add(1) == 1 {
+			select {
+			case <-time.After(500 * time.Millisecond):
+			case <-r.Context().Done():
+			}
+			return
 		}
+		w.WriteHeader(http.StatusOK)
 	}))
 	defer server.Close()
-	client := newRestyClient(fastRetry).SetTimeout(20 * time.Millisecond)
-	if _, err := client.R().Get(server.URL); err == nil {
-		t.Fatal("expected a client timeout")
+	client := newRestyClient(fastRetry).SetTimeout(50 * time.Millisecond)
+	resp, err := client.R().Get(server.URL)
+	if err != nil {
+		t.Fatalf("a client timeout must be retried: %v", err)
 	}
+	if hits.Load() != 2 || resp.StatusCode() != http.StatusOK {
+		t.Fatalf("hits=%d status=%d", hits.Load(), resp.StatusCode())
+	}
+}
+
+func TestRetryPolicyStopsOnCallerCancellation(t *testing.T) {
+	var hits atomic.Int32
+	ctx, cancel := context.WithCancel(context.Background())
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits.Add(1)
+		cancel()
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer server.Close()
+	_, _ = newRestyClient(fastRetry).R().SetContext(ctx).Get(server.URL)
 	if hits.Load() != 1 {
-		t.Fatalf("a client timeout was retried: %d attempts", hits.Load())
+		t.Fatalf("a cancelled caller was retried: %d attempts", hits.Load())
 	}
 }
 
@@ -104,7 +128,7 @@ func TestRetryPolicyStopsAfterBudget(t *testing.T) {
 	}
 
 	hits.Store(0)
-	cfg.Budget = -1
+	cfg.Budget = 0
 	cfg.MaxRetries = 2
 	if _, err := newRestyClient(cfg).R().Get(server.URL); err != nil {
 		t.Fatal(err)
@@ -139,8 +163,8 @@ func TestRetryPolicyRetriesRefusedConnection(t *testing.T) {
 	if _, err := client.R().Get("http://" + addr); err == nil {
 		t.Fatal("expected a refused connection")
 	}
-	if attempts.Load() != 2 {
-		t.Fatalf("a refused connection should be retried once, attempts = %d", attempts.Load())
+	if attempts.Load() != 5 {
+		t.Fatalf("a refused connection should be retried up to max_retries, attempts = %d", attempts.Load())
 	}
 }
 
@@ -152,16 +176,17 @@ func (timeoutError) Temporary() bool { return true }
 
 func TestIsRetryableTransportError(t *testing.T) {
 	cases := map[error]bool{
-		nil:                               false,
-		context.Canceled:                  false,
-		context.DeadlineExceeded:          false,
-		timeoutError{}:                    false,
-		syscall.ECONNREFUSED:              true,
-		syscall.ECONNRESET:                true,
-		io.ErrUnexpectedEOF:               true,
-		fmt.Errorf("wrapped: %w", io.EOF): true,
-		errors.New("read: connection reset by peer"): true,
-		errors.New("tls: bad certificate"):           false,
+		nil:                      false,
+		context.Canceled:         false,
+		context.DeadlineExceeded: true,
+		timeoutError{}:           true,
+		errors.New("dial tcp: lookup x: no such host"): true,
+		syscall.ECONNREFUSED:                           true,
+		syscall.ECONNRESET:                             true,
+		io.ErrUnexpectedEOF:                            true,
+		fmt.Errorf("wrapped: %w", io.EOF):              true,
+		errors.New("read: connection reset by peer"):   true,
+		errors.New("tls: bad certificate"):             false,
 	}
 	for err, want := range cases {
 		if got := isRetryableTransportError(err); got != want {
@@ -175,7 +200,7 @@ func TestIsRetryableTransportError(t *testing.T) {
 
 func TestUpstreamRetryConfigWiring(t *testing.T) {
 	cfg := config.UpstreamRetryConfig{}.WithDefaults()
-	if cfg.MaxRetries != 1 || cfg.Budget != config.DefaultUpstreamRetryBudget || cfg.Wait != config.DefaultUpstreamRetryWait {
+	if cfg.MaxRetries != config.DefaultUpstreamRetryMaxRetries || cfg.Budget != 0 || cfg.Wait != config.DefaultUpstreamRetryWait {
 		t.Fatalf("defaults = %+v", cfg)
 	}
 	if got := (config.UpstreamRetryConfig{Wait: 2 * time.Second}).WithDefaults(); got.MaxWait != 2*time.Second {
@@ -185,8 +210,8 @@ func TestUpstreamRetryConfigWiring(t *testing.T) {
 	if tracker.http.RetryCount != 2 {
 		t.Fatalf("tracker retry count = %d", tracker.http.RetryCount)
 	}
-	if NewToolboxClient(&config.ToolboxConfig{}).http.RetryCount != 1 || NewSekaiAPIClient(nil).http.RetryCount != 1 {
-		t.Fatal("clients default to one retry")
+	if NewToolboxClient(&config.ToolboxConfig{}).http.RetryCount != 4 || NewSekaiAPIClient(nil).http.RetryCount != 4 {
+		t.Fatal("clients default to four retries")
 	}
 	if NewSekaiAPIClient(&config.SekaiAPIConfig{Retry: config.UpstreamRetryConfig{MaxRetries: -1}}).http.RetryCount != 0 {
 		t.Fatal("retries can be disabled per upstream")

@@ -240,7 +240,7 @@ hmes:                      # HMES 外部服务（public/internal base_url + toke
 
 sekai_api:                 # 上游 Sekai API 客户端
   base_url: ""
-  retry: {}                # 重试策略（toolbox / tracker 同结构）：默认 max_retries 1、wait 200ms、max_wait 1s、budget 3s；只重试 GET/HEAD 的 502/503 与连接被拒/重置，不重试客户端超时，首个请求开始超过 budget 后不再重试；max_retries 为负关闭
+  retry: {}                # 重试策略（toolbox / tracker 同结构）：默认 max_retries 4、wait 1s、max_wait 2s、不设 budget（即 3.7.18 及之前的行为）；任何 5xx 与传输错误（含客户端超时）都会重试，调用方取消不重试；budget 为正时首个请求开始超过 budget 后不再重试；max_retries 为负关闭
 
 tracker:                   # SK Tracker 客户端
   base_url: ""

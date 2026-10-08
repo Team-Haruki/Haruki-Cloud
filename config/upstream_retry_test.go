@@ -19,7 +19,18 @@ func TestUpstreamRetryEnvOverrides(t *testing.T) {
 		t.Fatalf("sekai %+v toolbox %+v", cfg.SekaiAPI.Retry, cfg.Toolbox.Retry)
 	}
 	tracker := cfg.Tracker.Retry.WithDefaults()
-	if tracker.MaxRetries != -1 || tracker.Wait != 50*time.Millisecond || tracker.MaxWait != 500*time.Millisecond || tracker.Budget != DefaultUpstreamRetryBudget {
+	if tracker.MaxRetries != -1 || tracker.Wait != 50*time.Millisecond || tracker.MaxWait != 500*time.Millisecond || tracker.Budget != 0 {
 		t.Fatalf("tracker %+v", tracker)
+	}
+}
+
+func TestUpstreamRetryDefaultsMatchPre38Behaviour(t *testing.T) {
+	got := UpstreamRetryConfig{}.WithDefaults()
+	want := UpstreamRetryConfig{MaxRetries: 4, Wait: time.Second, MaxWait: 2 * time.Second}
+	if got != want {
+		t.Fatalf("defaults = %+v, want %+v", got, want)
+	}
+	if got := (UpstreamRetryConfig{Wait: 3 * time.Second}).WithDefaults(); got.MaxWait != 3*time.Second {
+		t.Fatalf("max_wait must not be below wait: %+v", got)
 	}
 }

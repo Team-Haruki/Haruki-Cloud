@@ -1,12 +1,14 @@
 # Haruki Cloud — Agent Guidelines
 
 This file is the canonical onboarding document for any AI assistant working on
-the Haruki-Cloud repository (Codex, Claude, Copilot CLI, etc.). It mirrors
-[`.github/copilot-instructions.md`](.github/copilot-instructions.md).
+the Haruki-Cloud repository (Codex, Claude, Copilot, etc.) and the single source
+of truth for agent guidance. [`CLAUDE.md`](CLAUDE.md) and
+[`.github/copilot-instructions.md`](.github/copilot-instructions.md) only point
+here; edit this file instead of copying text into them.
 
 For deeper architecture background, the authoritative human-facing references
 are in [`docs/`](docs/). The most important entry points are listed in
-[Authoritative documents](#authoritative-documents) below.
+[Authoritative documents](#8-authoritative-documents) below.
 
 ---
 
@@ -30,7 +32,8 @@ Haruki-Cloud is the core backend of the **HarukiBot** ecosystem. It serves:
 
 There is **one** runtime entry point: `main.go` at the repo root, which only
 sets up signal handling and calls `server.Run(ctx)` from
-`internal/server/`. Auxiliary CLIs live under `cmd/` (`importer`, `extractor`).
+`internal/server/`. Auxiliary CLIs live under `cmd/` (`importer`, `extractor`,
+`trust-signer`, `asset-index`, `image-cache-reconcile`; see §5).
 
 ---
 
@@ -42,7 +45,10 @@ Haruki-Cloud/
 ├── internal/server/        # bootstrap: init_*.go, fiber.go, run.go
 ├── cmd/
 │   ├── importer/           # legacy export → new DB importer CLI
-│   └── extractor/          # schema extractor utility
+│   ├── extractor/          # schema extractor utility
+│   ├── trust-signer/       # offline Ed25519 keyset signer (never run on the Cloud host)
+│   ├── asset-index/        # manual resource-catalog bootstrap / publication
+│   └── image-cache-reconcile/ # render-cache index vs. object store check (--repair)
 │
 ├── api/
 │   ├── helper.go           # shared response helpers, VerifyAPIAuthorization
@@ -54,26 +60,39 @@ Haruki-Cloud/
 │   ├── bot/
 │   │   ├── auth/           # bot registration / login / session / stats
 │   │   └── pjsk/           # bot command endpoints (handler-registry driven)
-│   └── groupguard/
+│   ├── groupguard/
+│   └── trust/              # GET /api/v3/trust/keyset (serves the offline-signed keyset)
 │
 ├── internal/
+│   ├── cachepersist/       # bounded background writer for rebuildable cache snapshots
 │   ├── cluster/            # node role / read-only mode helpers (config.Cfg.Node)
+│   ├── core/buildpolicy/   # AuthV3 client build allowlist / revocations (docs/build-policy.cn.md)
 │   ├── core/crypto/        # Noise protocol helpers
+│   ├── core/dbpool/        # database/sql pool sizing / recycling
+│   ├── core/secevent/      # security event funnel + threshold alerts
+│   ├── core/trustsign/     # detached-payload Ed25519 signing contract (shared with Haruki-Client)
 │   ├── core/upstream/      # upstream connection pool / transport
+│   ├── core/urlhost/       # picks one public base URL out of per-node hosts
 │   ├── handler/            # cross-domain command registry / bot routing
+│   ├── httpcoding/         # zstd content coding with internal services (deck-service, Drawing)
 │   ├── identity/           # platform user → haruki user resolution
 │   ├── jsonutil/           # JSON facade: encoding/json/v2 engine, v1-compatible semantics
 │   ├── middleware/secure/  # security middleware
 │   ├── observability/commandtrace/ # command execution tracing
+│   ├── observability/upstreamcall/ # per-upstream-call timing (Drawing, deck)
 │   ├── onebot11/           # OneBot11 message helpers (was internal/pjsk/onebot11/)
-│   └── pjsk/               # PJSK subsystem (see §4)
+│   ├── pjsk/               # PJSK subsystem (see below)
+│   ├── server/             # bootstrap (see above)
+│   ├── storage/            # Store abstraction: local filesystem and S3-compatible (storage/s3) backends
+│   └── testutil/           # shared test assertions / clock helpers
 │
 ├── config/                 # YAML config loader + timeouts
-├── database/               # ent-generated DB clients (bot/censor/chunithm/pjsk/sekai/users)
+├── database/               # ent-generated DB clients (bot/censor/chunithm/{maindb,music}/pjsk/sekai/users)
 ├── ent/                    # ent schema definitions (mirror of database/)
 ├── docs/                   # canonical human-facing documentation
 ├── exports/                # legacy JSON snapshots for the importer (local only, not in git)
-├── scripts/                # ops helpers (e.g. provision_bot)
+├── scripts/                # ops helpers (provision_bot, prepare-release.sh, ...)
+├── deploy/                 # failover / secondary-node scripts and compose files
 ├── integration/            # integration tests (gated behind HARUKI_RUN_INTEGRATION)
 └── Dockerfile / docker-compose.yml
 ```
@@ -103,6 +122,7 @@ Haruki-Cloud/
 ```
 render/
 ├── app/         # the App composition root (see §3)
+├── assetindex/  # immutable per-region asset inventories (publish / consume)
 ├── assets/      # asset providers
 ├── cachefill/   # per-key singleflight + failure backoff for DB-backed master data caches
 ├── card/        # card lookup / parser / detail / list
@@ -118,6 +138,7 @@ render/
 ├── misc/        # miscellaneous (e.g. birthday)
 ├── music/       # music detail / list / progress / rewards
 ├── mysekai/     # MySekai data
+├── playerframe/ # equipped player frames + operator overrides (docs/player-frame-overrides.md)
 ├── profile/     # user profile rendering
 ├── provider/    # request-scoped DB providers (db_*.go)
 ├── releasecheck/# release window checks
@@ -138,7 +159,8 @@ runtime. It holds every controller, every external client, the DB client, the
 Redis client, and runtime config.
 
 - `internal/server/init_services.go` translates each `config.Cfg.*` section into
-  a `renderapp.Config` and constructs the `App` via `renderapp.New(cfg)`.
+  a `renderapp.Config` and constructs the `App` via
+  `renderapp.New(sekaiClient, pjskClient, renderapp.Config{...})`.
 - Handlers receive an `*App` (typically as `rc.App`) and must access shared
   dependencies via fields on it. **Do not introduce package-level singletons.**
 - Tests can construct `&renderapp.App{...}` literals and only set the fields
@@ -186,8 +208,9 @@ Redis client, and runtime config.
 
 ## 4. Database & migrations
 
-- Six ent-generated DBs live under `database/`: `bot`, `censor`, `chunithm`,
-  `pjsk`, `sekai`, `users`. Schemas are in `ent/<db>/schema/`.
+- Seven ent clients live under `database/`: `bot`, `censor`, `chunithm/maindb`,
+  `chunithm/music`, `pjsk`, `sekai`, `users`. Schemas are in `ent/<db>/schema/`
+  (for CHUNITHM: `ent/chunithm/maindb/schema/` and `ent/chunithm/music/schema/`).
 - **Auto-migrate runs at startup.** `internal/server/init_database.go`'s
   `initDBClient` helper calls `Schema.Create(ctx)` for every DB. There is no
   separate `cmd/migrate` tool any more (it was removed).
@@ -199,22 +222,35 @@ Redis client, and runtime config.
 
 `field.String(...).MaxLen(N)` validates **byte length** (`len(s)`), not rune
 count. Aliases and other CJK-heavy fields need a comfortably large `MaxLen`
-(currently `500` for both `aliases.alias` and `group_aliases.alias`).
+(currently `500` for both `alias.alias` and `group_alias.alias`).
 
 ---
 
 ## 5. CLIs
 
-| CLI                      | Purpose                                                                                                                                                        |
-|--------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `go build .`             | Build the main server (`haruki-cloud`).                                                                                                                        |
-| `cmd/importer/`          | Migrate legacy `exports/*.json` into the new DB. Targets: `bindings`, `character-aliases`, `music-aliases`, `group-aliases`, `defaults`, or `all`. Idempotent. |
-| `cmd/extractor/`         | Schema extraction helper.                                                                                                                                      |
-| `scripts/provision_bot/` | Bot provisioning helper.                                                                                                                                       |
+| CLI                             | Purpose                                                                                                                                                         |
+|---------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `go build .`                    | Build the main server (`haruki-cloud`).                                                                                                                         |
+| `cmd/importer/`                 | Migrate legacy `exports/*.json` into the new DB. Targets: `bindings`, `character-aliases`, `music-aliases`, `group-aliases`, `defaults`, or `all`. Idempotent. |
+| `cmd/extractor/`                | Dump the `database/sekai` table/column/unique-key layout to `schema_info.json`.                                                                                 |
+| `cmd/trust-signer/`             | Offline Ed25519 tool: `keygen` / `sign` / `verify` for the trust keyset and the online manifest signing key. Never run root `keygen` on the Cloud host.        |
+| `cmd/asset-index/`              | Bootstrap a region's resource catalog (`--region`; dry inventory by default, `--publish` writes shards, BPM index and pointer). Pause the region updater first. |
+| `cmd/image-cache-reconcile/`    | Page through render-cache index entries and check their objects; `--repair` drops index references to confirmed-missing objects. Never deletes objects.        |
+| `scripts/provision_bot/`        | Manually provision a bot user (`--qq`, optional `--bot-id`, `--force`, `--rebind`) and print its credential.                                                    |
 
 `cmd/importer` reads DB connection from env (`HARUKI_PJSK_DB_URL`,
-`HARUKI_USERS_DB_URL`) or `haruki-cloud.yaml`. Dry-run mode (`--dry-run`)
-parses files and counts records without touching the DB.
+`HARUKI_USERS_DB_URL`) or `haruki-cloud.yaml` (`--config`); exports are read
+from `--exports-dir` (default `./exports`). Dry-run mode (`--dry-run`) parses
+files and counts records without touching the DB.
+
+- `all` runs the targets in order: bindings → character-aliases →
+  music-aliases → group-aliases → defaults.
+- Platform detection: an `im_user_id` shaped `<sha256hex>_<digits>` is
+  imported as `qqbot`, anything else as `qq`.
+- Default bindings: a user with one binding gets the global default plus that
+  server's default; with several bindings the global default follows
+  jp > cn > tw > en > kr and every server gets its own default. Existing
+  defaults are skipped.
 
 ---
 
@@ -270,6 +306,11 @@ When in doubt about current architecture, consult these in order:
 | `docs/database-schemas.cn.md`     | DB schema reference                                                |
 | `docs/pjsk-command-system.cn.md`  | PJSK command system design                                         |
 | `docs/toolbox-api.cn.md`          | Upstream Toolbox API contract                                      |
+| `docs/build-policy.cn.md`         | Client build allowlist / revocation and security event alerts      |
+| `docs/storage-migration.cn.md`    | Storage slot / object storage rollout and rollback table           |
+| `docs/sk-tracker-cloud-contract.cn.md` | SK semantics Cloud expects from the Event Tracker cloud API   |
+| `docs/public-bot-v2-api.cn.md`    | Public (unauthenticated) bot query API                             |
+| `docs/player-frame-overrides.md`  | `pjsk_render.player_frame_overrides` operator config               |
 | `docs/deck_refer_help.md`         | User-facing help text for the `deck` command family                |
 
 `docs/` only describes the current shape of the project. Historical progress
@@ -287,20 +328,20 @@ the code wins; please update the doc in the same change.
   `CardParser` type.
 - Server entry: only `main.go` at the repo root, build with `go build .`.
   Init logic (`init_*.go`, `fiber.go`, `run.go`) lives in `internal/server/`.
+  Do not bring back `cmd/server/main.go`.
 
 ## 10. Production deployment — config debugging
 
-The production compose stack is at `/data/HarukiServices/configs/` on the
-server. Config is layered; the effective value for any setting is (highest
-priority first):
+Config is layered; the effective value for any setting is (highest priority
+first):
 
 1. **Environment variable** (e.g. `HARUKI_PJSK_RENDER_IMAGE_CACHE_URI`)
-   — injected via `.env` + `docker-compose.yml` `environment:` block.
+   — injected via the stack's `.env` + `docker-compose.yml` `environment:`
+   block. `config.ReadConfig` applies these overrides after loading the YAML.
 2. **`haruki-cloud.yaml`** — mounted into the container.
 
 **Always check `.env` first when a config value is not taking effect.**
-A stale or incorrect env var silently overrides the YAML. Key file:
-`/data/HarukiServices/configs/.env`.
+A stale or incorrect env var silently overrides the YAML.
 
 To verify what a running container actually sees:
 
@@ -308,17 +349,16 @@ To verify what a running container actually sees:
 docker exec haruki-cloud env | grep HARUKI_
 ```
 
-To apply `.env` changes, recreate the container:
+To apply `.env` changes, recreate the container with the same compose project
+name, `--env-file` and `-f` files the stack was started with:
 
 ```bash
-docker compose -p haruki-production --env-file .env \
-  -f docker-compose.yml -f docker-compose.production.yml \
+docker compose -p <project> --env-file .env -f docker-compose.yml [-f <override>.yml] \
   up -d haruki-cloud --force-recreate --no-deps
 ```
 
-Note: the compose project name is `haruki-production` (set via
-`COMPOSE_PROJECT_NAME` in `.env`). Always pass `-p haruki-production` or
-`--env-file .env` so Docker Compose resolves the correct project.
+Pass the same `-p` / `--env-file` every time so Docker Compose resolves the
+existing project.
 
 ---
 
@@ -332,8 +372,9 @@ As of this revision the project is **considered functionally complete**:
   character aliases, 12 985 music aliases, 6 354 group aliases, 114 804
   default-binding rows across 52 002 users).
 - Asset migration completed via parallel rsync to the new host.
-- `cmd/migrate` removed (auto-migrate at startup); `cmd/importer` is the only
-  remaining one-off data tool.
+- `cmd/migrate` removed (auto-migrate at startup). The remaining data tools are
+  `cmd/importer` (legacy import), `cmd/asset-index` (catalog bootstrap) and
+  `cmd/image-cache-reconcile` (render-cache index repair).
 
 ## Git commits
 
@@ -390,11 +431,15 @@ The files in `.github/workflows` are thin callers:
     `go.mod`/`go.sum`, the Dockerfile or the workflows change. On `main` it runs in
     parallel with the tests and pushes the immutable
     `ghcr.io/team-haruki/haruki-cloud:sha-<full sha>` and `:sha-<7 chars>` as soon as the
-    build finishes. The `Docker tags` job (`docker-retag.yml`, after `CI OK`) then moves
+    build finishes. The `Docker tags` job (template `docker-retag.yml`, after `CI OK`) then moves
     `:main` to that digest without rebuilding, so `:main` only follows commits whose
     `CI OK` passed. Main images report the version `main-<sha7>`. The registry
     `:buildcache` keeps the module download layer.
-  - The aggregate job **`CI OK`** is the only required status check.
+  - `workflows` runs actionlint on the workflow files.
+  - The aggregate job **`CI OK`** (needs `go`, `sonar`, `docker`, `workflows`) is the
+    single gate: `Docker tags` and the release gate wait for it. It is meant to be the
+    required status check, but `main` currently has no branch protection or ruleset,
+    so GitHub does not enforce it on merges.
 - `integration.yml` (`Integration`) is manual only and stays out of `CI`.
   `./integration/...` drives a **running** Haruki-Cloud server (`HARUKI_TEST_BASE_URL`,
   default `http://127.0.0.1:6666`) with a provisioned bot and its own users/pjsk

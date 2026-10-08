@@ -7,11 +7,13 @@ import (
 	"strings"
 	"time"
 
+	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) applyProfilePreset(region renderregion.Value, raw *snapshot.RawUserData, query AutoQuery) error {
@@ -566,6 +568,14 @@ func (c *Controller) restoreFixedCard(region renderregion.Value, raw, original *
 	}
 	fallbackCard, err := c.buildFallbackRecommendUserCard(region, cardID, raw.Now, preferOriginal)
 	if err != nil {
+		// Without "当前" the fixed cards are the IDs the user typed after #, so
+		// an ID this server's master data lacks (usually a card not yet released
+		// here) is the user's input. With "当前" they come from the game's own
+		// deck, where a missing card is a master-data gap and stays an error.
+		if !preferOriginal && sekaiDB.IsNotFound(err) {
+			return usererror.Inputf("当前%s服未找到卡牌 %d（可能尚未在该服实装），请检查固定卡牌ID",
+				strings.ToUpper(renderregion.WithDefault(region).String()), cardID)
+		}
 		return err
 	}
 	if fallbackCard == nil {

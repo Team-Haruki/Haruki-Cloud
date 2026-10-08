@@ -264,6 +264,11 @@ func TestReplayErrorIsExpectedCommandRejection(t *testing.T) {
 	}
 	testutil.RequireArgs(t, !isExpectedCommandError(fmt.Errorf("failed to search card: %w", fmt.Errorf("database unavailable"))), "an unmarked wrapped error should remain an error")
 
+	const unknownFixedCard = "当前CN服未找到卡牌 1378（可能尚未在该服实装），请检查固定卡牌ID"
+	testutil.RequireArgs(t, isExpectedCommandError(usererror.Inputf("%s", unknownFixedCard)), "an unknown typed fixed card should be classified as a rejection")
+	if got := clientErrorTextForCommand(unknownFixedCard, false, "/活动组卡", "deck/event"); got != unknownFixedCard {
+		t.Fatalf("unknown fixed card reply = %q, want %q", got, unknownFixedCard)
+	}
 }
 
 func TestSafeCommandTraceRegionRejectsUntrustedValues(t *testing.T) {

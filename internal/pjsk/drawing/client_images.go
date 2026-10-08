@@ -54,7 +54,8 @@ func (c *HarukiDrawingClient) GenerateInventoryListImage(req *InventoryListReque
 }
 
 func (c *HarukiDrawingClient) GenerateEventDetailImage(req *EventDetailRequest) (ImageResult, error) {
-	return c.postUncachedImage("/api/pjsk/event/detail", req)
+	data, err := c.postUncached("/api/pjsk/event/detail", req)
+	return ImageBytes(data), err
 }
 
 func (c *HarukiDrawingClient) GenerateEventRecordImage(req *EventRecordRequest) (ImageResult, error) {
@@ -96,7 +97,8 @@ func (c *HarukiDrawingClient) GenerateCharacterBirthdayImage(req *CharaBirthdayR
 func (c *HarukiDrawingClient) GenerateAliasListImage(req *AliasListRequest) (ImageResult, error) {
 	// Alias-list watermarks include request DT, so we intentionally bypass the
 	// render cache here to avoid serving stale timestamps.
-	return c.postUncachedImage("/api/pjsk/misc/alias-list", req)
+	data, err := c.postUncached("/api/pjsk/misc/alias-list", req)
+	return ImageBytes(data), err
 }
 
 func (c *HarukiDrawingClient) GenerateCommandHelpImage(req *CommandHelpRenderRequest) (ImageResult, error) {

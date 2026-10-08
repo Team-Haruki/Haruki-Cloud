@@ -11,11 +11,10 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 )
 
-// RenderedImageMessage emits a rendered image: an artifact ref (including a
-// store-ref whose row Cloud recorded) as a public image-cache URL (preferring
-// the writer node), anything else (including a drawing_artifact.no_store_paths
-// render without store-ref) as bytes stored in the image cache and sent as a
-// URL. Never inline: a bot v2 response is one Noise message
+// RenderedImageMessage emits a rendered image: an artifact ref as a public
+// image-cache URL (preferring the rendering node), anything else (including a
+// drawing_artifact.no_store_paths render) as bytes stored in the image cache
+// and sent as a URL. Never inline: a bot v2 response is one Noise message
 // capped at 65535 bytes, far below a rendered image as base64.
 func (rc *RequestContext) RenderedImageMessage(image drawing.ImageResult) (onebot11.Message, error) {
 	return renderedImageMessage(rc.Ctx, image, rc.App)

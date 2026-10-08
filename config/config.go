@@ -518,10 +518,6 @@ func ApplyEnvOverrides(cfg *Config) error {
 	if err := envStringSlice("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_NO_STORE_PATHS", &cfg.PJSKRender.DrawingArtifact.NoStorePaths); err != nil {
 		return err
 	}
-	envBool("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_STORE_REF_ENABLED", &cfg.PJSKRender.DrawingArtifact.StoreRef.Enabled)
-	if err := envStringSlice("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_STORE_REF_PATHS", &cfg.PJSKRender.DrawingArtifact.StoreRef.Paths); err != nil {
-		return err
-	}
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_FETCH_TIMEOUT", &cfg.PJSKRender.DrawingArtifact.FetchTimeout)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ARTIFACT_TIMEOUT", &cfg.PJSKRender.DrawingArtifact.ArtifactTimeout)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_URI", &cfg.PJSKRender.ImageCache.URI)
@@ -859,43 +855,6 @@ type DrawingArtifactConfig struct {
 	// render_cache_index lookup; the bytes still reach the bot as an
 	// image-cache URL. Absent = DefaultDrawingArtifactNoStorePaths; [] = none.
 	NoStorePaths []string `yaml:"no_store_paths"`
-	// StoreRef lets Drawing deliver those Cache-Store: 0 renders itself.
-	StoreRef DrawingArtifactStoreRefConfig `yaml:"store_ref"`
-}
-
-// DrawingArtifactStoreRefConfig is pjsk_render.drawing_artifact.store_ref.
-//
-// For a matching render whose directive already carries
-// X-Haruki-Cache-Store: 0, Cloud also sends X-Haruki-Artifact-Mode: store-ref.
-// Drawing then uploads the image to the image-cache bucket itself, under
-// Cloud's key layout, and answers a small ref. Cloud records the same
-// image_cache_entries row it writes for its own uploads, so retention and GC
-// are unchanged, and sends the bot the URL.
-//
-// This removes the WAN transfer of the image bytes and Cloud's own PUT. Any
-// fallback (a Drawing without the mode, or a failed upload answered with
-// X-Haruki-Artifact-Degraded: 1) is today's path. It needs a remote
-// (non-local) image_cache slot.
-type DrawingArtifactStoreRefConfig struct {
-	// Enabled is the master switch; default false.
-	Enabled bool `yaml:"enabled"`
-	// Paths lists api path prefixes (matched per path segment) to roll out
-	// gradually. Absent = the effective no_store_paths; [] = none. Paths that
-	// are not sent with Cache-Store: 0 (no_store_paths and the uncached
-	// endpoints event/detail and misc/alias-list) are unaffected.
-	Paths []string `yaml:"paths"`
-}
-
-// EffectiveStoreRefPaths is the store-ref path list in force: nil while
-// store_ref is disabled, no_store_paths while store_ref.paths is absent.
-func (c DrawingArtifactConfig) EffectiveStoreRefPaths() []string {
-	if !c.StoreRef.Enabled {
-		return nil
-	}
-	if c.StoreRef.Paths == nil {
-		return c.NoStorePaths
-	}
-	return c.StoreRef.Paths
 }
 
 // DefaultDrawingArtifactNoStorePaths are the per-user renders whose render

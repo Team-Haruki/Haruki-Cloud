@@ -97,42 +97,53 @@ func (c *Controller) buildUserQueryFromTrackerV2(server string, eventID int, use
 	return out, previous, next, true, nil
 }
 
-func (c *Controller) buildCheckRoomFromTrackerCloudV2(server string, eventID int, ranks []int, userID *int64, wlCharacterID *int, skipMissing bool) (drawing.RankInfo, *drawing.RankInfo, *drawing.RankInfo, bool, error) {
+// trackerCheckRoom is one check-room answer. enrich, when set, adds the
+// trace metrics to a RankInfo; it is split out so that its tracker call can
+// run alongside the adjacent-rank lookups.
+type trackerCheckRoom struct {
+	info           drawing.RankInfo
+	previous, next *drawing.RankInfo
+	enrich         func(*drawing.RankInfo)
+}
+
+func (c *Controller) checkRoomFromTrackerCloudV2(server string, eventID int, ranks []int, userID *int64, wlCharacterID *int, skipMissing bool) (trackerCheckRoom, bool, error) {
 	source, ok := c.trackerCloudV2()
 	if !ok {
-		return drawing.RankInfo{}, nil, nil, false, nil
+		return trackerCheckRoom{}, false, nil
 	}
 	resp, err := source.GetCloudSKCheckRoom(server, eventID, wlCharacterID, ranks, userID, skipMissing, 3600)
 	if err != nil {
-		return drawing.RankInfo{}, nil, nil, true, err
+		return trackerCheckRoom{}, true, err
 	}
 	current := resp.Rank
 	if current.Rank <= 0 && len(resp.Ranks) > 0 {
 		current = resp.Ranks[0]
 	}
 	if current.Rank <= 0 {
-		return drawing.RankInfo{}, nil, nil, true, sekaiapi.ErrRankingNotFound
+		return trackerCheckRoom{}, true, sekaiapi.ErrRankingNotFound
 	}
 	if userID != nil && *userID > 0 && !cloudRankInfoMatchesUser(*userID, current) {
 		currentInfo, err := latestUserTraceFromTrackerV2(source, server, eventID, *userID, wlCharacterID)
 		if err != nil {
-			return drawing.RankInfo{}, nil, nil, true, err
+			return trackerCheckRoom{}, true, err
 		}
-		return currentInfo, nil, nil, true, nil
+		return trackerCheckRoom{info: currentInfo}, true, nil
 	}
-	currentInfo := rankInfoFromCloudV2(current)
-	c.enrichRankInfoFromCloudV2Trace(server, eventID, wlCharacterID, current, &currentInfo)
-	var previous *drawing.RankInfo
+	room := trackerCheckRoom{
+		info: rankInfoFromCloudV2(current),
+		enrich: func(info *drawing.RankInfo) {
+			c.enrichRankInfoFromCloudV2Trace(server, eventID, wlCharacterID, current, info)
+		},
+	}
 	if resp.Previous != nil {
 		info := rankInfoFromCloudV2(*resp.Previous)
-		previous = &info
+		room.previous = &info
 	}
-	var next *drawing.RankInfo
 	if resp.Next != nil {
 		info := rankInfoFromCloudV2(*resp.Next)
-		next = &info
+		room.next = &info
 	}
-	return currentInfo, previous, next, true, nil
+	return room, true, nil
 }
 
 func (c *Controller) buildCheckRoomRanksFromTrackerCloudV2(server string, eventID int, ranks []int, wlCharacterID *int, skipMissing bool) ([]drawing.RankInfo, *drawing.RankInfo, *drawing.RankInfo, bool, error) {

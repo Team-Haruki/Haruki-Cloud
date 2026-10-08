@@ -36,7 +36,7 @@ func TestTrackerV2UserQueryEdgeCoverage(t *testing.T) {
 }
 
 func TestTrackerV2CheckRoomEdgeCoverage(t *testing.T) {
-	if _, _, _, ok, err := (&Controller{}).buildCheckRoomFromTrackerCloudV2("jp", 1, []int{1}, nil, nil, false); ok || err != nil {
+	if _, ok, err := (&Controller{}).checkRoomFromTrackerCloudV2("jp", 1, []int{1}, nil, nil, false); ok || err != nil {
 		t.Fatalf("unconfigured check room = %v, %v", ok, err)
 	}
 
@@ -48,16 +48,16 @@ func TestTrackerV2CheckRoomEdgeCoverage(t *testing.T) {
 	}}
 	controller := NewController(nil)
 	controller.SetTrackerIntegration(tracker, nil, nil)
-	info, previous, next, ok, err := controller.buildCheckRoomFromTrackerCloudV2("jp", 1, []int{10}, nil, nil, false)
-	if err != nil || !ok || info.Rank != 10 || previous == nil || next == nil {
-		t.Fatalf("check room fallback = %#v, %#v, %#v, %v, %v", info, previous, next, ok, err)
+	room, ok, err := controller.checkRoomFromTrackerCloudV2("jp", 1, []int{10}, nil, nil, false)
+	if err != nil || !ok || room.info.Rank != 10 || room.previous == nil || room.next == nil || room.enrich == nil {
+		t.Fatalf("check room fallback = %#v, %v, %v", room, ok, err)
 	}
 
 	wrongUID := "11"
 	tracker.checkResp = &sekaiapi.CloudCheckRoomResponse{Rank: sekaiapi.CloudRankInfo{Rank: 5, UserID: &wrongUID}}
 	tracker.traceErr = errors.New("trace failed")
 	userID := int64(10)
-	if _, _, _, _, err := controller.buildCheckRoomFromTrackerCloudV2("jp", 1, nil, &userID, nil, false); !errors.Is(err, tracker.traceErr) {
+	if _, _, err := controller.checkRoomFromTrackerCloudV2("jp", 1, nil, &userID, nil, false); !errors.Is(err, tracker.traceErr) {
 		t.Fatalf("check room mismatched trace error = %v", err)
 	}
 }

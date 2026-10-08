@@ -587,6 +587,11 @@ func isExpectedCommandError(err error) bool {
 	if _, ok := errors.AsType[*botValidationError](err); ok {
 		return true
 	}
+	// Unparsable queries, unknown names and out-of-range indexes are the
+	// user's input, not a failure of Cloud or its upstreams.
+	if usererror.IsInput(err) {
+		return true
+	}
 	_, ok := errors.AsType[onebot11.ReplayError](err)
 	return ok
 }

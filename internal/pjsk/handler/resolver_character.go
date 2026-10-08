@@ -11,6 +11,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/card"
+	"haruki-cloud/utils/usererror"
 )
 
 func resolveEducationAreaCharacterID(ctx context.Context, app *renderapp.App, region renderregion.Value, query string) (int, error) {
@@ -33,12 +34,12 @@ func resolveGameCharacterIDByQuery(
 	}
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return 0, fmt.Errorf("请输入角色名")
+		return 0, usererror.Inputf("请输入角色名")
 	}
 
 	target := normalizeGameCharacterText(query)
 	if target == "" {
-		return 0, fmt.Errorf("请输入角色名")
+		return 0, usererror.Inputf("请输入角色名")
 	}
 	if charID, resolved, err := resolveKnownGameCharacterID(ctx, app, query); resolved || err != nil {
 		return charID, err
@@ -50,7 +51,7 @@ func resolveGameCharacterIDByQuery(
 	}
 	switch len(ids) {
 	case 0:
-		return 0, fmt.Errorf("未找到角色：%s", query)
+		return 0, usererror.Inputf("未找到角色：%s", query)
 	case 1:
 		return ids[0], nil
 	default:

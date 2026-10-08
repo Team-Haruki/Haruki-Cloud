@@ -326,6 +326,7 @@ func (p *dbEventProvider) resetLocalMasterdataCache() {
 	p.cardMu.Unlock()
 	p.cardLinks.reset()
 	p.deckBonuses.reset()
+	p.allEvents.reset()
 	p.unitMu.Lock()
 	p.unitCache = make(map[int]string)
 	p.unitMu.Unlock()

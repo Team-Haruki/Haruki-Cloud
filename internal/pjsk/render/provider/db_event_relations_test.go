@@ -85,8 +85,8 @@ func TestEventListPreloadQueryCountsAndData(t *testing.T) {
 		t.Fatalf("cold queries=%d, want events+links+bonuses+cards=4", got)
 	}
 	warm := readList()
-	if got := queries.Swap(0); got != 1 {
-		t.Fatalf("warm queries=%d, want events=1", got)
+	if got := queries.Swap(0); got != 0 {
+		t.Fatalf("warm queries=%d, want 0 (event list is indexed too)", got)
 	}
 	if !reflect.DeepEqual(cold, warm) {
 		t.Fatal("cold and warm rows differ")

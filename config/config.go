@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/core/dbpool"
 	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
@@ -160,6 +161,15 @@ func envBoolPtr(name string, dst **bool) {
 			*dst = &b
 		}
 	}
+}
+
+// envPool overrides a pool block from <prefix>_MAX_OPEN, _MAX_IDLE,
+// _CONN_MAX_LIFETIME and _CONN_MAX_IDLE_TIME.
+func envPool(prefix string, dst *dbpool.Config) {
+	envInt(prefix+"_MAX_OPEN", &dst.MaxOpen)
+	envInt(prefix+"_MAX_IDLE", &dst.MaxIdle)
+	envDuration(prefix+"_CONN_MAX_LIFETIME", &dst.ConnMaxLifetime)
+	envDuration(prefix+"_CONN_MAX_IDLE_TIME", &dst.ConnMaxIdleTime)
 }
 
 // Storage slot env prefixes, one per fixed slot.
@@ -364,10 +374,13 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_BACKEND_SSL_CERT", &cfg.Backend.SSLCert)
 	envStr("HARUKI_BACKEND_SSL_KEY", &cfg.Backend.SSLKey)
 	envStr("HARUKI_BACKEND_LOG_LEVEL", &cfg.Backend.LogLevel)
+	envBool("HARUKI_BACKEND_ACCESS_LOG_PROBES", &cfg.Backend.AccessLogProbes)
 	envStr("HARUKI_BACKEND_ACCEPT_AUTHORIZATION", &cfg.Backend.AcceptAuthorization)
 	envStr("HARUKI_BACKEND_ACCEPT_USER_AGENT", &cfg.Backend.AcceptUserAgent)
 	envBool("HARUKI_BACKEND_ALLOW_INSECURE_INTERNAL_API", &cfg.Backend.AllowInsecureInternalAPI)
 	envStr("HARUKI_LATEST_CLIENT_VERSION", &cfg.Backend.LatestHarukiClientVersion)
+	envDuration("HARUKI_BACKEND_ALIAS_API_CACHE_TTL", &cfg.Backend.AliasAPICacheTTL)
+	envDuration("HARUKI_BACKEND_ALIAS_API_NOT_FOUND_CACHE_TTL", &cfg.Backend.AliasAPINotFoundCacheTTL)
 
 	// Redis
 	envStr("HARUKI_REDIS_HOST", &cfg.Redis.Host)
@@ -379,12 +392,16 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_PJSK_DB_TYPE", &cfg.PJSK.DBType)
 	envStr("HARUKI_PJSK_DB_URL", &cfg.PJSK.DBURL)
 	envDuration("HARUKI_PJSK_CN_MYSEKAI_BAN_DURATION", &cfg.PJSK.CNMySekaiBanDuration)
+	envPool("HARUKI_PJSK_DB", &cfg.PJSK.Pool)
 
 	// Sekai
 	envBool("HARUKI_SEKAI_ENABLED", &cfg.Sekai.Enabled)
 	envStr("HARUKI_SEKAI_DB_TYPE", &cfg.Sekai.DBType)
 	envStr("HARUKI_SEKAI_DB_URL", &cfg.Sekai.DBURL)
 	envBool("HARUKI_SEKAI_AUTO_MIGRATE", &cfg.Sekai.AutoMigrate)
+	envPool("HARUKI_SEKAI_DB", &cfg.Sekai.Pool)
+	envPool("HARUKI_SEKAI_MYSEKAI_DB", &cfg.Sekai.MySekaiPool)
+	envPool("HARUKI_SEKAI_PROVIDER_DB", &cfg.Sekai.ProviderPool)
 	envBool("HARUKI_SEKAI_DB_SYNC_ENABLED", &cfg.Sekai.RemoteSync.Enabled)
 	envStr("HARUKI_SEKAI_DB_SYNC_SOURCE_DB_TYPE", &cfg.Sekai.RemoteSync.SourceDBType)
 	envStr("HARUKI_SEKAI_DB_SYNC_SOURCE_DB_URL", &cfg.Sekai.RemoteSync.SourceDBURL)
@@ -401,10 +418,13 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_CHUNITHM_MUSIC_DB_URL", &cfg.Chunithm.MusicDBURL)
 	envStr("HARUKI_CHUNITHM_BINDING_DB_TYPE", &cfg.Chunithm.BindingDBType)
 	envStr("HARUKI_CHUNITHM_BINDING_DB_URL", &cfg.Chunithm.BindingDBURL)
+	envPool("HARUKI_CHUNITHM_MUSIC_DB", &cfg.Chunithm.MusicDBPool)
+	envPool("HARUKI_CHUNITHM_BINDING_DB", &cfg.Chunithm.BindingDBPool)
 
 	// Users DB
 	envStr("HARUKI_USERS_DB_TYPE", &cfg.UsersDB.DBType)
 	envStr("HARUKI_USERS_DB_URL", &cfg.UsersDB.DBURL)
+	envPool("HARUKI_USERS_DB", &cfg.UsersDB.Pool)
 	if err := envStringSlice("HARUKI_MODERATION_ADMIN_QQ_IDS", &cfg.Moderation.AdminQQIDs); err != nil {
 		return err
 	}
@@ -412,6 +432,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	// Haruki Bot
 	envStr("HARUKI_BOT_DB_TYPE", &cfg.HarukiBotDB.DBType)
 	envStr("HARUKI_BOT_DB_URL", &cfg.HarukiBotDB.DBURL)
+	envPool("HARUKI_BOT_DB", &cfg.HarukiBotDB.Pool)
 	envStr("HARUKI_BOT_CREDENTIAL_SIGN_TOKEN", &cfg.HarukiBotDB.CredentialSignToken)
 	envStr("HARUKI_BOT_SESSION_SIGN_TOKEN", &cfg.HarukiBotDB.SessionSignToken)
 	envStr("HARUKI_BOT_INTERNAL_API_TOKEN", &cfg.HarukiBotDB.InternalAPIToken)
@@ -440,12 +461,14 @@ func ApplyEnvOverrides(cfg *Config) error {
 	// Sekai API
 	envStr("HARUKI_SEKAI_API_BASE_URL", &cfg.SekaiAPI.BaseURL)
 	envStr("HARUKI_SEKAI_API_TOKEN", &cfg.SekaiAPI.Token)
+	envRetry("HARUKI_SEKAI_API", &cfg.SekaiAPI.Retry)
 
 	// Toolbox
 	envStr("HARUKI_TOOLBOX_BASE_URL", &cfg.Toolbox.BaseURL)
 	envStr("HARUKI_TOOLBOX_API_TOKEN", &cfg.Toolbox.APIToken)
 	envStr("HARUKI_TOOLBOX_USER_AGENT", &cfg.Toolbox.UserAgent)
 	envBool("HARUKI_TOOLBOX_CONDITIONAL_FETCH", &cfg.Toolbox.ConditionalFetch)
+	envRetry("HARUKI_TOOLBOX", &cfg.Toolbox.Retry)
 
 	// HMES
 	envStr("HARUKI_HMES_PUBLIC_BASE_URL", &cfg.HMES.PublicBaseURL)
@@ -464,6 +487,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envInt("HARUKI_TRACKER_TRACE_LEADERBOARD_MAX_CONCURRENCY", &cfg.Tracker.TraceLeaderboardMaxConcurrency)
 	envInt("HARUKI_TRACKER_LATEST_LEADERBOARD_MAX_CONCURRENCY", &cfg.Tracker.LatestLeaderboardMaxConcurrency)
 	envDuration("HARUKI_TRACKER_ACQUIRE_TIMEOUT", &cfg.Tracker.AcquireTimeout)
+	envRetry("HARUKI_TRACKER", &cfg.Tracker.Retry)
 
 	// Censor
 	envStr("HARUKI_CENSOR_BAIDU_API_KEY", &cfg.Censor.BaiduAPIKey)
@@ -474,6 +498,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_CENSOR_TENCENT_BIZ_TYPE", &cfg.Censor.TencentBizType)
 	envStr("HARUKI_CENSOR_DB_TYPE", &cfg.Censor.CensorDBType)
 	envStr("HARUKI_CENSOR_DB_URL", &cfg.Censor.CensorDBURL)
+	envPool("HARUKI_CENSOR_DB", &cfg.Censor.CensorDBPool)
 
 	// PJSK Render
 	envBool("HARUKI_PJSK_RENDER_ENABLED", &cfg.PJSKRender.Enabled)
@@ -539,6 +564,10 @@ func ApplyEnvOverrides(cfg *Config) error {
 	if err := envStringSlice("HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_PREFIXES", &cfg.PJSKRender.AssetProbe.WarmPrefixes); err != nil {
 		return err
 	}
+	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_INTERVAL", &cfg.PJSKRender.AssetProbe.WarmInterval)
+	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_REQUEST_BUDGET", &cfg.PJSKRender.AssetProbe.RequestBudget)
+	envInt("HARUKI_PJSK_RENDER_ASSET_PROBE_REQUEST_MAX_STORE_CALLS", &cfg.PJSKRender.AssetProbe.RequestMaxStoreCalls)
+	envInt("HARUKI_PJSK_RENDER_ASSET_PROBE_REQUEST_CONCURRENCY", &cfg.PJSKRender.AssetProbe.RequestConcurrency)
 	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_OUTPUT_DIR", &cfg.PJSKRender.MusicMeta.OutputDir)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_SOURCE", &cfg.PJSKRender.MusicMeta.Source)
@@ -583,23 +612,34 @@ func ApplyEnvOverrides(cfg *Config) error {
 }
 
 type BackendConfig struct {
-	Host                      string        `yaml:"host"`
-	Port                      int           `yaml:"port"`
-	SSL                       bool          `yaml:"ssl"`
-	SSLCert                   string        `yaml:"ssl_cert"`
-	SSLKey                    string        `yaml:"ssl_key"`
-	LogLevel                  string        `yaml:"log_level"`
-	MainLogFile               string        `yaml:"main_log_file"`
-	AccessLog                 string        `yaml:"access_log"`
-	APICacheTTL               time.Duration `yaml:"api_cache_ttl"`
-	AccessLogPath             string        `yaml:"access_log_path"`
-	AcceptAuthorization       string        `yaml:"accept_authorization"`
-	AcceptUserAgent           string        `yaml:"accept_user_agent"`
-	AllowInsecureInternalAPI  bool          `yaml:"allow_insecure_internal_api"`
-	EnableTrustProxy          bool          `yaml:"enable_trust_proxy"`
-	TrustProxies              []string      `yaml:"trusted_proxies"`
-	ProxyHeader               string        `yaml:"proxy_header"`
-	LatestHarukiClientVersion string        `yaml:"latest_haruki_client_version"`
+	Host        string        `yaml:"host"`
+	Port        int           `yaml:"port"`
+	SSL         bool          `yaml:"ssl"`
+	SSLCert     string        `yaml:"ssl_cert"`
+	SSLKey      string        `yaml:"ssl_key"`
+	LogLevel    string        `yaml:"log_level"`
+	MainLogFile string        `yaml:"main_log_file"`
+	AccessLog   string        `yaml:"access_log"`
+	APICacheTTL time.Duration `yaml:"api_cache_ttl"`
+	// AliasAPICacheTTL caches public alias lookups (hdb:pjsk:alias). It must
+	// outlast the external crawl interval; approvals and deletions clear the
+	// affected keys. 0 = default (12h), negative = api_cache_ttl.
+	AliasAPICacheTTL time.Duration `yaml:"alias_api_cache_ttl"`
+	// AliasAPINotFoundCacheTTL caches public alias 404s, cleared on approval.
+	// 0 = default (1h), negative = not cached.
+	AliasAPINotFoundCacheTTL time.Duration `yaml:"alias_api_not_found_cache_ttl"`
+	AccessLogPath            string        `yaml:"access_log_path"`
+	// AccessLogProbes also logs successful readiness probes (/readyz).
+	// Default false: a 7 req/s poller otherwise fills most of the access
+	// log. Failed probes (status >= 400) are always logged.
+	AccessLogProbes           bool     `yaml:"access_log_probes"`
+	AcceptAuthorization       string   `yaml:"accept_authorization"`
+	AcceptUserAgent           string   `yaml:"accept_user_agent"`
+	AllowInsecureInternalAPI  bool     `yaml:"allow_insecure_internal_api"`
+	EnableTrustProxy          bool     `yaml:"enable_trust_proxy"`
+	TrustProxies              []string `yaml:"trusted_proxies"`
+	ProxyHeader               string   `yaml:"proxy_header"`
+	LatestHarukiClientVersion string   `yaml:"latest_haruki_client_version"`
 }
 
 type NodeConfig struct {
@@ -609,17 +649,20 @@ type NodeConfig struct {
 }
 
 type ChunithmConfig struct {
-	Enabled       bool   `yaml:"enabled"`
-	MusicDBType   string `yaml:"music_db_type"`
-	MusicDBURL    string `yaml:"music_db_url"`
-	BindingDBType string `yaml:"binding_db_type"`
-	BindingDBURL  string `yaml:"binding_db_url"`
+	Enabled       bool          `yaml:"enabled"`
+	MusicDBType   string        `yaml:"music_db_type"`
+	MusicDBURL    string        `yaml:"music_db_url"`
+	MusicDBPool   dbpool.Config `yaml:"music_db_pool"`
+	BindingDBType string        `yaml:"binding_db_type"`
+	BindingDBURL  string        `yaml:"binding_db_url"`
+	BindingDBPool dbpool.Config `yaml:"binding_db_pool"`
 }
 
 type PJSKConfig struct {
 	Enabled        bool                      `yaml:"enabled"`
 	DBType         string                    `yaml:"db_type"`
 	DBURL          string                    `yaml:"db_url"`
+	Pool           dbpool.Config             `yaml:"pool"`
 	AllowCNMySekai []MySekaiCNWhitelistEntry `yaml:"allow_cn_mysekai"`
 	// CNMySekaiBanDuration is retained for config compatibility and ignored.
 	// Blocked CN MySekai requests now warn three times, then stay silent.
@@ -627,11 +670,18 @@ type PJSKConfig struct {
 }
 
 type SekaiConfig struct {
-	Enabled     bool                  `yaml:"enabled"`
-	DBType      string                `yaml:"db_type"`
-	DBURL       string                `yaml:"db_url"`
-	AutoMigrate bool                  `yaml:"auto_migrate"`
-	RemoteSync  SekaiRemoteSyncConfig `yaml:"remote_sync"`
+	Enabled bool   `yaml:"enabled"`
+	DBType  string `yaml:"db_type"`
+	DBURL   string `yaml:"db_url"`
+	// Pool bounds the main ent client (default 16: master loads hold a
+	// connection for up to ~2 s, so a small cap would queue command queries).
+	Pool dbpool.Config `yaml:"pool"`
+	// MySekaiPool bounds each region's MySekai masterdata store (default 3).
+	MySekaiPool dbpool.Config `yaml:"mysekai_pool"`
+	// ProviderPool bounds each region's render provider raw-row pool (default 1).
+	ProviderPool dbpool.Config         `yaml:"provider_pool"`
+	AutoMigrate  bool                  `yaml:"auto_migrate"`
+	RemoteSync   SekaiRemoteSyncConfig `yaml:"remote_sync"`
 }
 
 type SekaiRemoteSyncConfig struct {
@@ -650,11 +700,22 @@ type SekaiRemoteSyncConfig struct {
 // ondemand choice and case correction against the assets slot when no local
 // asset root is configured). Zero values select the defaults.
 type AssetProbeConfig struct {
-	PositiveTTL  time.Duration `yaml:"positive_ttl"`  // resolved keys (default 6h)
-	ListingTTL   time.Duration `yaml:"listing_ttl"`   // directory listings (default 30m)
-	NegativeTTL  time.Duration `yaml:"negative_ttl"`  // misses; a miss in a listing older than this re-lists it once (default 5m)
-	Timeout      time.Duration `yaml:"timeout"`       // one HEAD or one directory listing (default 3s)
-	WarmPrefixes []string      `yaml:"warm_prefixes"` // directories listed in the background at startup (default none)
+	PositiveTTL time.Duration `yaml:"positive_ttl"` // resolved keys (default 6h)
+	ListingTTL  time.Duration `yaml:"listing_ttl"`  // directory listings (default 30m)
+	NegativeTTL time.Duration `yaml:"negative_ttl"` // misses; a miss in a listing older than this re-lists it once (default 5m)
+	Timeout     time.Duration `yaml:"timeout"`      // one HEAD or one directory listing (default 3s)
+	// WarmPrefixes are directories listed in the background at startup and
+	// every WarmInterval. Empty selects the defaults (card thumbnails, home
+	// banners and event directories of every region); ["none"] disables.
+	WarmPrefixes []string      `yaml:"warm_prefixes"`
+	WarmInterval time.Duration `yaml:"warm_interval"` // re-list period (default 3/4 of listing_ttl; negative = startup only)
+	// Per-request cap on uncached probes: wait budget from the first miss
+	// (default 5s), store calls (default 128), concurrent probes (default
+	// 8). Past it lookups fall back to the first candidate path. Negative
+	// disables that limit.
+	RequestBudget        time.Duration `yaml:"request_budget"`
+	RequestMaxStoreCalls int           `yaml:"request_max_store_calls"`
+	RequestConcurrency   int           `yaml:"request_concurrency"`
 }
 
 // AssetIndexConfig consumes complete inventories published by Asset-Updater.
@@ -930,8 +991,9 @@ type CensorConfig struct {
 	TencentRegion    string `yaml:"tencent_region"`   // default: ap-guangzhou
 	TencentBizType   string `yaml:"tencent_biz_type"` // optional Biz type tag
 	// Censor result database
-	CensorDBType string `yaml:"censor_db_type"`
-	CensorDBURL  string `yaml:"censor_db_url"`
+	CensorDBType string        `yaml:"censor_db_type"`
+	CensorDBURL  string        `yaml:"censor_db_url"`
+	CensorDBPool dbpool.Config `yaml:"censor_db_pool"`
 }
 
 // NoiseStaticKeyConfig names one Noise static key pair by a stable identifier.
@@ -941,11 +1003,12 @@ type NoiseStaticKeyConfig struct {
 }
 
 type HarukiBotDBConfig struct {
-	DBType              string `yaml:"db_type"`
-	DBURL               string `yaml:"db_url"`
-	CredentialSignToken string `yaml:"credential_sign_token"`
-	SessionSignToken    string `yaml:"session_sign_token"`
-	InternalAPIToken    string `yaml:"internal_api_token"`
+	DBType              string        `yaml:"db_type"`
+	DBURL               string        `yaml:"db_url"`
+	Pool                dbpool.Config `yaml:"pool"`
+	CredentialSignToken string        `yaml:"credential_sign_token"`
+	SessionSignToken    string        `yaml:"session_sign_token"`
+	InternalAPIToken    string        `yaml:"internal_api_token"`
 	// AuthV3SessionTTL bounds sessions issued by the Noise-wrapped AuthV3
 	// endpoint. 0 = default (1h); clamped to [1m, 30d].
 	AuthV3SessionTTL time.Duration `yaml:"auth_v3_session_ttl"`
@@ -1026,8 +1089,9 @@ type DiagnosticsConfig struct {
 }
 
 type UsersDBConfig struct {
-	DBType string `yaml:"db_type"`
-	DBURL  string `yaml:"db_url"`
+	DBType string        `yaml:"db_type"`
+	DBURL  string        `yaml:"db_url"`
+	Pool   dbpool.Config `yaml:"pool"`
 }
 
 type ModerationConfig struct {
@@ -1044,19 +1108,21 @@ type SekaiAPIConfig struct {
 	BaseURL string                  `yaml:"base_url"`
 	Token   string                  `yaml:"token"`
 	Targets []upstream.TargetConfig `yaml:"targets"`
+	Retry   UpstreamRetryConfig     `yaml:"retry"`
 }
 
 type TrackerConfig struct {
-	BaseURL                         string        `yaml:"base_url"`
-	Token                           string        `yaml:"token"`
-	UserAgent                       string        `yaml:"user_agent"`
-	Timeout                         time.Duration `yaml:"timeout"`
-	TraceBatchWindow                time.Duration `yaml:"trace_batch_window"`
-	TraceBatchMaxWait               time.Duration `yaml:"trace_batch_max_wait"`
-	TraceBatchFlushRanks            int           `yaml:"trace_batch_flush_ranks"`
-	TraceLeaderboardMaxConcurrency  int           `yaml:"trace_leaderboard_max_concurrency"`
-	LatestLeaderboardMaxConcurrency int           `yaml:"latest_leaderboard_max_concurrency"`
-	AcquireTimeout                  time.Duration `yaml:"acquire_timeout"`
+	BaseURL                         string              `yaml:"base_url"`
+	Token                           string              `yaml:"token"`
+	UserAgent                       string              `yaml:"user_agent"`
+	Timeout                         time.Duration       `yaml:"timeout"`
+	TraceBatchWindow                time.Duration       `yaml:"trace_batch_window"`
+	TraceBatchMaxWait               time.Duration       `yaml:"trace_batch_max_wait"`
+	TraceBatchFlushRanks            int                 `yaml:"trace_batch_flush_ranks"`
+	TraceLeaderboardMaxConcurrency  int                 `yaml:"trace_leaderboard_max_concurrency"`
+	LatestLeaderboardMaxConcurrency int                 `yaml:"latest_leaderboard_max_concurrency"`
+	AcquireTimeout                  time.Duration       `yaml:"acquire_timeout"`
+	Retry                           UpstreamRetryConfig `yaml:"retry"`
 }
 
 type ToolboxConfig struct {
@@ -1067,7 +1133,8 @@ type ToolboxConfig struct {
 	// unchanged snapshot answers 304 without a payload. Requires a Toolbox
 	// deployment with conditional read support; when false the same semantics
 	// are emulated with the legacy upload_time probe.
-	ConditionalFetch bool `yaml:"conditional_fetch"`
+	ConditionalFetch bool                `yaml:"conditional_fetch"`
+	Retry            UpstreamRetryConfig `yaml:"retry"`
 }
 
 type HMESConfig struct {
@@ -1100,6 +1167,14 @@ type Config struct {
 
 var Cfg Config
 
+// The public alias-by-id crawler sweeps every 6 hours; a 12h TTL keeps one
+// sweep's keys alive through the next. 404s expire sooner because a pending
+// alias can be approved at any time (approvals also clear the key).
+const (
+	DefaultAliasAPICacheTTL         = 12 * time.Hour
+	DefaultAliasAPINotFoundCacheTTL = time.Hour
+)
+
 // ApplyProfileDefaults fills in zero-value fields with profile-aware defaults.
 // Called after YAML parse but before env overrides, so explicit YAML values and
 // env vars always take precedence.
@@ -1128,6 +1203,13 @@ func ApplyProfileDefaults(cfg *Config) {
 		default:
 			cfg.Backend.APICacheTTL = 10 * time.Second
 		}
+	}
+
+	if cfg.Backend.AliasAPICacheTTL == 0 {
+		cfg.Backend.AliasAPICacheTTL = DefaultAliasAPICacheTTL
+	}
+	if cfg.Backend.AliasAPINotFoundCacheTTL == 0 {
+		cfg.Backend.AliasAPINotFoundCacheTTL = DefaultAliasAPINotFoundCacheTTL
 	}
 
 	// Absent (nil) keeps the default list; an explicit [] disables it.

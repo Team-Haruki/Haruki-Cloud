@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
@@ -58,6 +59,8 @@ type RequestContext struct {
 // Region is already resolved (resolveRegionFromDefaultBinding was called in Execute).
 func NewRequestContext(ctx context.Context, r *CommandRequest, app *renderapp.App) *RequestContext {
 	regionStr := regionWithDefault(r.Region)
+	// One store-probe budget for every asset lookup of this command.
+	ctx = renderassets.WithProbeBudget(ctx)
 	requestApp := app
 	if app != nil {
 		requestScoped := *app

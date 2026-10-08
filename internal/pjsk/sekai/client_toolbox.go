@@ -62,7 +62,7 @@ type MysekaiBirthdayEvent struct {
 // reaching for a package-level singleton.
 func NewToolboxClient(cfg *config.ToolboxConfig) *HarukiToolboxClient {
 	return &HarukiToolboxClient{
-		http: newRestyClient().
+		http: newRestyClient(toolboxRetryConfig(cfg)).
 			SetTimeout(apiTimeout).
 			SetResponseBodyLimit(toolboxMaxResponseBytes),
 		config: cfg,

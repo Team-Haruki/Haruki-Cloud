@@ -11,6 +11,7 @@ import (
 	"unicode"
 
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/core/dbpool"
 	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/cachefill"
@@ -148,12 +149,12 @@ func newDBMySekaiProvider(client *sekaiDB.Client, region renderregion.Value, cfg
 	if err != nil {
 		return p
 	}
+	dbpool.Apply(db, cfg.sekaiPool.WithDefaults(dbpool.Defaults(1)))
 	if err := db.Ping(); err != nil {
 		_ = db.Close()
 		return p
 	}
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(1)
+	dbpool.Register(providerPoolName, db)
 	p.db = db
 	return p
 }
@@ -231,8 +232,11 @@ func (p *dbMySekaiProvider) Close() error {
 	if p == nil || p.db == nil {
 		return nil
 	}
+	dbpool.Unregister(providerPoolName, p.db)
 	return p.db.Close()
 }
+
+const providerPoolName = "sekai_provider"
 
 // loadDBList serves one table from the database. The rows are cached until
 // the masterdata cache is reset (the registry poll resets it after an

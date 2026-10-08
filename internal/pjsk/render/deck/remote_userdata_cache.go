@@ -20,7 +20,11 @@ import (
 
 const (
 	remoteUserdataCacheEntries = 256
-	remoteUserdataCacheTTL     = 10 * time.Minute
+	// deck-service keeps cached userdata for 30 minutes after its last use
+	// (DECK_USERDATA_CACHE_TTL_SECONDS default 1800), so a hash Cloud still
+	// holds is normally still there; an evicted one is re-uploaded once via
+	// the missing-hash retry in doRecommendBatch.
+	remoteUserdataCacheTTL     = 30 * time.Minute
 	remoteUserdataMaxHashBytes = 4096
 )
 

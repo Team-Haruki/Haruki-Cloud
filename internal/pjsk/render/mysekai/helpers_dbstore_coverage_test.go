@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	stdjson "encoding/json"
+	"haruki-cloud/internal/core/dbpool"
 	"reflect"
 	"testing"
 
@@ -248,7 +249,7 @@ func testNilDBMasterdataStore(t *testing.T) {
 	if nilStore.loadList("musics.json") != nil || len(nilStore.loadMapByID("musics.json")) != 0 || nilStore.loadObject("x", nil) {
 		t.Fatal("nil db store load behavior mismatch")
 	}
-	if newDBMasterdataStore(context.Background(), " ", "jp") != nil {
+	if newDBMasterdataStore(context.Background(), " ", "jp", dbpool.Config{}) != nil {
 		t.Fatal("blank DSN should not configure a DB store")
 	}
 }

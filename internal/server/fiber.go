@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"expvar"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -64,7 +65,9 @@ func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 			accessLogAsyncWriter = harukiLogger.NewReliableAsyncWriter(accessLogFile, logQueueCapacity, reliableLogOverflowWriter)
 			accessWriter = accessLogAsyncWriter
 		}
-		app.Use(accessLogMiddleware(harukiLogger.NewLogger("HTTP", "INFO", accessWriter)))
+		app.Use(accessLogMiddlewareWithOptions(harukiLogger.NewLogger("HTTP", "INFO", accessWriter), accessLogOptions{
+			logProbes: harukiConfig.Cfg.Backend.AccessLogProbes,
+		}))
 	}
 	app.Use(recover.New(recover.Config{PanicHandler: func(c fiber.Ctx, recovered any) error {
 		attrs := []any{"panic_type", fmt.Sprintf("%T", recovered)}
@@ -123,7 +126,23 @@ func requestBodyLimitForPath(path string) int {
 	return defaultRequestBodyLimit
 }
 
+// readinessProbePath is the unauthenticated probe route; successful probes
+// are left out of the access log unless backend.access_log_probes is set.
+const readinessProbePath = "/readyz"
+
+// suppressedProbeLogs counts successful probes left out of the access log
+// (/debug/vars "access_log_probes_suppressed"), so the poll rate stays visible.
+var suppressedProbeLogs = expvar.NewInt("access_log_probes_suppressed")
+
+type accessLogOptions struct {
+	logProbes bool
+}
+
 func accessLogMiddleware(accessLogger *harukiLogger.Logger) fiber.Handler {
+	return accessLogMiddlewareWithOptions(accessLogger, accessLogOptions{logProbes: true})
+}
+
+func accessLogMiddlewareWithOptions(accessLogger *harukiLogger.Logger, opts accessLogOptions) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		startedAt := time.Now()
 		requestBytes := len(c.Request().Body())
@@ -132,8 +151,12 @@ func accessLogMiddleware(accessLogger *harukiLogger.Logger) fiber.Handler {
 		var observedErr error
 		errorType := ""
 		defer func() {
-			snapshot := trace.Snapshot()
 			statusCode := c.Response().StatusCode()
+			if !opts.logProbes && observedErr == nil && statusCode < fiber.StatusBadRequest && c.Path() == readinessProbePath {
+				suppressedProbeLogs.Add(1)
+				return
+			}
+			snapshot := trace.Snapshot()
 			attrs := []any{
 				"event", "http_request",
 				"request_id", requestid.FromContext(c),
@@ -181,7 +204,7 @@ func accessLogMiddleware(accessLogger *harukiLogger.Logger) fiber.Handler {
 }
 
 func registerReadinessRoute(app *fiber.App) {
-	app.Get("/readyz", func(c fiber.Ctx) error {
+	app.Get(readinessProbePath, func(c fiber.Ctx) error {
 		// Minimal readiness signal only. Deployment profile, build version and
 		// node name/role are intentionally NOT exposed here — this endpoint is
 		// public/unauthenticated, and that metadata aids targeting/recon. Expose

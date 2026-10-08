@@ -53,7 +53,14 @@ func (r *RemoteDeckRecommender) RecommendBatchContext(ctx context.Context, req R
 	if err := validateRemoteRecommendRequest(req); err != nil {
 		return nil, err
 	}
-	exec, err := r.acquireExecution(ctx)
+	// Hash before leasing so the lease can prefer the target that already
+	// holds this userdata (see acquireExecutionFor).
+	var userdataKey *[32]byte
+	if len(req.UserData) > 0 {
+		key := remoteUserdataDigest(ctx, req.UserData)
+		userdataKey = &key
+	}
+	exec, err := r.acquireExecutionFor(ctx, userdataKey)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +306,10 @@ func (r *RemoteDeckRecommender) doRecommendBatch(ctx context.Context, exec *remo
 		return nil, fmt.Errorf("deck remote engine: no user data bytes available")
 	}
 
-	key := remoteUserdataDigest(ctx, userData)
+	key := exec.userdataKey
+	if !exec.hasUserdataKey {
+		key = remoteUserdataDigest(ctx, userData)
+	}
 	for attempt := 0; ; attempt++ {
 		entry, err := r.cachedUserdata(ctx, exec.state, key, userData)
 		if err != nil {

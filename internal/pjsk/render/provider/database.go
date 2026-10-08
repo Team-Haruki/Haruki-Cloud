@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/core/dbpool"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/cachefill"
 )
@@ -14,6 +15,17 @@ type DatabaseProviderOption func(*databaseProviderConfig)
 type databaseProviderConfig struct {
 	sekaiDBType string
 	sekaiDSN    string
+	sekaiPool   dbpool.Config
+}
+
+// WithSekaiPool bounds the raw pool opened from the WithSekaiDatabase DSN;
+// zero fields take dbpool.Defaults(1).
+func WithSekaiPool(pool dbpool.Config) DatabaseProviderOption {
+	return func(cfg *databaseProviderConfig) {
+		if cfg != nil {
+			cfg.sekaiPool = pool
+		}
+	}
 }
 
 func WithSekaiDatabase(driverName, dataSourceName string) DatabaseProviderOption {

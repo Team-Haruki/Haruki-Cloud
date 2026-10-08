@@ -36,6 +36,19 @@ type StoreProbeConfig struct {
 	// "jp-assets/startapp/thumbnail/chara") listed in the background at
 	// startup so the first renders find them cached.
 	WarmPrefixes []string
+	// WarmInterval re-lists WarmPrefixes before their listings expire.
+	// 0 = three quarters of ListingTTL; negative = startup only.
+	WarmInterval time.Duration
+	// RequestBudget bounds how long one request waits on uncached probes,
+	// counted from its first one; afterwards its lookups fall back to the
+	// first candidate. 0 = default (5s), negative = unbounded.
+	RequestBudget time.Duration
+	// RequestMaxStoreCalls caps the store round trips (HEAD, listing) one
+	// request may wait on. 0 = default (128), negative = unbounded.
+	RequestMaxStoreCalls int
+	// RequestConcurrency caps one request's concurrent uncached probes.
+	// 0 = default (8), negative = unbounded.
+	RequestConcurrency int
 }
 
 // Defaults for StoreProbeConfig.
@@ -44,6 +57,10 @@ const (
 	DefaultStoreProbeListingTTL  = 30 * time.Minute
 	DefaultStoreProbeNegativeTTL = 5 * time.Minute
 	DefaultStoreProbeTimeout     = 3 * time.Second
+	// DefaultStoreProbeWarmTimeout bounds one listing during background
+	// warm-up; a wide directory (thumbnail/chara) can need several pages,
+	// which must not be cut short and remembered as unavailable.
+	DefaultStoreProbeWarmTimeout = 30 * time.Second
 )
 
 const (
@@ -89,6 +106,18 @@ func (c StoreProbeConfig) withDefaults() StoreProbeConfig {
 	if c.Timeout <= 0 {
 		c.Timeout = DefaultStoreProbeTimeout
 	}
+	if c.WarmInterval == 0 {
+		c.WarmInterval = c.ListingTTL * 3 / 4
+	}
+	if c.RequestBudget == 0 {
+		c.RequestBudget = DefaultStoreProbeRequestBudget
+	}
+	if c.RequestMaxStoreCalls == 0 {
+		c.RequestMaxStoreCalls = DefaultStoreProbeRequestMaxStoreCalls
+	}
+	if c.RequestConcurrency == 0 {
+		c.RequestConcurrency = DefaultStoreProbeRequestConcurrency
+	}
 	return c
 }
 
@@ -133,6 +162,8 @@ type storeProbeResult struct {
 	found      bool
 	err        error
 	operations *sharedAssetOperations
+	// storeCalls is how many store round trips the flight made.
+	storeCalls int64
 }
 
 func newStoreProbe(store storage.Store, cfg StoreProbeConfig, log *logger.Logger) *storeProbe {
@@ -185,6 +216,18 @@ func (p *storeProbe) resolve(ctx context.Context, key storage.Key) (resolved sto
 		return "", false, errStoreProbeOpen
 	}
 	commandtrace.RecordOperation(ctx, "asset.store_probe_cache_miss", 0)
+	budget := p.budgetFor(ctx)
+	var expired <-chan time.Time
+	if budget != nil {
+		release, err := budget.acquire(ctx, p.now())
+		if err != nil {
+			return "", false, p.budgetRefused(ctx, key, err)
+		}
+		defer release()
+		var stop func() bool
+		expired, stop = budget.expiry(p.now())
+		defer stop()
+	}
 	finishWait := commandtrace.MeasureOperation(ctx, "asset.store_probe_wait")
 	defer finishWait()
 	generation := p.keys.currentGeneration()
@@ -197,11 +240,27 @@ func (p *storeProbe) resolve(ctx context.Context, key storage.Key) (resolved sto
 		if flight.Shared {
 			commandtrace.RecordOperation(ctx, "asset.store_probe_shared", 0)
 		}
+		if budget != nil {
+			budget.charge(result.storeCalls)
+		}
 		result.operations.merge(ctx)
 		return result.key, result.found, result.err
+	case <-expired:
+		// The flight runs on: its result is cached for the next request.
+		return "", false, p.budgetRefused(ctx, key, errStoreProbeBudget)
 	case <-ctx.Done():
 		return "", false, ctx.Err()
 	}
+}
+
+// budgetRefused records a lookup the request's probe budget turned away; the
+// caller falls back to its first candidate.
+func (p *storeProbe) budgetRefused(ctx context.Context, key storage.Key, err error) error {
+	if errors.Is(err, errStoreProbeBudget) {
+		commandtrace.RecordOperation(ctx, "asset.store_probe_budget_exhausted", 0)
+		p.logError(key, err)
+	}
+	return err
 }
 
 func flightKey(name string, generation uint64) string {
@@ -219,8 +278,10 @@ func (p *storeProbe) resolveUncached(ctx context.Context, key storage.Key, gener
 	}
 	sharedCtx, trace := commandtrace.WithNewTrace(sharedCtx)
 	sharedCtx, collector := collectAssetOperations(sharedCtx)
+	sharedCtx, calls := withStoreCallCounter(sharedCtx)
 	result := p.probe(sharedCtx, key)
 	result.operations = collector.finish(trace)
+	result.storeCalls = calls.n.Load()
 	if !errors.Is(result.err, errStoreProbeOpen) {
 		p.remember(key, result, generation)
 	}
@@ -291,7 +352,14 @@ func (p *storeProbe) call(ctx context.Context, op string, fn func(context.Contex
 	if !p.breaker.allow(p.now()) {
 		return errStoreProbeOpen
 	}
-	callCtx, cancel := context.WithTimeout(ctx, p.cfg.Timeout)
+	if counter := storeCallCounterFrom(ctx); counter != nil {
+		counter.n.Add(1)
+	}
+	timeout := p.cfg.Timeout
+	if override, ok := ctx.Value(storeCallTimeoutKey{}).(time.Duration); ok && override > timeout {
+		timeout = override
+	}
+	callCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	startedAt := time.Now()
 	err := fn(callCtx)
@@ -328,6 +396,10 @@ func (p *storeProbe) dirIndex(ctx context.Context, parent string, staleBefore ti
 		if storage.IsBackgroundIO(ctx) {
 			sharedCtx = storage.WithBackgroundIO(sharedCtx)
 		}
+		if timeout, ok := ctx.Value(storeCallTimeoutKey{}).(time.Duration); ok {
+			sharedCtx = context.WithValue(sharedCtx, storeCallTimeoutKey{}, timeout)
+		}
+		sharedCtx = inheritStoreCallCounter(sharedCtx, ctx)
 		sharedCtx, trace := commandtrace.WithNewTrace(sharedCtx)
 		if cached, ok := p.dirs.lookup(parent, p.now()); ok && cached.listedAt.After(staleBefore) {
 			return cached, nil
@@ -560,11 +632,45 @@ func parentDir(dir string) (string, bool) {
 	return "", true
 }
 
+// storeCallTimeoutKey raises cfg.Timeout for one context's store calls
+// (background warm-up only).
+type storeCallTimeoutKey struct{}
+
 // warm lists cfg.WarmPrefixes and the directories above them, and runs the
 // bulk listing of a wide prefix synchronously, so the first renders after a
 // restart find their listings cached.
 func (p *storeProbe) warm(ctx context.Context) {
+	p.warmPass(ctx, time.Time{})
+}
+
+// warmLoop warms once, then re-lists the prefixes every cfg.WarmInterval so
+// their listings are replaced before ListingTTL expires them and requests
+// never meet them cold.
+func (p *storeProbe) warmLoop(ctx context.Context) {
+	p.warm(ctx)
+	if p.cfg.WarmInterval <= 0 || len(p.cfg.WarmPrefixes) == 0 {
+		return
+	}
+	ticker := time.NewTicker(p.cfg.WarmInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-p.lifecycle.Done():
+			return
+		case <-ticker.C:
+			p.warmPass(ctx, p.now())
+		}
+	}
+}
+
+// warmPass lists every warm prefix (and the levels above it), replacing
+// listings no newer than staleBefore; a non-zero staleBefore also redoes the
+// bulk listing of a wide prefix.
+func (p *storeProbe) warmPass(ctx context.Context, staleBefore time.Time) {
 	ctx = storage.WithBackgroundIO(ctx)
+	ctx = context.WithValue(ctx, storeCallTimeoutKey{}, DefaultStoreProbeWarmTimeout)
 	for _, raw := range p.cfg.WarmPrefixes {
 		prefix, err := storage.CleanDirPrefix(raw)
 		if err != nil || ctx.Err() != nil {
@@ -573,15 +679,18 @@ func (p *storeProbe) warm(ctx context.Context) {
 		parent := ""
 		if prefix != "" {
 			for _, segment := range strings.Split(strings.TrimSuffix(string(prefix), "/"), "/") {
-				if _, err := p.dirIndex(ctx, parent, time.Time{}); err != nil {
+				if _, err := p.dirIndex(ctx, parent, staleBefore); err != nil {
 					break
 				}
 				parent += segment + "/"
 			}
 		}
-		index, err := p.dirIndex(ctx, parent, time.Time{})
+		index, err := p.dirIndex(ctx, parent, staleBefore)
 		if err != nil || index.unavailable {
 			continue
+		}
+		if !staleBefore.IsZero() {
+			p.dirs.remove(bulkMarker(parent))
 		}
 		for name := range index.dirs.exact {
 			if grand, ok := p.bulkCandidate(parent + name + "/"); ok {
@@ -853,6 +962,15 @@ func (c *probeCache[V]) removeLocked(key string, entry *probeCacheEntry[V]) {
 	if entry.element != nil {
 		c.recent.Remove(entry.element)
 		entry.element = nil
+	}
+}
+
+// remove drops key, so the next lookup misses.
+func (c *probeCache[V]) remove(key string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if entry, ok := c.entries[key]; ok {
+		c.removeLocked(key, entry)
 	}
 }
 

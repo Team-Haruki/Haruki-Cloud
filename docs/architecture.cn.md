@@ -176,19 +176,23 @@ backend:                   # 服务基础配置
   accept_authorization: "" # 内部 API 鉴权令牌
   accept_user_agent: ""    # 内部 API User-Agent 过滤
   allow_insecure_internal_api: false # 仅 dev/beta 时可开启；production 下强制关闭
+  access_log_probes: false           # true 时成功的 /readyz 探测也写访问日志；失败的探测总会记录
+  alias_api_cache_ttl: "12h"         # 公开别名查询缓存（高于约 6h 的爬取间隔）；审核通过/删除别名时立即清除对应 key
+  alias_api_not_found_cache_ttl: "1h" # 公开别名查询 404 的缓存时间；负值不缓存
 
 redis:                     # Redis 连接
   addr: "localhost:6379"
 
 pjsk:                      # PJSK 数据库
   db_url: "..."
+  pool: {}                 # 连接池（每个 ent 客户端和 sekai 原生池都有）：max_open / max_idle（缺省等于 max_open）/ conn_max_lifetime 30m / conn_max_idle_time 5m；默认 max_open：pjsk 10、users 8、bot 10、censor 4、chunithm 各 4、sekai 16（另有每区服 mysekai_pool 3、provider_pool 1）。五区服时单进程最多 84 个连接（含 image_cache 8），远低于与 tracker 共用的 PG max_connections 200；统计见诊断监听 /debug/vars 的 db_pools
 pjsk_render:               # 渲染引擎配置
   drawing:
     base_url: ""           # Drawing API 地址
     timeout: 30
   asset_dirs: {}           # 公开素材主机 assets_base_urls（必填）；primary 已弃用（E1）
   storage: {}              # 五个存储槽位（fs / s3），缺省时从旧目录派生
-  asset_probe: {}          # 无本地素材根时按 assets 槽位选路径（startapp/ondemand、大小写）；positive_ttl 6h / listing_ttl 30m / negative_ttl 5m / timeout 3s / warm_prefixes []
+  asset_probe: {}          # 无本地素材根时按 assets 槽位选路径（startapp/ondemand、大小写）；positive_ttl 6h / listing_ttl 30m / negative_ttl 5m / timeout 3s；warm_prefixes 为空时默认预热各区服 startapp/thumbnail/chara、startapp/home/banner、ondemand/event（["none"] 关闭），并每 warm_interval（默认 listing_ttl 的 3/4）刷新；单请求探测上限 request_budget 5s / request_max_store_calls 128 / request_concurrency 8，超限回退首个候选路径
   image_cache: {}          # pg_url、hosts、render_index.*、gc_*、legacy_redirect
   drawing_artifact: {}     # Artifact 模式放量白名单
   local_masterdata: {}     # legacy/dev 本地 Masterdata fallback；生产默认关闭。所有 master 读取（含库存道具表、自定义名片资源、MySekai 大门皮肤/自定义谱面标签、JP musicCategories）都先走 DB，只有开启 enabled+allow_fallback（或 allow_leaks）且某张表为空/不可用时才读本地 JSON
@@ -196,6 +200,7 @@ pjsk_render:               # 渲染引擎配置
 
 sekai:                     # Sekai Masterdata 数据库
   db_url: "..."
+  pool: {}                 # 主 ent 客户端（默认 16）；mysekai_pool / provider_pool 为每区服的原生池
   remote_sync: {}          # 可选：从远程维护的 PostgreSQL masterdata DB 定期同步到本地库
 
 chunithm:                  # CHUNITHM（两个独立数据库）
@@ -235,6 +240,7 @@ hmes:                      # HMES 外部服务（public/internal base_url + toke
 
 sekai_api:                 # 上游 Sekai API 客户端
   base_url: ""
+  retry: {}                # 重试策略（toolbox / tracker 同结构）：默认 max_retries 1、wait 200ms、max_wait 1s、budget 3s；只重试 GET/HEAD 的 502/503 与连接被拒/重置，不重试客户端超时，首个请求开始超过 budget 后不再重试；max_retries 为负关闭
 
 tracker:                   # SK Tracker 客户端
   base_url: ""
@@ -244,7 +250,9 @@ diagnostics:               # 可选的运维诊断监听（独立于公网 Fiber
   allow_non_loopback: false # 无鉴权；非 loopback 地址会被拒绝启动（记 ERROR，主服务照常运行），除非显式置 true
 ```
 
-`diagnostics` 的环境变量为 `HARUKI_DIAGNOSTICS_LISTEN_ADDR` / `HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK`。生产上在 `cloud.env` 里设 `HARUKI_DIAGNOSTICS_LISTEN_ADDR=127.0.0.1:6060`，然后 `docker exec haruki-cloud-v3 wget -qO- http://127.0.0.1:6060/debug/runtime`，或经 SSH 隧道用 `go tool pprof http://127.0.0.1:6060/debug/pprof/profile`。诊断监听随主服务一起优雅关闭。
+`diagnostics` 的环境变量为 `HARUKI_DIAGNOSTICS_LISTEN_ADDR` / `HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK`。生产上在 `cloud.env` 里设 `HARUKI_DIAGNOSTICS_LISTEN_ADDR=127.0.0.1:6060`，然后 `docker exec haruki-cloud-v3 wget -qO- http://127.0.0.1:6060/debug/runtime`，或经 SSH 隧道用 `go tool pprof http://127.0.0.1:6060/debug/pprof/profile`。诊断监听随主服务一起优雅关闭。仓库内 `docker-compose.yml` 默认即为 `127.0.0.1:6060`（推荐的生产设置，设为空字符串可关闭）；`/debug/vars` 另含 `db_pools`（各连接池的 open / in_use / idle / wait_count / max_idle_closed 等）与 `access_log_probes_suppressed`。
+
+`docker-compose.yml` 还为 Cloud 容器设置 `sysctls: net.ipv4.tcp_slow_start_after_idle: "0"`：bridge 网络的容器有独立的 network namespace，不继承宿主机的该值；默认值 1 会让空闲超过一个 RTO 的长连接回到 10 个报文段的拥塞窗口，约 300 KB 的图片 PUT 或组卡 userdata 上传因此多耗约 5 个 RTT。修改需要重建容器。
 
 ---
 
@@ -378,7 +386,7 @@ domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1" }
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/v2/bot/:botId/command/manifests` | 读取 command manifest；未配置 bot DB 时返回不可用响应 |
+| GET | `/api/v2/bot/:botId/command/manifests` | 读取 command manifest；未配置 bot DB 时返回不可用响应。响应（含签名 envelope）在进程内缓存，每 30s 重读一次表，payload 不变时不重新签名；带强 `ETag`，客户端发 `If-None-Match` 命中时返回空 body 的 304 |
 | POST | `/api/v2/bot/:botId/pjsk/card/detail` | 卡面详情 |
 | POST | `/api/v2/bot/:botId/pjsk/card/list` | 查卡列表 |
 | POST | `/api/v2/bot/:botId/pjsk/music` | 歌曲详情类路径之一 |

@@ -43,7 +43,7 @@ func NewTrackerClient(cfg *config.TrackerConfig) *TrackerClient {
 		timeout = cfg.Timeout
 	}
 	return &TrackerClient{
-		http:   newRestyClient().SetTimeout(timeout),
+		http:   newRestyClient(trackerRetryConfig(cfg)).SetTimeout(timeout),
 		config: cfg,
 		flight: &singleflight.Group{},
 	}

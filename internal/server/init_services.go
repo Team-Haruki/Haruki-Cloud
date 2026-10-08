@@ -199,11 +199,15 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		AssetPrimaryDir:                    harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,
 		AssetLegacyDirs:                    harukiConfig.Cfg.PJSKRender.AssetDirs.Legacy,
 		AssetProbe: renderassets.StoreProbeConfig{
-			PositiveTTL:  harukiConfig.Cfg.PJSKRender.AssetProbe.PositiveTTL,
-			NegativeTTL:  harukiConfig.Cfg.PJSKRender.AssetProbe.NegativeTTL,
-			ListingTTL:   harukiConfig.Cfg.PJSKRender.AssetProbe.ListingTTL,
-			Timeout:      harukiConfig.Cfg.PJSKRender.AssetProbe.Timeout,
-			WarmPrefixes: harukiConfig.Cfg.PJSKRender.AssetProbe.WarmPrefixes,
+			PositiveTTL:          harukiConfig.Cfg.PJSKRender.AssetProbe.PositiveTTL,
+			NegativeTTL:          harukiConfig.Cfg.PJSKRender.AssetProbe.NegativeTTL,
+			ListingTTL:           harukiConfig.Cfg.PJSKRender.AssetProbe.ListingTTL,
+			Timeout:              harukiConfig.Cfg.PJSKRender.AssetProbe.Timeout,
+			WarmPrefixes:         renderassets.ResolveWarmPrefixes(harukiConfig.Cfg.PJSKRender.AssetProbe.WarmPrefixes),
+			WarmInterval:         harukiConfig.Cfg.PJSKRender.AssetProbe.WarmInterval,
+			RequestBudget:        harukiConfig.Cfg.PJSKRender.AssetProbe.RequestBudget,
+			RequestMaxStoreCalls: harukiConfig.Cfg.PJSKRender.AssetProbe.RequestMaxStoreCalls,
+			RequestConcurrency:   harukiConfig.Cfg.PJSKRender.AssetProbe.RequestConcurrency,
 		},
 		LocalMasterdata: renderapp.LocalMasterdataConfig{
 			Enabled:         harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,
@@ -217,8 +221,10 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			PollInterval: harukiConfig.Cfg.PJSKRender.MasterdataRegistry.PollInterval,
 			SettleDelays: harukiConfig.Cfg.PJSKRender.MasterdataRegistry.SettleDelays,
 		},
-		SekaiDBType: harukiConfig.Cfg.Sekai.DBType,
-		SekaiDSN:    harukiConfig.Cfg.Sekai.DBURL,
+		SekaiDBType:       harukiConfig.Cfg.Sekai.DBType,
+		SekaiDSN:          harukiConfig.Cfg.Sekai.DBURL,
+		SekaiMySekaiPool:  harukiConfig.Cfg.Sekai.MySekaiDBPool(),
+		SekaiProviderPool: harukiConfig.Cfg.Sekai.ProviderDBPool(),
 		UserSnapshot: renderapp.UserSnapshotConfig{
 			Provider:      harukiConfig.Cfg.PJSKRender.UserSnapshot.Provider,
 			AllowFallback: harukiConfig.Cfg.PJSKRender.UserSnapshot.AllowFallback,
@@ -593,11 +599,12 @@ func initCensorIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, r
 	}
 	ctx = ensureContext(ctx)
 
-	censorClient, err := censorDB.Open(cfg.CensorDBType, cfg.CensorDBURL)
+	drv, err := openEntDriver("censor", cfg.CensorDBType, cfg.CensorDBURL, cfg.DBPool())
 	if err != nil {
 		mainLogger.Error("failed to connect to Censor DB", "error_type", fmt.Sprintf("%T", err))
 		return nil
 	}
+	censorClient := censorDB.NewClient(censorDB.Driver(drv))
 	if err := censorClient.Schema.Create(ctx); err != nil {
 		mainLogger.Error("failed to create schema for Censor DB", "error_type", fmt.Sprintf("%T", err))
 		_ = censorClient.Close()

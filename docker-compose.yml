@@ -85,6 +85,14 @@ services:
       - ALL
     networks:
       - haruki-net
+    # A bridge-network container has its own network namespace, so the host's
+    # net.ipv4.tcp_slow_start_after_idle does not apply here. With the kernel
+    # default (1) every pooled keep-alive connection that idled for one RTO
+    # restarts at a 10-segment window, and a ~300 KB image PUT or deck
+    # userdata upload then needs about five round trips. 0 keeps the learned
+    # window across idle periods. Changing it needs a container recreate.
+    sysctls:
+      net.ipv4.tcp_slow_start_after_idle: "0"
     ports:
       - "${HARUKI_BACKEND_PORT:-6666}:${HARUKI_BACKEND_PORT:-6666}"
     volumes:
@@ -106,6 +114,11 @@ services:
       HARUKI_BACKEND_SSL: ${HARUKI_BACKEND_SSL:-false}
       HARUKI_BACKEND_SSL_CERT: ${HARUKI_BACKEND_SSL_CERT:-}
       HARUKI_BACKEND_SSL_KEY: ${HARUKI_BACKEND_SSL_KEY:-}
+      # Diagnostics listener (pprof, expvar incl. db_pools, /debug/runtime).
+      # Unauthenticated, so loopback only: reach it with
+      #   docker exec haruki-cloud wget -qO- http://127.0.0.1:6060/debug/runtime
+      # or an SSH tunnel. Recommended in production; set it empty to disable.
+      HARUKI_DIAGNOSTICS_LISTEN_ADDR: ${HARUKI_DIAGNOSTICS_LISTEN_ADDR-127.0.0.1:6060}
 
       # ── Redis ─────────────────────────────────────────────────────────────
       HARUKI_REDIS_HOST: ${REDIS_HOST:-redis}

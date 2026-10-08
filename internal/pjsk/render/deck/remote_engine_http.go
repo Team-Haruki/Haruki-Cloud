@@ -15,6 +15,7 @@ import (
 
 	"haruki-cloud/internal/httpcoding"
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/observability/upstreamcall"
 
 	"github.com/klauspost/compress/zstd"
 )
@@ -120,7 +121,8 @@ func (r *RemoteDeckRecommender) executeDeckPostAttempt(ctx context.Context, base
 }
 
 func (r *RemoteDeckRecommender) sendDeckPost(ctx context.Context, baseURL, path string, payload []byte, coding, contentType, logLabel string, attempt int, responseBody any) (deckPostOutcome, bool) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+path, bytes.NewReader(payload))
+	httpCtx, timing := upstreamcall.Start(ctx)
+	req, err := http.NewRequestWithContext(httpCtx, http.MethodPost, baseURL+path, bytes.NewReader(payload))
 	if err != nil {
 		return deckPostOutcome{err: err, done: true}, false
 	}
@@ -128,15 +130,20 @@ func (r *RemoteDeckRecommender) sendDeckPost(ctx context.Context, baseURL, path 
 	httpcoding.SetRequestHeaders(req.Header, coding)
 	start := time.Now()
 	finishHTTP := commandtrace.MeasureOperation(ctx, deckHTTPStage)
+	call := upstreamcall.Call{Op: deckHTTPStage, Target: r.targetNameFor(baseURL), Path: path, RequestBytes: len(payload)}
 	resp, err := r.client.Do(req)
 	if err != nil {
 		finishHTTP()
+		call.Err = err
+		upstreamcall.Record(ctx, timing, time.Now(), call)
 		return r.deckTransportError(ctx, path, logLabel, attempt, time.Since(start), err), false
 	}
 	r.coding.Observe(baseURL, resp.Header)
 	body, truncated, readErr := readDeckResponseBody(resp.Body)
 	resp.Body.Close()
 	finishHTTP()
+	call.StatusCode, call.ResponseBytes, call.Node, call.Err = resp.StatusCode, len(body), resp.Header.Get(upstreamcall.NodeHeader), readErr
+	upstreamcall.Record(ctx, timing, time.Now(), call)
 	if readErr != nil {
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return deckPostOutcome{err: ctxErr, done: true}, false
@@ -154,6 +161,17 @@ func (r *RemoteDeckRecommender) sendDeckPost(ctx context.Context, baseURL, path 
 		return deckPostOutcome{err: fmt.Errorf("deck-service response: %w", err), done: true}, false
 	}
 	return r.handleDeckPostResponse(ctx, path, logLabel, attempt, time.Since(start), resp.StatusCode, body, responseBody), false
+}
+
+// targetNameFor names the configured target behind baseURL for call
+// attribution; there are only a handful of targets.
+func (r *RemoteDeckRecommender) targetNameFor(baseURL string) string {
+	for _, state := range r.targetStates {
+		if state != nil && state.target.BaseURL == baseURL {
+			return state.target.Name
+		}
+	}
+	return ""
 }
 
 func (r *RemoteDeckRecommender) deckTransportError(ctx context.Context, path, logLabel string, attempt int, elapsed time.Duration, err error) deckPostOutcome {

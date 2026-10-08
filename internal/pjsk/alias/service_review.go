@@ -69,7 +69,13 @@ func (s *Service) Approve(ctx context.Context, platform, platformUserID string, 
 		return nil, err
 	}
 	tx = nil
-	return s.buildAliasRecordsFromPending(ctx, orderedPendingAliases(uniqueIDs, byID))
+	approved := orderedPendingAliases(uniqueIDs, byID)
+	changes := make([]AliasChange, 0, len(approved))
+	for _, row := range approved {
+		changes = append(changes, AliasChange{AliasType: row.AliasType, AliasTypeID: row.AliasTypeID, Alias: row.Alias})
+	}
+	s.notifyChanged(ctx, changes)
+	return s.buildAliasRecordsFromPending(ctx, approved)
 }
 
 func loadPendingAliasesForReview(ctx context.Context, tx *pjskdb.Tx, reviewIDs []int64) (map[int64]*pjskdb.PendingAlias, error) {

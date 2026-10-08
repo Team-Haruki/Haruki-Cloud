@@ -16,10 +16,21 @@ backend:
   # Any non-empty value enables the canonical structured HTTP access log.
   access_log: "structured"
   access_log_path: "access.log"
+  # Successful /readyz probes are left out of the access log (a load balancer
+  # polling several times a second otherwise fills most of it); failed probes
+  # are always logged and the skipped count is /debug/vars
+  # "access_log_probes_suppressed". Env HARUKI_BACKEND_ACCESS_LOG_PROBES.
+  access_log_probes: false
   accept_authorization: null
   accept_user_agent: null
   allow_insecure_internal_api: false
   api_cache_ttl: "300s"
+  # Public alias lookups (/api/v2/public/pjsk/alias/*) are crawled every ~6h,
+  # so they keep their own TTL above that interval; 404s are cached shorter.
+  # Approving or deleting an alias clears the affected keys immediately.
+  # Negative alias_api_cache_ttl = api_cache_ttl; negative not-found TTL = 404s uncached.
+  alias_api_cache_ttl: "12h"            # env HARUKI_BACKEND_ALIAS_API_CACHE_TTL
+  alias_api_not_found_cache_ttl: "1h"   # env HARUKI_BACKEND_ALIAS_API_NOT_FOUND_CACHE_TTL
   enable_trust_proxy: true
   trusted_proxies:
     - "127.0.0.0/8"
@@ -39,11 +50,27 @@ chunithm:
   music_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_chunithm sslmode=disable"
   binding_db_type: "postgres"
   binding_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_chunithm sslmode=disable"
+  music_db_pool: {max_open: 4}    # see pjsk.pool; env HARUKI_CHUNITHM_MUSIC_DB_MAX_OPEN, ...
+  binding_db_pool: {max_open: 4}  # env HARUKI_CHUNITHM_BINDING_DB_MAX_OPEN, ...
 
 pjsk:
   enabled: true
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_pjsk sslmode=disable"
+  # Connection pool of this database (every ent client and raw sekai pool has
+  # one). Unset fields take the defaults shown; max_idle defaults to max_open,
+  # because database/sql's default of 2 idle connections opens and closes a
+  # backend per extra concurrent query during bursts. Per-process worst case
+  # with five regions: sekai 16 + 5x3 mysekai + 5x1 provider, pjsk 10,
+  # users 8, bot 10, censor 4, chunithm 2x4, image_cache 8 = 84 connections,
+  # well under PostgreSQL max_connections (shared with the tracker).
+  # Live stats: /debug/vars "db_pools" on the diagnostics listener.
+  # Env: HARUKI_PJSK_DB_MAX_OPEN / _MAX_IDLE / _CONN_MAX_LIFETIME / _CONN_MAX_IDLE_TIME.
+  pool:
+    max_open: 10
+    max_idle: 10
+    conn_max_lifetime: "30m"
+    conn_max_idle_time: "5m"
   # MySekai is disabled for CN region by default. Add platform+group_id
   # entries below to whitelist specific groups.
   allow_cn_mysekai:
@@ -57,6 +84,9 @@ sekai:
   enabled: true
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_sekai sslmode=disable"
+  pool: {max_open: 16}          # main ent client; master loads hold a connection for up to ~2 s (env HARUKI_SEKAI_DB_MAX_OPEN, ...)
+  mysekai_pool: {max_open: 3}   # per region: MySekai masterdata store (env HARUKI_SEKAI_MYSEKAI_DB_MAX_OPEN, ...)
+  provider_pool: {max_open: 1}  # per region: render provider raw rows (env HARUKI_SEKAI_PROVIDER_DB_MAX_OPEN, ...)
   auto_migrate: false # SekaiAPI owns masterdata DB schema; enable only for local/dev bootstrap
   remote_sync:
     enabled: false
@@ -96,10 +126,12 @@ censor:
   # Censor result database
   censor_db_type: "postgres"
   censor_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_censor sslmode=disable"
+  censor_db_pool: {max_open: 4}  # env HARUKI_CENSOR_DB_MAX_OPEN, ...
 
 haruki_bot:
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_bot sslmode=disable"
+  pool: {max_open: 10}          # env HARUKI_BOT_DB_MAX_OPEN, ...
   enable_registration: true
   turnstile_secret_key: "0x4AAAAAAxxxxxxxx"
   smtp_host: "smtp.example.com"
@@ -157,6 +189,7 @@ haruki_bot:
 users_db:
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_users sslmode=disable"
+  pool: {max_open: 8}           # env HARUKI_USERS_DB_MAX_OPEN, ...
 
 moderation:
   # QQ accounts allowed to run /kill and /back. Empty means nobody can use them.
@@ -172,6 +205,17 @@ sekai_api:
   #     base_url: "https://api-b.sekai.haruki.example.com"
   #     concurrency: 8
   token: "your-haruki-sekai-api-token"
+  # Retries (same block and defaults for toolbox and tracker): only idempotent GET/HEAD, only on
+  # 502/503 or a refused/reset connection, never on a client timeout, and only while the next
+  # attempt starts within `budget` of the first one, so the worst case stays near budget plus
+  # one request timeout. max_retries < 0 disables retries.
+  # Env: HARUKI_SEKAI_API_RETRY_MAX_RETRIES / _RETRY_WAIT / _RETRY_MAX_WAIT / _RETRY_BUDGET
+  # (HARUKI_TOOLBOX_RETRY_*, HARUKI_TRACKER_RETRY_*).
+  retry:
+    max_retries: 1
+    wait: "200ms"
+    max_wait: "1s"
+    budget: "3s"
 
 toolbox:
   base_url: "https://toolbox.haruki.example.com"
@@ -182,11 +226,13 @@ toolbox:
   # （Haruki-Toolbox-Backend PR #58 及之后）；关闭时用 upload_time 探测模拟
   # 相同语义（旧的两跳流程）。
   conditional_fetch: false
+  retry: {max_retries: 1, budget: "3s"}   # see sekai_api.retry
 
 tracker:
   base_url: "https://tracker.haruki.example.com"
   token: ""                       # bearer for /api/v2/cloud/* (tracker cloud_api.tokens); empty sends no Authorization header
   user_agent: "HarukiCloud/1.0"
+  retry: {max_retries: 1, budget: "3s"}   # see sekai_api.retry
 
 pjsk_render:
   # Operator-only YAML settings, keyed by server + game UID. No DB/API/command setter.
@@ -411,7 +457,18 @@ pjsk_render:
     listing_ttl: "30m"            # directory listings (env HARUKI_PJSK_RENDER_ASSET_PROBE_LISTING_TTL)
     negative_ttl: "5m"            # misses; a miss in a listing older than this re-lists it once, so hourly asset updates surface within negative_ttl (env HARUKI_PJSK_RENDER_ASSET_PROBE_NEGATIVE_TTL)
     timeout: "3s"                 # one HEAD or one listing; the slot's stat_timeout / request_timeout still apply per attempt (env HARUKI_PJSK_RENDER_ASSET_PROBE_TIMEOUT)
-    warm_prefixes: []             # directories listed in the background at startup, e.g. jp-assets/startapp/thumbnail/chara (env HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_PREFIXES, comma-separated)
+    # Directories listed in the background at startup and every warm_interval, so request-time
+    # listings (and HEAD storms on directories that could not be listed) are rare. Empty selects
+    # the defaults: <region>-assets/startapp/thumbnail/chara, startapp/home/banner and
+    # ondemand/event for jp/en/tw/kr/cn; ["none"] disables. Warm-up listings may take up to 30s.
+    warm_prefixes: []             # env HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_PREFIXES, comma-separated
+    warm_interval: "0s"           # 0 = 3/4 of listing_ttl; negative = startup only (env HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_INTERVAL)
+    # Per-request cap on uncached probes. Past it a lookup falls back to its first candidate path;
+    # probes already started finish in the background and warm the cache for the next request.
+    # Negative disables a limit.
+    request_budget: "5s"          # wait budget from the request's first uncached probe (env ..._ASSET_PROBE_REQUEST_BUDGET)
+    request_max_store_calls: 128  # HEADs + listings one request may wait on (env ..._ASSET_PROBE_REQUEST_MAX_STORE_CALLS)
+    request_concurrency: 8        # concurrent uncached probes per request (env ..._ASSET_PROBE_REQUEST_CONCURRENCY)
   
   local_masterdata:
     enabled: false            # legacy/dev only; production should use sekai.remote_sync instead
@@ -465,5 +522,8 @@ diagnostics:
   # authentication: keep it on loopback and reach it with docker exec, an SSH
   # tunnel or a 127.0.0.1-only port publish. Empty disables it.
   # Env: HARUKI_DIAGNOSTICS_LISTEN_ADDR / HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK.
+  # Recommended in production: "127.0.0.1:6060" (the repo docker-compose.yml sets it via
+  # HARUKI_DIAGNOSTICS_LISTEN_ADDR). /debug/vars also carries db_pools and
+  # access_log_probes_suppressed.
   listen_addr: ""             # e.g. "127.0.0.1:6060"
   allow_non_loopback: false   # a non-loopback host is refused (logged, service keeps running) unless true

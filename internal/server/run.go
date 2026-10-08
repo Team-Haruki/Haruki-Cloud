@@ -38,6 +38,7 @@ func Run(ctx context.Context) {
 	renderRuntime := initPJSKRenderIfEnabled(ctx, mainLogger, sekaiClient, pjskClient)
 	censorService := initCensorIfEnabled(ctx, mainLogger, renderRuntime)
 	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, banChecker, censorService)
+	wireAliasCacheInvalidation(renderRuntime, redisClient)
 	startRenderHostProbers(ctx, renderRuntime)
 	startStorageDiagnostics(ctx, renderRuntime, mainLogger)
 	if renderRuntime != nil && renderRuntime.Bindings != nil && !harukiConfig.Cfg.Node.ReadOnly {

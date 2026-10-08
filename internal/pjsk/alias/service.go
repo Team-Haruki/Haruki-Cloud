@@ -1,6 +1,8 @@
 package alias
 
 import (
+	"context"
+
 	pjskdb "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/cluster"
@@ -26,6 +28,22 @@ func (s *Service) SetReadOnly(readOnly bool) {
 		return
 	}
 	s.readOnly = readOnly
+}
+
+// SetChangeListener registers fn to run after every committed alias
+// approval or deletion.
+func (s *Service) SetChangeListener(fn ChangeListener) {
+	if s == nil {
+		return
+	}
+	s.onChange = fn
+}
+
+func (s *Service) notifyChanged(ctx context.Context, changes []AliasChange) {
+	if s == nil || s.onChange == nil || len(changes) == 0 {
+		return
+	}
+	s.onChange(ctx, changes)
 }
 
 func (s *Service) requireWritable() error {

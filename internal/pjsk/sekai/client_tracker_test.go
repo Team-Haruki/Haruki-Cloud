@@ -205,7 +205,7 @@ func TestTrackerClientDoesNotCacheServerErrors(t *testing.T) {
 	var hits atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hit := hits.Add(1)
-		if hit <= 5 {
+		if hit <= 1 {
 			http.Error(w, "boom", http.StatusInternalServerError)
 			return
 		}
@@ -222,8 +222,9 @@ func TestTrackerClientDoesNotCacheServerErrors(t *testing.T) {
 	if _, err := client.GetCloudSKQuery("jp", 101, nil, []int{100}, nil, false, false, 3600); err != nil {
 		t.Fatalf("second request should refetch and succeed: %v", err)
 	}
-	if got := hits.Load(); got <= 5 {
-		t.Fatalf("expected second request to refetch after 5xx, got %d hits", got)
+	// A 500 is not retried; the second request refetches after it.
+	if got := hits.Load(); got != 2 {
+		t.Fatalf("expected one attempt per request, got %d hits", got)
 	}
 }
 

@@ -522,5 +522,8 @@ diagnostics:
   # authentication: keep it on loopback and reach it with docker exec, an SSH
   # tunnel or a 127.0.0.1-only port publish. Empty disables it.
   # Env: HARUKI_DIAGNOSTICS_LISTEN_ADDR / HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK.
+  # Recommended in production: "127.0.0.1:6060" (the repo docker-compose.yml sets it via
+  # HARUKI_DIAGNOSTICS_LISTEN_ADDR). /debug/vars also carries db_pools and
+  # access_log_probes_suppressed.
   listen_addr: ""             # e.g. "127.0.0.1:6060"
   allow_non_loopback: false   # a non-loopback host is refused (logged, service keeps running) unless true

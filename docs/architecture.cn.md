@@ -250,7 +250,9 @@ diagnostics:               # 可选的运维诊断监听（独立于公网 Fiber
   allow_non_loopback: false # 无鉴权；非 loopback 地址会被拒绝启动（记 ERROR，主服务照常运行），除非显式置 true
 ```
 
-`diagnostics` 的环境变量为 `HARUKI_DIAGNOSTICS_LISTEN_ADDR` / `HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK`。生产上在 `cloud.env` 里设 `HARUKI_DIAGNOSTICS_LISTEN_ADDR=127.0.0.1:6060`，然后 `docker exec haruki-cloud-v3 wget -qO- http://127.0.0.1:6060/debug/runtime`，或经 SSH 隧道用 `go tool pprof http://127.0.0.1:6060/debug/pprof/profile`。诊断监听随主服务一起优雅关闭。
+`diagnostics` 的环境变量为 `HARUKI_DIAGNOSTICS_LISTEN_ADDR` / `HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK`。生产上在 `cloud.env` 里设 `HARUKI_DIAGNOSTICS_LISTEN_ADDR=127.0.0.1:6060`，然后 `docker exec haruki-cloud-v3 wget -qO- http://127.0.0.1:6060/debug/runtime`，或经 SSH 隧道用 `go tool pprof http://127.0.0.1:6060/debug/pprof/profile`。诊断监听随主服务一起优雅关闭。仓库内 `docker-compose.yml` 默认即为 `127.0.0.1:6060`（推荐的生产设置，设为空字符串可关闭）；`/debug/vars` 另含 `db_pools`（各连接池的 open / in_use / idle / wait_count / max_idle_closed 等）与 `access_log_probes_suppressed`。
+
+`docker-compose.yml` 还为 Cloud 容器设置 `sysctls: net.ipv4.tcp_slow_start_after_idle: "0"`：bridge 网络的容器有独立的 network namespace，不继承宿主机的该值；默认值 1 会让空闲超过一个 RTO 的长连接回到 10 个报文段的拥塞窗口，约 300 KB 的图片 PUT 或组卡 userdata 上传因此多耗约 5 个 RTT。修改需要重建容器。
 
 ---
 

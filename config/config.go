@@ -374,6 +374,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_BACKEND_SSL_CERT", &cfg.Backend.SSLCert)
 	envStr("HARUKI_BACKEND_SSL_KEY", &cfg.Backend.SSLKey)
 	envStr("HARUKI_BACKEND_LOG_LEVEL", &cfg.Backend.LogLevel)
+	envBool("HARUKI_BACKEND_ACCESS_LOG_PROBES", &cfg.Backend.AccessLogProbes)
 	envStr("HARUKI_BACKEND_ACCEPT_AUTHORIZATION", &cfg.Backend.AcceptAuthorization)
 	envStr("HARUKI_BACKEND_ACCEPT_USER_AGENT", &cfg.Backend.AcceptUserAgent)
 	envBool("HARUKI_BACKEND_ALLOW_INSECURE_INTERNAL_API", &cfg.Backend.AllowInsecureInternalAPI)
@@ -619,15 +620,19 @@ type BackendConfig struct {
 	AliasAPICacheTTL time.Duration `yaml:"alias_api_cache_ttl"`
 	// AliasAPINotFoundCacheTTL caches public alias 404s, cleared on approval.
 	// 0 = default (1h), negative = not cached.
-	AliasAPINotFoundCacheTTL  time.Duration `yaml:"alias_api_not_found_cache_ttl"`
-	AccessLogPath             string        `yaml:"access_log_path"`
-	AcceptAuthorization       string        `yaml:"accept_authorization"`
-	AcceptUserAgent           string        `yaml:"accept_user_agent"`
-	AllowInsecureInternalAPI  bool          `yaml:"allow_insecure_internal_api"`
-	EnableTrustProxy          bool          `yaml:"enable_trust_proxy"`
-	TrustProxies              []string      `yaml:"trusted_proxies"`
-	ProxyHeader               string        `yaml:"proxy_header"`
-	LatestHarukiClientVersion string        `yaml:"latest_haruki_client_version"`
+	AliasAPINotFoundCacheTTL time.Duration `yaml:"alias_api_not_found_cache_ttl"`
+	AccessLogPath            string        `yaml:"access_log_path"`
+	// AccessLogProbes also logs successful readiness probes (/readyz).
+	// Default false: a 7 req/s poller otherwise fills most of the access
+	// log. Failed probes (status >= 400) are always logged.
+	AccessLogProbes           bool     `yaml:"access_log_probes"`
+	AcceptAuthorization       string   `yaml:"accept_authorization"`
+	AcceptUserAgent           string   `yaml:"accept_user_agent"`
+	AllowInsecureInternalAPI  bool     `yaml:"allow_insecure_internal_api"`
+	EnableTrustProxy          bool     `yaml:"enable_trust_proxy"`
+	TrustProxies              []string `yaml:"trusted_proxies"`
+	ProxyHeader               string   `yaml:"proxy_header"`
+	LatestHarukiClientVersion string   `yaml:"latest_haruki_client_version"`
 }
 
 type NodeConfig struct {

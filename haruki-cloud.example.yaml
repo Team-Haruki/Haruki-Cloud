@@ -16,6 +16,11 @@ backend:
   # Any non-empty value enables the canonical structured HTTP access log.
   access_log: "structured"
   access_log_path: "access.log"
+  # Successful /readyz probes are left out of the access log (a load balancer
+  # polling several times a second otherwise fills most of it); failed probes
+  # are always logged and the skipped count is /debug/vars
+  # "access_log_probes_suppressed". Env HARUKI_BACKEND_ACCESS_LOG_PROBES.
+  access_log_probes: false
   accept_authorization: null
   accept_user_agent: null
   allow_insecure_internal_api: false

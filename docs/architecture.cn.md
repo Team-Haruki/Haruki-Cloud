@@ -176,6 +176,7 @@ backend:                   # 服务基础配置
   accept_authorization: "" # 内部 API 鉴权令牌
   accept_user_agent: ""    # 内部 API User-Agent 过滤
   allow_insecure_internal_api: false # 仅 dev/beta 时可开启；production 下强制关闭
+  access_log_probes: false           # true 时成功的 /readyz 探测也写访问日志；失败的探测总会记录
   alias_api_cache_ttl: "12h"         # 公开别名查询缓存（高于约 6h 的爬取间隔）；审核通过/删除别名时立即清除对应 key
   alias_api_not_found_cache_ttl: "1h" # 公开别名查询 404 的缓存时间；负值不缓存
 

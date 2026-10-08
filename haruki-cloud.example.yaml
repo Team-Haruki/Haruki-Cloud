@@ -205,17 +205,18 @@ sekai_api:
   #     base_url: "https://api-b.sekai.haruki.example.com"
   #     concurrency: 8
   token: "your-haruki-sekai-api-token"
-  # Retries (same block and defaults for toolbox and tracker): only idempotent GET/HEAD, only on
-  # 502/503 or a refused/reset connection, never on a client timeout, and only while the next
-  # attempt starts within `budget` of the first one, so the worst case stays near budget plus
-  # one request timeout. max_retries < 0 disables retries.
+  # Retries (same block and defaults for toolbox and tracker): any 5xx answer or transport
+  # failure, client timeouts included, is retried up to max_retries times with a backoff from
+  # `wait` growing to `max_wait`; a cancelled caller is never retried. A positive `budget` stops
+  # starting retries that late after the first attempt (off by default). max_retries < 0
+  # disables retries. The defaults below are the behaviour Cloud ran with through 3.7.18.
   # Env: HARUKI_SEKAI_API_RETRY_MAX_RETRIES / _RETRY_WAIT / _RETRY_MAX_WAIT / _RETRY_BUDGET
   # (HARUKI_TOOLBOX_RETRY_*, HARUKI_TRACKER_RETRY_*).
   retry:
-    max_retries: 1
-    wait: "200ms"
-    max_wait: "1s"
-    budget: "3s"
+    max_retries: 4
+    wait: "1s"
+    max_wait: "2s"
+    budget: "0s"
 
 toolbox:
   base_url: "https://toolbox.haruki.example.com"
@@ -226,13 +227,13 @@ toolbox:
   # （Haruki-Toolbox-Backend PR #58 及之后）；关闭时用 upload_time 探测模拟
   # 相同语义（旧的两跳流程）。
   conditional_fetch: false
-  retry: {max_retries: 1, budget: "3s"}   # see sekai_api.retry
+  retry: {}                       # see sekai_api.retry
 
 tracker:
   base_url: "https://tracker.haruki.example.com"
   token: ""                       # bearer for /api/v2/cloud/* (tracker cloud_api.tokens); empty sends no Authorization header
   user_agent: "HarukiCloud/1.0"
-  retry: {max_retries: 1, budget: "3s"}   # see sekai_api.retry
+  retry: {}                       # see sekai_api.retry
 
 pjsk_render:
   # Operator-only YAML settings, keyed by server + game UID. No DB/API/command setter.

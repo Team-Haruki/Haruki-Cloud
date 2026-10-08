@@ -26,6 +26,7 @@ const (
 	traceCommandRegionKey = "haruki.command.region"
 	traceOutcomeKey       = "haruki.command.outcome"
 	traceErrorTypeKey     = "haruki.command.error_type"
+	traceErrorMessageKey  = "haruki.command.error_message"
 )
 
 var commandTelemetryLogger = logger.NewLoggerWithCommandWriter("Command", "INFO")
@@ -136,6 +137,9 @@ func emitCommandTrace(c fiber.Ctx, ctx context.Context, trace *commandtrace.Trac
 		attrs = append(attrs, "error_type", errorType)
 	} else if err != nil {
 		attrs = append(attrs, "error_type", fmt.Sprintf("%T", err))
+	}
+	if errorMessage := localString(c, traceErrorMessageKey); errorMessage != "" {
+		attrs = append(attrs, "error_message", errorMessage)
 	}
 	commandTelemetryLogger.InfoContext(ctx, "bot command completed", attrs...)
 }

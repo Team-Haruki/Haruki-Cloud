@@ -294,6 +294,21 @@ pjsk_render:
       - "api/pjsk/mysekai/talk-list"
       - "api/pjsk/mysekai/music-record"
       - "api/pjsk/mysekai/door-upgrade"
+    # Store-ref: for those Cache-Store: 0 renders, Drawing uploads the image to the image-cache bucket itself
+    # (X-Haruki-Artifact-Mode: store-ref) and answers a small ref. Cloud records the same image_cache_entries row
+    # as for its own uploads (so retention and GC are unchanged) and sends the bot the URL. The bytes do not cross
+    # the WAN and Cloud makes no PUT. A Drawing without the mode, or a failed upload (X-Haruki-Artifact-Degraded: 1),
+    # falls back to today's bytes + Cloud PUT. A ref Cloud cannot adopt (bucket other than the image_cache slot's,
+    # non-garage backend, not Cloud's key layout) writes no row, logs WARN drawing_store_ref_rejected and the render
+    # is requested once more without the mode (bytes + PUT). Needs a remote S3 image_cache slot; ignored otherwise.
+    # Deploy every Drawing node with store-ref support before enabling, then widen `paths` one prefix at a time.
+    store_ref:
+      enabled: false          # env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_STORE_REF_ENABLED
+      # Omit for "all of no_store_paths"; [] = none. The uncached endpoints api/pjsk/event/detail and
+      # api/pjsk/misc/alias-list may be listed too. Paths that store (Cache-Store: 1) are never affected.
+      # (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_STORE_REF_PATHS, comma-separated; "[]" = none)
+      paths:
+        - "api/pjsk/sk"
   music_meta:
     refresh_interval: "30m"   # how often to re-check the upstream for music_metas updates
     output_dir: ""            # optional: persist music_metas*.json into this directory after updates

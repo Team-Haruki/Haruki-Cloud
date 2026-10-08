@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/internal/httpcoding"
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/utils/imagecache"
 	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
@@ -399,7 +400,12 @@ func (c *HarukiDrawingClient) successBody(d *renderDirective, resp *resty.Respon
 		d.outcome.Degraded = true
 		d.outcome.Node = node
 		d.outcome.ContentType = contentType
+		if d.StoreRef {
+			commandtrace.RecordOperation(c.requestCtx, "drawing.store_ref_degraded", 0)
+		}
 		return resp.Body(), nil
+	case d != nil && d.StoreRef && strings.EqualFold(strings.TrimSpace(resp.Header().Get(headerArtifactMode)), artifactModeStoreRef):
+		return nil, c.acceptStoreRef(d, resp, node, contentType)
 	case d != nil && d.Artifact && strings.HasPrefix(strings.ToLower(strings.TrimSpace(contentType)), "application/json"):
 		finishDecode := commandtrace.MeasureOperation(c.requestCtx, "drawing.decode")
 		ref, err := parseArtifactRef(resp.Body())
@@ -418,9 +424,82 @@ func (c *HarukiDrawingClient) successBody(d *renderDirective, resp *resty.Respon
 		if d != nil {
 			d.outcome.Node = node
 			d.outcome.ContentType = contentType
+			if d.StoreRef {
+				// A Drawing that predates store-ref answers Cache-Store: 0 bytes.
+				commandtrace.RecordOperation(c.requestCtx, "drawing.store_ref_unsupported", 0)
+			}
 		}
 		return resp.Body(), nil
 	}
+}
+
+// storeRefIndexTimeout bounds recording a store-ref's row (content lock,
+// lookup, insert) after its request may have gone away.
+const storeRefIndexTimeout = 10 * time.Second
+
+// acceptStoreRef validates a store-ref, records its image_cache_entries row
+// and lands the served location on the outcome. The object already exists, so
+// a failed row write is logged and the ref is still used: the image is
+// delivered, and only GC loses sight of the object.
+func (c *HarukiDrawingClient) acceptStoreRef(d *renderDirective, resp *resty.Response, node, contentType string) error {
+	finishDecode := commandtrace.MeasureOperation(c.requestCtx, "drawing.decode")
+	ref, err := parseArtifactRef(resp.Body())
+	finishDecode()
+	if err != nil {
+		return errDrawingBadArtifact(err)
+	}
+	if ref.NodeName == "" {
+		ref.NodeName = node
+	}
+	object := imagecache.AdoptedObject{
+		Hash: ref.Hash, Group: directiveCacheGroup, CDNPath: ref.CDNPath,
+		MediaType: ref.MediaType, SizeBytes: ref.SizeBytes, WriterNode: ref.NodeName,
+	}
+	if err := validateStoreRef(ref, object); err != nil {
+		return errDrawingBadArtifact(err)
+	}
+	commandtrace.RecordOperation(c.requestCtx, "drawing.store_ref", 0)
+	if indexer := c.artifact.storeRefIndexer; indexer != nil {
+		// The object exists whether or not this caller is still waiting: an
+		// unrecorded object is invisible to GC, so the row write outlives a
+		// cancelled request, bounded on its own.
+		indexCtx, cancel := context.WithTimeout(context.WithoutCancel(c.requestCtx), storeRefIndexTimeout)
+		location, err := indexer.AdoptObject(indexCtx, object, time.Now())
+		cancel()
+		if err != nil {
+			commandtrace.RecordOperation(c.requestCtx, "image.ref_index_error", 0)
+			c.logger.ErrorContext(c.requestCtx, "store-ref index row not written; object is invisible to GC",
+				"upstream", "drawing",
+				"hash", ref.Hash,
+				"cdn_path", ref.CDNPath,
+				"writer_node", ref.NodeName,
+				"error", err,
+				"metric", "drawing_store_ref_unindexed",
+			)
+		} else {
+			ref.CDNPath, ref.ObjectKey, ref.NodeName = location.CDNPath, location.CDNPath, location.WriterNode
+		}
+	}
+	d.outcome.Ref = ref
+	d.outcome.StoreRef = true
+	d.outcome.Node = node
+	d.outcome.ContentType = contentType
+	return nil
+}
+
+// validateStoreRef rejects a store-ref Cloud could not have written itself:
+// the image-cache key layout for its own hash, a garage object, no index row.
+func validateStoreRef(ref *ArtifactRef, object imagecache.AdoptedObject) error {
+	if ref.ObjectKey != "" && ref.ObjectKey != ref.CDNPath {
+		return fmt.Errorf("store-ref object_key %q differs from cdn_path %q", ref.ObjectKey, ref.CDNPath)
+	}
+	if ref.StorageBackend != artifactStorageGarage {
+		return fmt.Errorf("store-ref storage_backend %q", ref.StorageBackend)
+	}
+	if ref.IndexWritten || ref.Reused {
+		return fmt.Errorf("store-ref claims an index row")
+	}
+	return imagecache.ValidateAdoptedObject(object)
 }
 
 // noteDirectiveRejection logs a Drawing 400 that names a malformed directive

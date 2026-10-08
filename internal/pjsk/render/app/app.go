@@ -389,7 +389,7 @@ func newAppDrawingClient(initCtx context.Context, cfg Config, resources drawing.
 	})
 	cacheConfig := cfg.DrawingCache
 	configureRenderIndex(initCtx, &cacheConfig, imageStore, cfg)
-	options := appDrawingOptions(cfg)
+	options := appDrawingOptions(initCtx, cfg, imageStore)
 	options = append(options, drawing.WithCacheVersions(initCtx, cfg.DrawingCacheVersions, resources, upstream.ResolveTargets(cfg.DrawingBaseURL, cfg.DrawingTargets, "drawing")))
 	client := drawing.NewHarukiDrawingClientWithTargetsAndResources(
 		cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, options...,
@@ -420,7 +420,7 @@ func configureRenderIndex(initCtx context.Context, cacheConfig *drawing.RenderCa
 	cacheConfig.FetchTimeout = cfg.DrawingArtifact.FetchTimeout
 }
 
-func appDrawingOptions(cfg Config) []drawing.ClientOption {
+func appDrawingOptions(initCtx context.Context, cfg Config, imageStore *imagecache.PGStore) []drawing.ClientOption {
 	var options []drawing.ClientOption
 	if cfg.DrawingTimeout > 0 {
 		options = append(options, drawing.WithTimeout(cfg.DrawingTimeout))
@@ -429,7 +429,7 @@ func appDrawingOptions(cfg Config) []drawing.ClientOption {
 		options = append(options, drawing.WithRetryCount(cfg.DrawingRetryCount))
 	}
 	if len(cfg.DrawingArtifact.Endpoints) > 0 {
-		options = append(options, drawing.WithArtifactConfig(appArtifactConfig(cfg)))
+		options = append(options, drawing.WithArtifactConfig(appArtifactConfig(initCtx, cfg, imageStore)))
 	}
 	if cfg.DrawingSKMaxConcurrency > 0 || cfg.DrawingSKAcquireTimeout > 0 || cfg.DrawingMaxConcurrency > 0 {
 		options = append(options, drawing.WithLimiter(drawing.LimiterConfig{
@@ -441,14 +441,25 @@ func appDrawingOptions(cfg Config) []drawing.ClientOption {
 }
 
 // appArtifactConfig fills the artifact read-back dependencies from the
-// image_cache slot and the per-node image hosts.
-func appArtifactConfig(cfg Config) drawing.ArtifactConfig {
+// image_cache slot and the per-node image hosts, and the store-ref indexer
+// from the image cache index.
+func appArtifactConfig(initCtx context.Context, cfg Config, imageStore *imagecache.PGStore) drawing.ArtifactConfig {
 	artifact := cfg.DrawingArtifact
 	if artifact.Objects == nil {
 		artifact.Objects = cfg.Stores.ImageCache
 	}
 	if artifact.Hosts == nil {
 		artifact.Hosts = cfg.ImageHosts
+	}
+	if len(artifact.StoreRefPaths) > 0 {
+		switch {
+		case strings.TrimSpace(cfg.ImageCacheLocalRoot) != "" || cfg.Stores.ImageCache == nil || cfg.Stores.ImageCache == storage.Disabled():
+			// Drawing writes the bucket; a local image cache serves its own directory.
+			logger.WarnContext(initCtx, "drawing store-ref disabled: the image_cache slot is not a remote object store")
+			artifact.StoreRefPaths = nil
+		case artifact.StoreRefIndexer == nil && imageStore != nil:
+			artifact.StoreRefIndexer = imageStore
+		}
 	}
 	return artifact
 }

@@ -15,6 +15,7 @@ import (
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/storage"
+	"haruki-cloud/utils/imagecache"
 	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
@@ -187,6 +188,24 @@ type ArtifactConfig struct {
 	// responses are one Noise message (65535-byte cap). It only narrows
 	// Endpoints; a path outside Endpoints is unaffected.
 	NoStorePaths []string
+	// StoreRefPaths lists api path prefixes (matched like NoStorePaths) whose
+	// Cache-Store: 0 renders ask Drawing for a store-ref
+	// (X-Haruki-Artifact-Mode: store-ref). Drawing uploads the bytes to the
+	// image-cache bucket under Cloud's own key layout and returns a ref; Cloud
+	// records the image_cache_entries row through StoreRefIndexer and sends the
+	// bot the URL. The bytes never cross the WAN and Cloud makes no PUT. It
+	// narrows Endpoints and applies only to renders already sent with
+	// Cache-Store: 0 (NoStorePaths and the uncached endpoints). Empty = off.
+	StoreRefPaths []string
+	// StoreRefIndexer records the row for a store-ref (*imagecache.PGStore).
+	// Nil writes no row, which matches a Cloud image cache without an index.
+	StoreRefIndexer StoreRefIndexer
+}
+
+// StoreRefIndexer records the image_cache_entries row for an object Drawing
+// uploaded in store-ref mode and returns where to serve it from.
+type StoreRefIndexer interface {
+	AdoptObject(ctx context.Context, obj imagecache.AdoptedObject, now time.Time) (imagecache.AdoptedLocation, error)
 }
 
 // WithArtifactConfig enables artifact mode for the allow-listed endpoints.
@@ -269,6 +288,8 @@ func (l apiPathPrefixList) has(apiPath string) bool {
 type artifactSettings struct {
 	allow           artifactAllowList
 	noStore         apiPathPrefixList
+	storeRef        apiPathPrefixList
+	storeRefIndexer StoreRefIndexer
 	artifactTimeout time.Duration
 	fetcher         *artifactFetcher
 }
@@ -285,6 +306,8 @@ func newArtifactSettings(cfg ArtifactConfig) *artifactSettings {
 	return &artifactSettings{
 		allow:           allow,
 		noStore:         newAPIPathPrefixList(cfg.NoStorePaths),
+		storeRef:        newAPIPathPrefixList(cfg.StoreRefPaths),
+		storeRefIndexer: cfg.StoreRefIndexer,
 		artifactTimeout: artifactTimeout,
 		fetcher:         newArtifactFetcher(cfg.Objects, cfg.Hosts, cfg.FetchTimeout),
 	}
@@ -305,6 +328,12 @@ func (s *artifactSettings) allowsEndpoint(endpoint string) bool {
 // artifact store (no index lookup, X-Haruki-Cache-Store: 0, bytes back).
 func (s *artifactSettings) skipsStore(apiPath string) bool {
 	return s != nil && s.allow.has(apiPath) && s.noStore.has(apiPath)
+}
+
+// storeRefFor reports an allow-listed api path whose Cache-Store: 0 renders
+// ask Drawing for a store-ref.
+func (s *artifactSettings) storeRefFor(apiPath string) bool {
+	return s != nil && s.allow.has(apiPath) && s.storeRef.has(apiPath)
 }
 
 type artifactModeCtxKey struct{}

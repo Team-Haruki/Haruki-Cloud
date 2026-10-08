@@ -1,6 +1,8 @@
 package mysekai
 
 import (
+	"bytes"
+	"encoding/json/jsontext"
 	"fmt"
 	"slices"
 	"strings"
@@ -128,11 +130,24 @@ func (c *Controller) SnapshotExpired(region string) (bool, error) {
 	return status.Expired, nil
 }
 
+// SnapshotStatus reads only the snapshot's timestamps. It decodes just the
+// members the expiry check uses instead of the whole document, falling back
+// to the full decode (and its errors) when that is not possible.
 func (c *Controller) SnapshotStatus(region string, now time.Time) (SnapshotStatus, error) {
-	merged, resolvedRegion, err := c.prepareSnapshotOnly(region)
+	if err := c.ensureSnapshot(); err != nil {
+		return SnapshotStatus{}, err
+	}
+	rawBytes, err := c.snapshotBytes()
 	if err != nil {
 		return SnapshotStatus{}, err
 	}
+	merged, ok := c.decodeSnapshotTimeMembers(rawBytes)
+	if !ok {
+		if merged, err = c.decodeSnapshotBytes(rawBytes); err != nil {
+			return SnapshotStatus{}, err
+		}
+	}
+	resolvedRegion := c.resolveRegion(region)
 	if now.IsZero() {
 		now = time.Now()
 	}
@@ -147,26 +162,134 @@ func (c *Controller) SnapshotStatus(region string, now time.Time) (SnapshotStatu
 }
 
 func (c *Controller) decodeSnapshot(region string) (map[string]any, renderregion.Value, error) {
-	var rawBytes []byte
-	var err error
+	rawBytes, err := c.snapshotBytes()
+	if err != nil {
+		return nil, renderregion.Unknown, err
+	}
+	merged, err := c.decodeSnapshotBytes(rawBytes)
+	if err != nil {
+		return nil, renderregion.Unknown, err
+	}
+	return merged, c.resolveRegion(region), nil
+}
 
+func (c *Controller) snapshotBytes() ([]byte, error) {
 	if len(c.rawMySekaiJSON) > 0 {
-		rawBytes = c.rawMySekaiJSON
-	} else {
-		finishCopy := commandtrace.MeasureOperation(c.requestCtx, "mysekai.snapshot_copy")
-		rawBytes, err = c.snapshot.RawBytes()
-		finishCopy()
+		return c.rawMySekaiJSON, nil
+	}
+	finishCopy := commandtrace.MeasureOperation(c.requestCtx, "mysekai.snapshot_copy")
+	defer finishCopy()
+	return c.snapshot.RawBytes()
+}
+
+// decodeSnapshotTimeMembers returns the map decodeSnapshotBytes would build,
+// restricted to the members resolveMysekaiSnapshotTimeMs reads ("now",
+// "upload_time" and "now" inside "updatedResources"), with the same values
+// and the same raw-MySekai flattening. It streams over the document without
+// materializing the rest and reports false whenever the document cannot be
+// read that way, so the caller falls back to the full decode and its errors.
+func (c *Controller) decodeSnapshotTimeMembers(rawBytes []byte) (map[string]any, bool) {
+	finishDecode := commandtrace.MeasureOperation(c.requestCtx, "mysekai.snapshot_status_decode")
+	defer finishDecode()
+	// Match the full decode's leniency (duplicate names, invalid UTF-8).
+	decoder := jsontext.NewDecoder(bytes.NewReader(rawBytes), jsontext.AllowDuplicateNames(true), jsontext.AllowInvalidUTF8(true))
+	top, err := readSnapshotTimeFields(decoder, 0)
+	if err != nil || !top.isObject {
+		return nil, false
+	}
+	// Flattening copies every member of an updatedResources object to the
+	// top level, including a nested updatedResources.
+	flatten := len(c.rawMySekaiJSON) > 0 && top.updated != nil && top.updated.isObject
+	merged := make(map[string]any, 3)
+	for _, key := range []string{"now", "upload_time"} {
+		raw, ok := top.values[key]
+		if flatten {
+			if value, flat := top.updated.values[key]; flat {
+				raw, ok = value, true
+			}
+		}
+		if !ok {
+			continue
+		}
+		var value any
+		if decodeJSONUseNumber(raw, &value) != nil {
+			return nil, false
+		}
+		merged[key] = value
+	}
+	updated := top.updated
+	if flatten && top.updated.updated != nil {
+		updated = top.updated.updated
+	}
+	if updated != nil && updated.isObject {
+		inner := map[string]any{}
+		if raw, ok := updated.values["now"]; ok {
+			var now any
+			if decodeJSONUseNumber(raw, &now) != nil {
+				return nil, false
+			}
+			inner["now"] = now
+		}
+		merged["updatedResources"] = inner
+	}
+	return merged, true
+}
+
+// snapshotTimeFields holds the raw timestamp members of one JSON value; only
+// objects have members. Later duplicates win, as in the full decode.
+type snapshotTimeFields struct {
+	isObject bool
+	values   map[string]jsontext.Value
+	updated  *snapshotTimeFields
+}
+
+// readSnapshotTimeFields reads one value, keeping "now" and "upload_time"
+// and descending into "updatedResources" for two levels; everything else is
+// skipped without being decoded.
+func readSnapshotTimeFields(decoder *jsontext.Decoder, depth int) (snapshotTimeFields, error) {
+	if decoder.PeekKind() != '{' {
+		return snapshotTimeFields{}, decoder.SkipValue()
+	}
+	if _, err := decoder.ReadToken(); err != nil {
+		return snapshotTimeFields{}, err
+	}
+	fields := snapshotTimeFields{isObject: true, values: map[string]jsontext.Value{}}
+	for decoder.PeekKind() != '}' {
+		name, err := decoder.ReadToken()
 		if err != nil {
-			return nil, renderregion.Unknown, err
+			return snapshotTimeFields{}, err
+		}
+		switch key := name.String(); {
+		case key == "now" || key == "upload_time":
+			value, err := decoder.ReadValue()
+			if err != nil {
+				return snapshotTimeFields{}, err
+			}
+			fields.values[key] = value.Clone()
+		case key == "updatedResources" && depth < 2:
+			nested, err := readSnapshotTimeFields(decoder, depth+1)
+			if err != nil {
+				return snapshotTimeFields{}, err
+			}
+			fields.updated = &nested
+		default:
+			if err := decoder.SkipValue(); err != nil {
+				return snapshotTimeFields{}, err
+			}
 		}
 	}
+	_, err := decoder.ReadToken()
+	return fields, err
+}
 
+// decodeSnapshotBytes decodes the whole snapshot document.
+func (c *Controller) decodeSnapshotBytes(rawBytes []byte) (map[string]any, error) {
 	var merged map[string]any
 	finishDecode := commandtrace.MeasureOperation(c.requestCtx, "mysekai.snapshot_decode")
-	err = decodeJSONUseNumber(rawBytes, &merged)
+	err := decodeJSONUseNumber(rawBytes, &merged)
 	finishDecode()
 	if err != nil {
-		return nil, renderregion.Unknown, fmt.Errorf("decode mysekai data: %w", err)
+		return nil, fmt.Errorf("decode mysekai data: %w", err)
 	}
 
 	// When using raw mysekai JSON directly (not merged via userdata.Service),
@@ -181,8 +304,7 @@ func (c *Controller) decodeSnapshot(region string) (map[string]any, renderregion
 		}
 		finishFlatten()
 	}
-
-	return merged, c.resolveRegion(region), nil
+	return merged, nil
 }
 
 func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[string]any, override *drawing.ProfileCardRequest, includeSuite bool) *drawing.ProfileCardRequest {

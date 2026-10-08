@@ -262,9 +262,9 @@ func TestPrivatePayloadSharingKeepsOwnedBoundariesAndVersions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	source[0] = 'x'
-	if !bytes.Equal(first.data, expected) || first.uploadTime != 100 {
-		t.Fatal("ingestion did not isolate upstream bytes and retain the version")
+	// Ingestion takes ownership of the freshly fetched body instead of copying it.
+	if &first.data[0] != &source[0] || !bytes.Equal(first.data, expected) || first.uploadTime != 100 {
+		t.Fatal("ingestion did not take ownership of upstream bytes and retain the version")
 	}
 	warm, hit, err := cache.fetchPayload(suiteKey(), func(known int64) ([]byte, bool, error) {
 		if known != 100 {

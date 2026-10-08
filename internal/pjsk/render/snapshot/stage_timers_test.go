@@ -40,10 +40,10 @@ func TestPrivateDataTimersDistinguish200304AndBypass(t *testing.T) {
 		unchanged bool
 		want      map[string]int
 	}{
-		{"cold", cache, false, map[string]int{"snapshot.raw_cache_lookup": 1, "snapshot.raw_cache_miss": 1, "snapshot.payload_stamp": 1, "snapshot.payload_copy": 1}},
+		{"cold", cache, false, map[string]int{"snapshot.raw_cache_lookup": 1, "snapshot.raw_cache_miss": 1, "snapshot.payload_stamp": 1}},
 		{"validated", cache, true, map[string]int{"snapshot.raw_cache_lookup": 1, "snapshot.raw_cache_hit": 1}},
-		{"changed", cache, false, map[string]int{"snapshot.raw_cache_lookup": 1, "snapshot.raw_cache_miss": 1, "snapshot.payload_stamp": 1, "snapshot.payload_copy": 1}},
-		{"bypass", nil, false, map[string]int{"snapshot.raw_cache_bypass": 1, "snapshot.payload_stamp": 1, "snapshot.payload_copy": 1}},
+		{"changed", cache, false, map[string]int{"snapshot.raw_cache_lookup": 1, "snapshot.raw_cache_miss": 1, "snapshot.payload_stamp": 1}},
+		{"bypass", nil, false, map[string]int{"snapshot.raw_cache_bypass": 1, "snapshot.payload_stamp": 1}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx, trace := commandtrace.WithTrace(t.Context())
@@ -74,7 +74,7 @@ func TestDirectMySekaiTimersCoverBindingFetchCopyAndFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 	counts := snapshotTimerCounts(t, trace)
-	for name, want := range map[string]int{"snapshot.binding": 1, "snapshot.private_data": 1, "snapshot.payload_stamp": 1, "snapshot.payload_copy": 2, "snapshot.raw_cache_miss": 1} {
+	for name, want := range map[string]int{"snapshot.binding": 1, "snapshot.private_data": 1, "snapshot.payload_stamp": 1, "snapshot.payload_copy": 1, "snapshot.raw_cache_miss": 1} {
 		if counts[name] != want {
 			t.Fatalf("%s=%d want=%d", name, counts[name], want)
 		}

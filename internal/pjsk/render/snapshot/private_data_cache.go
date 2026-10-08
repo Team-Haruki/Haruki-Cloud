@@ -59,14 +59,14 @@ func newPrivateDataPayload(data []byte) privateDataPayload {
 	return newPrivateDataPayloadContext(context.TODO(), data)
 }
 
+// newPrivateDataPayloadContext takes ownership of data: the caller must not
+// modify or reuse it afterwards. Fetch results are freshly allocated per
+// response (decompressed or read from the body), so nothing else holds them.
 func newPrivateDataPayloadContext(ctx context.Context, data []byte) privateDataPayload {
 	finishStamp := commandtrace.MeasureOperation(ctx, "snapshot.payload_stamp")
-	uploadTime, _ := parseTopLevelUploadTime(data)
+	uploadTime, _ := payloadUploadTime(data)
 	finishStamp()
-	finishCopy := commandtrace.MeasureOperation(ctx, "snapshot.payload_copy")
-	copied := slices.Clone(data)
-	finishCopy()
-	return privateDataPayload{data: copied, uploadTime: uploadTime}
+	return privateDataPayload{data: data, uploadTime: uploadTime}
 }
 
 func (p privateDataPayload) cloneBytes() []byte {
@@ -133,7 +133,8 @@ func (c *PrivateDataCache) Fetch(
 		return nil, false, err
 	}
 	if !hit {
-		return fetched, false, nil
+		// The cache now owns fetched; hand the caller its own copy.
+		return slices.Clone(fetched), false, nil
 	}
 	return payload.cloneBytes(), hit, err
 }

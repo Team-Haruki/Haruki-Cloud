@@ -283,6 +283,9 @@ func (p *ToolboxSnapshotProvider) resolveBuiltSnapshot(
 			SuiteJSON:     suite.data,
 			MySekaiJSON:   mysekai.data,
 			MusicMetaJSON: musicMetaJSON,
+			// Private-data payloads are immutable once ingested, so the built
+			// snapshot shares the cached bytes instead of holding a second copy.
+			SuiteJSONImmutable: true,
 		})
 	}
 	var (

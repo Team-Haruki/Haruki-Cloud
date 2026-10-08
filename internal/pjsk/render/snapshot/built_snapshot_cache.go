@@ -63,12 +63,15 @@ const (
 	// Keys embed upload_time, so once an account uploads new data the old
 	// entry is never queried again and Get's lazy TTL check never fires for
 	// it — without a byte bound and the Put-time tail sweep, 2048 multi-MB
-	// churned entries could pin >20GiB.
-	defaultBuiltSnapshotCacheMaxBytes = 1 << 30 // 1GiB estimated
-	// builtSnapshotSizeFactor scales source payload size to an estimate of a
-	// built entry's footprint: the raw JSON clone, the parsed model, and the
-	// derived structures each retain roughly one payload's worth of data.
-	builtSnapshotSizeFactor = 3
+	// churned entries could pin >20GiB. With the old 3x estimate the 1GiB
+	// budget really held about 400MiB; 512MiB at the measured 1.3x keeps about
+	// the same number of entries and actual memory.
+	defaultBuiltSnapshotCacheMaxBytes = 512 << 20 // 512MiB estimated
+	// builtSnapshotSizePercent scales source payload size to an estimate of a
+	// built entry's footprint. The entry pins the source JSON (shared with the
+	// raw private-data cache, or a private merged buffer) plus a typed model of
+	// about 0.1-0.3x the payload; measured retention is 1.1-1.3x.
+	builtSnapshotSizePercent = 130
 )
 
 // NewBuiltSnapshotCache builds a cache with default bounds. Bounds govern only
@@ -117,13 +120,13 @@ func (c *BuiltSnapshotCache) Get(key builtSnapshotKey) Snapshot {
 
 // Put stores a built snapshot under key. payloadBytes is the total size of the
 // source payloads the snapshot was built from (suite + mysekai JSON); the
-// retained footprint is estimated as payloadBytes×builtSnapshotSizeFactor.
+// retained footprint is estimated as payloadBytes×builtSnapshotSizePercent/100.
 // A nil receiver or snapshot is a no-op.
 func (c *BuiltSnapshotCache) Put(key builtSnapshotKey, snapshot Snapshot, payloadBytes int64) {
 	if c == nil || snapshot == nil {
 		return
 	}
-	approx := payloadBytes * builtSnapshotSizeFactor
+	approx := payloadBytes * builtSnapshotSizePercent / 100
 	if approx < 0 {
 		approx = 0
 	}

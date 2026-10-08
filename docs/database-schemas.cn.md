@@ -1,6 +1,6 @@
 # Haruki-Cloud 数据库 Schema 文档
 
-> 最后更新：2026-04-23（v1.3）
+> 最后更新：2026-10-09（v1.4）
 
 ---
 
@@ -12,11 +12,11 @@
 
 | 模块 | Schema 目录 | 生成目录 | 数据库 | 表数量 |
 |------|-------------|----------|--------|--------|
-| **bot** | `ent/bot/schema/` | `database/bot/` | MySQL | 5 |
-| **censor** | `ent/censor/schema/` | `database/censor/` | MySQL | 3 |
+| **bot** | `ent/bot/schema/` | `database/bot/` | MySQL | 6 |
+| **censor** | `ent/censor/schema/` | `database/censor/` | MySQL | 4 |
 | **chunithm/maindb** | `ent/chunithm/maindb/schema/` | `database/chunithm/maindb/` | MySQL/PostgreSQL | 3 |
 | **chunithm/music** | `ent/chunithm/music/schema/` | `database/chunithm/music/` | MySQL/PostgreSQL | 3 |
-| **pjsk** | `ent/pjsk/schema/` | `database/pjsk/` | PostgreSQL | 9 |
+| **pjsk** | `ent/pjsk/schema/` | `database/pjsk/` | PostgreSQL | 13 |
 | **sekai** | `ent/sekai/schema/` | `database/sekai/` | PostgreSQL | 107 |
 | **users** | `ent/users/schema/` | `database/users/` | PostgreSQL | 1 |
 
@@ -110,6 +110,22 @@ Bot 客户端启动时下载的指令路由表，每行对应一个 API 端点�
 
 唯一索引：`(command_module, command_path)`
 
+### 3.6 `command_logs` 表
+
+Bot 命令调用记录，由 `api/bot/auth/telemetry.go` 的 `RecordCommandLog` 写入。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | auto | PK | 自动主键 |
+| `platform` | string(32) | default "" | IM 平台，如 `qq` |
+| `pid` | string(64) | default "" | Bot 平台实例标识 |
+| `gid` | string(128) | default "" | 平台群号 |
+| `uid` | string(128) | default "" | 平台用户 ID |
+| `command` | string(128) | default "" | 命中的命令 |
+| `created_at` | time | immutable | 记录时间 |
+
+索引：`platform`、`pid`、`gid`、`uid`、`command`、`created_at`（各自单列）
+
 ---
 
 ## 4. Censor 数据库（`database/censor/`）
@@ -149,6 +165,18 @@ Bot 客户端启动时下载的指令路由表，每行对应一个 API 端点�
 | `result` | string(10) | optional | 审核结果码 |
 
 索引：`haruki_user_id`
+
+### 4.4 `image_mod_cache` 表
+
+图片审核结果缓存，由 `utils/censor` 读写（同一 URL 不重复送审）。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | int | PK, immutable | 主键 |
+| `url` | string(2048) | NOT NULL, UNIQUE | 被审核的图片 URL |
+| `haruki_user_id` | int | optional | 提交图片的 Haruki 用户 ID（index） |
+| `result` | string(20) | NOT NULL | 审核建议：`Pass` / `Review` / `Block` |
+| `created_at` | time | immutable | 记录时间 |
 
 ---
 
@@ -251,13 +279,13 @@ CHUNITHM 数据分为两个独立数据库：**maindb**（用户数据）和 **m
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | `id` | int64 | PK | 主键 |
-| `alias_type` | string(20) | — | 别名类型（music / character / card 等） |
+| `alias_type` | string(20) | — | 别名类型（music / character） |
 | `alias_type_id` | int | — | 游戏内 ID |
-| `alias` | string(100) | — | 别名字符串 |
+| `alias` | string(500) | — | 别名字符串 |
 
 唯一索引：`(alias_type, alias_type_id, alias)`
 
-### 6.2 `group_aliases` 表（群组私有别名）
+### 6.2 `group_alias` 表（群组私有别名）
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -266,7 +294,7 @@ CHUNITHM 数据分为两个独立数据库：**maindb**（用户数据）和 **m
 | `group_id` | string(50) | — | 群组 ID |
 | `alias_type` | string(20) | — | 别名类型 |
 | `alias_type_id` | int | — | 游戏内 ID |
-| `alias` | string(100) | — | 别名字符串 |
+| `alias` | string(500) | — | 别名字符串 |
 
 唯一索引：`(platform, group_id, alias_type, alias_type_id, alias)`
 
@@ -374,6 +402,73 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 
 1. `reviewed_by` 保存审核者标识文本
 2. 审核权限本身通过 `alias_admins.haruki_user_id` 与 `users.id` 关联判定
+
+### 6.10 `alias_submission_bans` 表（别名提交封禁）
+
+禁止提交新别名的 IM 用户，由 `internal/pjsk/alias` 的审核逻辑维护。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | auto | PK | 自动主键 |
+| `platform` | string(20) | — | IM 平台 |
+| `platform_user_id` | string(100) | — | 平台用户 ID |
+| `banned_by` | string(100) | — | 操作者标识 |
+| `banned_at` | time | — | 封禁时间 |
+
+唯一索引：`(platform, platform_user_id)`
+
+### 6.11 `mysekai_birthday_subscriptions` 表（MySekai 生日素材监控）
+
+每个 PJSK 账号当前生效的生日素材监控（`internal/pjsk/subscription`）。`(region, uid)` 唯一，新建监控会覆盖旧监控。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | int | PK | 主键 |
+| `region` | string(7) | — | 区服 |
+| `uid` | string(30) | — | 游戏 UID |
+| `platform` / `platform_user_id` / `platform_group_id` | string | — | 订阅者与推送群 |
+| `cloud_bot_id` / `self_id` | string(64) | — | 推送使用的 Bot |
+| `materials` | JSON `[]string` | — | 监控的素材 |
+| `token` | string(128) | — | 订阅令牌 |
+| `active` | bool | default true | 是否生效 |
+| `expires_at` | time | — | 过期时间 |
+| `created_at` / `updated_at` | time | — | 创建 / 更新时间 |
+| `cancelled_at` | time | optional | 取消时间 |
+
+唯一索引：`(region, uid)`；另有 `(platform, platform_user_id)`、`platform_group_id`、`cloud_bot_id`、`self_id`、`expires_at`、`active` 索引。
+
+### 6.12 `mysekai_birthday_subscription_events` 表
+
+过滤后的生日派对上传事件。HMES 只转发事件 ID，Cloud 是事实来源。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | int | PK | 主键 |
+| `subscription_id` | int | FK → `mysekai_birthday_subscriptions.id`，ON DELETE CASCADE | 所属监控 |
+| `region` / `uid` | string | — | 账号 |
+| `platform` / `platform_user_id` / `platform_group_id` / `cloud_bot_id` / `self_id` | string | — | 推送目标（与订阅相同） |
+| `matched_material_ids` | JSON `[]int` | — | 命中的素材 ID |
+| `empty_result` | bool | default false | 是否无命中 |
+| `filtered_payload` | bytes | optional | 过滤后的数据 |
+| `upload_time` | time | — | 数据上传时间 |
+| `created_at` | time | immutable | 记录时间 |
+| `acknowledged_at` | time | optional | 确认时间 |
+
+### 6.13 `profile_bg_cleanups` 表（个人背景图对象清理）
+
+上传前登记对象归属，账号引用被替换后记录待删除债务（`internal/pjsk/accountdata`）。刻意不设账号外键：删除账号不能丢弃待清理记录。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | int | PK | 主键 |
+| `object_path` | string(512) | UNIQUE | 对象路径 |
+| `game_account_id` | int | — | 关联游戏账号 ID（无外键） |
+| `state` | enum | `uploading` / `pending` / `deleting` | 清理状态 |
+| `not_before` | time | — | 最早处理时间 |
+| `attempts` | int | default 0 | 已尝试次数 |
+| `created_at` | time | immutable | 记录时间 |
+
+索引：`(not_before, state)`
 
 ---
 
@@ -639,15 +734,12 @@ c, _ := client.Card.Query().
 
 ## 9. PJSK 别名类型说明
 
-PJSK 数据库中的 `alias_type` 字段使用以下值（定义于 `utils/utils.go`）：
+PJSK 数据库中的 `alias_type` 字段使用以下值（定义于 `internal/pjsk/alias/types.go`，其他值会被拒绝）：
 
 | 值 | 含义 |
 |----|------|
 | `music` | 歌曲别名 |
 | `character` | 角色别名 |
-| `card` | 卡片别名 |
-| `event` | 活动别名 |
-| `gacha` | 卡池别名 |
 
 ---
 
@@ -679,11 +771,9 @@ go generate ./ent/chunithm/music/...
 go generate ./ent/sekai/...
 go generate ./ent/users/...
 
-# 执行数据库迁移（在目标环境）
-# 优先读取 HARUKI_SEKAI_DB_URL / HARUKI_SEKAI_DSN；
-# 否则回退读取 HARUKI_CONFIG_PATH 或默认 ./haruki-cloud.yaml 中的 sekai.db_url
-go run ./cmd/migrate/...
 ```
+
+数据库迁移没有单独的命令：服务启动时 `internal/server/init_database.go` 对每个库调用 `Schema.Create(ctx)` 自动迁移。
 
 ---
 

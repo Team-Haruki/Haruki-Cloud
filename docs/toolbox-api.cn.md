@@ -2,14 +2,14 @@
 
 > 最后更新：2026-06-21
 >
-> 本文档描述 `utils/sekai.HarukiToolboxClient` 的全部能力、API 路由约定、参数语义、
+> 本文档描述 `internal/pjsk/sekai.HarukiToolboxClient` 的全部能力、API 路由约定、参数语义、
 > 返回类型与错误处理规范。Toolbox 是 Haruki-Cloud 访问私有用户游戏数据的唯一外部入口。
 
 ---
 
 ## 1. 概览
 
-`HarukiToolboxClient`（`utils/sekai/client_toolbox.go`）封装了所有对 **Haruki Toolbox** 服务
+`HarukiToolboxClient`（`internal/pjsk/sekai/client_toolbox.go`）封装了所有对 **Haruki Toolbox** 服务
 的 HTTP 调用。Toolbox 是一个独立后端服务，负责：
 
 1. 持有用户私有游戏数据快照（suite、mysekai 等）
@@ -33,12 +33,15 @@ toolbox:
   user_agent: "haruki-cloud/1.0"
 ```
 
-对应 Go 类型：`config.ToolboxConfig{BaseURL, APIToken, UserAgent}`
+对应 Go 类型：`config.ToolboxConfig{BaseURL, APIToken, UserAgent, ConditionalFetch, Retry}`
+（`conditional_fetch` 见下文“条件拉取”；`retry` 为 `config.UpstreamRetryConfig`）。
 
 请求默认启用：
 
-- 重试：最大 `maxRetries` 次，等待 `retryWaitTime`
-- 重试触发条件：网络级错误（`connection refused`、`no such host`、`EOF`、`i/o timeout`）或 HTTP 5xx
+- 重试：由 `toolbox.retry`（`max_retries` / `wait` / `max_wait` / `budget`，env `HARUKI_TOOLBOX_RETRY_*`）控制；
+  未设置时最多重试 4 次，首次等待 1s、最长 2s，不设预算；`max_retries` 为负数时关闭重试
+- 重试触发条件：网络级错误（`connection refused`、`connection reset`、`no such host`、`EOF`、`i/o timeout`，含客户端超时）或 HTTP 5xx；
+  调用方 context 已取消或超时时不重试；`budget` 为正时，超过首次请求开始后的预算不再发起重试
 
 ---
 
@@ -307,7 +310,7 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 
 ## 6. 错误类型参考
 
-所有 Toolbox 相关错误定义在 `utils/sekai/errors.go`：
+所有 Toolbox 相关错误定义在 `internal/pjsk/sekai/errors.go`：
 
 ### 哨兵错误（用 `errors.Is` 匹配）
 

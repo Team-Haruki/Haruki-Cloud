@@ -70,6 +70,8 @@ Haruki-Cloud/
 │
 ├── cmd/                          # ── 一次性 CLI 工具 ──
 │   ├── trust-signer/             #   离线 Ed25519 签名工具（keyset / manifest）
+│   ├── asset-index/              #   资源清单引导 / 手动发布（需先暂停该区服的更新任务）
+│   ├── image-cache-reconcile/    #   渲染缓存索引与对象核对（--repair 只移除索引引用）
 │   ├── importer/main.go          #   旧数据迁移工具（历史数据导入）
 │   └── extractor/main.go         #   Schema 提取工具
 │
@@ -116,7 +118,7 @@ Haruki-Cloud/
 │       └── render/               #     渲染与执行子系统
 │
 ├── config/                       # ── 配置 ──
-│   └── config.go                 #   YAML 配置加载，16 个顶级配置块
+│   └── config.go                 #   YAML 配置加载，18 个顶级配置块
 │
 ├── database/                     # ── 数据库层（Ent 自动生成） ──
 │   ├── bot/                      #   Bot 用户、统计、Command Manifest
@@ -172,7 +174,7 @@ node:                      # 集群节点身份
 
 backend:                   # 服务基础配置
   host: "0.0.0.0"
-  port: 3000
+  port: 6666
   accept_authorization: "" # 内部 API 鉴权令牌
   accept_user_agent: ""    # 内部 API User-Agent 过滤
   allow_insecure_internal_api: false # 仅 dev/beta 时可开启；production 下强制关闭
@@ -321,7 +323,7 @@ AuthV3 契约（请求体 Noise NK Message 1，响应体 Message 2，payload 均
 | 请求 | `bot_id`, `credential`, `timestamp` | 与 V2 相同；timestamp 窗口 ±300s |
 | 请求 | `nonce` | 16 字节随机数的 hex（32 字符），按 bot_id + nonce 一次性消费 |
 | 请求 | `method`, `path` | 必须等于实际 HTTP 方法与路径，防止密文搬到其他接口 |
-| 请求 | `client_version`, `build_id` | 记录用途，当前不阻断 |
+| 请求 | `client_version`, `build_id` | 按构建许可策略判定，未放行或已撤销的构建会被拒绝登录（log-only 模式只记录）；已签发会话在中间件中复查撤销，见 [build-policy.cn.md](build-policy.cn.md) |
 | 请求 | `noise_key_id` | 握手所用服务端公钥 ID；为空不校验，非空必须与实际匹配 |
 | 响应 | `session_token`, `expires_at`, `session_id` | session 有效期由 `auth_v3_session_ttl` 决定，默认 1h |
 | 响应 | `echo_nonce`, `server_time`, `accepted_build_id` | 回显与服务端时间 |
@@ -469,9 +471,9 @@ Bot 客户端
        ▼ 校验 registry 命中结果 == matched_command，且 handler.path == 当前端点
        │
        ▼ handler.Handle(...)
-       │  → ResolvedCommand{Module:Card, Mode:"card-detail", Query:"1001"}
+       │  → CommandRequest{Module:Card, Mode:"card-detail", Query:"1001"}
        │
-       ▼ handler.Execute(ctx, resolved, renderApp)  [bridge.go]
+       ▼ handler.ExecuteCommandRequest(ctx, resolved, renderApp)  [command_executor.go]
        │  → 返回 onebot11.Message
        │
        └─ 200 OK, JSON 包装的 OneBot11 message segments
@@ -714,9 +716,8 @@ internal/pjsk/render/
 
 每个模块通常包含：
 - `controller.go` — 对外暴露的 Controller 方法
-- `query.go` — 查询参数结构体
 - `builder.go` — 构建渲染请求 payload
-- `source.go` / `source_cloud.go` — 数据获取层
+- 其余文件按模块需要拆分（如 `lookup.go`、`parser.go`、`adapter_provider.go`、`types.go`）
 
 ### 8.4 chartstyle — 谱面风格工具
 
@@ -742,7 +743,7 @@ internal/pjsk/chartstyle/
 | 本地用户快照 | `render/snapshot/local.go` 读取本地 JSON 文件（user.json, music_metas.json, mysekai.json），应迁移至 DB 驱动 |
 | MySekai Masterdata | 依赖本地文件，未完全转为 DB 驱动 |
 | Deck 引擎 | 简化版实现，原生 CGo 引擎未迁入 |
-| Profile 扩展命令未完成 | `internal/pjsk/handler/profile.go` | 绑定/解绑/默认绑定已接入；`swap bind`、隐藏/展示抓包、隐藏/展示 ID、注册时间、服务状态、抓包模式仍为 disabled/TODO |
+| Profile 扩展命令未完成 | `internal/pjsk/handler/profile.go` 等 | 绑定/解绑/默认绑定、`swap bind`（`profile/bind/swap`）、隐藏/展示抓包、隐藏/展示 ID（`profile_settings.go`）、注册时间（`arrest.go`）已接入；服务状态、抓包模式尚无对应命令 |
 
 ---
 

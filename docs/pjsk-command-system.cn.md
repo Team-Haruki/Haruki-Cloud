@@ -8,7 +8,13 @@
 >
 > 1. 当前主协议已经完全收口为 `POST /api/v2/bot/:botId/pjsk/<path>`。
 > 2. `/internal/pjsk/*` 兼容路由已从仓库与运行时移除。
-> 3. 当前活跃 Bot path 数量请以 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
+> 3. 当前活跃 Bot path 以 handler registry（`internal/pjsk/handler/sekai_registry.go` 注册的 handler）为准。
+>
+> 2026-10-09 命名说明（下文设计章节保留了当时的名称）：
+>
+> 1. `parser.ResolvedCommand` 现为 `internal/pjsk/handler` 包内的 `CommandRequest`，由 `makeCommandRequest(...)` / `makeCommandRequestWithParams(...)` 构造。
+> 2. `commandhandler.Execute(...)` 现为 `commandhandler.ExecuteCommandRequest(...)`（`internal/pjsk/handler/command_executor.go`），按 handler 绑定的执行函数分发。
+> 3. `bridge.go` 与 `handler/sekai/` 子包已平铺进 `internal/pjsk/handler/`（如 `profile.go`、`alias.go`）。
 
 ## 1. 核心结论
 
@@ -142,10 +148,10 @@ Bot 端点不应该再把“请求发到哪个端点”这个问题重新交给�
 涉及：
 
 - `internal/pjsk/parser/extractor.go`
-- `internal/pjsk/parser/parser.go`
-- `internal/pjsk/parser/music_parser.go`
+- `internal/pjsk/parser/command_parser.go`
 - `internal/pjsk/parser/event_parser.go`
-- 其他类型化解析器
+- `internal/pjsk/parser/types.go` / `utils.go`
+- 各 render 模块内的类型化解析器（如 `render/card/parser.go`、`render/music/parser.go`）
 
 职责：
 
@@ -392,14 +398,14 @@ Bot 端点
 当前代码状态是：
 
 ```go
-func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *renderapp.App) (onebot11.Message, error)
+func ExecuteCommandRequest(ctx context.Context, resolved *CommandRequest, app *renderapp.App) (message onebot11.Message, err error)
 ```
 
 当前约定如下：
 
-1. 图片类 `execute*` 在 bridge 内部完成 `Render... -> ImageCache.StoreAndGetURL(...) -> onebot11.Image(url)`
-2. 文本类 `execute*` 直接在 bridge 内部返回 `onebot11.Text(text)`
-3. `CommandResultDataType` 仍保留在 bridge 内部，主要给 `executeProfile(...)` 这类辅助路径区分图片/文本，不再作为 API 对外契约
+1. 图片类 `execute*` 在 `internal/pjsk/handler` 内完成渲染并转换为 `onebot11.Image(url)`（字节结果经 `ImageCache.StoreAndGetURL(...)` 取得 URL，已有公开 URL 的结果直接使用）
+2. 文本类 `execute*` 直接返回 `onebot11.Text(text)`
+3. 不再有 `CommandResultDataType`；图片/文本区分只存在于各 `execute*` 内部，不作为 API 对外契约
 4. Bot API 与 legacy API 不再根据 `data_type` 分支出站
 
 ### 11.5 Bot API 的正确职责
@@ -418,7 +424,7 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 
 ### 11.6 `profile` 执行分发要求
 
-`internal/pjsk/handler/bridge.go` 中的 `executeProfile(...)` 应扩展为同时支持：
+`internal/pjsk/handler/profile.go` 中的 `executeProfile(...)` 同时支持：
 
 1. 传统资料卡类图片模式
 2. 账号绑定相关文本模式
@@ -478,17 +484,17 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 当前别名链路按下面顺序工作：
 
 ```text
-sekai/alias.go
-  -> makeResolvedCmdWithParams(..., ModuleAlias, mode, params)
-  -> bridge.executeAlias(...)
+internal/pjsk/handler/alias.go
+  -> makeCommandRequestWithParams(..., ModuleAlias, mode, params)
+  -> executeAlias(...)
   -> alias.ExecuteCommand(...)
   -> alias.Service
 ```
 
 也就是说：
 
-1. `sekai/alias.go` 只负责命令格式检查和参数提取
-2. `bridge.go` 只负责把 `ModuleAlias` 路由到文本执行器
+1. `alias.go` 中的 handler 只负责命令格式检查和参数提取
+2. `executeAlias(...)` 把 `ModuleAlias` 交给 `alias.ExecuteCommand(...)` 文本执行器（别名查询在可渲染时改为图片）
 3. `alias.Service` 负责歌曲/角色解析、冲突检查、审核权限和数据库写入
 
 ### 12.3 目标定位规则

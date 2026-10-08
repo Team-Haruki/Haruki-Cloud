@@ -10,7 +10,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -79,8 +81,11 @@ type Counter interface {
 // Config tunes alerting.
 type Config struct {
 	WebhookURL string
-	Threshold  int
-	Window     time.Duration
+	// WebhookToken, when set, is sent as "Authorization: Bearer <token>".
+	// It is never logged.
+	WebhookToken string
+	Threshold    int
+	Window       time.Duration
 	// Node names the Cloud instance in alerts.
 	Node string
 }
@@ -113,29 +118,54 @@ func New(cfg Config, counter Counter) *Monitor {
 		cfg.Window = DefaultWindow
 	}
 	m := &Monitor{cfg: cfg, counter: counter, logger: slog.Default(), spawn: func(f func()) { go f() }}
-	client := &http.Client{Timeout: webhookTimeout}
+	client := newWebhookClient()
 	m.post = func(ctx context.Context, payload []byte) error {
-		url := strings.TrimSpace(m.cfg.WebhookURL)
-		if url == "" {
-			return nil
-		}
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
-		if err != nil {
-			return err
-		}
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("User-Agent", "Haruki-Cloud-Security/1")
-		resp, err := client.Do(req)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode >= 300 {
-			return fmt.Errorf("webhook status %d", resp.StatusCode)
-		}
-		return nil
+		return m.postWebhook(ctx, client, payload)
 	}
 	return m
+}
+
+// newWebhookClient never follows redirects: a 3xx is returned as is and
+// counts as a failure, so the bearer token only reaches the configured host.
+func newWebhookClient() *http.Client {
+	return &http.Client{
+		Timeout: webhookTimeout,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+}
+
+// webhookStatusError is a non-2xx webhook response. Only the status code is
+// kept; the response body is never logged.
+type webhookStatusError struct{ status int }
+
+func (e webhookStatusError) Error() string { return fmt.Sprintf("webhook status %d", e.status) }
+
+func (m *Monitor) postWebhook(ctx context.Context, client *http.Client, payload []byte) error {
+	url := strings.TrimSpace(m.cfg.WebhookURL)
+	if url == "" {
+		return nil
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "Haruki-Cloud-Security/1")
+	if token := strings.TrimSpace(m.cfg.WebhookToken); token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4<<10))
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return webhookStatusError{status: resp.StatusCode}
+	}
+	return nil
 }
 
 // Report logs the event and, when the subject crosses the threshold inside
@@ -196,8 +226,13 @@ func (m *Monitor) Report(ctx context.Context, ev Event) {
 		deliverCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), webhookTimeout)
 		defer cancel()
 		if err := m.post(deliverCtx, payload); err != nil {
-			m.logger.LogAttrs(deliverCtx, slog.LevelWarn, "security alert webhook failed",
-				slog.String("kind", string(ev.Kind)), slog.String("error_type", fmt.Sprintf("%T", err)))
+			failAttrs := []slog.Attr{slog.String("kind", string(ev.Kind))}
+			if se, ok := errors.AsType[webhookStatusError](err); ok {
+				failAttrs = append(failAttrs, slog.Int("status", se.status))
+			} else {
+				failAttrs = append(failAttrs, slog.String("error_type", fmt.Sprintf("%T", err)))
+			}
+			m.logger.LogAttrs(deliverCtx, slog.LevelWarn, "security alert webhook failed", failAttrs...)
 		}
 	})
 }

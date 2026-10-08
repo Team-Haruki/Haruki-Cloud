@@ -123,7 +123,8 @@ AuthV3 签发的 session JWT 带 `bid`（build_id）和 `cv`（client_version）
 
 ```yaml
 security:
-  alert_webhook_url: https://example/hook
+  alert_webhook_url: https://alerts.example.com/internal/bot-security/alerts
+  alert_webhook_token: change-me   # 可选；非空时带 Authorization: Bearer <token>
   alert_threshold: 5
   alert_window: 10m
 ```
@@ -137,9 +138,22 @@ security:
  "window_seconds":600,"node":"cn06","time":"2026-09-02T09:00:00Z"}
 ```
 
+字段名、类型和 omitempty 规则由 `secevent_test.go` 的 `TestAlertPayloadShape` 固定，
+接收端按这个形状实现，改动须两边同步。`bot_id`、`build_id`、`client_version`、
+`source_ip`、`reason`、`node` 为空时省略，其余字段总是存在。
+
+投递规则：
+
+- 请求头 `Content-Type: application/json`；配置了 `alert_webhook_token` 时再带
+  `Authorization: Bearer <token>`，未配置则不发该头。token 不会写进任何日志。
+- 超时 5 秒。
+- 不跟随重定向：3xx 和其他非 2xx 一样算失败，token 只会发给配置的那个地址。
+- 失败记一条 WARN `security alert webhook failed`：非 2xx 只带 `status`（状态码），
+  不记录响应体；连接类错误只带 `error_type`。失败不重试，该窗口内也不会再发。
+
 计数放在 Redis（`haruki:sec:<kind>:<subject>`），多实例共享。环境变量：
-`HARUKI_SECURITY_ALERT_WEBHOOK_URL`、`HARUKI_SECURITY_ALERT_THRESHOLD`、
-`HARUKI_SECURITY_ALERT_WINDOW`。
+`HARUKI_SECURITY_ALERT_WEBHOOK_URL`、`HARUKI_SECURITY_ALERT_WEBHOOK_TOKEN`、
+`HARUKI_SECURITY_ALERT_THRESHOLD`、`HARUKI_SECURITY_ALERT_WINDOW`。
 
 ## 撤销手册
 

@@ -383,7 +383,7 @@ domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1" }
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/v2/bot/:botId/command/manifests` | 读取 command manifest；未配置 bot DB 时返回不可用响应 |
+| GET | `/api/v2/bot/:botId/command/manifests` | 读取 command manifest；未配置 bot DB 时返回不可用响应。响应（含签名 envelope）在进程内缓存，每 30s 重读一次表，payload 不变时不重新签名；带强 `ETag`，客户端发 `If-None-Match` 命中时返回空 body 的 304 |
 | POST | `/api/v2/bot/:botId/pjsk/card/detail` | 卡面详情 |
 | POST | `/api/v2/bot/:botId/pjsk/card/list` | 查卡列表 |
 | POST | `/api/v2/bot/:botId/pjsk/music` | 歌曲详情类路径之一 |

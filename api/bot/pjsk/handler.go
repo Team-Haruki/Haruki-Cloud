@@ -2,12 +2,16 @@ package pjsk
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"haruki-cloud/internal/core/secevent"
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"haruki-cloud/api"
 	botauth "haruki-cloud/api/bot/auth"
@@ -923,52 +927,154 @@ func shouldPreferMoreSpecificMessageMatch(message string, matched commandregistr
 // under DomainManifest. Clients verify the signature over the raw payload bytes
 // before decoding them.
 func buildManifestHandler(botDBClient *botDB.Client, preview3DEnabled bool, signer *trustsign.Signer) fiber.Handler {
+	cache := &manifestCache{}
 	return func(c fiber.Ctx) error {
 		if botDBClient == nil {
 			return api.JSONResponse(c, fiber.StatusNotImplemented,
 				"指令清单不可用：bot 数据库未配置", nil)
 		}
+		entry, failure := cache.get(time.Now(), func() ([]byte, string) {
+			return buildManifestPayload(c.Context(), botDBClient, preview3DEnabled)
+		}, func(payload []byte) ([]byte, string) {
+			return encodeManifestResponse(payload, signer)
+		})
+		if failure != "" {
+			return api.JSONResponse(c, fiber.StatusInternalServerError, failure, nil)
+		}
+		c.Set(fiber.HeaderETag, entry.etag)
+		c.Set(fiber.HeaderCacheControl, "no-cache")
+		if manifestETagMatches(c.Get(fiber.HeaderIfNoneMatch), entry.etag) {
+			return c.SendStatus(fiber.StatusNotModified)
+		}
+		c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSONCharsetUTF8)
+		return c.Status(fiber.StatusOK).Send(entry.body)
+	}
+}
 
-		rows, err := botDBClient.CommandManifest.Query().
-			Order(commandmanifest.ByCommandPriority(sql.OrderDesc())).
-			All(c.Context())
-		if err != nil {
-			return api.JSONResponse(c, fiber.StatusInternalServerError, "加载指令清单失败", nil)
-		}
+// manifestRefreshInterval bounds how stale a served manifest can be after
+// the command_manifests table changes (a node seeding a new release).
+const manifestRefreshInterval = 30 * time.Second
 
-		clientPolicyScopes := commandManifestClientPolicyScopes()
-		entries := make([]ManifestEntry, 0, len(rows))
-		for _, r := range rows {
-			if !botRouteEnabled(r.CommandPath, preview3DEnabled) {
-				continue
-			}
-			entries = append(entries, ManifestEntry{
-				CommandPrefixes:         r.CommandPrefixes,
-				CommandPriority:         r.CommandPriority,
-				CommandMode:             r.CommandMode,
-				CommandModule:           r.CommandModule,
-				CommandPath:             r.CommandPath,
-				CommandAdditionalParams: r.CommandAdditionalParams,
-				ClientPolicyScope:       clientPolicyScopes[manifestKey(r.CommandModule, r.CommandPath)],
-			})
+// manifestCache keeps the encoded (and, with a signer, signed) manifest
+// response. Every manifestRefreshInterval the rows are re-read and the JSON
+// payload rebuilt; signing and response encoding run again only when the
+// payload bytes changed. Ed25519 signatures are deterministic, so a reused
+// envelope is byte-identical to a freshly signed one.
+type manifestCache struct {
+	mu          sync.Mutex
+	checkedAt   time.Time
+	payloadHash [sha256.Size]byte
+	body        []byte
+	etag        string
+}
+
+type manifestCacheEntry struct {
+	body []byte
+	etag string
+}
+
+func (m *manifestCache) get(now time.Time, build func() ([]byte, string), encode func([]byte) ([]byte, string)) (manifestCacheEntry, string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.body != nil && now.Sub(m.checkedAt) < manifestRefreshInterval {
+		return manifestCacheEntry{body: m.body, etag: m.etag}, ""
+	}
+	payload, failure := build()
+	if failure != "" {
+		if m.body != nil {
+			// Keep serving the last good manifest; the next request retries.
+			return manifestCacheEntry{body: m.body, etag: m.etag}, ""
 		}
-		manifest := ManifestResponse{
-			Entries:                   entries,
-			CurrentHarukiCloudVersion: version.Get(),
-			LatestHarukiClientVersion: harukiConfig.Cfg.Backend.LatestHarukiClientVersion,
-			Profile:                   string(harukiConfig.Cfg.Profile),
+		return manifestCacheEntry{}, failure
+	}
+	hash := sha256.Sum256(payload)
+	if m.body != nil && hash == m.payloadHash {
+		m.checkedAt = now
+		return manifestCacheEntry{body: m.body, etag: m.etag}, ""
+	}
+	body, failure := encode(payload)
+	if failure != "" {
+		return manifestCacheEntry{}, failure
+	}
+	bodyHash := sha256.Sum256(body)
+	m.body, m.payloadHash, m.checkedAt = body, hash, now
+	m.etag = `"` + hex.EncodeToString(bodyHash[:16]) + `"`
+	return manifestCacheEntry{body: m.body, etag: m.etag}, ""
+}
+
+// buildManifestPayload returns the manifest's JSON payload, or a failure
+// message for the 500 response.
+func buildManifestPayload(ctx context.Context, botDBClient *botDB.Client, preview3DEnabled bool) ([]byte, string) {
+	rows, err := botDBClient.CommandManifest.Query().
+		Order(commandmanifest.ByCommandPriority(sql.OrderDesc())).
+		All(ctx)
+	if err != nil {
+		return nil, "加载指令清单失败"
+	}
+
+	clientPolicyScopes := commandManifestClientPolicyScopes()
+	entries := make([]ManifestEntry, 0, len(rows))
+	for _, r := range rows {
+		if !botRouteEnabled(r.CommandPath, preview3DEnabled) {
+			continue
 		}
-		if signer == nil {
-			return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, manifest)
-		}
-		payload, err := json.Marshal(manifest)
-		if err != nil {
-			return api.JSONResponse(c, fiber.StatusInternalServerError, "编码指令清单失败", nil)
-		}
+		entries = append(entries, ManifestEntry{
+			CommandPrefixes:         r.CommandPrefixes,
+			CommandPriority:         r.CommandPriority,
+			CommandMode:             r.CommandMode,
+			CommandModule:           r.CommandModule,
+			CommandPath:             r.CommandPath,
+			CommandAdditionalParams: r.CommandAdditionalParams,
+			ClientPolicyScope:       clientPolicyScopes[manifestKey(r.CommandModule, r.CommandPath)],
+		})
+	}
+	manifest := ManifestResponse{
+		Entries:                   entries,
+		CurrentHarukiCloudVersion: version.Get(),
+		LatestHarukiClientVersion: harukiConfig.Cfg.Backend.LatestHarukiClientVersion,
+		Profile:                   string(harukiConfig.Cfg.Profile),
+	}
+	payload, err := json.Marshal(manifest)
+	if err != nil {
+		return nil, "编码指令清单失败"
+	}
+	return payload, ""
+}
+
+// encodeManifestResponse wraps payload in the standard response envelope:
+// as the manifest object itself, or as a trustsign.Envelope over the exact
+// payload bytes when a signer is configured.
+func encodeManifestResponse(payload []byte, signer *trustsign.Signer) ([]byte, string) {
+	var data any = json.RawMessage(payload)
+	if signer != nil {
 		envelope, err := signer.Sign(trustsign.DomainManifest, trustsign.EncodingJSON, payload)
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusInternalServerError, "签名指令清单失败", nil)
+			return nil, "签名指令清单失败"
 		}
-		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, envelope)
+		data = envelope
 	}
+	body, err := json.Marshal(api.BuildResponseMap(fiber.StatusOK, api.ResponseOK, data))
+	if err != nil {
+		return nil, "编码指令清单失败"
+	}
+	return body, ""
+}
+
+// manifestETagMatches implements If-None-Match for the manifest's strong
+// ETag: "*" or any listed tag, weak or strong, matches.
+func manifestETagMatches(header, etag string) bool {
+	header = strings.TrimSpace(header)
+	if header == "" || etag == "" {
+		return false
+	}
+	if header == "*" {
+		return true
+	}
+	for _, candidate := range strings.Split(header, ",") {
+		candidate = strings.TrimPrefix(strings.TrimSpace(candidate), "W/")
+		if candidate == etag {
+			return true
+		}
+	}
+	return false
 }

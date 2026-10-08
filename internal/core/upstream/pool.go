@@ -20,8 +20,11 @@ type TargetConfig struct {
 }
 
 type Lease struct {
-	Target  TargetConfig
-	release func()
+	Target TargetConfig
+	// Preferred reports that AcquireAffinity got the key's rendezvous
+	// target rather than a least-pending fallback.
+	Preferred bool
+	release   func()
 }
 
 func (l *Lease) Release() {
@@ -142,10 +145,38 @@ func (p *Pool) AcquireFunc(ctx context.Context, accept TargetPredicate) (*Lease,
 	if slot == nil {
 		return nil, ErrNoAvailableTargets
 	}
+	return slot.acquire(ctx, false)
+}
+
+// AcquireAffinity prefers the target that rendezvous hashing assigns to key
+// among the targets accept admits, so repeated work on the same key (for
+// example one userdata digest) lands where its per-target cache is warm.
+// When that target is saturated (pending >= concurrency) it falls back to
+// the least-pending accepted target, exactly like AcquireFunc. accept is
+// called at most once per target. An empty key behaves like AcquireFunc.
+func (p *Pool) AcquireAffinity(ctx context.Context, key []byte, accept TargetPredicate) (*Lease, error) {
+	if len(key) == 0 {
+		return p.AcquireFunc(ctx, accept)
+	}
+	if p == nil || len(p.targets) == 0 {
+		return nil, ErrNoTargetsConfigured
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	slot, preferred := p.pickAffinitySlot(key, accept)
+	if slot == nil {
+		return nil, ErrNoAvailableTargets
+	}
+	return slot.acquire(ctx, preferred)
+}
+
+func (slot *targetSlot) acquire(ctx context.Context, preferred bool) (*Lease, error) {
 	slot.resource.pending.Add(1)
 	if slot.resource.sem == nil {
 		return &Lease{
-			Target: slot.target,
+			Target:    slot.target,
+			Preferred: preferred,
 			release: func() {
 				slot.resource.pending.Add(-1)
 			},
@@ -154,7 +185,8 @@ func (p *Pool) AcquireFunc(ctx context.Context, accept TargetPredicate) (*Lease,
 	select {
 	case slot.resource.sem <- struct{}{}:
 		return &Lease{
-			Target: slot.target,
+			Target:    slot.target,
+			Preferred: preferred,
 			release: func() {
 				<-slot.resource.sem
 				slot.resource.pending.Add(-1)
@@ -185,6 +217,68 @@ func (p *Pool) pickSlotFunc(accept TargetPredicate) *targetSlot {
 		}
 	}
 	return best
+}
+
+// pickAffinitySlot returns the accepted slot with the highest rendezvous
+// score for key when it has a free slot, and otherwise the least-pending
+// accepted slot (rotating start, as pickSlotFunc). preferred reports which.
+func (p *Pool) pickAffinitySlot(key []byte, accept TargetPredicate) (*targetSlot, bool) {
+	start := int(p.next.Add(1)-1) % len(p.targets)
+	var (
+		best, leastPending *targetSlot
+		bestScore          uint64
+		leastPendingCount  int64
+	)
+	for offset := 0; offset < len(p.targets); offset++ {
+		slot := p.targets[(start+offset)%len(p.targets)]
+		if accept != nil && !accept(slot.target) {
+			continue
+		}
+		if score := rendezvousScore(key, slot.target.Name); best == nil || score > bestScore {
+			best, bestScore = slot, score
+		}
+		if pending := slot.resource.pending.Load(); leastPending == nil || pending < leastPendingCount {
+			leastPending, leastPendingCount = slot, pending
+		}
+	}
+	if best == nil {
+		return nil, false
+	}
+	if best.hasCapacity() {
+		return best, true
+	}
+	return leastPending, leastPending == best
+}
+
+func (slot *targetSlot) hasCapacity() bool {
+	return slot.resource.sem == nil || slot.resource.pending.Load() < int64(cap(slot.resource.sem))
+}
+
+// rendezvousScore is a highest-random-weight hash of (key, name): FNV-1a
+// over both, finished with the splitmix64 mixer. It is deterministic across
+// processes, so every Cloud node maps a key to the same target.
+func rendezvousScore(key []byte, name string) uint64 {
+	const (
+		offset64 = 14695981039346656037
+		prime64  = 1099511628211
+	)
+	h := uint64(offset64)
+	for _, b := range key {
+		h ^= uint64(b)
+		h *= prime64
+	}
+	h ^= 0xff
+	h *= prime64
+	for i := 0; i < len(name); i++ {
+		h ^= uint64(name[i])
+		h *= prime64
+	}
+	h ^= h >> 30
+	h *= 0xbf58476d1ce4e5b9
+	h ^= h >> 27
+	h *= 0x94d049bb133111eb
+	h ^= h >> 31
+	return h
 }
 
 func normalizeBaseURL(raw string) string {

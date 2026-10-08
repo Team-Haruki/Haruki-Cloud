@@ -166,6 +166,14 @@ func (r *RemoteDeckRecommender) defaultAlgorithmsForOption(option map[string]any
 }
 
 func (r *RemoteDeckRecommender) acquireExecution(ctx context.Context) (*remoteExecution, error) {
+	return r.acquireExecutionFor(ctx, nil)
+}
+
+// acquireExecutionFor leases a deck target. With a userdata digest it
+// prefers the target rendezvous hashing assigns to that digest, where the
+// per-target userdata cache most likely already holds the upload; a full or
+// circuit-open target falls back to least-pending.
+func (r *RemoteDeckRecommender) acquireExecutionFor(ctx context.Context, userdataKey *[32]byte) (*remoteExecution, error) {
 	if r == nil || r.client == nil || r.pool == nil || !r.pool.Enabled() {
 		return nil, fmt.Errorf("deck recommend service is not configured")
 	}
@@ -174,10 +182,17 @@ func (r *RemoteDeckRecommender) acquireExecution(ctx context.Context) (*remoteEx
 		return nil, err
 	}
 
-	finishQueue := commandtrace.MeasureOperation(ctx, "deck.queue")
-	lease, err := r.pool.AcquireFunc(ctx, func(target upstream.TargetConfig) bool {
+	accept := func(target upstream.TargetConfig) bool {
 		return r.targetAcceptsAssignment(ctx, target)
-	})
+	}
+	finishQueue := commandtrace.MeasureOperation(ctx, "deck.queue")
+	var lease *upstream.Lease
+	var err error
+	if userdataKey != nil {
+		lease, err = r.pool.AcquireAffinity(ctx, userdataKey[:], accept)
+	} else {
+		lease, err = r.pool.AcquireFunc(ctx, accept)
+	}
 	finishQueue()
 	if err != nil {
 		if ctxErr := ctx.Err(); ctxErr != nil {
@@ -190,10 +205,20 @@ func (r *RemoteDeckRecommender) acquireExecution(ctx context.Context) (*remoteEx
 		lease.Release()
 		return nil, fmt.Errorf("deck-service target state is not initialized: %s", lease.Target.Name)
 	}
-	return &remoteExecution{
+	exec := &remoteExecution{
 		lease: lease,
 		state: state,
-	}, nil
+	}
+	if userdataKey != nil {
+		exec.userdataKey = *userdataKey
+		exec.hasUserdataKey = true
+		if lease.Preferred {
+			commandtrace.RecordOperation(ctx, "deck.target_affinity", 0)
+		} else {
+			commandtrace.RecordOperation(ctx, "deck.target_affinity_fallback", 0)
+		}
+	}
+	return exec, nil
 }
 
 func (r *RemoteDeckRecommender) targetAcceptsAssignment(ctx context.Context, target upstream.TargetConfig) bool {

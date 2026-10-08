@@ -263,6 +263,10 @@ type remoteTargetState struct {
 type remoteExecution struct {
 	lease *upstream.Lease
 	state *remoteTargetState
+	// userdataKey is the request's userdata digest when it was computed
+	// before the lease (hasUserdataKey), so the upload reuses it.
+	userdataKey    [32]byte
+	hasUserdataKey bool
 }
 
 func (e *remoteExecution) Release() {

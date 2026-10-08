@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/observability/commandtrace"
@@ -27,6 +28,10 @@ type BuildInput struct {
 	MusicMetaPath  string
 	PersistRawFile bool
 	RawFilePattern string
+
+	// SuiteJSONImmutable promises that SuiteJSON is never modified by anyone,
+	// so a snapshot built straight from it keeps the slice instead of a copy.
+	SuiteJSONImmutable bool
 }
 
 type HarukiSnapshotFactory interface {
@@ -132,7 +137,7 @@ func (f *DefaultSnapshotFactory) buildService(ctx context.Context, input BuildIn
 		Rewards: convertChallengeRewards(raw.UserChallengeLiveSoloHighScoreRewards),
 	}
 	service.rawData = &raw
-	service.rawJSON = slices.Clone(data)
+	service.rawJSON = retainedSnapshotJSON(input, data)
 
 	if len(input.MusicMetaJSON) > 0 {
 		processed, view, prepareErr := meta.Prepare(input.MusicMetaJSON)
@@ -164,4 +169,15 @@ func (f *DefaultSnapshotFactory) buildService(ctx context.Context, input BuildIn
 	}
 
 	return service, nil
+}
+
+// retainedSnapshotJSON returns the bytes a Service keeps as its raw JSON. A
+// normalized or merged document is a private buffer and needs no copy; the
+// caller's own SuiteJSON is copied unless the caller declared it immutable.
+func retainedSnapshotJSON(input BuildInput, data []byte) []byte {
+	aliasesInput := len(data) > 0 && len(data) == len(input.SuiteJSON) && unsafe.SliceData(data) == unsafe.SliceData(input.SuiteJSON)
+	if aliasesInput && !input.SuiteJSONImmutable {
+		return slices.Clone(data)
+	}
+	return data
 }

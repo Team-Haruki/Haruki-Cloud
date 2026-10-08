@@ -151,11 +151,11 @@ func TestToolboxSnapshotProviderRebuildsOnChangedUploadTime(t *testing.T) {
 }
 
 func TestBuiltSnapshotCacheEvictsWhenOverByteBudget(t *testing.T) {
-	// Budget fits two 1000-byte-payload entries (x3 size factor) but not three.
-	c := NewBuiltSnapshotCacheWithLimits(0, 6500, time.Hour)
+	// Budget fits two 1000-byte-payload entries (1.3x size estimate) but not three.
+	c := NewBuiltSnapshotCacheWithLimits(0, 3000, time.Hour)
 	c.Put(builtKey(1, 100), buildTestSnapshot(t), 1000)
 	c.Put(builtKey(2, 100), buildTestSnapshot(t), 1000)
-	c.Put(builtKey(3, 100), buildTestSnapshot(t), 1000) // 9000 estimated > 6500, evicts uid 1
+	c.Put(builtKey(3, 100), buildTestSnapshot(t), 1000) // 3900 estimated > 3000, evicts uid 1
 
 	if got := c.Get(builtKey(1, 100)); got != nil {
 		t.Fatalf("oldest entry should have been evicted by the byte bound")
@@ -163,8 +163,8 @@ func TestBuiltSnapshotCacheEvictsWhenOverByteBudget(t *testing.T) {
 	if c.Get(builtKey(2, 100)) == nil || c.Get(builtKey(3, 100)) == nil {
 		t.Fatalf("entries within the byte budget should remain")
 	}
-	if c.curBytes != 6000 {
-		t.Fatalf("curBytes = %d, want 6000", c.curBytes)
+	if c.curBytes != 2600 {
+		t.Fatalf("curBytes = %d, want 2600", c.curBytes)
 	}
 }
 
@@ -173,8 +173,8 @@ func TestBuiltSnapshotCacheReplacingEntryAdjustsBytes(t *testing.T) {
 	key := builtKey(1, 100)
 	c.Put(key, buildTestSnapshot(t), 1000)
 	c.Put(key, buildTestSnapshot(t), 2000)
-	if c.curBytes != 6000 {
-		t.Fatalf("curBytes after replace = %d, want 6000", c.curBytes)
+	if c.curBytes != 2600 {
+		t.Fatalf("curBytes after replace = %d, want 2600", c.curBytes)
 	}
 	if c.ll.Len() != 1 {
 		t.Fatalf("replace must not duplicate entries, len = %d", c.ll.Len())
@@ -193,8 +193,8 @@ func TestBuiltSnapshotCachePutSweepsExpiredTail(t *testing.T) {
 	if c.ll.Len() != 1 {
 		t.Fatalf("expired tail entries should be swept on Put, len = %d", c.ll.Len())
 	}
-	if c.curBytes != 3000 {
-		t.Fatalf("curBytes after sweep = %d, want 3000", c.curBytes)
+	if c.curBytes != 1300 {
+		t.Fatalf("curBytes after sweep = %d, want 1300", c.curBytes)
 	}
 	if c.Get(builtKey(3, 100)) == nil {
 		t.Fatalf("fresh entry must survive the sweep")

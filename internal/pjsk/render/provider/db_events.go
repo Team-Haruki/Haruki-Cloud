@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
@@ -12,7 +13,6 @@ import (
 	"haruki-cloud/database/sekai/card"
 	"haruki-cloud/database/sekai/cardsupplie"
 	"haruki-cloud/database/sekai/event"
-	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	"haruki-cloud/database/sekai/worldbloom"
 	"haruki-cloud/database/sekai/worldbloomchapterrankingrewardrange"
@@ -39,6 +39,7 @@ type dbEventProvider struct {
 
 	cardLinks   dbMasterIndex[map[int][]int64]
 	deckBonuses dbMasterIndex[map[int][]*masterdata.EventDeckBonus]
+	allEvents   dbMasterIndex[[]*masterdata.Event]
 
 	unitMu    sync.RWMutex
 	unitCache map[int]string
@@ -92,12 +93,15 @@ func (p *dbEventProvider) GetByID(ctx context.Context, id int) (*masterdata.Even
 	return common.CloneEvent(model), nil
 }
 
+// errEventCardNotFound matches the message of the per-card query this
+// lookup replaced; callers only test for a non-nil error.
+var errEventCardNotFound = errors.New("sekai: eventcard not found")
+
+// GetByCardID returns the earliest event (lowest event ID) that links the
+// card, answered from the cached event-card index.
 func (p *dbEventProvider) GetByCardID(ctx context.Context, cardID int) (*masterdata.Event, error) {
 	p.init()
-	link, err := p.client.Eventcard.Query().
-		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.CardIDEQ(int64(cardID))).
-		Order(eventcard.ByEventID()).
-		First(ctx)
+	eventID, err := p.firstEventIDForCard(ctx, cardID)
 	if err != nil {
 		if p.local != nil {
 			if fallback, fallbackErr := p.local.GetByCardID(ctx, cardID); fallbackErr == nil && fallback != nil {
@@ -106,15 +110,31 @@ func (p *dbEventProvider) GetByCardID(ctx context.Context, cardID int) (*masterd
 		}
 		return nil, fmt.Errorf("query event by card %d: %w", cardID, err)
 	}
-	return p.GetByID(ctx, int(link.EventID))
+	return p.GetByID(ctx, eventID)
 }
 
+func (p *dbEventProvider) firstEventIDForCard(ctx context.Context, cardID int) (int, error) {
+	links, err := p.eventCardIDs(ctx)
+	if err != nil {
+		return 0, err
+	}
+	first := 0
+	for eventID, cardIDs := range links {
+		if (first == 0 || eventID < first) && slices.Contains(cardIDs, int64(cardID)) {
+			first = eventID
+		}
+	}
+	if first == 0 {
+		return 0, errEventCardNotFound
+	}
+	return first, nil
+}
+
+// GetAll lists the region's events by start time from a cached index that
+// follows the masterdata reset hooks like the other event indexes.
 func (p *dbEventProvider) GetAll(ctx context.Context) []*masterdata.Event {
 	p.init()
-	entities, err := p.client.Event.Query().
-		Where(event.ServerRegionEQ(p.region.String())).
-		Order(event.ByStartAt()).
-		All(ctx)
+	events, err := p.allEvents.get(ctx, "events.all_index", p.loadAllEvents)
 	if err != nil {
 		if p.local != nil {
 			return p.local.GetAll(ctx)
@@ -122,11 +142,10 @@ func (p *dbEventProvider) GetAll(ctx context.Context) []*masterdata.Event {
 		return nil
 	}
 
-	result := make([]*masterdata.Event, 0, len(entities))
+	result := make([]*masterdata.Event, 0, len(events))
 	p.eventMu.Lock()
 	defer p.eventMu.Unlock()
-	for _, entity := range entities {
-		model := common.ConvertEventEntity(entity)
+	for _, model := range events {
 		p.eventCache[model.ID] = model
 		result = append(result, common.CloneEvent(model))
 	}
@@ -146,6 +165,27 @@ func (p *dbEventProvider) GetAll(ctx context.Context) []*masterdata.Event {
 		})
 	}
 	return result
+}
+
+// loadAllEvents reads only the columns ConvertEventEntity uses; the unused
+// event_ranking_reward_ranges column alone is about 1.6 MB for JP.
+func (p *dbEventProvider) loadAllEvents(ctx context.Context) ([]*masterdata.Event, error) {
+	entities, err := p.client.Event.Query().
+		Where(event.ServerRegionEQ(p.region.String())).
+		Order(event.ByStartAt()).
+		Select(
+			event.FieldGameID, event.FieldEventType, event.FieldUnit, event.FieldName, event.FieldAssetbundleName,
+			event.FieldStartAt, event.FieldAggregateAt, event.FieldClosedAt, event.FieldVirtualLiveID,
+		).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	models := make([]*masterdata.Event, 0, len(entities))
+	for _, entity := range entities {
+		models = append(models, common.ConvertEventEntity(entity))
+	}
+	return models, nil
 }
 
 func (p *dbEventProvider) GetCards(ctx context.Context, eventID int) ([]*masterdata.Card, error) {

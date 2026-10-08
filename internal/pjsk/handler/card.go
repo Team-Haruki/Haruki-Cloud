@@ -279,6 +279,7 @@ func executeCardList(rc *RequestContext, cardCtrl *card.Controller) (onebot11.Me
 	mergeParams(rc.Cmd.Params, &q)
 	q.Region = rc.Cmd.Region
 	q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
+	rc.warmSuiteAndPublicProfile(false)
 	q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, rc.ResolveSnapshot(false))
 	data, err := cardCtrl.RenderCardListImage(q)
 	if err != nil {

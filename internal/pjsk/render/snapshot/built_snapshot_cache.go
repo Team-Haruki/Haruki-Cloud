@@ -33,6 +33,10 @@ type BuiltSnapshotCache struct {
 	maxBytes   int64
 	curBytes   int64
 	ttl        time.Duration
+
+	// latest maps an account and field set to the newest stored key, so a
+	// raw-cache miss can still revalidate a built snapshot (see latestKey).
+	latest map[builtSnapshotIdentity]builtSnapshotKey
 }
 
 // builtSnapshotKey fully determines a built snapshot. MySekaiUploadTime is 0
@@ -44,6 +48,18 @@ type builtSnapshotKey struct {
 	SuiteProjection   string
 	NeedMySekai       bool
 	MySekaiUploadTime int64
+}
+
+// builtSnapshotIdentity is a builtSnapshotKey without its upload_times.
+type builtSnapshotIdentity struct {
+	Region          string
+	UID             int64
+	SuiteProjection string
+	NeedMySekai     bool
+}
+
+func (k builtSnapshotKey) identity() builtSnapshotIdentity {
+	return builtSnapshotIdentity{Region: k.Region, UID: k.UID, SuiteProjection: k.SuiteProjection, NeedMySekai: k.NeedMySekai}
 }
 
 type builtSnapshotEntry struct {
@@ -63,12 +79,15 @@ const (
 	// Keys embed upload_time, so once an account uploads new data the old
 	// entry is never queried again and Get's lazy TTL check never fires for
 	// it — without a byte bound and the Put-time tail sweep, 2048 multi-MB
-	// churned entries could pin >20GiB.
-	defaultBuiltSnapshotCacheMaxBytes = 1 << 30 // 1GiB estimated
-	// builtSnapshotSizeFactor scales source payload size to an estimate of a
-	// built entry's footprint: the raw JSON clone, the parsed model, and the
-	// derived structures each retain roughly one payload's worth of data.
-	builtSnapshotSizeFactor = 3
+	// churned entries could pin >20GiB. With the old 3x estimate the 1GiB
+	// budget really held about 400MiB; 512MiB at the measured 1.3x keeps about
+	// the same number of entries and actual memory.
+	defaultBuiltSnapshotCacheMaxBytes = 512 << 20 // 512MiB estimated
+	// builtSnapshotSizePercent scales source payload size to an estimate of a
+	// built entry's footprint. The entry pins the source JSON (shared with the
+	// raw private-data cache, or a private merged buffer) plus a typed model of
+	// about 0.1-0.3x the payload; measured retention is 1.1-1.3x.
+	builtSnapshotSizePercent = 130
 )
 
 // NewBuiltSnapshotCache builds a cache with default bounds. Bounds govern only
@@ -88,6 +107,7 @@ func NewBuiltSnapshotCacheWithLimits(maxEntries int, maxBytes int64, ttl time.Du
 	return &BuiltSnapshotCache{
 		ll:         list.New(),
 		items:      make(map[builtSnapshotKey]*list.Element),
+		latest:     make(map[builtSnapshotIdentity]builtSnapshotKey),
 		maxEntries: maxEntries,
 		maxBytes:   maxBytes,
 		ttl:        ttl,
@@ -115,15 +135,39 @@ func (c *BuiltSnapshotCache) Get(key builtSnapshotKey) Snapshot {
 	return entry.snapshot
 }
 
+// latestKey returns the newest live key stored for an account and field set.
+// Its upload_times are what a raw-cache miss sends upstream as the known
+// version: a not-modified answer to that caller's own authorized read makes
+// the entry under this key servable, exactly as for a raw-cache hit.
+func (c *BuiltSnapshotCache) latestKey(id builtSnapshotIdentity) (builtSnapshotKey, bool) {
+	if c == nil {
+		return builtSnapshotKey{}, false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	key, ok := c.latest[id]
+	if !ok {
+		return builtSnapshotKey{}, false
+	}
+	el, ok := c.items[key]
+	if !ok {
+		return builtSnapshotKey{}, false
+	}
+	if c.ttl > 0 && time.Since(el.Value.(*builtSnapshotEntry).storedAt) > c.ttl {
+		return builtSnapshotKey{}, false
+	}
+	return key, true
+}
+
 // Put stores a built snapshot under key. payloadBytes is the total size of the
 // source payloads the snapshot was built from (suite + mysekai JSON); the
-// retained footprint is estimated as payloadBytes×builtSnapshotSizeFactor.
+// retained footprint is estimated as payloadBytes×builtSnapshotSizePercent/100.
 // A nil receiver or snapshot is a no-op.
 func (c *BuiltSnapshotCache) Put(key builtSnapshotKey, snapshot Snapshot, payloadBytes int64) {
 	if c == nil || snapshot == nil {
 		return
 	}
-	approx := payloadBytes * builtSnapshotSizeFactor
+	approx := payloadBytes * builtSnapshotSizePercent / 100
 	if approx < 0 {
 		approx = 0
 	}
@@ -140,6 +184,7 @@ func (c *BuiltSnapshotCache) Put(key builtSnapshotKey, snapshot Snapshot, payloa
 		c.items[key] = el
 		c.curBytes += approx
 	}
+	c.latest[key.identity()] = key
 	for (c.maxEntries > 0 && c.ll.Len() > c.maxEntries) || (c.maxBytes > 0 && c.curBytes > c.maxBytes) {
 		back := c.ll.Back()
 		if back == nil {
@@ -174,6 +219,9 @@ func (c *BuiltSnapshotCache) removeElementLocked(el *list.Element) {
 	entry := el.Value.(*builtSnapshotEntry)
 	c.ll.Remove(el)
 	delete(c.items, entry.key)
+	if id := entry.key.identity(); c.latest[id] == entry.key {
+		delete(c.latest, id)
+	}
 	c.curBytes -= entry.approxBytes
 	if c.curBytes < 0 {
 		c.curBytes = 0

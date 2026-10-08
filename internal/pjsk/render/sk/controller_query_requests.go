@@ -3,6 +3,7 @@ package sk
 import (
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 
 	"haruki-cloud/internal/observability/commandtrace"
@@ -205,8 +206,15 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 	if err != nil {
 		return nil, err
 	}
-	payload.Ranks = selection.infos
+	// The target's trace metrics and its neighbours are independent tracker
+	// reads once the target rank is known, so they run concurrently.
+	var wg sync.WaitGroup
+	if selection.enrich != nil && len(selection.infos) > 0 {
+		wg.Go(func() { selection.enrich(&selection.infos[0]) })
+	}
 	c.populateCheckRoomAdjacentRanks(&payload, normalized, selection)
+	wg.Wait()
+	payload.Ranks = selection.infos
 	return c.BuildCheckRoomRequest(payload)
 }
 
@@ -216,6 +224,9 @@ type checkRoomRankSelection struct {
 	previous            *drawing.RankInfo
 	next                *drawing.RankInfo
 	alwaysFetchAdjacent bool
+	// enrich adds trace metrics to infos[0] when the check-room answer left
+	// them to the caller.
+	enrich func(*drawing.RankInfo)
 }
 
 func (c *Controller) populateCheckRoomCharacterIcon(payload *drawing.CFRequest, query TrackerRankQuery) {
@@ -236,7 +247,7 @@ func (c *Controller) resolveCheckRoomRanks(query TrackerRankQuery) (checkRoomRan
 }
 
 func (c *Controller) resolveSingleCheckRoomRank(query TrackerRankQuery) (checkRoomRankSelection, error) {
-	info, previous, next, ok, err := c.buildCheckRoomFromTrackerCloudV2(
+	room, ok, err := c.checkRoomFromTrackerCloudV2(
 		query.Region,
 		query.EventID,
 		query.Ranks,
@@ -245,12 +256,14 @@ func (c *Controller) resolveSingleCheckRoomRank(query TrackerRankQuery) (checkRo
 		shouldSkipMissingTrackerRanks(query),
 	)
 	if ok {
-		return newCheckRoomRankSelection(info, previous, next, err)
+		selection, err := newCheckRoomRankSelection(room.info, room.previous, room.next, err)
+		selection.enrich = room.enrich
+		return selection, err
 	}
 	if query.UserID == nil || *query.UserID <= 0 {
 		return checkRoomRankSelection{}, nil
 	}
-	info, err = c.buildSingleUserFromTracker(query.Region, query.EventID, *query.UserID, query.WlCharacterID)
+	info, err := c.buildSingleUserFromTracker(query.Region, query.EventID, *query.UserID, query.WlCharacterID)
 	if err != nil {
 		return checkRoomRankSelection{}, fmt.Errorf("tracker user query failed: %w", err)
 	}
@@ -303,12 +316,17 @@ func (c *Controller) populateCheckRoomAdjacentRanks(payload *drawing.CFRequest, 
 	}
 	payload.PrevRank = selection.previous
 	payload.NextRank = selection.next
+	var previous, next *drawing.RankInfo
+	var wg sync.WaitGroup
 	if selection.target > 1 {
-		if previous := c.tryBuildSingleRank(query, selection.target-1); previous != nil {
-			payload.PrevRank = previous
-		}
+		wg.Go(func() { previous = c.tryBuildSingleRank(query, selection.target-1) })
 	}
-	if next := c.tryBuildSingleRank(query, selection.target+1); next != nil {
+	next = c.tryBuildSingleRank(query, selection.target+1)
+	wg.Wait()
+	if previous != nil {
+		payload.PrevRank = previous
+	}
+	if next != nil {
 		payload.NextRank = next
 	}
 }

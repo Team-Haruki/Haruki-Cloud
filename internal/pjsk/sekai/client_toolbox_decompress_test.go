@@ -31,6 +31,22 @@ func toolboxEncode(t *testing.T, plain []byte) []byte {
 	return encoder.EncodeAll(plain, nil)
 }
 
+func toolboxEncodeStream(t *testing.T, plain []byte) []byte {
+	t.Helper()
+	var out bytes.Buffer
+	encoder, err := zstd.NewWriter(&out, zstd.WithEncoderConcurrency(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := encoder.Write(plain); err != nil {
+		t.Fatal(err)
+	}
+	if err := encoder.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return out.Bytes()
+}
+
 // A raw-block frame without content size makes the output limit depend on
 // streaming reads, even when its window descriptor advertises a large window.
 func toolboxUnknownSizeFrame(plain []byte, windowLog byte) []byte {
@@ -158,7 +174,9 @@ func TestToolboxDecoderCancellationAndReuse(t *testing.T) {
 	client := NewToolboxClient(nil)
 	defer client.Close()
 	plain := bytes.Repeat([]byte("cancel this stream without decoding all data"), 1<<16)
-	resp := toolboxCompressedResponse(toolboxEncode(t, plain))
+	// A streamed frame has no content size, so it takes the cancellable
+	// streaming path rather than the one-shot DecodeAll.
+	resp := toolboxCompressedResponse(toolboxEncodeStream(t, plain))
 	decoder, err := client.decoders.acquire()
 	if err != nil {
 		t.Fatal(err)
@@ -317,5 +335,59 @@ func TestToolboxIdleDecoderReleasesRequestReferences(t *testing.T) {
 			}
 			runtime.KeepAlive(client)
 		})
+	}
+}
+
+func TestToolboxDecodeAllFastPath(t *testing.T) {
+	plain := bytes.Repeat([]byte(`{"userCards":[{"cardId":1,"level":60}]},`), 4096)
+	sized := toolboxEncode(t, plain)
+	streamed := toolboxEncodeStream(t, plain)
+
+	var header zstd.Header
+	if err := header.Decode(sized); err != nil || !header.HasFCS {
+		t.Fatalf("EncodeAll frame header = %+v, %v", header, err)
+	}
+	if err := header.Decode(streamed); err != nil || header.HasFCS {
+		t.Fatalf("streamed frame header = %+v, %v", header, err)
+	}
+
+	client := NewToolboxClient(nil)
+	defer client.Close()
+	decoder, err := client.decoders.acquire()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.decoders.release(decoder)
+
+	out, ok := decodeToolboxZstdFrame(decoder, sized, toolboxMaxDecompressedResponseBytes)
+	if !ok || !bytes.Equal(out, plain) || cap(out) != len(plain)+toolboxDecodeAllSlack {
+		t.Fatalf("fast path ok=%t size=%d cap=%d", ok, len(out), cap(out))
+	}
+	original := bytes.Clone(sized)
+	if _, ok := decodeToolboxZstdFrame(decoder, sized, toolboxMaxDecompressedResponseBytes); !ok || !bytes.Equal(sized, original) {
+		t.Fatal("fast path must leave the response body untouched")
+	}
+	twoFrames := append(bytes.Clone(sized), sized...)
+	for name, body := range map[string][]byte{
+		"no content size": streamed,
+		"over limit":      sized,
+		"second frame":    twoFrames,
+		"truncated":       sized[:len(sized)-4],
+		"not zstd":        []byte("plain"),
+	} {
+		limit := int64(toolboxMaxDecompressedResponseBytes)
+		if name == "over limit" {
+			limit = int64(len(plain) - 1)
+		}
+		if out, ok := decodeToolboxZstdFrame(decoder, body, limit); ok || out != nil {
+			t.Fatalf("%s: fast path answered (size=%d)", name, len(out))
+		}
+	}
+	// Bodies the fast path declines still decode, or fail, on the streaming path.
+	if got, err := client.decompressContext(context.Background(), toolboxCompressedResponse(twoFrames)); err != nil || !bytes.Equal(got, append(bytes.Clone(plain), plain...)) {
+		t.Fatalf("two frames size=%d err=%v", len(got), err)
+	}
+	if got, err := client.decompressContext(context.Background(), toolboxCompressedResponse(streamed)); err != nil || !bytes.Equal(got, plain) {
+		t.Fatalf("streamed size=%d err=%v", len(got), err)
 	}
 }

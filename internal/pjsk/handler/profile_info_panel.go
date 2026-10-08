@@ -87,6 +87,7 @@ func executeSuiteInfoPanel(rc *RequestContext) (onebot11.Message, error) {
 	if rc.App == nil || rc.App.Drawing == nil {
 		return nil, fmt.Errorf("drawing service unavailable")
 	}
+	rc.warmSuiteAndPublicProfile(false)
 	binding, snap, err := rc.requireVisibleSuiteSnapshot()
 	if err != nil {
 		return nil, err

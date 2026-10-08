@@ -3,6 +3,7 @@ package masterdata
 import (
 	"bytes"
 	"fmt"
+	"slices"
 
 	json "haruki-cloud/internal/jsonutil"
 	"sort"
@@ -272,4 +273,32 @@ func normalizeCardParameterType(value string) string {
 
 func cardParameterMeaningful(item CardParameter) bool {
 	return item.ID != 0 || item.CardID != 0 || item.Power != 0 || strings.TrimSpace(item.CardParameterType) != ""
+}
+
+// StrongestCardParameters returns, for each parameter type in first-seen
+// order, the entry with the highest power (the first one on ties). The
+// per-type maximum is the only thing Cloud reads from card parameters (card
+// power), so a cached card index can drop the per-level rows, about 150 per
+// card. The input is not modified.
+func StrongestCardParameters(items []CardParameter) []CardParameter {
+	if len(items) == 0 {
+		return items
+	}
+	strongest := make([]CardParameter, 0, 3)
+	for _, item := range items {
+		found := false
+		for i := range strongest {
+			if strongest[i].CardParameterType == item.CardParameterType {
+				if item.Power > strongest[i].Power {
+					strongest[i] = item
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			strongest = append(strongest, item)
+		}
+	}
+	return slices.Clip(strongest)
 }

@@ -62,6 +62,7 @@ func executeInventory(rc *RequestContext) (onebot11.Message, error) {
 		return nil, err
 	}
 
+	rc.warmSuiteAndPublicProfile(false)
 	binding, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
 	if suiteErr != nil {
 		return nil, suiteErr

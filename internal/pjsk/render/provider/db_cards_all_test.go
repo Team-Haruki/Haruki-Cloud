@@ -70,9 +70,17 @@ func TestCardAllCacheSharesLoadsAndOwnsReturns(t *testing.T) {
 	p.cardMu.Lock()
 	p.allCardsLoadedAt = time.Now().Add(-dbBulkIndexTTL)
 	p.cardMu.Unlock()
+	// An expired index is still served while one background flight reloads it.
 	cards, err = p.Filter(ctx, &CardFilter{})
-	if err != nil || cards[0].Prefix != "updated" || queries.Load() != 3 {
-		t.Fatalf("TTL refresh failed: %v, queries %d", err, queries.Load())
+	if err != nil || cards[0].Prefix != "jp" {
+		t.Fatalf("expired index was not served while refreshing: %v, %v", cards, err)
+	}
+	waitForIndexRefresh(t, func() bool {
+		cards, err := p.Filter(ctx, &CardFilter{})
+		return err == nil && cards[0].Prefix == "updated"
+	})
+	if queries.Load() != 3 {
+		t.Fatalf("TTL refresh queries = %d, want 3", queries.Load())
 	}
 	p.resetMasterdataCache()
 	if _, err := p.Filter(ctx, &CardFilter{}); err != nil {

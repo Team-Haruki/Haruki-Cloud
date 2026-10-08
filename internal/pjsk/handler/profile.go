@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"haruki-cloud/internal/pjsk/drawing"
 	"strings"
+	"sync"
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -11,6 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func (sekaiHandlers) ProfileBindHandle() HarukiSekaiCommandHandler {
@@ -325,7 +327,7 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 	}
 	region = resolvedTargetRegion(region, target)
 
-	resp, err := fetchCachedSekaiUserProfile(rc.Ctx, rc.App, region, target.PJSKUserID)
+	resp, profileSnapshot, err := fetchProfileAndTargetSnapshot(rc, p, target, region)
 	if err != nil {
 		return zeroTarget, nil, fmt.Errorf("获取玩家信息失败：%w", err)
 	}
@@ -337,13 +339,6 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 		}
 		if !rc.App.Censor.CensorShortBio(rc.Ctx, harukiID, target.PJSKUserID, resp.UserProfile.Word, region) {
 			resp.UserProfile.Word = ""
-		}
-	}
-
-	var profileSnapshot snapshot.Snapshot
-	if p.Mode == "self" && hasUsableSuiteData(target.Binding) {
-		if platform, platformUserID := platformCredentials(p); platform != "" {
-			profileSnapshot = resolveTargetSnapshot(rc.Ctx, rc.App, region, platform, platformUserID, target.PJSKUserID, false)
 		}
 	}
 
@@ -367,6 +362,32 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 		return zeroTarget, nil, err
 	}
 	return target, message, nil
+}
+
+// fetchProfileAndTargetSnapshot fetches the SekaiAPI profile and, for a self
+// query with a visible suite, the target's suite snapshot concurrently. The
+// profile error stays fatal and the snapshot stays optional; the snapshot is
+// never fetched when the profile is not wanted (other modes, hidden suite).
+func fetchProfileAndTargetSnapshot(rc *RequestContext, p userQueryParams, target ResolvedGameTarget, region string) (*sekaiapi.GetAnotherProfileResponse, snapshot.Snapshot, error) {
+	var (
+		platform, platformUserID string
+		profileSnapshot          snapshot.Snapshot
+	)
+	if p.Mode == "self" && hasUsableSuiteData(target.Binding) {
+		platform, platformUserID = platformCredentials(p)
+	}
+	var wg sync.WaitGroup
+	if platform != "" {
+		wg.Go(func() {
+			profileSnapshot = resolveTargetSnapshot(rc.Ctx, rc.App, region, platform, platformUserID, target.PJSKUserID, false)
+		})
+	}
+	resp, err := fetchCachedSekaiUserProfile(rc.Ctx, rc.App, region, target.PJSKUserID)
+	wg.Wait()
+	if err != nil {
+		return nil, nil, err
+	}
+	return resp, profileSnapshot, nil
 }
 
 func isRequesterModularProfileEnabled(rc *RequestContext, p userQueryParams) bool {

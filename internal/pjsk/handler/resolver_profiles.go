@@ -274,12 +274,26 @@ func buildPublicMusicProfilesFromResolvedTarget(
 // game target. Used by mysekai commands where the target is already resolved
 // through userQueryParams (supporting u[i] selectors and region binding).
 func buildPublicProfileCardForTarget(ctx context.Context, target ResolvedGameTarget, region string, app *renderapp.App, profileSnapshot snapshot.Snapshot) (*drawing.ProfileCardRequest, error) {
+	return buildPublicProfileCardForTargetWithPrefetch(ctx, target, region, app, profileSnapshot, nil)
+}
+
+// buildPublicProfileCardForTargetWithPrefetch is buildPublicProfileCardForTarget
+// that consumes an already started profile fetch when one is given.
+func buildPublicProfileCardForTargetWithPrefetch(ctx context.Context, target ResolvedGameTarget, region string, app *renderapp.App, profileSnapshot snapshot.Snapshot, prefetch *sekaiProfilePrefetch) (*drawing.ProfileCardRequest, error) {
 	if app == nil || app.Profiles == nil {
 		return nil, nil
 	}
 	region = resolvedTargetRegion(region, target)
 
-	resp, err := fetchCachedSekaiUserProfile(ctx, app, region, target.PJSKUserID)
+	var (
+		resp *sekaiapi.GetAnotherProfileResponse
+		err  error
+	)
+	if prefetch != nil {
+		resp, err = prefetch.wait()
+	} else {
+		resp, err = fetchCachedSekaiUserProfile(ctx, app, region, target.PJSKUserID)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("sekaiapi profile fetch failed: %w", err)
 	}

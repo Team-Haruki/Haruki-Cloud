@@ -85,8 +85,8 @@ func TestEventListPreloadQueryCountsAndData(t *testing.T) {
 		t.Fatalf("cold queries=%d, want events+links+bonuses+cards=4", got)
 	}
 	warm := readList()
-	if got := queries.Swap(0); got != 1 {
-		t.Fatalf("warm queries=%d, want events=1", got)
+	if got := queries.Swap(0); got != 0 {
+		t.Fatalf("warm queries=%d, want 0 (event list is indexed too)", got)
 	}
 	if !reflect.DeepEqual(cold, warm) {
 		t.Fatal("cold and warm rows differ")
@@ -161,9 +161,15 @@ func TestEventRelationIndexesDoNotCacheFailuresAndRefreshEmptyRows(t *testing.T)
 	provider.events.cardLinks.mu.Lock()
 	provider.events.cardLinks.loadedAt = time.Now().Add(-dbBulkIndexTTL)
 	provider.events.cardLinks.mu.Unlock()
-	cards, err := provider.events.GetCards(ctx, 1)
-	if err != nil || len(cards) != 1 || calls.Load() != 3 {
-		t.Fatalf("expired empty index: cards=%+v err=%v queries=%d", cards, err, calls.Load())
+	if _, err := provider.events.GetCards(ctx, 1); err == nil {
+		t.Fatal("expired index must be served while it refreshes")
+	}
+	waitForIndexRefresh(t, func() bool {
+		cards, err := provider.events.GetCards(ctx, 1)
+		return err == nil && len(cards) == 1
+	})
+	if calls.Load() != 3 {
+		t.Fatalf("expired empty index queries=%d", calls.Load())
 	}
 }
 

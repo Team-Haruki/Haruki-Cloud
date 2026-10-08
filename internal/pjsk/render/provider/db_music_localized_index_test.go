@@ -131,9 +131,15 @@ func TestMusicTitleIndexRetriesFailureAndExpires(t *testing.T) {
 	provider.musics.localizedTitles.mu.Lock()
 	provider.musics.localizedTitles.loadedAt = time.Now().Add(-dbBulkIndexTTL)
 	provider.musics.localizedTitles.mu.Unlock()
-	titles, err := provider.musics.GetLocalizedTitles(ctx, 1)
-	if err != nil || !reflect.DeepEqual(titles, []string{"new title"}) || calls.Load() != 3 {
-		t.Fatalf("expired title index=%v err=%v calls=%d", titles, err, calls.Load())
+	if titles, err := provider.musics.GetLocalizedTitles(ctx, 1); err != nil || len(titles) != 0 {
+		t.Fatalf("expired title index was not served while refreshing: %v, %v", titles, err)
+	}
+	waitForIndexRefresh(t, func() bool {
+		titles, err := provider.musics.GetLocalizedTitles(ctx, 1)
+		return err == nil && reflect.DeepEqual(titles, []string{"new title"})
+	})
+	if calls.Load() != 3 {
+		t.Fatalf("expired title index calls=%d", calls.Load())
 	}
 }
 

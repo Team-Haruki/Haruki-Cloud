@@ -33,6 +33,10 @@ type BuiltSnapshotCache struct {
 	maxBytes   int64
 	curBytes   int64
 	ttl        time.Duration
+
+	// latest maps an account and field set to the newest stored key, so a
+	// raw-cache miss can still revalidate a built snapshot (see latestKey).
+	latest map[builtSnapshotIdentity]builtSnapshotKey
 }
 
 // builtSnapshotKey fully determines a built snapshot. MySekaiUploadTime is 0
@@ -44,6 +48,18 @@ type builtSnapshotKey struct {
 	SuiteProjection   string
 	NeedMySekai       bool
 	MySekaiUploadTime int64
+}
+
+// builtSnapshotIdentity is a builtSnapshotKey without its upload_times.
+type builtSnapshotIdentity struct {
+	Region          string
+	UID             int64
+	SuiteProjection string
+	NeedMySekai     bool
+}
+
+func (k builtSnapshotKey) identity() builtSnapshotIdentity {
+	return builtSnapshotIdentity{Region: k.Region, UID: k.UID, SuiteProjection: k.SuiteProjection, NeedMySekai: k.NeedMySekai}
 }
 
 type builtSnapshotEntry struct {
@@ -91,6 +107,7 @@ func NewBuiltSnapshotCacheWithLimits(maxEntries int, maxBytes int64, ttl time.Du
 	return &BuiltSnapshotCache{
 		ll:         list.New(),
 		items:      make(map[builtSnapshotKey]*list.Element),
+		latest:     make(map[builtSnapshotIdentity]builtSnapshotKey),
 		maxEntries: maxEntries,
 		maxBytes:   maxBytes,
 		ttl:        ttl,
@@ -118,6 +135,30 @@ func (c *BuiltSnapshotCache) Get(key builtSnapshotKey) Snapshot {
 	return entry.snapshot
 }
 
+// latestKey returns the newest live key stored for an account and field set.
+// Its upload_times are what a raw-cache miss sends upstream as the known
+// version: a not-modified answer to that caller's own authorized read makes
+// the entry under this key servable, exactly as for a raw-cache hit.
+func (c *BuiltSnapshotCache) latestKey(id builtSnapshotIdentity) (builtSnapshotKey, bool) {
+	if c == nil {
+		return builtSnapshotKey{}, false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	key, ok := c.latest[id]
+	if !ok {
+		return builtSnapshotKey{}, false
+	}
+	el, ok := c.items[key]
+	if !ok {
+		return builtSnapshotKey{}, false
+	}
+	if c.ttl > 0 && time.Since(el.Value.(*builtSnapshotEntry).storedAt) > c.ttl {
+		return builtSnapshotKey{}, false
+	}
+	return key, true
+}
+
 // Put stores a built snapshot under key. payloadBytes is the total size of the
 // source payloads the snapshot was built from (suite + mysekai JSON); the
 // retained footprint is estimated as payloadBytes×builtSnapshotSizePercent/100.
@@ -143,6 +184,7 @@ func (c *BuiltSnapshotCache) Put(key builtSnapshotKey, snapshot Snapshot, payloa
 		c.items[key] = el
 		c.curBytes += approx
 	}
+	c.latest[key.identity()] = key
 	for (c.maxEntries > 0 && c.ll.Len() > c.maxEntries) || (c.maxBytes > 0 && c.curBytes > c.maxBytes) {
 		back := c.ll.Back()
 		if back == nil {
@@ -177,6 +219,9 @@ func (c *BuiltSnapshotCache) removeElementLocked(el *list.Element) {
 	entry := el.Value.(*builtSnapshotEntry)
 	c.ll.Remove(el)
 	delete(c.items, entry.key)
+	if id := entry.key.identity(); c.latest[id] == entry.key {
+		delete(c.latest, id)
+	}
 	c.curBytes -= entry.approxBytes
 	if c.curBytes < 0 {
 		c.curBytes = 0

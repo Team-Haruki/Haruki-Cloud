@@ -46,7 +46,7 @@ func TestPayloadUploadTimeMatchesFullDecode(t *testing.T) {
 func TestScanTopLevelUploadTimeRejectsUnclearShapes(t *testing.T) {
 	for _, doc := range []string{
 		``, `{`, `{"a"`, `{"a":`, `{"a":"unterminated`, `{"a":[1,2`, `{"a":1 "b":2}`, `{"upload_time":5`, `{"upload_time":-}`,
-		`{"a":}`, `{"Upload_time":1,"upload_time":2}`, `{"a\"b":1,"upload_time":2}`,
+		`{"a":}`, `{"Upload_time":1,"upload_time":2}`, `{"a\"b":1,"upload_time":2}`, `{"abc`, `{"a":["x`, `{"a":{"b":"x"`,
 	} {
 		if value, ok := scanTopLevelUploadTime([]byte(doc)); ok {
 			t.Fatalf("scanTopLevelUploadTime(%q) = %d, want no answer", doc, value)

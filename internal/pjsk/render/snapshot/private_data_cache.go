@@ -53,6 +53,9 @@ type PrivateDataKey struct {
 type privateDataPayload struct {
 	data       []byte
 	uploadTime int64
+	// versionOnly marks a payload whose upload_time upstream confirmed against
+	// a version only the built-snapshot cache holds, so it carries no body.
+	versionOnly bool
 }
 
 func newPrivateDataPayload(data []byte) privateDataPayload {
@@ -153,6 +156,20 @@ func (c *PrivateDataCache) fetchPayloadContext(
 	key PrivateDataKey,
 	fetch func(knownUploadTime int64) (data []byte, notModified bool, err error),
 ) (privateDataPayload, bool, error) {
+	return c.fetchPayloadWithFallback(ctx, key, 0, fetch)
+}
+
+// fetchPayloadWithFallback is fetchPayloadContext for a caller that holds a
+// built snapshot of this payload. When the raw entry is gone, fallbackKnown
+// (that snapshot's upload_time) is sent instead of 0, and a not-modified
+// answer returns a versionOnly payload: the version is confirmed by this
+// caller's own authorized read, and the caller serves its built snapshot.
+func (c *PrivateDataCache) fetchPayloadWithFallback(
+	ctx context.Context,
+	key PrivateDataKey,
+	fallbackKnown int64,
+	fetch func(knownUploadTime int64) (data []byte, notModified bool, err error),
+) (privateDataPayload, bool, error) {
 	var cached *privateDataStoreEntry
 	known := int64(0)
 	if c != nil {
@@ -165,12 +182,19 @@ func (c *PrivateDataCache) fetchPayloadContext(
 	} else {
 		commandtrace.RecordOperation(ctx, "snapshot.raw_cache_bypass", 0)
 	}
+	if cached == nil && fallbackKnown > 0 {
+		known = fallbackKnown
+	}
 
 	data, notModified, err := fetch(known)
 	if err != nil {
 		return privateDataPayload{}, false, err
 	}
 	if notModified {
+		if cached == nil && fallbackKnown > 0 {
+			commandtrace.RecordOperation(ctx, "snapshot.raw_cache_version_only", 0)
+			return privateDataPayload{uploadTime: fallbackKnown, versionOnly: true}, false, nil
+		}
 		if cached == nil {
 			// Upstream cannot validate a timestamp this request never sent.
 			return privateDataPayload{}, false, fmt.Errorf("snapshot: upstream reported not-modified without a cached payload")

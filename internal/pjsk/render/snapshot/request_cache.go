@@ -54,6 +54,17 @@ func cacheFromContext(ctx context.Context) *requestCache {
 }
 
 func cachedPrivateData(ctx context.Context, key privateDataCacheKey, fetch func() (privateDataPayload, error)) (privateDataPayload, error, bool) {
+	return requestCachedPrivateData(ctx, key, false, fetch)
+}
+
+// refreshPrivateData replaces this command's entry for key with a new fetch.
+// It is used when a versionOnly entry turns out not to be servable.
+func refreshPrivateData(ctx context.Context, key privateDataCacheKey, fetch func() (privateDataPayload, error)) (privateDataPayload, error) {
+	data, err, _ := requestCachedPrivateData(ctx, key, true, fetch)
+	return data, err
+}
+
+func requestCachedPrivateData(ctx context.Context, key privateDataCacheKey, replace bool, fetch func() (privateDataPayload, error)) (privateDataPayload, error, bool) {
 	cache := cacheFromContext(ctx)
 	if cache == nil {
 		commandtrace.RecordOperation(ctx, "snapshot.request_cache_bypass", 0)
@@ -65,6 +76,9 @@ func cachedPrivateData(ctx context.Context, key privateDataCacheKey, fetch func(
 
 	cache.mu.Lock()
 	entry, hit := cache.privateData[key]
+	if replace {
+		entry, hit = nil, false
+	}
 	if entry == nil {
 		entry = &privateDataCacheEntry{}
 		cache.privateData[key] = entry

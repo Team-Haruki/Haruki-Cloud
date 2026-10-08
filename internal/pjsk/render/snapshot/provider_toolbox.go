@@ -122,26 +122,111 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		return nil, err
 	}
 
-	suiteResult, err := p.fetchPrivateData(ctx, binding.Server, "suite", uid, platform, imUserID, projection, func(knownUploadTime int64) ([]byte, bool, error) {
+	snapshotRegion := snapshotRegionForBinding(region, binding.Server)
+	built, hasBuilt := p.revalidationCandidate(snapshotRegion, uid, projection, opts)
+	fetchSuite := func(knownUploadTime int64) ([]byte, bool, error) {
 		if len(fields) > 0 {
 			return p.client.GetSuiteDataFieldsConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime, fields)
 		}
 		return p.client.GetSuiteDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
-	})
+	}
+	suiteRequest := privateDataRequest{server: binding.Server, dataType: "suite", uid: uid, platform: platform, imUserID: imUserID, projection: projection}
+	if hasBuilt {
+		suiteRequest.fallbackKnown = built.SuiteUploadTime
+	}
+	suiteResult, err := p.fetchPrivateData(ctx, suiteRequest, fetchSuite)
 	if err != nil {
 		return nil, err
 	}
-	if len(suiteResult.data) == 0 {
+	if len(suiteResult.data) == 0 && !suiteResult.versionOnly {
 		p.logEmptyPrivateData(ctx, binding.Server, "suite")
 		return nil, fmt.Errorf("snapshot: suite snapshot is empty")
 	}
 
-	mysekaiJSON, err := p.resolveMySekaiData(ctx, binding.Server, uid, platform, imUserID, opts.NeedMySekai)
+	mysekaiFallback := int64(0)
+	if hasBuilt && opts.NeedMySekai && suiteResult.uploadTime == built.SuiteUploadTime {
+		mysekaiFallback = built.MySekaiUploadTime
+	}
+	mysekaiJSON, err := p.resolveMySekaiData(ctx, binding.Server, uid, platform, imUserID, opts.NeedMySekai, mysekaiFallback)
 	if err != nil {
 		return nil, err
 	}
+	if suiteResult.versionOnly || mysekaiJSON.versionOnly {
+		if snapshot := p.revalidatedSnapshot(ctx, snapshotRegion, uid, suiteResult.privateDataPayload, mysekaiJSON, opts); snapshot != nil {
+			return snapshot, nil
+		}
+		if suiteResult, mysekaiJSON, err = p.refetchVersionOnly(ctx, suiteRequest, fetchSuite, suiteResult, mysekaiJSON); err != nil {
+			return nil, err
+		}
+	}
 	snapshotRegion, musicMetaJSON := p.resolveSupplementalData(region, binding.Server, opts)
 	return p.resolveBuiltSnapshot(ctx, tResolve, snapshotRegion, uid, suiteResult.privateDataPayload, mysekaiJSON, musicMetaJSON, opts)
+}
+
+// revalidationCandidate returns the newest memoized snapshot key for this
+// account and field set, whose upload_times a raw-cache miss can revalidate
+// instead of transferring a body the built snapshot already covers.
+func (p *ToolboxSnapshotProvider) revalidationCandidate(region renderregion.Value, uid int64, projection string, opts ResolveOptions) (builtSnapshotKey, bool) {
+	if opts.NeedMusicMeta {
+		return builtSnapshotKey{}, false
+	}
+	return p.builtCache.latestKey(builtSnapshotIdentity{
+		Region:          region.String(),
+		UID:             uid,
+		SuiteProjection: projection,
+		NeedMySekai:     opts.NeedMySekai,
+	})
+}
+
+// revalidatedSnapshot returns the built snapshot whose upload_times this
+// request just confirmed. A versionOnly result can also come from this
+// command's request cache for a resolve the built cache does not memoize
+// (music meta), so that case never serves an entry.
+func (p *ToolboxSnapshotProvider) revalidatedSnapshot(ctx context.Context, region renderregion.Value, uid int64, suite, mysekai privateDataPayload, opts ResolveOptions) Snapshot {
+	if opts.NeedMusicMeta {
+		return nil
+	}
+	snapshot := p.builtCache.Get(newBuiltSnapshotKey(region, uid, suite, mysekai, opts))
+	if snapshot != nil {
+		commandtrace.RecordOperation(ctx, "snapshot.built_cache_revalidated", 0)
+	}
+	return snapshot
+}
+
+// refetchVersionOnly replaces versionOnly results with full reads when no
+// built entry can be served for them (it was evicted since the lookup).
+func (p *ToolboxSnapshotProvider) refetchVersionOnly(
+	ctx context.Context,
+	suiteRequest privateDataRequest,
+	fetchSuite conditionalPrivateDataFetcher,
+	suite toolboxPrivateDataResult,
+	mysekai privateDataPayload,
+) (toolboxPrivateDataResult, privateDataPayload, error) {
+	var err error
+	if suite.versionOnly {
+		if suite, err = p.refetchPrivateData(ctx, suiteRequest, fetchSuite); err != nil {
+			return suite, mysekai, err
+		}
+		if len(suite.data) == 0 {
+			p.logEmptyPrivateData(ctx, suiteRequest.server, "suite")
+			return suite, mysekai, fmt.Errorf("snapshot: suite snapshot is empty")
+		}
+	}
+	if mysekai.versionOnly {
+		mysekai, err = p.refetchMySekaiData(ctx, suiteRequest.server, suiteRequest.uid, suiteRequest.platform, suiteRequest.imUserID)
+	}
+	return suite, mysekai, err
+}
+
+func newBuiltSnapshotKey(region renderregion.Value, uid int64, suite, mysekai privateDataPayload, opts ResolveOptions) builtSnapshotKey {
+	return builtSnapshotKey{
+		Region:            region.String(),
+		UID:               uid,
+		SuiteUploadTime:   suite.uploadTime,
+		SuiteProjection:   strings.Join(opts.SuiteFields, ","),
+		NeedMySekai:       opts.NeedMySekai,
+		MySekaiUploadTime: mysekai.uploadTime,
+	}
 }
 
 func (p *ToolboxSnapshotProvider) resolveAccount(
@@ -176,32 +261,58 @@ func (p *ToolboxSnapshotProvider) resolveAccount(
 	return binding, uid, nil
 }
 
-func (p *ToolboxSnapshotProvider) fetchPrivateData(
-	ctx context.Context,
-	server, dataType string,
-	uid int64,
-	platform, imUserID string,
-	projection string,
-	fetch conditionalPrivateDataFetcher,
-) (toolboxPrivateDataResult, error) {
+// privateDataRequest identifies one private-data read. fallbackKnown is the
+// upload_time of a built snapshot to revalidate when the raw entry is gone.
+type privateDataRequest struct {
+	server, dataType   string
+	uid                int64
+	platform, imUserID string
+	projection         string
+	fallbackKnown      int64
+}
+
+func (p *ToolboxSnapshotProvider) fetchPrivateData(ctx context.Context, request privateDataRequest, fetch conditionalPrivateDataFetcher) (toolboxPrivateDataResult, error) {
+	return p.fetchPrivateDataMode(ctx, request, false, fetch)
+}
+
+// refetchPrivateData replaces a versionOnly result with a full read.
+func (p *ToolboxSnapshotProvider) refetchPrivateData(ctx context.Context, request privateDataRequest, fetch conditionalPrivateDataFetcher) (toolboxPrivateDataResult, error) {
+	request.fallbackKnown = 0
+	return p.fetchPrivateDataMode(ctx, request, true, fetch)
+}
+
+func (p *ToolboxSnapshotProvider) fetchPrivateDataMode(ctx context.Context, request privateDataRequest, refresh bool, fetch conditionalPrivateDataFetcher) (toolboxPrivateDataResult, error) {
+	server, dataType := request.server, request.dataType
 	started := time.Now()
 	result := toolboxPrivateDataResult{}
-	data, err, requestCacheHit := cachedPrivateData(ctx, privateDataCacheKey{
+	requestKey := privateDataCacheKey{
 		Server:         server,
 		DataType:       dataType,
-		UserID:         uid,
-		Platform:       platform,
-		PlatformUserID: imUserID,
-		Projection:     projection,
-	}, func() (privateDataPayload, error) {
-		data, cross, ferr := p.privateCache.fetchPayloadContext(
+		UserID:         request.uid,
+		Platform:       request.platform,
+		PlatformUserID: request.imUserID,
+		Projection:     request.projection,
+	}
+	load := func() (privateDataPayload, error) {
+		data, cross, ferr := p.privateCache.fetchPayloadWithFallback(
 			ctx,
-			PrivateDataKey{Server: server, DataType: dataType, UID: uid, Projection: projection},
+			PrivateDataKey{Server: server, DataType: dataType, UID: request.uid, Projection: request.projection},
+			request.fallbackKnown,
 			fetch,
 		)
 		result.crossRequestCacheHit = cross
 		return data, ferr
-	})
+	}
+	var (
+		data            privateDataPayload
+		err             error
+		requestCacheHit bool
+	)
+	if refresh {
+		data, err = refreshPrivateData(ctx, requestKey, load)
+	} else {
+		data, err, requestCacheHit = cachedPrivateData(ctx, requestKey, load)
+	}
 	result.privateDataPayload = data
 	result.requestCacheHit = requestCacheHit
 	result.elapsed = time.Since(started)
@@ -235,21 +346,36 @@ func (p *ToolboxSnapshotProvider) logEmptyPrivateData(ctx context.Context, serve
 	)
 }
 
-func (p *ToolboxSnapshotProvider) resolveMySekaiData(ctx context.Context, server string, uid int64, platform, imUserID string, needed bool) (privateDataPayload, error) {
+func (p *ToolboxSnapshotProvider) resolveMySekaiData(ctx context.Context, server string, uid int64, platform, imUserID string, needed bool, fallbackKnown int64) (privateDataPayload, error) {
 	if !needed {
 		return privateDataPayload{}, nil
 	}
-	result, err := p.fetchPrivateData(ctx, server, "mysekai", uid, platform, imUserID, "", func(knownUploadTime int64) ([]byte, bool, error) {
-		return p.client.GetMySekaiDataConditionalContext(ctx, server, uid, platform, imUserID, knownUploadTime)
-	})
+	request := privateDataRequest{server: server, dataType: "mysekai", uid: uid, platform: platform, imUserID: imUserID, fallbackKnown: fallbackKnown}
+	result, err := p.fetchPrivateData(ctx, request, p.mySekaiFetcher(ctx, server, uid, platform, imUserID))
 	return result.privateDataPayload, err
 }
 
-func (p *ToolboxSnapshotProvider) resolveSupplementalData(region renderregion.Value, bindingServer string, opts ResolveOptions) (renderregion.Value, []byte) {
-	metaRegion := region
-	if bindingRegion := renderregion.Normalize(bindingServer); !bindingRegion.IsZero() {
-		metaRegion = bindingRegion
+func (p *ToolboxSnapshotProvider) refetchMySekaiData(ctx context.Context, server string, uid int64, platform, imUserID string) (privateDataPayload, error) {
+	request := privateDataRequest{server: server, dataType: "mysekai", uid: uid, platform: platform, imUserID: imUserID}
+	result, err := p.refetchPrivateData(ctx, request, p.mySekaiFetcher(ctx, server, uid, platform, imUserID))
+	return result.privateDataPayload, err
+}
+
+func (p *ToolboxSnapshotProvider) mySekaiFetcher(ctx context.Context, server string, uid int64, platform, imUserID string) conditionalPrivateDataFetcher {
+	return func(knownUploadTime int64) ([]byte, bool, error) {
+		return p.client.GetMySekaiDataConditionalContext(ctx, server, uid, platform, imUserID, knownUploadTime)
 	}
+}
+
+func snapshotRegionForBinding(region renderregion.Value, bindingServer string) renderregion.Value {
+	if bindingRegion := renderregion.Normalize(bindingServer); !bindingRegion.IsZero() {
+		return bindingRegion
+	}
+	return region
+}
+
+func (p *ToolboxSnapshotProvider) resolveSupplementalData(region renderregion.Value, bindingServer string, opts ResolveOptions) (renderregion.Value, []byte) {
+	metaRegion := snapshotRegionForBinding(region, bindingServer)
 	if opts.NeedMusicMeta && p.metas != nil {
 		return metaRegion, p.metas.Get(metaRegion.String())
 	}
@@ -268,14 +394,7 @@ func (p *ToolboxSnapshotProvider) resolveBuiltSnapshot(
 	// Toolbox advances upload_time whenever the payload changes. Reuse the
 	// version parsed at ingestion; every request has already authorized its read.
 	memoizable := !opts.NeedMusicMeta && suite.uploadTime > 0 && (!opts.NeedMySekai || mysekai.uploadTime > 0)
-	memoKey := builtSnapshotKey{
-		Region:            region.String(),
-		UID:               uid,
-		SuiteUploadTime:   suite.uploadTime,
-		SuiteProjection:   strings.Join(opts.SuiteFields, ","),
-		NeedMySekai:       opts.NeedMySekai,
-		MySekaiUploadTime: mysekai.uploadTime,
-	}
+	memoKey := newBuiltSnapshotKey(region, uid, suite, mysekai, opts)
 	build := func(buildCtx context.Context) (Snapshot, error) {
 		return p.factory.Build(buildCtx, BuildInput{
 			Region:        region,

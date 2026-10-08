@@ -17,6 +17,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/observability/upstreamcall"
 )
 
 const drawingMaxResponseBytes = 64 << 20
@@ -244,6 +245,7 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 
 	requestCtx := c.requestCtx
 	targetBaseURL := c.baseURL
+	targetName := drawingLegacyTargetName
 	var lease *upstream.Lease
 	var err error
 	if c.pool != nil && c.pool.Enabled() {
@@ -255,6 +257,7 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 		}
 		defer lease.Release()
 		targetBaseURL = lease.Target.BaseURL
+		targetName = lease.Target.Name
 	}
 	if strings.TrimSpace(targetBaseURL) == "" {
 		return nil, fmt.Errorf("drawing client base_url is empty")
@@ -270,9 +273,11 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 	directive := c.activeDirective()
 	tPost := time.Now()
 	finishHTTP := commandtrace.MeasureOperation(requestCtx, "drawing.http")
-	resp, err := c.sendPrepared(requestCtx, targetBaseURL, endpoint, encodedBody, directive)
+	httpCtx, timing := upstreamcall.Start(requestCtx)
+	resp, err := c.sendPrepared(httpCtx, targetBaseURL, endpoint, encodedBody, directive)
 	finishHTTP()
 	elapsed := time.Since(tPost)
+	recordDrawingCall(requestCtx, timing, targetName, endpoint, len(encodedBody), resp, err)
 	if err != nil {
 		c.logger.WarnContext(requestCtx, "drawing request failed",
 			"upstream", "drawing",
@@ -314,6 +319,26 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 		"response_bytes", len(resp.Body()),
 	)
 	return c.successBody(directive, resp)
+}
+
+// drawingLegacyTargetName names the single drawing_base_url target when no
+// drawing_targets pool is configured.
+const drawingLegacyTargetName = "drawing"
+
+func recordDrawingCall(ctx context.Context, timing *upstreamcall.Timing, target, endpoint string, requestBytes int, resp *resty.Response, err error) {
+	call := upstreamcall.Call{
+		Op:           "drawing.http",
+		Target:       target,
+		Path:         endpoint,
+		RequestBytes: requestBytes,
+		Err:          err,
+	}
+	if resp != nil {
+		call.StatusCode = resp.StatusCode()
+		call.ResponseBytes = len(resp.Body())
+		call.Node = resp.Header().Get(upstreamcall.NodeHeader)
+	}
+	upstreamcall.Record(ctx, timing, time.Now(), call)
 }
 
 // sendPrepared posts one encoded render request. The body goes out

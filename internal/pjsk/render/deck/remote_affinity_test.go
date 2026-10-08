@@ -1,11 +1,14 @@
 package deck
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 
@@ -129,5 +132,57 @@ func TestRemoteRecommendAffinityFallsBackFromOpenCircuit(t *testing.T) {
 	}
 	if _, ok := traceOperation(trace.Snapshot(), "deck.target_affinity"); !ok {
 		t.Fatal("the next rendezvous target among accepted ones is still an affinity choice")
+	}
+}
+
+type deckLogBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *deckLogBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *deckLogBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
+}
+
+func TestDeckHTTPRecordsTargetAndSplitTiming(t *testing.T) {
+	_, configs := newAffinityDeckTargets(t, 1)
+	remote := newTestRemoteDeckRecommenderWithTargets(configs, http.DefaultClient)
+	remote.logger = logger.NewLogger("DeckAttributionTest", "ERROR", nil)
+	request := testRemoteRecommendRequest()
+	for _, state := range remote.targetStates {
+		state.musicMetaHash = hashPayload(request.MusicMeta)
+	}
+	logs := &deckLogBuffer{}
+	logger.SetCommandWriter(logs)
+	t.Cleanup(func() { logger.SetCommandWriter(nil) })
+
+	ctx, trace := commandtrace.WithTrace(context.Background())
+	if _, err := remote.RecommendBatchContext(ctx, request); err != nil {
+		t.Fatal(err)
+	}
+	ops := make(map[string]int)
+	for _, op := range trace.Snapshot().Operations {
+		ops[op.Name] = op.Count
+	}
+	// The upload's operations merge into the command trace too.
+	if ops["deck.http"] != 2 || ops["deck.http.ttfb"] != 2 || ops["deck.http.body"] != 2 {
+		t.Fatalf("operations = %v", ops)
+	}
+	line := logs.String()
+	for _, want := range []string{"op=deck.http", "target=deck-0", "upstream_path=/cache_userdata", "upstream_path=/recommend", "status_code=200"} {
+		if !strings.Contains(line, want) {
+			t.Fatalf("call records %q lack %q", line, want)
+		}
+	}
+	if remote.targetNameFor("http://unknown") != "" {
+		t.Fatal("unknown base URL has no target name")
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/utils/usererror"
 	"slices"
 	"strconv"
 	"strings"
@@ -99,7 +100,7 @@ func selectBindingByIndex(items []BindingListItem, selector, server string) (Bin
 	}
 	scopedItems := filterBindingsByServer(items, normalizedServer)
 	if len(scopedItems) == 0 {
-		return BindingListItem{}, fmt.Errorf("你还没有绑定任何%s服账号", strings.ToUpper(normalizedServer))
+		return BindingListItem{}, usererror.Inputf("你还没有绑定任何%s服账号", strings.ToUpper(normalizedServer))
 	}
 	return bindingAtIndex(scopedItems, index, normalizedServer)
 }
@@ -109,9 +110,9 @@ func bindingAtIndex(items []BindingListItem, index int, server string) (BindingL
 		return items[index-1], nil
 	}
 	if server != "" {
-		return BindingListItem{}, fmt.Errorf("指定的%s服账号序号超出范围，目前仅绑定了%d个账号", strings.ToUpper(server), len(items))
+		return BindingListItem{}, usererror.Inputf("指定的%s服账号序号超出范围，目前仅绑定了%d个账号", strings.ToUpper(server), len(items))
 	}
-	return BindingListItem{}, fmt.Errorf("指定的账号序号超出范围，目前仅绑定了%d个账号", len(items))
+	return BindingListItem{}, usererror.Inputf("指定的账号序号超出范围，目前仅绑定了%d个账号", len(items))
 }
 
 func selectBindingByUID(items []BindingListItem, selector string) (BindingListItem, error) {
@@ -165,7 +166,7 @@ func (s *BindingService) ResolveOwnBindingForUIDQuery(ctx context.Context, platf
 	if server != "" {
 		scoped := filterBindingsByServer(items, server)
 		if len(scoped) == 0 {
-			return BindingListItem{}, fmt.Errorf("你还没有绑定任何%s服账号", strings.ToUpper(server))
+			return BindingListItem{}, usererror.Inputf("你还没有绑定任何%s服账号", strings.ToUpper(server))
 		}
 		for _, item := range scoped {
 			if item.IsServerDefault {

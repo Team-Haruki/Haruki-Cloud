@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewBuilder(source DataSource, translation DataSource, eventSource event.DataSource, assetHelper *assets.AssetHelper) *Builder {
@@ -208,7 +209,7 @@ func (b *Builder) buildCardListRequestFromCards(resolved []*masterdata.Card, reg
 
 func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderregion.Value, detailedProfile *drawing.DetailedProfileCardRequest, showID, showBox, unownedOnly, useAfterTraining bool, groupBy string) (*drawing.CardBoxRequest, error) {
 	if len(cards) == 0 {
-		return nil, fmt.Errorf("cards are required")
+		return nil, usererror.Inputf("cards are required")
 	}
 
 	ownedCards := extractOwnedCards(detailedProfile)
@@ -265,7 +266,7 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		}
 	}
 	if len(items) == 0 {
-		return nil, fmt.Errorf("cards are required")
+		return nil, usererror.Inputf("cards are required")
 	}
 	return &drawing.CardBoxRequest{
 		Cards:               items,

@@ -5,6 +5,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewSearchService(source DataSource, parser *Parser) *SearchService {
@@ -26,7 +27,7 @@ func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 	now := currentCardVisibilityTime()
 	info, err := s.parser.Parse(query)
 	if err != nil || info == nil {
-		return nil, fmt.Errorf("无法解析的指令: %s", query)
+		return nil, usererror.Inputf("无法解析的指令: %s", query)
 	}
 	switch info.Type {
 	case QueryTypeID:
@@ -68,7 +69,7 @@ func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 		sortCardsByReleaseAndID(visibleItems)
 		return visibleItems[len(visibleItems)-1], nil
 	default:
-		return nil, fmt.Errorf("无法解析的指令: %s", query)
+		return nil, usererror.Inputf("无法解析的指令: %s", query)
 	}
 }
 
@@ -76,7 +77,7 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 	now := currentCardVisibilityTime()
 	info, err := s.parser.ParsePreferFilter(query)
 	if err != nil || info == nil {
-		return nil, fmt.Errorf("无法解析的列表查询指令: %s", query)
+		return nil, usererror.Inputf("无法解析的列表查询指令: %s", query)
 	}
 	switch info.Type {
 	case QueryTypeFilter:
@@ -114,7 +115,7 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 		}
 		return []*masterdata.Card{card}, nil
 	default:
-		return nil, fmt.Errorf("无法解析的列表查询指令: %s", query)
+		return nil, usererror.Inputf("无法解析的列表查询指令: %s", query)
 	}
 }
 

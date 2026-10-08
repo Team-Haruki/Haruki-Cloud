@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewController(defaultSource DataSource, defaultEventSource event.DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
@@ -370,7 +371,7 @@ func (c *Controller) searchStrictFilterCards(source DataSource, rawQuery string,
 		return nil, parseErr
 	}
 	if info == nil || info.Type != QueryTypeFilter {
-		return nil, fmt.Errorf("无法解析的列表查询指令: %s", rawQuery)
+		return nil, usererror.Inputf("无法解析的列表查询指令: %s", rawQuery)
 	}
 	items, err := source.FilterCards(info)
 	if err != nil {

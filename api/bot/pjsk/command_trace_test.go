@@ -16,6 +16,7 @@ import (
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/logger"
+	"haruki-cloud/utils/usererror"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/recover"
@@ -251,6 +252,17 @@ func TestCommandTraceLabelsRejectUntrustedCommands(t *testing.T) {
 func TestReplayErrorIsExpectedCommandRejection(t *testing.T) {
 	testutil.RequireArgs(t, isExpectedCommandError(onebot11.NewReplayError("invalid query")), "ReplayError should be classified as a rejection")
 	testutil.RequireArgs(t, !(isExpectedCommandError(fmt.Errorf("database unavailable"))), "unexpected internal error should remain an error")
+	for _, err := range []error{
+		usererror.Inputf("指定的CN服账号序号超出范围，目前仅绑定了1个账号"),
+		usererror.Inputf("未找到角色：虾"),
+		fmt.Errorf("failed to search card: %w", usererror.Inputf("无法解析的指令: x")),
+		fmt.Errorf("failed to search card list: %w", usererror.Inputf("无法解析的列表查询指令: x")),
+		fmt.Errorf("failed to search card box: %w", usererror.Inputf("无法解析的指令: x")),
+		usererror.Inputf("cards are required"),
+	} {
+		testutil.Require(t, isExpectedCommandError(err), "user-input error %q should be classified as a rejection", err)
+	}
+	testutil.RequireArgs(t, !isExpectedCommandError(fmt.Errorf("failed to search card: %w", fmt.Errorf("database unavailable"))), "an unmarked wrapped error should remain an error")
 
 }
 

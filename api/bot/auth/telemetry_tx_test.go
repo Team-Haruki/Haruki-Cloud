@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -123,5 +124,20 @@ func TestRecordCommandTelemetryFallsBackWithoutTransaction(t *testing.T) {
 
 	if err := RecordCommandTelemetry(context.Background(), nil, 9, entry); err != nil {
 		t.Fatal("a nil client is a no-op")
+	}
+}
+
+func TestRecordCommandTelemetryRollsBackFailedTransaction(t *testing.T) {
+	client, counting := newCountingBotClient(t)
+	// An over-long command fails validation inside the transaction.
+	entry := CommandLogEntry{Platform: "qq", Command: strings.Repeat("x", 4096)}
+	if err := RecordCommandTelemetry(context.Background(), client, 11, entry); err == nil {
+		t.Fatal("expected the command log validation error")
+	}
+	if counting.commits.Load() != 0 {
+		t.Fatal("a failed transaction must not commit")
+	}
+	if count, _ := client.CommandLog.Query().Count(context.Background()); count != 0 {
+		t.Fatalf("command logs = %d", count)
 	}
 }

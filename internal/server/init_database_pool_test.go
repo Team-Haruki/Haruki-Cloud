@@ -8,7 +8,11 @@ import (
 
 	pjskDB "haruki-cloud/database/pjsk"
 	"haruki-cloud/internal/core/dbpool"
+	pjskalias "haruki-cloud/internal/pjsk/alias"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+
+	"github.com/alicebob/miniredis/v2"
+	"github.com/redis/go-redis/v9"
 )
 
 func TestOpenEntDriverAppliesPoolLimits(t *testing.T) {
@@ -39,7 +43,12 @@ func TestOpenEntDriverRejectsUnsupportedDriver(t *testing.T) {
 	}
 }
 
-func TestWireAliasCacheInvalidationNilSafe(t *testing.T) {
+func TestWireAliasCacheInvalidation(t *testing.T) {
 	wireAliasCacheInvalidation(nil, nil)
 	wireAliasCacheInvalidation(&renderapp.App{}, nil)
+
+	server := miniredis.RunT(t)
+	client := redis.NewClient(&redis.Options{Addr: server.Addr()})
+	defer func() { _ = client.Close() }()
+	wireAliasCacheInvalidation(&renderapp.App{Aliases: &pjskalias.Service{}}, client)
 }

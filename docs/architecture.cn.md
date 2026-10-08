@@ -520,33 +520,6 @@ Bot 的共享执行会给内部操作添加 `command.shared.operation.` 前缀�
 
 **不存储路径。** `drawing_artifact.no_store_paths`（按整段前缀匹配，只作用于已在 `endpoints` 白名单内的路径；缺省为 `api/pjsk/deck`、`api/pjsk/event/planner`、`api/pjsk/sk` 以及 mysekai 的 `map`/`resource`/`talk-list`/`music-record`/`door-upgrade`，显式 `[]` 关闭）用于复用率接近零的按用户渲染：Cloud 跳过 pending 缓存与 `render_cache_index` 查询，指令头带 `X-Haruki-Cache-Store: 0`，Drawing 直接返回字节、不上传 Garage 也不写索引；返回的字节与其他字节结果一样经 image cache 存储后以 URL 发给 bot，绝不以 `base64://` 内联：bot v2 响应是单条 Noise 消息（上限 65535 字节），内联图片必然加密失败（3.7.3 事故）。这类结果也不进入进程内缓存：Drawing 对缺素材图同样回 `Cache-Store: 0`，Cloud 无法区分“主动不存”和“缺素材不可缓存”。
 
-**Store-ref（节点本地上传、返回引用）。** `drawing_artifact.store_ref`（`enabled` 默认关闭；`paths` 按整段前缀匹配，缺省等于生效的 `no_store_paths`，显式 `[]` 关闭）只作用于本来就带 `X-Haruki-Cache-Store: 0` 的渲染，即不存储路径，以及列入后的不缓存端点 `api/pjsk/event/detail`、`api/pjsk/misc/alias-list`；存储路径（`Cache-Store: 1`）永不受影响。
-
-这类请求额外带 `X-Haruki-Artifact-Mode: store-ref`。之所以用独立头，是因为旧 Drawing 对 `X-Haruki-Artifact` 的未知值回 400，对未知头则忽略并回 `Cache-Store: 0` 字节。
-
-新 Drawing 的处理：
-- 计算 sha256，按 Cloud 自己的 key 布局 `pjsk/<sha256>-<generation>.<ext>` 上传到 `image-cache` 桶。
-- 不访问 PG。
-- 返回 `index_written: false` 的 ArtifactRef。`node_name` 为接受 PUT 的 Garage 网关（Drawing `storage.writer_node`）。
-- 响应头带 `X-Haruki-Artifact-Mode: store-ref` 与 `Cache-Store: 0`。
-
-Cloud 的处理：
-- 校验 ref：`bucket` 必须等于 Cloud `image_cache` 槽位的 S3 bucket，`storage_backend` 为 garage，key 必须是该 hash 的 Cloud 布局，且无索引行。
-- 校验不通过时不写行，WARN `drawing_store_ref_rejected` 计数（`StoreRefRejectedCount`，trace 事件 `drawing.store_ref_rejected`），并对同一节点不带 store-ref 头重新请求一次渲染，取回字节后走原 PUT。ref 本身不带字节；直接报错会把 Drawing 配置错误变成用户可见失败，重渲染只多花一次渲染。JSON 本身不合法时仍按坏 ref 报渲染错误。
-- 槽位不是 S3（本地或未配置）时 bucket 为空，store-ref 自动关闭。
-- 用 `imagecache.PGStore.AdoptObject` 写与自己上传时相同的 `image_cache_entries` 行：同一内容锁、查找、插入，`writer_node`/`written_at` 照填。
-- 该 hash 已有其他路径的行时，保留原行并改用原路径，把 Drawing 的副本登记进上传意图队列，由 GC 在宽限期后删除。保留期与 GC 因此与 Cloud 自己的写入完全一致。
-- ref 不进入暂存缓存与 `render_cache_index`。handler 按 `FreshWriterNode` 语义优先选写入节点主机输出 URL，不读字节、不做 `image.store`。
-
-写行失败时仍发送 URL，并以 ERROR `drawing_store_ref_unindexed` 记录 hash 与路径；这类对象不受 GC 管理。行写入使用脱离调用方取消的独立 10 秒期限，尽量避免请求取消留下无行对象。
-
-回退：Drawing 回 `X-Haruki-Artifact-Degraded: 1` 字节，或旧 Drawing 回普通 `Cache-Store: 0` 字节时，走原来的 image cache PUT。`image_cache` 为本地目录时 store-ref 自动关闭。
-
-计时：
-- `drawing.http` 的 `response_bytes` 可直接对比字节与 ref 的响应体积。
-- `image.ref_index` 统计写行，含 `image.content_lock`、`image.lookup`、`image.index`。
-- `drawing.store_ref`、`drawing.store_ref_degraded`、`drawing.store_ref_unsupported`、`image.ref_duplicate`、`image.ref_index_error` 为计数事件。
-
 **GC。** `utils/imagecache.GC` 由应用生命周期管理，`gc_enabled` 默认关闭，`gc_dry_run` 默认开启。过期渲染索引的 DELETE 原子复核选取时的过期条件，避免删除已续期的行。物理对象回收另外受 `gc_object_delete_enabled` 控制，只有所有 Cloud 与 Drawing 写入者采用同一生命周期协议后才能开启。内容写入与回收按内容 hash 使用 PostgreSQL 事务锁；回收先提交索引退役与持久 outbox，再在新事务中复核引用并删除旧 generation 对象。删除失败的债务保存在数据库，重启后继续处理。随机 generation key 使超时后晚到的旧 DELETE 无法命中新写入的对象。上传前独立提交意图记录，上传与索引成功后消费；进程崩溃或索引失败留下的意图可在期限后回收。
 
 `cmd/image-cache-reconcile` 分页检查索引指向的对象，默认只检查；`--repair` 仅移除已确认缺失对象的索引引用，供后续请求重画，不删除对象。该工具使用只读 schema 探测，不执行 DDL；只接受无本地目录覆盖、bucket 根路径的显式 S3 槽位，避免检查错误存储目标。正常图片缓存命中仍保持零 HEAD/GET。
@@ -555,7 +528,7 @@ Cloud 的处理：
 
 **字节与暂存。** 渲染缓存只在 `render_index.lookup_enabled` 打开且索引可用时启用；`ImageResult` 要么携带字节，要么携带 ArtifactRef（只有字节消费者调用 `Bytes(ctx)` 时才从 `image_cache` 槽位或主机读回）。暂存缓存最多 128 项、64 MiB，有效期不超过 120 秒与业务 TTL；新 ArtifactRef 暂存节点提示，即使 Drawing 已写入索引也保留到该期限。索引保存短期有效的 writer node 提示，使其他 Cloud 实例优先访问刚写入的节点。Drawing 响应明确 `Cache-Store: 0` 时不进入持久或暂存缓存。
 
-Bot 命令和生日推送使用控制器的 `Render*Image` 与 Drawing 客户端的 `Generate*Image` 入口，将 `ImageResult` 保留到消息构建阶段；多图结果逐张选择公开 URL。旧 `[]byte` 入口保留兼容，通过 `Bytes(ctx)` 读取图片。没有可用公开主机时也会读取字节，沿用图片存储回退。活动详情与别名列表继续使用不缓存的字节响应（列入 `store_ref.paths` 后其 `Generate*Image` 入口可返回 store-ref；旧 `[]byte` 入口从不请求 store-ref）。
+Bot 命令和生日推送使用控制器的 `Render*Image` 与 Drawing 客户端的 `Generate*Image` 入口，将 `ImageResult` 保留到消息构建阶段；多图结果逐张选择公开 URL。旧 `[]byte` 入口保留兼容，通过 `Bytes(ctx)` 读取图片。没有可用公开主机时也会读取字节，沿用图片存储回退。活动详情与别名列表继续使用不缓存的字节响应。
 
 命令计时中，`drawing.http` 是 Drawing 请求的完整往返；`drawing.artifact_fetch` 单独统计引用转为字节时的等待与下载，`drawing.artifact_store` 与 `drawing.artifact_public` 分别统计对象存储读取和公开主机读取。共享下载的内部操作会并入各等待请求的 trace，因此这些操作时长可能重叠，不能直接相加作为总耗时。直接返回图片引用的路径没有图片下载操作。
 

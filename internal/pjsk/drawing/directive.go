@@ -26,13 +26,7 @@ const (
 	headerArtifactDegraded = "X-Haruki-Artifact-Degraded"
 	headerNode             = "X-Haruki-Node"
 	headerDirectiveError   = "X-Haruki-Directive-Error"
-	// headerArtifactMode selects Drawing's store-ref mode. It is a separate
-	// header because an older Drawing rejects any X-Haruki-Artifact value but
-	// 0/1 with a 400, while it ignores this header and answers Cache-Store: 0
-	// with bytes, which Cloud already handles.
-	headerArtifactMode   = "X-Haruki-Artifact-Mode"
-	artifactModeStoreRef = "store-ref"
-	directiveCacheGroup  = "pjsk"
+	directiveCacheGroup    = "pjsk"
 )
 
 // drawingMaxCacheTTLSeconds is Drawing's X-Haruki-Cache-TTL cap (A9.3). The
@@ -50,19 +44,13 @@ type renderDirective struct {
 	TTLSeconds int64  // 0 = infinite; clamped only on the wire
 	Store      bool   // X-Haruki-Cache-Store: 1|0
 	Artifact   bool   // X-Haruki-Artifact: 1
-	// StoreRef asks for a store-ref (X-Haruki-Artifact-Mode: store-ref); only
-	// sent with Store false, and only by callers that accept a ref result.
-	StoreRef bool
-	outcome  *renderOutcome
+	outcome    *renderOutcome
 }
 
 // renderOutcome is written by postPrepared only. Node carries X-Haruki-Node
 // on the branches without a ref; on the ref branch it fills an empty NodeName.
-// StoreRef marks Ref as a store-ref whose row Cloud has recorded: it is never
-// a render cache entry.
 type renderOutcome struct {
 	Ref         *ArtifactRef
-	StoreRef    bool
 	Degraded    bool
 	NoStore     bool
 	ContentType string
@@ -140,9 +128,6 @@ func (d *renderDirective) apply(request *resty.Request) {
 		SetHeader(headerCacheGroup, d.Group).
 		SetHeader(headerAPIPath, d.APIPath).
 		SetHeader(headerUserID, d.UserID)
-	if d.StoreRef && !d.Store {
-		request.SetHeader(headerArtifactMode, artifactModeStoreRef)
-	}
 }
 
 // activeDirective returns the context directive when artifact mode allows its
@@ -158,20 +143,6 @@ func (c *HarukiDrawingClient) activeDirective() *renderDirective {
 // postUncached is attach point B: the deliberately uncached endpoints send
 // the full directive with X-Haruki-Cache-Store: 0 when allow-listed.
 func (c *HarukiDrawingClient) postUncached(endpoint string, body any) ([]byte, error) {
-	image, err := c.postUncachedResult(endpoint, body, false)
-	if err != nil {
-		return nil, err
-	}
-	return image.data, nil
-}
-
-// postUncachedImage is postUncached for image callers: on a store-ref path it
-// asks Drawing for a store-ref and returns the ref instead of bytes.
-func (c *HarukiDrawingClient) postUncachedImage(endpoint string, body any) (ImageResult, error) {
-	return c.postUncachedResult(endpoint, body, true)
-}
-
-func (c *HarukiDrawingClient) postUncachedResult(endpoint string, body any, acceptRef bool) (ImageResult, error) {
 	var requestCtx context.Context
 	if c != nil {
 		requestCtx = c.requestCtx
@@ -185,27 +156,21 @@ func (c *HarukiDrawingClient) postUncachedResult(endpoint string, body any, acce
 	// The same prepared body is keyed and sent, so the key describes the bytes on the wire.
 	d, ok := c.WithContext(requestCtx).newUncachedDirective(endpoint, prepared)
 	if !ok {
-		data, err := c.WithContext(requestCtx).postPrepared(endpoint, prepared)
-		return ImageBytes(data), err
+		return c.WithContext(requestCtx).postPrepared(endpoint, prepared)
 	}
-	d.StoreRef = acceptRef && c.artifact.storeRefFor(d.APIPath)
 	data, err := c.WithContext(withDirective(requestCtx, d)).postPrepared(endpoint, prepared)
 	if err != nil {
-		return ImageResult{}, err
+		return nil, err
+	}
+	if d.outcome.Ref != nil {
+		return nil, fmt.Errorf("drawing returned an artifact ref for uncached endpoint %s", endpoint)
 	}
 	cacheLogger.DebugContext(requestCtx, "drawing uncached artifact-mode render",
 		"upstream_path", endpoint,
 		"node", d.outcome.Node,
 		"degraded", d.outcome.Degraded,
-		"store_ref", d.outcome.StoreRef,
 	)
-	if d.outcome.Ref != nil {
-		if d.outcome.StoreRef {
-			return ImageResult{ref: d.outcome.Ref, fetcher: c.artifact.fetcher}, nil
-		}
-		return ImageResult{}, fmt.Errorf("drawing returned an artifact ref for uncached endpoint %s", endpoint)
-	}
-	return ImageBytes(data), nil
+	return data, nil
 }
 
 // newUncachedDirective keys an uncached endpoint. Any failure drops the

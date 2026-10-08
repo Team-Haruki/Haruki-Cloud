@@ -471,10 +471,6 @@ func (c *RenderCacheClient) renderRemoteMiss(ctx context.Context, endpoint, key 
 	var directive *renderDirective
 	if mode != nil && mode.allow.has(policy.APIPath) {
 		directive = newRenderDirective(key, policy, ttl, !mode.skipsStore(policy.APIPath))
-		// Store-ref only replaces the bytes of a Cache-Store: 0 render: Drawing
-		// uploads them and Cloud records the image cache row, never a render
-		// cache entry.
-		directive.StoreRef = !directive.Store && mode.storeRefFor(policy.APIPath)
 		renderCtx = withDirective(ctx, directive)
 	}
 	image, err := render(renderCtx)
@@ -483,7 +479,7 @@ func (c *RenderCacheClient) renderRemoteMiss(ctx context.Context, endpoint, key 
 	}
 	noStore := renderNoStore(ctx) || (directive != nil && directive.outcome.NoStore)
 	if directive != nil && directive.outcome.Ref != nil {
-		if noStore || directive.outcome.StoreRef {
+		if noStore {
 			return ImageResult{ref: directive.outcome.Ref, fetcher: c.fetcher}, nil
 		}
 		return c.pendingRef(key, policy, ttl, directive.outcome.Ref), nil

@@ -186,8 +186,6 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			FetchTimeout:    harukiConfig.Cfg.PJSKRender.DrawingArtifact.FetchTimeout,
 			ArtifactTimeout: harukiConfig.Cfg.PJSKRender.DrawingArtifact.ArtifactTimeout,
 			NoStorePaths:    harukiConfig.Cfg.PJSKRender.DrawingArtifact.NoStorePaths,
-			StoreRefPaths:   harukiConfig.Cfg.PJSKRender.DrawingArtifact.EffectiveStoreRefPaths(),
-			StoreRefBucket:  imageCacheBucket(harukiConfig.Cfg.PJSKRender.Storage.ImageCache),
 		},
 		DrawingCache: drawing.RenderCacheConfig{
 			TTL: harukiConfig.Cfg.PJSKRender.DrawingCache.TTL,
@@ -294,16 +292,6 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	}
 	mainLogger.Info("PJSK render runtime initialized", "asset_root_count", len(runtime.AssetRoots()))
 	return runtime
-}
-
-// imageCacheBucket is the bucket of an S3 image_cache slot, "" otherwise. It is
-// what a Drawing store-ref must name to be adopted.
-func imageCacheBucket(c storage.ProviderConfig) string {
-	resolved, err := storage.Resolve(c)
-	if err != nil || resolved.Scheme != storage.SchemeS3 {
-		return ""
-	}
-	return resolved.Bucket
 }
 
 // buildRenderStores opens the five storage slots from pjsk_render.storage,

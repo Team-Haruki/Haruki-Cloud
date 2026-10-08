@@ -7,6 +7,7 @@ import (
 
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/core/dbpool"
 	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -83,9 +84,13 @@ type Config struct {
 	MasterdataRegistry        MasterdataRegistryConfig
 	SekaiDBType               string
 	SekaiDSN                  string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
-	UserSnapshot              UserSnapshotConfig
-	MusicMetaRefreshInterval  time.Duration
-	MusicMetaOutputDir        string
+	// SekaiMySekaiPool and SekaiProviderPool bound the per-region raw sekai
+	// pools opened from SekaiDSN (mysekai masterdata store, render provider).
+	SekaiMySekaiPool         dbpool.Config
+	SekaiProviderPool        dbpool.Config
+	UserSnapshot             UserSnapshotConfig
+	MusicMetaRefreshInterval time.Duration
+	MusicMetaOutputDir       string
 	// MusicMetaStore, when non-nil, replaces MusicMetaOutputDir for the
 	// loader New builds when MetaLoader is nil.
 	MusicMetaStore                     storage.Store

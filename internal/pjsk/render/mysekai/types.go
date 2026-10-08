@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"haruki-cloud/internal/core/dbpool"
 	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -34,6 +35,7 @@ type Controller struct {
 
 type masterdataResolver struct {
 	dsn           string
+	pool          dbpool.Config
 	localDir      string
 	allowFallback bool
 
@@ -54,7 +56,10 @@ type mysekaiMapSiteConfig struct {
 }
 
 type MasterdataOptions struct {
-	SekaiDSN      string
+	SekaiDSN string
+	// SekaiPool bounds each region's store opened from SekaiDSN; zero
+	// fields take dbpool.Defaults(3).
+	SekaiPool     dbpool.Config
 	LocalDir      string
 	AllowFallback bool
 	// AssetReader reads public asset objects (nil -> local AssetHelper

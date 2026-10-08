@@ -182,6 +182,7 @@ redis:                     # Redis 连接
 
 pjsk:                      # PJSK 数据库
   db_url: "..."
+  pool: {}                 # 连接池（每个 ent 客户端和 sekai 原生池都有）：max_open / max_idle（缺省等于 max_open）/ conn_max_lifetime 30m / conn_max_idle_time 5m；默认 max_open：pjsk 10、users 8、bot 10、censor 4、chunithm 各 4、sekai 16（另有每区服 mysekai_pool 3、provider_pool 1）。五区服时单进程最多 84 个连接（含 image_cache 8），远低于与 tracker 共用的 PG max_connections 200；统计见诊断监听 /debug/vars 的 db_pools
 pjsk_render:               # 渲染引擎配置
   drawing:
     base_url: ""           # Drawing API 地址
@@ -196,6 +197,7 @@ pjsk_render:               # 渲染引擎配置
 
 sekai:                     # Sekai Masterdata 数据库
   db_url: "..."
+  pool: {}                 # 主 ent 客户端（默认 16）；mysekai_pool / provider_pool 为每区服的原生池
   remote_sync: {}          # 可选：从远程维护的 PostgreSQL masterdata DB 定期同步到本地库
 
 chunithm:                  # CHUNITHM（两个独立数据库）

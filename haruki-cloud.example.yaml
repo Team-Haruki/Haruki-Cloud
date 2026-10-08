@@ -39,11 +39,27 @@ chunithm:
   music_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_chunithm sslmode=disable"
   binding_db_type: "postgres"
   binding_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_chunithm sslmode=disable"
+  music_db_pool: {max_open: 4}    # see pjsk.pool; env HARUKI_CHUNITHM_MUSIC_DB_MAX_OPEN, ...
+  binding_db_pool: {max_open: 4}  # env HARUKI_CHUNITHM_BINDING_DB_MAX_OPEN, ...
 
 pjsk:
   enabled: true
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_pjsk sslmode=disable"
+  # Connection pool of this database (every ent client and raw sekai pool has
+  # one). Unset fields take the defaults shown; max_idle defaults to max_open,
+  # because database/sql's default of 2 idle connections opens and closes a
+  # backend per extra concurrent query during bursts. Per-process worst case
+  # with five regions: sekai 16 + 5x3 mysekai + 5x1 provider, pjsk 10,
+  # users 8, bot 10, censor 4, chunithm 2x4, image_cache 8 = 84 connections,
+  # well under PostgreSQL max_connections (shared with the tracker).
+  # Live stats: /debug/vars "db_pools" on the diagnostics listener.
+  # Env: HARUKI_PJSK_DB_MAX_OPEN / _MAX_IDLE / _CONN_MAX_LIFETIME / _CONN_MAX_IDLE_TIME.
+  pool:
+    max_open: 10
+    max_idle: 10
+    conn_max_lifetime: "30m"
+    conn_max_idle_time: "5m"
   # MySekai is disabled for CN region by default. Add platform+group_id
   # entries below to whitelist specific groups.
   allow_cn_mysekai:
@@ -57,6 +73,9 @@ sekai:
   enabled: true
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_sekai sslmode=disable"
+  pool: {max_open: 16}          # main ent client; master loads hold a connection for up to ~2 s (env HARUKI_SEKAI_DB_MAX_OPEN, ...)
+  mysekai_pool: {max_open: 3}   # per region: MySekai masterdata store (env HARUKI_SEKAI_MYSEKAI_DB_MAX_OPEN, ...)
+  provider_pool: {max_open: 1}  # per region: render provider raw rows (env HARUKI_SEKAI_PROVIDER_DB_MAX_OPEN, ...)
   auto_migrate: false # SekaiAPI owns masterdata DB schema; enable only for local/dev bootstrap
   remote_sync:
     enabled: false
@@ -96,10 +115,12 @@ censor:
   # Censor result database
   censor_db_type: "postgres"
   censor_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_censor sslmode=disable"
+  censor_db_pool: {max_open: 4}  # env HARUKI_CENSOR_DB_MAX_OPEN, ...
 
 haruki_bot:
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_bot sslmode=disable"
+  pool: {max_open: 10}          # env HARUKI_BOT_DB_MAX_OPEN, ...
   enable_registration: true
   turnstile_secret_key: "0x4AAAAAAxxxxxxxx"
   smtp_host: "smtp.example.com"
@@ -157,6 +178,7 @@ haruki_bot:
 users_db:
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_users sslmode=disable"
+  pool: {max_open: 8}           # env HARUKI_USERS_DB_MAX_OPEN, ...
 
 moderation:
   # QQ accounts allowed to run /kill and /back. Empty means nobody can use them.

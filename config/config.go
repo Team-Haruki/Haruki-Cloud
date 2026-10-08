@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/core/dbpool"
 	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
@@ -160,6 +161,15 @@ func envBoolPtr(name string, dst **bool) {
 			*dst = &b
 		}
 	}
+}
+
+// envPool overrides a pool block from <prefix>_MAX_OPEN, _MAX_IDLE,
+// _CONN_MAX_LIFETIME and _CONN_MAX_IDLE_TIME.
+func envPool(prefix string, dst *dbpool.Config) {
+	envInt(prefix+"_MAX_OPEN", &dst.MaxOpen)
+	envInt(prefix+"_MAX_IDLE", &dst.MaxIdle)
+	envDuration(prefix+"_CONN_MAX_LIFETIME", &dst.ConnMaxLifetime)
+	envDuration(prefix+"_CONN_MAX_IDLE_TIME", &dst.ConnMaxIdleTime)
 }
 
 // Storage slot env prefixes, one per fixed slot.
@@ -379,12 +389,16 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_PJSK_DB_TYPE", &cfg.PJSK.DBType)
 	envStr("HARUKI_PJSK_DB_URL", &cfg.PJSK.DBURL)
 	envDuration("HARUKI_PJSK_CN_MYSEKAI_BAN_DURATION", &cfg.PJSK.CNMySekaiBanDuration)
+	envPool("HARUKI_PJSK_DB", &cfg.PJSK.Pool)
 
 	// Sekai
 	envBool("HARUKI_SEKAI_ENABLED", &cfg.Sekai.Enabled)
 	envStr("HARUKI_SEKAI_DB_TYPE", &cfg.Sekai.DBType)
 	envStr("HARUKI_SEKAI_DB_URL", &cfg.Sekai.DBURL)
 	envBool("HARUKI_SEKAI_AUTO_MIGRATE", &cfg.Sekai.AutoMigrate)
+	envPool("HARUKI_SEKAI_DB", &cfg.Sekai.Pool)
+	envPool("HARUKI_SEKAI_MYSEKAI_DB", &cfg.Sekai.MySekaiPool)
+	envPool("HARUKI_SEKAI_PROVIDER_DB", &cfg.Sekai.ProviderPool)
 	envBool("HARUKI_SEKAI_DB_SYNC_ENABLED", &cfg.Sekai.RemoteSync.Enabled)
 	envStr("HARUKI_SEKAI_DB_SYNC_SOURCE_DB_TYPE", &cfg.Sekai.RemoteSync.SourceDBType)
 	envStr("HARUKI_SEKAI_DB_SYNC_SOURCE_DB_URL", &cfg.Sekai.RemoteSync.SourceDBURL)
@@ -401,10 +415,13 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_CHUNITHM_MUSIC_DB_URL", &cfg.Chunithm.MusicDBURL)
 	envStr("HARUKI_CHUNITHM_BINDING_DB_TYPE", &cfg.Chunithm.BindingDBType)
 	envStr("HARUKI_CHUNITHM_BINDING_DB_URL", &cfg.Chunithm.BindingDBURL)
+	envPool("HARUKI_CHUNITHM_MUSIC_DB", &cfg.Chunithm.MusicDBPool)
+	envPool("HARUKI_CHUNITHM_BINDING_DB", &cfg.Chunithm.BindingDBPool)
 
 	// Users DB
 	envStr("HARUKI_USERS_DB_TYPE", &cfg.UsersDB.DBType)
 	envStr("HARUKI_USERS_DB_URL", &cfg.UsersDB.DBURL)
+	envPool("HARUKI_USERS_DB", &cfg.UsersDB.Pool)
 	if err := envStringSlice("HARUKI_MODERATION_ADMIN_QQ_IDS", &cfg.Moderation.AdminQQIDs); err != nil {
 		return err
 	}
@@ -412,6 +429,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	// Haruki Bot
 	envStr("HARUKI_BOT_DB_TYPE", &cfg.HarukiBotDB.DBType)
 	envStr("HARUKI_BOT_DB_URL", &cfg.HarukiBotDB.DBURL)
+	envPool("HARUKI_BOT_DB", &cfg.HarukiBotDB.Pool)
 	envStr("HARUKI_BOT_CREDENTIAL_SIGN_TOKEN", &cfg.HarukiBotDB.CredentialSignToken)
 	envStr("HARUKI_BOT_SESSION_SIGN_TOKEN", &cfg.HarukiBotDB.SessionSignToken)
 	envStr("HARUKI_BOT_INTERNAL_API_TOKEN", &cfg.HarukiBotDB.InternalAPIToken)
@@ -474,6 +492,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_CENSOR_TENCENT_BIZ_TYPE", &cfg.Censor.TencentBizType)
 	envStr("HARUKI_CENSOR_DB_TYPE", &cfg.Censor.CensorDBType)
 	envStr("HARUKI_CENSOR_DB_URL", &cfg.Censor.CensorDBURL)
+	envPool("HARUKI_CENSOR_DB", &cfg.Censor.CensorDBPool)
 
 	// PJSK Render
 	envBool("HARUKI_PJSK_RENDER_ENABLED", &cfg.PJSKRender.Enabled)
@@ -609,17 +628,20 @@ type NodeConfig struct {
 }
 
 type ChunithmConfig struct {
-	Enabled       bool   `yaml:"enabled"`
-	MusicDBType   string `yaml:"music_db_type"`
-	MusicDBURL    string `yaml:"music_db_url"`
-	BindingDBType string `yaml:"binding_db_type"`
-	BindingDBURL  string `yaml:"binding_db_url"`
+	Enabled       bool          `yaml:"enabled"`
+	MusicDBType   string        `yaml:"music_db_type"`
+	MusicDBURL    string        `yaml:"music_db_url"`
+	MusicDBPool   dbpool.Config `yaml:"music_db_pool"`
+	BindingDBType string        `yaml:"binding_db_type"`
+	BindingDBURL  string        `yaml:"binding_db_url"`
+	BindingDBPool dbpool.Config `yaml:"binding_db_pool"`
 }
 
 type PJSKConfig struct {
 	Enabled        bool                      `yaml:"enabled"`
 	DBType         string                    `yaml:"db_type"`
 	DBURL          string                    `yaml:"db_url"`
+	Pool           dbpool.Config             `yaml:"pool"`
 	AllowCNMySekai []MySekaiCNWhitelistEntry `yaml:"allow_cn_mysekai"`
 	// CNMySekaiBanDuration is retained for config compatibility and ignored.
 	// Blocked CN MySekai requests now warn three times, then stay silent.
@@ -627,11 +649,18 @@ type PJSKConfig struct {
 }
 
 type SekaiConfig struct {
-	Enabled     bool                  `yaml:"enabled"`
-	DBType      string                `yaml:"db_type"`
-	DBURL       string                `yaml:"db_url"`
-	AutoMigrate bool                  `yaml:"auto_migrate"`
-	RemoteSync  SekaiRemoteSyncConfig `yaml:"remote_sync"`
+	Enabled bool   `yaml:"enabled"`
+	DBType  string `yaml:"db_type"`
+	DBURL   string `yaml:"db_url"`
+	// Pool bounds the main ent client (default 16: master loads hold a
+	// connection for up to ~2 s, so a small cap would queue command queries).
+	Pool dbpool.Config `yaml:"pool"`
+	// MySekaiPool bounds each region's MySekai masterdata store (default 3).
+	MySekaiPool dbpool.Config `yaml:"mysekai_pool"`
+	// ProviderPool bounds each region's render provider raw-row pool (default 1).
+	ProviderPool dbpool.Config         `yaml:"provider_pool"`
+	AutoMigrate  bool                  `yaml:"auto_migrate"`
+	RemoteSync   SekaiRemoteSyncConfig `yaml:"remote_sync"`
 }
 
 type SekaiRemoteSyncConfig struct {
@@ -930,8 +959,9 @@ type CensorConfig struct {
 	TencentRegion    string `yaml:"tencent_region"`   // default: ap-guangzhou
 	TencentBizType   string `yaml:"tencent_biz_type"` // optional Biz type tag
 	// Censor result database
-	CensorDBType string `yaml:"censor_db_type"`
-	CensorDBURL  string `yaml:"censor_db_url"`
+	CensorDBType string        `yaml:"censor_db_type"`
+	CensorDBURL  string        `yaml:"censor_db_url"`
+	CensorDBPool dbpool.Config `yaml:"censor_db_pool"`
 }
 
 // NoiseStaticKeyConfig names one Noise static key pair by a stable identifier.
@@ -941,11 +971,12 @@ type NoiseStaticKeyConfig struct {
 }
 
 type HarukiBotDBConfig struct {
-	DBType              string `yaml:"db_type"`
-	DBURL               string `yaml:"db_url"`
-	CredentialSignToken string `yaml:"credential_sign_token"`
-	SessionSignToken    string `yaml:"session_sign_token"`
-	InternalAPIToken    string `yaml:"internal_api_token"`
+	DBType              string        `yaml:"db_type"`
+	DBURL               string        `yaml:"db_url"`
+	Pool                dbpool.Config `yaml:"pool"`
+	CredentialSignToken string        `yaml:"credential_sign_token"`
+	SessionSignToken    string        `yaml:"session_sign_token"`
+	InternalAPIToken    string        `yaml:"internal_api_token"`
 	// AuthV3SessionTTL bounds sessions issued by the Noise-wrapped AuthV3
 	// endpoint. 0 = default (1h); clamped to [1m, 30d].
 	AuthV3SessionTTL time.Duration `yaml:"auth_v3_session_ttl"`
@@ -1026,8 +1057,9 @@ type DiagnosticsConfig struct {
 }
 
 type UsersDBConfig struct {
-	DBType string `yaml:"db_type"`
-	DBURL  string `yaml:"db_url"`
+	DBType string        `yaml:"db_type"`
+	DBURL  string        `yaml:"db_url"`
+	Pool   dbpool.Config `yaml:"pool"`
 }
 
 type ModerationConfig struct {

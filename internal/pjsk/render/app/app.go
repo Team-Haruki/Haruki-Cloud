@@ -62,6 +62,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	inventoryMasterdataDir := dependencies.inventoryMasterdataDir
 	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.DefaultRegion, assetHelper, mysekai.MasterdataOptions{
 		SekaiDSN:                          cfg.SekaiDSN,
+		SekaiPool:                         cfg.SekaiMySekaiPool,
 		LocalDir:                          localMasterdataDir,
 		AllowFallback:                     localMasterdataFallback && cfg.LocalMasterdata.AllowFallback,
 		AssetReader:                       dependencies.assetReader,
@@ -247,7 +248,7 @@ func (c *appDatabaseControllers) registerProvider(source provider.MasterDataProv
 }
 
 func (c *appDatabaseControllers) configureDefaultProvider(sekaiClient *sekaiDB.Client, cfg Config, localFallback bool, localDir string, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshotService snapshot.Snapshot, educationController *education.Controller, skController *sk.Controller) {
-	databaseProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion, provider.WithSekaiDatabase(cfg.SekaiDBType, cfg.SekaiDSN))
+	databaseProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion, provider.WithSekaiDatabase(cfg.SekaiDBType, cfg.SekaiDSN), provider.WithSekaiPool(cfg.SekaiProviderPool))
 	if localFallback {
 		databaseProvider.SetLocalMasterdataDir(localDir, cfg.LocalMasterdata.AllowLeaks)
 	}
@@ -289,7 +290,7 @@ func (c *appDatabaseControllers) configureRegionProviders(sekaiClient *sekaiDB.C
 }
 
 func (c *appDatabaseControllers) configureRegionProvider(sekaiClient *sekaiDB.Client, region renderregion.Value, cfg Config, localFallback bool, localDir string, educationController *education.Controller, skController *sk.Controller) {
-	regionProvider := provider.NewDatabaseProvider(sekaiClient, region, provider.WithSekaiDatabase(cfg.SekaiDBType, cfg.SekaiDSN))
+	regionProvider := provider.NewDatabaseProvider(sekaiClient, region, provider.WithSekaiDatabase(cfg.SekaiDBType, cfg.SekaiDSN), provider.WithSekaiPool(cfg.SekaiProviderPool))
 	if localFallback {
 		regionProvider.SetLocalMasterdataDir(localDir, cfg.LocalMasterdata.AllowLeaks)
 	}

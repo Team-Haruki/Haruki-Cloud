@@ -9,6 +9,7 @@ import (
 	"time"
 	"unicode"
 
+	"haruki-cloud/internal/core/dbpool"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/render/cachefill"
 )
@@ -88,7 +89,9 @@ type dbMasterdataCache struct {
 // newDBMasterdataStore opens a read-only connection to the sekai database
 // and returns a store scoped to the given server region.
 // Returns nil if the DSN is empty or the connection fails.
-func newDBMasterdataStore(ctx context.Context, dsn, region string) *dbMasterdataStore {
+const mysekaiPoolName = "sekai_mysekai"
+
+func newDBMasterdataStore(ctx context.Context, dsn, region string, pool dbpool.Config) *dbMasterdataStore {
 	dsn = strings.TrimSpace(dsn)
 	if dsn == "" {
 		return nil
@@ -100,6 +103,7 @@ func newDBMasterdataStore(ctx context.Context, dsn, region string) *dbMasterdata
 	if err != nil {
 		return nil
 	}
+	dbpool.Apply(db, pool.WithDefaults(dbpool.Defaults(3)))
 	finishPing := commandtrace.MeasureOperation(ctx, "mysekai.masterdata_ping")
 	err = db.PingContext(ctx)
 	finishPing()
@@ -107,7 +111,7 @@ func newDBMasterdataStore(ctx context.Context, dsn, region string) *dbMasterdata
 		db.Close()
 		return nil
 	}
-	db.SetMaxOpenConns(3)
+	dbpool.Register(mysekaiPoolName, db)
 	return &dbMasterdataStore{
 		db:     db,
 		region: region,
@@ -138,6 +142,7 @@ func (s *dbMasterdataStore) resetCache() {
 
 func (s *dbMasterdataStore) Close() {
 	if s != nil && s.db != nil {
+		dbpool.Unregister(mysekaiPoolName, s.db)
 		s.db.Close()
 	}
 }

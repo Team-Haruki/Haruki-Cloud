@@ -19,9 +19,12 @@ import (
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
 	usersDB "haruki-cloud/database/users"
+	"haruki-cloud/internal/core/dbpool"
 	"haruki-cloud/internal/observability/commandtrace"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 )
@@ -49,6 +52,22 @@ func initDBClient[T interface {
 	}
 	installEntTracing(client)
 	return client
+}
+
+// openEntDriver opens a bounded *sql.DB for an ent client: sql.Open, the
+// pool limits, then entsql.OpenDB. The generated <db>.Open only takes a DSN
+// and leaves database/sql defaults (2 idle connections, no lifetime).
+func openEntDriver(name, driverName, dsn string, pool dbpool.Config) (*entsql.Driver, error) {
+	switch driverName {
+	case dialect.MySQL, dialect.Postgres, dialect.SQLite:
+	default:
+		return nil, fmt.Errorf("unsupported driver: %q", driverName)
+	}
+	db, err := dbpool.Open(name, driverName, dsn, pool)
+	if err != nil {
+		return nil, err
+	}
+	return entsql.OpenDB(driverName, db), nil
 }
 
 type traceableEntClient interface {
@@ -80,14 +99,24 @@ func initChunithmIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger,
 
 	chunithmMainClient := initDBClient(ctx, mainLogger, "Chunithm main",
 		func() (*chunithmMainDB.Client, error) {
-			return chunithmMainDB.Open(harukiConfig.Cfg.Chunithm.BindingDBType, harukiConfig.Cfg.Chunithm.BindingDBURL)
+			cfg := harukiConfig.Cfg.Chunithm
+			drv, err := openEntDriver("chunithm_main", cfg.BindingDBType, cfg.BindingDBURL, cfg.BindingDBPoolConfig())
+			if err != nil {
+				return nil, err
+			}
+			return chunithmMainDB.NewClient(chunithmMainDB.Driver(drv)), nil
 		},
 		func(c *chunithmMainDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
 	)
 
 	chunithmMusicClient := initDBClient(ctx, mainLogger, "Chunithm music",
 		func() (*chunithmMusicDB.Client, error) {
-			return chunithmMusicDB.Open(harukiConfig.Cfg.Chunithm.MusicDBType, harukiConfig.Cfg.Chunithm.MusicDBURL)
+			cfg := harukiConfig.Cfg.Chunithm
+			drv, err := openEntDriver("chunithm_music", cfg.MusicDBType, cfg.MusicDBURL, cfg.MusicDBPoolConfig())
+			if err != nil {
+				return nil, err
+			}
+			return chunithmMusicDB.NewClient(chunithmMusicDB.Driver(drv)), nil
 		},
 		func(c *chunithmMusicDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
 	)
@@ -105,7 +134,12 @@ func initUsers(ctx context.Context, mainLogger *harukiLogger.Logger) *usersDB.Cl
 
 	return initDBClient(ctx, mainLogger, "Users",
 		func() (*usersDB.Client, error) {
-			return usersDB.Open(harukiConfig.Cfg.UsersDB.DBType, harukiConfig.Cfg.UsersDB.DBURL)
+			cfg := harukiConfig.Cfg.UsersDB
+			drv, err := openEntDriver("users", cfg.DBType, cfg.DBURL, cfg.DBPool())
+			if err != nil {
+				return nil, err
+			}
+			return usersDB.NewClient(usersDB.Driver(drv)), nil
 		},
 		func(c *usersDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
 	)
@@ -119,7 +153,12 @@ func initPJSKIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app
 
 	pjskClient := initDBClient(ctx, mainLogger, "PJSK",
 		func() (*pjskDB.Client, error) {
-			return pjskDB.Open(harukiConfig.Cfg.PJSK.DBType, harukiConfig.Cfg.PJSK.DBURL)
+			cfg := harukiConfig.Cfg.PJSK
+			drv, err := openEntDriver("pjsk", cfg.DBType, cfg.DBURL, cfg.DBPool())
+			if err != nil {
+				return nil, err
+			}
+			return pjskDB.NewClient(pjskDB.Driver(drv)), nil
 		},
 		func(c *pjskDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
 	)
@@ -134,10 +173,12 @@ func initSekaiIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger) *s
 	}
 	ctx = ensureContext(ctx)
 
-	client, err := sekaiDB.Open(harukiConfig.Cfg.Sekai.DBType, harukiConfig.Cfg.Sekai.DBURL)
+	cfg := harukiConfig.Cfg.Sekai
+	drv, err := openEntDriver("sekai", cfg.DBType, cfg.DBURL, cfg.DBPool())
 	if err != nil {
 		fatalStartup(mainLogger, "failed to connect to Sekai DB", "error_type", fmt.Sprintf("%T", err))
 	}
+	client := sekaiDB.NewClient(sekaiDB.Driver(drv))
 	if harukiConfig.Cfg.Sekai.AutoMigrate {
 		if err := client.Schema.Create(ctx); err != nil {
 			fatalStartup(mainLogger, "failed to create Sekai DB schema", "error_type", fmt.Sprintf("%T", err))
@@ -154,7 +195,12 @@ func initBot(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.Ap
 
 	botDBClient := initDBClient(ctx, mainLogger, "Bot",
 		func() (*botDB.Client, error) {
-			return botDB.Open(harukiConfig.Cfg.HarukiBotDB.DBType, harukiConfig.Cfg.HarukiBotDB.DBURL)
+			cfg := harukiConfig.Cfg.HarukiBotDB
+			drv, err := openEntDriver("bot", cfg.DBType, cfg.DBURL, cfg.DBPool())
+			if err != nil {
+				return nil, err
+			}
+			return botDB.NewClient(botDB.Driver(drv)), nil
 		},
 		func(c *botDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
 	)

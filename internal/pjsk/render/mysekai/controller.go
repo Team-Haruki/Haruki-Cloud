@@ -73,6 +73,7 @@ var (
 func newMasterdataResolver(opts MasterdataOptions) *masterdataResolver {
 	return &masterdataResolver{
 		dsn:           strings.TrimSpace(opts.SekaiDSN),
+		pool:          opts.SekaiPool,
 		localDir:      cleanMasterdataDir(opts.LocalDir),
 		allowFallback: opts.AllowFallback,
 		cache:         make(map[string]masterdataSource),
@@ -177,7 +178,7 @@ func (r *masterdataResolver) build(ctx context.Context, region renderregion.Valu
 
 	var primary masterdataSource
 	if r.dsn != "" {
-		if store := newDBMasterdataStore(ctx, r.dsn, region.String()); store != nil && store.Configured() {
+		if store := newDBMasterdataStore(ctx, r.dsn, region.String(), r.pool); store != nil && store.Configured() {
 			primary = store
 		}
 	}

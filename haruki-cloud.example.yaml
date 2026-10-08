@@ -444,7 +444,18 @@ pjsk_render:
     listing_ttl: "30m"            # directory listings (env HARUKI_PJSK_RENDER_ASSET_PROBE_LISTING_TTL)
     negative_ttl: "5m"            # misses; a miss in a listing older than this re-lists it once, so hourly asset updates surface within negative_ttl (env HARUKI_PJSK_RENDER_ASSET_PROBE_NEGATIVE_TTL)
     timeout: "3s"                 # one HEAD or one listing; the slot's stat_timeout / request_timeout still apply per attempt (env HARUKI_PJSK_RENDER_ASSET_PROBE_TIMEOUT)
-    warm_prefixes: []             # directories listed in the background at startup, e.g. jp-assets/startapp/thumbnail/chara (env HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_PREFIXES, comma-separated)
+    # Directories listed in the background at startup and every warm_interval, so request-time
+    # listings (and HEAD storms on directories that could not be listed) are rare. Empty selects
+    # the defaults: <region>-assets/startapp/thumbnail/chara, startapp/home/banner and
+    # ondemand/event for jp/en/tw/kr/cn; ["none"] disables. Warm-up listings may take up to 30s.
+    warm_prefixes: []             # env HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_PREFIXES, comma-separated
+    warm_interval: "0s"           # 0 = 3/4 of listing_ttl; negative = startup only (env HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_INTERVAL)
+    # Per-request cap on uncached probes. Past it a lookup falls back to its first candidate path;
+    # probes already started finish in the background and warm the cache for the next request.
+    # Negative disables a limit.
+    request_budget: "5s"          # wait budget from the request's first uncached probe (env ..._ASSET_PROBE_REQUEST_BUDGET)
+    request_max_store_calls: 128  # HEADs + listings one request may wait on (env ..._ASSET_PROBE_REQUEST_MAX_STORE_CALLS)
+    request_concurrency: 8        # concurrent uncached probes per request (env ..._ASSET_PROBE_REQUEST_CONCURRENCY)
   
   local_masterdata:
     enabled: false            # legacy/dev only; production should use sekai.remote_sync instead

@@ -360,7 +360,7 @@ func newAppDependencies(initCtx context.Context, sekaiClient *sekaiDB.Client, cf
 		index.Start(initCtx)
 	}
 	if len(cfg.AssetProbe.WarmPrefixes) > 0 {
-		go assetHelper.WarmUp(initCtx)
+		go assetHelper.WarmLoop(initCtx)
 	}
 	snapshotService, staticSnapshotProvider := newAppSnapshotServices(initCtx, sekaiClient, assetHelper, cfg)
 	drawingClient, imageStore, imageStoreErr := newAppDrawingClient(initCtx, cfg, index)

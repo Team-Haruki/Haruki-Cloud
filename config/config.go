@@ -561,6 +561,10 @@ func ApplyEnvOverrides(cfg *Config) error {
 	if err := envStringSlice("HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_PREFIXES", &cfg.PJSKRender.AssetProbe.WarmPrefixes); err != nil {
 		return err
 	}
+	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_WARM_INTERVAL", &cfg.PJSKRender.AssetProbe.WarmInterval)
+	envDuration("HARUKI_PJSK_RENDER_ASSET_PROBE_REQUEST_BUDGET", &cfg.PJSKRender.AssetProbe.RequestBudget)
+	envInt("HARUKI_PJSK_RENDER_ASSET_PROBE_REQUEST_MAX_STORE_CALLS", &cfg.PJSKRender.AssetProbe.RequestMaxStoreCalls)
+	envInt("HARUKI_PJSK_RENDER_ASSET_PROBE_REQUEST_CONCURRENCY", &cfg.PJSKRender.AssetProbe.RequestConcurrency)
 	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_OUTPUT_DIR", &cfg.PJSKRender.MusicMeta.OutputDir)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_SOURCE", &cfg.PJSKRender.MusicMeta.Source)
@@ -693,11 +697,22 @@ type SekaiRemoteSyncConfig struct {
 // ondemand choice and case correction against the assets slot when no local
 // asset root is configured). Zero values select the defaults.
 type AssetProbeConfig struct {
-	PositiveTTL  time.Duration `yaml:"positive_ttl"`  // resolved keys (default 6h)
-	ListingTTL   time.Duration `yaml:"listing_ttl"`   // directory listings (default 30m)
-	NegativeTTL  time.Duration `yaml:"negative_ttl"`  // misses; a miss in a listing older than this re-lists it once (default 5m)
-	Timeout      time.Duration `yaml:"timeout"`       // one HEAD or one directory listing (default 3s)
-	WarmPrefixes []string      `yaml:"warm_prefixes"` // directories listed in the background at startup (default none)
+	PositiveTTL time.Duration `yaml:"positive_ttl"` // resolved keys (default 6h)
+	ListingTTL  time.Duration `yaml:"listing_ttl"`  // directory listings (default 30m)
+	NegativeTTL time.Duration `yaml:"negative_ttl"` // misses; a miss in a listing older than this re-lists it once (default 5m)
+	Timeout     time.Duration `yaml:"timeout"`      // one HEAD or one directory listing (default 3s)
+	// WarmPrefixes are directories listed in the background at startup and
+	// every WarmInterval. Empty selects the defaults (card thumbnails, home
+	// banners and event directories of every region); ["none"] disables.
+	WarmPrefixes []string      `yaml:"warm_prefixes"`
+	WarmInterval time.Duration `yaml:"warm_interval"` // re-list period (default 3/4 of listing_ttl; negative = startup only)
+	// Per-request cap on uncached probes: wait budget from the first miss
+	// (default 5s), store calls (default 128), concurrent probes (default
+	// 8). Past it lookups fall back to the first candidate path. Negative
+	// disables that limit.
+	RequestBudget        time.Duration `yaml:"request_budget"`
+	RequestMaxStoreCalls int           `yaml:"request_max_store_calls"`
+	RequestConcurrency   int           `yaml:"request_concurrency"`
 }
 
 // AssetIndexConfig consumes complete inventories published by Asset-Updater.

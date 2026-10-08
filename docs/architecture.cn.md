@@ -192,7 +192,7 @@ pjsk_render:               # 渲染引擎配置
     timeout: 30
   asset_dirs: {}           # 公开素材主机 assets_base_urls（必填）；primary 已弃用（E1）
   storage: {}              # 五个存储槽位（fs / s3），缺省时从旧目录派生
-  asset_probe: {}          # 无本地素材根时按 assets 槽位选路径（startapp/ondemand、大小写）；positive_ttl 6h / listing_ttl 30m / negative_ttl 5m / timeout 3s / warm_prefixes []
+  asset_probe: {}          # 无本地素材根时按 assets 槽位选路径（startapp/ondemand、大小写）；positive_ttl 6h / listing_ttl 30m / negative_ttl 5m / timeout 3s；warm_prefixes 为空时默认预热各区服 startapp/thumbnail/chara、startapp/home/banner、ondemand/event（["none"] 关闭），并每 warm_interval（默认 listing_ttl 的 3/4）刷新；单请求探测上限 request_budget 5s / request_max_store_calls 128 / request_concurrency 8，超限回退首个候选路径
   image_cache: {}          # pg_url、hosts、render_index.*、gc_*、legacy_redirect
   drawing_artifact: {}     # Artifact 模式放量白名单
   local_masterdata: {}     # legacy/dev 本地 Masterdata fallback；生产默认关闭。所有 master 读取（含库存道具表、自定义名片资源、MySekai 大门皮肤/自定义谱面标签、JP musicCategories）都先走 DB，只有开启 enabled+allow_fallback（或 allow_leaks）且某张表为空/不可用时才读本地 JSON

@@ -155,6 +155,10 @@ func (h *AssetHelper) WithContext(ctx context.Context) *AssetHelper {
 		return nil
 	}
 	clone := *h
+	if h.store != nil && ctx != nil {
+		// Copies made for one request share its store-probe budget.
+		ctx = WithProbeBudget(ctx)
+	}
 	clone.ctx = ctx
 	return &clone
 }
@@ -184,6 +188,15 @@ func (h *AssetHelper) WarmUp(ctx context.Context) {
 		return
 	}
 	h.store.warm(ctx)
+}
+
+// WarmLoop runs WarmUp and then keeps the warm prefixes' listings fresh
+// every StoreProbeConfig.WarmInterval until ctx ends or the helper closes.
+func (h *AssetHelper) WarmLoop(ctx context.Context) {
+	if !h.ProbesStore() {
+		return
+	}
+	h.store.warmLoop(ctx)
 }
 
 // ProbesStore reports whether region path choice can consult a store.

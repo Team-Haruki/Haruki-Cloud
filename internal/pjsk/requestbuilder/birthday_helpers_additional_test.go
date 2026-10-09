@@ -69,7 +69,7 @@ func TestBirthdayDateRegionAndPathHelpers(t *testing.T) {
 	}
 	{
 		testutil.RequireArgs(t, isBirthdayFifthAnniv(renderregion.JP), "fifth anniversary region classification failed")
-		testutil.RequireArgs(t, !(isBirthdayFifthAnniv(renderregion.EN)), "fifth anniversary region classification failed")
+		testutil.RequireArgs(t, isBirthdayFifthAnniv(renderregion.EN), "fifth anniversary region classification failed")
 	}
 	{
 		testutil.RequireArgs(t, !(birthdayDaysUntil(now, now.Add(-time.Hour)) != 0), "birthday day countdown failed")

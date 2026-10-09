@@ -12,6 +12,7 @@ import (
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	"haruki-cloud/internal/pjsk/alias"
+	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -120,6 +121,71 @@ func TestBuildMiscBirthdayRequestFromCharacterID(t *testing.T) {
 	}
 	testutil.RequireArgs(t, foundMiku, "expected miku in birthday calendar")
 
+}
+
+func TestBuildMiscBirthdayRequestEventTimesAcrossRegions(t *testing.T) {
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:birthday_regions_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	t.Cleanup(func() { _ = client.Close() })
+	app := &renderapp.App{Sekai: client, Assets: assets.NewAssetHelper(t.TempDir(), nil)}
+	for _, tc := range []struct {
+		region string
+		name   string
+		offset int
+	}{
+		{"jp", "日服", 9},
+		{"cn", "国服", 8},
+		{"tw", "台服", 8},
+		{"en", "国际服", 0},
+		{"kr", "韩服", 9},
+	} {
+		t.Run(tc.region, func(t *testing.T) {
+			_, err := client.Card.Create().
+				SetServerRegion(tc.region).
+				SetGameID(91001).
+				SetCharacterID(21).
+				SetCardRarityType("rarity_birthday").
+				SetAssetbundleName("birthday_card_test").
+				SetReleaseAt(1).
+				Save(context.Background())
+			if err != nil {
+				t.Fatal(err)
+			}
+			req, err := BuildMiscBirthdayRequest(context.Background(), &CommandInput{
+				Region: tc.region,
+				Params: json.RawMessage(`{"cid":21}`),
+			}, app)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !req.IsFifthAnniv || req.RegionName != tc.name {
+				t.Fatalf("unexpected birthday region payload: %+v", req)
+			}
+			birthday := time.UnixMilli(req.LiveTime.StartAt).In(time.FixedZone(tc.region, tc.offset*3600))
+			if birthday.Month() != time.August || birthday.Day() != 31 || birthday.Hour() != 0 || birthday.Minute() != 0 {
+				t.Fatalf("birthday should start at server midnight on August 31: %v", birthday)
+			}
+			for _, event := range []struct {
+				name       string
+				value      *drawing.BirthdayEventTime
+				start, end int
+			}{
+				{"gacha", &req.GachaTime, -4, 3},
+				{"live", &req.LiveTime, 0, 1},
+				{"drop", req.DropTime, -3, 0},
+				{"flower", req.FlowerTime, -3, 3},
+				{"party", req.PartyTime, 0, 3},
+			} {
+				if event.value == nil {
+					t.Fatalf("missing %s time", event.name)
+				}
+				wantStart := birthday.AddDate(0, 0, event.start).UnixMilli()
+				wantEnd := birthday.AddDate(0, 0, event.end).Add(-time.Minute).UnixMilli()
+				if event.value.StartAt != wantStart || event.value.EndAt != wantEnd {
+					t.Errorf("%s time = %+v, want %d to %d", event.name, event.value, wantStart, wantEnd)
+				}
+			}
+		})
+	}
 }
 
 func TestBuildBirthdayInfosSelectsJune24AfterJune12(t *testing.T) {

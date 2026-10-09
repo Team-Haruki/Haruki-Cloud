@@ -20,9 +20,16 @@ import (
 // trigger (the command the user typed) the help pointer added to usage and
 // bad-parameter errors.
 func commandErrorText(ctx context.Context, err error, commandPath, trigger string) string {
+	return commandErrorReply(ctx, err, commandPath, helpTrigger(trigger))
+}
+
+// commandErrorReply is commandErrorText with the help pointer's command
+// already known (empty for none), for routes served outside the command
+// registry.
+func commandErrorReply(ctx context.Context, err error, commandPath, helpCommand string) string {
 	locale := i18n.LocaleFromContext(ctx)
 	typed := userErrorOf(err)
-	return sanitizeErrorReply(ctx, withRouteGuidance(typed, commandPath, trigger), locale)
+	return sanitizeErrorReply(ctx, withRouteGuidance(typed, commandPath, helpCommand), locale)
 }
 
 // userErrorOf returns err's typed user error: its own, the classification of
@@ -40,8 +47,9 @@ func userErrorOf(err error) *usererror.Error {
 
 // withRouteGuidance completes a usage or bad-parameter error: a generic
 // "unrecognized arguments" reason becomes the route's own guidance, and the
-// help pointer for the typed command follows the reason.
-func withRouteGuidance(err *usererror.Error, commandPath, trigger string) i18n.Message {
+// help pointer for helpCommand (the command as typed, see helpTrigger)
+// follows the reason.
+func withRouteGuidance(err *usererror.Error, commandPath, helpCommand string) i18n.Message {
 	message := err.Message
 	if err.Code != usererror.CodeUsage && err.Code != usererror.CodeBadParam {
 		return message
@@ -54,11 +62,10 @@ func withRouteGuidance(err *usererror.Error, commandPath, trigger string) i18n.M
 			message = guidance
 		}
 	}
-	trigger = helpTrigger(trigger)
-	if trigger == "" {
+	if helpCommand == "" {
 		return message
 	}
-	return i18n.WithUsage(message, trigger)
+	return i18n.WithUsage(message, helpCommand)
 }
 
 // helpTrigger is the command as typed, without arguments, when it is a slash

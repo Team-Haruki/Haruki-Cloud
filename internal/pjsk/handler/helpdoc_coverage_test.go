@@ -11,6 +11,7 @@ import (
 	corehandler "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/subscription"
 	"haruki-cloud/utils/usererror"
 )
 
@@ -35,7 +36,14 @@ func helpDocTriggers(markdown string) []string {
 // directly after the command must not start with a Chinese character, since
 // "/歌曲表" would otherwise pass as "/歌曲" plus "表".
 func helpDocTriggerResolves(span string) bool {
-	return helpDocSpanCommand(span) != ""
+	return helpDocSpanCommand(span) != "" || isBirthdayMonitorCommand(strings.Fields(span)[0])
+}
+
+// isBirthdayMonitorCommand reports whether command is a spelling of the
+// birthday monitor route, which is served outside the command registry.
+func isBirthdayMonitorCommand(command string) bool {
+	_, err := subscription.ParseBirthdayMonitorCommand(command)
+	return err == nil
 }
 
 // requireNoHelpDocFindings fails for every finding.
@@ -83,9 +91,13 @@ func sortedStrings(values []string) []string {
 func TestEveryRouteHasHelpDoc(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 	var findings []string
+	paths := []string{BirthdayMonitorHelpPath}
 	for _, route := range corehandler.ListBotRoutes() {
-		if _, ok, _ := i18n.HelpDoc(i18n.DefaultLocale, commandHelpDocKey(route.Path)); !ok {
-			findings = append(findings, route.Path)
+		paths = append(paths, route.Path)
+	}
+	for _, path := range paths {
+		if _, ok, _ := i18n.HelpDoc(i18n.DefaultLocale, commandHelpDocKey(path)); !ok {
+			findings = append(findings, path)
 		}
 	}
 	requireNoHelpDocFindings(t, findings, "route has no help document")
@@ -97,6 +109,7 @@ func helpDocRouteKeys() map[string]string {
 	keys := map[string]string{
 		commandHelpGenericKey:                       "",
 		commandHelpDocKey(mysekaiBlueprintHelpPath): commandHelpRoutePath(mysekaiBlueprintHelpPath),
+		commandHelpDocKey(BirthdayMonitorHelpPath):  BirthdayMonitorHelpPath,
 	}
 	for _, route := range corehandler.ListBotRoutes() {
 		keys[commandHelpDocKey(route.Path)] = strings.Trim(route.Path, "/")
@@ -257,6 +270,12 @@ func TestHelpDocExamplesParse(t *testing.T) {
 			t.Errorf("%s.md: no examples under ## 示例", key)
 		}
 		for _, example := range examples {
+			if route == BirthdayMonitorHelpPath {
+				if _, err := subscription.ParseBirthdayMonitorCommand(example); err != nil {
+					t.Errorf("%s.md: example %q is rejected (%s)", key, example, usererror.LogText(err))
+				}
+				continue
+			}
 			resolved, err := dispatchForTest(context.Background(), helpExampleEvent(example))
 			if err != nil {
 				t.Errorf("%s.md: example %q is rejected (%s)", key, example, usererror.LogText(err))

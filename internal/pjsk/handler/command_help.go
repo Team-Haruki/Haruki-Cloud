@@ -54,6 +54,17 @@ func commandHelpMessage(ctx context.Context, resolved *CommandRequest, app *rend
 	return inlineImageMessage(ctx, data), nil
 }
 
+// BirthdayMonitorHelpPath is the route of the MySekai birthday material
+// monitor (/烤森生日监听). It is served outside the command registry, so it
+// answers "-help" itself with RouteHelpMessage.
+const BirthdayMonitorHelpPath = "mysekai/birthday-monitor"
+
+// RouteHelpMessage answers "-help" for a route served outside the command
+// registry: the route's help document, like commandHelpMessage.
+func RouteHelpMessage(ctx context.Context, path string, app *renderapp.App) (onebot11.Message, error) {
+	return commandHelpMessage(ctx, &CommandRequest{CommandPath: path}, app)
+}
+
 // commandHelpTextMessage is the text fallback of a help image: the same
 // document with its Markdown markup removed, so chat users never see "#",
 // "`" or "**".

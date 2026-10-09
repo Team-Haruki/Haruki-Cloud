@@ -74,7 +74,7 @@ type birthdayTokenValidationResponse struct {
 	PendingEvents       []subscription.PendingBirthdayEvent `json:"pending_events,omitempty"`
 }
 
-const birthdayMonitorCommandPath = "mysekai/birthday-monitor"
+const birthdayMonitorCommandPath = pjskhandler.BirthdayMonitorHelpPath
 
 var birthdayMonitorCommandPrefixes = []string{
 	"/烤森生日取消监听", //copylint:ignore 指令触发词
@@ -156,6 +156,18 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 		service := newBirthdayMonitorService(renderApp)
 		finishExecute := commandtrace.MeasurePhase(requestCtx, "command_execute")
 		defer finishPhaseOnPanic(finishExecute)
+		helpCommand := birthdayMonitorHelpCommand(text)
+
+		if isBirthdayMonitorHelpText(text) {
+			message, err := pjskhandler.RouteHelpMessage(requestCtx, birthdayMonitorCommandPath, renderApp)
+			finishExecute()
+			if err != nil {
+				setCommandTraceOutcome(c, "error", err)
+				return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorReply(requestCtx, err, birthdayMonitorCommandPath, helpCommand))})
+			}
+			setCommandTraceOutcome(c, "ok", nil)
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, message)
+		}
 
 		if isCancelBirthdayMonitorText(text) {
 			_, err := service.Cancel(requestCtx, req.Platform, req.PlatformUserID, req.PlatformGroupID, botID, req.SelfID, req.Server, regionExplicit, text)
@@ -167,7 +179,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 					"command", traceCommand,
 					"error_type", fmt.Sprintf("%T", err),
 				)
-				return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(requestCtx, err, birthdayMonitorCommandPath, ""))})
+				return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorReply(requestCtx, err, birthdayMonitorCommandPath, helpCommand))})
 			}
 			setCommandTraceOutcome(c, "ok", nil)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(i18n.T("subscription.birthday.cancelled"))})
@@ -182,7 +194,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 				"command", traceCommand,
 				"error_type", fmt.Sprintf("%T", err),
 			)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(requestCtx, err, birthdayMonitorCommandPath, ""))})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorReply(requestCtx, err, birthdayMonitorCommandPath, helpCommand))})
 		}
 
 		visible := onebot11.Message{onebot11.Text(i18n.T("subscription.birthday.updated", i18n.Data{"Minutes": int(result.Duration.Minutes())}))}
@@ -462,6 +474,30 @@ func buildBirthdayMonitorManifestCommandPrefixes(commands []string) []string {
 		}
 	}
 	return result
+}
+
+// isBirthdayMonitorHelpText reports whether text asks for the monitor's
+// help: the command followed by "-help" or "-h".
+func isBirthdayMonitorHelpText(text string) bool {
+	fields := strings.Fields(text)
+	if len(fields) < 2 {
+		return false
+	}
+	last := strings.ToLower(fields[len(fields)-1])
+	return last == "-help" || last == "-h"
+}
+
+// birthdayMonitorHelpCommand is the monitor command text starts with, as
+// typed (region prefix included), for the help pointer of usage errors.
+func birthdayMonitorHelpCommand(text string) string {
+	text = strings.Join(strings.Fields(text), " ")
+	best := ""
+	for _, command := range birthdayMonitorManifestCommandPrefixes {
+		if len(command) > len(best) && strings.HasPrefix(strings.ToLower(text), strings.ToLower(command)) {
+			best = command
+		}
+	}
+	return best
 }
 
 func isCancelBirthdayMonitorText(text string) bool {

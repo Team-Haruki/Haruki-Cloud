@@ -1,4 +1,4 @@
-# 订阅：烤森生日材料监听（/生日材料监听 等）。
+# 订阅：烤森生日材料监听（/烤森生日监听、/烤森生日取消监听）。
 
 [subscription.birthday.feature]
 description = "功能名，用在 common.unavailable 的 Feature 占位符里：烤森生日材料监听。"

@@ -476,3 +476,16 @@ Workflow maintenance rules:
   `# vX.Y.Z` comment; Dependabot (`github-actions`) updates them and the template refs.
 - CI uses the Go version in `go.mod` exactly (`GOTOOLCHAIN=local`); keep
   `.github/tools/go.mod` and the Dockerfile's `golang` image on the same version.
+
+## Release notes
+
+Release notes follow the org standard,
+[`RELEASE_NOTES.md` in `seiunx-dev/ci-templates`](https://github.com/seiunx-dev/ci-templates/blob/main/RELEASE_NOTES.md),
+and are written in English.
+
+- Title every release with the tag only, for example `v3.8.3`; every tag gets a release.
+- Publish a tag as a pre-release only when it has an `-alpha`, `-beta` or `-rc` suffix.
+- Omit empty sections, and end every item with its PR number `(#123)`, or the short
+  commit SHA when there is no PR.
+- `release.yml` publishes the release with auto-generated notes; rewrite them to the
+  standard afterwards with `gh release edit <tag> --notes-file <file>` (never pass `--latest`).

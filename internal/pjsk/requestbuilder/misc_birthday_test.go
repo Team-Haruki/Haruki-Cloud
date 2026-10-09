@@ -9,6 +9,7 @@ import (
 
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	sekaienttest "haruki-cloud/database/sekai/enttest"
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -74,7 +75,7 @@ func TestBuildMiscBirthdayRequestFromCharacterID(t *testing.T) {
 		testutil.Require(t, !(req.Month != 8), "unexpected birthday target: %+v", req)
 		testutil.Require(t, !(req.Day != 31), "unexpected birthday target: %+v", req)
 	}
-	testutil.Require(t, !(req.RegionName != "日服"), "unexpected region name: %q", req.RegionName)
+	testutil.Require(t, !(req.RegionName != i18n.RegionName("jp").String()), "unexpected region name: %q", req.RegionName)
 	testutil.Require(t, !(req.ColorCode != "#33AAFF"), "unexpected color code: %q", req.ColorCode)
 	testutil.Require(t, strings.Contains(req.SdImagePath, "character/character_sd_l/chr_sp_21.png"), "unexpected sd path: %q", req.SdImagePath)
 	testutil.Require(t, strings.Contains(req.TitleImagePath, "character/label_horizontal/chr_h_lb_21.png"), "unexpected title path: %q", req.TitleImagePath)
@@ -129,14 +130,13 @@ func TestBuildMiscBirthdayRequestEventTimesAcrossRegions(t *testing.T) {
 	app := &renderapp.App{Sekai: client, Assets: assets.NewAssetHelper(t.TempDir(), nil)}
 	for _, tc := range []struct {
 		region string
-		name   string
 		offset int
 	}{
-		{"jp", "日服", 9},
-		{"cn", "国服", 8},
-		{"tw", "台服", 8},
-		{"en", "国际服", 0},
-		{"kr", "韩服", 9},
+		{"jp", 9},
+		{"cn", 8},
+		{"tw", 8},
+		{"en", 0},
+		{"kr", 9},
 	} {
 		t.Run(tc.region, func(t *testing.T) {
 			_, err := client.Card.Create().
@@ -157,7 +157,7 @@ func TestBuildMiscBirthdayRequestEventTimesAcrossRegions(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !req.IsFifthAnniv || req.RegionName != tc.name {
+			if !req.IsFifthAnniv || req.RegionName != i18n.RegionName(tc.region).String() {
 				t.Fatalf("unexpected birthday region payload: %+v", req)
 			}
 			birthday := time.UnixMilli(req.LiveTime.StartAt).In(time.FixedZone(tc.region, tc.offset*3600))

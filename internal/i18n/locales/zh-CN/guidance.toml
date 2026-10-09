@@ -95,7 +95,7 @@ other = "无法识别参数，请写卡池 ID、序号（如 -1）、event123 �
 
 [guidance.inventory_list]
 description = "路由 inventory/list（查背包）的参数无法识别时的原因行。"
-other = "无法识别参数，请写一个分类：水晶、火罐、ms材料或记忆"
+other = "无法识别参数，请写一个分类：“水晶”、“火罐”、“ms材料”或“记忆”"
 
 [guidance.misc_birthday]
 description = "路由 misc/birthday（角色生日）的参数无法识别时的原因行。"

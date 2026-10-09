@@ -36,7 +36,21 @@ type ShopQuery struct {
 
 var mysekaiShopTypeOrder = map[string]int{"blueprint_daily": 0, "blueprint_weekly": 1, "tool": 2, "material": 3}
 
-var mysekaiShopTypeTitles = map[string]string{"blueprint_daily": "每日蓝图", "blueprint_weekly": "每周蓝图", "material": "材料", "tool": "工具"}
+var mysekaiShopTypeTitles = map[string]i18n.Message{
+	"blueprint_daily":  i18n.M("mysekai.image.shop.type_blueprint_daily"),
+	"blueprint_weekly": i18n.M("mysekai.image.shop.type_blueprint_weekly"),
+	"material":         i18n.M("mysekai.image.shop.type_material"),
+	"tool":             i18n.M("mysekai.image.shop.type_tool"),
+}
+
+// mysekaiShopTypeTitle is the group title of a shop type, "" for a type this
+// build does not know.
+func mysekaiShopTypeTitle(shopType string) string {
+	if title, ok := mysekaiShopTypeTitles[shopType]; ok {
+		return title.String()
+	}
+	return ""
+}
 
 // BuildShopRequest uses the uploaded lineup, never inventing a new rotation
 // from master data when the player has not uploaded their refreshed shop.
@@ -67,12 +81,12 @@ func (c *Controller) BuildShopRequest(query ShopQuery) (*drawing.MysekaiShopRequ
 	pass, _ := merged["userMysekaiColorfulPass"].(map[string]any)
 	passActive := int64Number(pass["expiredAt"], 0) > now
 	request := &drawing.MysekaiShopRequest{
-		Title: "烤森商店（按上传数据）", PassActive: &passActive,
+		Title: i18n.T("mysekai.image.shop.title"), PassActive: &passActive,
 		Profile: c.mysekaiProfileCard(region, merged, query.Profile, true),
 		Shops:   make([]drawing.MysekaiShopGroup, 0),
 	}
 	if !passActive {
-		request.Title += "（通行证未生效）"
+		request.Title = i18n.T("mysekai.image.shop.title_pass_inactive")
 	}
 	resolver := c.newMysekaiResourceResolver(region)
 	if query.ShopType == "" || query.ShopType == "blueprint" {
@@ -168,7 +182,7 @@ func (c *Controller) buildResourceShopGroups(query ShopQuery, merged map[string]
 		item = resolved
 		group := groups[shopType]
 		if group == nil {
-			title := mysekaiShopTypeTitles[shopType]
+			title := mysekaiShopTypeTitle(shopType)
 			group = &drawing.MysekaiShopGroup{ShopType: shopType, Title: &title}
 			groups[shopType] = group
 		}

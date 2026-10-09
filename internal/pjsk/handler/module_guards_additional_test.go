@@ -122,7 +122,7 @@ func TestInventoryParsingAndExecutionGuards(t *testing.T) {
 	{
 		message, err := executeInventory(rc)
 		testutil.Require(t, err == nil, "CN MySekai runtime warning failed: %v", err)
-		testutil.Check(t, rejectionText(t, message) == cnMySekaiNeverOpensNotice, "missing CN MySekai warning")
+		testutil.Check(t, rejectionText(t, message) == cnMySekaiNotice(), "missing CN MySekai warning")
 	}
 
 	rc.Cmd.Params = nil

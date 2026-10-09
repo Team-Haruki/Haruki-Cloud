@@ -114,25 +114,25 @@ func resolveUniqueMusicQuery(source DataSource, query string, allowUnreleased bo
 	if matches := collectMusicMatches(source, func(musicInfo *masterdata.Music) bool {
 		return strings.EqualFold(strings.TrimSpace(musicInfo.Title), query)
 	}, now, allowUnreleased); len(matches) > 0 {
-		return selectUniqueMusicMatch("曲名/别名", matches)
+		return selectUniqueMusicMatch("title_or_alias", matches)
 	}
 
 	if matches := collectMusicMatches(source, func(musicInfo *masterdata.Music) bool {
 		return strings.Contains(strings.ToLower(strings.TrimSpace(musicInfo.Title)), queryLower)
 	}, now, allowUnreleased); len(matches) > 0 {
-		return selectUniqueMusicMatch("曲名/别名", matches)
+		return selectUniqueMusicMatch("title_or_alias", matches)
 	}
 
 	if matches := collectLocalizedMusicMatches(source, func(title string) bool {
 		return strings.EqualFold(strings.TrimSpace(title), query)
 	}, now, allowUnreleased); len(matches) > 0 {
-		return selectUniqueMusicMatch("曲名/别名", matches)
+		return selectUniqueMusicMatch("title_or_alias", matches)
 	}
 
 	if matches := collectLocalizedMusicMatches(source, func(title string) bool {
 		return strings.Contains(strings.ToLower(strings.TrimSpace(title)), queryLower)
 	}, now, allowUnreleased); len(matches) > 0 {
-		return selectUniqueMusicMatch("曲名/别名", matches)
+		return selectUniqueMusicMatch("title_or_alias", matches)
 	}
 	if allowUnreleased {
 		return nil, notfound.Music(query)
@@ -178,7 +178,7 @@ func resolveUniqueMusicKeyword(source DataSource, keyword string, allowUnrelease
 	if len(matches) == 0 {
 		return nil, nil
 	}
-	return selectUniqueMusicMatch("曲名/别名", matches)
+	return selectUniqueMusicMatch("title_or_alias", matches)
 }
 
 func collectMusicMatches(source DataSource, matcher func(*masterdata.Music) bool, now int64, allowUnreleased bool) []*masterdata.Music {

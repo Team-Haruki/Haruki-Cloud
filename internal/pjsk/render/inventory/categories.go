@@ -1,24 +1,28 @@
 package inventory
 
-import "strings"
+import (
+	"strings"
+
+	"haruki-cloud/internal/i18n"
+)
 
 type inventorySectionDef struct {
 	key   string
-	title string
+	title i18n.Message
 }
 
 var inventorySectionOrder = []inventorySectionDef{
-	{key: "currency", title: "货币"},
-	{key: "boost", title: "演出能量"},
-	{key: "basic", title: "基础材料"},
-	{key: "training", title: "育成材料"},
-	{key: "costume", title: "服装材料"},
-	{key: "music", title: "音乐与演唱"},
-	{key: "tickets", title: "招募与兑换券"},
-	{key: "event", title: "活动材料"},
-	{key: "memory", title: "记忆"},
-	{key: "mysekai", title: "MySekai 材料"},
-	{key: "other", title: "其他"},
+	{key: "currency", title: i18n.M("inventory.image.section.currency")},
+	{key: "boost", title: i18n.M("inventory.image.section.boost")},
+	{key: "basic", title: i18n.M("inventory.image.section.basic")},
+	{key: "training", title: i18n.M("inventory.image.section.training")},
+	{key: "costume", title: i18n.M("inventory.image.section.costume")},
+	{key: "music", title: i18n.M("inventory.image.section.music")},
+	{key: "tickets", title: i18n.M("inventory.image.section.tickets")},
+	{key: "event", title: i18n.M("inventory.image.section.event")},
+	{key: "memory", title: i18n.M("inventory.image.section.memory")},
+	{key: "mysekai", title: i18n.M("inventory.image.section.mysekai")},
+	{key: "other", title: i18n.M("inventory.image.section.misc")},
 }
 
 func inventoryCategoryForMaterial(materialType string, name string) string {
@@ -37,20 +41,20 @@ func inventoryCategoryForMaterial(materialType string, name string) string {
 		strings.Contains(typ, "song"):
 		return "music"
 	case strings.Contains(typ, "ticket") ||
-		strings.Contains(lowerName, "券") ||
+		strings.Contains(lowerName, "券") || //copylint:ignore 游戏数据原文（匹配键）
 		strings.Contains(lowerName, "ticket"):
 		return "tickets"
 	case strings.Contains(typ, "event") ||
-		strings.Contains(lowerName, "活动") ||
-		strings.Contains(lowerName, "交换所"):
+		strings.Contains(lowerName, "活动") || //copylint:ignore 游戏数据原文（匹配键）
+		strings.Contains(lowerName, "交换所"): //copylint:ignore 游戏数据原文（匹配键）
 		return "event"
 	case strings.Contains(typ, "special_training") ||
 		strings.Contains(typ, "master_lesson") ||
 		strings.Contains(typ, "skill") ||
 		strings.Contains(typ, "character_rank") ||
-		strings.Contains(lowerName, "练习") ||
-		strings.Contains(lowerName, "技能") ||
-		strings.Contains(lowerName, "想法"):
+		strings.Contains(lowerName, "练习") || //copylint:ignore 游戏数据原文（匹配键）
+		strings.Contains(lowerName, "技能") || //copylint:ignore 游戏数据原文（匹配键）
+		strings.Contains(lowerName, "想法"): //copylint:ignore 游戏数据原文（匹配键）
 		return "training"
 	case typ == "" ||
 		strings.Contains(typ, "material") ||

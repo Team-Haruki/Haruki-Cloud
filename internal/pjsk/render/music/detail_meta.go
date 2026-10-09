@@ -5,7 +5,9 @@ import (
 	"math"
 	"slices"
 	"strconv"
+	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -15,15 +17,15 @@ var (
 	musicDetailLeaderboardLiveTypeOrder = []string{"solo", "multi", "auto"}
 	musicDetailLeaderboardTargetOrder   = []string{"score", "pt", pointsPerTimeMetric}
 
-	musicDetailLeaderboardLiveTypes = map[string]string{
-		"solo":  "单人",
-		"multi": "多人",
-		"auto":  "AUTO",
+	musicDetailLeaderboardLiveTypes = map[string]i18n.Message{
+		"solo":  i18n.M("music.image.detail.live_solo"),
+		"multi": i18n.M("music.image.detail.live_multi"),
+		"auto":  i18n.M("music.image.detail.live_auto"),
 	}
-	musicDetailLeaderboardTargets = map[string]string{
-		"score":             "分数",
-		"pt":                "PT",
-		pointsPerTimeMetric: "时速",
+	musicDetailLeaderboardTargets = map[string]i18n.Message{
+		"score":             i18n.M("music.image.detail.target_score"),
+		"pt":                i18n.M("music.image.detail.target_pt"),
+		pointsPerTimeMetric: i18n.M("music.image.detail.target_pt_per_time"),
 	}
 	musicDetailLeaderboardSkills = map[string][]float64{
 		"solo":  {musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill},
@@ -98,16 +100,10 @@ func (c *Controller) resolveMusicDetailLength(region string, musicID int) *strin
 	return new(formatMusicDetailLength(maxSeconds))
 }
 
+// formatMusicDetailLength is the song length on the song detail image,
+// e.g. "2分05秒" (FormatDuration, rounded to seconds).
 func formatMusicDetailLength(seconds float64) string {
-	if seconds < 0 {
-		seconds = 0
-	}
-	minutes := int(seconds) / 60
-	remain := seconds - float64(minutes*60)
-	if remain < 0 {
-		remain = 0
-	}
-	return fmt.Sprintf("%.1f秒（%d分%.1f秒）", seconds, minutes, remain)
+	return i18n.FormatDuration(time.Duration(math.Round(seconds)) * time.Second).String()
 }
 
 func (c *Controller) resolveMusicDetailLeaderboard(region renderregion.Value, source DataSource, builder *Builder, musicID int) ([][]*drawing.LeaderboardInfo, int) {
@@ -175,7 +171,7 @@ func formatMusicDetailLeaderboardValue(row musicBoardRow, liveType, target strin
 	switch target {
 	case "score":
 		score := derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, "score"))
-		return fmt.Sprintf("%.1f%%", score*100)
+		return i18n.Percent(score * 100)
 	case "pt":
 		pt := derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, "pt"))
 		return strconv.Itoa(int(math.Round(pt)))
@@ -187,14 +183,14 @@ func formatMusicDetailLeaderboardValue(row musicBoardRow, liveType, target strin
 	}
 }
 
-func cloneMusicDetailLabels(input map[string]string, order []string) map[string]string {
+func cloneMusicDetailLabels(input map[string]i18n.Message, order []string) map[string]string {
 	if len(input) == 0 {
 		return nil
 	}
 	result := make(map[string]string, len(input))
 	for _, key := range order {
 		if value, ok := input[key]; ok {
-			result[key] = value
+			result[key] = value.String()
 		}
 	}
 	return result

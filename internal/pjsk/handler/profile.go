@@ -303,7 +303,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		if renderErr != nil {
 			text := strings.TrimSpace(string(data))
 			if text == "" {
-				text = "已更新个人信息背景设置"
+				text = i18n.T("profile.bg.adjusted_any")
 			}
 			profileLogger.WarnContext(rc.Ctx, "profile preview render failed after a background change",
 				"error", usererror.RedactForLog(usererror.LogText(renderErr), usererror.DefaultLogMessageLimit))

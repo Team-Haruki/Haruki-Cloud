@@ -417,10 +417,10 @@ func countTalkProgress(groups ...map[string]*talkRead) (int, int) {
 
 func talkProgressMessages(showAllTalks bool, totalReads, totalTalks int) (string, *string) {
 	if showAllTalks {
-		return fmt.Sprintf("对话家具列表 - 共 %d 条对话", totalTalks), nil
+		return i18n.T("mysekai.image.talk.title_all", i18n.Data{"Count": totalTalks}), nil
 	}
-	message := fmt.Sprintf("未读对话家具列表 - 进度: %d/%d (%.1f%%)", totalReads, totalTalks, percent(totalReads, totalTalks))
-	return message, new("*仅展示未读对话家具，灰色表示未获得蓝图")
+	message := i18n.T("mysekai.image.talk.title_unread", i18n.Data{"Read": totalReads, "Total": totalTalks, "Percent": i18n.Percent(percent(totalReads, totalTalks))})
+	return message, new(i18n.T("mysekai.image.talk.footnote"))
 }
 
 func sortSingleTalkFixtures(items []drawing.MysekaiTalkFixtures) {

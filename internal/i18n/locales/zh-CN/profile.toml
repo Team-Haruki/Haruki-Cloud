@@ -1,4 +1,4 @@
-# 个人信息与个人设置：个人信息、个人信息背景、时区、谱面样式、查水表难度、模块化个人信息、自定义个人信息。
+# 个人信息与个人设置：个人信息、个人信息背景、时区、谱面样式、逮捕难度、模块化个人信息、自定义个人信息。
 
 [profile.bg.binding_missing]
 description = "设置、清除或调整个人信息背景时找不到对应的绑定账号。"
@@ -49,15 +49,15 @@ description = "保存或删除个人信息背景失败（存储出错）。"
 other = "保存个人信息背景失败，请稍后再试"
 
 [profile.settings.save_failed]
-description = "保存个人设置失败（时区、谱面样式、查水表难度等）。"
+description = "保存个人设置失败（时区、谱面样式、逮捕难度等）。"
 other = "保存设置失败，请稍后再试"
 
 [profile.arrest_difficulty.required]
-description = "设置查水表难度时没有写任何难度开关。"
+description = "设置逮捕难度时没有写任何难度开关。"
 other = "请至少写一个难度开关"
 
 [profile.arrest_difficulty.unknown]
-description = "查水表难度写了不支持的难度，作为 common.bad_param 的原因行。"
+description = "逮捕难度写了不支持的难度，作为 common.bad_param 的原因行。"
 other = "难度只能是 EASY、NORMAL、HARD、EXPERT、MASTER、APPEND"
 
 [profile.chart_style.invalid]
@@ -81,7 +81,7 @@ description = "个人设置类指令试图修改别人的账号。"
 other = "这个设置只能修改自己的账号"
 
 [profile.arrest_difficulty.invalid]
-description = "查水表难度开关的写法不对。"
+description = "逮捕难度开关的写法不对。"
 other = "请写难度和开关，例如 master 开启 append 关闭"
 
 [profile.fetch_failed]
@@ -131,3 +131,82 @@ other = "自定义个人信息生成失败，请稍后再试"
 [profile.registration.unsupported_region]
 description = "查注册时间不支持该区服。"
 other = "这个区服无法计算注册时间"
+
+# 数据状态：/sud（抓包状态）、/msd（烤森数据状态）和烤森数据过期提示用同一种结构：
+# 第一行“<账号> 的<数据>”，第二行 profile.data_status.uploaded。
+
+[profile.data_status.suite]
+description = "/sud（抓包状态）的回复。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；Uploaded=上传时间行（profile.data_status.uploaded 或 profile.data_status.uploaded_unknown）。"
+other = "{{.Account}} 的抓包数据（Suite）\n{{.Uploaded}}"
+
+[profile.data_status.mysekai]
+description = "/msd（烤森数据状态）的回复。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；Uploaded=上传时间行（profile.data_status.uploaded 或 profile.data_status.uploaded_unknown）。"
+other = "{{.Account}} 的烤森（MySekai）数据\n{{.Uploaded}}"
+
+[profile.data_status.mysekai_expired]
+description = "烤森指令（地图、资源等）发现烤森数据已过期。结构与 /msd 相同，后面两行说明怎么办。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；Uploaded=上传时间行（profile.data_status.uploaded 或 profile.data_status.uploaded_unknown）。"
+other = "{{.Account}} 的烤森（MySekai）数据已过期\n{{.Uploaded}}\n要查看最新数据，请在 Haruki 工具箱重新上传烤森数据\n要继续查看已过期的数据，请在指令后加上“force”"
+
+[profile.data_status.mysekai_expired_current]
+description = "同 profile.data_status.mysekai_expired，但不知道是哪个绑定账号。占位符：Uploaded=上传时间行（profile.data_status.uploaded 或 profile.data_status.uploaded_unknown）。"
+other = "当前绑定账号的烤森（MySekai）数据已过期\n{{.Uploaded}}\n要查看最新数据，请在 Haruki 工具箱重新上传烤森数据\n要继续查看已过期的数据，请在指令后加上“force”"
+
+[profile.data_status.uploaded]
+description = "数据状态回复的上传时间行。占位符：Time=上传时间（format.time.datetime），例如“2026-10-09 14:05 (UTC+8)”；Age=距今多久（profile.data_status.age.*），例如“3小时20分钟前”。"
+other = "上次上传：{{.Time}}（{{.Age}}）"
+
+[profile.data_status.uploaded_unknown]
+description = "数据状态回复的上传时间行，上传时间未知时使用。"
+other = "上次上传时间未知"
+
+[profile.data_status.age.just_now]
+description = "上传时间距今不到 1 分钟，用在 profile.data_status.uploaded 的 Age 里。"
+other = "刚刚"
+
+[profile.data_status.age.minutes]
+description = "上传时间距今不到 1 小时，用在 profile.data_status.uploaded 的 Age 里，例如“5分钟前”。时长写法与 format.duration.* 一致，数字和单位之间不加空格。占位符：Minutes=分钟数。"
+other = "{{.Minutes}}分钟前"
+
+[profile.data_status.age.hours]
+description = "上传时间距今整小时数，例如“3小时前”。占位符：Hours=小时数。"
+other = "{{.Hours}}小时前"
+
+[profile.data_status.age.hours_minutes]
+description = "上传时间距今不到 1 天，例如“3小时20分钟前”。占位符：Hours=小时数；Minutes=分钟数。"
+other = "{{.Hours}}小时{{.Minutes}}分钟前"
+
+[profile.data_status.age.days]
+description = "上传时间距今整天数，例如“2天前”。占位符：Days=天数。"
+other = "{{.Days}}天前"
+
+[profile.data_status.age.days_hours]
+description = "上传时间距今 1 天以上，例如“2天3小时前”。占位符：Days=天数；Hours=小时数。"
+other = "{{.Days}}天{{.Hours}}小时前"
+
+[profile.data_status.self_only]
+description = "/sud、/msd 只能查询自己的数据，但指定了别人或游戏 UID。"
+other = "只能查询自己的上传状态"
+
+[profile.data_status.invalid_time]
+description = "工具箱返回的上传时间无法识别。"
+other = "获取上传时间失败，请稍后再试"
+
+[profile.bg.adjusted_any]
+description = "/调整个人信息背景 成功，但不知道是哪个账号（兜底）。"
+other = "已更新个人信息背景设置"
+
+[profile.data_source.suite]
+description = "图片：个人信息卡片上的数据来源名称：抓包数据。渲染服务会去掉末尾的“数据”二字，显示为“抓包”。"
+other = "抓包数据"
+
+[profile.data_source.mysekai]
+description = "图片：个人信息卡片上的数据来源名称：烤森数据。渲染服务会去掉末尾的“数据”二字，显示为“烤森”。"
+other = "烤森数据"
+
+[profile.data_source.public]
+description = "图片：个人信息卡片上的数据来源名称：游戏里公开的玩家信息（没有用户上传的数据时）。"
+other = "公开信息"
+
+[profile.image.modular_default_name]
+description = "图片：模块化个人信息默认布局的名称。"
+other = "默认模块化个人信息"

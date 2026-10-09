@@ -146,9 +146,9 @@ func testProfileDataSourceEdgeBranches(t *testing.T) {
 	mergeMySekaiDataSources(nil, map[string]any{}, false)
 	profile := &drawing.ProfileCardRequest{DataSources: []drawing.ProfileDataSource{{Name: "Suite"}}}
 	mergeMySekaiDataSources(profile, map[string]any{}, true)
-	testutil.Require(t, !(profile.DataSources[0].Name != "Mysekai数据"), "source-less replacement = %+v", profile.DataSources)
+	testutil.Require(t, !(profile.DataSources[0].Name != mySekaiDataLabel()), "source-less replacement = %+v", profile.DataSources)
 
-	profile = &drawing.ProfileCardRequest{DataSources: []drawing.ProfileDataSource{{Name: "Mysekai数据"}}}
+	profile = &drawing.ProfileCardRequest{DataSources: []drawing.ProfileDataSource{{Name: mySekaiDataLabel()}}}
 	mergeMySekaiDataSources(profile, map[string]any{"source": "toolbox"}, false)
 	{
 		testutil.Require(t, !(profile.DataSources[0].Source == nil), "existing MySekai source = %+v", profile.DataSources)
@@ -177,7 +177,7 @@ func testProfileDataSourceEdgeBranches(t *testing.T) {
 	replaceWithMySekaiDataSource(profile, map[string]any{})
 	{
 		testutil.Require(t, !(len(profile.DataSources) != 1), "fallback replacement source = %+v", profile.DataSources)
-		testutil.Require(t, !(profile.DataSources[0].Name != "Mysekai数据"), "fallback replacement source = %+v", profile.DataSources)
+		testutil.Require(t, !(profile.DataSources[0].Name != mySekaiDataLabel()), "fallback replacement source = %+v", profile.DataSources)
 	}
 
 	stripProfileDataSourceDetails(nil)

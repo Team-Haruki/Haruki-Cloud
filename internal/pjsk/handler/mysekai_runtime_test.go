@@ -166,7 +166,7 @@ func TestResolveMySekaiRenderContextPrefersSnapshotProfileCard(t *testing.T) {
 		card: &drawing.ProfileCardRequest{
 			Profile: &drawing.BasicProfile{ID: "99999999999999", Region: "TW", Nickname: "snapshot-card"},
 			DataSources: []drawing.ProfileDataSource{
-				{Name: "Suite数据"},
+				{Name: i18n.T("profile.data_source.suite")},
 			},
 		},
 	}
@@ -199,7 +199,7 @@ func TestResolveMySekaiRenderContextPrefersSnapshotProfileCard(t *testing.T) {
 	if result.Profile.Profile.Region != "JP" {
 		t.Fatalf("expected normalized profile region JP, got %q", result.Profile.Profile.Region)
 	}
-	if len(result.Profile.DataSources) == 0 || result.Profile.DataSources[0].Name != "Suite数据" {
+	if len(result.Profile.DataSources) == 0 || result.Profile.DataSources[0].Name != i18n.T("profile.data_source.suite") {
 		t.Fatalf("expected suite data source, got %+v", result.Profile.DataSources)
 	}
 }
@@ -249,7 +249,7 @@ func TestResolveMySekaiRenderContextPrefersPublicProfileCardWhenAvailable(t *tes
 				LeaderImagePath: "asset/user/snapshot.png",
 			},
 			DataSources: []drawing.ProfileDataSource{
-				{Name: "Suite数据"},
+				{Name: i18n.T("profile.data_source.suite")},
 			},
 		},
 	}
@@ -293,7 +293,7 @@ func TestResolveMySekaiRenderContextPrefersPublicProfileCardWhenAvailable(t *tes
 	if result.Profile.Profile.Region != "JP" {
 		t.Fatalf("expected normalized profile region JP, got %q", result.Profile.Profile.Region)
 	}
-	if len(result.Profile.DataSources) == 0 || result.Profile.DataSources[0].Name != "Suite数据" {
+	if len(result.Profile.DataSources) == 0 || result.Profile.DataSources[0].Name != i18n.T("profile.data_source.suite") {
 		t.Fatalf("expected suite data source metadata to remain, got %+v", result.Profile.DataSources)
 	}
 }
@@ -480,7 +480,7 @@ func TestExecuteMySekaiWarnsOnBlockedCNRegion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeMysekai() error = %v", err)
 	}
-	if got := rejectionText(t, message); got != cnMySekaiNeverOpensNotice {
+	if got := rejectionText(t, message); got != cnMySekaiNotice() {
 		t.Fatalf("warning = %q", got)
 	}
 }
@@ -586,12 +586,13 @@ func assertExpiredMysekaiMapRejected(t *testing.T, app *renderapp.App, staleUplo
 	if len(message) != 0 {
 		t.Fatalf("expected no image message when expired, got %+v", message)
 	}
-	expired := testutil.RequireUserError(t, err, usererror.CodeSetup, "mysekai.data_expired")
+	expired := testutil.RequireUserError(t, err, usererror.CodeSetup, "profile.data_status.mysekai_expired")
 	if expired.Message.Data["Account"].(i18n.Message).ID != "format.account.label" {
 		t.Fatalf("expired reply must name the bound account: %+v", expired.Message.Data)
 	}
-	if updatedAt := expired.Message.Data["UpdatedAt"].(i18n.Message).String(); !strings.Contains(updatedAt, time.UnixMilli(staleUploadTime).Format("2006")) {
-		t.Fatalf("expected the upload time to contain the upload year, got %q", updatedAt)
+	uploaded := expired.Message.Data["Uploaded"].(i18n.Message)
+	if uploaded.ID != "profile.data_status.uploaded" || !strings.Contains(uploaded.String(), time.UnixMilli(staleUploadTime).Format("2006")) {
+		t.Fatalf("expected the upload line with the upload year, got %+v", uploaded)
 	}
 }
 
@@ -854,7 +855,7 @@ func TestExecuteMySekaiResourceUsesPayloadProviderWithoutSnapshot(t *testing.T) 
 		if req.Profile.MysekaiLevel == nil || *req.Profile.MysekaiLevel != 9 {
 			t.Fatalf("expected mysekai rank on profile, got %+v", req.Profile.MysekaiLevel)
 		}
-		if len(req.Profile.DataSources) != 1 || req.Profile.DataSources[0].Name != "Mysekai数据" {
+		if len(req.Profile.DataSources) != 1 || req.Profile.DataSources[0].Name != i18n.T("profile.data_source.mysekai") {
 			t.Fatalf("expected mysekai-only profile data source, got %+v", req.Profile.DataSources)
 		}
 		_, _ = w.Write([]byte("mysekai-resource"))
@@ -1001,7 +1002,7 @@ func TestExecuteMySekaiMaterialViewsReturnTextWhenNoRemainingMaterials(t *testin
 			if err != nil {
 				t.Fatalf("executeMysekai() error = %v", err)
 			}
-			if got := singleTextSegment(t, message); got != "当前JP服账号已无剩余可获取材料" {
+			if got := singleTextSegment(t, message); got != i18n.T("mysekai.map.no_remaining", i18n.Data{"Region": i18n.RegionLabel("jp")}) {
 				t.Fatalf("unexpected message: %q", got)
 			}
 		})

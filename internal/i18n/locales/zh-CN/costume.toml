@@ -58,7 +58,7 @@ other = "找不到角色 ID {{.Character}} 的{{.Part}}“{{.Name}}”"
 
 [costume.part_name_ambiguous]
 description = "按名称匹配到角色的多个部件。占位符：Character=角色 ID；Part=部件名称（costume.part.*）；Name=用户写的名称；IDs=候选 ID，用“、”分隔。"
-other = "角色 ID {{.Character}} 有多个{{.Part}}匹配“{{.Name}}”（ID：{{.IDs}}），请写明组件 ID"
+other = "角色 ID {{.Character}} 有多个{{.Part}}匹配“{{.Name}}”（ID：{{.IDs}}），请写明部件 ID"
 
 [costume.query.type_invalid]
 description = "服装查询的类型不是服装、饰品或发型。"
@@ -81,8 +81,8 @@ description = "角色写了不止一次。"
 other = "重复指定了角色"
 
 [costume.query.part_name_required]
-description = "只写了角色 ID，没有写组件名称。"
-other = "除了角色 ID，还需要写组件名称"
+description = "只写了角色 ID，没有写部件名称。"
+other = "除了角色 ID，还需要写部件名称"
 
 [costume.query.unknown_param]
 description = "服装查询里有无法识别的参数，作为 common.bad_param 的原因行。"
@@ -97,8 +97,8 @@ description = "颜色 ID 写了不止一次。"
 other = "颜色 ID 重复"
 
 [costume.query.param_not_accepted]
-description = "组件查询不接受某个参数，作为 common.bad_param 的原因行。"
-other = "组件查询不接受这个参数"
+description = "部件查询不接受某个参数，作为 common.bad_param 的原因行。"
+other = "部件查询不接受这个参数"
 
 [costume.query.too_many_params]
 description = "服装查询的参数太多。"
@@ -240,3 +240,33 @@ other = "3D 模型渲染失败，请稍后再试"
 description = "获取 3D 渲染图片失败。"
 other = "获取 3D 渲染图片失败，请稍后再试"
 
+
+# 以下是画进图片的文字（costume.image.*）。
+
+[costume.image.list_title]
+description = "图片：服装列表的标题。占位符：Filter=筛选条件，用“ / ”分隔（部件、性别、角色、ID、关键词），没有筛选时为 costume.image.filter_all。"
+other = "查询结果：{{.Filter}}"
+
+[costume.image.filter_all]
+description = "图片：服装列表没有任何筛选条件时的筛选说明。"
+other = "全部服装"
+
+[costume.image.filter_ids]
+description = "图片：服装列表按饰品 ID 筛选时的筛选说明。占位符：IDs=饰品 ID，用“、”分隔。"
+other = "ID {{.IDs}}"
+
+[costume.image.gender_male]
+description = "图片：服装列表按性别筛选时的说明：男性服装。"
+other = "男装"
+
+[costume.image.gender_female]
+description = "图片：服装列表按性别筛选时的说明：女性服装。"
+other = "女装"
+
+[costume.image.gender_other]
+description = "图片：服装列表按性别筛选时的说明：不分性别的服装。"
+other = "其他"
+
+[costume.image.character_fallback]
+description = "图片：游戏数据里找不到角色名时，用角色 ID 代替。占位符：ID=角色 ID。"
+other = "角色 {{.ID}}"

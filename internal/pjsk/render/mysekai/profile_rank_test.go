@@ -3,6 +3,7 @@ package mysekai
 import (
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -12,7 +13,7 @@ func TestMysekaiProfileCardKeepsSuiteRank(t *testing.T) {
 	rank := 321
 	override := &drawing.ProfileCardRequest{
 		Profile:     &drawing.BasicProfile{ID: "1", Region: "JP"},
-		DataSources: []drawing.ProfileDataSource{{Name: "Suite数据"}},
+		DataSources: []drawing.ProfileDataSource{{Name: i18n.T("profile.data_source.suite")}},
 		Rank:        &rank,
 	}
 	merged := map[string]any{"userMysekaiGamedata": map[string]any{"mysekaiRank": 10}}

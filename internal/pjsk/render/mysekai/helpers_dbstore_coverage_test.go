@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	stdjson "encoding/json"
 	"haruki-cloud/internal/core/dbpool"
+	"haruki-cloud/internal/i18n"
 	"reflect"
 	"testing"
 
@@ -182,10 +183,10 @@ func testFixtureInfoTagAndBlueprintHelpers(t *testing.T) {
 	if len(positiveInfo) != 4 || len(negativeInfo) != 4 || positiveInfo[0] == negativeInfo[0] {
 		t.Fatalf("fixture basic info positive=%v negative=%v", positiveInfo, negativeInfo)
 	}
-	if got := fixtureBlueprintInfo(map[string]any{"isEnableSketch": true, "isObtainedByConvert": true, "craftCountLimit": 2}); len(got) != 3 || got[2] != "【最多制作2次】" {
+	if got := fixtureBlueprintInfo(map[string]any{"isEnableSketch": true, "isObtainedByConvert": true, "craftCountLimit": 2}); len(got) != 3 || got[2] != i18n.T("mysekai.image.fixture.craft_limit", i18n.Data{"Count": 2}) {
 		t.Fatalf("limited blueprint info = %v", got)
 	}
-	if got := fixtureBlueprintInfo(map[string]any{}); len(got) != 3 || got[2] != "【无制作次数限制】" {
+	if got := fixtureBlueprintInfo(map[string]any{}); len(got) != 3 || got[2] != i18n.T("mysekai.image.fixture.craft_unlimited") {
 		t.Fatalf("unlimited blueprint info = %v", got)
 	}
 	if fixtureTags(map[string]any{}, nil) != nil {

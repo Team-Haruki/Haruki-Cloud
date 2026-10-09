@@ -135,9 +135,9 @@ func TestMysekaiRuntimePureBranches(t *testing.T) {
 
 	rc := &RequestContext{Ctx: context.Background(), App: &renderapp.App{}, Platform: "qq", PlatformUserID: "actor"}
 	err = mysekaiExpiredError(rc, mySekaiRenderContext{}, rendermysekai.SnapshotStatus{LastUpdatedAt: time.Unix(1_700_000_000, 0)})
-	expired := testutil.RequireUserError(t, err, usererror.CodeSetup, "mysekai.data_expired")
-	if expired.Message.Data["Account"].(i18n.Message).ID != "binding.current_account" {
-		t.Fatalf("expired reply without a binding must name the current account: %+v", expired.Message.Data)
+	expired := testutil.RequireUserError(t, err, usererror.CodeSetup, "profile.data_status.mysekai_expired_current")
+	if expired.Message.Data["Uploaded"].(i18n.Message).ID != "profile.data_status.uploaded" {
+		t.Fatalf("expired reply must carry the upload line: %+v", expired.Message.Data)
 	}
 }
 

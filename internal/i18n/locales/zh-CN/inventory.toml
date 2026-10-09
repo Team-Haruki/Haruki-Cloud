@@ -1,13 +1,123 @@
-# 库存：查库存、背包筛选。
+# 背包：/查背包 和背包筛选。
 
 [inventory.filter_unknown]
-description = "库存筛选参数无法识别，作为 common.bad_param 的原因行。"
+description = "背包筛选参数无法识别，作为 common.bad_param 的原因行。"
 other = "可以写水晶、火罐、ms材料或记忆"
 
 [inventory.memory_cn_unavailable]
-description = "国服查库存不支持记忆。"
-other = "国服暂不支持查询记忆"
+description = "国服(CN)查背包时不支持记忆。占位符：Region=国服的区服显示名“国服(CN)”。"
+other = "{{.Region}}暂不支持查询记忆"
 
 [inventory.mysekai_cn_unavailable]
-description = "国服查库存不支持烤森材料。"
-other = "国服不支持查询烤森材料"
+description = "国服(CN)查背包时不支持烤森材料（国服不开放烤森功能）。占位符：Region=国服的区服显示名“国服(CN)”。"
+other = "{{.Region}}不支持查询烤森材料"
+
+# 以下是画进图片的文字（inventory.image.*）。
+
+[inventory.image.section.currency]
+description = "图片：背包分组标题：货币。"
+other = "货币"
+
+[inventory.image.section.boost]
+description = "图片：背包分组标题：演出能量（火罐等）。"
+other = "演出能量"
+
+[inventory.image.section.basic]
+description = "图片：背包分组标题：基础材料。"
+other = "基础材料"
+
+[inventory.image.section.training]
+description = "图片：背包分组标题：育成材料。"
+other = "育成材料"
+
+[inventory.image.section.costume]
+description = "图片：背包分组标题：服装材料。"
+other = "服装材料"
+
+[inventory.image.section.music]
+description = "图片：背包分组标题：音乐与演唱相关道具。"
+other = "音乐与演唱"
+
+[inventory.image.section.tickets]
+description = "图片：背包分组标题：招募券与兑换券。"
+other = "招募与兑换券"
+
+[inventory.image.section.event]
+description = "图片：背包分组标题：活动材料。"
+other = "活动材料"
+
+[inventory.image.section.memory]
+description = "图片：背包分组标题：记忆。"
+other = "记忆"
+
+[inventory.image.section.mysekai]
+description = "图片：背包分组标题：烤森材料。"
+other = "烤森材料"
+
+[inventory.image.section.misc]
+description = "图片：背包分组标题：其他。"
+other = "其他"
+
+[inventory.image.boost_total]
+description = "图片：/查背包 火罐 时，演出能量分组标题后面加上合计能恢复多少。占位符：Title=分组标题（inventory.image.section.boost）；Total=所有演出能量道具合计可恢复的点数。"
+other = "{{.Title}}（合计可恢复 {{.Total}} 点）"
+
+[inventory.image.coin.title]
+description = "图片：背包里金币的名称。"
+other = "金币"
+
+[inventory.image.coin.desc]
+description = "图片：背包里金币的说明。"
+other = "游戏内的基础货币，用于成员育成等"
+
+[inventory.image.jewel_free.title]
+description = "图片：背包里免费水晶的名称。"
+other = "免费水晶"
+
+[inventory.image.jewel_free.desc]
+description = "图片：背包里免费水晶的说明。"
+other = "免费获得的水晶，可用于招募等"
+
+[inventory.image.jewel_paid.title]
+description = "图片：背包里付费水晶的名称。"
+other = "付费水晶"
+
+[inventory.image.jewel_paid.desc]
+description = "图片：背包里付费水晶的说明。"
+other = "购买获得的水晶，可用于招募等"
+
+[inventory.image.virtual_coin.title]
+description = "图片：背包里虚拟币的名称。"
+other = "虚拟币"
+
+[inventory.image.virtual_coin.desc]
+description = "图片：背包里虚拟币的说明。"
+other = "虚拟 Live 等玩法中使用的货币"
+
+[inventory.image.unnamed.material]
+description = "图片：游戏数据里没有名称的材料。占位符：ID=材料 ID。"
+other = "材料 {{.ID}}"
+
+[inventory.image.unnamed.gacha_ticket]
+description = "图片：游戏数据里没有名称的招募券。占位符：ID=招募券 ID。"
+other = "招募券 {{.ID}}"
+
+[inventory.image.unnamed.practice_ticket]
+description = "图片：游戏数据里没有名称的练习乐谱。占位符：ID=练习乐谱 ID。"
+other = "练习乐谱 {{.ID}}"
+
+[inventory.image.unnamed.skill_practice_ticket]
+description = "图片：游戏数据里没有名称的技能升级乐谱。占位符：ID=技能升级乐谱 ID。"
+other = "技能升级乐谱 {{.ID}}"
+
+[inventory.image.unnamed.gacha_ceil_item]
+description = "图片：游戏数据里没有名称的招募贴纸（招募保底兑换道具）。占位符：ID=道具 ID。"
+other = "招募贴纸 {{.ID}}"
+
+[inventory.image.unnamed.mysekai_material]
+description = "图片：游戏数据里没有名称的烤森材料。占位符：ID=材料 ID。"
+other = "烤森材料 {{.ID}}"
+
+[inventory.image.unnamed.boost_item]
+description = "图片：游戏数据里没有名称的演出能量道具。占位符：ID=道具 ID。"
+other = "演出能量道具 {{.ID}}"

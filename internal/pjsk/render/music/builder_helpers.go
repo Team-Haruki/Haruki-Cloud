@@ -92,13 +92,13 @@ var vocalCaptionOverrides = map[string]string{
 	"バーチャル・シンガーver.":               virtualSingerLabel,
 	"バーチャルシンガーver.":                virtualSingerLabel,
 	"アナザーボーカルver.":                 anotherVocalLabel,
-	"原曲ver.":                       originalSongLabel,
-	"原曲 ver.":                      originalSongLabel,
+	"原曲ver.":                       originalSongLabel, //copylint:ignore 游戏数据原文（匹配键）
+	"原曲 ver.":                      originalSongLabel, //copylint:ignore 游戏数据原文（匹配键）
 	"ストリーミングライブver.":               connectLiveLabel,
 	"ストリーミングライブ ver.":              connectLiveLabel,
 	"エイプリルフールver.":                 aprilFoolLabel,
 	"あんさんぶるスターズ！！コラボver.":          ensembleStarsCollabLabel,
-	"「劇場版プロジェクトセカイ」ver.":           "Movie",
+	"「劇場版プロジェクトセカイ」ver.":           "Movie", //copylint:ignore 游戏数据原文（匹配键）
 	"sekai ver.":                   "Sekai",
 	"sekai":                        "Sekai",
 	"virtual singer ver.":          virtualSingerLabel,
@@ -148,12 +148,12 @@ var vocalLocalizationByRegion = map[renderregion.Value]map[string]string{
 		virtualSingerLowerLabel: virtualSingerLabel,
 	},
 	renderregion.CN: {
-		"sekai":                 "「世界」",
-		virtualSingerLowerLabel: "虚拟歌手",
+		"sekai":                 "「世界」", //copylint:ignore 游戏内名称
+		virtualSingerLowerLabel: "虚拟歌手", //copylint:ignore 游戏内名称（国服）
 	},
 	renderregion.TW: {
-		"sekai":                 "「世界」",
-		virtualSingerLowerLabel: "虚擬歌手",
+		"sekai":                 "「世界」", //copylint:ignore 游戏内名称
+		virtualSingerLowerLabel: "虛擬歌手", //copylint:ignore 游戏内名称（台服）
 	},
 	renderregion.KR: {
 		"sekai":                 "세카이",

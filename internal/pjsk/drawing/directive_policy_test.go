@@ -193,7 +193,7 @@ func TestRenderCacheDisabledEndpointsUsePostUncached(t *testing.T) {
 }
 
 func TestRenderCacheKeyVersionForAndTTLEncoding(t *testing.T) {
-	if renderCacheKeyVersionFor("api/pjsk/event/list") != 5 || renderCacheKeyVersionFor("api/pjsk/card/box") != 3 {
+	if renderCacheKeyVersionFor("api/pjsk/event/list") != 5 || renderCacheKeyVersionFor("api/pjsk/card/box") != 4 {
 		t.Fatal("key version drift")
 	}
 	if directiveTTLSeconds(0, true) != 0 || directiveTTLSeconds(1500*time.Millisecond, false) != 2 || directiveTTLSeconds(0, false) != 1 {

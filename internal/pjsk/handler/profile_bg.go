@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	profileHorizontalKeywords = []string{"横屏", "横向", "横版"}
-	profileVerticalKeywords   = []string{"竖屏", "竖向", "竖版", "纵向"}
+	profileHorizontalKeywords = []string{"横屏", "横向", "横版"}       //copylint:ignore 解析关键字
+	profileVerticalKeywords   = []string{"竖屏", "竖向", "竖版", "纵向"} //copylint:ignore 解析关键字
 )
 
 func extractProfileVerticalArg(args string) (*bool, string) {
@@ -53,7 +53,7 @@ func extractFirstImageURL(ctx HarrukiSekaiHandlerContext) string {
 
 func parseProfileBGAdjustArgs(args string) (accountdata.ProfileSettingsCommandParams, error) {
 	params := accountdata.ProfileSettingsCommandParams{}
-	args = strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(args, "度", ""), "%", ""))
+	args = strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(args, "度", ""), "%", "")) //copylint:ignore 解析关键字
 	if args == "" {
 		return params, nil
 	}
@@ -81,24 +81,24 @@ func parseProfileBGAdjustArgs(args string) (accountdata.ProfileSettingsCommandPa
 func parseProfileBGToken(tokens []string, index int) (string, string, int, error) {
 	token := strings.TrimSpace(tokens[index])
 	switch strings.ToLower(token) {
-	case "模糊", "blur", "透明", "alpha":
+	case "模糊", "blur", "透明", "alpha": //copylint:ignore 解析关键字
 		if index+1 >= len(tokens) {
 			return "", "", 0, usererror.Misuse(i18n.M("profile.bg.adjust_usage"))
 		}
 		return profileBGTokenKind(token), tokens[index+1], 1, nil
 	default:
-		if strings.HasPrefix(token, "模糊") {
-			return "blur", strings.TrimPrefix(token, "模糊"), 0, nil
+		if strings.HasPrefix(token, "模糊") { //copylint:ignore 解析关键字
+			return "blur", strings.TrimPrefix(token, "模糊"), 0, nil //copylint:ignore 解析关键字
 		}
-		if strings.HasPrefix(token, "透明") {
-			return "alpha", strings.TrimPrefix(token, "透明"), 0, nil
+		if strings.HasPrefix(token, "透明") { //copylint:ignore 解析关键字
+			return "alpha", strings.TrimPrefix(token, "透明"), 0, nil //copylint:ignore 解析关键字
 		}
 		return "", "", 0, usererror.BadParam(token, i18n.M("profile.bg.param_unknown"))
 	}
 }
 
 func profileBGTokenKind(token string) string {
-	if strings.EqualFold(token, "blur") || token == "模糊" {
+	if strings.EqualFold(token, "blur") || token == "模糊" { //copylint:ignore 解析关键字
 		return "blur"
 	}
 	return "alpha"

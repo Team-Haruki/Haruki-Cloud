@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
@@ -28,7 +29,15 @@ func TestInventoryRefactorFallbackItemsAndInvalidEntries(t *testing.T) {
 	if len(items) != 8 {
 		t.Fatalf("inventory items = %d, want coin plus seven fallbacks", len(items))
 	}
-	for _, want := range []string{"材料 11", "招募券 12", "练习乐谱 13", "技能升级乐谱 14", "招募贴纸 15", "MySekai 材料 16", "演出能量道具 17"} {
+	for _, want := range []string{
+		i18n.T("inventory.image.unnamed.material", i18n.Data{"ID": 11}),
+		i18n.T("inventory.image.unnamed.gacha_ticket", i18n.Data{"ID": 12}),
+		i18n.T("inventory.image.unnamed.practice_ticket", i18n.Data{"ID": 13}),
+		i18n.T("inventory.image.unnamed.skill_practice_ticket", i18n.Data{"ID": 14}),
+		i18n.T("inventory.image.unnamed.gacha_ceil_item", i18n.Data{"ID": 15}),
+		i18n.T("inventory.image.unnamed.mysekai_material", i18n.Data{"ID": 16}),
+		i18n.T("inventory.image.unnamed.boost_item", i18n.Data{"ID": 17}),
+	} {
 		found := false
 		for _, item := range items {
 			found = found || item.Name == want

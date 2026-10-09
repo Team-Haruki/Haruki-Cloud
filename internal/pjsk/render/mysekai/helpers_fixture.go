@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -77,40 +78,36 @@ func fixtureColorImages(resolve pathResolver, item map[string]any) []drawing.Mys
 	return images
 }
 
-func fixtureBasicInfo(item map[string]any) []string {
-	boolLabel := func(ok bool, yes, no string) string {
-		if ok {
-			return yes
-		}
-		return no
+// fixtureInfoLabel picks the yes or no label of a fixture detail flag. The
+// labels of one detail image carry no emoji, so the group stays uniform.
+func fixtureInfoLabel(ok bool, yes, no i18n.Message) string {
+	if ok {
+		return yes.String()
 	}
+	return no.String()
+}
+
+func fixtureBasicInfo(item map[string]any) []string {
 	info := []string{
-		boolLabel(boolValue(item["isAssembled"]), "【🔨可制作】", "【❌不可制作】"),
-		boolLabel(boolValue(item["isDisassembled"]), "【♻️可回收】", "【❌不可回收】"),
+		fixtureInfoLabel(boolValue(item["isAssembled"]), i18n.M("mysekai.image.fixture.craftable"), i18n.M("mysekai.image.fixture.not_craftable")),
+		fixtureInfoLabel(boolValue(item["isDisassembled"]), i18n.M("mysekai.image.fixture.recyclable"), i18n.M("mysekai.image.fixture.not_recyclable")),
 	}
 	playerAction := stringValue(item["mysekaiFixturePlayerActionType"]) != "" && stringValue(item["mysekaiFixturePlayerActionType"]) != "no_action"
-	info = append(info, boolLabel(playerAction, "【👋玩家可交互】", "【❌玩家不可交互】"))
-	info = append(info, boolLabel(boolValue(item["isGameCharacterAction"]), "【🎡角色可交互】", "【❌角色无交互】"))
+	info = append(info, fixtureInfoLabel(playerAction, i18n.M("mysekai.image.fixture.player_action"), i18n.M("mysekai.image.fixture.no_player_action")))
+	info = append(info, fixtureInfoLabel(boolValue(item["isGameCharacterAction"]), i18n.M("mysekai.image.fixture.character_action"), i18n.M("mysekai.image.fixture.no_character_action")))
 	return info
 }
 
 func fixtureBlueprintInfo(blueprint map[string]any) []string {
-	boolLabel := func(ok bool, yes, no string) string {
-		if ok {
-			return yes
-		}
-		return no
-	}
 	limit := intNumber(blueprint["craftCountLimit"], 0)
 	info := []string{
-		boolLabel(boolValue(blueprint["isEnableSketch"]), "【📝蓝图可抄写】", "【蓝图不可抄写】"),
-		boolLabel(boolValue(blueprint["isObtainedByConvert"]), "【🎁蓝图可合成】", "【蓝图不可合成】"),
+		fixtureInfoLabel(boolValue(blueprint["isEnableSketch"]), i18n.M("mysekai.image.fixture.sketchable"), i18n.M("mysekai.image.fixture.not_sketchable")),
+		fixtureInfoLabel(boolValue(blueprint["isObtainedByConvert"]), i18n.M("mysekai.image.fixture.convertible"), i18n.M("mysekai.image.fixture.not_convertible")),
 	}
 	if limit > 0 {
-		info = append(info, fmt.Sprintf("【最多制作%d次】", limit))
-		return info
+		return append(info, i18n.T("mysekai.image.fixture.craft_limit", i18n.Data{"Count": limit}))
 	}
-	return append(info, "【无制作次数限制】")
+	return append(info, i18n.T("mysekai.image.fixture.craft_unlimited"))
 }
 
 func fixtureTags(item map[string]any, tags map[int]map[string]any) []string {

@@ -2,12 +2,12 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
@@ -146,7 +146,6 @@ func (sekaiHandlers) BPMHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/pjsk bpm", "/查bpm", "/查BPM",
 		},
-		Helper: bpmDetailHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
@@ -173,7 +172,6 @@ func (sekaiHandlers) BPMSearchHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/bpms", "/bpm搜索", "/BPM搜索", "/pjsk bpms", "/pjsk bpm search",
 		},
-		Helper: bpmSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
@@ -195,18 +193,6 @@ func (sekaiHandlers) BPMSearchHandle() HarukiSekaiCommandHandler {
 		},
 	}, executeMusic)
 }
-
-const bpmDetailHelp = `请输入要查询 BPM 的歌曲名、别名或歌曲 ID，例如:
-/查BPM Help me, ERINNNNNN!!
-/查BPM music123 master
-
-如果匹配到多个歌曲，会返回候选列表，请改用歌曲 ID 查询。`
-
-const bpmSearchHelp = `请输入要反查的 BPM 数值，例如:
-/bpms 200
-/bpm搜索 200 expert
-
-返回包含该 BPM 的歌曲列表；即使只有一个匹配结果也按列表输出。`
 
 func (sekaiHandlers) MusicCoverHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
@@ -246,11 +232,11 @@ func normalizeMusicListResultFilterToken(token string) string {
 	normalized = strings.ReplaceAll(normalized, "-", "")
 	normalized = strings.ReplaceAll(normalized, " ", "")
 	switch normalized {
-	case "未ap", "未allperfect", "未全perfect", "未全p", "notap":
+	case "未ap", "未allperfect", "未全perfect", "未全p", "notap": //copylint:ignore 解析关键字
 		return "not_ap"
-	case "未fc", "未fullcombo", "notfc":
+	case "未fc", "未fullcombo", "notfc": //copylint:ignore 解析关键字
 		return "not_fc"
-	case "未完成", "未clear", "未通关", "notclear":
+	case "未完成", "未clear", "未通关", "notclear": //copylint:ignore 解析关键字
 		return "not_clear"
 	default:
 		return ""
@@ -267,7 +253,7 @@ func extractMusicListFullFlag(args string) (bool, string) {
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
 		switch strings.ToLower(strings.TrimSpace(field)) {
-		case "full", "-f", "--full", "全部":
+		case "full", "-f", "--full", "全部": //copylint:ignore 解析关键字
 			full = true
 		default:
 			remaining = append(remaining, field)
@@ -371,14 +357,14 @@ func parseMusicListComparisonValue(
 	return map[string]any{key: value + delta}, true
 }
 
-var musicListRangeSeparators = regexp.MustCompile(`^(\d+)\s*(?:-|~|～|,|，|\.\.|到|至)\s*(\d+)$`)
+var musicListRangeSeparators = regexp.MustCompile(`^(\d+)\s*(?:-|~|～|,|，|\.\.|到|至)\s*(\d+)$`) //copylint:ignore 解析关键字
 
 func parseMusicListRangeToken(token string) (int, int, bool) {
 	normalized := strings.TrimSpace(token)
 	for _, pair := range [][2]string{
 		{"[", "]"},
 		{"(", ")"},
-		{"【", "】"},
+		{"【", "】"}, //copylint:ignore 解析关键字
 		{"（", "）"},
 	} {
 		if strings.HasPrefix(normalized, pair[0]) && strings.HasSuffix(normalized, pair[1]) {
@@ -410,7 +396,7 @@ func parseMusicListExactLevelToken(token string) (int, bool) {
 
 func isMusicListRangeSeparatorToken(token string) bool {
 	switch strings.TrimSpace(token) {
-	case "-", "~", "～", ",", "，", "..", "到", "至":
+	case "-", "~", "～", ",", "，", "..", "到", "至": //copylint:ignore 解析关键字
 		return true
 	default:
 		return false
@@ -570,7 +556,7 @@ func executeMusicCover(rc *RequestContext, musicCtrl *rendermusic.Controller) (o
 	if err != nil {
 		return nil, err
 	}
-	return append(image, onebot11.Text(fmt.Sprintf("【%d】%s", result.Music.ID, result.Music.Title))), nil
+	return append(image, onebot11.Text(i18n.T("music.caption", i18n.Data{"ID": result.Music.ID, "Title": result.Music.Title}))), nil
 }
 
 func executeMusicBPMDetail(rc *RequestContext, musicCtrl *rendermusic.Controller) (onebot11.Message, error) {
@@ -609,32 +595,34 @@ func renderMusicBPMDetailMessage(rc *RequestContext, result *rendermusic.BPMResu
 	return append(message, onebot11.Text(formatMusicBPMResult(result)))
 }
 
+// formatMusicBPMResult is the text reply of /查BPM: the song, then one line
+// per known value.
 func formatMusicBPMResult(result *rendermusic.BPMResult) string {
 	if result == nil {
-		return "未找到 BPM 信息"
+		return i18n.T("music.bpm.no_data")
 	}
-	var builder strings.Builder
+	lines := make([]string, 0, 6)
 	if result.Music != nil {
-		fmt.Fprintf(&builder, "【%d】%s", result.Music.ID, result.Music.Title)
+		lines = append(lines, i18n.T("music.caption", i18n.Data{"ID": result.Music.ID, "Title": result.Music.Title}))
 	} else {
-		builder.WriteString("歌曲 BPM")
+		lines = append(lines, i18n.T("music.bpm.detail.title"))
 	}
 	if diff := formatMusicDifficultyLabel(result.Difficulty); diff != "" {
-		fmt.Fprintf(&builder, "\n难度：%s", diff)
+		lines = append(lines, i18n.T("music.bpm.detail.difficulty", i18n.Data{"Difficulty": diff}))
 	}
 	if result.MainBPM > 0 {
-		fmt.Fprintf(&builder, "\n主 BPM：%s", formatMusicBPM(result.MainBPM))
+		lines = append(lines, i18n.T("music.bpm.detail.main", i18n.Data{"BPM": formatMusicBPM(result.MainBPM)}))
 	}
 	if sequence := formatMusicBPMSequence(result.Events); sequence != "" {
-		fmt.Fprintf(&builder, "\nBPM 变化：%s", sequence)
+		lines = append(lines, i18n.T("music.bpm.detail.changes", i18n.Data{"Sequence": sequence}))
 	}
 	if result.Duration > 0 {
-		fmt.Fprintf(&builder, "\n时长：%s", formatMusicDuration(result.Duration))
+		lines = append(lines, i18n.T("music.bpm.detail.duration", i18n.Data{"Duration": formatMusicDuration(result.Duration)}))
 	}
 	if result.BarCount > 0 {
-		fmt.Fprintf(&builder, "\n小节数：%d", result.BarCount)
+		lines = append(lines, i18n.T("music.bpm.detail.bars", i18n.Data{"Count": result.BarCount}))
 	}
-	return builder.String()
+	return strings.Join(lines, "\n")
 }
 
 func formatMusicBPMSequence(events []rendermusic.BPMEvent) string {
@@ -654,12 +642,8 @@ func formatMusicBPMSequence(events []rendermusic.BPMEvent) string {
 	return strings.Join(values, " / ")
 }
 
-func formatMusicDuration(seconds float64) string {
-	total := int(math.Round(seconds))
-	if total < 0 {
-		total = 0
-	}
-	return fmt.Sprintf("%d:%02d", total/60, total%60)
+func formatMusicDuration(seconds float64) i18n.Message {
+	return i18n.FormatDuration(time.Duration(math.Round(seconds)) * time.Second)
 }
 
 func renderNoteCountLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, query rendermusic.NoteCountQuery, matches []rendermusic.NoteCountMatch) (onebot11.Message, error) {
@@ -674,7 +658,11 @@ func renderNoteCountLookupListMessages(rc *RequestContext, musicCtrl *rendermusi
 			Level:      item.PlayLevel,
 		})
 	}
-	return renderMusicLookupListMessages(rc, musicCtrl, rc.Cmd.Region, "物量", strconv.Itoa(query.NoteCount), query.Difficulty, query.Difficulty, items)
+	title := i18n.T("music.lookup_list.note_count", i18n.Data{"Count": query.NoteCount})
+	if diff := formatMusicDifficultyLabel(query.Difficulty); diff != "" {
+		title = i18n.T("music.lookup_list.note_count_difficulty", i18n.Data{"Count": query.NoteCount, "Difficulty": diff})
+	}
+	return renderMusicLookupListMessages(rc, musicCtrl, rc.Cmd.Region, title, query.Difficulty, items)
 }
 
 func renderBPMLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, query rendermusic.BPMQuery, matches []rendermusic.BPMMatch) (onebot11.Message, error) {
@@ -688,10 +676,11 @@ func renderBPMLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Cont
 			MusicID: item.Music.ID,
 		})
 	}
-	return renderMusicBriefLookupListMessages(rc, musicCtrl, rc.Cmd.Region, "BPM", formatMusicBPM(query.BPM), items)
+	title := i18n.T("music.lookup_list.bpm", i18n.Data{"BPM": formatMusicBPM(query.BPM)})
+	return renderMusicBriefLookupListMessages(rc, musicCtrl, rc.Cmd.Region, title, items)
 }
 
-func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, prefix string, value string, requestDifficulty string, titleDifficulty string, items []rendermusic.ListItemQuery) (onebot11.Message, error) {
+func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, title string, requestDifficulty string, items []rendermusic.ListItemQuery) (onebot11.Message, error) {
 	if len(items) == 0 {
 		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_match"))
 	}
@@ -699,7 +688,7 @@ func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Co
 		Items:       items,
 		Difficulty:  requestDifficulty,
 		Region:      region,
-		Title:       stringPtr(buildMusicLookupListTitle(prefix, value, titleDifficulty)),
+		Title:       stringPtr(title),
 		TitleShadow: true,
 	})
 	if err != nil {
@@ -712,14 +701,14 @@ func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Co
 	return image, nil
 }
 
-func renderMusicBriefLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, prefix string, value string, items []rendermusic.BriefListItemQuery) (onebot11.Message, error) {
+func renderMusicBriefLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, title string, items []rendermusic.BriefListItemQuery) (onebot11.Message, error) {
 	if len(items) == 0 {
 		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_match"))
 	}
 	data, err := musicCtrl.RenderMusicBriefListImage(rendermusic.BriefListQuery{
 		Items:       items,
 		Region:      region,
-		Title:       stringPtr(buildMusicLookupListTitle(prefix, value, "")),
+		Title:       stringPtr(title),
 		TitleShadow: true,
 	})
 	if err != nil {
@@ -804,28 +793,12 @@ func dedupeBPMMatchesByMusic(matches []rendermusic.BPMMatch) []rendermusic.BPMMa
 	return result
 }
 
-func buildMusicLookupListTitle(prefix string, value string, difficulty string) string {
-	title := fmt.Sprintf("%s %s 匹配结果", strings.TrimSpace(prefix), strings.TrimSpace(value))
-	if diffLabel := formatMusicDifficultyLabel(difficulty); diffLabel != "" {
-		title = fmt.Sprintf("%s %s %s 匹配结果", strings.TrimSpace(prefix), strings.TrimSpace(value), diffLabel)
-	}
-	return strings.TrimSpace(title)
-}
-
+// formatMusicDifficultyLabel is the display name of a known difficulty key
+// (DifficultyLabel), "" for an empty or unknown key.
 func formatMusicDifficultyLabel(difficulty string) string {
-	switch strings.ToLower(strings.TrimSpace(difficulty)) {
-	case "easy":
-		return "EASY"
-	case "normal":
-		return "NORMAL"
-	case "hard":
-		return "HARD"
-	case "expert":
-		return "EXPERT"
-	case "master":
-		return "MASTER"
-	case "append":
-		return "APPEND"
+	switch key := strings.ToLower(strings.TrimSpace(difficulty)); key {
+	case "easy", "normal", "hard", "expert", "master", "append":
+		return i18n.DifficultyLabel(key).String()
 	default:
 		return ""
 	}

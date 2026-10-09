@@ -56,7 +56,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		MainGenres: collector.mainGenres(mainGenreMap, subGenreMap),
 	}
 	if options.showProgress && collector.totalAll > 0 {
-		message := fmt.Sprintf("总收集进度（不含生日家具）: %d/%d (%.1f%%)", collector.totalObtained, collector.totalAll, percent(collector.totalObtained, collector.totalAll))
+		message := i18n.T("mysekai.image.fixture.progress", i18n.Data{"Obtained": collector.totalObtained, "Total": collector.totalAll, "Percent": i18n.Percent(percent(collector.totalObtained, collector.totalAll))})
 		request.ProgressMessage = &message
 	}
 	return request, nil
@@ -282,7 +282,7 @@ func (c *fixtureListCollector) progressMessage(obtained, total int) *string {
 	if !c.options.showProgress || total <= 0 {
 		return nil
 	}
-	message := fmt.Sprintf("%d/%d (%.1f%%)", obtained, total, percent(obtained, total))
+	message := i18n.T("mysekai.image.progress", i18n.Data{"Obtained": obtained, "Total": total, "Percent": i18n.Percent(percent(obtained, total))})
 	return &message
 }
 

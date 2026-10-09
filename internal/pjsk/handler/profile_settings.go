@@ -58,7 +58,7 @@ func resolveSettingsSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 }
 
 var profileTimeZoneBaseCommands = []string{
-	"/pjsk时区", "/pjsktimezone", "/pjsktz",
+	"/pjsk时区", "/pjsktimezone", "/pjsktz", //copylint:ignore 指令触发词
 }
 
 func profileTimeZoneCommands() []string {
@@ -122,9 +122,9 @@ func parseProfileDifficultyToken(raw string) sekaiapi.MusicDifficultyType {
 
 func parseProfileDifficultyState(raw string) (bool, bool) {
 	switch strings.ToLower(strings.TrimSpace(raw)) {
-	case "开启", "开", "on", "enable", "enabled", "true", "1":
+	case "开启", "开", "on", "enable", "enabled", "true", "1": //copylint:ignore 解析关键字
 		return true, true
-	case "关闭", "关", "off", "disable", "disabled", "false", "0":
+	case "关闭", "关", "off", "disable", "disabled", "false", "0": //copylint:ignore 解析关键字
 		return false, true
 	default:
 		return false, false
@@ -137,7 +137,7 @@ func parseProfileDifficultyCompactToggle(raw string) (accountdata.ProfileDifficu
 		return accountdata.ProfileDifficultyToggle{}, false
 	}
 
-	for _, suffix := range []string{"开启", "关闭", "开", "关"} {
+	for _, suffix := range []string{"开启", "关闭", "开", "关"} { //copylint:ignore 解析关键字
 		if !strings.HasSuffix(lower, suffix) {
 			continue
 		}
@@ -153,7 +153,7 @@ func parseProfileDifficultyCompactToggle(raw string) (accountdata.ProfileDifficu
 }
 
 func parseProfileDifficultyToggles(raw string) ([]accountdata.ProfileDifficultyToggle, error) {
-	normalized := strings.NewReplacer("，", " ", ",", " ", "、", " ", "\n", " ", "\t", " ").Replace(strings.TrimSpace(raw))
+	normalized := strings.NewReplacer("，", " ", ",", " ", "、", " ", "\n", " ", "\t", " ").Replace(strings.TrimSpace(raw)) //copylint:ignore 解析关键字
 	fields := strings.Fields(normalized)
 	if len(fields) == 0 {
 		return nil, fmt.Errorf("empty")
@@ -480,7 +480,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			return rejectCNMySekai(rc)
 		}
 		if p.Mode != "self" {
-			return nil, usererror.Forbidden(i18n.M("binding.data_status.self_only"))
+			return nil, usererror.Forbidden(i18n.M("profile.data_status.self_only"))
 		}
 
 		binding, hid, err := resolveBinding(false, true)
@@ -505,7 +505,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		bindingServer = binding.Server
 	default:
 		if p.Mode != "self" {
-			return nil, usererror.Forbidden(i18n.M("binding.data_status.self_only"))
+			return nil, usererror.Forbidden(i18n.M("profile.data_status.self_only"))
 		}
 		binding, hid, err := resolveBinding(true, false)
 		if err != nil {
@@ -540,14 +540,14 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 
 	ts, err := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
 	if err != nil {
-		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("binding.data_status.invalid_time"), fmt.Errorf("parse upload time: %w", err))
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.data_status.invalid_time"), fmt.Errorf("parse upload time: %w", err))
 	}
 
 	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, resolvedHarukiID)
-	updatedAt, ago := uploadTimeLabels(time.Unix(ts, 0), timeZone)
+	uploaded := uploadedLine(time.Unix(ts, 0), timeZone)
 	account := i18n.AccountLabel(bindingServer, pjskUID, bindingVisible)
 	if label == privateDataMySekai {
-		return onebot11.Message{onebot11.Text(i18n.T("binding.data_status.mysekai", i18n.Data{"Account": account, "UpdatedAt": updatedAt, "Ago": ago}))}, nil
+		return onebot11.Message{onebot11.Text(i18n.T("profile.data_status.mysekai", i18n.Data{"Account": account, "Uploaded": uploaded}))}, nil
 	}
-	return onebot11.Message{onebot11.Text(i18n.T("binding.data_status.suite", i18n.Data{"Account": account, "UpdatedAt": updatedAt, "Ago": ago}))}, nil
+	return onebot11.Message{onebot11.Text(i18n.T("profile.data_status.suite", i18n.Data{"Account": account, "Uploaded": uploaded}))}, nil
 }

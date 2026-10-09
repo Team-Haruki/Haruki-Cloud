@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -67,7 +68,7 @@ func buildProfileCardDataSources(detail *drawing.DetailedProfileCardRequest, sna
 	}
 	return []drawing.ProfileDataSource{
 		{
-			Name:   "Sekai API",
+			Name:   i18n.T("profile.data_source.public"),
 			Source: new(detail.Source),
 			Mode:   common.CloneStringPtr(detail.Mode),
 		},

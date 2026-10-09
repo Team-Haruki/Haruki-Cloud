@@ -14,8 +14,9 @@ import (
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/internal/testutil"
 
-	_ "github.com/mattn/go-sqlite3"
 	"haruki-cloud/internal/i18n"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type accountCoverageIdentity struct {

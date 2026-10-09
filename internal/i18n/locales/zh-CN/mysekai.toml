@@ -1,9 +1,5 @@
 # 烤森（MySekai）：总览、地图、资源、家具、蓝图、商店、对话、照片、百景、大门升级。
 
-[mysekai.data_expired]
-description = "烤森相关指令发现烤森数据已过期（与 /sud、/msd 的格式一致）。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；UpdatedAt=上次上传时间（format.time.*）；Ago=距今多久，例如“约3小时前”。"
-other = "{{.Account}} 的烤森数据已过期\n上次上传：{{.UpdatedAt}}（{{.Ago}}）\n要查看最新数据，请在 Haruki 工具箱重新上传烤森（MySekai）数据\n确定要查看当前数据时，请在指令后加上 force"
-
 [mysekai.data_invalid]
 description = "烤森数据无法解析（上传的数据损坏）。"
 other = "烤森数据解析失败，请在 Haruki 工具箱重新上传烤森（MySekai）数据"
@@ -155,3 +151,35 @@ other = "百景名次应为正整数"
 [mysekai.character_or_none]
 description = "烤森蓝图、对话列表的参数既不是角色名也不是空（例如写了家具 ID）。"
 other = "请写角色名，或者不写参数；查看家具详情请使用 /msf"
+
+[mysekai.cn_gate.notice]
+description = "国服(CN)发送烤森指令（没有开放的群）时的回复。占位符：Region=国服的区服显示名“国服(CN)”。"
+other = "{{.Region}}不会开放烤森功能，请不要再发送烤森指令"
+
+[mysekai.cn_gate.notice_counted]
+description = "同 mysekai.cn_gate.notice，带上这是第几次提醒。占位符：Region=国服的区服显示名“国服(CN)”；Attempts=第几次提醒；Threshold=最多提醒几次。"
+other = "{{.Region}}不会开放烤森功能，请不要再发送烤森指令（{{.Attempts}}/{{.Threshold}}）"
+
+[mysekai.cn_gate.notice_last]
+description = "同 mysekai.cn_gate.notice_counted，最后一次提醒，之后不再回复。占位符：Region=国服的区服显示名“国服(CN)”；Attempts=第几次提醒；Threshold=最多提醒几次。"
+other = "{{.Region}}不会开放烤森功能，请不要再发送烤森指令（{{.Attempts}}/{{.Threshold}}）\n之后的{{.Region}}烤森指令将不再回复"
+
+[mysekai.map.no_remaining]
+description = "烤森资源、资源地图、地图（不显示已采集）：已经没有可采集的材料。占位符：Region=区服显示名，例如“日服(JP)”。"
+other = "当前{{.Region}}账号已经没有可采集的烤森材料"
+
+[mysekai.shop.empty]
+description = "烤森商店加了“全部”后，当前筛选下仍然没有任何商品。"
+other = "当前筛选下没有商店商品"
+
+[mysekai.shop.pass_inactive]
+description = "烤森商店：烤森通行证没有生效，没有可以购买的商品。“全部”是用户可以加在指令后的参数。"
+other = "烤森通行证未生效，暂时没有可购买的商品；在指令后加上“全部”可以查看所有商品的状态"
+
+[mysekai.shop.none_buyable]
+description = "烤森商店：当前筛选下没有可以购买的商品。“全部”是用户可以加在指令后的参数。"
+other = "当前筛选下没有可购买的商品；在指令后加上“全部”可以查看所有商品的状态"
+
+[mysekai.photo.taken_at]
+description = "烤森照片下方的拍摄时间。占位符：Time=拍摄时间（format.time.datetime，未知时为 format.time.unknown）。"
+other = "拍摄时间：{{.Time}}"

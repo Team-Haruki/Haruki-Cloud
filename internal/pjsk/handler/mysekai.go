@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -15,10 +14,11 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 
-	"golang.org/x/sync/errgroup"
 	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/utils/usererror"
+
+	"golang.org/x/sync/errgroup"
 )
 
 // mysekaiCharacterUsageError is the reply when the blueprint or talk list
@@ -564,8 +564,8 @@ func normalizeMysekaiHousingRankPart(part string) string {
 		"—", "-",
 		"–", "-",
 		"..", "-",
-		"到", "-",
-		"至", "-",
+		"到", "-", //copylint:ignore 解析关键字
+		"至", "-", //copylint:ignore 解析关键字
 	).Replace(strings.TrimSpace(part))
 }
 
@@ -617,7 +617,7 @@ func isPositiveIntegerToken(token string) bool {
 }
 
 func isMysekaiHousingRankRangeToken(token string) bool {
-	return strings.ContainsAny(token, "-~～－—–") || strings.Contains(token, "到") || strings.Contains(token, "至") || strings.Contains(token, "..")
+	return strings.ContainsAny(token, "-~～－—–") || strings.Contains(token, "到") || strings.Contains(token, "至") || strings.Contains(token, "..") //copylint:ignore 解析关键字
 }
 
 func shouldEnforceMysekaiExpiry(mode string) bool {
@@ -659,33 +659,29 @@ func mysekaiRenderContextOptionsForMode(mode string) mySekaiRenderContextOptions
 
 // mysekaiExpiredError is the reply for outdated MySekai data. It has the
 // same structure, terms and time format as the /sud and /msd replies
-// (privateDataStatusMessage).
+// (executeCheckData): the account line, then the uploadedLine.
 func mysekaiExpiredError(rc *RequestContext, renderCtx mySekaiRenderContext, status rendermysekai.SnapshotStatus) error {
 	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, renderCtx.HarukiUserID)
 	if renderCtx.HarukiUserID <= 0 {
 		timeZone = resolveRequesterHarukiUserTimeZone(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID)
 	}
+	uploaded := uploadedLine(status.LastUpdatedAt, timeZone)
 	account, ok := bindingAccountLabel(renderCtx.Binding)
 	if !ok {
-		account = i18n.M("binding.current_account")
+		return usererror.Setup(i18n.M("profile.data_status.mysekai_expired_current", i18n.Data{"Uploaded": uploaded}))
 	}
-	updatedAt, ago := uploadTimeLabels(status.LastUpdatedAt, timeZone)
-	return usererror.Setup(i18n.M("mysekai.data_expired", i18n.Data{"Account": account, "UpdatedAt": updatedAt, "Ago": ago}))
+	return usererror.Setup(i18n.M("profile.data_status.mysekai_expired", i18n.Data{"Account": account, "Uploaded": uploaded}))
 }
 
-// uploadTimeLabels formats an upload time for the data status replies: the
-// time in the user's zone, and how long ago it was.
-func uploadTimeLabels(uploadedAt time.Time, timeZone string) (i18n.Message, string) {
+// uploadedLine is the "上次上传：…" line of the data status replies (/sud,
+// /msd) and the expired MySekai data reply, in the user's time zone.
+func uploadedLine(uploadedAt time.Time, timeZone string) i18n.Message {
 	loc, _ := displaytime.LoadLocation(timeZone)
-	if uploadedAt.IsZero() {
-		return i18n.FormatUserTime(uploadedAt, loc), ""
-	}
-	return i18n.FormatUserTime(uploadedAt, loc), displaytime.FormatRelativeDuration(displaytime.Now(timeZone).Sub(uploadedAt))
+	return i18n.UploadedLine(uploadedAt, time.Now(), loc)
 }
 
 func mysekaiNoRemainingMaterialMessage(region string) onebot11.Message {
-	label := strings.ToUpper(strings.TrimSpace(regionWithDefault(region)))
-	return onebot11.Message{onebot11.Text(fmt.Sprintf("当前%s服账号已无剩余可获取材料", label))}
+	return onebot11.Message{onebot11.Text(i18n.T("mysekai.map.no_remaining", i18n.Data{"Region": i18n.RegionLabel(regionWithDefault(region))}))}
 }
 
 func mysekaiMapHasRemainingMaterials(renderCtx mySekaiRenderContext, params []byte) (bool, error) {
@@ -860,12 +856,12 @@ func executeResolvedMysekaiMode(rc *RequestContext, renderCtx mySekaiRenderConte
 		}
 		if len(request.Shops) == 0 {
 			if query.ShowAll {
-				return onebot11.Message{onebot11.Text("当前筛选下没有商店商品")}, nil
+				return onebot11.Message{onebot11.Text(i18n.T("mysekai.shop.empty"))}, nil
 			}
-			if request.PassActive != nil && !*request.PassActive && !query.ShowAll {
-				return onebot11.Message{onebot11.Text("当前 MySekai 通行证未生效，暂无可购买商品；可加“全部”查看商品状态")}, nil
+			if request.PassActive != nil && !*request.PassActive {
+				return onebot11.Message{onebot11.Text(i18n.T("mysekai.shop.pass_inactive"))}, nil
 			}
-			return onebot11.Message{onebot11.Text("当前筛选下没有可购买的商品；可加“全部”查看商品状态")}, nil
+			return onebot11.Message{onebot11.Text(i18n.T("mysekai.shop.none_buyable"))}, nil
 		}
 		data, err := renderCtx.Controller.RenderShopRequestImage(request)
 		return mysekaiRenderedImageResult(rc, data, err)
@@ -1004,16 +1000,16 @@ func executeMysekaiPhoto(rc *RequestContext, renderCtx mySekaiRenderContext) (on
 	if err != nil {
 		return nil, err
 	}
-	return append(image, onebot11.Text(fmt.Sprintf("拍摄时间: %s", mysekaiPhotoTime(rc, renderCtx.HarukiUserID, result.ObtainedAt)))), nil
+	return append(image, onebot11.Text(i18n.T("mysekai.photo.taken_at", i18n.Data{"Time": mysekaiPhotoTime(rc, renderCtx.HarukiUserID, result.ObtainedAt)}))), nil
 }
 
-func mysekaiPhotoTime(rc *RequestContext, harukiUserID int, obtainedAt time.Time) string {
+func mysekaiPhotoTime(rc *RequestContext, harukiUserID int, obtainedAt time.Time) i18n.Message {
 	if obtainedAt.IsZero() {
-		return "未知"
+		return i18n.FormatUserTime(obtainedAt, nil)
 	}
 	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, harukiUserID)
 	loc, _ := displaytime.LoadLocation(timeZone)
-	return displaytime.FormatTime(obtainedAt.In(loc), "2006-01-02 15:04")
+	return i18n.FormatUserTime(obtainedAt, loc)
 }
 
 // mysekaiShopResourceBoxes resolves mysekai_shop resource boxes through the

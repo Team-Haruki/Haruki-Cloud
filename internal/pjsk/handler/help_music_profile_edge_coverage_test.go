@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -177,7 +178,7 @@ func testMusicLevelRangeEdges(t *testing.T) {
 
 func testMusicFormattingHelperEdges(t *testing.T) {
 	t.Helper()
-	if got := formatMusicDuration(-1); got != "0:00" {
+	if got := formatMusicDuration(-1); got.String() != i18n.FormatDuration(0).String() {
 		t.Fatalf("negative duration = %q", got)
 	}
 	if got := formatMusicBPMSequence([]rendermusic.BPMEvent{{BPM: 0}, {BPM: 120}, {BPM: 120}, {BPM: 130}}); got != "0 / 120 / 130" {

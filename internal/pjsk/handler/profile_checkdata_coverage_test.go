@@ -60,7 +60,7 @@ func TestExecuteCheckDataSuccessfulSuiteAndMySekai(t *testing.T) {
 	cmd := &CommandRequest{Mode: "suite", Region: "jp", Params: executionCoverageParams(t, userQueryParams{
 		Mode: "self", Platform: "qq", PlatformUserID: "check-data-user",
 	})}
-	if _, err := executeCheckData(NewRequestContext(ctx, cmd, app)); testutil.MessageID(err) != "binding.data_status.invalid_time" {
+	if _, err := executeCheckData(NewRequestContext(ctx, cmd, app)); testutil.MessageID(err) != "profile.data_status.invalid_time" {
 		t.Fatalf("invalid upload timestamp error = %v", err)
 	}
 

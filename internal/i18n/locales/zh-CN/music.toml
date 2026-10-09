@@ -127,3 +127,43 @@ other = "匹配到多首歌曲，请用歌曲 ID 查询，例如 /查曲 123"
 [music.ambiguous_list.bpm]
 description = "查 BPM 匹配到多首歌曲时，候选列表图片的标题。"
 other = "匹配到多首歌曲，请用歌曲 ID 查询，例如 /查BPM 123"
+
+[music.caption]
+description = "一首歌曲的文字标题：/查曲绘 图片下方的说明、/查BPM 回复的第一行。占位符：ID=歌曲 ID；Title=歌曲名（游戏数据原文）。"
+other = "【{{.ID}}】{{.Title}}"
+
+[music.bpm.detail.title]
+description = "/查BPM 回复的第一行，不知道是哪首歌曲时使用（兜底）。"
+other = "歌曲 BPM"
+
+[music.bpm.detail.difficulty]
+description = "/查BPM 回复里的难度行。占位符：Difficulty=难度显示名，例如 MASTER。"
+other = "难度：{{.Difficulty}}"
+
+[music.bpm.detail.main]
+description = "/查BPM 回复里的主 BPM 行。占位符：BPM=主 BPM 数值。"
+other = "主 BPM：{{.BPM}}"
+
+[music.bpm.detail.changes]
+description = "/查BPM 回复里的 BPM 变化行。占位符：Sequence=按出现顺序排列的 BPM，用“ / ”分隔，例如“120 / 180 / 120”。"
+other = "BPM 变化：{{.Sequence}}"
+
+[music.bpm.detail.duration]
+description = "/查BPM 回复里的谱面时长行。占位符：Duration=时长（format.duration.*），例如“2分03秒”。"
+other = "时长：{{.Duration}}"
+
+[music.bpm.detail.bars]
+description = "/查BPM 回复里的小节数行。占位符：Count=小节数。"
+other = "小节数：{{.Count}}"
+
+[music.lookup_list.note_count]
+description = "物量反查结果图片的标题。占位符：Count=物量。"
+other = "物量为 {{.Count}} 的谱面"
+
+[music.lookup_list.note_count_difficulty]
+description = "按难度的物量反查结果图片的标题。占位符：Count=物量；Difficulty=难度显示名，例如 MASTER。"
+other = "物量为 {{.Count}} 的 {{.Difficulty}} 谱面"
+
+[music.lookup_list.bpm]
+description = "BPM 反查（/bpm搜索）结果图片的标题。占位符：BPM=用户写的 BPM 数值。"
+other = "BPM 为 {{.BPM}} 的歌曲"

@@ -18,20 +18,12 @@ const (
 	mySekaiInfoPanelAllCommand = "mysekai-info-panel-all"
 )
 
-const infoPanelHelp = `使用方式:
-/信息面板 su
-/信息面板 ms
-/信息面板 all
-
-su / suite：使用 Suite 数据；ms / mysekai：使用 MySekai 数据；all：同时显示 Suite 与 MySekai 数据。可加 u序号 选择自己的绑定账号。`
-
 func (sekaiHandlers) ProfileInfoPanelHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path: "profile/info-panel",
 		Commands: []string{
 			"/信息面板", "/pjsk info panel", "/info-panel",
 		},
-		Helper: infoPanelHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			self, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {

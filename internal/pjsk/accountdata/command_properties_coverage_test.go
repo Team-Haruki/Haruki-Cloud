@@ -257,34 +257,51 @@ func testProfileSettingsMutationClassification(t *testing.T) {
 
 func testProfileSettingsFormatting(t *testing.T) {
 	t.Helper()
-	if formatVerifyListText(nil, "") != "你还没有绑定任何PJSK账号" || !strings.Contains(formatVerifyListText(nil, "jp"), "JP服") {
+	if formatVerifyListText(nil, "") != i18n.T("binding.none") || formatVerifyListText(nil, "jp") != i18n.T("binding.none_in_region", i18n.Data{"Region": i18n.RegionLabel("jp")}) {
 		t.Fatal("empty verify list formatting mismatch")
 	}
 	visiblePath := "bg.jpg"
 	verified := BindingListItem{Index: 2, Server: "jp", UserID: "123456789", Verified: true, Visible: true, IsGlobalDefault: true, IsServerDefault: true, Bg: &drawing.ProfileBgSettings{ImgPath: &visiblePath, Blur: 5, Alpha: 70, Vertical: true}}
 	unverified := BindingListItem{Index: 1, Server: "tw", UserID: "987654321"}
+	if item := formatVerifyListItem(verified, 1, false); item.ID != "profile.verify_list.item_default" || item.Data["Status"].(i18n.Message).ID != "profile.verify_list.verified" || item.Data["Default"].(i18n.Message).ID != "profile.verify_list.default_both" || item.Data["Index"] != 1 {
+		t.Fatalf("verified item = %+v", item)
+	}
+	if item := formatVerifyListItem(unverified, 2, true); item.ID != "profile.verify_list.item" || item.Data["Status"].(i18n.Message).ID != "profile.verify_list.unverified" || item.Data["Index"] != 1 {
+		t.Fatalf("unverified item = %+v", item)
+	}
+	globalOnly, regionOnly := verified, verified
+	globalOnly.IsServerDefault, regionOnly.IsGlobalDefault = false, false
+	if formatVerifyListItem(globalOnly, 1, false).Data["Default"].(i18n.Message).ID != "profile.verify_list.default_global" || formatVerifyListItem(regionOnly, 1, false).Data["Default"].(i18n.Message).ID != "profile.verify_list.default_region" {
+		t.Fatal("default binding marks mismatch")
+	}
 	verifyText := formatVerifyListText([]BindingListItem{verified, unverified}, "")
-	if !strings.Contains(verifyText, "✅") || !strings.Contains(verifyText, "❌") || !strings.Contains(verifyText, "全局默认") {
+	if lines := strings.Split(verifyText, "\n"); len(lines) != 3 || lines[0] != i18n.T("profile.verify_list.header") || lines[2] != formatVerifyListItem(unverified, 2, false).String() {
 		t.Fatalf("verify list text = %q", verifyText)
 	}
-	if text := formatVerifyListText([]BindingListItem{verified}, "jp"); !strings.Contains(text, "u2") {
+	if text := formatVerifyListText([]BindingListItem{verified}, "jp"); !strings.HasPrefix(text, i18n.T("profile.verify_list.header_region", i18n.Data{"Region": i18n.RegionLabel("jp")})) || !strings.Contains(text, "u2 ") {
 		t.Fatalf("regional verify list text = %q", text)
 	}
-	if !strings.Contains(formatProfileBGSettingsText(BindingListItem{Server: "jp"}), "还没有") || !strings.Contains(formatProfileBGSettingsText(verified), "竖屏") {
-		t.Fatal("profile background settings formatting mismatch")
+	if formatProfileBGSettingsText(BindingListItem{Server: "jp"}) != i18n.T("profile.bg.none", i18n.Data{"Region": i18n.RegionLabel("jp")}) {
+		t.Fatal("empty profile background settings mismatch")
+	}
+	wantSettings := func(orientation string) string {
+		return i18n.T("profile.bg.settings", i18n.Data{"Account": i18n.AccountLabel("jp", "123456789", true), "Orientation": i18n.M(orientation), "Blur": 5, "Alpha": 70})
+	}
+	if formatProfileBGSettingsText(verified) != wantSettings("profile.bg.orientation.vertical") {
+		t.Fatalf("vertical profile background settings = %q", formatProfileBGSettingsText(verified))
 	}
 	verified.Bg.Vertical = false
-	if !strings.Contains(formatProfileBGSettingsText(verified), "横屏") {
+	if formatProfileBGSettingsText(verified) != wantSettings("profile.bg.orientation.horizontal") {
 		t.Fatal("horizontal profile background formatting mismatch")
 	}
 	candidates := make([]string, 25)
 	for i := range candidates {
 		candidates[i] = strings.Repeat("x", i+1)
 	}
-	if text := formatTimeZoneCandidatesText(" +08 ", candidates); !strings.Contains(text, "另外 5 个候选") || strings.Count(text, "\n") != 21 {
+	if text := formatTimeZoneCandidatesText(" +08 ", candidates); !strings.HasSuffix(text, i18n.T("profile.timezone.ambiguous_more", i18n.Data{"Count": 5})) || strings.Count(text, "\n") != 21 {
 		t.Fatalf("timezone candidates text = %q", text)
 	}
-	if text := formatTimeZoneCandidatesText("UTC", []string{"UTC"}); !strings.Contains(text, "UTC") {
+	if text := formatTimeZoneCandidatesText("UTC", []string{"UTC"}); text != i18n.T("profile.timezone.ambiguous", i18n.Data{"Query": "UTC"})+"\nUTC" {
 		t.Fatalf("short timezone candidates text = %q", text)
 	}
 }
@@ -306,8 +323,11 @@ func testProfileDifficultyHelpers(t *testing.T) {
 	if _, err := applyProfileDifficultyToggles(nil, []ProfileDifficultyToggle{{Difficulty: "bad", Enabled: true}}); err == nil {
 		t.Fatal("unsupported difficulty toggle should fail")
 	}
-	if summary := formatProfileDifficultySummary([]sekaiapi.MusicDifficultyType{"bad", sekaiapi.MusicDifficultyEasy}); !strings.Contains(summary, "easy开启") || !strings.Contains(summary, "master关闭") {
-		t.Fatalf("difficulty summary = %q", summary)
+	if summary := formatProfileDifficultySummary([]sekaiapi.MusicDifficultyType{"bad", sekaiapi.MusicDifficultyEasy, sekaiapi.MusicDifficultyMaster}); summary.ID != "profile.arrest_difficulty.done" || summary.Data["Difficulties"] != "EASY、MASTER" {
+		t.Fatalf("difficulty summary = %+v", summary)
+	}
+	if summary := formatProfileDifficultySummary(nil); summary.ID != "profile.arrest_difficulty.done_none" {
+		t.Fatalf("empty difficulty summary = %+v", summary)
 	}
 	defaults := newDefaultUserSettings()
 	if len(defaults.PJSKEnabledDifficulties) != 2 {

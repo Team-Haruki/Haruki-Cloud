@@ -1,4 +1,4 @@
-# 个人信息与个人设置：个人信息、个人信息背景、时区、谱面样式、查水表难度、模块化个人信息、自定义个人信息。
+# 个人信息与个人设置：个人信息、个人信息背景、时区、谱面样式、逮捕难度、模块化个人信息、自定义个人信息。
 
 [profile.bg.binding_missing]
 description = "设置、清除或调整个人信息背景时找不到对应的绑定账号。"
@@ -49,15 +49,15 @@ description = "保存或删除个人信息背景失败（存储出错）。"
 other = "保存个人信息背景失败，请稍后再试"
 
 [profile.settings.save_failed]
-description = "保存个人设置失败（时区、谱面样式、查水表难度等）。"
+description = "保存个人设置失败（时区、谱面样式、逮捕难度等）。"
 other = "保存设置失败，请稍后再试"
 
 [profile.arrest_difficulty.required]
-description = "设置查水表难度时没有写任何难度开关。"
+description = "设置逮捕难度时没有写任何难度开关。"
 other = "请至少写一个难度开关"
 
 [profile.arrest_difficulty.unknown]
-description = "查水表难度写了不支持的难度，作为 common.bad_param 的原因行。"
+description = "逮捕难度写了不支持的难度，作为 common.bad_param 的原因行。"
 other = "难度只能是 EASY、NORMAL、HARD、EXPERT、MASTER、APPEND"
 
 [profile.chart_style.invalid]
@@ -81,7 +81,7 @@ description = "个人设置类指令试图修改别人的账号。"
 other = "这个设置只能修改自己的账号"
 
 [profile.arrest_difficulty.invalid]
-description = "查水表难度开关的写法不对。"
+description = "逮捕难度开关的写法不对。"
 other = "请写难度和开关，例如 master 开启 append 关闭"
 
 [profile.fetch_failed]
@@ -131,3 +131,190 @@ other = "自定义个人信息生成失败，请稍后再试"
 [profile.registration.unsupported_region]
 description = "查注册时间不支持该区服。"
 other = "这个区服无法计算注册时间"
+
+# 数据状态：/sud（抓包状态）、/msd（烤森数据状态）和烤森数据过期提示用同一种结构：
+# 第一行“<账号> 的<数据>”，第二行 profile.data_status.uploaded。
+
+[profile.data_status.suite]
+description = "/sud（抓包状态）的回复。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；Uploaded=上传时间行（profile.data_status.uploaded 或 profile.data_status.uploaded_unknown）。"
+other = "{{.Account}} 的抓包数据（Suite）\n{{.Uploaded}}"
+
+[profile.data_status.mysekai]
+description = "/msd（烤森数据状态）的回复。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；Uploaded=上传时间行（profile.data_status.uploaded 或 profile.data_status.uploaded_unknown）。"
+other = "{{.Account}} 的烤森（MySekai）数据\n{{.Uploaded}}"
+
+[profile.data_status.mysekai_expired]
+description = "烤森指令（地图、资源等）发现烤森数据已过期。结构与 /msd 相同，后面两行说明怎么办。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；Uploaded=上传时间行（profile.data_status.uploaded 或 profile.data_status.uploaded_unknown）。"
+other = "{{.Account}} 的烤森（MySekai）数据已过期\n{{.Uploaded}}\n要查看最新数据，请在 Haruki 工具箱重新上传烤森数据\n要继续查看已过期的数据，请在指令后加上“force”"
+
+[profile.data_status.mysekai_expired_current]
+description = "同 profile.data_status.mysekai_expired，但不知道是哪个绑定账号。占位符：Uploaded=上传时间行（profile.data_status.uploaded 或 profile.data_status.uploaded_unknown）。"
+other = "当前绑定账号的烤森（MySekai）数据已过期\n{{.Uploaded}}\n要查看最新数据，请在 Haruki 工具箱重新上传烤森数据\n要继续查看已过期的数据，请在指令后加上“force”"
+
+[profile.data_status.uploaded]
+description = "数据状态回复的上传时间行。占位符：Time=上传时间（format.time.datetime），例如“2026-10-09 14:05 (UTC+8)”；Age=距今多久（profile.data_status.age.*），例如“3小时20分钟前”。"
+other = "上次上传：{{.Time}}（{{.Age}}）"
+
+[profile.data_status.uploaded_unknown]
+description = "数据状态回复的上传时间行，上传时间未知时使用。"
+other = "上次上传时间未知"
+
+[profile.data_status.age.just_now]
+description = "上传时间距今不到 1 分钟，用在 profile.data_status.uploaded 的 Age 里。"
+other = "刚刚"
+
+[profile.data_status.age.minutes]
+description = "上传时间距今不到 1 小时，用在 profile.data_status.uploaded 的 Age 里，例如“5分钟前”。时长写法与 format.duration.* 一致，数字和单位之间不加空格。占位符：Minutes=分钟数。"
+other = "{{.Minutes}}分钟前"
+
+[profile.data_status.age.hours]
+description = "上传时间距今整小时数，例如“3小时前”。占位符：Hours=小时数。"
+other = "{{.Hours}}小时前"
+
+[profile.data_status.age.hours_minutes]
+description = "上传时间距今不到 1 天，例如“3小时20分钟前”。占位符：Hours=小时数；Minutes=分钟数。"
+other = "{{.Hours}}小时{{.Minutes}}分钟前"
+
+[profile.data_status.age.days]
+description = "上传时间距今整天数，例如“2天前”。占位符：Days=天数。"
+other = "{{.Days}}天前"
+
+[profile.data_status.age.days_hours]
+description = "上传时间距今 1 天以上，例如“2天3小时前”。占位符：Days=天数；Hours=小时数。"
+other = "{{.Days}}天{{.Hours}}小时前"
+
+[profile.data_status.self_only]
+description = "/sud、/msd 只能查询自己的数据，但指定了别人或游戏 UID。"
+other = "只能查询自己的上传状态"
+
+[profile.data_status.invalid_time]
+description = "工具箱返回的上传时间无法识别。"
+other = "获取上传时间失败，请稍后再试"
+
+[profile.visibility.uid_hidden]
+description = "/隐藏id 成功：之后图片里的游戏 UID 会打码。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”。"
+other = "已隐藏 {{.Account}} 的游戏 UID"
+
+[profile.visibility.uid_shown]
+description = "/展示id 成功：之后图片里显示完整的游戏 UID。占位符：Account=账号显示名，例如“[日服(JP)] 123456789”。"
+other = "已展示 {{.Account}} 的游戏 UID"
+
+[profile.visibility.suite_hidden]
+description = "/隐藏抓包 成功：其他人不能再使用这个账号的抓包数据。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”。"
+other = "已隐藏 {{.Account}} 的抓包数据（Suite）"
+
+[profile.visibility.suite_shown]
+description = "/展示抓包 成功。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”。"
+other = "已展示 {{.Account}} 的抓包数据（Suite）"
+
+[profile.visibility.mysekai_hidden]
+description = "/隐藏烤森抓包 成功。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”。"
+other = "已隐藏 {{.Account}} 的烤森（MySekai）数据"
+
+[profile.visibility.mysekai_shown]
+description = "/展示烤森抓包 成功。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”。"
+other = "已展示 {{.Account}} 的烤森（MySekai）数据"
+
+[profile.verify.done]
+description = "/pjsk验证 成功。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”。"
+other = "已验证游戏账号 {{.Account}}"
+
+[profile.verify.already]
+description = "/pjsk验证：这个绑定账号之前已经验证过。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”。"
+other = "{{.Account}} 已经验证过，不需要重复验证"
+
+[profile.verify_list.header]
+description = "/pjsk验证列表 的第一行（没有写区服前缀时，u序号按全部绑定账号编号）。"
+other = "已绑定游戏账号的验证状态（u序号按全部账号编号）："
+
+[profile.verify_list.header_region]
+description = "/pjsk验证列表 的第一行（写了区服前缀时，u序号按该区服编号）。占位符：Region=区服显示名，例如“日服(JP)”。"
+other = "{{.Region}}已绑定游戏账号的验证状态（u序号按该区服编号）："
+
+[profile.verify_list.item]
+description = "/pjsk验证列表 的一行。占位符：Index=u序号的数字；Account=账号显示名，例如“[日服(JP)] 123***789”；Status=验证状态（profile.verify_list.verified 或 unverified）。"
+other = "u{{.Index}} {{.Account}} {{.Status}}"
+
+[profile.verify_list.item_default]
+description = "/pjsk验证列表 的一行，该账号是默认绑定。占位符：Index=u序号的数字；Account=账号显示名，例如“[日服(JP)] 123***789”；Status=验证状态（profile.verify_list.verified 或 unverified）；Default=默认绑定说明（profile.verify_list.default_*）。"
+other = "u{{.Index}} {{.Account}} {{.Status}}（{{.Default}}）"
+
+[profile.verify_list.verified]
+description = "/pjsk验证列表 的验证状态：已验证。"
+other = "已验证"
+
+[profile.verify_list.unverified]
+description = "/pjsk验证列表 的验证状态：未验证。"
+other = "未验证"
+
+[profile.verify_list.default_global]
+description = "/pjsk验证列表 里该账号是全局默认绑定。"
+other = "全局默认绑定"
+
+[profile.verify_list.default_region]
+description = "/pjsk验证列表 里该账号是某个区服的默认绑定。占位符：Region=区服显示名，例如“日服(JP)”。"
+other = "{{.Region}}默认绑定"
+
+[profile.verify_list.default_both]
+description = "/pjsk验证列表 里该账号既是全局默认绑定，也是该区服的默认绑定。占位符：Region=区服显示名，例如“日服(JP)”。"
+other = "全局默认绑定、{{.Region}}默认绑定"
+
+[profile.timezone.done]
+description = "/pjsk时区 设置成功，之后按这个时区显示时间。占位符：TimeZone=IANA 时区名，例如 Asia/Shanghai。"
+other = "已将时区设置为 {{.TimeZone}}"
+
+[profile.timezone.ambiguous]
+description = "/pjsk时区 写的 UTC 偏移对应多个时区，下面逐行列出候选时区名。占位符：Query=用户写的偏移，超过 30 个字截断。"
+other = "UTC 偏移“{{.Query}}”对应多个时区，请改用下面的时区名设置："
+
+[profile.timezone.ambiguous_more]
+description = "profile.timezone.ambiguous 的候选太多时，最后一行说明还有几个没有列出。占位符：Count=没有列出的时区数。"
+other = "……以及另外 {{.Count}} 个时区"
+
+[profile.arrest_difficulty.done]
+description = "/逮捕难度 设置成功，列出 /逮捕 之后会统计的难度。占位符：Difficulties=开启的难度，按游戏顺序用“、”分隔，例如“EXPERT、MASTER”。"
+other = "已设置 /逮捕 统计的难度：{{.Difficulties}}"
+
+[profile.arrest_difficulty.done_none]
+description = "/逮捕难度 设置成功，但所有难度都关闭了。"
+other = "已关闭 /逮捕 的所有难度"
+
+[profile.chart_style.done]
+description = "/谱面样式 设置成功。占位符：Style=谱面样式，用户写的 white 或 black。"
+other = "已将谱面样式设置为“{{.Style}}”"
+
+[profile.modular.enabled]
+description = "/开启模块化个人信息 成功。"
+other = "已开启模块化个人信息，之后 /个人信息 将使用模块化布局"
+
+[profile.modular.disabled]
+description = "/关闭模块化个人信息 成功。"
+other = "已关闭模块化个人信息，之后 /个人信息 将使用经典布局"
+
+[profile.bg.uploaded]
+description = "/上传个人信息背景 成功，后面会附上新的个人信息预览图。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”。"
+other = "已更新 {{.Account}} 的个人信息背景"
+
+[profile.bg.cleared]
+description = "/清空个人信息背景 成功。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”。"
+other = "已清除 {{.Account}} 的个人信息背景"
+
+[profile.bg.adjusted]
+description = "/调整个人信息背景 成功，后面会附上新的个人信息预览图。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”。"
+other = "已更新 {{.Account}} 的个人信息背景设置"
+
+[profile.bg.adjusted_any]
+description = "/调整个人信息背景 成功，但不知道是哪个账号（兜底）。"
+other = "已更新个人信息背景设置"
+
+[profile.bg.settings]
+description = "/调整个人信息背景 不写参数时，显示当前的背景设置。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；Orientation=方向（profile.bg.orientation.*）；Blur=模糊程度 0~10；Alpha=透明程度 0~100。"
+other = "{{.Account}} 的个人信息背景设置\n方向：{{.Orientation}}\n模糊：{{.Blur}}\n透明：{{.Alpha}}"
+
+[profile.bg.orientation.horizontal]
+description = "个人信息背景方向：横屏，用在 profile.bg.settings 里。"
+other = "横屏"
+
+[profile.bg.orientation.vertical]
+description = "个人信息背景方向：竖屏，用在 profile.bg.settings 里。"
+other = "竖屏"

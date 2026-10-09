@@ -347,7 +347,7 @@ func TestInfoPanelAllFollowsTheMySekaiCNGate(t *testing.T) {
 		return message
 	}
 	ms, all := run(mySekaiInfoPanelCommand), run(mySekaiInfoPanelAllCommand)
-	if got := rejectionText(t, all); got != cnMySekaiNeverOpensNotice || got != rejectionText(t, ms) {
+	if got := rejectionText(t, all); got != cnMySekaiNotice() || got != rejectionText(t, ms) {
 		t.Fatalf("all = %q, ms = %q; want the same CN MySekai warning", got, rejectionText(t, ms))
 	}
 }

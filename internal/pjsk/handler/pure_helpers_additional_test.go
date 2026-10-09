@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
@@ -156,7 +157,7 @@ func TestMusicFormattingAndListHelpers(t *testing.T) {
 
 func testMusicBPMFormatting(t *testing.T) {
 	t.Helper()
-	if got := formatMusicBPMResult(nil); got != "未找到 BPM 信息" {
+	if got := formatMusicBPMResult(nil); got != i18n.T("music.bpm.no_data") {
 		t.Fatalf("nil BPM result = %q", got)
 	}
 	result := &rendermusic.BPMResult{
@@ -165,10 +166,16 @@ func testMusicBPMFormatting(t *testing.T) {
 		Duration: 125.4, BarCount: 42,
 	}
 	formatted := formatMusicBPMResult(result)
-	for _, want := range []string{"【7】Song", "EXPERT", "主 BPM：120", "120 / 150.5", "2:05", "42"} {
-		if !strings.Contains(formatted, want) {
-			t.Errorf("formatMusicBPMResult() = %q, missing %q", formatted, want)
-		}
+	want := strings.Join([]string{
+		i18n.T("music.caption", i18n.Data{"ID": 7, "Title": "Song"}),
+		i18n.T("music.bpm.detail.difficulty", i18n.Data{"Difficulty": "EXPERT"}),
+		i18n.T("music.bpm.detail.main", i18n.Data{"BPM": "120"}),
+		i18n.T("music.bpm.detail.changes", i18n.Data{"Sequence": "120 / 150.5 / 0"}),
+		i18n.T("music.bpm.detail.duration", i18n.Data{"Duration": i18n.FormatDuration(125 * time.Second)}),
+		i18n.T("music.bpm.detail.bars", i18n.Data{"Count": 42}),
+	}, "\n")
+	if formatted != want {
+		t.Errorf("formatMusicBPMResult() = %q, want %q", formatted, want)
 	}
 	result.Music = nil
 	result.Difficulty = "unknown"
@@ -176,13 +183,13 @@ func testMusicBPMFormatting(t *testing.T) {
 	result.Events = nil
 	result.Duration = 0
 	result.BarCount = 0
-	if got := formatMusicBPMResult(result); got != "歌曲 BPM" {
+	if got := formatMusicBPMResult(result); got != i18n.T("music.bpm.detail.title") {
 		t.Fatalf("minimal BPM result = %q", got)
 	}
 	if got := formatMusicBPMSequence(nil); got != "" {
 		t.Fatalf("empty BPM sequence = %q", got)
 	}
-	if formatMusicDuration(-1) != "0:00" || formatMusicDuration(65.6) != "1:06" {
+	if formatMusicDuration(-1).String() != i18n.FormatDuration(0).String() || formatMusicDuration(65.6).String() != i18n.FormatDuration(66*time.Second).String() {
 		t.Fatal("duration formatting mismatch")
 	}
 }
@@ -222,12 +229,6 @@ func testMusicMatchHelpers(t *testing.T) {
 	}
 	if dedupeBPMMatchesByMusic(nil) != nil {
 		t.Fatal("nil matches should remain nil")
-	}
-	if got := buildMusicLookupListTitle("BPM", "120", "master"); got != "BPM 120 MASTER 匹配结果" {
-		t.Fatalf("lookup title = %q", got)
-	}
-	if got := buildMusicLookupListTitle("BPM", "120", ""); got != "BPM 120 匹配结果" {
-		t.Fatalf("plain lookup title = %q", got)
 	}
 }
 func TestMusicLevelParserInvalidAndBoundaryCases(t *testing.T) {
@@ -286,10 +287,10 @@ func TestMusicEmptyRenderInputsReturnErrors(t *testing.T) {
 	if message := renderMusicBPMDetailMessage(rc, &rendermusic.BPMResult{}); len(message) != 1 || message[0].Type != onebot11.TypeText {
 		t.Fatalf("BPM detail message = %+v", message)
 	}
-	if _, err := renderMusicLookupListMessages(rc, nil, "jp", "BPM", "120", "", "", nil); err == nil {
+	if _, err := renderMusicLookupListMessages(rc, nil, "jp", "title", "", nil); err == nil {
 		t.Fatal("expected empty detailed lookup error")
 	}
-	if _, err := renderMusicBriefLookupListMessages(rc, nil, "jp", "BPM", "120", nil); err == nil {
+	if _, err := renderMusicBriefLookupListMessages(rc, nil, "jp", "title", nil); err == nil {
 		t.Fatal("expected empty brief lookup error")
 	}
 	if _, err := renderAmbiguousMusicDetailListMessages(rc, nil, "jp", nil, nil); err == nil {

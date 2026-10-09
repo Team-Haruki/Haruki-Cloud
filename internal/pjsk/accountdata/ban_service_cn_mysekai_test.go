@@ -5,12 +5,13 @@ import (
 	"sync"
 	"testing"
 
-	"entgo.io/ent/dialect"
-	entsql "entgo.io/ent/dialect/sql"
 	usersdb "haruki-cloud/database/users"
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/parser"
+
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 
 	_ "github.com/mattn/go-sqlite3"
 )

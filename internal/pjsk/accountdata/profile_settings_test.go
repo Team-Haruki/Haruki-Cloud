@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
@@ -240,7 +241,12 @@ func TestExecuteProfileSettingsCommandVerifyListImplicitRegionUsesGlobalIndex(t 
 		t.Fatalf("verify list: %v", err)
 	}
 
-	expected := "已绑定账号验证状态（u序号全局编号）:\nu1 [JP] 123********234 ✅ (全局默认 / JP服默认)"
+	expected := i18n.T("profile.verify_list.header") + "\n" + i18n.T("profile.verify_list.item_default", i18n.Data{
+		"Index":   1,
+		"Account": i18n.AccountLabel("jp", "12345678901234", false),
+		"Status":  i18n.M("profile.verify_list.verified"),
+		"Default": i18n.M("profile.verify_list.default_both", i18n.Data{"Region": i18n.RegionLabel("jp")}),
+	})
 	if string(text) != expected {
 		t.Fatalf("unexpected verify list text:\n%s", text)
 	}
@@ -273,7 +279,12 @@ func TestExecuteProfileSettingsCommandVerifyListExplicitRegionFiltersAndUsesServ
 		t.Fatalf("verify list explicit region: %v", err)
 	}
 
-	expected := "已绑定JP服账号验证状态（u序号按该区服编号）:\nu1 [JP] 123********234 ✅ (全局默认 / JP服默认)"
+	expected := i18n.T("profile.verify_list.header_region", i18n.Data{"Region": i18n.RegionLabel("jp")}) + "\n" + i18n.T("profile.verify_list.item_default", i18n.Data{
+		"Index":   1,
+		"Account": i18n.AccountLabel("jp", "12345678901234", false),
+		"Status":  i18n.M("profile.verify_list.verified"),
+		"Default": i18n.M("profile.verify_list.default_both", i18n.Data{"Region": i18n.RegionLabel("jp")}),
+	})
 	if string(text) != expected {
 		t.Fatalf("unexpected verify list text:\n%s", text)
 	}
@@ -314,16 +325,16 @@ func TestExecuteProfileSettingsCommandVerifyListMultiServerImplicitRegionShowsGl
 
 	got := string(text)
 	// global u1 → JP (first in sort order), global u2 → TW
-	if !strings.Contains(got, "全局编号") {
+	if !strings.HasPrefix(got, i18n.T("profile.verify_list.header")+"\n") {
 		t.Fatalf("expected global-index header, got:\n%s", got)
 	}
-	if !strings.Contains(got, "u1 [JP]") {
+	if !strings.Contains(got, "u1 "+i18n.T("format.account.label", i18n.Data{"Region": i18n.RegionLabel("jp"), "UID": ""})) {
 		t.Fatalf("expected JP as global u1, got:\n%s", got)
 	}
-	if !strings.Contains(got, "u2 [TW]") {
+	if !strings.Contains(got, "u2 "+i18n.T("format.account.label", i18n.Data{"Region": i18n.RegionLabel("tw"), "UID": ""})) {
 		t.Fatalf("expected TW as global u2, got:\n%s", got)
 	}
-	if strings.Contains(got, "u1 [TW]") {
+	if strings.Contains(got, "u1 "+i18n.T("format.account.label", i18n.Data{"Region": i18n.RegionLabel("tw"), "UID": ""})) {
 		t.Fatalf("TW should not appear as u1 in global index, got:\n%s", got)
 	}
 }
@@ -365,7 +376,7 @@ func TestExecuteProfileSettingsCommandVerifyListExplicitRegionExcludesOtherServe
 	if strings.Contains(got, "TW") || strings.Contains(got, "22222222222222") {
 		t.Fatalf("explicit JP verify list should not contain TW, got:\n%s", got)
 	}
-	if !strings.Contains(got, "u1 [JP]") {
+	if !strings.Contains(got, "u1 "+i18n.T("format.account.label", i18n.Data{"Region": i18n.RegionLabel("jp"), "UID": ""})) {
 		t.Fatalf("expected JP u1 in explicit-region verify list, got:\n%s", got)
 	}
 }
@@ -391,7 +402,7 @@ func TestExecuteProfileSettingsCommandVerifyReturnsVerificationText(t *testing.T
 	if err != nil {
 		t.Fatalf("verify command: %v", err)
 	}
-	if got := string(text); got != "已验证JP服账号 123********234" {
+	if got := string(text); got != i18n.T("profile.verify.done", i18n.Data{"Account": i18n.AccountLabel("jp", "12345678901234", false)}) {
 		t.Fatalf("unexpected verify text:\n%s", got)
 	}
 }
@@ -434,7 +445,7 @@ func TestExecuteProfileSettingsCommandBGUploadUsesGlobalDefaultBindingWhenRegion
 	if err != nil {
 		t.Fatalf("bg upload command: %v", err)
 	}
-	if got := string(text); got != "已更新TW服个人信息背景" {
+	if got := string(text); got != i18n.T("profile.bg.uploaded", i18n.Data{"Account": i18n.AccountLabel("tw", "11111111111111", false)}) {
 		t.Fatalf("unexpected bg upload text:\n%s", got)
 	}
 	if len(bgStore.saved) != 1 || bgStore.saved[0] != "https://example.com/bg-tw.png" {
@@ -507,7 +518,7 @@ func TestExecuteProfileSettingsCommandBGUploadSelectorUsesGlobalIndicesWhenRegio
 	if err != nil {
 		t.Fatalf("bg upload command with implicit-region selector: %v", err)
 	}
-	if got := string(text); got != "已更新TW服个人信息背景" {
+	if got := string(text); got != i18n.T("profile.bg.uploaded", i18n.Data{"Account": i18n.AccountLabel("tw", "11111111111111", false)}) {
 		t.Fatalf("unexpected bg upload text:\n%s", got)
 	}
 	if len(bgStore.savedServers) != 1 || bgStore.savedServers[0] != "tw" {
@@ -557,7 +568,7 @@ func TestExecuteProfileSettingsCommandBGUploadSelectorUsesRegionalIndicesWhenReg
 	if err != nil {
 		t.Fatalf("bg upload command with explicit-region selector: %v", err)
 	}
-	if got := string(text); got != "已更新JP服个人信息背景" {
+	if got := string(text); got != i18n.T("profile.bg.uploaded", i18n.Data{"Account": i18n.AccountLabel("jp", "22222222222222", false)}) {
 		t.Fatalf("unexpected bg upload text:\n%s", got)
 	}
 	if len(bgStore.savedServers) != 1 || bgStore.savedServers[0] != "jp" {
@@ -620,7 +631,7 @@ func TestExecuteProfileSettingsCommandSetTimeZone(t *testing.T) {
 	if err != nil {
 		t.Fatalf("set timezone: %v", err)
 	}
-	if got := string(text); got != "已设置PJSK时区为 Asia/Tokyo" {
+	if got := string(text); got != i18n.T("profile.timezone.done", i18n.Data{"TimeZone": "Asia/Tokyo"}) {
 		t.Fatalf("unexpected timezone set text:\n%s", got)
 	}
 }
@@ -639,7 +650,7 @@ func TestExecuteProfileSettingsCommandSetTimeZoneAmbiguousOffsetReturnsCandidate
 	}
 
 	got := string(text)
-	if !strings.Contains(got, "匹配到多个时区") {
+	if !strings.HasPrefix(got, i18n.T("profile.timezone.ambiguous", i18n.Data{"Query": "+28800"})+"\n") {
 		t.Fatalf("unexpected ambiguous timezone text:\n%s", got)
 	}
 	if !strings.Contains(got, "Asia/Shanghai") {
@@ -659,7 +670,7 @@ func TestExecuteProfileSettingsCommandSetChartStyle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("set chart style: %v", err)
 	}
-	if got := string(text); got != "已设置谱面样式为 white" {
+	if got := string(text); got != i18n.T("profile.chart_style.done", i18n.Data{"Style": "white"}) {
 		t.Fatalf("unexpected chart style set text:\n%s", got)
 	}
 }
@@ -676,9 +687,7 @@ func TestExecuteProfileSettingsCommandSetChartStyleRejectsInvalidValue(t *testin
 	if err == nil {
 		t.Fatal("expected invalid chart style error, got nil")
 	}
-	if !strings.Contains(err.Error(), "white 或 black") {
-		t.Fatalf("unexpected chart style error: %v", err)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeInput, "profile.chart_style.invalid")
 }
 
 func TestExecuteProfileSettingsCommandSetArrestDifficulty(t *testing.T) {
@@ -700,7 +709,7 @@ func TestExecuteProfileSettingsCommandSetArrestDifficulty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("set arrest difficulty: %v", err)
 	}
-	if got := string(text); got != "已设置逮捕难度为 easy关闭 normal关闭 hard关闭 expert关闭 master开启 append开启" {
+	if got := string(text); got != i18n.T("profile.arrest_difficulty.done", i18n.Data{"Difficulties": "MASTER、APPEND"}) {
 		t.Fatalf("unexpected arrest difficulty text:\n%s", got)
 	}
 }
@@ -720,7 +729,7 @@ func TestExecuteProfileSettingsCommandSetArrestDifficultyPreservesUntouchedValue
 	if err != nil {
 		t.Fatalf("set arrest difficulty: %v", err)
 	}
-	if got := string(text); got != "已设置逮捕难度为 easy关闭 normal关闭 hard关闭 expert关闭 master开启 append开启" {
+	if got := string(text); got != i18n.T("profile.arrest_difficulty.done", i18n.Data{"Difficulties": "MASTER、APPEND"}) {
 		t.Fatalf("unexpected arrest difficulty text:\n%s", got)
 	}
 }

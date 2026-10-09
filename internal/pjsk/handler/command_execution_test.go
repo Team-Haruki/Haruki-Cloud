@@ -49,10 +49,11 @@ import (
 	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
 
-	_ "github.com/mattn/go-sqlite3"
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/utils/usererror"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type handlerTestBindingValidator struct{}
@@ -207,7 +208,7 @@ func TestExecuteCheckDataMySekaiWarnsOnCNWhenNotAllowed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeCheckData() error = %v", err)
 	}
-	if rejectionText(t, message) != cnMySekaiNeverOpensNotice {
+	if rejectionText(t, message) != cnMySekaiNotice() {
 		t.Fatalf("unexpected message: %+v", message)
 	}
 }
@@ -705,7 +706,7 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode music-list request: %v", err)
 			}
-			if req.Title == nil || *req.Title != "物量 777 匹配结果" {
+			if req.Title == nil || *req.Title != i18n.T("music.lookup_list.note_count", i18n.Data{"Count": 777}) {
 				t.Fatalf("unexpected list title: %+v", req.Title)
 			}
 			if len(req.MusicList) != 1 {
@@ -889,7 +890,7 @@ func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.
 	if briefListCalls != 1 {
 		t.Fatalf("expected 1 music-brief-list render call, got %d", briefListCalls)
 	}
-	if len(titles) != 1 || titles[0] != "BPM 200 匹配结果" {
+	if len(titles) != 1 || titles[0] != i18n.T("music.lookup_list.bpm", i18n.Data{"BPM": "200"}) {
 		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }
@@ -949,7 +950,7 @@ func TestExecuteMusicBPMUsesListImageForSingleMatch(t *testing.T) {
 	if briefListCalls != 1 {
 		t.Fatalf("expected 1 music-brief-list render call, got %d", briefListCalls)
 	}
-	if len(titles) != 1 || titles[0] != "BPM 200 匹配结果" {
+	if len(titles) != 1 || titles[0] != i18n.T("music.lookup_list.bpm", i18n.Data{"BPM": "200"}) {
 		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }
@@ -1046,7 +1047,7 @@ func TestExecuteMusicNoteCountUsesSingleMusicListImageWithoutSummaryText(t *test
 	if listCalls != 1 {
 		t.Fatalf("expected 1 music-list render call, got %d", listCalls)
 	}
-	if len(titles) != 1 || titles[0] != "物量 777 EXPERT 匹配结果" {
+	if len(titles) != 1 || titles[0] != i18n.T("music.lookup_list.note_count_difficulty", i18n.Data{"Count": 777, "Difficulty": "EXPERT"}) {
 		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }
@@ -1653,7 +1654,7 @@ func TestExecuteProfileBGAdjustReturnsPreviewImage(t *testing.T) {
 	if !ok {
 		t.Fatalf("unexpected text segment data: %+v", message[1].Data)
 	}
-	if !strings.Contains(textData.Text, "已更新JP服个人信息背景设置") {
+	if !strings.Contains(textData.Text, i18n.T("profile.bg.adjusted", i18n.Data{"Account": i18n.AccountLabel("jp", "12345678901234", false)})) {
 		t.Fatalf("unexpected text summary: %q", textData.Text)
 	}
 	if captured.BgSettings == nil {
@@ -4285,7 +4286,7 @@ func TestExecuteMysekaiPhoto(t *testing.T) {
 	if !ok {
 		t.Fatalf("unexpected text data type: %T", message[1].Data)
 	}
-	if !strings.HasPrefix(textData.Text, "拍摄时间: ") {
+	if textData.Text != i18n.T("mysekai.photo.taken_at", i18n.Data{"Time": i18n.FormatUserTime(time.UnixMilli(1700000000000), nil)}) {
 		t.Fatalf("unexpected photo text: %q", textData.Text)
 	}
 }

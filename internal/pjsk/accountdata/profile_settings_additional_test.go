@@ -10,6 +10,7 @@ import (
 
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	"haruki-cloud/ent/pjsk/schema"
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/accountdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
@@ -126,23 +127,23 @@ func TestExecuteProfileBackgroundCommandModes(t *testing.T) {
 		ImageURL:       "https://example.com/bg.png",
 	}
 
-	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGUpload, params); err != nil || !strings.Contains(string(text), "已更新JP服") {
+	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGUpload, params); err != nil || string(text) != i18n.T("profile.bg.uploaded", i18n.Data{"Account": i18n.AccountLabel("jp", "12345678901234", false)}) {
 		t.Fatalf("upload command = %q, %v", text, err)
 	}
 	params.ImageURL = ""
-	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || !strings.Contains(string(text), "模糊度") {
+	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || !strings.HasPrefix(string(text), i18n.T("format.account.label", i18n.Data{"Region": i18n.RegionLabel("jp"), "UID": i18n.MaskUID("12345678901234", false)})) {
 		t.Fatalf("inspect command = %q, %v", text, err)
 	}
 	blur, alpha, vertical := 8, 60, true
 	params.Blur, params.Alpha, params.Vertical = &blur, &alpha, &vertical
-	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || !strings.Contains(string(text), "已更新JP服") {
+	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || string(text) != i18n.T("profile.bg.adjusted", i18n.Data{"Account": i18n.AccountLabel("jp", "12345678901234", false)}) {
 		t.Fatalf("adjust command = %q, %v", text, err)
 	}
-	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGClear, params); err != nil || !strings.Contains(string(text), "已清空JP服") {
+	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGClear, params); err != nil || string(text) != i18n.T("profile.bg.cleared", i18n.Data{"Account": i18n.AccountLabel("jp", "12345678901234", false)}) {
 		t.Fatalf("clear command = %q, %v", text, err)
 	}
 	params.Blur, params.Alpha, params.Vertical = nil, nil, nil
-	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || !strings.Contains(string(text), "还没有自定义") {
+	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || string(text) != i18n.T("profile.bg.none", i18n.Data{"Region": i18n.RegionLabel("jp")}) {
 		t.Fatalf("empty inspect command = %q, %v", text, err)
 	}
 }

@@ -23,7 +23,7 @@ func (sekaiHandlers) ChartHandle() HarukiSekaiCommandHandler {
 			if strings.TrimSpace(ctx.GetArgs()) == "" {
 				return nil, usererror.Misuse(i18n.M("music.query_required"))
 			}
-			if ctx.GetTriggerCmd() == "/技能预览" {
+			if ctx.GetTriggerCmd() == "/技能预览" { //copylint:ignore 指令触发词
 				return makeCommandRequestWithParams(ctx, parser.ModuleMusic, "music-chart", map[string]bool{
 					"skill": true,
 				}), nil

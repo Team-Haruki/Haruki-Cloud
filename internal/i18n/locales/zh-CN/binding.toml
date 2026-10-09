@@ -73,22 +73,6 @@ other = "当前 QQ 号没有在工具箱完成绑定，或无权访问 {{.Accoun
 description = "工具箱报告该游戏账号的工具箱账号已被封禁。占位符：Data=数据名称（binding.data_kind.*）。"
 other = "该账号的工具箱账号已被封禁，无法获取{{.Data}}"
 
-[binding.data_status.suite]
-description = "/sud（抓包状态）：抓包数据的上次上传时间（与烤森数据过期提示的格式一致）。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；UpdatedAt=上次上传时间（format.time.*）；Ago=距今多久，例如“约3小时前”。"
-other = "{{.Account}} 的抓包数据（Suite）\n上次上传：{{.UpdatedAt}}（{{.Ago}}）"
-
-[binding.data_status.mysekai]
-description = "/msd：烤森数据的上次上传时间（与烤森数据过期提示的格式一致）。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；UpdatedAt=上次上传时间（format.time.*）；Ago=距今多久，例如“约3小时前”。"
-other = "{{.Account}} 的烤森（MySekai）数据\n上次上传：{{.UpdatedAt}}（{{.Ago}}）"
-
-[binding.data_status.self_only]
-description = "/sud、/msd 只能查询自己的数据。"
-other = "只能查询自己的上传状态"
-
-[binding.data_status.invalid_time]
-description = "工具箱返回的上传时间无法识别。"
-other = "获取上传时间失败，请稍后再试"
-
 [binding.none]
 description = "用户还没有绑定任何游戏账号。"
 other = "你还没有绑定任何游戏账号"

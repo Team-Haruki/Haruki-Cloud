@@ -134,7 +134,7 @@ func extractMysekaiFullFlag(args string) (bool, string) {
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
 		switch strings.ToLower(strings.TrimSpace(field)) {
-		case "", "all", "full", "全部":
+		case "", "all", "full", "全部": //copylint:ignore 解析关键字
 			if strings.TrimSpace(field) != "" {
 				full = true
 			}
@@ -209,7 +209,7 @@ func extractMysekaiAllFlag(args string) (bool, string) {
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
 		switch strings.ToLower(strings.TrimSpace(field)) {
-		case "", "all", "全部":
+		case "", "all", "全部": //copylint:ignore 解析关键字
 			if strings.TrimSpace(field) != "" {
 				showAll = true
 			}

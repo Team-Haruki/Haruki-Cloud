@@ -71,7 +71,7 @@ func parseStampPageWithRemaining(args string) (int, string, bool) {
 
 	for i := 0; i < len(fields)-1; i++ {
 		switch strings.ToLower(fields[i]) {
-		case "page", "p", "页":
+		case "page", "p", "页": //copylint:ignore 解析关键字
 		default:
 			continue
 		}
@@ -93,7 +93,7 @@ func parseStampPageWithRemaining(args string) (int, string, bool) {
 func parseStampAll(args string) bool {
 	value := strings.TrimSpace(strings.ToLower(args))
 	switch value {
-	case "all", "全部", "所有":
+	case "all", "全部", "所有": //copylint:ignore 解析关键字
 		return true
 	default:
 		return false

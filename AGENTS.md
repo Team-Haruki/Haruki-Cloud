@@ -75,6 +75,7 @@ Haruki-Cloud/
 │   ├── core/urlhost/       # picks one public base URL out of per-node hosts
 │   ├── handler/            # cross-domain command registry / bot routing
 │   ├── httpcoding/         # zstd content coding with internal services (deck-service, Drawing)
+│   ├── i18n/               # ALL user-facing copy: TOML catalogs + help docs under locales/<locale>/ (see §12)
 │   ├── identity/           # platform user → haruki user resolution
 │   ├── jsonutil/           # JSON facade: encoding/json/v2 engine, v1-compatible semantics
 │   ├── middleware/secure/  # security middleware
@@ -271,6 +272,12 @@ staticcheck ./...
   with only the dependencies under test populated (the rest are nil-safe).
 - When adding or extending an interface, all test mock implementations of that
   interface must be updated to implement the new methods.
+- User-copy guards (see §12) run as ordinary tests: `internal/i18n` (catalog
+  style, catalog integrity, copylint ratchet, help-doc style ratchet, helper
+  golden file) and `internal/pjsk/handler` (help-doc triggers, route help
+  coverage). After lowering a ratchet count or changing helper output,
+  regenerate with `HARUKI_UPDATE_GOLDEN=1 go test ./internal/i18n/` and
+  review the diff.
 
 ---
 
@@ -281,6 +288,9 @@ staticcheck ./...
 - Comment only what genuinely needs clarification — do not annotate self-evident
   code.
 - **Avoid emoji** in generated code unless explicitly requested.
+- **No user copy in Go code.** Every user-facing string lives in the
+  `internal/i18n` catalogs and every user-facing error is a typed
+  `usererror.Error`; see §12 and `docs/i18n.md`.
 - JSON goes through `internal/jsonutil` (an `encoding/json/v2` engine with
   v1-compatible semantics). Do not reintroduce `bytedance/sonic` — it was
   removed in the Go 1.27 / json/v2 migration.
@@ -311,7 +321,8 @@ When in doubt about current architecture, consult these in order:
 | `docs/sk-tracker-cloud-contract.cn.md` | SK semantics Cloud expects from the Event Tracker cloud API   |
 | `docs/public-bot-v2-api.cn.md`    | Public (unauthenticated) bot query API                             |
 | `docs/player-frame-overrides.md`  | `pjsk_render.player_frame_overrides` operator config               |
-| `docs/deck_refer_help.md`         | User-facing help text for the `deck` command family                |
+| `docs/deck_refer_help.md`         | Reference notes for the `deck` command family (the bot's own help is `internal/i18n/locales/zh-CN/help/deck*.md`) |
+| `docs/i18n.md`                    | How to add, review and translate user copy (catalogs, help docs)   |
 
 `docs/` only describes the current shape of the project. Historical progress
 and integration plans are no longer kept — when a doc and the code disagree,
@@ -375,6 +386,154 @@ As of this revision the project is **considered functionally complete**:
 - `cmd/migrate` removed (auto-migrate at startup). The remaining data tools are
   `cmd/importer` (legacy import), `cmd/asset-index` (catalog bootstrap) and
   `cmd/image-cache-reconcile` (render-cache index repair).
+
+## 12. 用户文案规范（User copy）
+
+本节是用户可见文案的唯一规范。用户可见文案指聊天回复、错误提示、`-help`
+帮助文档，以及 Cloud 发给 Drawing、会被画进图片的标签和标题。
+
+### 12.1 文案放在哪里
+
+- **所有用户文案都在 i18n 目录里，Go 代码里不写文案。** 目录在
+  `internal/i18n/locales/<locale>/`：每个领域一个 TOML 文件
+  （`common.toml`、`format.toml`、`moderation.toml`……），帮助文档在
+  `help/*.md`。目前只写 `zh-CN`；新增语言只需新建同级目录，缺失的消息自动回退到
+  `zh-CN`。具体做法见 [`docs/i18n.md`](docs/i18n.md)。
+- 代码通过 `internal/i18n` 取文案：`i18n.M(id, i18n.Data{...})` 得到
+  `Message`（延迟渲染，`.String()` 或 `.In(locale)`），`i18n.T(...)` 直接得到
+  `zh-CN` 字符串。ID 必须写成字符串字面量，占位符写成 `i18n.Data{...}` 字面量，
+  这样完整性测试才能检查。不要手写 `i18n.Message{...}`。
+- 共享格式一律用 `internal/i18n` 的函数，不要自己拼：`RegionLabel`、
+  `AccountLabel`、`MaskUID`、`FormatUserTime`、`FormatDuration`、`Thousands`、
+  `Wan`、`Percent`/`PercentN`、`PageLabel`、`DifficultyLabel`、`LiveTypeLabel`，
+  以及错误模板 `Unavailable`、`Timeout`、`NotFound`、`Ambiguous`、
+  `OutOfRange`、`BadParam`、`Usage`、`WithUsage`、`RequestFailed`、
+  `Misconfigured`、`ReadOnly`。
+- **错误一律用 `utils/usererror` 的带类型错误**：`usererror.Error{Code,
+  Message, Cause}`。`Error()` 只返回用户文案；`Cause` 只进日志
+  （`usererror.LogText`）。构造函数：`Invalid`、`Forbidden`、`BadParam`、
+  `Usage`、`NotFound`、`Ambiguous`、`OutOfRange`、`Unavailable`、`Timeout`、
+  `Misconfigured`、`Internal`、`ReadOnly`，或 `New`/`Wrap`。
+  - 用户输入错误必须用输入类 Code（`input`、`bad_param`、`usage`、
+    `not_found`、`ambiguous`、`out_of_range`），不能显示成服务故障。
+  - 任何路径都不能把原始错误文本给用户：英文、内部原因、上游响应体、状态码、
+    字段名、内部 ID 都不行。禁止 `fmt.Errorf("<中文>: %w", err)` 这类写法；
+    改成 `usererror.Wrap(code, i18n.M(...), err)`。
+  - 带类型错误会原样发给用户，不经过 `param_echo` 改写。处理器里判断"已是用户
+    文案"用 `isUserFacingError`，不要只判断 `onebot11.ReplayError`。
+  - 测试断言 `Code` 和消息 ID，不断言中文原文；中文由目录本身和
+    `internal/i18n/testdata/helpers.zh-CN.golden` 锁定。
+- 上游返回的英文错误（工具箱、游戏数据服务、查榜服务、组卡服务）属于跨仓库约定。
+  集中在一个分类器里匹配，配契约测试；上游有状态码或错误码时优先用它们。
+
+### 12.2 目录约定
+
+- **ID**：小写字母、数字、下划线，用点分段，第一段等于文件名：
+  `<领域>.<子域>.<名称>`，例如 `moderation.kill.done_until`。ID 一旦被代码使用
+  就保持稳定；措辞变了也不改 ID。不要用 go-i18n 的保留字（`id`、`other`、
+  `one`、`description` 等）作 ID 段。
+- **description**：每条都必须有，写清出现在哪里（哪条指令、什么情况），再写
+  `占位符：Name=含义；Other=含义`，每个占位符都要说明。审查文案的人只看目录，
+  不看代码。
+- **占位符**：只用命名占位符 `{{.Name}}`（大驼峰），不用 `%s`/`%d`，不用模板
+  逻辑。需要分支时拆成几条消息。值是 `Message` 时会按同一语言先渲染。
+- 一个领域一个文件；共享模板放 `common.toml`，格式化相关放 `format.toml`。
+- 新消息必须被代码使用，否则完整性测试失败（确需保留的写进
+  `internal/i18n/testdata/unused_ids.allowlist` 并注明原因）。
+
+### 12.3 已定规则
+
+| 编号 | 规则 |
+|---|---|
+| B | 区服显示：`日服(JP)`、`国服(CN)`、`台服(TW)`、`韩服(KR)`、`国际服(EN)`（半角括号、大写代码、不加空格，由 `RegionLabel` 生成）。账号行：`[日服(JP)] <UID>`（`AccountLabel`）。通用名词用"区服"，不用"服务器"指区服。小写区服代码只作为输入语法（如 `/jp查曲`）。 |
+| C | 首次提到或引导用户去工具箱上传时写"抓包数据（Suite）"、"烤森（MySekai）"；之后写"抓包数据"、"烤森"、"烤森数据"。 |
+| D | 中文与拉丁字母、数字之间加一个半角空格：`卡牌 ID`、`最多 5 个`、`游戏 UID`。例外：用户原样输入的记号（`u1`、`event123`、`t100`、`wl1`、`10火`、`/jp查曲`）和 B 的区服显示名。 |
+| E | 活动点数：名词写 PT（目标 PT、活动 PT），数字后的单位写 pt（还需 1234 pt）。 |
+| F | 不向用户提内部组件（SekaiAPI、Tracker、Cloud、Cloud 节点、masterdata、OneBot self_id、Client、数据库、上游、Drawing/绘图服务）。用功能名：获取游戏数据失败、查榜服务、渲染服务。只有 Bot 管理员能处理的问题统一回复"服务配置异常，请联系 Bot 管理员"，细节写日志或 commandtrace。 |
+| H | Cloud 负责发给 Drawing 的所有标签的本地化，从目录取预先本地化的字符串。Drawing 目前自己本地化的原始 key 先不动，记为 Drawing 后续事项。改动图片文字时提升 `renderCacheKeyVersion`。 |
+| I | 帮助文档里写了但未注册的指令：没有歧义和冲突时把文档写法注册为别名，否则改文档。 |
+| J | 错误脱敏必须完整，见 12.1。 |
+| K | 烤森"数据已过期"、`/sud`（抓包状态）和 `/msd` 用同一套术语（C）、同一个时间格式函数和同一种结构。 |
+| L | 每个已注册路由都有帮助文档；帮助示例必须能被解析；区服前缀说明只生成一次；帮助版式统一；用法错误回复一行原因加"发送 /<指令> -help 查看用法"（`WithUsage`）。 |
+
+### 12.4 默认规则
+
+- **语气**：用"你"或省略主语，不用"您"。中性陈述，不用语气词，文字回复不用
+  emoji（✅/❌ 改成"已验证/未验证"）。图片里同一组标签的 emoji 要么都有要么都没有。
+- **标点**：中文后用全角冒号"："；中文里用全角括号"（）"（B 除外）；逗号"，"、
+  并列"、"、分句"；"。单句聊天回复结尾不加"。"，同一条里两句话之间用"。"。
+  关键词和用户输入值用“”，游戏专有名词用「」，不用 `"`。描述性范围用 `~`
+  （0~100），输入语法保留 `-`（1-4）。区服代码列表按 jp、cn、tw、kr、en 排序。
+  URL 单独成行或两侧留空白。省略号写"……"。
+- **格式**：时间统一 `2026-10-09 14:05 (UTC+8)`（`FormatUserTime`，按用户时区，
+  默认 Asia/Shanghai，禁止服务器本地时区和 `MST`）；时长 `2分03秒`
+  （`FormatDuration`）；大数用"万"（`Wan`），千分位只用 `Thousands`；百分比用
+  `Percent`；分页 `第 1/3 页`（`PageLabel`）。
+- **结构**：成功回复用"已<动词>……"；错误回复写"<原因>，<下一步>"。用法表头写
+  "用法："。参数错误第一行写"参数格式不正确：“<参数>”"，下一行写具体原因
+  （`BadParam`）。
+- **保持不变**：公开 API 文档约定的 `message: "success"`
+  （`docs/public-bot-v2-api.cn.md`）和 `api/public` 的英文协议消息。
+
+### 12.5 术语表
+
+| 概念 | 规范写法 | 禁用写法 |
+|---|---|---|
+| 区服（通用） | 区服 | 服务器（指区服时；"游戏服务器维护中"可保留） |
+| 区服显示名 | 日服(JP)、国服(CN)、台服(TW)、韩服(KR)、国际服(EN) | JP服、[JP]、在 JP 服、CN 服、日服（jp） |
+| 区服代码（输入） | jp、cn、tw、kr、en | jp/cn/en/tw/kr、大小写混写 |
+| suite 数据 | 抓包数据（Suite）→ 抓包数据 | suite、Suite数据、User Data、用户数据、套装 |
+| MySekai | 烤森（MySekai）→ 烤森、烤森数据 | mysekai、Mysekai、MySekai数据 |
+| command | 指令 | 命令 |
+| 榜线 | 榜线 | 档线、分数线、SK 线 |
+| 档位 / 名次 | T100（档位）、第 N 名（名次） | 显示用的 t100、Txxx名 |
+| 账号 | 游戏账号 | PJSK账号、%s服PJSK账号 |
+| 账号号码 | 游戏 UID | 游戏ID、游戏UID、账号ID、单独的 UID |
+| 默认账号 | 默认绑定 | 主账号（只作触发词）、默认账号 |
+| 平台身份 | QQ 号 | QQ号、QQ账号 |
+| 工具箱 | 工具箱（帮助里首次写 Haruki 工具箱） | Toolbox、toolbox、Haruki工具箱 |
+| 卡组 / 组卡 | 卡组 = 5 张卡；组卡 = 动作或功能 | 主队、队伍、推荐队伍 |
+| 歌曲 | 歌曲、歌曲名、歌曲 ID | 歌、曲目 |
+| 自制谱面 | 自制谱面 | 自定义谱面、自制谱 |
+| Live | 虚拟 Live、多人 Live、单人 Live | 虚拟Live、虚拟演唱会、多人LIVE、协力 |
+| World Link | WL（WL 活动、WL 章节） | WorldLink、wl活动 |
+| 活动点数 | PT（名词）、pt（数字后单位） | 目标PT、1234PT |
+| 个人信息 | 个人信息、个人信息背景、自定义个人信息、模块化个人信息 | 个人资料、资料卡、模块化资料、profile、自定义档案 |
+| 难度 | EASY、NORMAL、HARD、EXPERT、MASTER、APPEND | 显示文本里的小写 expert |
+| 封禁到期 | 解封时间 | 封禁至 |
+| 内部组件 | 游戏数据服务 / 获取游戏数据失败、查榜服务、渲染服务、组卡服务 | SekaiAPI、Tracker、Cloud、masterdata、Client、数据库、上游、绘图服务 |
+| 管理员才能处理 | 服务配置异常，请联系 Bot 管理员 | 请更新 Client、请检查配置 |
+| 称呼 | 你 / 省略主语 | 您 |
+| 重试 | 请稍后再试 | 请稍后重试 |
+| 不可用 | 暂时不可用 | 未就绪 |
+| 用法 | 用法：、发送 /<指令> -help 查看用法 | 使用方式:、查看完整用法请发送： |
+| 参数错误 | 参数格式不正确：“<参数>” | 参数解析失败 |
+
+### 12.6 不属于文案（留在代码里）
+
+- 用户输入的指令触发词和别名表（`Commands: []string{...}`、`PrefixArgs`）、
+  解析关键字（`internal/pjsk/parser/`、`internal/pjsk/filteralias/`、
+  `render/common/nicknames.go`、`render/card/extractor.go` 等）。
+- 游戏主数据名称（角色、歌曲、卡牌、家具等）和外部 API 的取值
+  （`utils/censor` 的"合规/不合规"）。
+- 日志、内部错误原因、测试数据、运维工具（`cmd/`、`scripts/`）。
+- 存进数据库、之后原样显示的值（例如系统写入的封禁原因），在该行末尾标注
+  `//copylint:ignore <原因>`。
+
+### 12.7 防回退测试
+
+| 测试 | 位置 | 规则 |
+|---|---|---|
+| `TestCatalogStyle` | `internal/i18n` | 目录零容忍：汉字后半角冒号、中文半角括号、中英之间缺空格、单句结尾"。"、禁用词（您、请稍后重试、未就绪、命令、Toolbox、SekaiAPI、Tracker、masterdata、Cloud、suite、Mysekai、套装、档线、分数线、（状态、`"` 等）、`%s` 占位符、缺 description、占位符未说明、ID 格式 |
+| `TestCatalogIntegrity` | `internal/i18n` | 代码引用的 ID 都存在、占位符一一对应、没有未使用的 ID、其他语言不多出 ID |
+| `TestCopylintRatchet` | `internal/i18n` | 非测试 Go 代码里的中文字面量和"中文 + %w/%v"的 `fmt.Errorf`，按文件计数，只许减少（`testdata/copylint.baseline`） |
+| `TestHelpDocStyleRatchet` | `internal/i18n` | 帮助文档的标点、空格和禁用词，按文件计数，只许减少（`testdata/helpdoc_style.baseline`） |
+| `TestHelperGolden` | `internal/i18n` | 共享格式函数的中文输出（`testdata/helpers.zh-CN.golden`） |
+| `TestHelpDocTriggersAreRegistered` | `internal/pjsk/handler` | 帮助文档里反引号中的 `/指令` 都能解析到已注册指令（已知缺口在 `testdata/helpdoc_unregistered_triggers.txt`） |
+| `TestEveryRouteHasHelpDoc` | `internal/pjsk/handler` | 每个已注册路由都有自己的帮助文档（缺口在 `testdata/helpdoc_missing_routes.txt`） |
+
+基线和允许清单只能缩小：修完问题后用 `HARUKI_UPDATE_GOLDEN=1 go test ./internal/i18n/`
+重新生成基线，并删除允许清单里已修好的行（测试会提示）。不要为了让测试通过而调高基线。
 
 ## Git commits
 

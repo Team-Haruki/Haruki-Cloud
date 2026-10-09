@@ -94,6 +94,7 @@ Haruki-Cloud/
 │   ├── core/trustsign/           #   Ed25519 分离载荷签名契约（keyset / manifest）
 │   ├── core/upstream/            #   上游连接池 / Transport
 │   ├── handler/                  #   统一命令注册表（handler.go + bot_route.go）
+│   ├── i18n/                     #   全部用户文案：locales/<语言>/*.toml 目录 + help/*.md 帮助文档（见 docs/i18n.md）
 │   ├── identity/                 #   平台用户身份解析
 │   ├── jsonutil/                 #   JSON 门面（json/v2 引擎 + v1 兼容语义）
 │   ├── middleware/secure/        #   安全中间件

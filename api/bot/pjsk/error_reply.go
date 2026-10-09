@@ -22,8 +22,7 @@ import (
 func commandErrorText(ctx context.Context, err error, commandPath, trigger string) string {
 	locale := i18n.LocaleFromContext(ctx)
 	typed := userErrorOf(err)
-	text := withRouteGuidance(typed, commandPath, trigger).In(locale)
-	return sanitizeErrorReply(ctx, text, locale)
+	return sanitizeErrorReply(ctx, withRouteGuidance(typed, commandPath, trigger), locale)
 }
 
 // userErrorOf returns err's typed user error: its own, the classification of
@@ -78,11 +77,11 @@ func helpTrigger(trigger string) string {
 	return strings.Fields(trigger)[0]
 }
 
-// sanitizeErrorReply is the last check before error text reaches a user: a
-// line that no catalog message produces is dropped (and logged), and an
-// empty result or a sensitive URL becomes the generic reply.
-func sanitizeErrorReply(ctx context.Context, text string, locale i18n.Locale) string {
-	clean, dropped := i18n.SanitizeLines(text)
+// sanitizeErrorReply renders reply and is the last check before error text
+// reaches a user: a line that no catalog message produces is dropped (and
+// logged), and an empty result or a sensitive URL becomes the generic reply.
+func sanitizeErrorReply(ctx context.Context, reply i18n.Message, locale i18n.Locale) string {
+	clean, dropped := i18n.SanitizeMessage(reply, locale)
 	if len(dropped) > 0 {
 		logger.WarnContext(ctx, "dropped non-catalog lines from an error reply",
 			"dropped_lines", len(dropped),

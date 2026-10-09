@@ -106,12 +106,17 @@ func TestCommandErrorTextClassifiesUpstreamFailures(t *testing.T) {
 
 func TestSanitizeErrorReplyDropsNonCatalogLines(t *testing.T) {
 	ctx := context.Background()
-	reply := i18n.M("binding.required").String()
-	got := sanitizeErrorReply(ctx, reply+"\nraw upstream detail: token=abc", i18n.DefaultLocale)
-	if got != reply {
-		t.Fatalf("sanitized reply = %q, want %q", got, reply)
+	// A raw cause that slipped into a placeholder of a usage reply.
+	leaky := i18n.M("common.with_usage", i18n.Data{
+		"Reason": "raw upstream detail: token=abc",
+		"Usage":  i18n.Usage("/绑定"),
+	})
+	got := sanitizeErrorReply(ctx, leaky, i18n.DefaultLocale)
+	if want := i18n.Usage("/绑定").String(); got != want {
+		t.Fatalf("sanitized reply = %q, want %q", got, want)
 	}
-	if got := sanitizeErrorReply(ctx, "raw upstream detail", i18n.DefaultLocale); got != i18n.RequestFailed().String() {
+	onlyRaw := i18n.M("common.with_usage", i18n.Data{"Reason": "raw upstream detail", "Usage": "unexpected EOF"})
+	if got := sanitizeErrorReply(ctx, onlyRaw, i18n.DefaultLocale); got != i18n.RequestFailed().String() {
 		t.Fatalf("a reply with no catalog line must become the generic reply: %q", got)
 	}
 }

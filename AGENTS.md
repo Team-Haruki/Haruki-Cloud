@@ -434,8 +434,10 @@ As of this revision the project is **considered functionally complete**:
     用上游分类器分类，分不出来就回复通用的“请求处理失败”。处理器里判断"已是
     用户文案"用 `isUserFacingError`（只认带类型错误）。错误分流一律按类型
     （`errors.Is`/`errors.As`、`usererror.As`、消息 ID），不要匹配错误文本。
-  - 最后一道防线：`i18n.SanitizeLines` 丢掉不是由任何目录消息渲染出来的行
-    （丢掉的行写日志），结果为空或含敏感 URL 时回复通用错误。
+  - 最后一道防线：`i18n.SanitizeMessage` 丢掉不是由任何目录消息渲染出来的行
+    （丢掉的行写日志），结果为空或含敏感 URL 时回复通用错误。字面文字太少的
+    模板行（如 `u{{.Index}} {{.Account}}`、`{{.Value}}万`、
+    `{{.Region}}活动 {{.ID}}`）是弱模式，只在回复本身用到该消息时才认。
   - 测试断言 `Code` 和消息 ID，不断言中文原文（`testutil.RequireUserError`、
     `testutil.MessageID`）；中文由目录本身和
     `internal/i18n/testdata/helpers.zh-CN.golden` 锁定。

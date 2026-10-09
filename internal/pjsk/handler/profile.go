@@ -256,6 +256,11 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		}
 		return onebot11.Message{onebot11.Text(string(data))}, nil
 	case accountdata.ProfileModeHideID, accountdata.ProfileModeShowID,
+		accountdata.ProfileModeHideSK, accountdata.ProfileModeShowSK,
+		accountdata.ProfileModeHideInfo, accountdata.ProfileModeShowInfo,
+		accountdata.ProfileModeHideArrest, accountdata.ProfileModeShowArrest,
+		accountdata.ProfileModeHideAll, accountdata.ProfileModeShowAll,
+		accountdata.ProfileModeVisibility,
 		accountdata.ProfileModeHideSuite, accountdata.ProfileModeShowSuite,
 		accountdata.ProfileModeHideMySekai, accountdata.ProfileModeShowMySekai,
 		accountdata.ProfileModeVerify, accountdata.ProfileModeVerifyList,
@@ -342,7 +347,7 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 	profileCtrl := rc.App.Profiles.WithContext(rc.Ctx)
 	region = regionWithDefault(region)
 
-	target, err := resolveGameTarget(rc.Ctx, p, region, regionExplicit, rc.App)
+	target, err := resolveGameTarget(rc.Ctx, p, region, regionExplicit, rc.App, accountdata.ExposureProfile)
 	if err != nil {
 		return zeroTarget, nil, err
 	}
@@ -365,7 +370,7 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 
 	q := profile.Query{
 		Region:           region,
-		Visible:          target.Visible,
+		Visible:          target.UIDVisible,
 		BgSettings:       target.BgSettings,
 		VerticalOverride: p.ProfileVertical,
 	}

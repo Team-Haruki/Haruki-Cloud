@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/drawing"
@@ -159,7 +160,7 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 		Platform:       rc.Platform,
 		PlatformUserID: rc.PlatformUserID,
 		Selector:       selector,
-	}, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
+	}, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App, accountdata.ExposureProfile)
 	if err != nil {
 		return nil, nil, "", nil, err
 	}
@@ -234,7 +235,7 @@ func buildDeckDetailedProfileForTargetWithResponse(rc *RequestContext, target Re
 
 	q := profile.Query{
 		Region:     region,
-		Visible:    target.Visible,
+		Visible:    target.UIDVisible,
 		BgSettings: target.BgSettings,
 	}
 	finishBuild := measurePayloadBuild(rc.Ctx)

@@ -127,7 +127,7 @@ func TestExecuteDeckReturnsStandardSuiteReplayError(t *testing.T) {
 	if typed.Message.String() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected suite reply: %s", typed.Message)
 	}

@@ -87,7 +87,7 @@ func bindingAccountLabel(binding *accountdata.ResolvedBinding) (i18n.Message, bo
 	if binding == nil || strings.TrimSpace(binding.PJSKUserID) == "" {
 		return i18n.Message{}, false
 	}
-	return i18n.AccountLabel(binding.Server, binding.PJSKUserID, binding.Visible), true
+	return i18n.AccountLabel(binding.Server, binding.PJSKUserID, binding.Visibility.UID), true
 }
 
 // privateDataError is the reply when binding has no usable data of kind:

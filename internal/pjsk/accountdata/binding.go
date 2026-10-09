@@ -19,10 +19,12 @@ var ErrNoBinding = errors.New("pjsk: no binding found for user on this server")
 
 // ResolvedBinding holds the result of a successful binding lookup.
 type ResolvedBinding struct {
-	BindingID      int
-	PJSKUserID     string
-	Server         string
-	Visible        bool
+	BindingID  int
+	PJSKUserID string
+	Server     string
+	// Visibility is the owner's per-exposure settings (UID, ranking,
+	// profile, arrest).
+	Visibility     Visibility
 	SuiteVisible   bool
 	MySekaiVisible bool
 	Verified       bool
@@ -44,8 +46,10 @@ func newBindingResolver(db *pjskdb.Client) *bindingResolver {
 //
 // Resolution order:
 //  1. user_default_bindings — the user's explicitly chosen default for this server.
-//  2. Fallback: first visible binding in user_bindings for this server
-//     (for users who bound an account but never set a default).
+//  2. Fallback: the first binding in user_bindings for this server, in
+//     display order (for users who bound an account but never set a
+//     default). Visibility is not a resolution rule: each exposure is
+//     checked by the caller that shows the account to someone else.
 //
 // Returns ErrNoBinding if the user has no binding on the requested server.
 func (r *bindingResolver) Resolve(ctx context.Context, harukiUserID int, server string) (*ResolvedBinding, error) {
@@ -68,7 +72,7 @@ func (r *bindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 			BindingID:      b.ID,
 			PJSKUserID:     bindingUserID(b),
 			Server:         bindingServer(b),
-			Visible:        b.Visible,
+			Visibility:     bindingVisibility(b),
 			SuiteVisible:   b.SuiteVisible,
 			MySekaiVisible: b.MysekaiVisible,
 			Verified:       b.Verified,
@@ -79,12 +83,11 @@ func (r *bindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 		return nil, err
 	}
 
-	// 2. Fallback: first visible binding for this server.
+	// 2. Fallback: first binding for this server.
 	bindings, err := r.db.UserBinding.Query().
 		Where(
 			userbinding.HarukiUserID(harukiUserID),
 			userbinding.HasGameAccountWith(gameaccount.ServerEQ(server)),
-			userbinding.Visible(true),
 		).
 		WithGameAccount().
 		All(ctx)
@@ -113,7 +116,7 @@ func (r *bindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 		BindingID:      b.ID,
 		PJSKUserID:     bindingUserID(b),
 		Server:         bindingServer(b),
-		Visible:        b.Visible,
+		Visibility:     bindingVisibility(b),
 		SuiteVisible:   b.SuiteVisible,
 		MySekaiVisible: b.MysekaiVisible,
 		Verified:       b.Verified,

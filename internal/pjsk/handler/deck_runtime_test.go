@@ -423,7 +423,7 @@ func TestExecuteDeckMySekaiRequiresVisibleSuiteSnapshot(t *testing.T) {
 	if err == nil || err.Error() != privateDataHiddenMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}

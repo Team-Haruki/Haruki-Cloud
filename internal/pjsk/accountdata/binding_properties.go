@@ -159,7 +159,8 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 }
 
-// SetBindingVisible sets the visibility flag for the current binding.
+// SetBindingVisible shows or hides every exposure (UID, ranking, profile,
+// arrest) of the current binding at once, like /显示全部 and /隐藏全部.
 func (s *BindingService) SetBindingVisible(ctx context.Context, platform, platformUserID, server string, visible bool) (*BindingListItem, error) {
 	if err := s.requireWritable(); err != nil {
 		return nil, err
@@ -168,8 +169,7 @@ func (s *BindingService) SetBindingVisible(ctx context.Context, platform, platfo
 	if err != nil {
 		return nil, err
 	}
-	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
-		SetVisible(visible).
+	if _, err := setBindingVisibility(s.pjskDB.UserBinding.UpdateOneID(binding.ID), UniformVisibility(visible)).
 		Save(ctx); err != nil {
 		return nil, err
 	}

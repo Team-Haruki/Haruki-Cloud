@@ -323,9 +323,13 @@ Edge：`← user_bindings`（一对多）
 | `haruki_user_id` | int | — | Haruki 用户 ID（关联 users 表） |
 | `game_account_id` | int | FK, nullable | 指向 `game_accounts.id` |
 | `display_order` | int | default 0 | 绑定列表中的持久化排序 |
-| `visible` | bool | default true | 是否公开展示 UID |
-| `suite_visible` | bool | default true | 是否公开展示抓包 / suite 数据 |
-| `mysekai_visible` | bool | default true | 是否公开展示 MySekai 私有数据 |
+| `visible` | bool | default true | **已废弃**：四个分项都展示时为 true。只为回滚保留并随分项同步写入；新代码只在分项为 NULL 时读它 |
+| `uid_visible` | bool | nullable | 回复和图片里是否显示完整游戏 UID（`/隐藏id`） |
+| `sk_visible` | bool | nullable | 其他人能否通过 @ 查询活动排名（`/隐藏sk`） |
+| `profile_visible` | bool | nullable | 其他人能否通过 @ 查看个人信息和用该账号数据生成的结果（`/隐藏个人信息`） |
+| `arrest_visible` | bool | nullable | 其他人能否通过 @ 逮捕（`/隐藏逮捕`） |
+| `suite_visible` | bool | default true | 是否公开展示抓包 / suite 数据（也挡住本人查询） |
+| `mysekai_visible` | bool | default true | 是否公开展示 MySekai 私有数据（也挡住本人查询） |
 | `verified` | bool | default false | 当前绑定账号是否已验证 |
 
 唯一索引：`(haruki_user_id, game_account_id)`  
@@ -333,6 +337,16 @@ Edge：
 
 1. `→ game_accounts`（多对一，`game_account_id`）
 2. `→ user_default_bindings`（一对多）
+
+可见性分项（`uid_visible`、`sk_visible`、`profile_visible`、`arrest_visible`）：
+
+1. 原来只有一个 `visible`，`false` 时隐藏全部。拆分后每种暴露方式一个开关，`/隐藏全部`、`/显示全部` 一次改四个。
+2. 迁移：启动时 auto-migrate 加四个可空列，随后（只在可写节点）执行
+   `accountdata.BackfillBindingVisibility`：每个分项 `IS NULL` 的行按 `visible` 回填（`visible=false` 的绑定四项都是 false，`visible=true` 的都是 true）。只改 NULL，可重复执行；旧版本二进制在滚动发布期间新建的行在下次启动时补齐。
+3. 读取时 NULL 分项按 `visible` 处理（`bindingVisibility`），所以回填之前和滚动发布期间行为与拆分前一致。
+4. 任何分项变化都同时写全部四项和 `visible = 四项都为 true`。回滚到只认 `visible` 的旧版本时，只隐藏了一部分的绑定按“全部隐藏”处理，不会比用户的设置暴露更多。
+5. 新绑定四项都是 false（与原来新建绑定 `visible=false` 一致）；抓包和烤森开关不变。
+6. `visible` 计划在下一个版本之后删除（先确认不再需要回滚到拆分前的版本）。
 
 ### 6.5 `user_default_bindings` 表（默认绑定指针）
 

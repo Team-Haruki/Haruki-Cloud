@@ -152,11 +152,10 @@ func (s *BindingService) Bind(ctx context.Context, platform, platformUserID, raw
 		if orderErr != nil {
 			return nil, orderErr
 		}
-		binding, err = tx.UserBinding.Create().
+		binding, err = createBindingVisibility(tx.UserBinding.Create().
 			SetHarukiUserID(harukiUserID).
 			SetGameAccountID(account.ID).
-			SetDisplayOrder(displayOrder).
-			SetVisible(false).
+			SetDisplayOrder(displayOrder), NewBindingVisibility).
 			Save(ctx)
 		if err != nil {
 			return nil, err

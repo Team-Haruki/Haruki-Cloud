@@ -847,7 +847,7 @@ func TestExecuteEventRecordReturnsContextualSuiteMessageWhenSnapshotMissing(t *t
 	if err == nil || err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}

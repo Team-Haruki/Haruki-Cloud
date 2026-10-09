@@ -644,8 +644,8 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 	if binding == nil {
 		return accountdata.ErrNoBinding
 	}
-	if targetSelector == "" && !binding.Visible && !isSelfTarget {
-		return usererror.Forbidden(i18n.M("binding.target_hidden"))
+	if targetSelector == "" && !binding.Visibility.SK && !isSelfTarget {
+		return hiddenTargetError(accountdata.ExposureSK)
 	}
 
 	uid, parseErr := strconv.ParseInt(strings.TrimSpace(binding.PJSKUserID), 10, 64)

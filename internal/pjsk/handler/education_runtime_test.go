@@ -318,7 +318,7 @@ func TestExecuteEducationAreaRequiresSuiteSnapshotWhenBindingVisible(t *testing.
 	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "cn",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -18,8 +18,16 @@ description = "查询 @群友在指定区服的数据，但该用户在该区服
 other = "该用户在{{.Region}}没有绑定游戏账号"
 
 [binding.target_hidden]
-description = "查询 @群友的数据，但该用户隐藏了个人信息。"
+description = "查看 @群友的个人信息或用其账号数据生成的结果（个人信息、组卡、烤森等），但该用户发送过 /隐藏个人信息。"
 other = "该用户已隐藏个人信息"
+
+[binding.target_hidden_sk]
+description = "查询 @群友的活动排名，但该用户发送过 /隐藏sk。"
+other = "该用户已隐藏活动排名"
+
+[binding.target_hidden_arrest]
+description = "逮捕 @群友，但该用户发送过 /隐藏逮捕。"
+other = "该用户已隐藏逮捕信息"
 
 [binding.target_uid_invalid]
 description = "@群友绑定的游戏 UID 不是有效数字（数据异常）。"

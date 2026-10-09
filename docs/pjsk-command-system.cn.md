@@ -527,7 +527,33 @@ internal/pjsk/handler/alias.go
 8. 批量拒绝会先校验全部审核 ID，再在同一事务内写入拒绝记录并删除待审记录
 9. `/kill` 与 `/back` 仅允许 `moderation.admin_qq_ids` 中的 QQ 使用；全局封禁同时覆盖用户命令、Bot 登录、Bot 会话校验和 Bot 请求
 
-## 13. 相关文档
+## 13. 绑定可见性（隐私设置）
+
+每个绑定账号对其他人的每种暴露方式各有一个开关（`user_bindings` 的 `uid_visible`、`sk_visible`、`profile_visible`、`arrest_visible`，迁移见 `database-schemas.cn.md` 6.4）。抓包数据和烤森数据另有 `suite_visible`、`mysekai_visible`，它们连本人的查询也会挡住，不属于 `/隐藏全部`。
+
+| 功能 | Path | Mode | 指令（含别名） |
+|------|------|------|------|
+| 隐藏/显示游戏 UID | `profile/visibility/hide`、`profile/visibility/show` | `profile-hide-id`、`profile-show-id` | `/隐藏id` `/隐藏ID` `/隐藏uid` `/pjsk隐藏id` `/pjsk hide id`；`/显示id` `/展示id` `/显示uid` `/pjsk显示id` `/pjsk展示id` `/pjsk show id` |
+| 隐藏/显示活动排名 | `profile/sk/hide`、`profile/sk/show` | `profile-hide-sk`、`profile-show-sk` | `/隐藏sk` `/pjsk隐藏sk` `/pjsk hide sk`；`/显示sk` `/展示sk` `/pjsk显示sk` `/pjsk展示sk` `/pjsk show sk`（`sk` 也可写 `SK`） |
+| 隐藏/显示个人信息 | `profile/info/hide`、`profile/info/show` | `profile-hide-info`、`profile-show-info` | `/隐藏个人信息` `/pjsk隐藏个人信息` `/pjsk hide profile`；`/显示个人信息` `/展示个人信息` `/pjsk显示个人信息` `/pjsk展示个人信息` `/pjsk show profile` |
+| 隐藏/显示逮捕信息 | `profile/arrest/hide`、`profile/arrest/show` | `profile-hide-arrest`、`profile-show-arrest` | `/隐藏逮捕` `/pjsk隐藏逮捕` `/pjsk hide arrest`；`/显示逮捕` `/展示逮捕` `/pjsk显示逮捕` `/pjsk展示逮捕` `/pjsk show arrest` |
+| 一次隐藏/显示以上四项 | `profile/visibility/hide-all`、`profile/visibility/show-all` | `profile-hide-all`、`profile-show-all` | `/隐藏全部` `/pjsk隐藏全部` `/pjsk hide all`；`/显示全部` `/展示全部` `/pjsk显示全部` `/pjsk展示全部` `/pjsk show all` |
+| 查看全部可见性设置 | `profile/visibility/status` | `profile-visibility` | `/隐私设置` `/可见性设置` `/pjsk隐私设置` `/pjsk privacy` |
+
+所有指令都可加 `u序号` 选择自己的绑定，也可加区服前缀（`/jp隐藏sk`）。修改类指令的回复先写改了什么，再列出全部六项设置。
+
+执行时的检查点：
+
+| 暴露方式 | 检查位置 | 隐藏时 |
+|------|------|------|
+| 游戏 UID | `ResolvedGameTarget.UIDVisible` → 个人信息卡片和其他图片的 `IsHideUID`、`AccountLabel`、`/逮捕`、`/注册时间`、`/抓包状态` 等的 UID 打码 | 打码，不拒绝 |
+| 活动排名 | `resolveTrackerTargetUser`（`/sk @群友` 等查榜指令） | 别人查询时回复“该用户已隐藏活动排名” |
+| 个人信息 | `resolveGameTarget(..., accountdata.ExposureProfile)`：个人信息、自定义个人信息、组卡、烤森和其他用抓包数据生成的 @群友 查询 | “该用户已隐藏个人信息” |
+| 逮捕信息 | `resolveGameTarget(..., accountdata.ExposureArrest)`（`/逮捕 @群友`） | “该用户已隐藏逮捕信息” |
+
+本人的查询不受这四项影响（UID 仍按设置打码）。
+
+## 14. 相关文档
 
 - [ZeroBot 与 Cloud 联调方案](zerobot-cloud-integration-plan.cn.md)
 - [项目进展总结](project-status-summary.cn.md)

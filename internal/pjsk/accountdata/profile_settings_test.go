@@ -86,7 +86,7 @@ func testProfileBindingVisibility(t *testing.T, ctx context.Context, service *ac
 	if err != nil {
 		t.Fatalf("hide id: %v", err)
 	}
-	if item.Visible {
+	if item.Visibility.UID {
 		t.Fatalf("expected visible=false, got %+v", item)
 	}
 

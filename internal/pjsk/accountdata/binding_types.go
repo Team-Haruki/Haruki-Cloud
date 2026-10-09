@@ -79,7 +79,7 @@ type BindingListItem struct {
 	DisplayOrder    int
 	Server          string
 	UserID          string
-	Visible         bool
+	Visibility      Visibility
 	SuiteVisible    bool
 	MySekaiVisible  bool
 	Verified        bool

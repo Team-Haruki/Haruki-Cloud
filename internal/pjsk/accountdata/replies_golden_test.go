@@ -16,9 +16,9 @@ import (
 // HARUKI_UPDATE_GOLDEN=1 go test ./internal/pjsk/accountdata/.
 func TestAccountRepliesGolden(t *testing.T) {
 	bgPath := "bg.jpg"
-	jpDefault := BindingListItem{Index: 1, Server: "jp", UserID: "7487590788965145370", Verified: true, IsGlobalDefault: true, IsServerDefault: true,
+	jpDefault := BindingListItem{Index: 1, Server: "jp", UserID: "7487590788965145370", Verified: true, IsGlobalDefault: true, IsServerDefault: true, SuiteVisible: true, MySekaiVisible: true,
 		Bg: &drawing.ProfileBgSettings{ImgPath: &bgPath, Blur: 5, Alpha: 70, Vertical: true}}
-	cnVisible := BindingListItem{Index: 1, Server: "cn", UserID: "123456789", Visible: true, IsServerDefault: true}
+	cnVisible := BindingListItem{Index: 1, Server: "cn", UserID: "123456789", Visibility: UniformVisibility(true), IsServerDefault: true, SuiteVisible: true, MySekaiVisible: true}
 	twPlain := BindingListItem{Index: 1, Server: "tw", UserID: "987654321"}
 	items := []BindingListItem{jpDefault, cnVisible, twPlain}
 	candidates := make([]string, 22)
@@ -39,12 +39,21 @@ func TestAccountRepliesGolden(t *testing.T) {
 		{"swap (region)", formatBindingSwapResultText("u1", "u2", "jp", []BindingListItem{jpDefault})},
 		{"verify list", formatVerifyListText(items, "")},
 		{"verify list (region)", formatVerifyListText([]BindingListItem{jpDefault}, "jp")},
-		{"hide uid", profileVisibilityResultText(ProfileModeHideID, bindingAccountLabel(jpDefault))},
-		{"show uid", profileVisibilityResultText(ProfileModeShowID, bindingAccountLabel(cnVisible))},
-		{"hide suite", profileVisibilityResultText(ProfileModeHideSuite, bindingAccountLabel(jpDefault))},
-		{"show suite", profileVisibilityResultText(ProfileModeShowSuite, bindingAccountLabel(jpDefault))},
-		{"hide mysekai", profileVisibilityResultText(ProfileModeHideMySekai, bindingAccountLabel(jpDefault))},
-		{"show mysekai", profileVisibilityResultText(ProfileModeShowMySekai, bindingAccountLabel(jpDefault))},
+		{"hide uid", profileVisibilityResultText(ProfileModeHideID, jpDefault)},
+		{"show uid", profileVisibilityResultText(ProfileModeShowID, cnVisible)},
+		{"hide suite", profileVisibilityResultText(ProfileModeHideSuite, withSuite(jpDefault, false, true))},
+		{"show suite", profileVisibilityResultText(ProfileModeShowSuite, jpDefault)},
+		{"hide mysekai", profileVisibilityResultText(ProfileModeHideMySekai, withSuite(jpDefault, true, false))},
+		{"show mysekai", profileVisibilityResultText(ProfileModeShowMySekai, jpDefault)},
+		{"hide sk", profileVisibilityResultText(ProfileModeHideSK, cnVisible.withVisibility(cnVisible.Visibility.With(ExposureSK, false)))},
+		{"show sk", profileVisibilityResultText(ProfileModeShowSK, jpDefault.withVisibility(jpDefault.Visibility.With(ExposureSK, true)))},
+		{"hide profile", profileVisibilityResultText(ProfileModeHideInfo, cnVisible.withVisibility(cnVisible.Visibility.With(ExposureProfile, false)))},
+		{"show profile", profileVisibilityResultText(ProfileModeShowInfo, jpDefault.withVisibility(jpDefault.Visibility.With(ExposureProfile, true)))},
+		{"hide arrest", profileVisibilityResultText(ProfileModeHideArrest, cnVisible.withVisibility(cnVisible.Visibility.With(ExposureArrest, false)))},
+		{"show arrest", profileVisibilityResultText(ProfileModeShowArrest, jpDefault.withVisibility(jpDefault.Visibility.With(ExposureArrest, true)))},
+		{"hide all", profileVisibilityResultText(ProfileModeHideAll, jpDefault)},
+		{"show all", profileVisibilityResultText(ProfileModeShowAll, cnVisible)},
+		{"privacy settings", profileVisibilityResultText(ProfileModeVisibility, BindingListItem{Index: 2, Server: "jp", UserID: "123456789", Visibility: Visibility{UID: false, SK: true, Profile: true, Arrest: false}, SuiteVisible: true, MySekaiVisible: false})},
 		{"arrest difficulty", formatProfileDifficultySummary([]sekaiapi.MusicDifficultyType{sekaiapi.MusicDifficultyExpert, sekaiapi.MusicDifficultyMaster})},
 		{"arrest difficulty (none)", formatProfileDifficultySummary(nil)},
 		{"bg settings", formatProfileBGSettingsText(jpDefault)},
@@ -74,4 +83,14 @@ func compareRepliesGolden(t *testing.T, got string) {
 	if string(want) != got {
 		t.Fatalf("%s is out of date; review the diff and regenerate with HARUKI_UPDATE_GOLDEN=1\n--- got ---\n%s", path, got)
 	}
+}
+
+func (item BindingListItem) withVisibility(v Visibility) BindingListItem {
+	item.Visibility = v
+	return item
+}
+
+func withSuite(item BindingListItem, suite, mySekai bool) BindingListItem {
+	item.SuiteVisible, item.MySekaiVisible = suite, mySekai
+	return item
 }

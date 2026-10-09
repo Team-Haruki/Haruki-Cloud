@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"haruki-cloud/internal/pjsk/accountdata"
 	"strconv"
 	"strings"
 
@@ -303,7 +304,7 @@ func executeTargetMySekaiDeck(rc *RequestContext, query deck.AutoQuery, params u
 		params.Platform = strings.TrimSpace(rc.Cmd.RequesterPlatform)
 		params.PlatformUserID = strings.TrimSpace(rc.Cmd.RequesterUserID)
 	}
-	target, err := resolveGameTarget(rc.Ctx, params, regionStr, rc.Cmd.RegionExplicit, rc.App)
+	target, err := resolveGameTarget(rc.Ctx, params, regionStr, rc.Cmd.RegionExplicit, rc.App, accountdata.ExposureProfile)
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +360,7 @@ func applyMySekaiDeckProfile(rc *RequestContext, query *deck.AutoQuery, target R
 	if rc.App.Profiles == nil {
 		return
 	}
-	profileQuery := profile.Query{Region: regionStr, Visible: target.Visible, BgSettings: target.BgSettings}
+	profileQuery := profile.Query{Region: regionStr, Visible: target.UIDVisible, BgSettings: target.BgSettings}
 	finishBuild := measurePayloadBuild(rc.Ctx)
 	detail, err := rc.App.Profiles.WithContext(rc.Ctx).BuildDetailedProfileCardFromAPIWithSnapshot(profileQuery, resp, targetSnapshot)
 	finishBuild()

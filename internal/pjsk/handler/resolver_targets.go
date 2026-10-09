@@ -13,7 +13,10 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 )
 
-func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (ResolvedGameTarget, error) {
+// resolveGameTarget resolves the account a query is about. For another
+// user's account (@群友), exposure is what the command shows of it; an owner
+// who hid that exposure gets the request refused (hiddenTargetError).
+func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App, exposure accountdata.Exposure) (ResolvedGameTarget, error) {
 	if app == nil || app.Bindings == nil {
 		return ResolvedGameTarget{}, accountdata.ErrBindingServiceUnavailable
 	}
@@ -41,7 +44,7 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 		return ResolvedGameTarget{
 			HarukiUserID: hid,
 			PJSKUserID:   binding.PJSKUserID,
-			Visible:      binding.Visible,
+			UIDVisible:   binding.Visibility.UID,
 			BgSettings:   binding.Bg,
 			Binding:      binding,
 		}, nil
@@ -50,22 +53,35 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 		if err != nil {
 			return ResolvedGameTarget{}, normalizeBindingLookupError(err, i18n.M("binding.target_not_bound"))
 		}
-		if !binding.Visible {
-			return ResolvedGameTarget{}, usererror.Forbidden(i18n.M("binding.target_hidden"))
+		if !binding.Visibility.Allows(exposure) {
+			return ResolvedGameTarget{}, hiddenTargetError(exposure)
 		}
 		return ResolvedGameTarget{
 			PJSKUserID: binding.PJSKUserID,
-			Visible:    binding.Visible,
+			UIDVisible: binding.Visibility.UID,
 			BgSettings: binding.Bg,
 			Binding:    binding,
 		}, nil
 	case "uid":
 		return ResolvedGameTarget{
 			PJSKUserID: p.PJSKUserID,
-			Visible:    true,
+			UIDVisible: true,
 		}, nil
 	default:
 		return ResolvedGameTarget{}, fmt.Errorf("unknown query mode %q", p.Mode)
+	}
+}
+
+// hiddenTargetError is the reply when another user's account hides what a
+// command would show of it.
+func hiddenTargetError(exposure accountdata.Exposure) error {
+	switch exposure {
+	case accountdata.ExposureSK:
+		return usererror.Forbidden(i18n.M("binding.target_hidden_sk"))
+	case accountdata.ExposureArrest:
+		return usererror.Forbidden(i18n.M("binding.target_hidden_arrest"))
+	default:
+		return usererror.Forbidden(i18n.M("binding.target_hidden"))
 	}
 }
 

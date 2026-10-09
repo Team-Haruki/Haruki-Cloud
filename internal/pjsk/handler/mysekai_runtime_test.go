@@ -404,7 +404,7 @@ func TestExecuteMySekaiMissingSnapshotUsesStandardReplayError(t *testing.T) {
 	if replyErr.Message.String() != privateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected reply: %q", replyErr.Message)
 	}

@@ -407,7 +407,7 @@ func testBindingDisplayHelpers(t *testing.T) {
 	if _, ok := bindingAccountLabel(&accountdata.ResolvedBinding{Server: "jp"}); ok {
 		t.Fatal("a binding without UID must have no account label")
 	}
-	binding := &accountdata.ResolvedBinding{Server: "jp", PJSKUserID: "12345678901234", Visible: false}
+	binding := &accountdata.ResolvedBinding{Server: "jp", PJSKUserID: "12345678901234", Visibility: accountdata.UniformVisibility(false)}
 	label, ok := bindingAccountLabel(binding)
 	if !ok || label.String() != i18n.AccountLabel("jp", "12345678901234", false).String() {
 		t.Fatalf("binding account label = %q, %v", label, ok)
@@ -416,7 +416,7 @@ func testBindingDisplayHelpers(t *testing.T) {
 
 func testPrivateDataMessages(t *testing.T) {
 	t.Helper()
-	binding := &accountdata.ResolvedBinding{Server: "jp", PJSKUserID: "12345678901234", Visible: false}
+	binding := &accountdata.ResolvedBinding{Server: "jp", PJSKUserID: "12345678901234", Visibility: accountdata.UniformVisibility(false)}
 	for _, tc := range []struct {
 		got  i18n.Message
 		id   string

@@ -128,7 +128,7 @@ func testProfileBindingCommandExecution(t *testing.T) {
 
 func testProfileBindingFormatting(t *testing.T) {
 	t.Helper()
-	visible := BindingListItem{Index: 2, BindingID: 2, Server: "jp", UserID: "123456789", Visible: true, IsGlobalDefault: true, IsServerDefault: true}
+	visible := BindingListItem{Index: 2, BindingID: 2, Server: "jp", UserID: "123456789", Visibility: UniformVisibility(true), IsGlobalDefault: true, IsServerDefault: true}
 	hidden := BindingListItem{Index: 1, BindingID: 1, Server: "jp", UserID: "123456789"}
 	testProfileBindingListFormatting(t, visible, hidden)
 	testProfileBindingResultFormatting(t, visible, hidden)
@@ -292,7 +292,7 @@ func testProfileSettingsFormatting(t *testing.T) {
 		t.Fatal("empty verify list formatting mismatch")
 	}
 	visiblePath := "bg.jpg"
-	verified := BindingListItem{Index: 2, Server: "jp", UserID: "123456789", Verified: true, Visible: true, IsGlobalDefault: true, IsServerDefault: true, Bg: &drawing.ProfileBgSettings{ImgPath: &visiblePath, Blur: 5, Alpha: 70, Vertical: true}}
+	verified := BindingListItem{Index: 2, Server: "jp", UserID: "123456789", Verified: true, Visibility: UniformVisibility(true), IsGlobalDefault: true, IsServerDefault: true, Bg: &drawing.ProfileBgSettings{ImgPath: &visiblePath, Blur: 5, Alpha: 70, Vertical: true}}
 	unverified := BindingListItem{Index: 1, Server: "tw", UserID: "987654321"}
 	verifyText := formatVerifyListText([]BindingListItem{verified, unverified}, "")
 	marks := i18n.T("account.mark.global_default") + "、" + i18n.T("account.mark.region_default", i18n.Data{"Region": jp})

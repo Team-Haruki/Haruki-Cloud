@@ -74,6 +74,26 @@ func Visible(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldEQ(FieldVisible, v))
 }
 
+// UIDVisible applies equality check predicate on the "uid_visible" field. It's identical to UIDVisibleEQ.
+func UIDVisible(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldUIDVisible, v))
+}
+
+// SkVisible applies equality check predicate on the "sk_visible" field. It's identical to SkVisibleEQ.
+func SkVisible(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldSkVisible, v))
+}
+
+// ProfileVisible applies equality check predicate on the "profile_visible" field. It's identical to ProfileVisibleEQ.
+func ProfileVisible(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldProfileVisible, v))
+}
+
+// ArrestVisible applies equality check predicate on the "arrest_visible" field. It's identical to ArrestVisibleEQ.
+func ArrestVisible(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldArrestVisible, v))
+}
+
 // SuiteVisible applies equality check predicate on the "suite_visible" field. It's identical to SuiteVisibleEQ.
 func SuiteVisible(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldEQ(FieldSuiteVisible, v))
@@ -207,6 +227,86 @@ func VisibleEQ(v bool) predicate.UserBinding {
 // VisibleNEQ applies the NEQ predicate on the "visible" field.
 func VisibleNEQ(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldNEQ(FieldVisible, v))
+}
+
+// UIDVisibleEQ applies the EQ predicate on the "uid_visible" field.
+func UIDVisibleEQ(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldUIDVisible, v))
+}
+
+// UIDVisibleNEQ applies the NEQ predicate on the "uid_visible" field.
+func UIDVisibleNEQ(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNEQ(FieldUIDVisible, v))
+}
+
+// UIDVisibleIsNil applies the IsNil predicate on the "uid_visible" field.
+func UIDVisibleIsNil() predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldIsNull(FieldUIDVisible))
+}
+
+// UIDVisibleNotNil applies the NotNil predicate on the "uid_visible" field.
+func UIDVisibleNotNil() predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNotNull(FieldUIDVisible))
+}
+
+// SkVisibleEQ applies the EQ predicate on the "sk_visible" field.
+func SkVisibleEQ(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldSkVisible, v))
+}
+
+// SkVisibleNEQ applies the NEQ predicate on the "sk_visible" field.
+func SkVisibleNEQ(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNEQ(FieldSkVisible, v))
+}
+
+// SkVisibleIsNil applies the IsNil predicate on the "sk_visible" field.
+func SkVisibleIsNil() predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldIsNull(FieldSkVisible))
+}
+
+// SkVisibleNotNil applies the NotNil predicate on the "sk_visible" field.
+func SkVisibleNotNil() predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNotNull(FieldSkVisible))
+}
+
+// ProfileVisibleEQ applies the EQ predicate on the "profile_visible" field.
+func ProfileVisibleEQ(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldProfileVisible, v))
+}
+
+// ProfileVisibleNEQ applies the NEQ predicate on the "profile_visible" field.
+func ProfileVisibleNEQ(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNEQ(FieldProfileVisible, v))
+}
+
+// ProfileVisibleIsNil applies the IsNil predicate on the "profile_visible" field.
+func ProfileVisibleIsNil() predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldIsNull(FieldProfileVisible))
+}
+
+// ProfileVisibleNotNil applies the NotNil predicate on the "profile_visible" field.
+func ProfileVisibleNotNil() predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNotNull(FieldProfileVisible))
+}
+
+// ArrestVisibleEQ applies the EQ predicate on the "arrest_visible" field.
+func ArrestVisibleEQ(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldArrestVisible, v))
+}
+
+// ArrestVisibleNEQ applies the NEQ predicate on the "arrest_visible" field.
+func ArrestVisibleNEQ(v bool) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNEQ(FieldArrestVisible, v))
+}
+
+// ArrestVisibleIsNil applies the IsNil predicate on the "arrest_visible" field.
+func ArrestVisibleIsNil() predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldIsNull(FieldArrestVisible))
+}
+
+// ArrestVisibleNotNil applies the NotNil predicate on the "arrest_visible" field.
+func ArrestVisibleNotNil() predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNotNull(FieldArrestVisible))
 }
 
 // SuiteVisibleEQ applies the EQ predicate on the "suite_visible" field.

@@ -20,6 +20,15 @@ import (
 const (
 	ProfileModeHideID         = "profile-hide-id"
 	ProfileModeShowID         = "profile-show-id"
+	ProfileModeHideSK         = "profile-hide-sk"
+	ProfileModeShowSK         = "profile-show-sk"
+	ProfileModeHideInfo       = "profile-hide-info"
+	ProfileModeShowInfo       = "profile-show-info"
+	ProfileModeHideArrest     = "profile-hide-arrest"
+	ProfileModeShowArrest     = "profile-show-arrest"
+	ProfileModeHideAll        = "profile-hide-all"
+	ProfileModeShowAll        = "profile-show-all"
+	ProfileModeVisibility     = "profile-visibility"
 	ProfileModeHideSuite      = "profile-hide-suite"
 	ProfileModeShowSuite      = "profile-show-suite"
 	ProfileModeHideMySekai    = "profile-hide-mysekai"
@@ -96,8 +105,13 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 	resolveBinding := newProfileBindingResolver(ctx, service, params)
 	switch mode {
 	case ProfileModeHideID, ProfileModeShowID,
+		ProfileModeHideSK, ProfileModeShowSK,
+		ProfileModeHideInfo, ProfileModeShowInfo,
+		ProfileModeHideArrest, ProfileModeShowArrest,
+		ProfileModeHideAll, ProfileModeShowAll,
 		ProfileModeHideSuite, ProfileModeShowSuite,
-		ProfileModeHideMySekai, ProfileModeShowMySekai:
+		ProfileModeHideMySekai, ProfileModeShowMySekai,
+		ProfileModeVisibility:
 		return executeProfileVisibilityMode(ctx, service, mode, params, resolveBinding)
 	case ProfileModeVerify:
 		return executeProfileVerifyMode(ctx, service, params, resolveBinding)
@@ -139,25 +153,49 @@ func newProfileBindingResolver(ctx context.Context, service *BindingService, par
 	}
 }
 
+// visibilityModes maps each per-exposure toggle mode to the exposures it
+// changes and whether it shows them. /隐藏全部 and /显示全部 change the four
+// exposures the single legacy flag covered; suite and MySekai data keep
+// their own toggles because hiding them also blocks the owner's own queries.
+var visibilityModes = map[string]struct {
+	exposures []Exposure
+	shown     bool
+}{
+	ProfileModeHideID:     {[]Exposure{ExposureUID}, false},
+	ProfileModeShowID:     {[]Exposure{ExposureUID}, true},
+	ProfileModeHideSK:     {[]Exposure{ExposureSK}, false},
+	ProfileModeShowSK:     {[]Exposure{ExposureSK}, true},
+	ProfileModeHideInfo:   {[]Exposure{ExposureProfile}, false},
+	ProfileModeShowInfo:   {[]Exposure{ExposureProfile}, true},
+	ProfileModeHideArrest: {[]Exposure{ExposureArrest}, false},
+	ProfileModeShowArrest: {[]Exposure{ExposureArrest}, true},
+	ProfileModeHideAll:    {Exposures, false},
+	ProfileModeShowAll:    {Exposures, true},
+}
+
 func executeProfileVisibilityMode(ctx context.Context, service *BindingService, mode string, params ProfileSettingsCommandParams, resolve profileBindingResolver) ([]byte, error) {
 	binding, err := resolve()
 	if err != nil {
 		return nil, err
 	}
 	update := service.pjskDB.UserBinding.UpdateOneID(binding.ID)
-	switch mode {
-	case ProfileModeHideID:
-		_, err = update.SetVisible(false).Save(ctx)
-	case ProfileModeShowID:
-		_, err = update.SetVisible(true).Save(ctx)
-	case ProfileModeHideSuite:
-		_, err = update.SetSuiteVisible(false).Save(ctx)
-	case ProfileModeShowSuite:
-		_, err = update.SetSuiteVisible(true).Save(ctx)
-	case ProfileModeHideMySekai:
-		_, err = update.SetMysekaiVisible(false).Save(ctx)
-	case ProfileModeShowMySekai:
-		_, err = update.SetMysekaiVisible(true).Save(ctx)
+	if change, ok := visibilityModes[mode]; ok {
+		visibility := bindingVisibility(binding)
+		for _, exposure := range change.exposures {
+			visibility = visibility.With(exposure, change.shown)
+		}
+		_, err = setBindingVisibility(update, visibility).Save(ctx)
+	} else {
+		switch mode {
+		case ProfileModeHideSuite:
+			_, err = update.SetSuiteVisible(false).Save(ctx)
+		case ProfileModeShowSuite:
+			_, err = update.SetSuiteVisible(true).Save(ctx)
+		case ProfileModeHideMySekai:
+			_, err = update.SetMysekaiVisible(false).Save(ctx)
+		case ProfileModeShowMySekai:
+			_, err = update.SetMysekaiVisible(true).Save(ctx)
+		}
 	}
 	if err != nil {
 		return nil, err
@@ -166,25 +204,72 @@ func executeProfileVisibilityMode(ctx context.Context, service *BindingService, 
 	if err != nil {
 		return nil, err
 	}
-	return []byte(profileVisibilityResultText(mode, bindingAccountLabel(*item))), nil
+	return []byte(profileVisibilityResultText(mode, *item)), nil
 }
 
-func profileVisibilityResultText(mode string, account i18n.Message) string {
+// profileVisibilityResultText is the reply to a visibility command: what
+// changed, then every visibility setting of the account. The status command
+// (ProfileModeVisibility) only lists the settings.
+func profileVisibilityResultText(mode string, item BindingListItem) string {
+	account := bindingAccountLabel(item)
+	settings := visibilitySettingsMessage(item)
+	if mode == ProfileModeVisibility {
+		return i18n.T("account.visibility.status", i18n.Data{"Account": account, "Settings": settings})
+	}
+	return i18n.T("account.visibility.changed", i18n.Data{"Result": profileVisibilityChange(mode, account), "Settings": settings})
+}
+
+func profileVisibilityChange(mode string, account i18n.Message) i18n.Message {
 	data := i18n.Data{"Account": account}
 	switch mode {
 	case ProfileModeHideID:
-		return i18n.T("account.visibility.hide_uid", data)
+		return i18n.M("account.visibility.hide_uid", data)
 	case ProfileModeShowID:
-		return i18n.T("account.visibility.show_uid", data)
+		return i18n.M("account.visibility.show_uid", data)
+	case ProfileModeHideSK:
+		return i18n.M("account.visibility.hide_sk", data)
+	case ProfileModeShowSK:
+		return i18n.M("account.visibility.show_sk", data)
+	case ProfileModeHideInfo:
+		return i18n.M("account.visibility.hide_profile", data)
+	case ProfileModeShowInfo:
+		return i18n.M("account.visibility.show_profile", data)
+	case ProfileModeHideArrest:
+		return i18n.M("account.visibility.hide_arrest", data)
+	case ProfileModeShowArrest:
+		return i18n.M("account.visibility.show_arrest", data)
+	case ProfileModeHideAll:
+		return i18n.M("account.visibility.hide_all", data)
+	case ProfileModeShowAll:
+		return i18n.M("account.visibility.show_all", data)
 	case ProfileModeHideSuite:
-		return i18n.T("account.visibility.hide_suite", data)
+		return i18n.M("account.visibility.hide_suite", data)
 	case ProfileModeShowSuite:
-		return i18n.T("account.visibility.show_suite", data)
+		return i18n.M("account.visibility.show_suite", data)
 	case ProfileModeHideMySekai:
-		return i18n.T("account.visibility.hide_mysekai", data)
+		return i18n.M("account.visibility.hide_mysekai", data)
 	default:
-		return i18n.T("account.visibility.show_mysekai", data)
+		return i18n.M("account.visibility.show_mysekai", data)
 	}
+}
+
+// visibilitySettingsMessage lists every visibility setting of a binding, one
+// per line.
+func visibilitySettingsMessage(item BindingListItem) i18n.Message {
+	state := func(shown bool) i18n.Message {
+		if shown {
+			return i18n.M("account.visibility.state.shown")
+		}
+		return i18n.M("account.visibility.state.hidden")
+	}
+	return i18n.M("account.visibility.settings", i18n.Data{
+		"UID":     state(item.Visibility.UID),
+		"SK":      state(item.Visibility.SK),
+		"Profile": state(item.Visibility.Profile),
+		"Arrest":  state(item.Visibility.Arrest),
+		"Suite":   state(item.SuiteVisible),
+		"MySekai": state(item.MySekaiVisible),
+	})
 }
 
 func executeProfileVerifyMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams, resolve profileBindingResolver) ([]byte, error) {
@@ -341,6 +426,14 @@ func profileSettingsModeMutates(mode string, params ProfileSettingsCommandParams
 	switch mode {
 	case ProfileModeHideID,
 		ProfileModeShowID,
+		ProfileModeHideSK,
+		ProfileModeShowSK,
+		ProfileModeHideInfo,
+		ProfileModeShowInfo,
+		ProfileModeHideArrest,
+		ProfileModeShowArrest,
+		ProfileModeHideAll,
+		ProfileModeShowAll,
 		ProfileModeHideSuite,
 		ProfileModeShowSuite,
 		ProfileModeHideMySekai,

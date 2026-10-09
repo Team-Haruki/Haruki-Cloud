@@ -62,7 +62,7 @@ other = "难度只能是 EASY、NORMAL、HARD、EXPERT、MASTER、APPEND"
 
 [profile.chart_style.required]
 description = "/谱面样式 没有写样式。"
-other = "请写谱面样式：black 或 white"
+other = "请指定谱面样式：black 或 white"
 
 [profile.chart_style.invalid]
 description = "谱面样式不是 black 或 white。"

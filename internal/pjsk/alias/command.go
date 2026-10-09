@@ -11,10 +11,11 @@ import (
 )
 
 // ExecuteCommand runs an alias command and returns its reply. The reply is a
-// catalog message, not rendered text: replies that repeat alias text nobody
-// has reviewed yet (submissions, the pending list, submitter lookups,
-// rejections) show it only when the bot client enabled parameter echo, and
-// the delivering layer renders the message for its own client.
+// catalog message, not rendered text: the submission reply repeats alias
+// text nobody has reviewed yet only when the bot client enabled parameter
+// echo, so the delivering layer renders the message for its own client.
+// Replies only alias review admins can receive (pending list, submitter
+// lookup, approve, reject) always show the text.
 func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json.RawMessage) (i18n.Message, error) {
 	switch mode {
 	case ModeDelete:
@@ -101,7 +102,7 @@ func executePendingListCommand(ctx context.Context, service *Service, raw json.R
 	if len(records) == 0 {
 		return i18n.M("alias.pending.none"), nil
 	}
-	return i18n.M("alias.pending.list", i18n.Data{"Count": len(records), "Records": aliasRecordMessages(records)}), nil
+	return i18n.M("alias.pending.list", i18n.Data{"Count": len(records), "Records": reviewAliasRecordMessages(records)}), nil
 }
 
 func executeSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
@@ -113,7 +114,7 @@ func executeSubmitterCommand(ctx context.Context, service *Service, raw json.Raw
 	if err != nil {
 		return i18n.Message{}, err
 	}
-	return i18n.M("alias.submitter.result", i18n.Data{"Record": aliasRecordMessage(*record), "Submitter": record.SubmittedBy}), nil
+	return i18n.M("alias.submitter.result", i18n.Data{"Record": reviewAliasRecordMessage(*record), "Submitter": record.SubmittedBy}), nil
 }
 
 func executeBanSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
@@ -143,7 +144,7 @@ func executeApproveCommand(ctx context.Context, service *Service, raw json.RawMe
 	if err != nil {
 		return i18n.Message{}, err
 	}
-	return i18n.M("alias.approve.done", i18n.Data{"Count": len(records), "Records": passedAliasRecordMessages(records)}), nil
+	return i18n.M("alias.approve.done", i18n.Data{"Count": len(records), "Records": reviewAliasRecordMessages(records)}), nil
 }
 
 func executeRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {

@@ -65,7 +65,7 @@ description = "别名类型不支持（内部参数错误）。"
 other = "不支持这种别名类型"
 
 [alias.already_approved]
-description = "提交或通过的别名已经在已审核列表里。占位符：Kind=别名类型（alias.kind.*）；UserAlias=别名原文。"
+description = "提交的别名已经在已审核列表里（回复提交者，按参数回显规则）。占位符：Kind=别名类型（alias.kind.*）；UserAlias=别名原文。"
 other = "{{.Kind}}别名“{{.UserAlias}}”已经在已审核列表中"
 
 [alias.already_approved_no_echo]
@@ -81,7 +81,7 @@ description = "alias.already_pending 的不回显形式：客户端没有开启�
 other = "这个{{.Kind}}别名已经在待审核列表中"
 
 [alias.conflicts_name]
-description = "提交的别名与已有的歌曲名或角色名相同。占位符：Kind=别名类型（alias.kind.*）；UserAlias=别名原文；NameKind=名称类型（alias.name_kind.*）。"
+description = "提交的别名与已有的歌曲名或角色名相同（回复提交者，按参数回显规则）。占位符：Kind=别名类型（alias.kind.*）；UserAlias=别名原文；NameKind=名称类型（alias.name_kind.*）。"
 other = "{{.Kind}}别名“{{.UserAlias}}”与已有{{.NameKind}}重复"
 
 [alias.conflicts_name_no_echo]
@@ -89,12 +89,20 @@ description = "alias.conflicts_name 的不回显形式：客户端没有开启�
 other = "这个{{.Kind}}别名与已有{{.NameKind}}重复"
 
 [alias.duplicate_in_batch]
-description = "一次通过的待审核别名里有重复。占位符：UserFirst=用户写的先出现的待审核 ID；UserSecond=用户写的重复的待审核 ID；Kind=别名类型（alias.kind.*）；UserAlias=别名原文。"
-other = "待审核 ID {{.UserFirst}} 与 {{.UserSecond}} 是重复的{{.Kind}}别名“{{.UserAlias}}”"
+description = "/同意别名：一次通过的待审核别名里有重复。只有别名审核管理员能收到，别名原文总是显示。占位符：UserFirst=管理员写的先出现的待审核 ID；UserSecond=管理员写的重复的待审核 ID；Kind=别名类型（alias.kind.*）；Alias=别名原文。"
+other = "待审核 ID {{.UserFirst}} 与 {{.UserSecond}} 是重复的{{.Kind}}别名“{{.Alias}}”"
 
 [alias.duplicate_in_batch_no_echo]
-description = "alias.duplicate_in_batch 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=别名类型（alias.kind.*）。"
-other = "要通过的待审核别名里有重复的{{.Kind}}别名"
+description = "alias.duplicate_in_batch 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示管理员写的待审核 ID，别名原文照常显示。占位符：Kind=别名类型（alias.kind.*）；Alias=别名原文。"
+other = "要通过的待审核别名里有重复的{{.Kind}}别名“{{.Alias}}”"
+
+[alias.review.already_approved]
+description = "/同意别名：要通过的别名已经在已审核列表里。只有别名审核管理员能收到，别名原文总是显示。占位符：Kind=别名类型（alias.kind.*）；Alias=别名原文。"
+other = "{{.Kind}}别名“{{.Alias}}”已经在已审核列表中"
+
+[alias.review.conflicts_name]
+description = "/同意别名：要通过的别名与已有的歌曲名或角色名相同。只有别名审核管理员能收到，别名原文总是显示。占位符：Kind=别名类型（alias.kind.*）；Alias=别名原文；NameKind=名称类型（alias.name_kind.*）。"
+other = "{{.Kind}}别名“{{.Alias}}”与已有{{.NameKind}}重复"
 
 [alias.duplicate_in_request]
 description = "一次提交的别名里有重复。占位符：UserFirst=先出现的别名；UserSecond=重复的别名。"
@@ -203,15 +211,15 @@ description = "别名图片里 ID 标签的前缀，后面接角色 ID 数字。
 other = "角色 ID"
 
 [alias.record.pending]
-description = "一条待审核别名，用在提交、待审核列表、拒绝、查提交者的回复里。别名还没有审核，不开启参数回显时换成只有待审核 ID 的不回显形式。占位符：ReviewID=待审核 ID；Kind=别名类型（alias.kind.*）；Name=歌曲或角色名称（游戏数据原文）；EntityID=歌曲或角色 ID；UserAlias=用户提交、还没有审核的别名原文。"
+description = "提交别名的回复里的一条待审核别名（回复提交者）。别名还没有审核，不开启参数回显时换成只有待审核 ID 的不回显形式。占位符：ReviewID=待审核 ID；Kind=别名类型（alias.kind.*）；Name=歌曲或角色名称（游戏数据原文）；EntityID=歌曲或角色 ID；UserAlias=用户提交、还没有审核的别名原文。"
 other = "待审核 ID {{.ReviewID}}：{{.Kind}}「{{.Name}}」（ID {{.EntityID}}）的别名“{{.UserAlias}}”"
 
 [alias.record.pending_no_echo]
 description = "alias.record.pending 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：ReviewID=待审核 ID；Kind=别名类型（alias.kind.*）；Name=歌曲或角色名称（游戏数据原文）；EntityID=歌曲或角色 ID。"
 other = "待审核别名 #{{.ReviewID}}：{{.Kind}}「{{.Name}}」（ID {{.EntityID}}）"
 
-[alias.record.passed]
-description = "/同意别名 成功后的一条刚通过审核的别名。别名已经审核，照常显示原文。占位符：ReviewID=原来的待审核 ID；Kind=别名类型（alias.kind.*）；Name=歌曲或角色名称（游戏数据原文）；EntityID=歌曲或角色 ID；Alias=别名原文。"
+[alias.record.review]
+description = "只有别名审核管理员能收到的回复里的一条待审核别名：待审核列表、查提交者、同意、拒绝、批量拒绝。管理员要审核原文，所以不论是否开启参数回显都显示别名原文。占位符：ReviewID=待审核 ID；Kind=别名类型（alias.kind.*）；Name=歌曲或角色名称（游戏数据原文）；EntityID=歌曲或角色 ID；Alias=别名原文。"
 other = "待审核 ID {{.ReviewID}}：{{.Kind}}「{{.Name}}」（ID {{.EntityID}}）的别名“{{.Alias}}”"
 
 [alias.record.approved]
@@ -219,11 +227,11 @@ description = "一条已删除的已审核别名，用在 /删除歌曲别名、
 other = "别名 ID {{.AliasID}}：{{.Kind}}「{{.Name}}」（ID {{.EntityID}}）的别名“{{.Alias}}”"
 
 [alias.record.rejected]
-description = "一条被拒绝的别名及拒绝原因。没有开启参数回显时，待审核别名不显示别名原文（alias.record.pending_no_echo）。占位符：Record=待审核别名（alias.record.pending）；Reason=拒绝原因（管理员输入的原文，批量拒绝时为 alias.batch_reject.reason）。"
+description = "一条被拒绝的别名及拒绝原因。占位符：Record=待审核别名（alias.record.review）；Reason=拒绝原因（管理员输入的原文，批量拒绝时为 alias.batch_reject.reason）。"
 other = "{{.Record}}\n原因：{{.Reason}}"
 
 [alias.add.done]
-description = "提交别名成功，下面每行一条待审核别名（alias.record.pending）。没有开启参数回显时，待审核别名不显示别名原文（alias.record.pending_no_echo）。占位符：Count=提交的别名数量；Kind=别名类型（alias.kind.*）；Records=待审核别名，每行一条。"
+description = "提交别名成功，下面每行一条待审核别名（alias.record.pending）。没有开启参数回显时不显示别名原文（alias.record.pending_no_echo）。占位符：Count=提交的别名数量；Kind=别名类型（alias.kind.*）；Records=待审核别名，每行一条。"
 other = "已提交 {{.Count}} 条{{.Kind}}别名，等待审核：\n{{.Records}}"
 
 [alias.delete.done]
@@ -235,11 +243,11 @@ description = "/待审核别名：没有待审核的别名。"
 other = "当前没有待审核别名"
 
 [alias.pending.list]
-description = "/待审核别名：待审核别名列表。没有开启参数回显时，待审核别名不显示别名原文（alias.record.pending_no_echo）。占位符：Count=待审核别名数量；Records=待审核别名，每行一条（alias.record.pending）。"
+description = "/待审核别名：待审核别名列表。占位符：Count=待审核别名数量；Records=待审核别名，每行一条（alias.record.review，管理员总能看到原文）。"
 other = "当前共有 {{.Count}} 条待审核别名：\n{{.Records}}"
 
 [alias.submitter.result]
-description = "/查询别名提交者 的回复。没有开启参数回显时，待审核别名不显示别名原文（alias.record.pending_no_echo）。占位符：Record=待审核别名（alias.record.pending）；Submitter=提交者，格式为“平台:用户 ID”，例如“qq:123456789”，可以直接用在 /禁用别名提交 里。"
+description = "/查询别名提交者 的回复。占位符：Record=待审核别名（alias.record.review）；Submitter=提交者，格式为“平台:用户 ID”，例如“qq:123456789”，可以直接用在 /禁用别名提交 里。"
 other = "{{.Record}}\n提交者：{{.Submitter}}"
 
 [alias.ban.done]
@@ -247,7 +255,7 @@ description = "/禁用别名提交 成功。占位符：User=被禁止的用户�
 other = "已禁止用户 {{.User}} 提交别名"
 
 [alias.approve.done]
-description = "/同意别名 成功。占位符：Count=通过的别名数量；Records=通过的别名，每行一条（alias.record.passed）。"
+description = "/同意别名 成功。占位符：Count=通过的别名数量；Records=通过的别名，每行一条（alias.record.review）。"
 other = "已通过 {{.Count}} 条别名：\n{{.Records}}"
 
 [alias.reject.done]

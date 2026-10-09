@@ -17,7 +17,7 @@ import (
 )
 
 func (s *Service) ensureAliasAvailable(ctx context.Context, aliasType string, approved *pjskdb.AliasClient, pending *pjskdb.PendingAliasClient, aliasText string) error {
-	if err := s.ensureEntityNameAvailable(ctx, aliasType, aliasText); err != nil {
+	if err := s.ensureEntityNameAvailable(ctx, aliasType, aliasText, false); err != nil {
 		return err
 	}
 	exists, err := approvedAliasExists(ctx, approved, aliasType, aliasText)
@@ -37,7 +37,18 @@ func (s *Service) ensureAliasAvailable(ctx context.Context, aliasType string, ap
 	return nil
 }
 
-func (s *Service) ensureEntityNameAvailable(ctx context.Context, aliasType, aliasText string) error {
+// conflictsNameError is the reply when aliasText equals a song or character
+// name. review is true on the approval path, whose replies only alias review
+// admins receive: they always see the text; a submitter sees it only with
+// parameter echo.
+func conflictsNameError(aliasType, aliasText string, review bool) error {
+	if review {
+		return usererror.Invalid(i18n.M("alias.review.conflicts_name", i18n.Data{"Kind": aliasKind(aliasType), "Alias": aliasText, "NameKind": aliasNameKind(aliasType)}))
+	}
+	return usererror.Invalid(i18n.M("alias.conflicts_name", i18n.Data{"Kind": aliasKind(aliasType), "UserAlias": i18n.EchoQuery(aliasText), "NameKind": aliasNameKind(aliasType)}))
+}
+
+func (s *Service) ensureEntityNameAvailable(ctx context.Context, aliasType, aliasText string, review bool) error {
 	switch aliasType {
 	case PjskAliasTypeMusic:
 		conflicts, err := s.sekai.Music.Query().
@@ -47,7 +58,7 @@ func (s *Service) ensureEntityNameAvailable(ctx context.Context, aliasType, alia
 			return err
 		}
 		if conflicts > 0 {
-			return usererror.Invalid(i18n.M("alias.conflicts_name", i18n.Data{"Kind": aliasKind(aliasType), "UserAlias": i18n.EchoQuery(aliasText), "NameKind": aliasNameKind(aliasType)}))
+			return conflictsNameError(aliasType, aliasText, review)
 		}
 		return nil
 	case PjskAliasTypeCharacter:
@@ -60,7 +71,7 @@ func (s *Service) ensureEntityNameAvailable(ctx context.Context, aliasType, alia
 		target := normalizeCompareText(aliasText)
 		for _, row := range rows {
 			if characterMatchesName(row, target) {
-				return usererror.Invalid(i18n.M("alias.conflicts_name", i18n.Data{"Kind": aliasKind(aliasType), "UserAlias": i18n.EchoQuery(aliasText), "NameKind": aliasNameKind(aliasType)}))
+				return conflictsNameError(aliasType, aliasText, review)
 			}
 		}
 		return nil

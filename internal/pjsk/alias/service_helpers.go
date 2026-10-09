@@ -351,6 +351,8 @@ func sortAliasTexts(values []string) {
 	})
 }
 
+// aliasRecordMessage is a pending alias in the reply to its submitter. The
+// text has not been reviewed, so it is shown only with parameter echo.
 func aliasRecordMessage(record PjskAliasRecord) i18n.Message {
 	return i18n.M("alias.record.pending", i18n.Data{
 		"ReviewID":  record.ReviewID,
@@ -369,24 +371,29 @@ func aliasRecordMessages(records []PjskAliasRecord) []i18n.Message {
 	return lines
 }
 
-// passedAliasRecordMessages are the records an admin just approved; their
-// alias text is reviewed now, so it is shown with or without echo.
-func passedAliasRecordMessages(records []PjskAliasRecord) []i18n.Message {
+// reviewAliasRecordMessage is a pending alias in a reply only alias review
+// admins can receive (the service checked requireAdmin before building it).
+// Admins review the text, so it is shown with or without parameter echo.
+func reviewAliasRecordMessage(record PjskAliasRecord) i18n.Message {
+	return i18n.M("alias.record.review", i18n.Data{
+		"ReviewID": record.ReviewID,
+		"Kind":     aliasKind(record.Entity.AliasType),
+		"Name":     record.Entity.Name,
+		"EntityID": record.Entity.ID,
+		"Alias":    record.Alias,
+	})
+}
+
+func reviewAliasRecordMessages(records []PjskAliasRecord) []i18n.Message {
 	lines := make([]i18n.Message, 0, len(records))
 	for _, record := range records {
-		lines = append(lines, i18n.M("alias.record.passed", i18n.Data{
-			"ReviewID": record.ReviewID,
-			"Kind":     aliasKind(record.Entity.AliasType),
-			"Name":     record.Entity.Name,
-			"EntityID": record.Entity.ID,
-			"Alias":    record.Alias,
-		}))
+		lines = append(lines, reviewAliasRecordMessage(record))
 	}
 	return lines
 }
 
 func rejectedAliasRecordMessage(record PjskAliasRecord, reason string) i18n.Message {
-	return i18n.M("alias.record.rejected", i18n.Data{"Record": aliasRecordMessage(record), "Reason": reason})
+	return i18n.M("alias.record.rejected", i18n.Data{"Record": reviewAliasRecordMessage(record), "Reason": reason})
 }
 
 func approvedAliasRecordMessage(record ApprovedAliasRecord) i18n.Message {

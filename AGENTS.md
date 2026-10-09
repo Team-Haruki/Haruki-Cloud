@@ -449,12 +449,15 @@ As of this revision the project is **considered functionally complete**:
     `<ID>_no_echo` 形式（同样的占位符去掉 `User…`，不留空引号或悬空的“：”），回复层按
     `i18n.WithParamEcho` 选择。已注册的指令名不算用户输入。分不清来源的数字按用户输入处理
     （例如错误回复里的活动 `common.event_label`）。
-  - **还没有审核的别名也按用户输入处理。** 提交别名的确认、待审核列表、查提交者、拒绝别名
-    （单条和批量）的回复，只在开启回显时显示别名原文；不开启时只显示待审核 ID
-    （“待审核别名 #12：歌曲「…」（ID 74）”），管理员按 ID 操作。通过别名的回复和删除已审核
-    别名的回复照常显示原文（已经审核）。这类成功回复用 `onebot11.LocalizedText` 返回目录消息，
-    投递层按客户端的设置渲染（共享执行的结果同时带两种回复）。其他成功回复不在此列。
-    详见 `docs/i18n.md`。
+  - **还没有审核的别名按收件人区分。** 回复提交者或任何非管理员的消息（提交别名的确认，
+    以及提交时的“已在待审核列表/已审核/与名称重复/提交里有重复”）按回显规则：不开启回显时
+    只显示待审核 ID（“待审核别名 #12：歌曲「…」（ID 74）”）。只有通过别名审核管理员检查
+    （`Service.requireAdmin`）后才会产生的回复——待审核列表、查提交者、同意、拒绝、批量拒绝，
+    以及同意时的“已审核/与名称重复/批量里重复”错误——不论是否开启回显都显示别名原文
+    （`alias.record.review`、`alias.review.*`，占位符不用 `User…`），因为管理员要审核原文；
+    其中管理员写的待审核 ID 仍按回显规则。删除已审核别名照常显示原文。判断依据是命令本身的
+    权限检查，不看群聊/私聊。提交确认用 `onebot11.LocalizedText` 返回目录消息，投递层按客户端
+    的设置渲染（共享执行的结果同时带两种回复）。其他成功回复不在此列。详见 `docs/i18n.md`。
   - 测试断言 `Code` 和消息 ID，不断言中文原文（`testutil.RequireUserError`、
     `testutil.MessageID`）；中文由目录本身和
     `internal/i18n/testdata/helpers.zh-CN.golden` 锁定。
@@ -593,7 +596,7 @@ As of this revision the project is **considered functionally complete**:
 | `TestEchoFreeFormsHideUserInput` | `internal/i18n` | 用文字哨兵和数字哨兵（`UserNumber` 和普通 int 各一次）渲染这些消息：不回显时哨兵不出现、不留空引号或悬空的“：”，回显时出现 |
 | `TestUserWrittenPlaceholdersAreUserInput` | `internal/i18n` | description 写着“用户写的/用户输入/管理员输入/用户提交”的占位符必须以 `User` 开头（成功回复等例外逐条列出） |
 | `TestCommandErrorTextHidesUserInputWithoutParamEcho`、`TestCommandErrorTextHidesNumbersWithoutParamEcho`、`TestBotEndpointHidesUserInputWithoutParamEcho` | `api/bot/pjsk` | 错误回复和 Bot 端点在没有开启参数回显时不出现用户输入（文字和数字），开启后照常显示 |
-| `TestSucceededSharedBotCommandKeepsBothVariants`、`TestAliasRepliesGolden` | `api/bot/pjsk`、`internal/pjsk/alias` | 未审核别名的成功回复不开启回显时不出现别名原文，共享结果同时带两种回复；golden 文件记录两种形式 |
+| `TestSucceededSharedBotCommandKeepsBothVariants`、`TestAdminAliasReviewReplyShowsTextWithoutEcho`、`TestAliasTextFollowsTheAudience`、`TestApprovalErrorsShowAliasTextToAdmins`、`TestAliasRepliesGolden` | `api/bot/pjsk`、`internal/pjsk/alias` | 提交者不开启回显时看不到未审核的别名原文，共享结果同时带两种回复；管理员的审核回复不开启回显也显示原文；golden 文件记录不同的形式 |
 
 这些测试都要求零发现，没有基线。唯一的允许清单是
 `internal/i18n/testdata/unused_ids.allowlist`（暂时没有代码引用的消息 ID，每行写原因），

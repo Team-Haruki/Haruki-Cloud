@@ -202,3 +202,21 @@ func TestSucceededSharedBotCommandKeepsBothVariants(t *testing.T) {
 		t.Fatalf("a reply without user input needs no echo variant: %s", plain.EchoResponse.JSONBody)
 	}
 }
+
+// Review replies only alias admins receive show the alias text to every
+// client, with or without echo.
+func TestAdminAliasReviewReplyShowsTextWithoutEcho(t *testing.T) {
+	list := i18n.M("alias.pending.list", i18n.Data{
+		"Count": 1,
+		"Records": []i18n.Message{i18n.M("alias.record.review", i18n.Data{
+			"ReviewID": 12, "Kind": i18n.M("alias.kind.music"), "Name": "Tell Your World", "EntityID": 74, "Alias": paramEchoSecret,
+		})},
+	})
+	result := succeededSharedBotCommand(context.Background(), onebot11.Message{onebot11.LocalizedText(list)}, sharedCommandMetadata{Outcome: "ok"}, false)
+	if !strings.Contains(string(result.Response.JSONBody), paramEchoSecret) {
+		t.Fatalf("admin reply without echo hides the alias: %s", result.Response.JSONBody)
+	}
+	if len(result.EchoResponse.JSONBody) != 0 {
+		t.Fatalf("an admin review reply needs no echo variant: %s", result.EchoResponse.JSONBody)
+	}
+}

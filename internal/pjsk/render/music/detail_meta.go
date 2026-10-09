@@ -172,7 +172,7 @@ func formatMusicDetailLeaderboardValue(row musicBoardRow, liveType, target strin
 		return strconv.Itoa(int(math.Round(pt)))
 	case pointsPerTimeMetric:
 		ptPerHour := derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, pointsPerTimeMetric))
-		return i18n.T("render_music.leaderboard.pt_per_hour", i18n.Data{"Value": i18n.Wan(ptPerHour)})
+		return i18n.T("music.image.detail.pt_per_hour", i18n.Data{"Value": i18n.Wan(ptPerHour)})
 	default:
 		return "-"
 	}

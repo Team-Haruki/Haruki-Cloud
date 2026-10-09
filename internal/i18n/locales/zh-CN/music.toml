@@ -269,3 +269,7 @@ other = "{{.Min}}~{{.Max}}（{{.Segments}} 段）"
 [music.b30.unavailable]
 description = "/b30 的回复：官方没有公开详细定数，所以不提供 B30。"
 other = "官方没有公开详细定数，暂不提供 B30"
+
+[music.image.detail.pt_per_hour]
+description = "歌曲详情图片里排行矩阵的时速数值。占位符：Value=每小时活动 PT，大于等于 1 万时以万为单位，如“12.35万”。"
+other = "{{.Value}}/h"

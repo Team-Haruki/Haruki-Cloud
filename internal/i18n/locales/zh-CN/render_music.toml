@@ -1,6 +1,0 @@
-# 图片渲染：歌曲相关图片（歌曲排行、歌曲详情、自制谱面、歌曲奖励）里由 Cloud 提供的标签。
-
-[render_music.leaderboard.pt_per_hour]
-description = "歌曲详情图片里排行矩阵的时速数值。占位符：Value=每小时活动 PT，大于等于 1 万时以万为单位，如“12.35万”。"
-other = "{{.Value}}/h"
-

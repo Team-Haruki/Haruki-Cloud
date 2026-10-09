@@ -1,26 +1,14 @@
 # 图片渲染：Cloud 发给 Drawing、会被画进图片的通用标签（各图片共用）。
-# 各图片自己的标签在 render_<领域>.toml。
-
-[render.progress]
-description = "图片里带名称的收集进度，例如“总收集进度：12/40（30%）”。占位符：Label=进度名称，见 render_mysekai.progress.*；Ratio=进度数值，见 render.progress_ratio。"
-other = "{{.Label}}：{{.Ratio}}"
-
-[render.progress_ratio]
-description = "图片里的进度数值，例如烤森家具、唱片各分类旁的“12/40（30%）”。占位符：Done=已完成数量；Total=总数量；Percent=完成百分比，已带 %。"
-other = "{{.Done}}/{{.Total}}（{{.Percent}}）"
+# 卡牌图片的标签在 render_card.toml，其他图片的标签在各领域的目录里（*.image.*）。
 
 [render.live_short.solo]
-description = "Live 类型的短标签，用在空间很小的位置（歌曲详情的排行矩阵行头、组卡图标题后缀）。完整写法见 format.live_type.*。"
+description = "Live 类型的短标签，用在空间很小的位置（歌曲详情图片里排行矩阵的行头）。完整写法见 format.live_type.*。"
 other = "单人"
 
 [render.live_short.multi]
-description = "Live 类型的短标签，用在空间很小的位置（歌曲详情的排行矩阵行头、组卡图标题后缀）。完整写法见 format.live_type.*。"
+description = "Live 类型的短标签，用在空间很小的位置（歌曲详情图片里排行矩阵的行头）。完整写法见 format.live_type.*。"
 other = "多人"
 
 [render.live_short.auto]
-description = "Live 类型的短标签，用在空间很小的位置（歌曲详情的排行矩阵行头、组卡图标题后缀）。完整写法见 format.live_type.*。"
+description = "Live 类型的短标签，用在空间很小的位置（歌曲详情图片里排行矩阵的行头）。完整写法见 format.live_type.*。"
 other = "自动"
-
-[render.live_short.mysekai]
-description = "组卡图标题后缀里的烤森组卡类型短标签。"
-other = "烤森"

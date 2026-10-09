@@ -365,3 +365,7 @@ other = "结果由统计得出，不一定准确，仅供参考"
 [mysekai.image.progress]
 description = "图片：烤森家具列表、唱片列表每个分组的收集进度。占位符：Obtained=已获得数量；Total=总数；Percent=百分比，例如“42.5%”。"
 other = "{{.Obtained}}/{{.Total}}（{{.Percent}}）"
+
+[mysekai.image.fixture.title]
+description = "家具详情图片（/msf）的标题。占位符：Region=区服显示名，如“日服(JP)”；ID=家具 ID；Name=家具名（游戏数据原文）。"
+other = "【{{.Region}} #{{.ID}}】{{.Name}}"

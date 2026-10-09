@@ -140,7 +140,3 @@ other = "歌曲 #{{.ID}}"
 [common.fallback.mysekai_material]
 description = "游戏数据里找不到烤森材料名时显示的占位名称（道具一览、限时蓝图等图片）。占位符：ID=材料 ID。"
 other = "烤森材料 #{{.ID}}"
-
-[common.fallback.item]
-description = "游戏数据里找不到物品名时显示的占位名称（烤森商店等图片）。占位符：ID=物品 ID。"
-other = "物品 #{{.ID}}"

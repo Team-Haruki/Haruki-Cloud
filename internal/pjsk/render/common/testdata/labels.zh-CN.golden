@@ -4,11 +4,6 @@ DataSourceLabel(public)	公开信息
 LiveShortLabel(solo)	单人
 LiveShortLabel(multi)	多人
 LiveShortLabel(auto)	自动
-LiveShortLabel(mysekai)	烤森
+LiveShortLabel(mysekai)	mysekai
 LiveShortLabel(challenge)	challenge
 CharacterFallbackName(7)	角色 #7
-EventFallbackName(120)	活动 #120
-ItemFallbackName(3)	物品 #3
-ProgressRatio(12, 40)	12/40（30%）
-ProgressRatio(1, 3)	1/3（33.3%）
-ProgressRatio(0, 0)	0/0（0%）

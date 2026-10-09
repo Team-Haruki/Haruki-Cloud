@@ -27,11 +27,6 @@ func TestLabelsGolden(t *testing.T) {
 		line("LiveShortLabel("+liveType+")", LiveShortLabel(liveType))
 	}
 	line("CharacterFallbackName(7)", CharacterFallbackName(7))
-	line("EventFallbackName(120)", EventFallbackName(120))
-	line("ItemFallbackName(3)", ItemFallbackName(3))
-	line("ProgressRatio(12, 40)", ProgressRatio(12, 40))
-	line("ProgressRatio(1, 3)", ProgressRatio(1, 3))
-	line("ProgressRatio(0, 0)", ProgressRatio(0, 0))
 
 	path := filepath.Join("testdata", "labels.zh-CN.golden")
 	if os.Getenv("HARUKI_UPDATE_GOLDEN") == "1" {

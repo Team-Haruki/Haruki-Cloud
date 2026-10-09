@@ -404,7 +404,7 @@ func ExecuteCommandRequest(ctx context.Context, resolved *CommandRequest, app *r
 当前约定如下：
 
 1. 图片类 `execute*` 在 `internal/pjsk/handler` 内完成渲染并转换为 `onebot11.Image(url)`（字节结果经 `ImageCache.StoreAndGetURL(...)` 取得 URL，已有公开 URL 的结果直接使用）
-2. 文本类 `execute*` 直接返回 `onebot11.Text(text)`
+2. 文本类 `execute*` 直接返回 `onebot11.Text(text)`；回复里有只能在开启参数回显时出现的用户输入（目前是还没有审核的别名原文）时，返回 `onebot11.LocalizedText(msg)`，由 `api/bot/pjsk` 按不回显和回显各渲染一次（共享结果同时带两种回复）
 3. 不再有 `CommandResultDataType`；图片/文本区分只存在于各 `execute*` 内部，不作为 API 对外契约
 4. Bot API 与 legacy API 不再根据 `data_type` 分支出站
 

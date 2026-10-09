@@ -263,3 +263,20 @@ func TestCharacterMissionSnapshotValidation(t *testing.T) {
 		t.Fatalf("missing profile error = %v", err)
 	}
 }
+
+// A title copied from the character mission image selects its own mission
+// type (an EX title its base type), with full-width or half-width
+// parentheses.
+func TestCharacterMissionTitlesParseToTheirOwnType(t *testing.T) {
+	for missionType, title := range characterMissionTitles {
+		want := missionType
+		if _, ex := CharacterMissionExTypes[missionType]; ex {
+			want = strings.TrimSuffix(missionType, "_ex")
+		}
+		for _, query := range []string{title.String(), normalizeCharacterMissionQuery(title.String())} {
+			if got, rest := ExtractCharacterMissionType("miku all " + query); got != want {
+				t.Errorf("title %q parsed to %q (rest %q), want %q", query, got, rest, want)
+			}
+		}
+	}
+}

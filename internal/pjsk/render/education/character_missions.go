@@ -76,10 +76,17 @@ var characterMissionTypeAliases = map[string][]string{
 
 // The aliases above are matched after normalizeCharacterMissionQuery, which
 // turns full-width parentheses into half-width ones. Every mission type key
-// itself (e.g. "play_live") is accepted as well.
+// itself (e.g. "play_live") is accepted as well, and so is the title shown
+// on the image, so a user can copy a title from the image into the command.
+// An EX title selects its base type, whose table already includes the EX
+// rounds; the base aliases above cover it.
 func init() {
-	for missionType := range characterMissionTitles {
-		characterMissionTypeAliases[missionType] = append(characterMissionTypeAliases[missionType], strings.ToLower(missionType))
+	for missionType, title := range characterMissionTitles {
+		aliases := append(characterMissionTypeAliases[missionType], strings.ToLower(missionType))
+		if _, ex := CharacterMissionExTypes[missionType]; !ex {
+			aliases = append(aliases, normalizeCharacterMissionQuery(title.String()))
+		}
+		characterMissionTypeAliases[missionType] = aliases
 	}
 }
 

@@ -15,7 +15,9 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendervlive "haruki-cloud/internal/pjsk/render/vlive"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
+	"haruki-cloud/utils/usererror"
 )
 
 func newVLiveSoloTestApp(t *testing.T, lives []*rendervlive.Live, paths *[]string) *renderapp.App {
@@ -75,8 +77,13 @@ func TestExecuteVLiveDetailRendersSoloGroup(t *testing.T) {
 	if len(message) != 1 || message[0].Type != "image" || len(paths) != 1 || paths[0] != "/api/pjsk/vlive/detail" {
 		t.Fatalf("unexpected detail reply: %+v paths=%v", message, paths)
 	}
-	message = runVLiveQuery(t, app, "999")
-	if len(message) != 1 || message[0].Type != "text" || message[0].Data.(onebot11.TextData).Text != i18n.T("vlive.solo.not_found", i18n.Data{"Query": "999"}) {
-		t.Fatalf("unexpected not-found reply: %+v", message)
+	// An unknown Live is a typed not-found error, so the reply layer can
+	// hide the query when the client did not enable parameter echo.
+	_, err := executeVLive(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleVLive, Mode: "vlive-list", Region: "jp", Query: "999",
+	}, app))
+	typed := testutil.RequireUserError(t, err, usererror.CodeNotFound, "vlive.solo.not_found")
+	if got := typed.Message.Data["UserQuery"]; got != i18n.UserText("999") {
+		t.Fatalf("not-found query = %v", got)
 	}
 }

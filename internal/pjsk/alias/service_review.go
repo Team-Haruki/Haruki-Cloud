@@ -121,11 +121,11 @@ func (s *Service) validatePendingAliasesForApproval(ctx context.Context, tx *pjs
 			return err
 		}
 		if exists {
-			return usererror.Invalid(i18n.M("alias.already_approved", i18n.Data{"Kind": aliasKind(row.AliasType), "Alias": row.Alias}))
+			return usererror.Invalid(i18n.M("alias.already_approved", i18n.Data{"Kind": aliasKind(row.AliasType), "UserAlias": i18n.EchoQuery(row.Alias)}))
 		}
 		key := row.AliasType + "\x00" + normalizeCompareText(row.Alias)
 		if prevID, ok := reserved[key]; ok {
-			return usererror.Invalid(i18n.M("alias.duplicate_in_batch", i18n.Data{"First": prevID, "Second": reviewID, "Kind": aliasKind(row.AliasType), "Alias": row.Alias}))
+			return usererror.Invalid(i18n.M("alias.duplicate_in_batch", i18n.Data{"First": prevID, "Second": reviewID, "Kind": aliasKind(row.AliasType), "UserAlias": i18n.EchoQuery(row.Alias)}))
 		}
 		reserved[key] = reviewID
 	}
@@ -141,7 +141,7 @@ func approvePendingAliases(ctx context.Context, tx *pjskdb.Tx, reviewIDs []int64
 			SetAlias(row.Alias).
 			Save(ctx)
 		if pjskdb.IsConstraintError(err) {
-			return usererror.Invalid(i18n.M("alias.already_approved", i18n.Data{"Kind": aliasKind(row.AliasType), "Alias": row.Alias}))
+			return usererror.Invalid(i18n.M("alias.already_approved", i18n.Data{"Kind": aliasKind(row.AliasType), "UserAlias": i18n.EchoQuery(row.Alias)}))
 		}
 		if err != nil {
 			return err

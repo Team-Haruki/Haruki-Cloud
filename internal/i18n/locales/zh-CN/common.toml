@@ -26,20 +26,32 @@ description = "某个功能响应超时。占位符：Feature=功能名，取自
 other = "连接{{.Feature}}超时，请稍后再试"
 
 [common.not_found]
-description = "按用户输入查找对象但没有结果。占位符：Kind=对象名称（如“歌曲”）；Query=用户输入原文，超过 30 个字截断。"
-other = "未找到{{.Kind}}：“{{.Query}}”"
+description = "按用户输入查找对象但没有结果。占位符：Kind=对象名称（如“歌曲”）；UserQuery=用户输入原文，超过 30 个字截断。"
+other = "未找到{{.Kind}}：“{{.UserQuery}}”"
+
+[common.not_found_no_echo]
+description = "common.not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=对象名称（如“歌曲”）。"
+other = "未找到对应的{{.Kind}}"
 
 [common.ambiguous]
-description = "用户输入同时匹配到多个对象。占位符：Query=用户输入原文，超过 30 个字截断；Kind=对象名称（如“歌曲”）。"
-other = "“{{.Query}}”匹配到多个{{.Kind}}，请写得更具体"
+description = "用户输入同时匹配到多个对象。占位符：UserQuery=用户输入原文，超过 30 个字截断；Kind=对象名称（如“歌曲”）。"
+other = "“{{.UserQuery}}”匹配到多个{{.Kind}}，请写得更具体"
+
+[common.ambiguous_no_echo]
+description = "common.ambiguous 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=对象名称（如“歌曲”）。"
+other = "匹配到多个{{.Kind}}，请写得更具体"
 
 [common.out_of_range]
 description = "数字参数超出允许范围。占位符：Param=参数名称（如“活动序号”）；Min=最小值；Max=最大值。"
 other = "{{.Param}}超出范围，可选范围为 {{.Min}}~{{.Max}}"
 
 [common.bad_param]
-description = "参数格式不正确。第一行回显用户写的参数，第二行写具体原因。占位符：Param=用户输入的参数原文，超过 30 个字截断；Reason=具体原因，一句话。"
-other = "参数格式不正确：“{{.Param}}”\n{{.Reason}}"
+description = "参数格式不正确。第一行回显用户写的参数，第二行写具体原因。占位符：UserParam=用户输入的参数原文，超过 30 个字截断；Reason=具体原因，一句话。"
+other = "参数格式不正确：“{{.UserParam}}”\n{{.Reason}}"
+
+[common.bad_param_no_echo]
+description = "common.bad_param 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Reason=具体原因，一句话。"
+other = "参数格式不正确\n{{.Reason}}"
 
 [common.usage]
 description = "用法错误回复的最后一行，指向指令帮助。占位符：Trigger=用户使用的指令，以 / 开头（如 /查曲）。"

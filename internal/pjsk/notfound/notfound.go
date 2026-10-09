@@ -20,7 +20,7 @@ func Music(query string) *usererror.Error {
 	if query = strings.TrimSpace(query); query == "" {
 		return usererror.Wrap(usererror.CodeNotFound, i18n.M("music.not_found_unspecified"), errors.New("music not found"))
 	}
-	return usererror.Wrap(usererror.CodeNotFound, i18n.M("music.not_found", i18n.Data{"Query": i18n.EchoQuery(query)}), fmt.Errorf("music not found: %s", query))
+	return usererror.Wrap(usererror.CodeNotFound, i18n.M("music.not_found", i18n.Data{"UserQuery": i18n.EchoQuery(query)}), fmt.Errorf("music not found: %s", query))
 }
 
 // MusicID reports that no song has id.
@@ -31,7 +31,7 @@ func Card(query string) *usererror.Error {
 	if query = strings.TrimSpace(query); query == "" {
 		return usererror.Wrap(usererror.CodeNotFound, i18n.M("card.not_found_unspecified"), errors.New("card not found"))
 	}
-	return usererror.Wrap(usererror.CodeNotFound, i18n.M("card.not_found", i18n.Data{"Query": i18n.EchoQuery(query)}), fmt.Errorf("card not found: %s", query))
+	return usererror.Wrap(usererror.CodeNotFound, i18n.M("card.not_found", i18n.Data{"UserQuery": i18n.EchoQuery(query)}), fmt.Errorf("card not found: %s", query))
 }
 
 // CardID reports that no card has id.
@@ -66,13 +66,13 @@ func InRegion(err error, region, fallbackQuery string) error {
 		if query == "" {
 			message = i18n.M("music.not_found_unspecified_in_region", i18n.Data{"Region": label})
 		} else {
-			message = i18n.M("music.not_found_in_region", i18n.Data{"Region": label, "Query": query})
+			message = i18n.M("music.not_found_in_region", i18n.Data{"Region": label, "UserQuery": query})
 		}
 	case "card.not_found", "card.not_found_unspecified":
 		if query == "" {
 			message = i18n.M("card.not_found_unspecified_in_region", i18n.Data{"Region": label})
 		} else {
-			message = i18n.M("card.not_found_in_region", i18n.Data{"Region": label, "Query": query})
+			message = i18n.M("card.not_found_in_region", i18n.Data{"Region": label, "UserQuery": query})
 		}
 	case "event.not_found":
 		message = i18n.M("event.not_found_in_region_hint", i18n.Data{"Region": label})
@@ -82,7 +82,7 @@ func InRegion(err error, region, fallbackQuery string) error {
 	return usererror.Wrap(usererror.CodeNotFound, message, typed.Cause)
 }
 
-func queryOf(message i18n.Message) string {
-	query, _ := message.Data["Query"].(string)
+func queryOf(message i18n.Message) i18n.UserText {
+	query, _ := message.Data["UserQuery"].(i18n.UserText)
 	return query
 }

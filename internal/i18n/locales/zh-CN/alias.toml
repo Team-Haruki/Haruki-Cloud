@@ -57,24 +57,44 @@ description = "别名类型不支持（内部参数错误）。"
 other = "不支持这种别名类型"
 
 [alias.already_approved]
-description = "提交或通过的别名已经在已审核列表里。占位符：Kind=别名类型（alias.kind.*）；Alias=别名原文。"
-other = "{{.Kind}}别名“{{.Alias}}”已经在已审核列表中"
+description = "提交或通过的别名已经在已审核列表里。占位符：Kind=别名类型（alias.kind.*）；UserAlias=别名原文。"
+other = "{{.Kind}}别名“{{.UserAlias}}”已经在已审核列表中"
+
+[alias.already_approved_no_echo]
+description = "alias.already_approved 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=别名类型（alias.kind.*）。"
+other = "这个{{.Kind}}别名已经在已审核列表中"
 
 [alias.already_pending]
-description = "提交的别名已经在待审核列表里。占位符：Kind=别名类型（alias.kind.*）；Alias=别名原文。"
-other = "{{.Kind}}别名“{{.Alias}}”已经在待审核列表中"
+description = "提交的别名已经在待审核列表里。占位符：Kind=别名类型（alias.kind.*）；UserAlias=别名原文。"
+other = "{{.Kind}}别名“{{.UserAlias}}”已经在待审核列表中"
+
+[alias.already_pending_no_echo]
+description = "alias.already_pending 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=别名类型（alias.kind.*）。"
+other = "这个{{.Kind}}别名已经在待审核列表中"
 
 [alias.conflicts_name]
-description = "提交的别名与已有的歌曲名或角色名相同。占位符：Kind=别名类型（alias.kind.*）；Alias=别名原文；NameKind=名称类型（alias.name_kind.*）。"
-other = "{{.Kind}}别名“{{.Alias}}”与已有{{.NameKind}}重复"
+description = "提交的别名与已有的歌曲名或角色名相同。占位符：Kind=别名类型（alias.kind.*）；UserAlias=别名原文；NameKind=名称类型（alias.name_kind.*）。"
+other = "{{.Kind}}别名“{{.UserAlias}}”与已有{{.NameKind}}重复"
+
+[alias.conflicts_name_no_echo]
+description = "alias.conflicts_name 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=别名类型（alias.kind.*）；NameKind=名称类型（alias.name_kind.*）。"
+other = "这个{{.Kind}}别名与已有{{.NameKind}}重复"
 
 [alias.duplicate_in_batch]
-description = "一次通过的待审核别名里有重复。占位符：First=先出现的待审核 ID；Second=重复的待审核 ID；Kind=别名类型（alias.kind.*）；Alias=别名原文。"
-other = "待审核 ID {{.First}} 与 {{.Second}} 是重复的{{.Kind}}别名“{{.Alias}}”"
+description = "一次通过的待审核别名里有重复。占位符：First=先出现的待审核 ID；Second=重复的待审核 ID；Kind=别名类型（alias.kind.*）；UserAlias=别名原文。"
+other = "待审核 ID {{.First}} 与 {{.Second}} 是重复的{{.Kind}}别名“{{.UserAlias}}”"
+
+[alias.duplicate_in_batch_no_echo]
+description = "alias.duplicate_in_batch 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：First=先出现的待审核 ID；Second=重复的待审核 ID；Kind=别名类型（alias.kind.*）。"
+other = "待审核 ID {{.First}} 与 {{.Second}} 是重复的{{.Kind}}别名"
 
 [alias.duplicate_in_request]
-description = "一次提交的别名里有重复。占位符：First=先出现的别名；Second=重复的别名。"
-other = "别名“{{.First}}”与“{{.Second}}”重复"
+description = "一次提交的别名里有重复。占位符：UserFirst=先出现的别名；UserSecond=重复的别名。"
+other = "别名“{{.UserFirst}}”与“{{.UserSecond}}”重复"
+
+[alias.duplicate_in_request_no_echo]
+description = "alias.duplicate_in_request 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "提交的别名里有重复，请删掉重复的别名"
 
 [alias.aliases_required]
 description = "提交或删除别名时没有写任何别名。"
@@ -109,8 +129,12 @@ description = "被禁止提交别名的用户提交别名。"
 other = "你已被禁止提交别名"
 
 [alias.approved_not_found]
-description = "删除别名时找不到该别名。占位符：Kind=别名类型（alias.kind.*）；Target=歌曲或角色名称；Alias=别名原文。"
-other = "{{.Target}}下没有已审核的{{.Kind}}别名“{{.Alias}}”"
+description = "删除别名时找不到该别名。占位符：Kind=别名类型（alias.kind.*）；Target=歌曲或角色名称；UserAlias=别名原文。"
+other = "{{.Target}}下没有已审核的{{.Kind}}别名“{{.UserAlias}}”"
+
+[alias.approved_not_found_no_echo]
+description = "alias.approved_not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=别名类型（alias.kind.*）；Target=歌曲或角色名称。"
+other = "{{.Target}}下没有这个已审核的{{.Kind}}别名"
 
 [alias.bulk_usage]
 description = "提交或删除别名的格式不对。"

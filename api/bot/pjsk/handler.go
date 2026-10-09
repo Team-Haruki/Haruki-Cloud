@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -292,8 +293,17 @@ func makeBotHandler(renderApp *renderapp.App, election commandResponseElection, 
 		metadata := decision.result.Metadata
 		applySharedBotCommandMetadata(c, metadata)
 		enqueueBotCommandTelemetry(c, telemetry, req, botID, metadata)
-		return writeEncodedBotResponse(c, decision.result.Response)
+		return writeEncodedBotResponse(c, decision.result.responseFor(req))
 	}
+}
+
+// responseFor is the reply for req: the echo variant only when its client
+// enabled parameter echo and the result has one.
+func (r sharedCommandResult) responseFor(req BotCommandRequest) encodedBotResponse {
+	if req.EnableParamEcho && len(r.EchoResponse.JSONBody) > 0 {
+		return r.EchoResponse
+	}
+	return r.Response
 }
 
 type botHandlerRejection struct {
@@ -522,8 +532,16 @@ func failedSharedBotCommand(
 		)
 	}
 	metadata.ErrorType = fmt.Sprintf("%T", err)
-	envelope := commandErrorEnvelope(ctx, err, commandPath, matchedCommand)
-	return encodeSharedCommandResult(ctx, envelope, metadata, forceExecutor)
+	envelope := commandErrorEnvelope(i18n.WithParamEcho(ctx, false), err, commandPath, matchedCommand)
+	result := encodeSharedCommandResult(ctx, envelope, metadata, forceExecutor)
+	echoEnvelope := commandErrorEnvelope(i18n.WithParamEcho(ctx, true), err, commandPath, matchedCommand)
+	if reflect.DeepEqual(echoEnvelope, envelope) {
+		return result
+	}
+	if echo, encodeErr := encodeBotResponseEnvelopeContext(ctx, echoEnvelope); encodeErr == nil {
+		result.EchoResponse = echo
+	}
+	return result
 }
 
 func encodeSharedCommandResult(ctx context.Context, envelope botResponseEnvelope, metadata sharedCommandMetadata, forceExecutor bool) sharedCommandResult {

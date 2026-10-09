@@ -201,20 +201,25 @@ func SanitizeLines(text string) (string, []string) {
 	return sanitizeLines(text, nil)
 }
 
-// SanitizeMessage renders m in locale and sanitizes it like SanitizeLines.
-// The lines of m and of the messages nested in it are also recognised by
-// their weak patterns, which no other reply may use.
-func SanitizeMessage(m Message, locale Locale) (string, []string) {
+// SanitizeMessage renders m with opts and sanitizes it like SanitizeLines.
+// The lines of m and of the messages nested in it, in the form opts renders
+// (the echo-free form under NoEcho), are also recognised by their weak
+// patterns, which no other reply may use.
+func SanitizeMessage(m Message, opts RenderOptions) (string, []string) {
 	loadLinePatterns()
+	c := mustLoad()
 	var own []linePattern
 	walkMessages(m, func(id string) {
+		if rendered, err := c.renderID(opts, id); err == nil {
+			id = rendered
+		}
 		for _, pattern := range messagePatterns[id] {
 			if pattern.weak {
 				own = append(own, pattern)
 			}
 		}
 	})
-	return sanitizeLines(m.In(locale), own)
+	return sanitizeLines(m.Render(opts), own)
 }
 
 // walkMessages calls visit with the ID of m and of every message nested in

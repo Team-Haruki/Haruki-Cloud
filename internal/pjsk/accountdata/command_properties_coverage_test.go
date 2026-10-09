@@ -323,11 +323,11 @@ func testProfileSettingsFormatting(t *testing.T) {
 	for i := range candidates {
 		candidates[i] = strings.Repeat("x", i+1)
 	}
-	text := formatTimeZoneCandidatesText(" +08 ", candidates)
-	if !strings.HasSuffix(text, "\n"+i18n.T("account.settings.timezone_more", i18n.Data{"Count": 5})) || strings.Count(text, "\n") != strings.Count(i18n.T("account.settings.timezone_candidates", i18n.Data{"Offset": "+08", "Candidates": ""}), "\n")+20 {
+	text := formatTimeZoneCandidatesText(candidates)
+	if !strings.HasSuffix(text, "\n"+i18n.T("account.settings.timezone_more", i18n.Data{"Count": 5})) || strings.Count(text, "\n") != strings.Count(i18n.T("account.settings.timezone_candidates", i18n.Data{"Candidates": ""}), "\n")+20 {
 		t.Fatalf("timezone candidates text = %q", text)
 	}
-	if text := formatTimeZoneCandidatesText("UTC", []string{"UTC"}); text != i18n.T("account.settings.timezone_candidates", i18n.Data{"Offset": "UTC", "Candidates": "UTC"}) {
+	if text := formatTimeZoneCandidatesText([]string{"UTC"}); text != i18n.T("account.settings.timezone_candidates", i18n.Data{"Candidates": "UTC"}) {
 		t.Fatalf("short timezone candidates text = %q", text)
 	}
 }

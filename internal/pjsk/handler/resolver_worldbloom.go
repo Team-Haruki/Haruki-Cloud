@@ -142,7 +142,7 @@ func resolveTrackerWorldBloomChapterSelection(
 
 	chapter := findWorldBloomChapterByCharacterID(chapters, charID)
 	if chapter == nil {
-		return nil, usererror.Invalid(i18n.M("sk.wl.no_character_chapter", i18n.Data{"Event": eventLabel(region.String(), eventID), "Character": charQuery}))
+		return nil, usererror.Invalid(i18n.M("sk.wl.no_character_chapter", i18n.Data{"Event": eventLabel(region.String(), eventID), "Character": characterLabel(ctx, app, charID)}))
 	}
 	return chapter, nil
 }

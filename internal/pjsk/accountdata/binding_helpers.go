@@ -125,11 +125,11 @@ func selectBindingByUID(items []BindingListItem, selector string) (BindingListIt
 	}
 	switch len(matched) {
 	case 0:
-		return BindingListItem{}, usererror.New(usererror.CodeNotFound, i18n.M("binding.selector_uid_not_bound", i18n.Data{"UID": i18n.EchoQuery(selector)}))
+		return BindingListItem{}, usererror.New(usererror.CodeNotFound, i18n.M("binding.selector_uid_not_bound", i18n.Data{"UserUID": i18n.EchoQuery(selector)}))
 	case 1:
 		return matched[0], nil
 	default:
-		return BindingListItem{}, usererror.New(usererror.CodeAmbiguous, i18n.M("binding.selector_uid_ambiguous", i18n.Data{"UID": i18n.EchoQuery(selector)}))
+		return BindingListItem{}, usererror.New(usererror.CodeAmbiguous, i18n.M("binding.selector_uid_ambiguous", i18n.Data{"UserUID": i18n.EchoQuery(selector)}))
 	}
 }
 

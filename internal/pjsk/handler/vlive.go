@@ -55,7 +55,7 @@ func executeVLiveDetail(rc *RequestContext, timeZone string) (onebot11.Message, 
 	case errors.Is(err, vlive.ErrNoSoloLives):
 		return onebot11.Message{onebot11.Text(i18n.T("vlive.solo.none", i18n.Data{"Region": i18n.RegionLabel(regionWithDefault(rc.Cmd.Region))}))}, nil
 	case errors.Is(err, vlive.ErrSoloLiveNotFound):
-		return onebot11.Message{onebot11.Text(i18n.T("vlive.solo.not_found", i18n.Data{"Query": i18n.EchoQuery(query.Query)}))}, nil
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("vlive.solo.not_found", i18n.Data{"UserQuery": i18n.EchoQuery(query.Query)}))
 	case err != nil:
 		return nil, err
 	}

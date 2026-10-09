@@ -15,10 +15,13 @@ import (
 )
 
 func TestCommandErrorTextShowsTypedReplies(t *testing.T) {
-	ctx := context.Background()
+	ctx := i18n.WithParamEcho(context.Background(), true)
 	notFound := notfound.Card("662")
 	if got := commandErrorText(ctx, fmt.Errorf("failed to search card: %w", notFound), "card/detail", "/card 662"); got != notFound.Message.String() {
 		t.Fatalf("wrapped typed reply = %q, want %q", got, notFound.Message)
+	}
+	if got := commandErrorText(context.Background(), notFound, "card/detail", "/card 662"); got != i18n.T("card.not_found_no_echo") {
+		t.Fatalf("typed reply without echo = %q", got)
 	}
 	readOnly := usererror.ReadOnly()
 	if got := commandErrorText(ctx, readOnly, "profile/bind", "/绑定"); got != readOnly.Message.String() {
@@ -27,6 +30,7 @@ func TestCommandErrorTextShowsTypedReplies(t *testing.T) {
 }
 
 func TestCommandErrorTextReplacesUnrecognizedWithRouteGuidance(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
 	ctx := context.Background()
 	got := commandErrorText(ctx, usererror.Unrecognized(), "event", "/查活动 super-secret")
 	want := i18n.WithUsage(i18n.M("guidance.event"), "/查活动").String()
@@ -37,10 +41,16 @@ func TestCommandErrorTextReplacesUnrecognizedWithRouteGuidance(t *testing.T) {
 		t.Fatalf("reply echoed the arguments: %q", got)
 	}
 
-	// A route without its own guidance keeps the generic reason.
-	got = commandErrorText(ctx, usererror.Unrecognized(), "no/such-route", "/cmd")
+	// A route without its own guidance keeps the generic reason. An
+	// unregistered command is user input: named only with echo.
+	echoCtx := i18n.WithParamEcho(ctx, true)
+	got = commandErrorText(echoCtx, usererror.Unrecognized(), "no/such-route", "/cmd")
 	if want := i18n.WithUsage(i18n.Unrecognized(), "/cmd").String(); got != want {
 		t.Fatalf("generic unrecognized reply = %q, want %q", got, want)
+	}
+	got = commandErrorText(ctx, usererror.Unrecognized(), "no/such-route", "/cmd")
+	if want := i18n.Unrecognized().String(); got != want {
+		t.Fatalf("generic unrecognized reply without echo = %q, want %q", got, want)
 	}
 
 	// A help pointer needs a slash command.
@@ -51,18 +61,22 @@ func TestCommandErrorTextReplacesUnrecognizedWithRouteGuidance(t *testing.T) {
 }
 
 func TestCommandErrorTextAddsHelpPointerToMisuseAndBadParams(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
 	ctx := context.Background()
 	reason := i18n.M("deck.compare.too_many", i18n.Data{"Max": 5})
 	if got, want := commandErrorText(ctx, usererror.Misuse(reason), "deck/event", "/活动组卡"), i18n.WithUsage(reason, "/活动组卡").String(); got != want {
 		t.Fatalf("misuse reply = %q, want %q", got, want)
 	}
-	bad := usererror.BadParam("x", i18n.M("inventory.filter_unknown"))
-	if got, want := commandErrorText(ctx, bad, "inventory/list", "/查背包 x"), i18n.WithUsage(bad.Message, "/查背包").String(); got != want {
+	bad := usererror.BadParam("xyz", i18n.M("inventory.filter_unknown"))
+	if got, want := commandErrorText(ctx, bad, "inventory/list", "/查背包 xyz"), i18n.WithUsage(bad.Message, "/查背包").Render(i18n.RenderOptions{NoEcho: true}); got != want || strings.Contains(got, "xyz") {
 		t.Fatalf("bad parameter reply = %q, want %q", got, want)
+	}
+	if got, want := commandErrorText(i18n.WithParamEcho(ctx, true), bad, "inventory/list", "/查背包 xyz"), i18n.WithUsage(bad.Message, "/查背包").String(); got != want {
+		t.Fatalf("bad parameter reply with echo = %q, want %q", got, want)
 	}
 	// Errors that are not about the command's shape get no help pointer.
 	notFound := notfound.Music("x")
-	if got := commandErrorText(ctx, notFound, "music", "/查曲 x"); got != notFound.Message.String() {
+	if got := commandErrorText(ctx, notFound, "music", "/查曲 x"); got != notFound.Message.Render(i18n.RenderOptions{NoEcho: true}) {
 		t.Fatalf("not-found reply = %q", got)
 	}
 }
@@ -77,8 +91,18 @@ func TestHelpTriggerKeepsMultiWordCommands(t *testing.T) {
 		"/not-registered": "/not-registered",
 		"event 1":         "",
 	} {
-		if got := helpTrigger(trigger); got != want {
-			t.Errorf("helpTrigger(%q) = %q, want %q", trigger, got, want)
+		if got := helpTrigger(trigger, true); got != want {
+			t.Errorf("helpTrigger(%q, echo) = %q, want %q", trigger, got, want)
+		}
+	}
+	// Without echo only a registered command may be named.
+	for trigger, want := range map[string]string{
+		"/pjsk vlive 12":  "/pjsk vlive",
+		"/jp查曲 tyw":       "/jp查曲",
+		"/not-registered": "",
+	} {
+		if got := helpTrigger(trigger, false); got != want {
+			t.Errorf("helpTrigger(%q, no echo) = %q, want %q", trigger, got, want)
 		}
 	}
 }
@@ -111,12 +135,12 @@ func TestSanitizeErrorReplyDropsNonCatalogLines(t *testing.T) {
 		"Reason": "raw upstream detail: token=abc",
 		"Usage":  i18n.Usage("/绑定"),
 	})
-	got := sanitizeErrorReply(ctx, leaky, i18n.DefaultLocale)
+	got := sanitizeErrorReply(ctx, leaky, i18n.RenderOptions{Locale: i18n.DefaultLocale})
 	if want := i18n.Usage("/绑定").String(); got != want {
 		t.Fatalf("sanitized reply = %q, want %q", got, want)
 	}
 	onlyRaw := i18n.M("common.with_usage", i18n.Data{"Reason": "raw upstream detail", "Usage": "unexpected EOF"})
-	if got := sanitizeErrorReply(ctx, onlyRaw, i18n.DefaultLocale); got != i18n.RequestFailed().String() {
+	if got := sanitizeErrorReply(ctx, onlyRaw, i18n.RenderOptions{Locale: i18n.DefaultLocale}); got != i18n.RequestFailed().String() {
 		t.Fatalf("a reply with no catalog line must become the generic reply: %q", got)
 	}
 }
@@ -149,7 +173,7 @@ func TestSanitizeErrorReplyKeepsToolboxLink(t *testing.T) {
 	if !strings.Contains(want, "https://") {
 		t.Fatalf("reply has no toolbox address: %q", want)
 	}
-	if got := sanitizeErrorReply(context.Background(), reply, i18n.DefaultLocale); got != want {
+	if got := sanitizeErrorReply(context.Background(), reply, i18n.RenderOptions{Locale: i18n.DefaultLocale}); got != want {
 		t.Fatalf("sanitized reply = %q, want %q", got, want)
 	}
 }

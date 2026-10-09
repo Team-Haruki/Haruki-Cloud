@@ -1,16 +1,24 @@
 # 歌曲：查曲、谱面、BPM、歌曲列表、歌曲奖励、进度、自制谱面。
 
 [music.not_found]
-description = "查歌曲时找不到匹配的歌曲（不确定区服时）。占位符：Query=用户写的歌曲名、别名或 ID，超过 30 个字截断。"
-other = "未找到歌曲：“{{.Query}}”"
+description = "查歌曲时找不到匹配的歌曲（不确定区服时）。占位符：UserQuery=用户写的歌曲名、别名或 ID，超过 30 个字截断。"
+other = "未找到歌曲：“{{.UserQuery}}”"
+
+[music.not_found_no_echo]
+description = "music.not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "未找到对应的歌曲"
 
 [music.not_found_unspecified]
 description = "查歌曲时找不到匹配的歌曲，且没有可显示的查询内容（不确定区服时）。"
 other = "未找到对应的歌曲"
 
 [music.not_found_in_region]
-description = "在某个区服查歌曲时找不到匹配的歌曲，提示可以加区服前缀查其他区服。占位符：Region=区服显示名；Query=用户写的歌曲名、别名或 ID，超过 30 个字截断。"
-other = "{{.Region}}未找到歌曲：“{{.Query}}”\n查询其他区服的歌曲请加区服前缀，例如 /cn查曲"
+description = "在某个区服查歌曲时找不到匹配的歌曲，提示可以加区服前缀查其他区服。占位符：Region=区服显示名；UserQuery=用户写的歌曲名、别名或 ID，超过 30 个字截断。"
+other = "{{.Region}}未找到歌曲：“{{.UserQuery}}”\n查询其他区服的歌曲请加区服前缀，例如 /cn查曲"
+
+[music.not_found_in_region_no_echo]
+description = "music.not_found_in_region 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Region=区服显示名。"
+other = "{{.Region}}未找到对应的歌曲\n查询其他区服的歌曲请加区服前缀，例如 /cn查曲"
 
 [music.not_found_unspecified_in_region]
 description = "在某个区服查歌曲时找不到匹配的歌曲，且没有可显示的查询内容。占位符：Region=区服显示名。"

@@ -129,7 +129,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 			setCommandTraceOutcome(c, "rejected", err)
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
-		requestCtx := c.Context()
+		requestCtx := i18n.WithParamEcho(c.Context(), req.EnableParamEcho)
 		traceCommand := allowedCommandTraceLabel(req.MatchedCommand, birthdayMonitorManifestCommandPrefixes)
 		setCommandTraceMetadata(c, traceCommand, birthdayMonitorCommandPath)
 		finishValidation := commandtrace.MeasurePhase(requestCtx, "request_validate")

@@ -377,7 +377,11 @@ domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1" }
    （生产必配 Noise 密钥；未配置时仅测试用 JSON 明文）
 3. 会话 token 在请求体顶层字段 `session_token` 里随密文传输，不再放请求头；
    `/pjsk` 下所有 POST（含 birthday-monitor 的 render / ack）都必须携带
-4. 错误回复只来自文案目录，不按请求字段回显参数
+4. `BotCommandRequest.enableParamEcho` 默认为 `false`：错误回复（参数错误、找不到、
+   匹配到多个、用法提示等）只来自文案目录，且不回显用户输入（查询词、参数值、名称、
+   别名、未注册的指令）；客户端只有显式传 `true` 时才回显具体参数。带回显的消息都有
+   一条不回显的同名 `_no_echo` 消息（约定见 `docs/i18n.md`）。共享执行的结果同时带
+   两种回复，由实际投递的 bot 按自己的设置选择
 5. `BotCommandRequest` 另有四个可选字段：
    - `event_time` / `event_id`：平台事件时间戳（OneBot time）用于事件级去重——
      同一条消息被多个 bot 观测到时时间一致，已消费的响应选举保留 120s，可区分
@@ -830,7 +834,7 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | `response_election*.go` | 多 bot 响应选举（窗口、key、roster、生成） | — |
 | `bot_response_envelope.go` | 响应封装 | — |
 | `command_trace.go` | 命令执行追踪接入 | — |
-| `error_reply.go` / `param_guidance.go` | 错误回复（带类型错误、上游分类、按路由的参数引导、最终脱敏） | — |
+| `error_reply.go` / `param_guidance.go` | 错误回复（带类型错误、上游分类、按路由的参数引导、按 `enableParamEcho` 决定是否回显用户输入、最终脱敏） | — |
 | `birthday_monitor.go` | MySekai 生日订阅推送 | — |
 | `seed.go` | 从 handler registry 同步 command manifest 到 bot DB | — |
 | `struct.go` | `BotCommandRequest`、`ManifestEntry`、`ManifestResponse` | — |

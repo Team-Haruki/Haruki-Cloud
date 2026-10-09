@@ -118,7 +118,7 @@ func (c *Controller) resolveTalkCharacterUnit(query, unit string, characterID in
 		return characterID, intNumberFrom(candidates[0], 0, "id", "game_id"), nil
 	}
 	if characterID == 21 {
-		return 0, 0, usererror.Misuse(i18n.M("mysekai.talk.virtual_singer_unit", i18n.Data{"Example": strings.TrimSpace(query) + " ln"}))
+		return 0, 0, usererror.Misuse(i18n.M("mysekai.talk.virtual_singer_unit", i18n.Data{"UserExample": i18n.EchoQuery(strings.TrimSpace(query) + " ln")}))
 	}
 	return characterID, intNumberFrom(candidates[0], 0, "id", "game_id"), nil
 }

@@ -17,16 +17,24 @@ description = "卡牌列表图片的提示标题：取抓包数据失败，先�
 other = "{{.Reason}}；当前显示全部卡牌"
 
 [card.not_found]
-description = "查卡牌时找不到匹配的卡牌（不确定区服时）。占位符：Query=用户写的卡牌 ID 或筛选条件，超过 30 个字截断。"
-other = "未找到卡牌：“{{.Query}}”"
+description = "查卡牌时找不到匹配的卡牌（不确定区服时）。占位符：UserQuery=用户写的卡牌 ID 或筛选条件，超过 30 个字截断。"
+other = "未找到卡牌：“{{.UserQuery}}”"
+
+[card.not_found_no_echo]
+description = "card.not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "未找到对应的卡牌"
 
 [card.not_found_unspecified]
 description = "查卡牌时找不到匹配的卡牌，且没有可显示的查询内容（不确定区服时）。"
 other = "未找到对应的卡牌"
 
 [card.not_found_in_region]
-description = "在某个区服查卡牌时找不到匹配的卡牌，提示可以加区服前缀查其他区服。占位符：Region=区服显示名；Query=用户写的卡牌 ID 或筛选条件，超过 30 个字截断。"
-other = "{{.Region}}未找到卡牌：“{{.Query}}”\n查询其他区服的卡牌请加区服前缀，例如 /cn查卡"
+description = "在某个区服查卡牌时找不到匹配的卡牌，提示可以加区服前缀查其他区服。占位符：Region=区服显示名；UserQuery=用户写的卡牌 ID 或筛选条件，超过 30 个字截断。"
+other = "{{.Region}}未找到卡牌：“{{.UserQuery}}”\n查询其他区服的卡牌请加区服前缀，例如 /cn查卡"
+
+[card.not_found_in_region_no_echo]
+description = "card.not_found_in_region 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Region=区服显示名。"
+other = "{{.Region}}未找到对应的卡牌\n查询其他区服的卡牌请加区服前缀，例如 /cn查卡"
 
 [card.not_found_unspecified_in_region]
 description = "在某个区服查卡牌时找不到匹配的卡牌，且没有可显示的查询内容。占位符：Region=区服显示名。"

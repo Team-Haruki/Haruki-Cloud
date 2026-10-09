@@ -231,11 +231,12 @@ func LiveTypeLabel(liveType string) Message {
 // message; longer queries are cut with "……".
 const QueryEchoLimit = 30
 
-// EchoQuery trims a user's query for display in a message.
-func EchoQuery(query string) string {
+// EchoQuery trims a user's query for display in a user-input placeholder
+// (see UserText). It is hidden when the reply is rendered without echo.
+func EchoQuery(query string) UserText {
 	query = strings.Join(strings.Fields(query), " ")
 	if utf8.RuneCountInString(query) <= QueryEchoLimit {
-		return query
+		return UserText(query)
 	}
-	return string([]rune(query)[:QueryEchoLimit]) + "……"
+	return UserText(string([]rune(query)[:QueryEchoLimit]) + "……")
 }

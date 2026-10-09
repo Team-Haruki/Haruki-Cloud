@@ -41,8 +41,12 @@ description = "活动规划没有可计算的歌曲。"
 other = "没有可计算的歌曲"
 
 [event.planner.no_deck]
-description = "活动规划：组卡服务没有返回某首歌的卡组数据或 PT。占位符：Song=用户写的歌曲。"
-other = "组卡服务没有返回“{{.Song}}”的卡组数据，请稍后再试"
+description = "活动规划：组卡服务没有返回某首歌的卡组数据或 PT。占位符：UserSong=用户写的歌曲。"
+other = "组卡服务没有返回“{{.UserSong}}”的卡组数据，请稍后再试"
+
+[event.planner.no_deck_no_echo]
+description = "event.planner.no_deck 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "组卡服务没有返回其中一首歌曲的卡组数据，请稍后再试"
 
 [event.planner.no_current]
 description = "活动规划没有指定活动，且当前没有进行中的活动。占位符：Region=区服显示名。"

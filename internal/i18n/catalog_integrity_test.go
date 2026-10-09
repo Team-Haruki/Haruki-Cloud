@@ -99,6 +99,9 @@ type messageRef struct {
 	dynamic bool     // the ID is not a string literal
 	keys    []string // placeholder keys, when every Data argument is a literal
 	keysOK  bool
+	// userKeys are the keys whose value is built by UserText or EchoQuery,
+	// i.e. user input.
+	userKeys []string
 }
 
 // collectMessageRefs finds every i18n.M / i18n.T call (and M / T inside the
@@ -117,6 +120,24 @@ func collectMessageRefs(src goSource, insideI18n bool) []messageRef {
 			return insideI18n && typ.Name == "Data"
 		}
 		return false
+	}
+	isUserTextCall := func(expr ast.Expr) bool {
+		call, ok := expr.(*ast.CallExpr)
+		if !ok {
+			return false
+		}
+		name := ""
+		switch fun := call.Fun.(type) {
+		case *ast.SelectorExpr:
+			if x, ok := fun.X.(*ast.Ident); ok && local != "" && x.Name == local {
+				name = fun.Sel.Name
+			}
+		case *ast.Ident:
+			if insideI18n {
+				name = fun.Name
+			}
+		}
+		return name == "UserText" || name == "EchoQuery"
 	}
 	var refs []messageRef
 	ast.Inspect(src.file, func(n ast.Node) bool {
@@ -165,6 +186,9 @@ func collectMessageRefs(src goSource, insideI18n bool) []messageRef {
 				}
 				name, _ := strconv.Unquote(key.Value)
 				ref.keys = append(ref.keys, name)
+				if isUserTextCall(kv.Value) {
+					ref.userKeys = append(ref.userKeys, name)
+				}
 			}
 		}
 		refs = append(refs, ref)
@@ -181,7 +205,10 @@ func collectMessageRefs(src goSource, insideI18n bool) []messageRef {
 //   - every catalog message is used somewhere, except the IDs listed in
 //     testdata/unused_ids.allowlist;
 //   - other locales only translate IDs of the default locale, with the same
-//     placeholders.
+//     placeholders;
+//   - user input (UserText, EchoQuery) only goes into a user-input
+//     placeholder (User…), so the echo-free form can leave it out. Using a
+//     message also uses its echo-free form.
 func TestCatalogIntegrity(t *testing.T) {
 	root := repoRoot(t)
 	used := map[string]bool{}
@@ -195,6 +222,12 @@ func TestCatalogIntegrity(t *testing.T) {
 				continue
 			}
 			used[ref.id] = true
+			used[ref.id+NoEchoSuffix] = true
+			for _, key := range ref.userKeys {
+				if !IsUserPlaceholder(key) {
+					t.Errorf("%s: %s gets user input in placeholder %s; name it User… (see docs/i18n.md)", ref.pos, ref.id, key)
+				}
+			}
 			entry, ok := Entry(DefaultLocale, ref.id)
 			if !ok {
 				t.Errorf("%s: unknown message ID %q", ref.pos, ref.id)

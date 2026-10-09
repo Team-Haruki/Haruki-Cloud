@@ -13,8 +13,12 @@ description = "烤森对话列表找不到要查询的角色。"
 other = "找不到要查询的角色"
 
 [mysekai.talk.virtual_singer_unit]
-description = "查询属于多个团的虚拟歌手时没有写团名。占位符：Example=示例写法，例如“miku ln”。"
-other = "这个虚拟歌手属于多个团，请同时写团名，例如“{{.Example}}”"
+description = "查询属于多个团的虚拟歌手时没有写团名。占位符：UserExample=示例写法，例如“miku ln”。"
+other = "这个虚拟歌手属于多个团，请同时写团名，例如“{{.UserExample}}”"
+
+[mysekai.talk.virtual_singer_unit_no_echo]
+description = "mysekai.talk.virtual_singer_unit 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "这个虚拟歌手属于多个团，请在角色名后同时写团名，例如“miku ln”"
 
 [mysekai.blueprint_term.region_unavailable]
 description = "该区服没有限时蓝图数据。"
@@ -45,8 +49,12 @@ description = "家具详情一次写了多个家具 ID。"
 other = "家具详情一次只能查询一个家具 ID"
 
 [mysekai.fixture.category_not_found]
-description = "找不到用户写的家具分类。占位符：Query=用户写的分类，超过 30 个字截断。"
-other = "未找到家具分类：“{{.Query}}”"
+description = "找不到用户写的家具分类。占位符：UserQuery=用户写的分类，超过 30 个字截断。"
+other = "未找到家具分类：“{{.UserQuery}}”"
+
+[mysekai.fixture.category_not_found_no_echo]
+description = "mysekai.fixture.category_not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "未找到对应的家具分类"
 
 [mysekai.fixture.category_not_found_any]
 description = "找不到对应的家具分类（没有可显示的查询内容）。"

@@ -17,8 +17,12 @@ description = "查个人虚拟 Live 时该区服没有个人虚拟 Live。占位
 other = "{{.Region}}当前没有个人虚拟 Live"
 
 [vlive.solo.not_found]
-description = "查个人虚拟 Live 时找不到用户写的 Live。占位符：Query=用户输入的查询词（超过 30 字会截断）。"
-other = "未找到个人虚拟 Live：“{{.Query}}”\n发送 /vlive 查看虚拟 Live 列表"
+description = "查个人虚拟 Live 时找不到用户写的 Live。占位符：UserQuery=用户输入的查询词（超过 30 字会截断）。"
+other = "未找到个人虚拟 Live：“{{.UserQuery}}”\n发送 /vlive 查看虚拟 Live 列表"
+
+[vlive.solo.not_found_no_echo]
+description = "vlive.solo.not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "未找到对应的个人虚拟 Live\n发送 /vlive 查看虚拟 Live 列表"
 
 [vlive.fallback_name]
 description = "虚拟 Live 列表图和详情图里，Live 没有名称时显示的名称。占位符：ID=虚拟 Live ID。"

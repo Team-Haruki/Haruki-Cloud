@@ -244,7 +244,7 @@ func normalizeSubmittedAliases(raw []string) ([]string, error) {
 		}
 		key := normalizeCompareText(aliasText)
 		if previous, ok := seen[key]; ok {
-			return nil, usererror.Invalid(i18n.M("alias.duplicate_in_request", i18n.Data{"First": previous, "Second": aliasText}))
+			return nil, usererror.Invalid(i18n.M("alias.duplicate_in_request", i18n.Data{"UserFirst": i18n.EchoQuery(previous), "UserSecond": i18n.EchoQuery(aliasText)}))
 		}
 		seen[key] = aliasText
 		cleaned = append(cleaned, aliasText)

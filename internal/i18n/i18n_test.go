@@ -219,10 +219,10 @@ func TestLoadCatalogRejectsBrokenTrees(t *testing.T) {
 	if err != nil || len(c.locales) != 2 {
 		t.Fatalf("loadCatalog() = %+v, %v", c, err)
 	}
-	if text, err := c.localize("en-US", "a.b", nil); err != nil || text != "x" {
+	if text, err := c.localize(RenderOptions{Locale: "en-US"}, "a.b", nil); err != nil || text != "x" {
 		t.Fatalf("localize() = %q, %v", text, err)
 	}
-	if _, err := c.localize(ZhCN, "", nil); err == nil {
+	if _, err := c.localize(RenderOptions{Locale: ZhCN}, "", nil); err == nil {
 		t.Fatal("empty id rendered")
 	}
 }

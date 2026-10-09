@@ -855,7 +855,7 @@ func TestParseComboQueryEchoesTypedLabel(t *testing.T) {
 	} {
 		_, err := parseComboQuery(ComboQuery{Query: query})
 		typed := testutil.RequireUserError(t, err, usererror.CodeBadParam, "common.bad_param")
-		if got := typed.Message.Data["Param"]; got != want {
+		if got := typed.Message.Data["UserParam"]; got != i18n.UserText(want) {
 			t.Errorf("parseComboQuery(%q) Param = %v, want %q", query, got, want)
 		}
 	}

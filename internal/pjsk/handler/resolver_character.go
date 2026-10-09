@@ -52,11 +52,11 @@ func resolveGameCharacterIDByQuery(
 	}
 	switch len(ids) {
 	case 0:
-		return 0, usererror.New(usererror.CodeNotFound, i18n.M("character.not_found", i18n.Data{"Query": i18n.EchoQuery(query)}))
+		return 0, usererror.New(usererror.CodeNotFound, i18n.M("character.not_found", i18n.Data{"UserQuery": i18n.EchoQuery(query)}))
 	case 1:
 		return ids[0], nil
 	default:
-		return 0, usererror.New(usererror.CodeAmbiguous, i18n.M("character.ambiguous", i18n.Data{"Query": i18n.EchoQuery(query)}))
+		return 0, usererror.New(usererror.CodeAmbiguous, i18n.M("character.ambiguous", i18n.Data{"UserQuery": i18n.EchoQuery(query)}))
 	}
 }
 

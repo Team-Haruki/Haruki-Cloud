@@ -172,8 +172,8 @@ description = "/时区 设置成功，之后时间按这个时区显示。占位
 other = "已将时区设为 {{.TimeZone}}"
 
 [account.settings.timezone_candidates]
-description = "/时区 写的是 UTC 偏移量，对应多个时区，下面每行列出一个候选时区名。占位符：Offset=用户写的偏移量原文；Candidates=候选时区名，每行一个，最多 20 个，后面可能接 account.settings.timezone_more。"
-other = "偏移量“{{.Offset}}”对应多个时区，请改用下面的时区名设置：\n{{.Candidates}}"
+description = "/时区 写的是 UTC 偏移量，对应多个时区，下面每行列出一个候选时区名。这条回复不回显用户写的偏移量（与客户端的参数回显设置无关）。占位符：Candidates=候选时区名，每行一个，最多 20 个，后面可能接 account.settings.timezone_more。"
+other = "这个偏移量对应多个时区，请改用下面的时区名设置：\n{{.Candidates}}"
 
 [account.settings.timezone_more]
 description = "account.settings.timezone_candidates 的最后一行：候选太多，没有全部列出。占位符：Count=没有列出的时区数量。"

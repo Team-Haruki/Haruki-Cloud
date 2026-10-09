@@ -49,7 +49,7 @@ func TestAccountRepliesGolden(t *testing.T) {
 		{"arrest difficulty (none)", formatProfileDifficultySummary(nil)},
 		{"bg settings", formatProfileBGSettingsText(jpDefault)},
 		{"bg settings (none)", formatProfileBGSettingsText(twPlain)},
-		{"timezone candidates", formatTimeZoneCandidatesText("+9", candidates)},
+		{"timezone candidates", formatTimeZoneCandidatesText(candidates)},
 	}
 	var b strings.Builder
 	for _, row := range rows {

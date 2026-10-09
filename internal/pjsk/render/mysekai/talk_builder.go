@@ -57,7 +57,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		return nil, err
 	}
 	if characterUnitID == 0 {
-		return nil, usererror.New(usererror.CodeNotFound, i18n.M("character.not_found", i18n.Data{"Query": i18n.EchoQuery(query.Query)}))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("character.not_found", i18n.Data{"UserQuery": i18n.EchoQuery(query.Query)}))
 	}
 
 	masterdata := c.loadTalkListMasterdata()

@@ -69,7 +69,7 @@ u1 [日服(JP)] 748*************370 已验证（全局默认、日服(JP)默认�
 == bg settings (none)
 台服(TW)还没有设置个人信息背景
 == timezone candidates
-偏移量“+9”对应多个时区，请改用下面的时区名设置：
+这个偏移量对应多个时区，请改用下面的时区名设置：
 Etc/Zone
 Etc/Zonex
 Etc/Zonexx

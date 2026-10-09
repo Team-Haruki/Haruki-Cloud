@@ -98,12 +98,20 @@ description = "u序号超出该区服已绑定账号数量。占位符：Region=
 other = "{{.Region}}账号序号超出范围，目前只绑定了 {{.Count}} 个账号"
 
 [binding.selector_uid_not_bound]
-description = "写的游戏 UID 没有被绑定。占位符：UID=用户写的游戏 UID。"
-other = "没有绑定游戏 UID {{.UID}}"
+description = "写的游戏 UID 没有被绑定。占位符：UserUID=用户写的游戏 UID。"
+other = "没有绑定游戏 UID {{.UserUID}}"
+
+[binding.selector_uid_not_bound_no_echo]
+description = "binding.selector_uid_not_bound 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "没有绑定这个游戏 UID"
 
 [binding.selector_uid_ambiguous]
-description = "写的游戏 UID 在多个区服都绑定了。占位符：UID=用户写的游戏 UID。"
-other = "游戏 UID {{.UID}} 在多个区服都已绑定，请改用 u序号"
+description = "写的游戏 UID 在多个区服都绑定了。占位符：UserUID=用户写的游戏 UID。"
+other = "游戏 UID {{.UserUID}} 在多个区服都已绑定，请改用 u序号"
+
+[binding.selector_uid_ambiguous_no_echo]
+description = "binding.selector_uid_ambiguous 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "这个游戏 UID 在多个区服都已绑定，请改用 u序号"
 
 [binding.record_missing]
 description = "找不到绑定记录（绑定刚被删除等）。"

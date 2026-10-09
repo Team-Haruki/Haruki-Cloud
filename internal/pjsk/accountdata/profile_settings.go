@@ -239,7 +239,7 @@ func executeProfileTimeZoneMode(ctx context.Context, service *BindingService, pa
 		return nil, err
 	}
 	if len(candidates) > 0 {
-		return []byte(formatTimeZoneCandidatesText(params.TimeZone, candidates)), nil
+		return []byte(formatTimeZoneCandidatesText(candidates)), nil
 	}
 	userID, settings, err := loadProfileUserSettings(ctx, service, params)
 	if err != nil {
@@ -413,7 +413,7 @@ func formatProfileBGSettingsText(item BindingListItem) string {
 	})
 }
 
-func formatTimeZoneCandidatesText(raw string, candidates []string) string {
+func formatTimeZoneCandidatesText(candidates []string) string {
 	const maxCandidates = 20
 
 	limit := min(len(candidates), maxCandidates)
@@ -422,7 +422,6 @@ func formatTimeZoneCandidatesText(raw string, candidates []string) string {
 		listed = append(listed, i18n.T("account.settings.timezone_more", i18n.Data{"Count": len(candidates) - limit}))
 	}
 	return i18n.T("account.settings.timezone_candidates", i18n.Data{
-		"Offset":     i18n.EchoQuery(raw),
 		"Candidates": strings.Join(listed, "\n"),
 	})
 }

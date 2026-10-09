@@ -1,6 +1,7 @@
 package i18n
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -15,9 +16,13 @@ func TestEveryMessageRendersWithSampleData(t *testing.T) {
 		for _, entry := range Entries(locale) {
 			data := Data{}
 			for _, name := range entry.Placeholders {
+				if IsUserPlaceholder(name) {
+					data[name] = UserText("‹" + name + "›")
+					continue
+				}
 				data[name] = "‹" + name + "›"
 			}
-			text, err := c.localize(locale, entry.ID, data)
+			text, err := c.localize(RenderOptions{Locale: locale}, entry.ID, data)
 			if err != nil {
 				t.Errorf("%s %s: %v", locale, entry.ID, err)
 				continue
@@ -29,7 +34,7 @@ func TestEveryMessageRendersWithSampleData(t *testing.T) {
 				t.Errorf("%s %s: template syntax left in %q", locale, entry.ID, text)
 			}
 			for name, value := range data {
-				if !strings.Contains(text, value.(string)) {
+				if !strings.Contains(text, fmt.Sprint(value)) {
 					t.Errorf("%s %s: placeholder %s missing from %q", locale, entry.ID, name, text)
 				}
 			}

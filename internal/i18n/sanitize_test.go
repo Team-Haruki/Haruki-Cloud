@@ -1,6 +1,7 @@
 package i18n
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -90,7 +91,7 @@ func TestSanitizeMessageKeepsItsOwnWeakLines(t *testing.T) {
 	if !strings.Contains(text, "ID 2") {
 		t.Fatalf("reply did not render its candidates: %q", text)
 	}
-	clean, dropped := SanitizeMessage(reply, DefaultLocale)
+	clean, dropped := SanitizeMessage(reply, RenderOptions{Locale: DefaultLocale})
 	if clean != text || len(dropped) != 0 {
 		t.Fatalf("SanitizeMessage dropped own lines: %q -> %q (dropped %q)", text, clean, dropped)
 	}
@@ -100,18 +101,33 @@ func TestSanitizeMessageKeepsItsOwnWeakLines(t *testing.T) {
 }
 
 // Every line of every message that has literal text survives the sanitizer
-// when the message itself is the reply.
+// when the message itself is the reply, with and without parameter echo (an
+// echo-free reply is never dropped to the generic one for being echo-free).
 func TestSanitizeMessageKeepsEveryCatalogLine(t *testing.T) {
 	for _, locale := range Locales() {
 		for _, entry := range Entries(locale) {
 			data := Data{}
 			for _, name := range entry.Placeholders {
+				if IsUserPlaceholder(name) {
+					data[name] = UserText("‹" + name + "›")
+					continue
+				}
 				data[name] = "‹" + name + "›"
 			}
-			_, dropped := SanitizeMessage(M(entry.ID, data), locale)
-			for _, line := range dropped {
-				if !placeholderOnlyLine(entry.Text, line, data) {
-					t.Errorf("%s %s: line %q dropped", locale, entry.ID, line)
+			for _, noEcho := range []bool{false, true} {
+				template := entry.Text
+				if noEcho && HasUserPlaceholder(entry.ID) {
+					echoFree, ok := Entry(DefaultLocale, entry.ID+NoEchoSuffix)
+					if !ok {
+						continue // reported by TestUserInputMessagesHaveEchoFreeForm
+					}
+					template = echoFree.Text
+				}
+				_, dropped := SanitizeMessage(M(entry.ID, data), RenderOptions{Locale: locale, NoEcho: noEcho})
+				for _, line := range dropped {
+					if !placeholderOnlyLine(template, line, data) {
+						t.Errorf("%s %s (no echo %v): line %q dropped", locale, entry.ID, noEcho, line)
+					}
 				}
 			}
 		}
@@ -127,7 +143,7 @@ func placeholderOnlyLine(template, rendered string, data Data) bool {
 		}
 		filled := line
 		for name, value := range data {
-			filled = strings.ReplaceAll(filled, "{{."+name+"}}", value.(string))
+			filled = strings.ReplaceAll(filled, "{{."+name+"}}", fmt.Sprint(value))
 		}
 		if strings.TrimSpace(filled) == strings.TrimSpace(rendered) {
 			return true

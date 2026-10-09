@@ -25,14 +25,14 @@ func (s *Service) ensureAliasAvailable(ctx context.Context, aliasType string, ap
 		return err
 	}
 	if exists {
-		return usererror.Invalid(i18n.M("alias.already_approved", i18n.Data{"Kind": aliasKind(aliasType), "Alias": aliasText}))
+		return usererror.Invalid(i18n.M("alias.already_approved", i18n.Data{"Kind": aliasKind(aliasType), "UserAlias": i18n.EchoQuery(aliasText)}))
 	}
 	pendingExists, err := pendingAliasExists(ctx, pending, aliasType, aliasText)
 	if err != nil {
 		return err
 	}
 	if pendingExists {
-		return usererror.Invalid(i18n.M("alias.already_pending", i18n.Data{"Kind": aliasKind(aliasType), "Alias": aliasText}))
+		return usererror.Invalid(i18n.M("alias.already_pending", i18n.Data{"Kind": aliasKind(aliasType), "UserAlias": i18n.EchoQuery(aliasText)}))
 	}
 	return nil
 }
@@ -47,7 +47,7 @@ func (s *Service) ensureEntityNameAvailable(ctx context.Context, aliasType, alia
 			return err
 		}
 		if conflicts > 0 {
-			return usererror.Invalid(i18n.M("alias.conflicts_name", i18n.Data{"Kind": aliasKind(aliasType), "Alias": aliasText, "NameKind": aliasNameKind(aliasType)}))
+			return usererror.Invalid(i18n.M("alias.conflicts_name", i18n.Data{"Kind": aliasKind(aliasType), "UserAlias": i18n.EchoQuery(aliasText), "NameKind": aliasNameKind(aliasType)}))
 		}
 		return nil
 	case PjskAliasTypeCharacter:
@@ -60,7 +60,7 @@ func (s *Service) ensureEntityNameAvailable(ctx context.Context, aliasType, alia
 		target := normalizeCompareText(aliasText)
 		for _, row := range rows {
 			if characterMatchesName(row, target) {
-				return usererror.Invalid(i18n.M("alias.conflicts_name", i18n.Data{"Kind": aliasKind(aliasType), "Alias": aliasText, "NameKind": aliasNameKind(aliasType)}))
+				return usererror.Invalid(i18n.M("alias.conflicts_name", i18n.Data{"Kind": aliasKind(aliasType), "UserAlias": i18n.EchoQuery(aliasText), "NameKind": aliasNameKind(aliasType)}))
 			}
 		}
 		return nil

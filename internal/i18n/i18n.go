@@ -73,9 +73,51 @@ func (m Message) IsZero() bool { return m.ID == "" }
 func (m Message) String() string { return m.In(DefaultLocale) }
 
 // In renders the message in locale, falling back to DefaultLocale for a
-// message the locale does not have.
+// message the locale does not have. User input is shown (see RenderOptions).
 func (m Message) In(locale Locale) string {
-	return render(locale, m.ID, m.Data)
+	return m.Render(RenderOptions{Locale: locale})
+}
+
+// Render renders the message with opts. A zero Locale means DefaultLocale.
+func (m Message) Render(opts RenderOptions) string {
+	if opts.Locale == "" {
+		opts.Locale = DefaultLocale
+	}
+	return render(opts, m.ID, m.Data)
+}
+
+// UserText is text the user typed: a query, an argument value, an unknown
+// token, a name or an alias. Pass it only in a user-input placeholder (a
+// placeholder named User…, e.g. {{.UserQuery}}); EchoQuery builds one.
+type UserText string
+
+// NoEchoSuffix ends the ID of a message's echo-free form. Every message with
+// a user-input placeholder has one: "music.not_found" has
+// "music.not_found_no_echo", with the same placeholders minus the User… ones.
+const NoEchoSuffix = "_no_echo"
+
+// IsUserPlaceholder reports whether a placeholder name marks user input:
+// "User" followed by an upper-case letter, e.g. UserQuery or UserParam.
+func IsUserPlaceholder(name string) bool {
+	return len(name) > len("User") && strings.HasPrefix(name, "User") && name[4] >= 'A' && name[4] <= 'Z'
+}
+
+// HasUserPlaceholder reports whether the default-locale message id shows
+// user input.
+func HasUserPlaceholder(id string) bool {
+	entry, ok := mustLoad().entries[DefaultLocale][id]
+	return ok && slices.ContainsFunc(entry.Placeholders, IsUserPlaceholder)
+}
+
+// RenderOptions controls how a message is rendered.
+type RenderOptions struct {
+	// Locale is the catalog language; empty means DefaultLocale.
+	Locale Locale
+	// NoEcho renders the echo-free form (ID + NoEchoSuffix) of every message,
+	// nested ones included, that has a user-input placeholder, and never
+	// substitutes a UserText value. Bot replies use it unless the client
+	// enabled parameter echo (WithParamEcho).
+	NoEcho bool
 }
 
 func mergeData(data []Data) Data {
@@ -112,6 +154,33 @@ func LocaleFromContext(ctx context.Context) Locale {
 		}
 	}
 	return DefaultLocale
+}
+
+type paramEchoKey struct{}
+
+// WithParamEcho returns a context recording whether the bot client enabled
+// parameter echo (BotCommandRequest.EnableParamEcho).
+func WithParamEcho(ctx context.Context, enabled bool) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, paramEchoKey{}, enabled)
+}
+
+// ParamEchoFromContext reports whether parameter echo was enabled with
+// WithParamEcho. It is off unless a client turned it on.
+func ParamEchoFromContext(ctx context.Context) bool {
+	if ctx != nil {
+		enabled, _ := ctx.Value(paramEchoKey{}).(bool)
+		return enabled
+	}
+	return false
+}
+
+// RenderOptionsFromContext is the context's locale, with user input hidden
+// unless parameter echo is enabled.
+func RenderOptionsFromContext(ctx context.Context) RenderOptions {
+	return RenderOptions{Locale: LocaleFromContext(ctx), NoEcho: !ParamEchoFromContext(ctx)}
 }
 
 //go:embed locales
@@ -247,24 +316,50 @@ func (c *catalog) localizer(locale Locale) *goi18n.Localizer {
 // broken catalog entry never shows an ID or template error to a user.
 const fallbackID = "common.request_failed"
 
-func render(locale Locale, id string, data Data) string {
+func render(opts RenderOptions, id string, data Data) string {
 	c := mustLoad()
-	text, err := c.localize(locale, id, data)
+	text, err := c.localize(opts, id, data)
 	if err == nil {
 		return text
 	}
-	slog.Error("i18n: render message", "id", id, "locale", string(locale), "error", err.Error())
+	slog.Error("i18n: render message", "id", id, "locale", string(opts.Locale), "no_echo", opts.NoEcho, "error", err.Error())
 	if id != fallbackID {
-		if text, err := c.localize(locale, fallbackID, nil); err == nil {
+		if text, err := c.localize(opts, fallbackID, nil); err == nil {
 			return text
 		}
 	}
 	return id
 }
 
-func (c *catalog) localize(locale Locale, id string, data Data) (string, error) {
+// renderID is the message actually rendered for id: its echo-free form when
+// opts.NoEcho is set and id shows user input.
+func (c *catalog) renderID(opts RenderOptions, id string) (string, error) {
+	if !opts.NoEcho {
+		return id, nil
+	}
+	entry, ok := c.entries[DefaultLocale][id]
+	if !ok || !slices.ContainsFunc(entry.Placeholders, IsUserPlaceholder) {
+		return id, nil
+	}
+	echoFree := id + NoEchoSuffix
+	if _, ok := c.entries[DefaultLocale][echoFree]; !ok {
+		return "", fmt.Errorf("message %q shows user input but has no %s form", id, NoEchoSuffix)
+	}
+	return echoFree, nil
+}
+
+func (c *catalog) localize(opts RenderOptions, id string, data Data) (string, error) {
 	if id == "" {
 		return "", fmt.Errorf("empty message id")
+	}
+	locale := opts.Locale
+	if locale == "" {
+		locale = DefaultLocale
+		opts.Locale = locale
+	}
+	id, err := c.renderID(opts, id)
+	if err != nil {
+		return "", err
 	}
 	var templateData map[string]any
 	if len(data) > 0 {
@@ -272,13 +367,19 @@ func (c *catalog) localize(locale Locale, id string, data Data) (string, error) 
 		for k, v := range data {
 			switch nested := v.(type) {
 			case Message:
-				v = nested.In(locale)
+				v = nested.Render(opts)
 			case []Message:
 				lines := make([]string, len(nested))
 				for i, line := range nested {
-					lines[i] = line.In(locale)
+					lines[i] = line.Render(opts)
 				}
 				v = strings.Join(lines, "\n")
+			case UserText:
+				if opts.NoEcho {
+					// Never substituted: a template that still needs it fails
+					// and the generic reply is shown instead.
+					continue
+				}
 			}
 			templateData[k] = v
 		}

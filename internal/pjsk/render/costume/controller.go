@@ -1244,7 +1244,7 @@ func (s *singleCostumeLookup) resolve() (*masterdata.Costume3d, error) {
 func (s *singleCostumeLookup) noMatchError() error {
 	needle := strings.TrimSpace(s.query.Query)
 	if s.named {
-		return usererror.New(usererror.CodeNotFound, i18n.M("costume.part_name_not_found", i18n.Data{"Character": s.query.Character3DID, "Part": partTypeLabel(s.partType), "Name": i18n.EchoQuery(needle)}))
+		return usererror.New(usererror.CodeNotFound, i18n.M("costume.part_name_not_found", i18n.Data{"Character": s.query.Character3DID, "Part": partTypeLabel(s.partType), "UserName": i18n.EchoQuery(needle)}))
 	}
 	return fmt.Errorf("no costume matched %q", needle)
 }
@@ -1255,7 +1255,7 @@ func (s *singleCostumeLookup) resolveNamed() (*masterdata.Costume3d, error) {
 		return s.resolveLogicalID(ids[0])
 	}
 	if len(ids) > 1 {
-		return nil, usererror.New(usererror.CodeAmbiguous, i18n.M("costume.part_name_ambiguous", i18n.Data{"Character": s.query.Character3DID, "Part": partTypeLabel(s.partType), "Name": i18n.EchoQuery(s.query.Query), "IDs": joinCostumeIDs(ids)}))
+		return nil, usererror.New(usererror.CodeAmbiguous, i18n.M("costume.part_name_ambiguous", i18n.Data{"Character": s.query.Character3DID, "Part": partTypeLabel(s.partType), "UserName": i18n.EchoQuery(s.query.Query), "IDs": joinCostumeIDs(ids)}))
 	}
 	if len(s.items) > 1 && len(ids) == 1 {
 		sort.Slice(s.items, func(i, j int) bool { return s.items[i].ID < s.items[j].ID })

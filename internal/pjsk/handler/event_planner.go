@@ -315,12 +315,12 @@ func buildEventPlannerDrawingSong(
 		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, err
 	}
 	if len(deckReq.DeckData) == 0 {
-		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, usererror.New(usererror.CodeUnavailable, i18n.M("event.planner.no_deck", i18n.Data{"Song": selection.Query}))
+		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, usererror.New(usererror.CodeUnavailable, i18n.M("event.planner.no_deck", i18n.Data{"UserSong": i18n.EchoQuery(selection.Query)}))
 	}
 	deckData := deckReq.DeckData[0]
 	basePoint := eventPlannerIntValue(deckData.Score)
 	if basePoint <= 0 {
-		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, usererror.New(usererror.CodeUnavailable, i18n.M("event.planner.no_deck", i18n.Data{"Song": selection.Query}))
+		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, usererror.New(usererror.CodeUnavailable, i18n.M("event.planner.no_deck", i18n.Data{"UserSong": i18n.EchoQuery(selection.Query)}))
 	}
 	planSong := drawing.EventPlannerSong{
 		Query:          selection.Query,

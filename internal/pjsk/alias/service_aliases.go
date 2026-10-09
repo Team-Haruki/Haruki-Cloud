@@ -104,7 +104,7 @@ func createPendingAliases(ctx context.Context, tx *pjskdb.Tx, aliasType string, 
 			SetSubmittedAt(now).
 			Save(ctx)
 		if pjskdb.IsConstraintError(err) {
-			return nil, usererror.Invalid(i18n.M("alias.already_pending", i18n.Data{"Kind": aliasKind(aliasType), "Alias": aliasText}))
+			return nil, usererror.Invalid(i18n.M("alias.already_pending", i18n.Data{"Kind": aliasKind(aliasType), "UserAlias": i18n.EchoQuery(aliasText)}))
 		}
 		if err != nil {
 			return nil, err
@@ -281,7 +281,7 @@ func (s *Service) Delete(ctx context.Context, aliasType, platform, platformUserI
 	for _, aliasText := range cleanedAliases {
 		row, ok := byAlias[normalizeCompareText(aliasText)]
 		if !ok {
-			return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.approved_not_found", i18n.Data{"Kind": aliasKind(aliasType), "Target": entityRef.Name, "Alias": aliasText}))
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.approved_not_found", i18n.Data{"Kind": aliasKind(aliasType), "Target": entityRef.Name, "UserAlias": i18n.EchoQuery(aliasText)}))
 		}
 		if err := tx.Alias.DeleteOneID(row.ID).Exec(ctx); err != nil {
 			return nil, err

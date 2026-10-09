@@ -640,7 +640,7 @@ func TestExecuteProfileSettingsCommandSetTimeZoneAmbiguousOffsetReturnsCandidate
 	}
 
 	got := string(text)
-	if !strings.HasPrefix(got, i18n.T("account.settings.timezone_candidates", i18n.Data{"Offset": "+28800", "Candidates": ""})) {
+	if !strings.HasPrefix(got, i18n.T("account.settings.timezone_candidates", i18n.Data{"Candidates": ""})) {
 		t.Fatalf("unexpected ambiguous timezone text:\n%s", got)
 	}
 	if !strings.Contains(got, "Asia/Shanghai") {

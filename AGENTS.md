@@ -276,7 +276,8 @@ staticcheck ./...
   findings: `internal/i18n` (catalog style, catalog integrity, every message
   renders, copylint, help-doc style, helper golden file) and
   `internal/pjsk/handler` (help-doc triggers, route help coverage, help
-  layout, help examples). After changing helper output or a golden reply,
+  layout, help examples), plus the parameter-echo guards (echo-free forms in
+  `internal/i18n`, error replies and endpoints in `api/bot/pjsk`). After changing helper output or a golden reply,
   regenerate with `HARUKI_UPDATE_GOLDEN=1 go test ./...` and review the diff.
 
 ---
@@ -438,6 +439,13 @@ As of this revision the project is **considered functionally complete**:
     （丢掉的行写日志），结果为空或含敏感 URL 时回复通用错误。字面文字太少的
     模板行（如 `u{{.Index}} {{.Account}}`、`{{.Value}}万`、
     `{{.Region}}活动 {{.ID}}`）是弱模式，只在回复本身用到该消息时才认。
+  - **参数回显默认关闭。** 客户端没有在请求里设 `enableParamEcho: true` 时，错误回复
+    （参数错误、找不到、匹配到多个、超出范围、用法、参数引导）不能出现任何用户输入：
+    查询词、参数值、无法识别的写法、用户写的名称和别名、用户写的未注册指令。显示用户输入的
+    占位符以 `User` 开头（`{{.UserQuery}}`），值用 `i18n.UserText`/`i18n.EchoQuery`；这样的
+    消息必须有 `<ID>_no_echo` 形式（同样的占位符去掉 `User…`，不留空引号或悬空的“：”），
+    回复层按 `i18n.WithParamEcho` 选择。已注册的指令名和解析成整数的值不算用户输入。
+    成功回复不在此列。详见 `docs/i18n.md`。
   - 测试断言 `Code` 和消息 ID，不断言中文原文（`testutil.RequireUserError`、
     `testutil.MessageID`）；中文由目录本身和
     `internal/i18n/testdata/helpers.zh-CN.golden` 锁定。
@@ -458,7 +466,8 @@ As of this revision the project is **considered functionally complete**:
   `占位符：Name=含义；Other=含义`，每个占位符都要说明。审查文案的人只看目录，
   不看代码。
 - **占位符**：只用命名占位符 `{{.Name}}`（大驼峰），不用 `%s`/`%d`，不用模板
-  逻辑。需要分支时拆成几条消息。值是 `Message` 时会按同一语言先渲染。
+  逻辑。需要分支时拆成几条消息。值是 `Message` 时会按同一语言先渲染。显示用户输入的
+  占位符以 `User` 开头，消息要有 `<ID>_no_echo` 形式（12.1）。
 - 一个领域一个文件；共享模板放 `common.toml`，格式化相关放 `format.toml`。
 - 新消息必须被代码使用，否则完整性测试失败（确需保留的写进
   `internal/i18n/testdata/unused_ids.allowlist` 并注明原因）。
@@ -571,6 +580,9 @@ As of this revision the project is **considered functionally complete**:
 | `TestEveryHelpDocIsReachable` | `internal/pjsk/handler` | 没有用户看不到的帮助文档（只允许路由文档、`generic`、`mysekai_blueprint`） |
 | `TestHelpDocsFollowLayout` | `internal/pjsk/handler` | 帮助版式：`# 标题`、用法/参数/示例/说明按顺序，不手写区服前缀说明（版式见 `docs/i18n.md`） |
 | `TestHelpDocExamplesParse` | `internal/pjsk/handler` | `## 示例` 里的每个示例都能被该文档的路由解析 |
+| `TestUserInputMessagesHaveEchoFreeForm` | `internal/i18n` | 带 `User…` 占位符的消息都有 `<ID>_no_echo` 形式，占位符一致 |
+| `TestEchoFreeFormsHideUserInput` | `internal/i18n` | 用哨兵值渲染这些消息：不回显时哨兵不出现、不留空引号或悬空的“：”，回显时出现 |
+| `TestCommandErrorTextHidesUserInputWithoutParamEcho`、`TestBotEndpointHidesUserInputWithoutParamEcho` | `api/bot/pjsk` | 错误回复和 Bot 端点在没有开启参数回显时不出现用户输入，开启后照常显示 |
 
 这些测试都要求零发现，没有基线。唯一的允许清单是
 `internal/i18n/testdata/unused_ids.allowlist`（暂时没有代码引用的消息 ID，每行写原因），

@@ -53,12 +53,20 @@ description = "找不到服装、角色、颜色的组合。占位符：Outfit=�
 other = "找不到服装 ID {{.Outfit}}、角色 ID {{.Character}}、颜色 ID {{.Color}} 的组合"
 
 [costume.part_name_not_found]
-description = "按名称找不到角色的部件。占位符：Character=角色 ID；Part=部件名称（costume.part.*）；Name=用户写的名称。"
-other = "找不到角色 ID {{.Character}} 的{{.Part}}“{{.Name}}”"
+description = "按名称找不到角色的部件。占位符：Character=角色 ID；Part=部件名称（costume.part.*）；UserName=用户写的名称。"
+other = "找不到角色 ID {{.Character}} 的{{.Part}}“{{.UserName}}”"
+
+[costume.part_name_not_found_no_echo]
+description = "costume.part_name_not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Character=角色 ID；Part=部件名称（costume.part.*）。"
+other = "找不到角色 ID {{.Character}} 中与这个名称对应的{{.Part}}"
 
 [costume.part_name_ambiguous]
-description = "按名称匹配到角色的多个部件。占位符：Character=角色 ID；Part=部件名称（costume.part.*）；Name=用户写的名称；IDs=候选 ID，用“、”分隔。"
-other = "角色 ID {{.Character}} 有多个{{.Part}}匹配“{{.Name}}”（ID：{{.IDs}}），请写明部件 ID"
+description = "按名称匹配到角色的多个部件。占位符：Character=角色 ID；Part=部件名称（costume.part.*）；UserName=用户写的名称；IDs=候选 ID，用“、”分隔。"
+other = "角色 ID {{.Character}} 有多个{{.Part}}匹配“{{.UserName}}”（ID：{{.IDs}}），请写明部件 ID"
+
+[costume.part_name_ambiguous_no_echo]
+description = "costume.part_name_ambiguous 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Character=角色 ID；Part=部件名称（costume.part.*）；IDs=候选 ID，用“、”分隔。"
+other = "角色 ID {{.Character}} 有多个{{.Part}}与这个名称匹配（ID：{{.IDs}}），请写明部件 ID"
 
 [costume.query.type_invalid]
 description = "服装查询的类型不是服装、饰品或发型。"

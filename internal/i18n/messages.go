@@ -35,12 +35,12 @@ func Timeout(feature Message) Message {
 
 // NotFound reports that nothing of kind matches the user's query.
 func NotFound(kind Message, query string) Message {
-	return M("common.not_found", Data{"Kind": kind, "Query": EchoQuery(query)})
+	return M("common.not_found", Data{"Kind": kind, "UserQuery": EchoQuery(query)})
 }
 
 // Ambiguous reports that the user's query matches several things of kind.
 func Ambiguous(kind Message, query string) Message {
-	return M("common.ambiguous", Data{"Kind": kind, "Query": EchoQuery(query)})
+	return M("common.ambiguous", Data{"Kind": kind, "UserQuery": EchoQuery(query)})
 }
 
 // OutOfRange reports that a numeric parameter lies outside min~max.
@@ -49,9 +49,10 @@ func OutOfRange(param Message, minValue, maxValue int) Message {
 }
 
 // BadParam is the reply for a malformed parameter: a first line naming the
-// parameter as the user wrote it, then the specific reason.
+// parameter as the user wrote it (left out without echo), then the specific
+// reason.
 func BadParam(param string, reason Message) Message {
-	return M("common.bad_param", Data{"Param": EchoQuery(param), "Reason": reason})
+	return M("common.bad_param", Data{"UserParam": EchoQuery(param), "Reason": reason})
 }
 
 // Unrecognized is the generic reason for arguments that could not be

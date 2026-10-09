@@ -346,7 +346,7 @@ Edge：
 3. bootstrap 只写 `NULL`：已经初始化的值在以后的启动里不会被覆盖（即使 `visible` 后来被旧版本改过），用户用指令改过的设置总是优先（指令一次写全部四项，不留 `NULL`）。可以每次启动都执行；旧版本二进制在滚动发布期间新建的行在下次启动时按同样规则初始化。
 4. 读取时 `NULL` 分项按 `visible` 处理（`bindingVisibility`），所以 bootstrap 之前和滚动发布期间行为与拆分前一致。
 5. 任何分项变化都同时写全部四项和 `visible = 四项都为 true`。回滚到只认 `visible` 的旧版本时，只隐藏了一部分的绑定按“全部隐藏”处理，不会比用户的设置暴露更多。
-6. 拆分之后新建的绑定在创建时就写入四项（`accountdata.NewBindingVisibility`），不会是 `NULL`。默认是四项都隐藏，与原来一致：`/绑定` 自 2026-04-14（“Hide bound account IDs by default”）起新建绑定时写 `visible=false`，列的默认值 `true` 没有被任何创建路径用到。导入工具按导出数据的 `visible` 写四项。抓包和烤森开关不变。
+6. 拆分之后新建的绑定在创建时就写入四项（`accountdata.NewBindingVisibility`），不会是 `NULL`。默认只隐藏 UID，sk、个人信息、逮捕三项显示：`/绑定` 自 2026-04-14（“Hide bound account IDs by default”）起新建绑定时写 `visible=false`，本意是默认隐藏 UID；拆分前这一个字段同时管着全部，拆分后只保留 UID 隐藏。新绑定的旧列 `visible` 因此为 `false`，回滚到旧版本时会全部隐藏，不会多暴露。导入工具按导出数据的 `visible` 写四项。抓包和烤森开关不变。
 7. TODO：`visible` 在下一个版本删除（先确认不再需要回滚到拆分前的版本），同时删掉读取时的 `NULL` 回退和 bootstrap。
 
 ### 6.5 `user_default_bindings` 表（默认绑定指针）

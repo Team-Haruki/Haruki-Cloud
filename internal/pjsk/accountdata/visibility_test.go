@@ -112,7 +112,7 @@ func TestVisibilityCommandsChangeOnlyTheirExposure(t *testing.T) {
 	}
 	bindingID := items[0].BindingID
 	if items[0].Visibility != NewBindingVisibility {
-		t.Fatalf("new binding visibility = %+v, want everything hidden", items[0].Visibility)
+		t.Fatalf("new binding visibility = %+v, want only the UID hidden", items[0].Visibility)
 	}
 	params := ProfileSettingsCommandParams{Platform: "qq", PlatformUserID: "42", Server: "jp", RegionExplicit: true}
 	run := func(mode string) string {

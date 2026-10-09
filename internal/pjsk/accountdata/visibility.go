@@ -131,10 +131,11 @@ func createBindingVisibility(create *pjskdb.UserBindingCreate, v Visibility) *pj
 
 // NewBindingVisibility is the visibility a newly bound account is created
 // with; every creation path sets it explicitly, so a binding created after
-// the split never has NULL flags. It is "hidden", because Bind has created
-// new bindings with visible=false since "Hide bound account IDs by default"
-// (the column's schema default of true is never used by a creation path).
-var NewBindingVisibility = UniformVisibility(false)
+// the split never has NULL flags. Only the UID is hidden, which is what
+// "Hide bound account IDs by default" meant; ranking, profile and arrest
+// lookups are shown until the owner hides them. The legacy visible column is
+// therefore false for a new binding, so an older binary hides everything.
+var NewBindingVisibility = Visibility{UID: false, SK: true, Profile: true, Arrest: true}
 
 // BootstrapBindingVisibility is the one-time bootstrap of the per-exposure
 // flags from the legacy visible column, run after every auto-migrate:

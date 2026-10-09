@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -297,5 +298,43 @@ func f(d l.Data) {
 	}
 	if got := collectMessageRefs(goSource{rel: "y.go", fset: fset, file: &ast.File{Name: ast.NewIdent("y")}}, false); got != nil {
 		t.Fatalf("file without i18n import = %+v", got)
+	}
+}
+
+// descriptionIDRef finds dotted message IDs in descriptions. Only a first
+// segment naming a catalog domain counts, so other dotted words are ignored;
+// "*" stands for any rest of an ID ("common.feature.*", "account.list.item*").
+var descriptionIDRef = regexp.MustCompile(`[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)*\.[a-z0-9_]*\*?`)
+
+// TestCatalogDescriptionReferencesExist checks that every message ID a
+// description points to exists, so reviewers reading only the catalog can
+// follow the reference.
+func TestCatalogDescriptionReferencesExist(t *testing.T) {
+	for _, locale := range Locales() {
+		entries := Entries(locale)
+		domains := map[string]bool{}
+		for _, entry := range entries {
+			domains[strings.SplitN(entry.ID, ".", 2)[0]] = true
+		}
+		exists := func(ref string) bool {
+			prefix, wildcard := strings.CutSuffix(ref, "*")
+			for _, entry := range entries {
+				if entry.ID == ref || (wildcard && strings.HasPrefix(entry.ID, prefix)) {
+					return true
+				}
+			}
+			return false
+		}
+		for _, entry := range entries {
+			for _, ref := range descriptionIDRef.FindAllString(entry.Description, -1) {
+				ref = strings.TrimRight(ref, ".")
+				if !strings.Contains(ref, ".") || !domains[strings.SplitN(ref, ".", 2)[0]] {
+					continue
+				}
+				if !exists(ref) {
+					t.Errorf("%s %s: description refers to unknown message %s", locale, entry.ID, ref)
+				}
+			}
+		}
 	}
 }

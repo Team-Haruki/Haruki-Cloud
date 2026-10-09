@@ -181,8 +181,8 @@ description = "同时写了 WL 章节和角色。"
 other = "不能同时指定 WL 章节和角色，请只保留其中一种写法"
 
 [deck.wl.turn_syntax_removed]
-description = "使用了已不支持的 wl2 章节写法。"
-other = "不再支持 wl2 这种 WL 章节写法，请改用 wl1 miku 或 event123 miku"
+description = "组卡时把“wl<数字>”当作 WL 章节写在活动 ID 或角色后面（这种写法已不再支持）。组卡里 wl 后面的数字是 WL 活动的期数，要写在开头。"
+other = "“wl”加数字表示 WL 活动的期数，请写成“wl1 miku”；已指定活动时直接写角色，例如“event123 miku”"
 
 [deck.wl.future_finale]
 description = "请求的 WL 终章期数超过了已有数据。占位符：Available=已有数据的最后一期；Turn=用户写的期数。"
@@ -213,43 +213,43 @@ description = "Bot 管理员停用了组卡功能时，所有组卡指令的回�
 other = "组卡功能已停用\n原因：{{.Reason}}\n需要组卡请暂时使用 Haruki 工具箱的组卡推荐功能"
 
 [deck.mode.event]
-description = "组卡条件摘要（deck.done）里的组卡类型：活动组卡。"
+description = "组卡条件摘要（common.processed）里的组卡类型：活动组卡。"
 other = "活动组卡"
 
 [deck.mode.challenge]
-description = "组卡条件摘要（deck.done）里的组卡类型：挑战 Live 组卡。"
+description = "组卡条件摘要（common.processed）里的组卡类型：挑战 Live 组卡。"
 other = "挑战组卡"
 
 [deck.mode.no_event]
-description = "组卡条件摘要（deck.done）里的组卡类型：不考虑活动加成的长草组卡。"
+description = "组卡条件摘要（common.processed）里的组卡类型：不考虑活动加成的长草组卡。"
 other = "长草组卡"
 
 [deck.mode.bonus]
-description = "组卡条件摘要（deck.done）里的组卡类型：凑活动加成的加成组卡。"
+description = "组卡条件摘要（common.processed）里的组卡类型：凑活动加成的加成组卡。"
 other = "加成组卡"
 
 [deck.mode.mysekai]
-description = "组卡条件摘要（deck.done）里的组卡类型：烤森组卡。"
+description = "组卡条件摘要（common.processed）里的组卡类型：烤森组卡。"
 other = "烤森组卡"
 
 [deck.mode.generic]
-description = "组卡条件摘要（deck.done）里无法细分时的组卡类型。"
+description = "组卡条件摘要（common.processed）里无法细分时的组卡类型。"
 other = "组卡"
 
 [deck.summary.event]
-description = "组卡条件摘要（deck.done）里指定的活动。占位符：ID=活动 ID。"
+description = "组卡条件摘要（common.processed）里指定的活动。占位符：ID=活动 ID。"
 other = "活动 {{.ID}}"
 
 [deck.summary.wl_character]
-description = "组卡条件摘要（deck.done）里指定的 WL 章节角色。占位符：Character=用户写的角色名，或 deck.summary.character_id。"
+description = "组卡条件摘要（common.processed）里指定的 WL 章节角色。占位符：Character=用户写的角色名，或 common.fallback.character。"
 other = "WL 章节角色：{{.Character}}"
 
 [deck.summary.leader]
-description = "组卡条件摘要（deck.done）里指定的队长角色。占位符：Character=用户写的角色名，或 deck.summary.character_id。"
+description = "组卡条件摘要（common.processed）里指定的队长角色。占位符：Character=用户写的角色名，或 common.fallback.character。"
 other = "指定队长：{{.Character}}"
 
 [deck.summary.challenge_character]
-description = "组卡条件摘要（deck.done）里指定的挑战 Live 角色。占位符：Character=用户写的角色名，或 deck.summary.character_id。"
+description = "组卡条件摘要（common.processed）里指定的挑战 Live 角色。占位符：Character=用户写的角色名，或 common.fallback.character。"
 other = "挑战角色：{{.Character}}"
 
 [deck.live.mysekai]

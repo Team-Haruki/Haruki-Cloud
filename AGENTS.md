@@ -516,6 +516,9 @@ As of this revision the project is **considered functionally complete**:
 | 工具箱 | 工具箱（帮助里首次写 Haruki 工具箱） | Toolbox、toolbox、Haruki工具箱 |
 | 卡组 / 组卡 | 卡组 = 5 张卡；组卡 = 动作或功能 | 主队、队伍、推荐队伍 |
 | 歌曲 | 歌曲、歌曲名、歌曲 ID | 歌、曲目 |
+| stamp | 贴纸、贴纸 ID | 表情（指贴纸时） |
+| 别名系统 | 歌曲别名、角色别名；状态写已审核、待审核 | 角色昵称（指别名时）、已通过的别名 |
+| 提及某人 | @群友 | @用户、@某人 |
 | 自制谱面 | 自制谱面 | 自定义谱面、自制谱 |
 | Live | 虚拟 Live、多人 Live、单人 Live | 虚拟Live、虚拟演唱会、多人LIVE、协力 |
 | World Link | WL（WL 活动、WL 章节） | WorldLink、wl活动 |
@@ -553,6 +556,7 @@ As of this revision the project is **considered functionally complete**:
 |---|---|---|
 | `TestCatalogStyle` | `internal/i18n` | 目录零容忍：汉字后半角冒号、中文半角括号、中英之间缺空格、单句结尾"。"、禁用词（您、请稍后重试、未就绪、命令、Toolbox、SekaiAPI、Tracker、masterdata、Cloud、suite、Mysekai、套装、档线、分数线、（状态、`"` 等）、`%s` 占位符、缺 description、占位符未说明、ID 格式 |
 | `TestCatalogIntegrity` | `internal/i18n` | 代码引用的 ID 都存在、占位符一一对应、没有未使用的 ID、其他语言不多出 ID |
+| `TestCatalogDescriptionReferencesExist` | `internal/i18n` | description 里提到的消息 ID 都存在（可用 `*` 表示一组） |
 | `TestEveryMessageRendersWithSampleData` | `internal/i18n` | 每条消息都能用示例数据渲染，占位符都出现在结果里，没有残留模板语法 |
 | `TestCopylint` | `internal/i18n` | 非测试 Go 代码里没有中文字面量和"中文 + %w/%v"的 `fmt.Errorf`（标注见 12.6） |
 | `TestHelpDocStyle` | `internal/i18n` | 帮助文档的标点、空格和禁用词零容忍（反引号和代码块不检查） |

@@ -138,7 +138,7 @@ other = "未写当前 PT，暂时无法读取你在该 WL 章节的 PT，当前 
 
 [event.planner.deck.optimal]
 description = "活动规划图片里卡组摘要的第一段：按最优卡组计算。"
-other = "最优组卡"
+other = "最优卡组"
 
 [event.planner.deck.fixed]
 description = "活动规划图片里卡组摘要的第一段：用户指定了卡牌或角色。"
@@ -150,11 +150,11 @@ other = "当前卡组"
 
 [event.planner.deck.max_profile]
 description = "活动规划图片里卡组摘要的第一段：按顶配（全卡满养成）计算。"
-other = "顶配组卡"
+other = "顶配卡组"
 
 [event.planner.deck.sub_max_profile]
 description = "活动规划图片里卡组摘要的第一段：按次顶配计算。"
-other = "次顶配组卡"
+other = "次顶配卡组"
 
 [event.planner.deck.power]
 description = "活动规划图片里卡组摘要的一段：卡组综合力。占位符：Power=综合力，5 位以上加千分位。"

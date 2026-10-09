@@ -32,7 +32,7 @@ func TestControllerQuerySummaryEntryPoints(t *testing.T) {
 			got: func() string {
 				return controller.SummaryForList(ListRequest{Region: "cn", CardIDs: []int{1001, 1002}})
 			},
-			want: i18n.RegionLabel("cn").String() + " / " + i18n.T("render_card.summary.mode.list") + " / " + i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": "1001, 1002"}),
+			want: i18n.RegionLabel("cn").String() + " / " + i18n.T("render_card.summary.mode.list") + " / " + i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": "1001、1002"}),
 		},
 		{
 			name: "box includes presentation options",
@@ -213,7 +213,7 @@ func TestDescribeQueryParts(t *testing.T) {
 		cardIDs    []int
 		want       []string
 	}{
-		{name: "explicit IDs", controller: nilController, mode: "list", cardIDs: []int{10, 20}, want: []string{i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": "10, 20"})}},
+		{name: "explicit IDs", controller: nilController, mode: "list", cardIDs: []int{10, 20}, want: []string{i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": "10、20"})}},
 		{name: "empty invalid IDs", controller: nilController, mode: "list", cardIDs: []int{0, -1}},
 		{name: "empty box", controller: nilController, mode: "box", want: []string{i18n.T("render_card.summary.all_released")}},
 		{name: "empty detail", controller: nilController, mode: "detail"},
@@ -244,7 +244,7 @@ func TestDescribeExplicitCardIDs(t *testing.T) {
 		{name: "none"},
 		{name: "only invalid", ids: []int{-1, 0}},
 		{name: "single", ids: []int{-1, 42, 0}, want: []string{i18n.T("render_card.summary.card_id", i18n.Data{"ID": 42})}},
-		{name: "up to five", ids: []int{1, 2, 3, 4, 5}, want: []string{i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": "1, 2, 3, 4, 5"})}},
+		{name: "up to five", ids: []int{1, 2, 3, 4, 5}, want: []string{i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": "1、2、3、4、5"})}},
 		{name: "more than five", ids: []int{1, 2, 3, 4, 5, 6}, want: []string{i18n.T("render_card.summary.card_count", i18n.Data{"Count": 6})}},
 	}
 
@@ -452,7 +452,7 @@ func TestSummaryDetailedSkillLabel(t *testing.T) {
 		{name: "life score", ids: []int{12}, want: i18n.T("render_card.summary.skill.life_score")},
 		{name: "judgment score", ids: []int{13}, want: i18n.T("render_card.summary.skill.judgment_score")},
 		{name: "unit score", ids: []int{15, 16, 17, 18, 19}, want: i18n.T("render_card.summary.skill.unit_score")},
-		{name: "generic IDs skip invalid", ids: []int{0, 2, -1, 7}, want: i18n.T("render_card.summary.skill.ids", i18n.Data{"IDs": "2,7"})},
+		{name: "generic IDs skip invalid", ids: []int{0, 2, -1, 7}, want: i18n.T("render_card.summary.skill.ids", i18n.Data{"IDs": "2、7"})},
 		{name: "only invalid IDs", ids: []int{0, -1}, want: ""},
 	}
 

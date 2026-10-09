@@ -181,7 +181,7 @@ func describeExplicitCardIDs(cardIDs []int) []string {
 		for _, cardID := range cleaned {
 			labels = append(labels, strconv.Itoa(cardID))
 		}
-		return []string{i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": strings.Join(labels, ", ")})}
+		return []string{i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": strings.Join(labels, "、")})}
 	}
 	return []string{i18n.T("render_card.summary.card_count", i18n.Data{"Count": len(cleaned)})}
 }
@@ -395,7 +395,7 @@ func summaryDetailedSkillLabel(skillIDs []int) string {
 	if len(labels) == 0 {
 		return ""
 	}
-	return i18n.T("render_card.summary.skill.ids", i18n.Data{"IDs": strings.Join(labels, ",")})
+	return i18n.T("render_card.summary.skill.ids", i18n.Data{"IDs": strings.Join(labels, "、")})
 }
 
 func summaryUnitFilterLabel(info *PjskCardQueryInfo) string {

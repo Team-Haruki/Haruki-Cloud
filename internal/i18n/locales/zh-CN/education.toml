@@ -45,8 +45,8 @@ description = "角色任务图片里的任务类型名（任务类型 collect_co
 other = "服装"
 
 [education.mission.collect_stamp]
-description = "角色任务图片里的任务类型名（任务类型 collect_stamp：收集该角色的表情（贴纸）数量）。"
-other = "表情"
+description = "角色任务图片里的任务类型名（任务类型 collect_stamp：收集该角色的贴纸数量）。"
+other = "贴纸"
 
 [education.mission.read_area_talk]
 description = "角色任务图片里的任务类型名（任务类型 read_area_talk：阅读该角色的区域对话数量）。"

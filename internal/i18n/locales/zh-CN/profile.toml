@@ -102,7 +102,7 @@ other = "可以写横屏、竖屏、模糊 0~10、透明 0~100"
 
 [profile.target_invalid]
 description = "个人信息类指令的目标参数无法识别，作为 common.bad_param 的原因行。"
-other = "请写 @用户、游戏 UID 或 u序号"
+other = "请写 @群友、游戏 UID 或 u序号"
 
 [profile.custom_card.index_required]
 description = "自定义个人信息没有写或写了多个页码。"

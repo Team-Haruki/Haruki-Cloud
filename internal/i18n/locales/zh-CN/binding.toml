@@ -10,19 +10,19 @@ description = "当前 Bot 运行在临时环境（没有绑定信息）时，所
 other = "当前运行的 HarukiBot 是临时环境，没有绑定信息，如需使用请重新绑定"
 
 [binding.target_not_bound]
-description = "查询 @用户的数据，但该用户没有绑定游戏账号。"
+description = "查询 @群友的数据，但该用户没有绑定游戏账号。"
 other = "该用户没有绑定游戏账号"
 
 [binding.target_not_bound_region]
-description = "查询 @用户在指定区服的数据，但该用户在该区服没有绑定游戏账号。占位符：Region=区服显示名，例如“日服(JP)”。"
+description = "查询 @群友在指定区服的数据，但该用户在该区服没有绑定游戏账号。占位符：Region=区服显示名，例如“日服(JP)”。"
 other = "该用户在{{.Region}}没有绑定游戏账号"
 
 [binding.target_hidden]
-description = "查询 @用户的数据，但该用户隐藏了个人信息。"
+description = "查询 @群友的数据，但该用户隐藏了个人信息。"
 other = "该用户已隐藏个人信息"
 
 [binding.target_uid_invalid]
-description = "@用户绑定的游戏 UID 不是有效数字（数据异常）。"
+description = "@群友绑定的游戏 UID 不是有效数字（数据异常）。"
 other = "该用户绑定的游戏 UID 无效"
 
 [binding.current_account]

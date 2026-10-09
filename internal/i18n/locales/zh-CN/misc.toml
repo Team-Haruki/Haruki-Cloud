@@ -17,7 +17,7 @@ description = "/逮捕 文字回复里每个难度一行的通关统计。占位
 other = "[{{.Difficulty}}] Clear {{.Clear}} / FC {{.FC}} / AP {{.AP}}"
 
 [misc.arrest.challenge]
-description = "/逮捕 文字回复的最后一行：挑战 Live 最高分。占位符：Character=挑战角色名，或 misc.arrest.character_id；Score=最高分，5 位以上加千分位。"
+description = "/逮捕 文字回复的最后一行：挑战 Live 最高分。占位符：Character=挑战角色名，或 common.fallback.character；Score=最高分，5 位以上加千分位。"
 other = "挑战 Live（{{.Character}}）：{{.Score}} 分"
 
 [misc.reg_time.result]

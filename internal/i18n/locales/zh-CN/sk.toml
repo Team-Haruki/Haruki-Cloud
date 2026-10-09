@@ -1,7 +1,7 @@
-# 查榜：榜线、查榜、时速、查房、查水表、追踪、预测、胜率，以及 @用户 和账号相关的查榜提示。
+# 查榜：榜线、查榜、时速、查房、查水表、追踪、预测、胜率，以及 @群友 和账号相关的查榜提示。
 
 [sk.predict.user_unsupported]
-description = "榜线预测指令按玩家（游戏 UID 或 @用户）查询时的提示。"
+description = "榜线预测指令按玩家（游戏 UID 或 @群友）查询时的提示。"
 other = "榜线预测不支持按玩家查询，请使用名次"
 
 [sk.predict.not_ready]
@@ -77,8 +77,8 @@ description = "一次查询的名次太多。占位符：Max=最多名次数。"
 other = "一次最多查询 {{.Max}} 个名次"
 
 [sk.mention_unsupported]
-description = "该查榜指令不支持 @用户。"
-other = "该指令不支持 @用户，请直接写游戏 UID"
+description = "该查榜指令不支持 @群友。"
+other = "该指令不支持 @群友，请直接写游戏 UID"
 
 [sk.rank_positive]
 description = "名次小于等于 0。也用作 common.bad_param 的原因行。"
@@ -114,7 +114,7 @@ other = "{{.Event}}没有可用的 WL 章节"
 
 [sk.wl.no_started_chapter]
 description = "用 wl 查当前章节，但该活动还没有开始任何章节。占位符：Event=活动（common.event_label）。"
-other = "{{.Event}}还没有开始任何 WL 章节，请用 wl2 或 wlmiku 指定章节"
+other = "{{.Event}}还没有开始任何 WL 章节，请写章节序号（如“wl2”）或角色（如“wlmiku”）指定章节"
 
 [sk.wl.no_chapter_no]
 description = "指定的章节序号不存在。占位符：Event=活动（common.event_label）；Chapter=章节序号。"
@@ -122,7 +122,7 @@ other = "{{.Event}}没有第 {{.Chapter}} 章 WL 单榜"
 
 [sk.wl.chapter_required]
 description = "查 WL 榜线时没有指定章节。"
-other = "查询 WL 榜线需要指定章节，可以使用 wl、wl2 或 wlmiku"
+other = "查询 WL 榜线需要指定章节：写“wl”查询当前章节，或写章节序号（如“wl2”）、角色（如“wlmiku”）"
 
 [sk.wl.no_character_chapter]
 description = "该活动没有指定角色的 WL 章节。占位符：Event=活动（common.event_label）；Character=角色名（取自游戏数据，找不到时为 common.fallback.character）。"
@@ -137,7 +137,7 @@ description = "查自己的榜线/排名时，图片前的一行提示：你已�
 other = "你已不在记录范围内，只显示最后一次记录到的数据"
 
 [sk.forecast.title]
-description = "榜线预测图片的标题。占位符：Event=活动名称（游戏数据原文，或 event.fallback_name）。"
+description = "榜线预测图片的标题。占位符：Event=活动名称（游戏数据原文，或 common.fallback.event）。"
 other = "{{.Event}} 预测"
 
 [sk.forecast.notice]

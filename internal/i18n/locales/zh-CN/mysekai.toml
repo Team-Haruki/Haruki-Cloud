@@ -215,7 +215,7 @@ description = "图片：/msf 家具详情里，限时期间额外需要的材料
 other = "【限时额外材料：{{.Materials}}】"
 
 [mysekai.image.material_quantity]
-description = "图片：一种烤森材料和数量，例如“木材×3”。占位符：Name=材料名（游戏数据原文）或 mysekai.image.material_unknown；Quantity=数量。"
+description = "图片：一种烤森材料和数量，例如“木材×3”。占位符：Name=材料名（游戏数据原文）或 common.fallback.mysekai_material；Quantity=数量。"
 other = "{{.Name}}×{{.Quantity}}"
 
 [mysekai.image.fixture.craftable]

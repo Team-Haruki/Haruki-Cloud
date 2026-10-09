@@ -65,7 +65,7 @@ description = "查询摘要：指定了一张卡牌。占位符：ID=卡牌 ID�
 other = "卡牌 ID {{.ID}}"
 
 [render_card.summary.card_ids]
-description = "查询摘要：指定了 2~5 张卡牌。占位符：IDs=卡牌 ID 列表，用“, ”分隔。"
+description = "查询摘要：指定了 2~5 张卡牌。占位符：IDs=卡牌 ID 列表，用“、”分隔，例如“1001、1002”。"
 other = "卡牌 ID {{.IDs}}"
 
 [render_card.summary.card_count]
@@ -145,7 +145,7 @@ description = "查询摘要里的具体技能筛选：团分（技能 15~19）�
 other = "团分"
 
 [render_card.summary.skill.ids]
-description = "查询摘要里的具体技能筛选：按技能 ID。占位符：IDs=技能 ID 列表，用“,”分隔。"
+description = "查询摘要里的具体技能筛选：按技能 ID。占位符：IDs=技能 ID 列表，用“、”分隔，例如“4、11”。"
 other = "技能 {{.IDs}}"
 
 [render_card.summary.unit.original_vs]

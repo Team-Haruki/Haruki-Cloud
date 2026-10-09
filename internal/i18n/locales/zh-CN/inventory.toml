@@ -111,8 +111,8 @@ description = "图片：游戏数据里没有名称的技能升级乐谱。占�
 other = "技能升级乐谱 #{{.ID}}"
 
 [inventory.image.unnamed.gacha_ceil_item]
-description = "图片：游戏数据里没有名称的招募贴纸（招募保底兑换道具）。占位符：ID=道具 ID。"
-other = "招募贴纸 #{{.ID}}"
+description = "图片：游戏数据里没有名称的招募保底兑换道具。占位符：ID=道具 ID。"
+other = "招募保底道具 #{{.ID}}"
 
 [inventory.image.unnamed.boost_item]
 description = "图片：游戏数据里没有名称的演出能量道具。占位符：ID=道具 ID。"

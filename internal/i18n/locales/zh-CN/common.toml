@@ -126,7 +126,7 @@ description = "只能查询自己的数据的指令，但指定了别人或 UID�
 other = "这个指令只能查询自己的数据，可以用 u序号 选择自己的账号"
 
 [common.processed]
-description = "图片前的一行文字，说明这次按什么条件处理（组卡、卡牌列表等）。占位符：Summary=用“ / ”连接的条件，例如“日服(JP) / 活动组卡 / 活动 123 / EXPERT”或“国服(CN) / 卡牌列表 / 卡牌 ID 1001, 1002”。"
+description = "图片前的一行文字，说明这次按什么条件处理（组卡、卡牌列表等）。占位符：Summary=用“ / ”连接的条件，例如“日服(JP) / 活动组卡 / 活动 123 / EXPERT”或“国服(CN) / 卡牌列表 / 卡牌 ID 1001、1002”。"
 other = "已处理{{.Summary}}"
 
 [common.fallback.character]

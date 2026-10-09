@@ -9,6 +9,7 @@ import (
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
@@ -703,7 +704,7 @@ func TestEventDeckHandleRejectsDeprecatedWorldBloomChapterSelectorAfterEventID(t
 		ArgText:    "140 wl3 sage",
 	})
 	testutil.Require(t, !(err == nil), "expected deprecated wl chapter selector to be rejected")
-	testutil.Require(t, strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法"), "unexpected error: %v", err)
+	testutil.RequireUserError(t, err, usererror.CodeUsage, "deck.wl.turn_syntax_removed")
 
 }
 
@@ -715,7 +716,7 @@ func TestEventDeckHandleRejectsDeprecatedStandaloneWorldBloomChapterSelector(t *
 		ArgText:    "sage wl3",
 	})
 	testutil.Require(t, !(err == nil), "expected deprecated wl chapter selector to be rejected")
-	testutil.Require(t, strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法"), "unexpected error: %v", err)
+	testutil.RequireUserError(t, err, usererror.CodeUsage, "deck.wl.turn_syntax_removed")
 
 }
 
@@ -1802,7 +1803,7 @@ func TestEventDeckHandleRejectsDeprecatedWorldBloomSelectorAndCharacterAfterEven
 		ArgText:    "140 wl3 miku",
 	})
 	testutil.Require(t, !(err == nil), "expected deprecated WL chapter selector to be rejected")
-	testutil.Require(t, strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法"), "unexpected error: %v", err)
+	testutil.RequireUserError(t, err, usererror.CodeUsage, "deck.wl.turn_syntax_removed")
 
 }
 

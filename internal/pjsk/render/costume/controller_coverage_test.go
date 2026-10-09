@@ -17,6 +17,7 @@ import (
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 type controllerCoverageContextKey struct{}
@@ -726,10 +727,10 @@ func TestControllerCoverageComboValidation(t *testing.T) {
 
 	query := ComboQuery{}
 	last := ""
-	if err := assignComboValue(&query, "unknown", 1, &last); err == nil {
+	if err := assignComboValue(&query, "unknown", "x", 1, &last); err == nil {
 		t.Fatal("unknown combo label was accepted")
 	}
-	if err := assignComboValue(&query, "outfit", 0, &last); err == nil {
+	if err := assignComboValue(&query, "outfit", "服装0", 0, &last); err == nil {
 		t.Fatal("non-positive combo ID was accepted")
 	}
 	if err := assignComboColor(&query, "unknown", 1); err == nil {
@@ -839,6 +840,23 @@ func testControllerCoverageListPrompt(t *testing.T) {
 	} {
 		if label := buildFilterLabel(query); label == "" {
 			t.Fatalf("empty filter label for %+v", query)
+		}
+	}
+}
+
+// A label without an ID is echoed as the user typed it, never as the
+// internal part key.
+func TestParseComboQueryEchoesTypedLabel(t *testing.T) {
+	for query, want := range map[string]string{
+		"角色21 饰品颜色":    "饰品颜色",
+		"角色21 服装":      "服装",
+		"角色21 发型":      "发型",
+		"角色21 Costume": "Costume",
+	} {
+		_, err := parseComboQuery(ComboQuery{Query: query})
+		typed := testutil.RequireUserError(t, err, usererror.CodeBadParam, "common.bad_param")
+		if got := typed.Message.Data["Param"]; got != want {
+			t.Errorf("parseComboQuery(%q) Param = %v, want %q", query, got, want)
 		}
 	}
 }

@@ -1949,8 +1949,10 @@ func parseComboQuery(query ComboQuery) (ComboQuery, error) {
 }
 
 type comboQueryParseState struct {
-	parsed          ComboQuery
-	pending         string
+	parsed  ComboQuery
+	pending string
+	// pendingRaw is the label token as the user typed it, for replies.
+	pendingRaw      string
 	lastColorTarget string
 	roleAlias       character3DAliasSelection
 }
@@ -1976,7 +1978,7 @@ func (s *comboQueryParseState) apply(token string) error {
 		}
 	}
 	if label, id, ok := parseComboLabeledID(lower); ok {
-		if err := assignComboValue(&s.parsed, label, id, &s.lastColorTarget); err != nil {
+		if err := assignComboValue(&s.parsed, label, token, id, &s.lastColorTarget); err != nil {
 			return err
 		}
 		s.pending = ""
@@ -1984,6 +1986,7 @@ func (s *comboQueryParseState) apply(token string) error {
 	}
 	if label, ok := normalizeComboLabel(lower); ok {
 		s.pending = label
+		s.pendingRaw = strings.TrimSpace(token)
 		return nil
 	}
 	if id, ok := ParseExplicitCostumeID(lower); ok {
@@ -2012,7 +2015,7 @@ func (s *comboQueryParseState) applyRoleAlias(token string) (bool, error) {
 
 func (s *comboQueryParseState) applyExplicitID(original string, id int) error {
 	if s.pending != "" {
-		if err := assignComboValue(&s.parsed, s.pending, id, &s.lastColorTarget); err != nil {
+		if err := assignComboValue(&s.parsed, s.pending, s.pendingRaw, id, &s.lastColorTarget); err != nil {
 			return err
 		}
 		s.pending = ""
@@ -2033,7 +2036,7 @@ func (s *comboQueryParseState) finish() (ComboQuery, error) {
 		if s.pending == "role" {
 			return ComboQuery{}, usererror.Misuse(i18n.M("costume.combo.character_missing"))
 		}
-		return ComboQuery{}, usererror.BadParam(s.pending, i18n.M("costume.combo.id_missing"))
+		return ComboQuery{}, usererror.BadParam(s.pendingRaw, i18n.M("costume.combo.id_missing"))
 	}
 	if err := s.roleAlias.apply(&s.parsed.Character3DID); err != nil {
 		return ComboQuery{}, err
@@ -2098,7 +2101,9 @@ func normalizeComboLabel(token string) (string, bool) {
 	}
 }
 
-func assignComboValue(query *ComboQuery, label string, id int, lastColorTarget *string) error {
+// assignComboValue sets the part named by label (a normalizeComboLabel
+// result) to id; raw is the label as the user typed it.
+func assignComboValue(query *ComboQuery, label, raw string, id int, lastColorTarget *string) error {
 	if id <= 0 {
 		return usererror.Invalid(i18n.M("costume.combo.part_id_invalid"))
 	}
@@ -2118,7 +2123,7 @@ func assignComboValue(query *ComboQuery, label string, id int, lastColorTarget *
 	case "accessory":
 		return assignComboAccessory(query, id, lastColorTarget)
 	default:
-		return usererror.BadParam(label, i18n.M("costume.combo.part_type_unknown"))
+		return usererror.BadParam(raw, i18n.M("costume.combo.part_type_unknown"))
 	}
 }
 

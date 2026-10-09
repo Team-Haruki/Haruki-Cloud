@@ -379,9 +379,10 @@ domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1" }
    `/pjsk` 下所有 POST（含 birthday-monitor 的 render / ack）都必须携带
 4. `BotCommandRequest.enableParamEcho` 默认为 `false`：错误回复（参数错误、找不到、
    匹配到多个、用法提示等）只来自文案目录，且不回显用户输入（查询词、参数值、名称、
-   别名、未注册的指令）；客户端只有显式传 `true` 时才回显具体参数。带回显的消息都有
-   一条不回显的同名 `_no_echo` 消息（约定见 `docs/i18n.md`）。共享执行的结果同时带
-   两种回复，由实际投递的 bot 按自己的设置选择
+   别名、未注册的指令、从指令里解析出的数字）；还没有审核的别名原文也只在开启回显时
+   出现在提交、待审核列表、查提交者和拒绝的回复里。客户端只有显式传 `true` 时才回显。
+   带回显的消息都有一条不回显的同名 `_no_echo` 消息（约定见 `docs/i18n.md`）。共享执行
+   的结果同时带两种回复，由实际投递的 bot 按自己的设置选择
 5. `BotCommandRequest` 另有四个可选字段：
    - `event_time` / `event_id`：平台事件时间戳（OneBot time）用于事件级去重——
      同一条消息被多个 bot 观测到时时间一致，已消费的响应选举保留 120s，可区分

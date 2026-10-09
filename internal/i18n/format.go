@@ -240,3 +240,16 @@ func EchoQuery(query string) UserText {
 	}
 	return UserText(string([]rune(query)[:QueryEchoLimit]) + "……")
 }
+
+// Integer is any signed integer type a command parser produces.
+type Integer interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64
+}
+
+// UserNumber is a number parsed from the user's command (an ID, rank, count,
+// WL turn, page, QQ number…) for a user-input placeholder. Like any UserText
+// it is hidden when the reply is rendered without echo. Numbers Cloud works
+// out itself (limits, result counts, the current event) are passed as is.
+func UserNumber[N Integer](n N) UserText {
+	return UserText(strconv.FormatInt(int64(n), 10))
+}

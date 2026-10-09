@@ -10,7 +10,12 @@ import (
 	"haruki-cloud/utils/usererror"
 )
 
-func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json.RawMessage) ([]byte, error) {
+// ExecuteCommand runs an alias command and returns its reply. The reply is a
+// catalog message, not rendered text: replies that repeat alias text nobody
+// has reviewed yet (submissions, the pending list, submitter lookups,
+// rejections) show it only when the bot client enabled parameter echo, and
+// the delivering layer renders the message for its own client.
+func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json.RawMessage) (i18n.Message, error) {
 	switch mode {
 	case ModeDelete:
 		return executeDeleteCommand(ctx, service, raw)
@@ -31,89 +36,90 @@ func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json
 	case ModeBatchReject:
 		return executeBatchRejectCommand(ctx, service, raw)
 	default:
-		return nil, fmt.Errorf("bridge: unsupported alias mode %q", mode)
+		return i18n.Message{}, fmt.Errorf("bridge: unsupported alias mode %q", mode)
 	}
 }
 
-func executeDeleteCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeDeleteCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeDeleteParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	records, err := service.Delete(ctx, params.AliasType, params.Platform, params.PlatformUserID, params.Target, params.Aliases)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	lines := make([]i18n.Message, 0, len(records))
 	for _, record := range records {
 		lines = append(lines, approvedAliasRecordMessage(record))
 	}
-	return []byte(i18n.T("alias.delete.done", i18n.Data{"Count": len(records), "Kind": aliasKind(params.AliasType), "Records": lines})), nil
+	return i18n.M("alias.delete.done", i18n.Data{"Count": len(records), "Kind": aliasKind(params.AliasType), "Records": lines}), nil
 }
 
-func executeAddCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeAddCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeAddParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	records, err := service.Submit(ctx, params.AliasType, params.Platform, params.PlatformUserID, params.Target, params.Aliases)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	return []byte(i18n.T("alias.add.done", i18n.Data{"Count": len(records), "Kind": aliasKind(params.AliasType), "Records": aliasRecordMessages(records)})), nil
+	return i18n.M("alias.add.done", i18n.Data{"Count": len(records), "Kind": aliasKind(params.AliasType), "Records": aliasRecordMessages(records)}), nil
 }
 
-func executeQueryCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeQueryCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeQueryParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	result, err := service.Query(ctx, params.AliasType, params.Target)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	entity := i18n.Data{"ID": result.Entity.ID, "Name": result.Entity.Name}
-	header := i18n.T("alias.query.music", entity)
+	header := i18n.M("alias.query.music", entity)
 	if params.AliasType == PjskAliasTypeCharacter {
-		header = i18n.T("alias.query.character", entity)
+		header = i18n.M("alias.query.character", entity)
 	}
-	if len(result.Aliases) == 0 {
-		return []byte(header + "\n" + i18n.T("alias.query.none")), nil
+	list := i18n.M("alias.query.none")
+	if len(result.Aliases) > 0 {
+		list = i18n.M("alias.query.list", i18n.Data{"Count": len(result.Aliases), "Aliases": strings.Join(result.Aliases, "\n")})
 	}
-	return []byte(header + "\n" + i18n.T("alias.query.list", i18n.Data{"Count": len(result.Aliases), "Aliases": strings.Join(result.Aliases, "\n")})), nil
+	return i18n.M("alias.query.result", i18n.Data{"Header": header, "List": list}), nil
 }
 
-func executePendingListCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executePendingListCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeReviewListParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	records, err := service.ListPending(ctx, params.Platform, params.PlatformUserID)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	if len(records) == 0 {
-		return []byte(i18n.T("alias.pending.none")), nil
+		return i18n.M("alias.pending.none"), nil
 	}
-	return []byte(i18n.T("alias.pending.list", i18n.Data{"Count": len(records), "Records": aliasRecordMessages(records)})), nil
+	return i18n.M("alias.pending.list", i18n.Data{"Count": len(records), "Records": aliasRecordMessages(records)}), nil
 }
 
-func executeSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeSubmitterParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	record, err := service.GetSubmitter(ctx, params.Platform, params.PlatformUserID, params.ReviewID)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	return []byte(i18n.T("alias.submitter.result", i18n.Data{"Record": aliasRecordMessage(*record), "Submitter": record.SubmittedBy})), nil
+	return i18n.M("alias.submitter.result", i18n.Data{"Record": aliasRecordMessage(*record), "Submitter": record.SubmittedBy}), nil
 }
 
-func executeBanSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeBanSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeBanSubmitterParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	record, err := service.BanSubmitter(
 		ctx,
@@ -123,50 +129,50 @@ func executeBanSubmitterCommand(ctx context.Context, service *Service, raw json.
 		params.TargetPlatformUserID,
 	)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	return []byte(i18n.T("alias.ban.done", i18n.Data{"User": record.Platform + ":" + record.PlatformUserID})), nil
+	return i18n.M("alias.ban.done", i18n.Data{"User": record.Platform + ":" + record.PlatformUserID}), nil
 }
 
-func executeApproveCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeApproveCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeApproveParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	records, err := service.Approve(ctx, params.Platform, params.PlatformUserID, params.ReviewIDs)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	return []byte(i18n.T("alias.approve.done", i18n.Data{"Count": len(records), "Records": aliasRecordMessages(records)})), nil
+	return i18n.M("alias.approve.done", i18n.Data{"Count": len(records), "Records": passedAliasRecordMessages(records)}), nil
 }
 
-func executeRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeRejectParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	record, err := service.Reject(ctx, params.Platform, params.PlatformUserID, params.ReviewID, params.Reason)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	return []byte(i18n.T("alias.reject.done", i18n.Data{"Record": rejectedAliasRecordMessage(*record, params.Reason)})), nil
+	return i18n.M("alias.reject.done", i18n.Data{"Record": rejectedAliasRecordMessage(*record, params.Reason)}), nil
 }
 
-func executeBatchRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeBatchRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeBatchRejectParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	reason := i18n.T("alias.batch_reject.reason")
 	records, err := service.RejectMany(ctx, params.Platform, params.PlatformUserID, params.ReviewIDs, reason)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	lines := make([]i18n.Message, 0, len(records))
 	for _, record := range records {
 		lines = append(lines, rejectedAliasRecordMessage(record, reason))
 	}
-	return []byte(i18n.T("alias.batch_reject.done", i18n.Data{"Count": len(records), "Records": lines})), nil
+	return i18n.M("alias.batch_reject.done", i18n.Data{"Count": len(records), "Records": lines}), nil
 }
 
 func decodeDeleteParams(raw json.RawMessage) (DeleteCommandParams, error) {

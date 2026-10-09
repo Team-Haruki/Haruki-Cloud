@@ -57,8 +57,12 @@ description = "BPM 反查写的 BPM 小于等于 0。"
 other = "BPM 必须大于 0"
 
 [music.bpm.no_chart]
-description = "BPM 反查没有结果。占位符：BPM=用户写的 BPM 数值。"
-other = "没有找到 BPM 为 {{.BPM}} 的谱面"
+description = "BPM 反查没有结果。占位符：UserBPM=用户写的 BPM 数值。"
+other = "没有找到 BPM 为 {{.UserBPM}} 的谱面"
+
+[music.bpm.no_chart_no_echo]
+description = "music.bpm.no_chart 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "没有找到这个 BPM 的谱面"
 
 [music.bpm.no_data]
 description = "查歌曲 BPM，但该谱面没有可用的 BPM 数据。"
@@ -69,12 +73,20 @@ description = "物量反查写的物量小于等于 0。"
 other = "物量必须大于 0"
 
 [music.note_count.no_chart]
-description = "物量反查没有结果。占位符：Count=物量。"
-other = "没有找到物量为 {{.Count}} 的谱面"
+description = "物量反查没有结果。占位符：UserCount=用户写的物量。"
+other = "没有找到物量为 {{.UserCount}} 的谱面"
+
+[music.note_count.no_chart_no_echo]
+description = "music.note_count.no_chart 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "没有找到这个物量的谱面"
 
 [music.note_count.no_chart_difficulty]
-description = "按难度的物量反查没有结果。占位符：Count=物量；Difficulty=难度显示名，例如 MASTER。"
-other = "没有找到物量为 {{.Count}} 的 {{.Difficulty}} 谱面"
+description = "按难度的物量反查没有结果。占位符：UserCount=用户写的物量；Difficulty=难度显示名，例如 MASTER。"
+other = "没有找到物量为 {{.UserCount}} 的 {{.Difficulty}} 谱面"
+
+[music.note_count.no_chart_difficulty_no_echo]
+description = "music.note_count.no_chart_difficulty 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Difficulty=难度显示名，例如 MASTER。"
+other = "没有找到这个物量的 {{.Difficulty}} 谱面"
 
 [music.custom_chart.jp_only]
 description = "自制谱面只能在日服查询。占位符：Region=日服的区服显示名。"

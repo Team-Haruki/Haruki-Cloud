@@ -373,11 +373,11 @@ func executeAlias(rc *RequestContext) (onebot11.Message, error) {
 	if message, ok, err := tryRenderAliasQueryAsImage(rc); ok {
 		return message, err
 	}
-	data, err := aliases.ExecuteCommand(rc.Ctx, rc.App.Aliases, rc.Cmd.Mode, rc.Cmd.Params)
+	reply, err := aliases.ExecuteCommand(rc.Ctx, rc.App.Aliases, rc.Cmd.Mode, rc.Cmd.Params)
 	if err != nil {
 		return nil, err
 	}
-	return onebot11.Message{onebot11.Text(string(data))}, nil
+	return onebot11.Message{onebot11.LocalizedText(reply)}, nil
 }
 
 func tryRenderAliasQueryAsImage(rc *RequestContext) (onebot11.Message, bool, error) {

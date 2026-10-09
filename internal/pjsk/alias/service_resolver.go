@@ -156,7 +156,7 @@ func (s *Service) tryResolveMusicByID(ctx context.Context, token string) (Entity
 		return EntityRef{}, true, err
 	}
 	if len(rows) == 0 {
-		return EntityRef{}, true, usererror.New(usererror.CodeNotFound, i18n.M("alias.id_not_found.music", i18n.Data{"ID": id}))
+		return EntityRef{}, true, usererror.New(usererror.CodeNotFound, i18n.M("alias.id_not_found.music", i18n.Data{"UserID": i18n.UserNumber(id)}))
 	}
 	return EntityRef{AliasType: PjskAliasTypeMusic, ID: id, Name: preferredMusicTitle(rows, id)}, true, nil
 }
@@ -270,7 +270,7 @@ func (s *Service) tryResolveCharacterByID(ctx context.Context, token string) (En
 		return EntityRef{}, true, err
 	}
 	if len(rows) == 0 {
-		return EntityRef{}, true, usererror.New(usererror.CodeNotFound, i18n.M("alias.id_not_found.character", i18n.Data{"ID": id}))
+		return EntityRef{}, true, usererror.New(usererror.CodeNotFound, i18n.M("alias.id_not_found.character", i18n.Data{"UserID": i18n.UserNumber(id)}))
 	}
 	return EntityRef{AliasType: PjskAliasTypeCharacter, ID: id, Name: preferredCharacterName(rows, id)}, true, nil
 }

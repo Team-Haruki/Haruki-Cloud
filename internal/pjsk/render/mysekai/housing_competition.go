@@ -134,7 +134,7 @@ func (c *Controller) BuildHousingCompetitionLine(ctx context.Context, api Housin
 	requestEntries := make([]drawing.MysekaiHousingCompetitionEntry, 0, len(ranks))
 	for _, rank := range ranks {
 		if rank > len(allEntries) {
-			return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.housing.rank_beyond", i18n.Data{"Count": len(allEntries), "Rank": rank}))
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.housing.rank_beyond", i18n.Data{"Count": len(allEntries), "UserRank": i18n.UserNumber(rank)}))
 		}
 		entry := allEntries[rank-1]
 		selected = append(selected, entry)
@@ -318,7 +318,7 @@ func (c *Controller) resolveHousingCompetition(query HousingCompetitionLineQuery
 				return info, nil
 			}
 		}
-		return HousingCompetitionInfo{}, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.housing.not_found", i18n.Data{"ID": query.HousingID}))
+		return HousingCompetitionInfo{}, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.housing.not_found", i18n.Data{"UserID": i18n.UserNumber(query.HousingID)}))
 	}
 
 	target, err := c.resolveHousingCompetitionRefreshTarget(query)

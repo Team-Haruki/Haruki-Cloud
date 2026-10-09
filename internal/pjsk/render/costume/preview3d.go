@@ -1627,7 +1627,7 @@ func (s *preview3DComboState) applyBody() error {
 	if s.query.BodyCostume3DID > 0 {
 		part, ok := s.registry.partForRole(s.query.BodyCostume3DID, s.role, "body")
 		if !ok {
-			return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.part_unusable", i18n.Data{"Part": i18n.M("costume.part.outfit"), "ID": s.query.BodyCostume3DID}), fmt.Errorf("3d combo body part not usable for unit=%s: %d", s.role.Unit, s.query.BodyCostume3DID))
+			return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.part_unusable", i18n.Data{"Part": i18n.M("costume.part.outfit"), "UserID": i18n.UserNumber(s.query.BodyCostume3DID)}), fmt.Errorf("3d combo body part not usable for unit=%s: %d", s.role.Unit, s.query.BodyCostume3DID))
 		}
 		s.bodyID = part.Costume3DID
 	}
@@ -1666,7 +1666,7 @@ func (s *preview3DComboState) applyHair() error {
 	if s.query.HairCostume3DID > 0 {
 		part, ok := s.registry.partForRole(s.query.HairCostume3DID, s.role, "hair")
 		if !ok {
-			return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.part_unusable", i18n.Data{"Part": i18n.M("costume.part.hair"), "ID": s.query.HairCostume3DID}), fmt.Errorf("3d combo hair part not usable for unit=%s: %d", s.role.Unit, s.query.HairCostume3DID))
+			return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.part_unusable", i18n.Data{"Part": i18n.M("costume.part.hair"), "UserID": i18n.UserNumber(s.query.HairCostume3DID)}), fmt.Errorf("3d combo hair part not usable for unit=%s: %d", s.role.Unit, s.query.HairCostume3DID))
 		}
 		s.hairID = part.Costume3DID
 	}
@@ -1701,7 +1701,7 @@ func (s *preview3DComboState) applyRawAccessoryHead() error {
 		return err
 	}
 	if !ok {
-		return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.part_unusable", i18n.Data{"Part": i18n.M("costume.part.accessory"), "ID": s.query.AccessoryCostume3DID}), fmt.Errorf("3d combo head/accessory part not usable for unit=%s: %d", s.role.Unit, s.query.AccessoryCostume3DID))
+		return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.part_unusable", i18n.Data{"Part": i18n.M("costume.part.accessory"), "UserID": i18n.UserNumber(s.query.AccessoryCostume3DID)}), fmt.Errorf("3d combo head/accessory part not usable for unit=%s: %d", s.role.Unit, s.query.AccessoryCostume3DID))
 	}
 	if s.resolvedAccessoryID > 0 && strings.TrimSpace(part.PackagePath) == "" {
 		return fmt.Errorf("3d combo accessory source has no packagePath: accessory=%d raw=%d", s.resolvedAccessoryID, part.Costume3DID)

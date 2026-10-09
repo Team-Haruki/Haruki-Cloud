@@ -441,11 +441,20 @@ As of this revision the project is **considered functionally complete**:
     `{{.Region}}活动 {{.ID}}`）是弱模式，只在回复本身用到该消息时才认。
   - **参数回显默认关闭。** 客户端没有在请求里设 `enableParamEcho: true` 时，错误回复
     （参数错误、找不到、匹配到多个、超出范围、用法、参数引导）不能出现任何用户输入：
-    查询词、参数值、无法识别的写法、用户写的名称和别名、用户写的未注册指令。显示用户输入的
-    占位符以 `User` 开头（`{{.UserQuery}}`），值用 `i18n.UserText`/`i18n.EchoQuery`；这样的
-    消息必须有 `<ID>_no_echo` 形式（同样的占位符去掉 `User…`，不留空引号或悬空的“：”），
-    回复层按 `i18n.WithParamEcho` 选择。已注册的指令名和解析成整数的值不算用户输入。
-    成功回复不在此列。详见 `docs/i18n.md`。
+    查询词、参数值、无法识别的写法、用户写的名称和别名、用户写的未注册指令，以及**从用户
+    指令里解析出的数字**（ID、名次、数量、WL 期数、页码、BPM、物量、游戏 UID、QQ 号……）。
+    我们自己算出的数字（上限、范围、结果数量、按“当前活动”得到的活动 ID）不算用户输入。
+    显示用户输入的占位符以 `User` 开头（`{{.UserQuery}}`、`{{.UserRank}}`），文字用
+    `i18n.UserText`/`i18n.EchoQuery`，数字用 `i18n.UserNumber`；这样的消息必须有
+    `<ID>_no_echo` 形式（同样的占位符去掉 `User…`，不留空引号或悬空的“：”），回复层按
+    `i18n.WithParamEcho` 选择。已注册的指令名不算用户输入。分不清来源的数字按用户输入处理
+    （例如错误回复里的活动 `common.event_label`）。
+  - **还没有审核的别名也按用户输入处理。** 提交别名的确认、待审核列表、查提交者、拒绝别名
+    （单条和批量）的回复，只在开启回显时显示别名原文；不开启时只显示待审核 ID
+    （“待审核别名 #12：歌曲「…」（ID 74）”），管理员按 ID 操作。通过别名的回复和删除已审核
+    别名的回复照常显示原文（已经审核）。这类成功回复用 `onebot11.LocalizedText` 返回目录消息，
+    投递层按客户端的设置渲染（共享执行的结果同时带两种回复）。其他成功回复不在此列。
+    详见 `docs/i18n.md`。
   - 测试断言 `Code` 和消息 ID，不断言中文原文（`testutil.RequireUserError`、
     `testutil.MessageID`）；中文由目录本身和
     `internal/i18n/testdata/helpers.zh-CN.golden` 锁定。
@@ -581,8 +590,10 @@ As of this revision the project is **considered functionally complete**:
 | `TestHelpDocsFollowLayout` | `internal/pjsk/handler` | 帮助版式：`# 标题`、用法/参数/示例/说明按顺序，不手写区服前缀说明（版式见 `docs/i18n.md`） |
 | `TestHelpDocExamplesParse` | `internal/pjsk/handler` | `## 示例` 里的每个示例都能被该文档的路由解析 |
 | `TestUserInputMessagesHaveEchoFreeForm` | `internal/i18n` | 带 `User…` 占位符的消息都有 `<ID>_no_echo` 形式，占位符一致 |
-| `TestEchoFreeFormsHideUserInput` | `internal/i18n` | 用哨兵值渲染这些消息：不回显时哨兵不出现、不留空引号或悬空的“：”，回显时出现 |
-| `TestCommandErrorTextHidesUserInputWithoutParamEcho`、`TestBotEndpointHidesUserInputWithoutParamEcho` | `api/bot/pjsk` | 错误回复和 Bot 端点在没有开启参数回显时不出现用户输入，开启后照常显示 |
+| `TestEchoFreeFormsHideUserInput` | `internal/i18n` | 用文字哨兵和数字哨兵（`UserNumber` 和普通 int 各一次）渲染这些消息：不回显时哨兵不出现、不留空引号或悬空的“：”，回显时出现 |
+| `TestUserWrittenPlaceholdersAreUserInput` | `internal/i18n` | description 写着“用户写的/用户输入/管理员输入/用户提交”的占位符必须以 `User` 开头（成功回复等例外逐条列出） |
+| `TestCommandErrorTextHidesUserInputWithoutParamEcho`、`TestCommandErrorTextHidesNumbersWithoutParamEcho`、`TestBotEndpointHidesUserInputWithoutParamEcho` | `api/bot/pjsk` | 错误回复和 Bot 端点在没有开启参数回显时不出现用户输入（文字和数字），开启后照常显示 |
+| `TestSucceededSharedBotCommandKeepsBothVariants`、`TestAliasRepliesGolden` | `api/bot/pjsk`、`internal/pjsk/alias` | 未审核别名的成功回复不开启回显时不出现别名原文，共享结果同时带两种回复；golden 文件记录两种形式 |
 
 这些测试都要求零发现，没有基线。唯一的允许清单是
 `internal/i18n/testdata/unused_ids.allowlist`（暂时没有代码引用的消息 ID，每行写原因），

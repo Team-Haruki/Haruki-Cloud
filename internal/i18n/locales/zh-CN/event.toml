@@ -1,8 +1,12 @@
 # 活动：查活动、活动列表、活动记录、活动规划。
 
 [event.not_found_in_region]
-description = "在某个区服找不到指定 ID 的活动。占位符：Region=区服显示名；ID=活动 ID。"
-other = "{{.Region}}未找到活动 {{.ID}}"
+description = "在某个区服找不到指定 ID 的活动。占位符：Region=区服显示名；UserID=用户写的活动 ID。"
+other = "{{.Region}}未找到活动 {{.UserID}}"
+
+[event.not_found_in_region_no_echo]
+description = "event.not_found_in_region 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Region=区服显示名。"
+other = "{{.Region}}未找到对应的活动"
 
 [event.query_required]
 description = "查活动但没有写参数。"
@@ -53,16 +57,28 @@ description = "活动规划没有指定活动，且当前没有进行中的活�
 other = "{{.Region}}当前没有进行中的活动，请在指令里写活动 ID，例如 event123"
 
 [event.planner.simulated_rank]
-description = "模拟活动按名次规划（模拟活动没有榜线）。占位符：Rank=名次。"
-other = "模拟活动不能按 T{{.Rank}} 读取榜线，请直接写目标 PT"
+description = "模拟活动按名次规划（模拟活动没有榜线）。占位符：UserRank=用户写的名次。"
+other = "模拟活动不能按 T{{.UserRank}} 读取榜线，请直接写目标 PT"
+
+[event.planner.simulated_rank_no_echo]
+description = "event.planner.simulated_rank 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "模拟活动不能按名次读取榜线，请直接写目标 PT"
 
 [event.planner.no_line]
-description = "活动规划按名次读取榜线，但查榜服务没有该名次的有效榜线。占位符：Rank=名次。"
-other = "查榜服务没有 T{{.Rank}} 的有效榜线"
+description = "活动规划按名次读取榜线，但查榜服务没有该名次的有效榜线。占位符：UserRank=用户写的名次。"
+other = "查榜服务没有 T{{.UserRank}} 的有效榜线"
+
+[event.planner.no_line_no_echo]
+description = "event.planner.no_line 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "查榜服务没有这个名次的有效榜线"
 
 [event.planner.no_line_wl]
-description = "活动规划按 WL 章节名次读取榜线，但查榜服务没有该名次的有效榜线。占位符：Rank=名次。"
-other = "查榜服务没有该 WL 章节 T{{.Rank}} 的有效榜线"
+description = "活动规划按 WL 章节名次读取榜线，但查榜服务没有该名次的有效榜线。占位符：UserRank=用户写的名次。"
+other = "查榜服务没有该 WL 章节 T{{.UserRank}} 的有效榜线"
+
+[event.planner.no_line_wl_no_echo]
+description = "event.planner.no_line_wl 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "查榜服务没有该 WL 章节这个名次的有效榜线"
 
 [event.planner.wl_character_required]
 description = "活动规划在 WL 活动按章节单榜规划，但没有写章节角色。"

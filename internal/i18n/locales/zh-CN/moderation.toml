@@ -49,8 +49,12 @@ description = "/back 解封成功后回复管理员。占位符：QQ=被解封�
 other = "已解除 QQ 号 {{.QQ}} 的全局封禁"
 
 [moderation.back.not_found]
-description = "/back 的 QQ 号从未使用过 Bot，没有用户记录。占位符：QQ=管理员输入的 QQ 号。"
-other = "没有找到 QQ 号 {{.QQ}} 的用户记录"
+description = "/back 的 QQ 号从未使用过 Bot，没有用户记录。占位符：UserQQ=管理员输入的 QQ 号。"
+other = "没有找到 QQ 号 {{.UserQQ}} 的用户记录"
+
+[moderation.back.not_found_no_echo]
+description = "moderation.back.not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "没有找到这个 QQ 号的用户记录"
 
 [moderation.banned]
 description = "被封禁用户使用指令时的回复（没有原因、永久）。占位符：Feature=被禁止的功能，取自 moderation.feature.*。"

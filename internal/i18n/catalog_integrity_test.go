@@ -99,8 +99,8 @@ type messageRef struct {
 	dynamic bool     // the ID is not a string literal
 	keys    []string // placeholder keys, when every Data argument is a literal
 	keysOK  bool
-	// userKeys are the keys whose value is built by UserText or EchoQuery,
-	// i.e. user input.
+	// userKeys are the keys whose value is built by UserText, EchoQuery or
+	// UserNumber, i.e. user input.
 	userKeys []string
 }
 
@@ -137,7 +137,7 @@ func collectMessageRefs(src goSource, insideI18n bool) []messageRef {
 				name = fun.Name
 			}
 		}
-		return name == "UserText" || name == "EchoQuery"
+		return name == "UserText" || name == "EchoQuery" || name == "UserNumber"
 	}
 	var refs []messageRef
 	ast.Inspect(src.file, func(n ast.Node) bool {
@@ -206,7 +206,7 @@ func collectMessageRefs(src goSource, insideI18n bool) []messageRef {
 //     testdata/unused_ids.allowlist;
 //   - other locales only translate IDs of the default locale, with the same
 //     placeholders;
-//   - user input (UserText, EchoQuery) only goes into a user-input
+//   - user input (UserText, EchoQuery, UserNumber) only goes into a user-input
 //     placeholder (User…), so the echo-free form can leave it out. Using a
 //     message also uses its echo-free form.
 func TestCatalogIntegrity(t *testing.T) {

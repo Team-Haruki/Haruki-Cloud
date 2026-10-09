@@ -94,8 +94,12 @@ description = "指令参数完全无法识别时的原因行。回复时会换�
 other = "无法识别指令参数"
 
 [common.event_label]
-description = "某个区服的某期活动，用在错误提示里，例如“日服(JP)活动 123”。占位符：Region=区服显示名；ID=活动 ID。"
-other = "{{.Region}}活动 {{.ID}}"
+description = "某个区服的某期活动，用在错误提示里，例如“日服(JP)活动 123”。活动 ID 可能是用户写的（event123、wl 期数），也可能是当前活动，一律按用户输入处理。占位符：Region=区服显示名；UserID=活动 ID。"
+other = "{{.Region}}活动 {{.UserID}}"
+
+[common.event_label_no_echo]
+description = "common.event_label 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Region=区服显示名。"
+other = "{{.Region}}的这个活动"
 
 [common.param.uid_invalid]
 description = "参数错误的原因行（接在 common.bad_param 后）：游戏 UID 格式不对。"

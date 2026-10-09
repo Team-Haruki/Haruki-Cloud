@@ -117,12 +117,20 @@ description = "百景榜没有获取到投稿。"
 other = "没有获取到可用的百景投稿"
 
 [mysekai.housing.rank_beyond]
-description = "百景榜投稿不够，无法查询指定名次。占位符：Count=获取到的投稿数；Rank=要查询的名次。"
-other = "只获取到 {{.Count}} 个百景投稿，无法查询第 {{.Rank}} 名"
+description = "百景榜投稿不够，无法查询指定名次。占位符：Count=获取到的投稿数；UserRank=用户写的要查询的名次。"
+other = "只获取到 {{.Count}} 个百景投稿，无法查询第 {{.UserRank}} 名"
+
+[mysekai.housing.rank_beyond_no_echo]
+description = "mysekai.housing.rank_beyond 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Count=获取到的投稿数。"
+other = "只获取到 {{.Count}} 个百景投稿，无法查询这个名次"
 
 [mysekai.housing.not_found]
-description = "找不到指定投稿编号的百景。占位符：ID=投稿编号。"
-other = "没有找到投稿编号为 {{.ID}} 的百景"
+description = "找不到指定投稿编号的百景。占位符：UserID=用户写的投稿编号。"
+other = "没有找到投稿编号为 {{.UserID}} 的百景"
+
+[mysekai.housing.not_found_no_echo]
+description = "mysekai.housing.not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "没有找到这个投稿编号的百景"
 
 [mysekai.housing.no_event]
 description = "当前没有进行中的烤森百景活动。"

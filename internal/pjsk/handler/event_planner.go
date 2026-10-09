@@ -630,7 +630,7 @@ func resolveEventPlannerTargetPoint(
 		return 0, "", usererror.Misuse(i18n.M("event.planner.target_required"))
 	}
 	if eventInfo == nil || eventInfo.ID <= 0 {
-		return 0, "", usererror.Invalid(i18n.M("event.planner.simulated_rank", i18n.Data{"Rank": params.TargetRank}))
+		return 0, "", usererror.Invalid(i18n.M("event.planner.simulated_rank", i18n.Data{"UserRank": i18n.UserNumber(params.TargetRank)}))
 	}
 	if rc == nil || rc.App == nil || rc.App.Tracker == nil {
 		return 0, "", usererror.Misconfigured(fmt.Errorf("event planner: tracker is not configured (rank %d)", params.TargetRank))
@@ -647,9 +647,9 @@ func resolveEventPlannerTargetPoint(
 	}
 	if lines == nil || len(lines.Ranks) == 0 || lines.Ranks[0].Score <= 0 {
 		if worldBloom {
-			return 0, "", usererror.New(usererror.CodeNotFound, i18n.M("event.planner.no_line_wl", i18n.Data{"Rank": params.TargetRank}))
+			return 0, "", usererror.New(usererror.CodeNotFound, i18n.M("event.planner.no_line_wl", i18n.Data{"UserRank": i18n.UserNumber(params.TargetRank)}))
 		}
-		return 0, "", usererror.New(usererror.CodeNotFound, i18n.M("event.planner.no_line", i18n.Data{"Rank": params.TargetRank}))
+		return 0, "", usererror.New(usererror.CodeNotFound, i18n.M("event.planner.no_line", i18n.Data{"UserRank": i18n.UserNumber(params.TargetRank)}))
 	}
 	source := i18n.T("event.planner.source.ranking", i18n.Data{"Rank": params.TargetRank})
 	if worldBloom {

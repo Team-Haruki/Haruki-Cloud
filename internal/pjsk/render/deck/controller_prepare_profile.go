@@ -575,8 +575,8 @@ func (c *Controller) restoreFixedCard(region renderregion.Value, raw, original *
 		// deck, where a missing card is a master-data gap and stays an error.
 		if !preferOriginal && sekaiDB.IsNotFound(err) {
 			return usererror.Invalid(i18n.M("deck.fixed.card_not_in_region", i18n.Data{
-				"Region": i18n.RegionLabel(renderregion.WithDefault(region).String()),
-				"CardID": cardID,
+				"Region":     i18n.RegionLabel(renderregion.WithDefault(region).String()),
+				"UserCardID": i18n.UserNumber(cardID),
 			}))
 		}
 		return err

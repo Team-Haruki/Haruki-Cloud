@@ -222,7 +222,7 @@ func (s *BanService) Back(ctx context.Context, qqID string) error {
 		return err
 	}
 	if count == 0 {
-		return usererror.New(usererror.CodeNotFound, i18n.M("moderation.back.not_found", i18n.Data{"QQ": qqID}))
+		return usererror.New(usererror.CodeNotFound, i18n.M("moderation.back.not_found", i18n.Data{"UserQQ": i18n.UserText(qqID)}))
 	}
 	return nil
 }

@@ -78,7 +78,7 @@ func (c *Controller) FindMusicChartsByBPM(query BPMQuery) ([]BPMMatch, error) {
 	}
 
 	if len(matches) == 0 {
-		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.bpm.no_chart", i18n.Data{"BPM": formatLookupBPMValue(query.BPM)}))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.bpm.no_chart", i18n.Data{"UserBPM": i18n.UserText(formatLookupBPMValue(query.BPM))}))
 	}
 
 	sort.Slice(matches, func(i, j int) bool {

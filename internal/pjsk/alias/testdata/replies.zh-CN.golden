@@ -13,18 +13,35 @@ tyw
 已提交 2 条歌曲别名，等待审核：
 待审核 ID 1：歌曲「Tell Your World」（ID 74）的别名“告诉你的世界”
 待审核 ID 2：歌曲「Tell Your World」（ID 74）的别名“世界”
+-- without parameter echo
+已提交 2 条歌曲别名，等待审核：
+待审核别名 #1：歌曲「Tell Your World」（ID 74）
+待审核别名 #2：歌曲「Tell Your World」（ID 74）
 == add character
 已提交 2 条角色别名，等待审核：
 待审核 ID 3：角色「初音ミク」（ID 21）的别名“葱”
 待审核 ID 4：角色「初音ミク」（ID 21）的别名“公主殿下”
+-- without parameter echo
+已提交 2 条角色别名，等待审核：
+待审核别名 #3：角色「初音ミク」（ID 21）
+待审核别名 #4：角色「初音ミク」（ID 21）
 == pending
 当前共有 4 条待审核别名：
 待审核 ID 1：歌曲「Tell Your World」（ID 74）的别名“告诉你的世界”
 待审核 ID 2：歌曲「Tell Your World」（ID 74）的别名“世界”
 待审核 ID 3：角色「初音ミク」（ID 21）的别名“葱”
 待审核 ID 4：角色「初音ミク」（ID 21）的别名“公主殿下”
+-- without parameter echo
+当前共有 4 条待审核别名：
+待审核别名 #1：歌曲「Tell Your World」（ID 74）
+待审核别名 #2：歌曲「Tell Your World」（ID 74）
+待审核别名 #3：角色「初音ミク」（ID 21）
+待审核别名 #4：角色「初音ミク」（ID 21）
 == submitter
 待审核 ID 1：歌曲「Tell Your World」（ID 74）的别名“告诉你的世界”
+提交者：qq:10001
+-- without parameter echo
+待审核别名 #1：歌曲「Tell Your World」（ID 74）
 提交者：qq:10001
 == approve
 已通过 2 条别名：
@@ -34,9 +51,17 @@ tyw
 已拒绝别名：
 待审核 ID 2：歌曲「Tell Your World」（ID 74）的别名“世界”
 原因：与已有别名重复
+-- without parameter echo
+已拒绝别名：
+待审核别名 #2：歌曲「Tell Your World」（ID 74）
+原因：与已有别名重复
 == batch reject
 已拒绝 1 条别名：
 待审核 ID 4：角色「初音ミク」（ID 21）的别名“公主殿下”
+原因：批量拒绝
+-- without parameter echo
+已拒绝 1 条别名：
+待审核别名 #4：角色「初音ミク」（ID 21）
 原因：批量拒绝
 == ban submitter
 已禁止用户 qq:10001 提交别名

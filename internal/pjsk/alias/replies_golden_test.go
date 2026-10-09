@@ -6,11 +6,14 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"haruki-cloud/internal/i18n"
 )
 
 // TestAliasRepliesGolden runs the alias review lifecycle and locks the zh-CN
 // text of every reply (alias.toml) in testdata/replies.zh-CN.golden, so a
-// wording change shows up as a reviewable diff. Regenerate with
+// wording change shows up as a reviewable diff. A reply that differs without
+// parameter echo (unreviewed alias text) is recorded in both forms. Regenerate with
 // HARUKI_UPDATE_GOLDEN=1 go test ./internal/pjsk/alias/.
 func TestAliasRepliesGolden(t *testing.T) {
 	ctx := context.Background()
@@ -27,7 +30,10 @@ func TestAliasRepliesGolden(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: %v", name, err)
 		}
-		b.WriteString("== " + name + "\n" + string(result) + "\n")
+		b.WriteString("== " + name + "\n" + result.String() + "\n")
+		if noEcho := result.Render(i18n.RenderOptions{NoEcho: true}); noEcho != result.String() {
+			b.WriteString("-- without parameter echo\n" + noEcho + "\n")
+		}
 	}
 	admin := ReviewListCommandParams{Platform: "qq", PlatformUserID: "admin"}
 

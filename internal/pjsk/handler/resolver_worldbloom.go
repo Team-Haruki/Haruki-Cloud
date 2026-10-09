@@ -29,7 +29,7 @@ func resolveTrackerWorldBloomEvent(ctx context.Context, app *renderapp.App, regi
 			Only(ctx)
 		if err != nil {
 			if sekaidb.IsNotFound(err) {
-				return nil, nil, usererror.New(usererror.CodeNotFound, i18n.M("event.not_found_in_region", i18n.Data{"Region": i18n.RegionLabel(region.String()), "ID": eventID}))
+				return nil, nil, usererror.New(usererror.CodeNotFound, i18n.M("event.not_found_in_region", i18n.Data{"Region": i18n.RegionLabel(region.String()), "UserID": i18n.UserNumber(eventID)}))
 			}
 			return nil, nil, fmt.Errorf("query sk event %d failed: %w", eventID, err)
 		}
@@ -122,7 +122,7 @@ func resolveTrackerWorldBloomChapterSelection(
 	if chapterNo, ok := parseTrackerWorldBloomChapterNo(query); ok {
 		chapter := findWorldBloomChapterByNo(chapters, chapterNo)
 		if chapter == nil {
-			return nil, usererror.Invalid(i18n.M("sk.wl.no_chapter_no", i18n.Data{"Event": eventLabel(region.String(), eventID), "Chapter": chapterNo}))
+			return nil, usererror.Invalid(i18n.M("sk.wl.no_chapter_no", i18n.Data{"Event": eventLabel(region.String(), eventID), "UserChapter": i18n.UserNumber(chapterNo)}))
 		}
 		return chapter, nil
 	}

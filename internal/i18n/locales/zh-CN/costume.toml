@@ -33,12 +33,20 @@ description = "参数名称，用在 common.out_of_range 的 Param 占位符里�
 other = "角色 ID"
 
 [costume.not_for_character]
-description = "服装、饰品或发型不适用于指定的角色。占位符：Part=部件名称（costume.part.*）；ID=部件 ID；Character=角色 ID。"
-other = "{{.Part}} {{.ID}} 不适用于角色 ID {{.Character}}"
+description = "服装、饰品或发型不适用于指定的角色。占位符：Part=部件名称（costume.part.*）；UserID=部件 ID（用户写的，或由用户写的名称得出）；UserCharacter=角色 ID（用户写的，或由用户写的角色名得出）。"
+other = "{{.Part}} {{.UserID}} 不适用于角色 ID {{.UserCharacter}}"
+
+[costume.not_for_character_no_echo]
+description = "costume.not_for_character 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Part=部件名称（costume.part.*）。"
+other = "这个{{.Part}}不适用于所选角色"
 
 [costume.accessory_raw_ambiguous]
-description = "饰品原始 ID 在该角色下对应多个独立饰品。占位符：RawID=原始 ID；Character=角色 ID；IDs=候选饰品 ID，用“、”分隔。"
-other = "饰品原始 ID {{.RawID}} 在角色 ID {{.Character}} 下对应多个独立饰品（ID：{{.IDs}}），请写明饰品 ID"
+description = "饰品原始 ID 在该角色下对应多个独立饰品。占位符：UserRawID=饰品原始 ID（用户写的，或由用户写的名称得出）；UserCharacter=角色 ID（用户写的，或由用户写的角色名得出）；IDs=候选饰品 ID，用“、”分隔。"
+other = "饰品原始 ID {{.UserRawID}} 在角色 ID {{.UserCharacter}} 下对应多个独立饰品（ID：{{.IDs}}），请写明饰品 ID"
+
+[costume.accessory_raw_ambiguous_no_echo]
+description = "costume.accessory_raw_ambiguous 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：IDs=候选饰品 ID，用“、”分隔。"
+other = "这个饰品原始 ID 在所选角色下对应多个独立饰品（ID：{{.IDs}}），请写明饰品 ID"
 
 [costume.color_index_min]
 description = "查服装的颜色序号小于 1。"
@@ -49,24 +57,28 @@ description = "查服装时该卡牌没有服装。"
 other = "该卡牌没有服装"
 
 [costume.combo_not_found]
-description = "找不到服装、角色、颜色的组合。占位符：Outfit=服装 ID；Character=角色 ID；Color=颜色 ID。"
-other = "找不到服装 ID {{.Outfit}}、角色 ID {{.Character}}、颜色 ID {{.Color}} 的组合"
+description = "找不到服装、角色、颜色的组合。占位符：UserOutfit=用户写的服装 ID；UserCharacter=角色 ID（用户写的，或由用户写的角色名得出）；UserColor=颜色 ID（用户写的，或由用户写的颜色序号得出）。"
+other = "找不到服装 ID {{.UserOutfit}}、角色 ID {{.UserCharacter}}、颜色 ID {{.UserColor}} 的组合"
+
+[costume.combo_not_found_no_echo]
+description = "costume.combo_not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "找不到所选服装、角色和颜色的组合"
 
 [costume.part_name_not_found]
-description = "按名称找不到角色的部件。占位符：Character=角色 ID；Part=部件名称（costume.part.*）；UserName=用户写的名称。"
-other = "找不到角色 ID {{.Character}} 的{{.Part}}“{{.UserName}}”"
+description = "按名称找不到角色的部件。占位符：UserCharacter=角色 ID（用户写的，或由用户写的角色名得出）；Part=部件名称（costume.part.*）；UserName=用户写的名称。"
+other = "找不到角色 ID {{.UserCharacter}} 的{{.Part}}“{{.UserName}}”"
 
 [costume.part_name_not_found_no_echo]
-description = "costume.part_name_not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Character=角色 ID；Part=部件名称（costume.part.*）。"
-other = "找不到角色 ID {{.Character}} 中与这个名称对应的{{.Part}}"
+description = "costume.part_name_not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Part=部件名称（costume.part.*）。"
+other = "找不到所选角色中与这个名称对应的{{.Part}}"
 
 [costume.part_name_ambiguous]
-description = "按名称匹配到角色的多个部件。占位符：Character=角色 ID；Part=部件名称（costume.part.*）；UserName=用户写的名称；IDs=候选 ID，用“、”分隔。"
-other = "角色 ID {{.Character}} 有多个{{.Part}}匹配“{{.UserName}}”（ID：{{.IDs}}），请写明部件 ID"
+description = "按名称匹配到角色的多个部件。占位符：UserCharacter=角色 ID（用户写的，或由用户写的角色名得出）；Part=部件名称（costume.part.*）；UserName=用户写的名称；IDs=候选 ID，用“、”分隔。"
+other = "角色 ID {{.UserCharacter}} 有多个{{.Part}}匹配“{{.UserName}}”（ID：{{.IDs}}），请写明部件 ID"
 
 [costume.part_name_ambiguous_no_echo]
-description = "costume.part_name_ambiguous 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Character=角色 ID；Part=部件名称（costume.part.*）；IDs=候选 ID，用“、”分隔。"
-other = "角色 ID {{.Character}} 有多个{{.Part}}与这个名称匹配（ID：{{.IDs}}），请写明部件 ID"
+description = "costume.part_name_ambiguous 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Part=部件名称（costume.part.*）；IDs=候选 ID，用“、”分隔。"
+other = "所选角色有多个{{.Part}}与这个名称匹配（ID：{{.IDs}}），请写明部件 ID"
 
 [costume.query.type_invalid]
 description = "服装查询的类型不是服装、饰品或发型。"
@@ -209,8 +221,12 @@ description = "3D 组合找不到能确定角色的部件。"
 other = "找不到能确定角色的 3D 部件，请检查部件 ID"
 
 [costume.preview3d.part_unusable]
-description = "3D 组合的某个部件不能用于当前角色或组合。占位符：Part=部件名称（costume.part.*）；ID=部件 ID。"
-other = "{{.Part}} ID {{.ID}} 不能用于当前角色或组合"
+description = "3D 组合的某个部件不能用于当前角色或组合。占位符：Part=部件名称（costume.part.*）；UserID=部件 ID（用户写的，或由用户写的名称得出）。"
+other = "{{.Part}} ID {{.UserID}} 不能用于当前角色或组合"
+
+[costume.preview3d.part_unusable_no_echo]
+description = "costume.preview3d.part_unusable 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Part=部件名称（costume.part.*）。"
+other = "这个{{.Part}}不能用于当前角色或组合"
 
 [costume.preview3d.head_hair_blocked]
 description = "3D 组合的饰品和发型不兼容。"
@@ -247,7 +263,6 @@ other = "3D 模型渲染失败，请稍后再试"
 [costume.preview3d.fetch_failed]
 description = "获取 3D 渲染图片失败。"
 other = "获取 3D 渲染图片失败，请稍后再试"
-
 
 # 以下是画进图片的文字（costume.image.*）。
 

@@ -353,11 +353,11 @@ func sortAliasTexts(values []string) {
 
 func aliasRecordMessage(record PjskAliasRecord) i18n.Message {
 	return i18n.M("alias.record.pending", i18n.Data{
-		"ReviewID": record.ReviewID,
-		"Kind":     aliasKind(record.Entity.AliasType),
-		"Name":     record.Entity.Name,
-		"EntityID": record.Entity.ID,
-		"Alias":    record.Alias,
+		"ReviewID":  record.ReviewID,
+		"Kind":      aliasKind(record.Entity.AliasType),
+		"Name":      record.Entity.Name,
+		"EntityID":  record.Entity.ID,
+		"UserAlias": i18n.UserText(record.Alias),
 	})
 }
 
@@ -365,6 +365,22 @@ func aliasRecordMessages(records []PjskAliasRecord) []i18n.Message {
 	lines := make([]i18n.Message, 0, len(records))
 	for _, record := range records {
 		lines = append(lines, aliasRecordMessage(record))
+	}
+	return lines
+}
+
+// passedAliasRecordMessages are the records an admin just approved; their
+// alias text is reviewed now, so it is shown with or without echo.
+func passedAliasRecordMessages(records []PjskAliasRecord) []i18n.Message {
+	lines := make([]i18n.Message, 0, len(records))
+	for _, record := range records {
+		lines = append(lines, i18n.M("alias.record.passed", i18n.Data{
+			"ReviewID": record.ReviewID,
+			"Kind":     aliasKind(record.Entity.AliasType),
+			"Name":     record.Entity.Name,
+			"EntityID": record.Entity.ID,
+			"Alias":    record.Alias,
+		}))
 	}
 	return lines
 }

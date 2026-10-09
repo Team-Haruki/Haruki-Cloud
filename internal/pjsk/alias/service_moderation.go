@@ -2,7 +2,6 @@ package alias
 
 import (
 	"context"
-	"strconv"
 	"strings"
 	"time"
 
@@ -32,7 +31,7 @@ func (s *Service) GetSubmitter(ctx context.Context, platform, platformUserID str
 		Only(ctx)
 	if err != nil {
 		if pjskdb.IsNotFound(err) {
-			return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"IDs": strconv.FormatInt(reviewID, 10)}))
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"UserIDs": i18n.UserNumber(reviewID)}))
 		}
 		return nil, err
 	}
@@ -41,7 +40,7 @@ func (s *Service) GetSubmitter(ctx context.Context, platform, platformUserID str
 		return nil, err
 	}
 	if len(records) != 1 {
-		return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"IDs": strconv.FormatInt(reviewID, 10)}))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"UserIDs": i18n.UserNumber(reviewID)}))
 	}
 	return &records[0], nil
 }

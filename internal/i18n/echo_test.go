@@ -2,7 +2,9 @@ package i18n
 
 import (
 	"context"
+	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -40,48 +42,72 @@ func TestUserInputMessagesHaveEchoFreeForm(t *testing.T) {
 // emptyQuotePairs are what an echo-free form must never leave behind.
 var emptyQuotePairs = []string{"“”", "「」", "\"\"", "：“", "”："}
 
+// numericSentinel is the number every user-input placeholder gets in the
+// numeric pass of TestEchoFreeFormsHideUserInput. IDs, ranks, counts, WL
+// turns and UIDs from the user's command are user input as much as text.
+const numericSentinel = 987654321
+
 // TestEchoFreeFormsHideUserInput renders every message that has a user-input
-// placeholder with a sentinel value. Without echo the sentinel never appears
-// and no empty quotes or dangling colon are left; with echo it is shown.
+// placeholder with sentinel values: a text sentinel, then a numeric one passed
+// both as UserNumber and as a plain int (a caller that forgot UserNumber).
+// Without echo no sentinel appears and no empty quotes or dangling colon are
+// left; with echo the sentinel is shown.
 func TestEchoFreeFormsHideUserInput(t *testing.T) {
+	type pass struct {
+		name     string
+		sentinel string
+		value    func() any
+	}
 	for _, locale := range Locales() {
 		for _, entry := range Entries(locale) {
 			if !HasUserPlaceholder(entry.ID) {
 				continue
 			}
-			sentinel := "ECHO_SENTINEL_" + entry.ID
-			data := Data{}
-			for _, name := range entry.Placeholders {
-				if IsUserPlaceholder(name) {
-					data[name] = UserText(sentinel)
-					continue
-				}
-				data[name] = "‹" + name + "›"
+			textSentinel := "ECHO_SENTINEL_" + entry.ID
+			numeric := strconv.Itoa(numericSentinel)
+			for _, p := range []pass{
+				{"text", textSentinel, func() any { return UserText(textSentinel) }},
+				{"UserNumber", numeric, func() any { return UserNumber(numericSentinel) }},
+				{"plain int", numeric, func() any { return numericSentinel }},
+			} {
+				checkEchoFreeForm(t, locale, entry, p.name, p.sentinel, p.value)
 			}
-			message := M(entry.ID, data)
-			echoed := message.Render(RenderOptions{Locale: locale})
-			if !strings.Contains(echoed, sentinel) {
-				t.Errorf("%s %s: echo rendering lost the user input: %q", locale, entry.ID, echoed)
+		}
+	}
+}
+
+func checkEchoFreeForm(t *testing.T, locale Locale, entry CatalogEntry, pass, sentinel string, value func() any) {
+	t.Helper()
+	data := Data{}
+	for _, name := range entry.Placeholders {
+		if IsUserPlaceholder(name) {
+			data[name] = value()
+			continue
+		}
+		data[name] = "‹" + name + "›"
+	}
+	message := M(entry.ID, data)
+	echoed := message.Render(RenderOptions{Locale: locale})
+	if !strings.Contains(echoed, sentinel) {
+		t.Errorf("%s %s (%s): echo rendering lost the user input: %q", locale, entry.ID, pass, echoed)
+	}
+	// Nested inside a usage reply as the reply layer builds it.
+	for _, reply := range []Message{message, WithUsage(message, "/查曲")} {
+		text := reply.Render(RenderOptions{Locale: locale, NoEcho: true})
+		if strings.Contains(text, sentinel) {
+			t.Errorf("%s %s (%s): echo-free rendering shows the user input: %q", locale, entry.ID, pass, text)
+		}
+		if text == RequestFailed().In(locale) {
+			t.Errorf("%s %s (%s): echo-free rendering fell back to the generic reply", locale, entry.ID, pass)
+		}
+		for _, pair := range emptyQuotePairs {
+			if strings.Contains(text, pair) {
+				t.Errorf("%s %s (%s): echo-free rendering leaves %q: %q", locale, entry.ID, pass, pair, text)
 			}
-			// Nested inside a usage reply as the reply layer builds it.
-			for _, reply := range []Message{message, WithUsage(message, "/查曲")} {
-				text := reply.Render(RenderOptions{Locale: locale, NoEcho: true})
-				if strings.Contains(text, sentinel) {
-					t.Errorf("%s %s: echo-free rendering shows the user input: %q", locale, entry.ID, text)
-				}
-				if text == RequestFailed().In(locale) {
-					t.Errorf("%s %s: echo-free rendering fell back to the generic reply", locale, entry.ID)
-				}
-				for _, pair := range emptyQuotePairs {
-					if strings.Contains(text, pair) {
-						t.Errorf("%s %s: echo-free rendering leaves %q: %q", locale, entry.ID, pair, text)
-					}
-				}
-				for _, line := range strings.Split(text, "\n") {
-					if strings.HasSuffix(strings.TrimSpace(line), "：") {
-						t.Errorf("%s %s: echo-free line ends with a colon: %q", locale, entry.ID, line)
-					}
-				}
+		}
+		for _, line := range strings.Split(text, "\n") {
+			if strings.HasSuffix(strings.TrimSpace(line), "：") {
+				t.Errorf("%s %s (%s): echo-free line ends with a colon: %q", locale, entry.ID, pass, line)
 			}
 		}
 	}
@@ -96,6 +122,10 @@ func TestNoEchoNeverSubstitutesUserText(t *testing.T) {
 	}
 	if got := leaky.String(); got != "ECHO_SENTINEL" {
 		t.Fatalf("echo rendering = %q", got)
+	}
+	leakyNumber := M("common.verbatim", Data{"Value": UserNumber(numericSentinel)})
+	if got := leakyNumber.Render(RenderOptions{NoEcho: true}); got != RequestFailed().String() {
+		t.Fatalf("UserNumber outside a User… placeholder rendered as %q", got)
 	}
 }
 
@@ -135,6 +165,56 @@ func TestIsUserPlaceholder(t *testing.T) {
 	for name, want := range map[string]bool{"UserQuery": true, "UserUID": true, "User": false, "Username": false, "Query": false, "Users": false} {
 		if got := IsUserPlaceholder(name); got != want {
 			t.Errorf("IsUserPlaceholder(%q) = %v", name, got)
+		}
+	}
+}
+
+// userWrittenOutsideEchoRule are placeholders whose description says the
+// value is user input but which are not User…: the echo rule covers error
+// replies and unreviewed alias text, not these success replies, image labels
+// and moderation notices.
+var userWrittenOutsideEchoRule = map[string]string{
+	"account.swap.done.Left":                     "success reply",
+	"account.swap.done.Right":                    "success reply",
+	"account.swap.done_region.Left":              "success reply",
+	"account.swap.done_region.Right":             "success reply",
+	"alias.record.rejected.Reason":               "the admin's own reason in a success reply",
+	"deck.summary.wl_character.Character":        "success summary",
+	"deck.summary.leader.Character":              "success summary",
+	"deck.summary.challenge_character.Character": "success summary",
+	"moderation.kill.done_permanent.Reason":      "the admin's own reason in a success reply",
+	"moderation.kill.done_until.Reason":          "the admin's own reason in a success reply",
+	"moderation.banned_reason.Reason":            "ban notice written by an admin",
+	"moderation.banned_reason_until.Reason":      "ban notice written by an admin",
+	"music.lookup_list.bpm.BPM":                  "image title of a successful lookup",
+	"music.image.board.strategy.Strategy":        "image label",
+}
+
+var userWrittenDescription = regexp.MustCompile(`用户写|用户输入|管理员输入|用户提交`)
+
+// TestUserWrittenPlaceholdersAreUserInput catches a new message whose
+// description says a placeholder holds what the user (or admin) typed, text
+// or number, without naming it User…, so it would be echoed without
+// parameter echo.
+func TestUserWrittenPlaceholdersAreUserInput(t *testing.T) {
+	seen := map[string]bool{}
+	for _, entry := range Entries(DefaultLocale) {
+		_, placeholders, _ := strings.Cut(entry.Description, "占位符：")
+		for _, item := range strings.Split(strings.TrimSuffix(placeholders, "。"), "；") {
+			name, meaning, ok := strings.Cut(item, "=")
+			if !ok || IsUserPlaceholder(name) || !userWrittenDescription.MatchString(meaning) {
+				continue
+			}
+			key := entry.ID + "." + name
+			seen[key] = true
+			if _, allowed := userWrittenOutsideEchoRule[key]; !allowed {
+				t.Errorf("%s: %s is user input (%q); name it User… and add %s%s", entry.File, key, meaning, entry.ID, NoEchoSuffix)
+			}
+		}
+	}
+	for key := range userWrittenOutsideEchoRule {
+		if !seen[key] {
+			t.Errorf("userWrittenOutsideEchoRule: %s no longer matches a catalog placeholder; remove it", key)
 		}
 	}
 }

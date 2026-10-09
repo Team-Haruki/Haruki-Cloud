@@ -29,7 +29,7 @@ func unrecognizedUnlessTyped(err error) error {
 
 // eventLabel names an event of region in error replies, e.g. "日服(JP)活动 123".
 func eventLabel(region string, eventID int) i18n.Message {
-	return i18n.M("common.event_label", i18n.Data{"Region": i18n.RegionLabel(strings.ToLower(strings.TrimSpace(region))), "ID": eventID})
+	return i18n.M("common.event_label", i18n.Data{"Region": i18n.RegionLabel(strings.ToLower(strings.TrimSpace(region))), "UserID": i18n.UserNumber(eventID)})
 }
 
 // characterLabel names a game character in replies: its name from game

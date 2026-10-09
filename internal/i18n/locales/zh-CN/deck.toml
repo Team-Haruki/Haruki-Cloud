@@ -77,8 +77,12 @@ description = "固定角色有重复。"
 other = "固定角色不能重复"
 
 [deck.fixed.card_not_in_region]
-description = "固定的卡牌在该区服不存在（可能还没有上线）。占位符：Region=区服显示名；CardID=卡牌 ID。"
-other = "{{.Region}}没有卡牌 {{.CardID}}（可能还没有在该区服上线），请检查固定卡牌 ID"
+description = "固定的卡牌在该区服不存在（可能还没有上线）。占位符：Region=区服显示名；UserCardID=用户写的卡牌 ID。"
+other = "{{.Region}}没有卡牌 {{.UserCardID}}（可能还没有在该区服上线），请检查固定卡牌 ID"
+
+[deck.fixed.card_not_in_region_no_echo]
+description = "deck.fixed.card_not_in_region 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Region=区服显示名。"
+other = "{{.Region}}没有指定的固定卡牌（可能还没有在该区服上线），请检查固定卡牌 ID"
 
 [deck.current.incomplete]
 description = "使用“当前”参数，但当前卡组不足 5 张。"
@@ -141,32 +145,56 @@ description = "组卡指定了 wl1 终章（终章从 wl2 开始）。"
 other = "终章从“wl2”开始，请写“wl2 终章”或“wl3 终章”"
 
 [deck.wl.finale_needs_leader]
-description = "WL 终章组卡没有指定队长角色。占位符：Turn=WL 期数。"
-other = "wl{{.Turn}} 终章需要指定队长角色，例如 wl{{.Turn}} 终章 miku"
+description = "WL 终章组卡没有指定队长角色。占位符：UserTurn=用户写的 WL 期数。"
+other = "wl{{.UserTurn}} 终章需要指定队长角色，例如 wl{{.UserTurn}} 终章 miku"
+
+[deck.wl.finale_needs_leader_no_echo]
+description = "deck.wl.finale_needs_leader 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "WL 终章需要指定队长角色，例如 wl2 终章 miku"
 
 [deck.wl.finale_turn_invalid]
-description = "WL 终章期数小于 2。占位符：Turn=用户写的期数。"
-other = "WL 终章从 wl2 开始，无法查询 wl{{.Turn}} 终章"
+description = "WL 终章期数小于 2。占位符：UserTurn=用户写的期数。"
+other = "WL 终章从 wl2 开始，无法查询 wl{{.UserTurn}} 终章"
+
+[deck.wl.finale_turn_invalid_no_echo]
+description = "deck.wl.finale_turn_invalid 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "WL 终章从 wl2 开始，无法查询这一期终章"
 
 [deck.wl.chapter_required]
-description = "WL 活动组卡没有指定角色章节。占位符：EventID=活动 ID。"
-other = "请指定要查询的 WL 角色章节，例如 wl1 miku 或 event{{.EventID}} miku"
+description = "WL 活动组卡没有指定角色章节。占位符：UserEventID=活动 ID（可能是用户写的，一律按用户输入处理）。"
+other = "请指定要查询的 WL 角色章节，例如 wl1 miku 或 event{{.UserEventID}} miku"
+
+[deck.wl.chapter_required_no_echo]
+description = "deck.wl.chapter_required 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "请指定要查询的 WL 角色章节，例如 wl1 miku"
 
 [deck.wl.chapter_required_mysekai]
-description = "烤森组卡在 WL 活动没有指定角色章节。占位符：EventID=活动 ID。"
-other = "请指定要查询的 WL 角色章节，例如“/烤森组卡 wl1 miku”或“/烤森组卡 event{{.EventID}} miku”"
+description = "烤森组卡在 WL 活动没有指定角色章节。占位符：UserEventID=活动 ID（可能是用户写的，一律按用户输入处理）。"
+other = "请指定要查询的 WL 角色章节，例如“/烤森组卡 wl1 miku”或“/烤森组卡 event{{.UserEventID}} miku”"
+
+[deck.wl.chapter_required_mysekai_no_echo]
+description = "deck.wl.chapter_required_mysekai 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "请指定要查询的 WL 角色章节，例如“/烤森组卡 wl1 miku”"
 
 [deck.wl.turn_invalid]
 description = "WL 活动序号无效。"
 other = "WL 活动序号无效"
 
 [deck.wl.turn_needs_character]
-description = "wl 序号没有指定角色。占位符：Turn=WL 期数。"
-other = "wl{{.Turn}} 需要指定角色，例如 wl{{.Turn}} miku"
+description = "wl 序号没有指定角色。占位符：UserTurn=用户写的 WL 期数。"
+other = "wl{{.UserTurn}} 需要指定角色，例如 wl{{.UserTurn}} miku"
+
+[deck.wl.turn_needs_character_no_echo]
+description = "deck.wl.turn_needs_character 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "按 WL 期数组卡需要指定角色，例如 wl1 miku"
 
 [deck.wl.turn_needs_character_or_unit]
-description = "wl 序号没有指定角色或团名。占位符：Turn=WL 期数。"
-other = "wl{{.Turn}} 需要指定角色或团名"
+description = "wl 序号没有指定角色或团名。占位符：UserTurn=用户写的 WL 期数。"
+other = "wl{{.UserTurn}} 需要指定角色或团名"
+
+[deck.wl.turn_needs_character_or_unit_no_echo]
+description = "deck.wl.turn_needs_character_or_unit 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "按 WL 期数组卡需要指定角色或团名"
 
 [deck.wl.character_invalid]
 description = "WL 角色无效。"
@@ -185,16 +213,28 @@ description = "组卡时把“wl<数字>”当作 WL 章节写在活动 ID 或�
 other = "“wl”加数字表示 WL 活动的期数，请写成“wl1 miku”；已指定活动时直接写角色，例如“event123 miku”"
 
 [deck.wl.future_finale]
-description = "请求的 WL 终章期数超过了已有数据。占位符：Available=已有数据的最后一期；Turn=用户写的期数。"
-other = "目前只有到 wl{{.Available}} 的终章数据，无法查询 wl{{.Turn}} 终章"
+description = "请求的 WL 终章期数超过了已有数据。占位符：Available=已有数据的最后一期；UserTurn=用户写的期数。"
+other = "目前只有到 wl{{.Available}} 的终章数据，无法查询 wl{{.UserTurn}} 终章"
+
+[deck.wl.future_finale_no_echo]
+description = "deck.wl.future_finale 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Available=已有数据的最后一期。"
+other = "目前只有到 wl{{.Available}} 的终章数据，无法查询这一期终章"
 
 [deck.wl.future_turn_character]
-description = "该角色的 WL 期数不足。占位符：Available=该角色已有的 WL 期数；Turn=用户写的期数。"
-other = "该角色目前只有 {{.Available}} 期 WL，无法查询 wl{{.Turn}}"
+description = "该角色的 WL 期数不足。占位符：Available=该角色已有的 WL 期数；UserTurn=用户写的期数。"
+other = "该角色目前只有 {{.Available}} 期 WL，无法查询 wl{{.UserTurn}}"
+
+[deck.wl.future_turn_character_no_echo]
+description = "deck.wl.future_turn_character 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Available=该角色已有的 WL 期数。"
+other = "该角色目前只有 {{.Available}} 期 WL，无法查询这一期"
 
 [deck.wl.future_turn_unit]
-description = "该团的 WL 期数不足。占位符：Available=该团已有的 WL 期数；Turn=用户写的期数。"
-other = "该团目前只有 {{.Available}} 期 WL，无法查询 wl{{.Turn}}"
+description = "该团的 WL 期数不足。占位符：Available=该团已有的 WL 期数；UserTurn=用户写的期数。"
+other = "该团目前只有 {{.Available}} 期 WL，无法查询 wl{{.UserTurn}}"
+
+[deck.wl.future_turn_unit_no_echo]
+description = "deck.wl.future_turn_unit 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Available=该团已有的 WL 期数。"
+other = "该团目前只有 {{.Available}} 期 WL，无法查询这一期"
 
 [deck.score_up.result]
 description = "/实效 的计算结果。占位符：Leader=队长技能加成（百分比）；Internal=5 张卡技能加成之和（内部值）；ScoreUp=实效（百分比）；Multiplier=倍率，即 1 + 实效 / 100。"

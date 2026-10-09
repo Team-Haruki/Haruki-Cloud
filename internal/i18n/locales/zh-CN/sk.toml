@@ -45,8 +45,12 @@ description = "玩家追踪：没有该玩家的追踪数据。"
 other = "没有找到该玩家的追踪数据"
 
 [sk.trace.no_rank_data]
-description = "玩家追踪：没有该名次的追踪数据。占位符：Rank=名次。"
-other = "没有找到第 {{.Rank}} 名的追踪数据"
+description = "玩家追踪：没有该名次的追踪数据。占位符：UserRank=用户写的名次。"
+other = "没有找到第 {{.UserRank}} 名的追踪数据"
+
+[sk.trace.no_rank_data_no_echo]
+description = "sk.trace.no_rank_data 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "没有找到这个名次的追踪数据"
 
 [sk.player_trace.max_two]
 description = "玩家追踪一次指定了 2 个以上名次。"
@@ -109,8 +113,12 @@ description = "用 wl 查当前章节，但该活动还没有开始任何章节�
 other = "{{.Event}}还没有开始任何 WL 章节，请写章节序号（如“wl2”）或角色（如“wlmiku”）指定章节"
 
 [sk.wl.no_chapter_no]
-description = "指定的章节序号不存在。占位符：Event=活动（common.event_label）；Chapter=章节序号。"
-other = "{{.Event}}没有第 {{.Chapter}} 章 WL 单榜"
+description = "指定的章节序号不存在。占位符：Event=活动（common.event_label）；UserChapter=用户写的章节序号。"
+other = "{{.Event}}没有第 {{.UserChapter}} 章 WL 单榜"
+
+[sk.wl.no_chapter_no_no_echo]
+description = "sk.wl.no_chapter_no 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Event=活动（common.event_label）。"
+other = "{{.Event}}没有这一章 WL 单榜"
 
 [sk.wl.chapter_required]
 description = "查 WL 榜线时没有指定章节。"

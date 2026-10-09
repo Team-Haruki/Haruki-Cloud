@@ -148,11 +148,11 @@ func resolveCustomProfileCard(cards []sekaiapi.UserCustomProfileCard, params pro
 		if target := findCustomProfileCard(cards, params.CustomProfileID, params.CustomProfileCardID); target != nil {
 			return target, nil
 		}
-		return nil, usererror.New(usererror.CodeNotFound, i18n.M("profile.custom_card.not_found_pair", i18n.Data{"Group": params.CustomProfileID, "Card": params.CustomProfileCardID}))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("profile.custom_card.not_found_pair", i18n.Data{"UserGroup": i18n.UserNumber(params.CustomProfileID), "UserCard": i18n.UserNumber(params.CustomProfileCardID)}))
 	}
 	page := max(1, params.Seq)
 	if page > len(cards) {
-		return nil, usererror.New(usererror.CodeNotFound, i18n.M("profile.custom_card.not_found_page", i18n.Data{"Page": page, "Total": len(cards)}))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("profile.custom_card.not_found_page", i18n.Data{"UserPage": i18n.UserNumber(page), "Total": len(cards)}))
 	}
 	ordered := slices.Clone(cards)
 	slices.SortStableFunc(ordered, func(a, b sekaiapi.UserCustomProfileCard) int { return a.Seq - b.Seq })

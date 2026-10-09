@@ -120,7 +120,7 @@ func prepareDeckWorldBloomFinaleSimulation(q *deck.AutoQuery, turn int) error {
 		return nil
 	}
 	if q.ForcedLeaderCharacterID == nil && strings.TrimSpace(q.ForcedLeaderCharacterQuery) == "" {
-		return usererror.Misuse(i18n.M("deck.wl.finale_needs_leader", i18n.Data{"Turn": turn}))
+		return usererror.Misuse(i18n.M("deck.wl.finale_needs_leader", i18n.Data{"UserTurn": i18n.UserNumber(turn)}))
 	}
 
 	q.EventID = nil
@@ -891,7 +891,7 @@ func clearDeckAutoEventSelection(q *deck.AutoQuery) {
 
 func resolveDeckWorldBloomFinaleEventByTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, turn int) (*sekaidb.Event, error) {
 	if turn < 2 {
-		return nil, usererror.Invalid(i18n.M("deck.wl.finale_turn_invalid", i18n.Data{"Turn": turn}))
+		return nil, usererror.Invalid(i18n.M("deck.wl.finale_turn_invalid", i18n.Data{"UserTurn": i18n.UserNumber(turn)}))
 	}
 	if turn == 2 {
 		return &sekaidb.Event{GameID: 180}, nil
@@ -939,7 +939,7 @@ func (e *deckFutureWorldBloomFinaleTurnError) userError() *usererror.Error {
 	if e == nil {
 		return usererror.Invalid(i18n.M("deck.wl.turn_invalid"))
 	}
-	return usererror.Invalid(i18n.M("deck.wl.future_finale", i18n.Data{"Available": e.Available, "Turn": e.Turn}))
+	return usererror.Invalid(i18n.M("deck.wl.future_finale", i18n.Data{"Available": e.Available, "UserTurn": i18n.UserNumber(e.Turn)}))
 }
 
 func deckWorldBloomHasFinaleChapter(chapters []*sekaidb.Worldbloom) bool {
@@ -954,9 +954,9 @@ func deckWorldBloomHasFinaleChapter(chapters []*sekaidb.Worldbloom) bool {
 func missingDeckWorldBloomChapterError(q *deck.AutoQuery, eventID int) error {
 	switch strings.ToLower(strings.TrimSpace(q.RecommendType)) {
 	case "mysekai":
-		return usererror.Misuse(i18n.M("deck.wl.chapter_required_mysekai", i18n.Data{"EventID": eventID}))
+		return usererror.Misuse(i18n.M("deck.wl.chapter_required_mysekai", i18n.Data{"UserEventID": i18n.UserNumber(eventID)}))
 	default:
-		return usererror.Misuse(i18n.M("deck.wl.chapter_required", i18n.Data{"EventID": eventID}))
+		return usererror.Misuse(i18n.M("deck.wl.chapter_required", i18n.Data{"UserEventID": i18n.UserNumber(eventID)}))
 	}
 }
 
@@ -975,7 +975,7 @@ func resolveDeckWorldBloomEventByTurnSelection(ctx context.Context, app *rendera
 		return resolveDeckWorldBloomEventByUnitTurn(ctx, app, region, turn, unit)
 	}
 
-	return nil, usererror.Misuse(i18n.M("deck.wl.turn_needs_character", i18n.Data{"Turn": turn}))
+	return nil, usererror.Misuse(i18n.M("deck.wl.turn_needs_character", i18n.Data{"UserTurn": i18n.UserNumber(turn)}))
 }
 
 func resolveDeckWorldBloomEventByCharacterTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, turn, charID int) (*sekaidb.Event, error) {
@@ -1012,7 +1012,7 @@ func resolveDeckWorldBloomEventByCharacterTurn(ctx context.Context, app *rendera
 func resolveDeckWorldBloomEventByUnitTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, turn int, unit string) (*sekaidb.Event, error) {
 	unit = normalizeDeckUnit(unit)
 	if unit == "" {
-		return nil, usererror.Misuse(i18n.M("deck.wl.turn_needs_character_or_unit", i18n.Data{"Turn": turn}))
+		return nil, usererror.Misuse(i18n.M("deck.wl.turn_needs_character_or_unit", i18n.Data{"UserTurn": i18n.UserNumber(turn)}))
 	}
 
 	worldBloomEvents, err := queryDeckWorldBloomEvents(ctx, app, region)
@@ -1066,9 +1066,9 @@ func (e *deckFutureWorldBloomTurnError) userError() *usererror.Error {
 	case e == nil:
 		return usererror.Invalid(i18n.M("deck.wl.turn_invalid"))
 	case e.Character > 0:
-		return usererror.Invalid(i18n.M("deck.wl.future_turn_character", i18n.Data{"Available": e.Available, "Turn": e.Turn}))
+		return usererror.Invalid(i18n.M("deck.wl.future_turn_character", i18n.Data{"Available": e.Available, "UserTurn": i18n.UserNumber(e.Turn)}))
 	default:
-		return usererror.Invalid(i18n.M("deck.wl.future_turn_unit", i18n.Data{"Available": e.Available, "Turn": e.Turn}))
+		return usererror.Invalid(i18n.M("deck.wl.future_turn_unit", i18n.Data{"Available": e.Available, "UserTurn": i18n.UserNumber(e.Turn)}))
 	}
 }
 

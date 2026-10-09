@@ -37,9 +37,9 @@ func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCou
 
 	if len(matches) == 0 {
 		if targetDifficulty != "" {
-			return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.note_count.no_chart_difficulty", i18n.Data{"Count": query.NoteCount, "Difficulty": i18n.DifficultyLabel(targetDifficulty)}))
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.note_count.no_chart_difficulty", i18n.Data{"UserCount": i18n.UserNumber(query.NoteCount), "Difficulty": i18n.DifficultyLabel(targetDifficulty)}))
 		}
-		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.note_count.no_chart", i18n.Data{"Count": query.NoteCount}))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.note_count.no_chart", i18n.Data{"UserCount": i18n.UserNumber(query.NoteCount)}))
 	}
 
 	sort.Slice(matches, func(i, j int) bool {

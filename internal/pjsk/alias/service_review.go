@@ -94,7 +94,7 @@ func loadPendingAliasesForReview(ctx context.Context, tx *pjskdb.Tx, reviewIDs [
 	}
 	missing := missingReviewIDs(reviewIDs, byID)
 	if len(missing) != 0 {
-		return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"IDs": strings.Join(missing, "、")}))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"UserIDs": i18n.UserText(strings.Join(missing, "、"))}))
 	}
 	return byID, nil
 }
@@ -125,7 +125,7 @@ func (s *Service) validatePendingAliasesForApproval(ctx context.Context, tx *pjs
 		}
 		key := row.AliasType + "\x00" + normalizeCompareText(row.Alias)
 		if prevID, ok := reserved[key]; ok {
-			return usererror.Invalid(i18n.M("alias.duplicate_in_batch", i18n.Data{"First": prevID, "Second": reviewID, "Kind": aliasKind(row.AliasType), "UserAlias": i18n.EchoQuery(row.Alias)}))
+			return usererror.Invalid(i18n.M("alias.duplicate_in_batch", i18n.Data{"UserFirst": i18n.UserNumber(prevID), "UserSecond": i18n.UserNumber(reviewID), "Kind": aliasKind(row.AliasType), "UserAlias": i18n.EchoQuery(row.Alias)}))
 		}
 		reserved[key] = reviewID
 	}
@@ -159,7 +159,7 @@ func (s *Service) Reject(ctx context.Context, platform, platformUserID string, r
 		return nil, err
 	}
 	if len(records) == 0 {
-		return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"IDs": strconv.FormatInt(reviewID, 10)}))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"UserIDs": i18n.UserNumber(reviewID)}))
 	}
 	return &records[0], nil
 }

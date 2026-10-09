@@ -750,10 +750,10 @@ func (c *Controller) applyCostumeDetailBodyRole(region renderregion.Value, costu
 	}
 	outfitID := outfitIDs[costumeInfo.ID]
 	if outfitID <= 0 {
-		return usererror.Invalid(i18n.M("costume.not_for_character", i18n.Data{"Part": i18n.M("costume.part.outfit"), "ID": costumeInfo.ID, "Character": query.Character3DID}))
+		return usererror.Invalid(i18n.M("costume.not_for_character", i18n.Data{"Part": i18n.M("costume.part.outfit"), "UserID": i18n.UserNumber(costumeInfo.ID), "UserCharacter": i18n.UserNumber(query.Character3DID)}))
 	}
 	if query.OutfitID > 0 && query.OutfitID != outfitID {
-		return usererror.Invalid(i18n.M("costume.not_for_character", i18n.Data{"Part": i18n.M("costume.part.outfit"), "ID": query.OutfitID, "Character": query.Character3DID}))
+		return usererror.Invalid(i18n.M("costume.not_for_character", i18n.Data{"Part": i18n.M("costume.part.outfit"), "UserID": i18n.UserNumber(query.OutfitID), "UserCharacter": i18n.UserNumber(query.Character3DID)}))
 	}
 	basic.OutfitID = outfitID
 	return nil
@@ -769,7 +769,7 @@ func (c *Controller) applyCostumeDetailAccessoryRole(region renderregion.Value, 
 	}
 	resolvedIDs := accessoryIDs[costumeInfo.ID]
 	if len(resolvedIDs) == 0 {
-		return usererror.Invalid(i18n.M("costume.not_for_character", i18n.Data{"Part": i18n.M("costume.part.accessory"), "ID": costumeInfo.ID, "Character": query.Character3DID}))
+		return usererror.Invalid(i18n.M("costume.not_for_character", i18n.Data{"Part": i18n.M("costume.part.accessory"), "UserID": i18n.UserNumber(costumeInfo.ID), "UserCharacter": i18n.UserNumber(query.Character3DID)}))
 	}
 	return selectCostumeDetailAccessory(resolvedIDs, costumeInfo.ID, query, basic)
 }
@@ -777,13 +777,13 @@ func (c *Controller) applyCostumeDetailAccessoryRole(region renderregion.Value, 
 func selectCostumeDetailAccessory(resolvedIDs []int, costumeID int, query Query, basic *drawing.CostumeBasic) error {
 	if query.AccessoryID > 0 {
 		if !slices.Contains(resolvedIDs, query.AccessoryID) {
-			return usererror.Invalid(i18n.M("costume.not_for_character", i18n.Data{"Part": i18n.M("costume.part.accessory"), "ID": query.AccessoryID, "Character": query.Character3DID}))
+			return usererror.Invalid(i18n.M("costume.not_for_character", i18n.Data{"Part": i18n.M("costume.part.accessory"), "UserID": i18n.UserNumber(query.AccessoryID), "UserCharacter": i18n.UserNumber(query.Character3DID)}))
 		}
 		basic.AccessoryID = query.AccessoryID
 		return nil
 	}
 	if len(resolvedIDs) > 1 {
-		return usererror.New(usererror.CodeAmbiguous, i18n.M("costume.accessory_raw_ambiguous", i18n.Data{"RawID": costumeID, "Character": query.Character3DID, "IDs": joinCostumeIDs(resolvedIDs)}))
+		return usererror.New(usererror.CodeAmbiguous, i18n.M("costume.accessory_raw_ambiguous", i18n.Data{"UserRawID": i18n.UserNumber(costumeID), "UserCharacter": i18n.UserNumber(query.Character3DID), "IDs": joinCostumeIDs(resolvedIDs)}))
 	}
 	basic.AccessoryID = resolvedIDs[0]
 	return nil
@@ -799,7 +799,7 @@ func (c *Controller) applyCostumeDetailHairRole(region renderregion.Value, costu
 	}
 	basic.HairID = hairIDs[costumeInfo.ID]
 	if basic.HairID <= 0 {
-		return usererror.Invalid(i18n.M("costume.not_for_character", i18n.Data{"Part": i18n.M("costume.part.hair"), "ID": costumeInfo.ID, "Character": query.Character3DID}))
+		return usererror.Invalid(i18n.M("costume.not_for_character", i18n.Data{"Part": i18n.M("costume.part.hair"), "UserID": i18n.UserNumber(costumeInfo.ID), "UserCharacter": i18n.UserNumber(query.Character3DID)}))
 	}
 	return nil
 }
@@ -1046,7 +1046,7 @@ func (c *Controller) resolveNormalizedOutfit(region renderregion.Value, source D
 			return item, nil
 		}
 	}
-	return nil, usererror.New(usererror.CodeNotFound, i18n.M("costume.combo_not_found", i18n.Data{"Outfit": query.OutfitID, "Character": query.Character3DID, "Color": colorID}))
+	return nil, usererror.New(usererror.CodeNotFound, i18n.M("costume.combo_not_found", i18n.Data{"UserOutfit": i18n.UserNumber(query.OutfitID), "UserCharacter": i18n.UserNumber(query.Character3DID), "UserColor": i18n.UserNumber(colorID)}))
 }
 
 func setCostumeDetailPreviewPath(prepared any, previewPath string) {
@@ -1244,7 +1244,7 @@ func (s *singleCostumeLookup) resolve() (*masterdata.Costume3d, error) {
 func (s *singleCostumeLookup) noMatchError() error {
 	needle := strings.TrimSpace(s.query.Query)
 	if s.named {
-		return usererror.New(usererror.CodeNotFound, i18n.M("costume.part_name_not_found", i18n.Data{"Character": s.query.Character3DID, "Part": partTypeLabel(s.partType), "UserName": i18n.EchoQuery(needle)}))
+		return usererror.New(usererror.CodeNotFound, i18n.M("costume.part_name_not_found", i18n.Data{"UserCharacter": i18n.UserNumber(s.query.Character3DID), "Part": partTypeLabel(s.partType), "UserName": i18n.EchoQuery(needle)}))
 	}
 	return fmt.Errorf("no costume matched %q", needle)
 }
@@ -1255,7 +1255,7 @@ func (s *singleCostumeLookup) resolveNamed() (*masterdata.Costume3d, error) {
 		return s.resolveLogicalID(ids[0])
 	}
 	if len(ids) > 1 {
-		return nil, usererror.New(usererror.CodeAmbiguous, i18n.M("costume.part_name_ambiguous", i18n.Data{"Character": s.query.Character3DID, "Part": partTypeLabel(s.partType), "UserName": i18n.EchoQuery(s.query.Query), "IDs": joinCostumeIDs(ids)}))
+		return nil, usererror.New(usererror.CodeAmbiguous, i18n.M("costume.part_name_ambiguous", i18n.Data{"UserCharacter": i18n.UserNumber(s.query.Character3DID), "Part": partTypeLabel(s.partType), "UserName": i18n.EchoQuery(s.query.Query), "IDs": joinCostumeIDs(ids)}))
 	}
 	if len(s.items) > 1 && len(ids) == 1 {
 		sort.Slice(s.items, func(i, j int) bool { return s.items[i].ID < s.items[j].ID })

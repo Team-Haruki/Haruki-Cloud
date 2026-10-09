@@ -5,6 +5,7 @@ import (
 	"slices"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -393,7 +394,7 @@ func TestResolveCustomProfileCardReturnsErrorForMissingPage(t *testing.T) {
 		t.Fatal("expected missing page error")
 	}
 	typed := testutil.RequireUserError(t, err, "", "profile.custom_card.not_found_page")
-	if typed.Message.Data["Page"] != 99 || typed.Message.Data["Total"] != 1 {
+	if typed.Message.Data["UserPage"] != i18n.UserNumber(99) || typed.Message.Data["Total"] != 1 {
 		t.Fatalf("unexpected page data: %+v", typed.Message.Data)
 	}
 }

@@ -81,7 +81,7 @@ func (c *Controller) buildPrimaryPlayerTrace(query TrackerRankQuery) ([]drawing.
 		return nil, nil, err
 	}
 	if len(first) == 0 {
-		return nil, nil, usererror.New(usererror.CodeNotFound, i18n.M("sk.trace.no_rank_data", i18n.Data{"Rank": query.Ranks[0]}))
+		return nil, nil, usererror.New(usererror.CodeNotFound, i18n.M("sk.trace.no_rank_data", i18n.Data{"UserRank": i18n.UserNumber(query.Ranks[0])}))
 	}
 	if len(query.Ranks) == 1 {
 		return first, nil, nil

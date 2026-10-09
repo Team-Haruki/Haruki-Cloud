@@ -1,12 +1,12 @@
 package pjsk
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -463,7 +463,36 @@ func executeSharedBotCommand(
 		return failedSharedBotCommand(ctx, err, resolved.CommandPath, resolved.TriggerCommand, resolved.TriggerCommand, metadata, forceExecutor, "execution")
 	}
 	metadata.Outcome = "ok"
-	return encodeSharedCommandResult(ctx, newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK, responseData), metadata, forceExecutor)
+	return succeededSharedBotCommand(ctx, responseData, metadata, forceExecutor)
+}
+
+// succeededSharedBotCommand encodes a command's reply. Text built with
+// onebot11.LocalizedText (a success reply that repeats unreviewed user
+// input) is rendered twice: without echo for Response and with echo for
+// EchoResponse, so the delivering bot can pick by its own request.
+func succeededSharedBotCommand(ctx context.Context, responseData onebot11.Message, metadata sharedCommandMetadata, forceExecutor bool) sharedCommandResult {
+	locale := i18n.LocaleFromContext(ctx)
+	result := encodeSharedCommandResult(ctx, newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK, responseData.Render(i18n.RenderOptions{Locale: locale, NoEcho: true})), metadata, forceExecutor)
+	if !responseData.HasLocalizedText() || result.Metadata.Outcome != "ok" {
+		return result
+	}
+	return withEchoVariant(ctx, result, newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK, responseData.Render(i18n.RenderOptions{Locale: locale})))
+}
+
+// withEchoVariant adds echoEnvelope to result as the reply for clients that
+// enabled parameter echo, when it differs from result's own reply (which is
+// always the one without echo). A shared result keeps both because the bot
+// that delivers it may not be the one that executed it.
+func withEchoVariant(ctx context.Context, result sharedCommandResult, echoEnvelope botResponseEnvelope) sharedCommandResult {
+	if len(result.Response.JSONBody) == 0 {
+		return result
+	}
+	echo, err := encodeBotResponseEnvelopeContext(ctx, echoEnvelope)
+	if err != nil || bytes.Equal(echo.JSONBody, result.Response.JSONBody) {
+		return result
+	}
+	result.EchoResponse = echo
+	return result
 }
 
 func resolveBotCommandWithCompat(
@@ -533,15 +562,8 @@ func failedSharedBotCommand(
 	}
 	metadata.ErrorType = fmt.Sprintf("%T", err)
 	envelope := commandErrorEnvelope(i18n.WithParamEcho(ctx, false), err, commandPath, matchedCommand)
-	result := encodeSharedCommandResult(ctx, envelope, metadata, forceExecutor)
 	echoEnvelope := commandErrorEnvelope(i18n.WithParamEcho(ctx, true), err, commandPath, matchedCommand)
-	if reflect.DeepEqual(echoEnvelope, envelope) {
-		return result
-	}
-	if echo, encodeErr := encodeBotResponseEnvelopeContext(ctx, echoEnvelope); encodeErr == nil {
-		result.EchoResponse = echo
-	}
-	return result
+	return withEchoVariant(ctx, encodeSharedCommandResult(ctx, envelope, metadata, forceExecutor), echoEnvelope)
 }
 
 func encodeSharedCommandResult(ctx context.Context, envelope botResponseEnvelope, metadata sharedCommandMetadata, forceExecutor bool) sharedCommandResult {

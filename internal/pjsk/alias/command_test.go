@@ -24,7 +24,7 @@ func executeAliasCommand(t *testing.T, ctx context.Context, service *Service, mo
 	if err != nil {
 		t.Fatalf("ExecuteCommand(%s): %v", mode, err)
 	}
-	text := string(result)
+	text := result.String()
 	if !strings.Contains(text, want) {
 		t.Fatalf("ExecuteCommand(%s) = %q, want substring %q", mode, text, want)
 	}

@@ -2,10 +2,11 @@ package vlive
 
 import (
 	"context"
-	"strings"
+	"errors"
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
@@ -68,7 +69,7 @@ func (f *fakeSource) WithContext(ctx context.Context) DataSource {
 	return &clone
 }
 
-func TestRenderTextFiltersAndFormatsLives(t *testing.T) {
+func TestBuildListRequestFiltersLives(t *testing.T) {
 	now := time.Date(2026, 3, 26, 20, 0, 0, 0, time.Local)
 	ms := func(tm time.Time) int64 { return tm.UnixMilli() }
 
@@ -117,41 +118,39 @@ func TestRenderTextFiltersAndFormatsLives(t *testing.T) {
 		},
 	}, renderregion.JP)
 
-	text, err := controller.RenderText(ListQuery{Now: now})
+	req, err := controller.BuildListRequest(ListQuery{Now: now})
 	if err != nil {
-		t.Fatalf("RenderText() error = %v", err)
+		t.Fatalf("BuildListRequest() error = %v", err)
 	}
-	if !strings.Contains(text, "JP 虚拟Live列表") {
-		t.Fatalf("missing header: %q", text)
+	byID := map[int]drawing.VLiveBrief{}
+	for _, live := range req.Lives {
+		byID[live.ID] = live
 	}
-	if !strings.Contains(text, "【1001】Future Live") || !strings.Contains(text, "下一场:") {
-		t.Fatalf("missing future live text: %q", text)
+	if len(byID) != 2 {
+		t.Fatalf("lives = %+v, want only 1001 and 1002", req.Lives)
 	}
-	if !strings.Contains(text, "【1002】Ongoing Live") || !strings.Contains(text, "当前Live进行中") {
-		t.Fatalf("missing ongoing live text: %q", text)
+	if future := byID[1001]; future.Name != "Future Live" || future.Living || future.CurrentStartAt == 0 {
+		t.Fatalf("future live = %+v", future)
 	}
-	if !strings.Contains(text, "剩余场次: 2") {
-		t.Fatalf("missing rest count: %q", text)
+	if ongoing := byID[1002]; ongoing.Name != "Ongoing Live" || !ongoing.Living {
+		t.Fatalf("ongoing live = %+v", ongoing)
 	}
-	if strings.Contains(text, "Too Far") || strings.Contains(text, "Already Ended") || strings.Contains(text, "Too Long") {
-		t.Fatalf("unexpected filtered lives in text: %q", text)
+	if byID[1001].RestCount != 2 {
+		t.Fatalf("rest count = %d, want 2", byID[1001].RestCount)
 	}
 }
 
-func TestRenderTextReturnsEmptyMessageWhenNoUpcomingLives(t *testing.T) {
+func TestBuildListRequestReportsNoLives(t *testing.T) {
 	controller := NewController(&fakeSource{
 		defaultRegion: renderregion.JP,
 		lives:         map[renderregion.Value][]*Live{renderregion.JP: nil},
 	}, renderregion.JP)
 
-	text, err := controller.RenderText(ListQuery{
+	_, err := controller.BuildListRequest(ListQuery{
 		Now: time.Date(2026, 3, 26, 20, 0, 0, 0, time.Local),
 	})
-	if err != nil {
-		t.Fatalf("RenderText() error = %v", err)
-	}
-	if text != "当前没有虚拟Live" {
-		t.Fatalf("unexpected empty text: %q", text)
+	if !errors.Is(err, ErrNoLives) {
+		t.Fatalf("BuildListRequest() error = %v, want ErrNoLives", err)
 	}
 }
 
@@ -171,12 +170,12 @@ func TestControllerWithContextClonesVLiveSource(t *testing.T) {
 	}, renderregion.JP)
 
 	ctx := context.WithValue(context.Background(), vliveContextKey("trace"), "vlive-list")
-	text, err := controller.WithContext(ctx).RenderText(ListQuery{Now: now})
+	req, err := controller.WithContext(ctx).BuildListRequest(ListQuery{Now: now})
 	if err != nil {
-		t.Fatalf("RenderText() error = %v", err)
+		t.Fatalf("BuildListRequest() error = %v", err)
 	}
-	if !strings.Contains(text, "Ctx Live") {
-		t.Fatalf("unexpected vlive text: %q", text)
+	if len(req.Lives) != 1 || req.Lives[0].Name != "Ctx Live" {
+		t.Fatalf("unexpected vlive request: %+v", req.Lives)
 	}
 }
 

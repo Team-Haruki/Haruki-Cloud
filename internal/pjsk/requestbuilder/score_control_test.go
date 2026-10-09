@@ -2,12 +2,12 @@ package requestbuilder
 
 import (
 	"context"
-	json "haruki-cloud/internal/jsonutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/music"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 )
 
 type scoreControlTestSource struct {
@@ -221,7 +222,7 @@ func TestBuildScoreControlRequestValidationBranches(t *testing.T) {
 	if _, err := BuildScoreControlRequest(context.Background(), &CommandInput{Params: []byte(`{`)}, app); err == nil {
 		t.Fatal("malformed selection unexpectedly succeeded")
 	}
-	if _, err := BuildScoreControlRequest(context.Background(), &CommandInput{Query: "100"}, app); err == nil || !strings.Contains(err.Error(), "data source") {
+	if _, err := BuildScoreControlRequest(context.Background(), &CommandInput{Query: "100"}, app); err == nil || !strings.Contains(testutil.ErrorDetail(err), "data source") {
 		t.Fatalf("unconfigured source error = %v", err)
 	}
 }

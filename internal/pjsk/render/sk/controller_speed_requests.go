@@ -1,7 +1,8 @@
 package sk
 
 import (
-	"fmt"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -10,7 +11,7 @@ import (
 
 func (c *Controller) BuildSpeedRequest(req drawing.SpeedRequest) (*drawing.SpeedRequest, error) {
 	if len(req.Ranks) == 0 {
-		return nil, fmt.Errorf("sk speed request has no ranks")
+		return nil, usererror.Misuse(i18n.M("sk.target_required"))
 	}
 	return &req, nil
 }
@@ -23,7 +24,7 @@ func (c *Controller) BuildSpeedRequestFromTracker(req TrackerRankQuery) (*drawin
 		return nil, err
 	}
 	if normalized.UserID != nil {
-		return nil, fmt.Errorf("speed 暂不支持按用户查询，请使用排名")
+		return nil, usererror.Misuse(i18n.M("sk.speed.user_unsupported"))
 	}
 	speedPeriodSeconds, speedUnitPeriodSeconds, speedUnitText := normalizeTrackerSpeedConfig(normalized)
 	speedInfos, err := c.buildSpeedInfosFromTracker(
@@ -72,7 +73,7 @@ func (c *Controller) RenderSpeed(req drawing.SpeedRequest) ([]byte, error) {
 
 func (c *Controller) RenderSpeedImage(req drawing.SpeedRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildSpeedRequest(req)

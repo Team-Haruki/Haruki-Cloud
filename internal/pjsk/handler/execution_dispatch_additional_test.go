@@ -23,6 +23,8 @@ import (
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	renderstamp "haruki-cloud/internal/pjsk/render/stamp"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 type handlerStampSource struct {
@@ -163,12 +165,12 @@ func testExecuteStampRequestPaths(t *testing.T) {
 	for _, query := range []renderstamp.ListQuery{{All: true}, {IDs: []int{1, 2}}} {
 		params, _ := json.Marshal(query)
 		rc.Cmd.Params = params
-		if _, err := executeStamp(rc); err == nil || !strings.Contains(err.Error(), "drawing client") {
+		if _, err := executeStamp(rc); err == nil || !strings.Contains(testutil.ErrorDetail(err), "drawing client") {
 			t.Fatalf("expected drawing guard for %+v, got %v", query, err)
 		}
 	}
 	rc.Cmd.Mode = "unknown"
-	if _, err := executeStamp(rc); err == nil || !strings.Contains(err.Error(), "unsupported stamp mode") {
+	if _, err := executeStamp(rc); err == nil || !strings.Contains(testutil.ErrorDetail(err), "unsupported stamp mode") {
 		t.Fatalf("unexpected unsupported-mode error: %v", err)
 	}
 
@@ -208,7 +210,7 @@ func TestSKModeDispatchWithoutExternalServices(t *testing.T) {
 		}
 	}
 	rc.Cmd.Mode = "unknown"
-	if _, err := executeSKMode(rc, controller); err == nil || !strings.Contains(err.Error(), "unsupported sk mode") {
+	if _, err := executeSKMode(rc, controller); err == nil || !strings.Contains(testutil.ErrorDetail(err), "unsupported sk mode") {
 		t.Fatalf("unsupported SK mode error = %v", err)
 	}
 
@@ -287,7 +289,7 @@ func testTrackerRankingErrorAndChapterTiming(t *testing.T) {
 	if normalizeSKSelfRankingNotFoundError(false, "jp", sekaiapi.ErrRankingNotFound) != sekaiapi.ErrRankingNotFound || normalizeSKSelfRankingNotFoundError(true, "jp", nil) != nil || normalizeSKSelfRankingNotFoundError(true, "jp", original) != original {
 		t.Fatal("non-matching self ranking error changed")
 	}
-	assertReplayErrorText(t, normalizeSKSelfRankingNotFoundError(true, "jp", sekaiapi.ErrRankingNotFound), "当前JP服活动没有找到你的排行榜数据")
+	testutil.RequireUserError(t, normalizeSKSelfRankingNotFoundError(true, "jp", sekaiapi.ErrRankingNotFound), usererror.CodeNotFound, "sk.self_not_ranked")
 
 	chapter := &sekaidb.Worldbloom{ChapterStartAt: 100, AggregateAt: 200}
 	request := &rendersk.TrackerRankQuery{}
@@ -369,7 +371,7 @@ func TestExecutionRuntimeAndCommandDispatch(t *testing.T) {
 	if err != nil || len(message) != 1 || message[0].Type != onebot11.TypeText {
 		t.Fatalf("help dispatch = %+v, %v", message, err)
 	}
-	if _, err := ExecuteCommandRequest(ctx, resolved, app); err == nil || !strings.Contains(err.Error(), "not bound") {
+	if _, err := ExecuteCommandRequest(ctx, resolved, app); err == nil || !strings.Contains(testutil.ErrorDetail(err), "not bound") {
 		t.Fatalf("unbound dispatch error = %v", err)
 	}
 	resolved.executor = func(*ExecutionRuntime) (onebot11.Message, error) {
@@ -384,7 +386,7 @@ func TestExecutionRuntimeAndCommandDispatch(t *testing.T) {
 	}
 	if _, err := ExecuteCommandRequest(ctx, resolved, app); err == nil {
 		t.Fatal("expected normalized domain error")
-	} else if _, ok := errors.AsType[onebot11.ReplayError](err); !ok {
-		t.Fatalf("domain error was not normalized: %T %v", err, err)
+	} else {
+		testutil.RequireUserError(t, err, usererror.CodeSetup, "binding.required")
 	}
 }

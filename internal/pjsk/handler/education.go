@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -14,6 +16,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/cachefill"
 	"haruki-cloud/internal/pjsk/render/education"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
 func (sekaiHandlers) ChallengeInfoHandle() HarukiSekaiCommandHandler {
@@ -142,10 +145,7 @@ func (sekaiHandlers) LeaderCountHandle() HarukiSekaiCommandHandler {
 }
 
 func educationCharacterMissionUsageError(triggerCmd string) error {
-	return onebot11.NewReplayError(
-		"参数格式不正确。查看完整用法和任务名列表请发送：%s -help",
-		triggerCmd,
-	)
+	return usererror.Misuse(i18n.M("education.character_mission.usage"))
 }
 
 func (sekaiHandlers) CharacterMissionHandle() HarukiSekaiCommandHandler {
@@ -213,9 +213,9 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 	}
 
 	allCharacter, args := extractEducationAreaFlag(args, educationAreaAllCharacterAliases...)
-	plant, args := extractEducationAreaFlag(args, "花树", "树花", "植物")
-	tree, args := extractEducationAreaFlag(args, "树", "tree")
-	flower, args := extractEducationAreaFlag(args, "花", "flower")
+	plant, args := extractEducationAreaFlag(args, "花树", "树花", "植物") //copylint:ignore 解析关键字
+	tree, args := extractEducationAreaFlag(args, "树", "tree")       //copylint:ignore 解析关键字
+	flower, args := extractEducationAreaFlag(args, "花", "flower")   //copylint:ignore 解析关键字
 	unit, args := extractEducationAreaUnit(args)
 	attr, args := extractEducationAreaAttr(args)
 	cid, characterQuery, args := extractEducationAreaCharacter(args)
@@ -238,6 +238,8 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 
 // educationAreaAllCharacterAliases select the every-character area item
 // (JP 7.0.0 想いの大樹).
+//
+//copylint:ignore-block 解析关键字
 var educationAreaAllCharacterAliases = []string{"大树", "大樹", "想いの大樹", "想いの大树", "思念之树", "全角色", "全员"}
 
 // normalizeEducationAreaError turns a filter for an area item the region
@@ -245,29 +247,24 @@ var educationAreaAllCharacterAliases = []string{"大树", "大樹", "想いの�
 // user-facing reply.
 func normalizeEducationAreaError(ctx context.Context, err error) error {
 	if errors.Is(err, education.ErrAreaItemNotInRegion) {
-		return onebot11.NewReplayError("当前区服暂未开放「想いの大樹」（大树）区域道具")
+		return usererror.New(usererror.CodeNotFound, i18n.M("education.area.big_tree_unavailable"))
 	}
 	if notReleased, ok := errors.AsType[*education.AreaItemNotReleasedError](err); ok {
-		const fullHint = "可在指令后加 full 查看全部等级所需材料"
 		if notReleased.OpensAtMs <= 0 {
-			return onebot11.NewReplayError("所查询的区域道具暂未开放升级\n%s", fullHint)
+			return usererror.New(usererror.CodeNotFound, i18n.M("education.area.not_on_sale"))
 		}
-		timeZone := displaytime.RequestTimeZoneFromContext(ctx)
-		opensAt := displaytime.TimeFromUnixMillis(notReleased.OpensAtMs, timeZone)
-		return onebot11.NewReplayError("所查询的区域道具将于 %s (%s) 开放升级\n%s",
-			displaytime.FormatTime(opensAt, "2006-01-02 15:04"), timeZone, fullHint)
+		opensAt := i18n.FormatUserTime(time.UnixMilli(notReleased.OpensAtMs), displaytime.RequestLocation(ctx))
+		return usererror.New(usererror.CodeNotFound, i18n.M("education.area.opens_at", i18n.Data{"OpensAt": opensAt}))
 	}
 	return err
 }
 
 func educationAreaUsageError(triggerCmd string) error {
-	return onebot11.NewReplayError("请指定要查询的区域道具分类，例如：%s mmj、%s miku、%s 花树。查看完整用法请发送：%s -help",
-		triggerCmd, triggerCmd, triggerCmd, triggerCmd)
+	return usererror.Misuse(i18n.M("education.area.usage"))
 }
 
 func educationAreaFullUsageError(triggerCmd string) error {
-	return onebot11.NewReplayError("full 需要和区域道具分类一起使用，例如：%s mmj full、%s 花树 full。查看完整用法请发送：%s -help",
-		triggerCmd, triggerCmd, triggerCmd)
+	return usererror.Misuse(i18n.M("education.area.full_usage"))
 }
 
 func extractEducationAreaFullFlag(args string) (bool, string) {
@@ -280,7 +277,7 @@ func extractEducationAreaFullFlag(args string) (bool, string) {
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
 		switch strings.ToLower(strings.TrimSpace(field)) {
-		case "full", "全部":
+		case "full", "全部": //copylint:ignore 解析关键字
 			full = true
 		default:
 			remaining = append(remaining, field)

@@ -2,9 +2,11 @@ package music
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/meta"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -13,6 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 var hiddenMusicIDs = map[int]struct{}{
@@ -128,7 +131,7 @@ func (c *Controller) shouldAllowLookupLeaks(region string, explicit bool) bool {
 func (c *Controller) resolveMusicTitleQuery(source DataSource, query string, allowUnreleased bool) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return nil, fmt.Errorf("music query is empty")
+		return nil, usererror.Misuse(i18n.M("music.query_required"))
 	}
 	now := currentMusicVisibilityTime()
 
@@ -184,7 +187,7 @@ func normalizeAmbiguousAliasMusic(source DataSource, aliasErr error, now int64, 
 	if len(ids) == 0 {
 		return nil, aliasErr
 	}
-	musicInfo, err := selectUniqueMusicMatch("曲名/别名", collectVisibleMusicMatchesByID(source, ids, now, allowUnreleased))
+	musicInfo, err := selectUniqueMusicMatch("title_or_alias", collectVisibleMusicMatchesByID(source, ids, now, allowUnreleased))
 	if musicInfo == nil && err == nil {
 		return nil, aliasErr
 	}
@@ -229,7 +232,7 @@ func resolveExplicitMusicListFilter(source DataSource, keyword string, now int64
 		return nil, false, nil
 	}
 	if source == nil {
-		return nil, true, fmt.Errorf("music data source is not configured")
+		return nil, true, usererror.Misconfigured(errors.New("music data source is not configured"))
 	}
 	musicInfo, err := source.GetMusicByID(musicID)
 	if err != nil {
@@ -283,7 +286,7 @@ func (c *Controller) resolveBuilder(region string) (renderregion.Value, DataSour
 	resolved := c.sources.ResolveRegion(renderregion.Normalize(region))
 	source, ok := c.sources.SourceForRegion(resolved)
 	if !ok {
-		return resolved, nil, nil, fmt.Errorf("no music data source for region %s", resolved)
+		return resolved, nil, nil, usererror.Misconfigured(fmt.Errorf("no music data source for region %s", resolved))
 	}
 	return resolved, source, NewBuilder(source, c.fallbackSource(resolved), c.assets), nil
 }

@@ -1,0 +1,61 @@
+# 订阅：烤森生日材料监听（/烤森生日监听、/烤森生日取消监听）。
+
+[subscription.birthday.feature]
+description = "功能名，用在 common.unavailable 的 Feature 占位符里：烤森生日材料监听。"
+other = "烤森生日材料监听"
+
+[subscription.birthday.group_only]
+description = "在私聊里使用生日材料监听。"
+other = "生日材料监听只能在群聊中使用"
+
+[subscription.birthday.no_binding]
+description = "找不到可以监听的绑定账号。"
+other = "未找到可监听的绑定账号，请先绑定并验证游戏账号"
+
+[subscription.birthday.unverified]
+description = "要监听的账号还没有验证。"
+other = "该账号还没有验证，请先在 Haruki 工具箱验证账号，再发送 /pjsk验证"
+
+[subscription.birthday.none_active]
+description = "取消监听，但该账号没有进行中的监听。"
+other = "当前账号没有进行中的生日材料监听"
+
+[subscription.birthday.not_owner]
+description = "取消监听，但进行中的监听不是由请求者在本群创建的。"
+other = "当前账号没有由你在本群创建的生日材料监听"
+
+[subscription.birthday.sync_failed]
+description = "向工具箱登记或更新监听失败，订阅没有生效。"
+other = "登记生日材料监听失败，订阅没有生效，请稍后再试"
+
+[subscription.birthday.cleanup_failed]
+description = "向工具箱取消监听失败。"
+other = "取消生日材料监听失败，请稍后再试"
+
+[subscription.birthday.materials_required]
+description = "生日材料监听关闭了所有材料。"
+other = "至少需要开启一种监听材料"
+
+[subscription.birthday.duration_range]
+description = "监听时长不在允许范围。占位符：Max=最长分钟数。"
+other = "监听时长需要在 1~{{.Max}} 分钟之间"
+
+[subscription.birthday.param_unknown]
+description = "生日材料监听写了无法识别的参数，作为 common.bad_param 的原因行。"
+other = "可以写材料名、开关、监听时长或 u序号"
+
+[subscription.birthday.event_no_data]
+description = "生日材料监听推送事件里没有可以绘制的地图数据（推送时拿到的事件不完整）。"
+other = "这次监听推送缺少可绘制的地图数据"
+
+[subscription.birthday.empty_result]
+description = "生日材料监听推送：这次烤森生日材料更新里没有用户订阅的材料。"
+other = "本次生日材料更新没有你订阅的材料"
+
+[subscription.birthday.cancelled]
+description = "/烤森生日取消监听 成功：已取消当前账号在本群的生日材料监听。"
+other = "已取消烤森生日材料监听"
+
+[subscription.birthday.updated]
+description = "/烤森生日监听 成功：已创建或更新生日材料监听。占位符：Minutes=监听有效期，单位分钟。"
+other = "已更新烤森生日材料监听，有效期 {{.Minutes}} 分钟"

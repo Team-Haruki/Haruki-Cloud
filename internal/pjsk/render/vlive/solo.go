@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -30,6 +31,7 @@ var (
 	ErrSoloLiveNotFound = errors.New("solo virtual live not found")
 )
 
+//copylint:ignore-block 解析关键字
 var soloQueryKeywords = []string{"solo", "ソロ", "个人", "個人", "单人", "單人"}
 
 // IsDetailQuery reports whether a /vlive argument asks for a solo live
@@ -167,7 +169,7 @@ func soonerWindow(candidate, current ResolvedLive) bool {
 // the query names one live.
 func (c *Controller) BuildDetailRequest(query DetailQuery) (*drawing.VLiveDetailRequest, error) {
 	if c == nil || c.sources == nil {
-		return nil, fmt.Errorf("vlive controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("vlive controller is not configured"))
 	}
 	region := c.resolveRegion(query.Region)
 	source, ok := c.sources.SourceForRegion(region)
@@ -374,7 +376,7 @@ func (c *Controller) RenderDetail(query DetailQuery) ([]byte, error) {
 
 func (c *Controller) RenderDetailImage(query DetailQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildDetailRequest(query)

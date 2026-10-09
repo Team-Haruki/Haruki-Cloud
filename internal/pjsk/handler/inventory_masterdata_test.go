@@ -20,7 +20,9 @@ import (
 	"haruki-cloud/internal/pjsk/render/cachefill"
 	renderinventory "haruki-cloud/internal/pjsk/render/inventory"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
+	"haruki-cloud/utils/usererror"
 )
 
 func newInventoryOutageRequestContext(t *testing.T, localDir string) *RequestContext {
@@ -73,10 +75,7 @@ func TestExecuteInventoryFailsWhenMasterdataDatabaseIsDown(t *testing.T) {
 	if message != nil || !errors.Is(err, cachefill.ErrUnavailable) {
 		t.Fatalf("inventory with the database down = %+v, %v; want ErrUnavailable", message, err)
 	}
-	replay, ok := errors.AsType[onebot11.ReplayError](WrapDomainError(err))
-	if !ok || string(replay) != ErrMsgMasterdataUnavailable {
-		t.Fatalf("user-facing error = %v; want %q", WrapDomainError(err), ErrMsgMasterdataUnavailable)
-	}
+	testutil.RequireUserError(t, WrapDomainError(err), usererror.CodeUnavailable, "common.unavailable")
 }
 
 func TestExecuteInventoryServesLocalMasterdataWhenDatabaseIsDown(t *testing.T) {

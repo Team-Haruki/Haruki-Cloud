@@ -1,0 +1,9 @@
+DataSourceLabel(suite)	抓包数据
+DataSourceLabel(mysekai)	烤森数据
+DataSourceLabel(public)	公开信息
+LiveShortLabel(solo)	单人
+LiveShortLabel(multi)	多人
+LiveShortLabel(auto)	自动
+LiveShortLabel(mysekai)	mysekai
+LiveShortLabel(challenge)	challenge
+CharacterFallbackName(7)	角色 #7

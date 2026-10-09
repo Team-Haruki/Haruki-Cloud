@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/notfound"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -42,7 +42,7 @@ func (s *botCardSource) GetCardByID(id int) (*masterdata.Card, error) {
 			},
 		}, nil
 	}
-	return nil, onebot11.NewReplayError("card %d not found", id)
+	return nil, notfound.CardID(id)
 }
 
 func (s *botCardSource) GetCardByCharacterAndSeq(_, _ int) (*masterdata.Card, error) {
@@ -57,7 +57,7 @@ func (s *botCardSource) GetCharacterByID(id int) (*masterdata.Character, error) 
 	if id == 5 {
 		return &masterdata.Character{ID: 5, FirstName: "花里", GivenName: "实乃理", Unit: "idol"}, nil
 	}
-	return nil, onebot11.NewReplayError("character %d not found", id)
+	return nil, fmt.Errorf("character %d not found", id)
 }
 
 func (s *botCardSource) GetCharacterColorCode(id int) (string, bool) {
@@ -71,7 +71,7 @@ func (s *botCardSource) GetSkillByID(id int) (*masterdata.Skill, error) {
 	if id == 9001 {
 		return &masterdata.Skill{ID: 9001, DescriptionSpriteName: "score_up"}, nil
 	}
-	return nil, onebot11.NewReplayError("skill %d not found", id)
+	return nil, fmt.Errorf("skill %d not found", id)
 }
 
 func (s *botCardSource) FormatSkillDescription(_ *masterdata.Skill, _ int) string { return "" }

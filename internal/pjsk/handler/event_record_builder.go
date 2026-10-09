@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"haruki-cloud/internal/i18n"
 	"sort"
 	"strconv"
 	"strings"
@@ -77,7 +78,7 @@ func (b *eventRecordBuilder) loadSnapshot() error {
 			return err
 		}
 		if snapshot == nil {
-			return newSuiteDataNotFoundReplayErrorForBinding(binding)
+			return suiteDataNotFoundError(binding)
 		}
 		b.snapshot = snapshot
 	} else {
@@ -539,7 +540,7 @@ func eventRecordWorldBloomChapterDisplay(rc *RequestContext, events renderprovid
 		return eventRecordWorldBloomChapterKey{}, eventRecordHonorRankDisplay{}, false
 	}
 	key := eventRecordWorldBloomChapterKey{eventID: eventID, gameCharacterID: gameCharacterID}
-	return key, eventRecordHonorRankDisplay{text: fmt.Sprintf("T%d", bestTier), tier: bestTier}, true
+	return key, eventRecordHonorRankDisplay{text: eventRecordTierText(bestTier), tier: bestTier}, true
 }
 
 func eventRecordWorldBloomBestHonorTier(ranges []masterdata.WorldBloomChapterRankingRewardRange, userHonorIDs map[int]struct{}, resourceBoxHonorIDs map[int][]int) int {
@@ -627,7 +628,7 @@ func buildEventRecordHonorRankDisplays(rawData *rendersnapshot.RawUserData, even
 		bestTier := eventRecordBestHonorTier(userHonorIDs, tiers)
 		if bestTier > 0 {
 			out[eventID] = eventRecordHonorRankDisplay{
-				text: fmt.Sprintf("T%d", bestTier),
+				text: eventRecordTierText(bestTier),
 				tier: bestTier,
 			}
 		}
@@ -678,10 +679,15 @@ func eventRecordRankingSettled(master map[string]any, now int64) bool {
 	return settledAt > 0 && now >= settledAt
 }
 
+// eventRecordTierText is the ranking tier a player reached, e.g. "T100".
+func eventRecordTierText(tier int) string {
+	return i18n.T("event.record.tier", i18n.Data{"Tier": tier})
+}
+
 func eventRecordRankNote(region renderregion.Value) *string {
-	switch renderregion.WithDefault(region) {
+	switch region = renderregion.WithDefault(region); region {
 	case renderregion.CN, renderregion.KR, renderregion.TW:
-		return stringPtr("CN/KR/TW服没有排名数据，仅显示Txxx名")
+		return stringPtr(i18n.T("event.record.rank_note", i18n.Data{"Region": i18n.RegionLabel(region.String())}))
 	default:
 		return nil
 	}

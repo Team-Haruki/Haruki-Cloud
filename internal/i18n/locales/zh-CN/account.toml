@@ -1,0 +1,432 @@
+# 账号：绑定、解绑、默认绑定、绑定列表、验证、可见性和个人设置（时区、逮捕难度、谱面样式、
+# 模块化个人信息、个人信息背景）的成功回复，以及 Bot 客户端接口（登录、会话、注销、统计、
+# 群绑定检查）返回给 Bot 运营者的 message。
+# 账号相关的错误提示在 binding.toml，封禁相关在 moderation.toml。
+
+# ---- 绑定列表（/绑定列表、/绑定交换） ----
+
+[account.list.header]
+description = "/绑定列表 不带区服时的第一行，下面每行一个账号（account.list.item*）。u序号是用户之后在指令里写的 u1、u2。"
+other = "已绑定的游戏账号（u序号按全部账号编号）："
+
+[account.list.header_region]
+description = "/<区服代码>绑定列表 的第一行，下面每行一个该区服的账号（account.list.item*）。占位符：Region=区服显示名，例如“日服(JP)”。"
+other = "{{.Region}}已绑定的游戏账号（u序号按该区服编号）："
+
+[account.list.item]
+description = "绑定列表里的一行，该账号不是任何默认绑定。占位符：Index=u序号的数字；Account=账号显示名，例如“[日服(JP)] 123***789”。"
+other = "u{{.Index}} {{.Account}}"
+
+[account.list.item_marked]
+description = "绑定列表里的一行，该账号是默认绑定。占位符：Index=u序号的数字；Account=账号显示名，例如“[日服(JP)] 123***789”；Marks=默认绑定标记，用“、”分隔（account.mark.*）。"
+other = "u{{.Index}} {{.Account}}（{{.Marks}}）"
+
+[account.mark.global_default]
+description = "绑定列表、验证列表里的标记：该账号是全局默认绑定。用在 account.list.item_marked、account.verify_list.item_marked 的 Marks 占位符里。"
+other = "全局默认"
+
+[account.mark.region_default]
+description = "绑定列表、验证列表里的标记：该账号是某个区服的默认绑定。用在 Marks 占位符里。占位符：Region=区服显示名。"
+other = "{{.Region}}默认"
+
+[account.swap.done]
+description = "/绑定交换 成功，下面接交换后的绑定列表。占位符：Left=用户写的第一个 u序号，例如“u1”；Right=用户写的第二个 u序号；List=交换后的绑定列表（account.list.*）。"
+other = "已交换 {{.Left}} 和 {{.Right}} 的顺序\n{{.List}}"
+
+[account.swap.done_region]
+description = "/<区服代码>绑定交换 成功，下面接交换后该区服的绑定列表。占位符：Region=区服显示名；Left=用户写的第一个 u序号；Right=用户写的第二个 u序号；List=交换后的绑定列表（account.list.*）。"
+other = "已交换{{.Region}}账号 {{.Left}} 和 {{.Right}} 的顺序\n{{.List}}"
+
+# ---- 绑定、解绑 ----
+
+[account.bind.done]
+description = "/绑定 成功的第一行，后面可能接 account.bind.note_*。占位符：Account=账号显示名，UID 中间打码，例如“[日服(JP)] 123***789”；Name=游戏内昵称（玩家自己设置的原文）。"
+other = "已绑定 {{.Account}}（{{.Name}}）"
+
+[account.bind.done_plain]
+description = "/绑定 成功但拿不到账号详情时的回复（正常情况下不会出现）。"
+other = "已绑定游戏账号"
+
+[account.bind.note_already_bound]
+description = "/绑定 的附加行：这个账号之前已经绑定过，这次没有新增绑定。"
+other = "这个账号之前已经绑定过，没有重复添加"
+
+[account.bind.note_global_default]
+description = "/绑定 的附加行：这是用户的第一个账号，已自动设为全局默认绑定。"
+other = "已自动设为全局默认绑定"
+
+[account.bind.note_region_default]
+description = "/绑定 的附加行：这是用户在该区服的第一个账号，已自动设为该区服的默认绑定。占位符：Region=区服显示名。"
+other = "已自动设为{{.Region}}默认绑定"
+
+[account.bind.note_multiple_regions]
+description = "/绑定 的附加行：同一个游戏 UID 在多个区服都查到了玩家，按区服顺序绑定了第一个。"
+other = "这个游戏 UID 在多个区服都存在，已按 jp、cn、tw、kr、en 的顺序绑定第一个找到的区服"
+
+[account.unbind.done]
+description = "/解绑 成功的第一行，后面可能接 account.unbind.reassigned_*。占位符：Account=被解绑的账号显示名。"
+other = "已解绑 {{.Account}}"
+
+[account.unbind.done_plain]
+description = "/解绑 成功但拿不到账号详情时的回复（正常情况下不会出现）。"
+other = "已解绑游戏账号"
+
+[account.unbind.reassigned_global]
+description = "/解绑 的附加行：被解绑的账号原来是全局默认绑定，已改用另一个账号。占位符：Account=新的全局默认绑定的账号显示名。"
+other = "已将全局默认绑定改为 {{.Account}}"
+
+[account.unbind.reassigned_region]
+description = "/解绑 的附加行：被解绑的账号原来是该区服的默认绑定，已改用另一个账号。占位符：Region=区服显示名；Account=新的区服默认绑定的账号显示名。"
+other = "已将{{.Region}}默认绑定改为 {{.Account}}"
+
+# ---- 默认绑定（/默认绑定、/取消默认绑定） ----
+
+[account.default.set_global]
+description = "设置全局默认绑定成功。占位符：Account=账号显示名。"
+other = "已将全局默认绑定设为 {{.Account}}"
+
+[account.default.set_region]
+description = "设置某个区服的默认绑定成功。占位符：Region=区服显示名；Account=账号显示名。"
+other = "已将{{.Region}}默认绑定设为 {{.Account}}"
+
+[account.default.set_plain]
+description = "设置默认绑定成功但拿不到账号详情时的回复（正常情况下不会出现）。"
+other = "已设置默认绑定"
+
+[account.default.cleared_global]
+description = "取消全局默认绑定成功。占位符：Account=原来的全局默认绑定的账号显示名。"
+other = "已取消全局默认绑定 {{.Account}}"
+
+[account.default.cleared_region]
+description = "取消某个区服的默认绑定成功。占位符：Region=区服显示名；Account=原来的区服默认绑定的账号显示名。"
+other = "已取消{{.Region}}默认绑定 {{.Account}}"
+
+[account.default.cleared_plain]
+description = "取消默认绑定成功但拿不到账号详情时的回复（正常情况下不会出现）。"
+other = "已取消默认绑定"
+
+# ---- 可见性（/隐藏id、/隐藏sk、/隐藏个人信息、/隐藏逮捕、/隐藏全部、/展示抓包、/隐藏烤森抓包、/隐私设置 等） ----
+
+[account.visibility.hide_uid]
+description = "/隐藏id 成功：回复和图片里不再显示完整的游戏 UID（只打码，其他设置不变）。占位符：Account=账号显示名（UID 已打码）。"
+other = "已隐藏 {{.Account}} 的游戏 UID"
+
+[account.visibility.show_uid]
+description = "/展示id 成功：回复和图片里显示完整的游戏 UID。占位符：Account=账号显示名（完整 UID）。"
+other = "已展示 {{.Account}} 的游戏 UID"
+
+[account.visibility.hide_sk]
+description = "/隐藏sk 成功：其他人不能再通过 @ 查询该账号的活动排名。占位符：Account=账号显示名。"
+other = "已隐藏 {{.Account}} 的活动排名"
+
+[account.visibility.show_sk]
+description = "/显示sk 成功：其他人可以通过 @ 查询该账号的活动排名。占位符：Account=账号显示名。"
+other = "已展示 {{.Account}} 的活动排名"
+
+[account.visibility.hide_profile]
+description = "/隐藏个人信息 成功：其他人不能再通过 @ 查看该账号的个人信息和用该账号数据生成的结果（组卡、烤森等）。占位符：Account=账号显示名。"
+other = "已隐藏 {{.Account}} 的个人信息"
+
+[account.visibility.show_profile]
+description = "/显示个人信息 成功：其他人可以通过 @ 查看该账号的个人信息。占位符：Account=账号显示名。"
+other = "已展示 {{.Account}} 的个人信息"
+
+[account.visibility.hide_arrest]
+description = "/隐藏逮捕 成功：其他人不能再通过 @ 逮捕该账号。占位符：Account=账号显示名。"
+other = "已隐藏 {{.Account}} 的逮捕信息"
+
+[account.visibility.show_arrest]
+description = "/显示逮捕 成功：其他人可以通过 @ 逮捕该账号。占位符：Account=账号显示名。"
+other = "已展示 {{.Account}} 的逮捕信息"
+
+[account.visibility.hide_all]
+description = "/隐藏全部 成功：一次隐藏游戏 UID、活动排名、个人信息和逮捕信息（抓包数据和烤森数据有自己的指令，不受影响）。占位符：Account=账号显示名。"
+other = "已隐藏 {{.Account}} 的游戏 UID、活动排名、个人信息和逮捕信息"
+
+[account.visibility.show_all]
+description = "/显示全部 成功：一次展示游戏 UID、活动排名、个人信息和逮捕信息（抓包数据和烤森数据不受影响）。占位符：Account=账号显示名。"
+other = "已展示 {{.Account}} 的游戏 UID、活动排名、个人信息和逮捕信息"
+
+[account.visibility.hide_suite]
+description = "/隐藏抓包 成功：其他人不能再查询该账号的抓包数据。占位符：Account=账号显示名。"
+other = "已隐藏 {{.Account}} 的抓包数据"
+
+[account.visibility.show_suite]
+description = "/展示抓包 成功：恢复展示该账号的抓包数据。占位符：Account=账号显示名。"
+other = "已展示 {{.Account}} 的抓包数据"
+
+[account.visibility.hide_mysekai]
+description = "/隐藏烤森抓包 成功：其他人不能再查询该账号的烤森数据。占位符：Account=账号显示名。"
+other = "已隐藏 {{.Account}} 的烤森数据"
+
+[account.visibility.show_mysekai]
+description = "/展示烤森抓包 成功：恢复展示该账号的烤森数据。占位符：Account=账号显示名。"
+other = "已展示 {{.Account}} 的烤森数据"
+
+[account.visibility.changed]
+description = "可见性指令（/隐藏id、/隐藏sk、/隐藏全部、/展示抓包 等）的回复：先写改了什么，再列出该账号的全部可见性设置。占位符：Result=改了什么（account.visibility.hide_* 或 show_*）；Settings=全部设置（account.visibility.settings）。"
+other = "{{.Result}}\n当前设置：\n{{.Settings}}"
+
+[account.visibility.status]
+description = "/隐私设置 的回复：列出该账号的全部可见性设置。占位符：Account=账号显示名；Settings=全部设置（account.visibility.settings）。"
+other = "{{.Account}} 的隐私设置：\n{{.Settings}}"
+
+[account.visibility.settings]
+description = "一个账号的全部可见性设置，每项一行。占位符：UID=游戏 UID 是否完整显示；SK=其他人能否通过 @ 查询活动排名；Profile=其他人能否通过 @ 查看个人信息；Arrest=其他人能否通过 @ 逮捕；Suite=抓包数据是否展示；MySekai=烤森数据是否展示。取值都是 account.visibility.state.*。"
+other = "游戏 UID：{{.UID}}\n活动排名：{{.SK}}\n个人信息：{{.Profile}}\n逮捕信息：{{.Arrest}}\n抓包数据：{{.Suite}}\n烤森数据：{{.MySekai}}"
+
+[account.visibility.state.shown]
+description = "可见性设置的取值：展示。"
+other = "展示"
+
+[account.visibility.state.hidden]
+description = "可见性设置的取值：隐藏。"
+other = "隐藏"
+
+# ---- 验证（/pjsk验证、/pjsk验证列表） ----
+
+[account.verify.done]
+description = "/pjsk验证 成功。占位符：Account=账号显示名。"
+other = "已验证 {{.Account}}"
+
+[account.verify.already]
+description = "/pjsk验证 时该账号之前已经验证过。占位符：Account=账号显示名。"
+other = "{{.Account}} 之前已经验证过"
+
+[account.verify_list.header]
+description = "/pjsk验证列表 不带区服时的第一行，下面每行一个账号（account.verify_list.item*）。"
+other = "已绑定游戏账号的验证状态（u序号按全部账号编号）："
+
+[account.verify_list.header_region]
+description = "/<区服代码>pjsk验证列表 的第一行，下面每行一个该区服的账号。占位符：Region=区服显示名。"
+other = "{{.Region}}已绑定游戏账号的验证状态（u序号按该区服编号）："
+
+[account.verify_list.item]
+description = "验证列表里的一行，该账号不是任何默认绑定。占位符：Index=u序号的数字；Account=账号显示名；Status=验证状态（account.verify_list.verified 或 unverified）。"
+other = "u{{.Index}} {{.Account}} {{.Status}}"
+
+[account.verify_list.item_marked]
+description = "验证列表里的一行，该账号是默认绑定。占位符：Index=u序号的数字；Account=账号显示名；Status=验证状态（account.verify_list.verified 或 unverified）；Marks=默认绑定标记，用“、”分隔（account.mark.*）。"
+other = "u{{.Index}} {{.Account}} {{.Status}}（{{.Marks}}）"
+
+[account.verify_list.verified]
+description = "验证列表里的状态：已验证。用在 account.verify_list.item* 的 Status 占位符里。"
+other = "已验证"
+
+[account.verify_list.unverified]
+description = "验证列表里的状态：未验证。用在 account.verify_list.item* 的 Status 占位符里。"
+other = "未验证"
+
+# ---- 个人设置 ----
+
+[account.settings.timezone_set]
+description = "/时区 设置成功，之后时间按这个时区显示。占位符：TimeZone=IANA 时区名，例如“Asia/Shanghai”。"
+other = "已将时区设为 {{.TimeZone}}"
+
+[account.settings.timezone_candidates]
+description = "/时区 写的是 UTC 偏移量，对应多个时区，下面每行列出一个候选时区名。这条回复不回显用户写的偏移量（与客户端的参数回显设置无关）。占位符：Candidates=候选时区名，每行一个，最多 20 个，后面可能接 account.settings.timezone_more。"
+other = "这个偏移量对应多个时区，请改用下面的时区名设置：\n{{.Candidates}}"
+
+[account.settings.timezone_more]
+description = "account.settings.timezone_candidates 的最后一行：候选太多，没有全部列出。占位符：Count=没有列出的时区数量。"
+other = "……以及另外 {{.Count}} 个时区"
+
+[account.settings.arrest_difficulty_set]
+description = "/逮捕难度 设置成功，列出开启和关闭的难度。占位符：Enabled=开启的难度，用“、”分隔（EASY……APPEND），没有时为 account.settings.none；Disabled=关闭的难度，格式同 Enabled。"
+other = "已设置逮捕难度\n开启：{{.Enabled}}\n关闭：{{.Disabled}}"
+
+[account.settings.none]
+description = "列表为空时的占位文字，用在 account.settings.arrest_difficulty_set 里。"
+other = "无"
+
+[account.settings.chart_style_set]
+description = "/谱面样式 设置成功。占位符：Style=谱面样式名（英文代码，例如“black”）。"
+other = "已将谱面样式设为 {{.Style}}"
+
+[account.settings.modular_enabled]
+description = "/开启模块化个人信息 成功。"
+other = "已开启模块化个人信息，之后 /个人信息 会使用模块化布局"
+
+[account.settings.modular_disabled]
+description = "/关闭模块化个人信息 成功。"
+other = "已关闭模块化个人信息，之后 /个人信息 会使用经典布局"
+
+# ---- 个人信息背景（/上传个人信息背景、/清除个人信息背景、/调整个人信息背景） ----
+
+[account.bg.uploaded]
+description = "上传个人信息背景成功。占位符：Region=区服显示名。"
+other = "已更新{{.Region}}个人信息背景"
+
+[account.bg.cleared]
+description = "清除个人信息背景成功。占位符：Region=区服显示名。"
+other = "已清除{{.Region}}个人信息背景"
+
+[account.bg.adjusted]
+description = "调整个人信息背景的模糊度、透明度或方向成功。占位符：Region=区服显示名。"
+other = "已更新{{.Region}}个人信息背景设置"
+
+[account.bg.none]
+description = "不带参数查看个人信息背景设置，但还没有上传背景。占位符：Region=区服显示名。"
+other = "{{.Region}}还没有设置个人信息背景"
+
+[account.bg.settings]
+description = "不带参数查看个人信息背景设置。占位符：Region=区服显示名；Account=账号显示名；Orientation=方向（account.bg.vertical 或 horizontal）；Blur=模糊度数值；Alpha=透明度数值。"
+other = "{{.Region}}个人信息背景设置\n账号：{{.Account}}\n方向：{{.Orientation}}\n模糊度：{{.Blur}}\n透明度：{{.Alpha}}"
+
+[account.bg.vertical]
+description = "个人信息背景方向：竖屏。用在 account.bg.settings 的 Orientation 占位符里。"
+other = "竖屏"
+
+[account.bg.horizontal]
+description = "个人信息背景方向：横屏。用在 account.bg.settings 的 Orientation 占位符里。"
+other = "横屏"
+
+# ---- Bot 客户端接口（返回给 Bot 程序，Bot 运营者在客户端日志里看到） ----
+
+[account.api.request_invalid]
+description = "Bot 内部会话校验接口：请求体无法解析。"
+other = "请求格式错误"
+
+[account.api.verify_fields_missing]
+description = "Bot 内部会话校验接口：请求体缺少 bot_id 或 session_token 字段（字段名原样显示）。"
+other = "缺少 bot_id 或 session_token"
+
+[account.api.logout_token_missing]
+description = "Bot 注销接口：请求没有带会话令牌。"
+other = "缺少注销所需的会话令牌"
+
+[account.api.logged_out]
+description = "Bot 注销接口：注销成功。"
+other = "已注销"
+
+[account.api.statistics_bot_missing]
+description = "Bot 统计上报接口：请求路径缺少 bot_id（字段名原样显示）。"
+other = "缺少 bot_id"
+
+[account.api.statistics_recorded]
+description = "Bot 统计上报接口：上报成功。"
+other = "已记录统计"
+
+[account.api.credential_invalid]
+description = "Bot 登录接口：凭证无效（签名错误、已撤销或不属于这个 Bot）。"
+other = "凭证无效"
+
+[account.api.payload_invalid]
+description = "Bot 登录接口：加密的登录载荷无法解析。"
+other = "加密载荷无效"
+
+[account.api.auth_expired]
+description = "Bot 登录接口：登录请求的时间戳超出允许的时间窗口（通常是 Bot 所在机器时间不准）。"
+other = "认证请求已过期"
+
+[account.api.bot_id_mismatch]
+description = "Bot 登录接口：载荷里的 bot_id 与请求路径不一致（字段名原样显示）。"
+other = "bot_id 不匹配"
+
+[account.api.auth_failed]
+description = "Bot 登录接口：通用的认证失败（不说明具体原因）。"
+other = "认证失败"
+
+[account.api.session_expired]
+description = "Bot 注销接口：会话已过期或令牌不正确。"
+other = "会话已过期或无效"
+
+[account.api.rate_limited]
+description = "Bot 登录接口：同一个 Bot 登录过于频繁。"
+other = "请求过于频繁，请稍后再试"
+
+[account.api.replay_detected]
+description = "Bot 登录接口：同一个登录请求被重复发送（nonce 已用过）。"
+other = "检测到重复请求"
+
+[account.api.owner_banned]
+description = "Bot 登录或指令接口：Bot 所有者的 QQ 号已被全局封禁。"
+other = "Bot 所有者已被全局封禁"
+
+[account.api.secure_channel_required]
+description = "Bot 登录接口：登录请求没有经过 Noise 加密通道。"
+other = "认证请求必须经由 Noise 安全通道"
+
+[account.api.request_binding_mismatch]
+description = "Bot 登录接口：载荷里记录的请求方法或路径与实际请求不一致。"
+other = "请求上下文不匹配"
+
+[account.api.noise_key_mismatch]
+description = "Bot 登录接口：Bot 使用的服务端公钥标识与当前公钥不一致（通常需要更新 Bot 程序）。"
+other = "Noise 公钥标识不匹配"
+
+[account.api.nonce_invalid]
+description = "Bot 登录接口：nonce 格式不对（字段名原样显示）。"
+other = "nonce 无效"
+
+[account.api.client_not_authorized]
+description = "Bot 登录接口：这个 Bot 程序的版本或构建没有被允许登录（不说明具体规则）。"
+other = "客户端未获授权"
+
+[account.api.session_revoked]
+description = "Bot 指令接口：会话所属的 Bot、版本或构建已被撤销授权。"
+other = "会话已被撤销，请更新客户端后重新登录"
+
+[account.api.session_token_missing]
+description = "Bot 指令接口：请求没有带会话令牌。"
+other = "缺少会话令牌"
+
+[account.api.session_store_unavailable]
+description = "Bot 指令接口：会话服务暂时无法校验令牌。"
+other = "会话服务暂时不可用，请稍后再试"
+
+[account.api.token_bot_mismatch]
+description = "Bot 指令接口：会话令牌属于另一个 Bot（字段名原样显示）。"
+other = "会话令牌中的 bot_id 与请求的 bot_id 不一致"
+
+[account.api.headers_missing]
+description = "Bot 接口：缺少会话请求头。占位符：BotIDHeader=Bot ID 请求头名；TokenHeader=会话令牌请求头名。"
+other = "缺少 {{.BotIDHeader}} 或 {{.TokenHeader}} 请求头"
+
+[account.api.header_bot_mismatch]
+description = "Bot 接口：请求头里的 bot_id 与请求路径不一致（字段名原样显示）。"
+other = "请求头中的 bot_id 与 URL 参数不一致"
+
+[account.api.token_invalid]
+description = "Bot 接口：会话令牌签名错误或已过期。"
+other = "会话令牌无效或已过期"
+
+[account.api.claims_invalid]
+description = "Bot 接口：会话令牌的内容无法识别。"
+other = "会话令牌声明无效"
+
+[account.api.session_missing]
+description = "Bot 接口：会话已过期、已注销或不存在。"
+other = "会话已过期或不存在"
+
+[account.api.token_mismatch]
+description = "Bot 接口：会话令牌不是这个 Bot 当前的令牌（已在别处重新登录）。"
+other = "会话令牌不匹配"
+
+[account.api.binding_lookup_failed]
+description = "群绑定检查接口（供其他 Bot 程序查询群成员是否绑定游戏账号）：查询失败。"
+other = "查询绑定状态失败，请稍后再试"
+
+[account.api.binding_lookup_unavailable]
+description = "群绑定检查接口：绑定查询暂时不可用（服务没有配置好或正在维护）。"
+other = "绑定查询暂时不可用，请稍后再试"
+
+[account.api.bot_session_invalid]
+description = "Bot 指令接口：URL 里的 bot_id 无效，或这个 Bot 没有注册。返回给 Bot 客户端。"
+other = "Bot 会话无效"
+
+[account.api.message_missing]
+description = "Bot 指令接口：请求里没有 message 字段。返回给 Bot 客户端。"
+other = "缺少 message"
+
+[account.api.matched_command_missing]
+description = "Bot 指令接口：请求里没有 matched_command 字段。返回给 Bot 客户端。"
+other = "缺少 matched_command"
+
+[account.api.matched_command_not_allowed]
+description = "Bot 指令接口：matched_command 不属于当前接口。返回给 Bot 客户端。"
+other = "当前接口不允许使用该 matched_command"
+
+[account.api.command_path_mismatch]
+description = "Bot 指令接口：消息里的指令和请求的接口不一致，响应数据里附带英文诊断信息。返回给 Bot 客户端。"
+other = "指令与当前接口不匹配"

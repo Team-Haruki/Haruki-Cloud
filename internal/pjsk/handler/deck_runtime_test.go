@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/i18n"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,6 +13,7 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	sekaienttest "haruki-cloud/database/sekai/enttest"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -419,11 +420,11 @@ func TestExecuteDeckMySekaiRequiresVisibleSuiteSnapshot(t *testing.T) {
 		Decks:    newHandlerTestDeckController(t),
 		Music:    newHandlerTestMusicController(t),
 	}))
-	if err == nil || err.Error() != buildPrivateDataHiddenMessage("suite", &accountdata.ResolvedBinding{
+	if err == nil || err.Error() != privateDataHiddenMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
-	}) {
+		Visibility: accountdata.UniformVisibility(false),
+	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -565,7 +566,7 @@ func TestExecuteDeckUsesSelectedBindingRegionBeforeResolvingCurrentEvent(t *test
 	if !ok {
 		t.Fatalf("unexpected text data: %+v", message[0].Data)
 	}
-	if !strings.Contains(textData.Text, "CN / 活动组卡 / event640") {
+	if !strings.Contains(textData.Text, i18n.RegionLabel("cn").String()+" / "+i18n.T("deck.mode.event")+" / "+i18n.T("deck.summary.event", i18n.Data{"ID": 640})) {
 		t.Fatalf("expected selected binding region event summary, got %q", textData.Text)
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/httpcoding"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
@@ -39,7 +40,7 @@ func newRemoteEngineProvider(cfg RecommendConfig) engineProvider {
 
 func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 	if p == nil {
-		return nil, fmt.Errorf("deck remote engine provider is not initialized")
+		return nil, deckTagged(upstreamerr.KindNotConfigured, fmt.Errorf("deck remote engine provider is not initialized"))
 	}
 	region = strings.ToLower(strings.TrimSpace(region))
 	if region == "" {
@@ -55,10 +56,10 @@ func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 
 	masterdataDir := resolveDeckRemoteMasterdataDir(p.cfg.MasterdataDir)
 	if masterdataDir == "" && p.registryURL == "" {
-		return nil, fmt.Errorf("deck remote engine requires local masterdata dir or registry_url")
+		return nil, deckTagged(upstreamerr.KindNotConfigured, fmt.Errorf("deck remote engine requires local masterdata dir or registry_url"))
 	}
 	if p.pool == nil || !p.pool.Enabled() || len(p.targets) == 0 {
-		return nil, fmt.Errorf("deck recommend service is not configured")
+		return nil, errDeckNotConfigured
 	}
 
 	algs := normalizeRecommendAlgorithmsForService(p.cfg.DefaultAlgs)
@@ -175,7 +176,7 @@ func (r *RemoteDeckRecommender) acquireExecution(ctx context.Context) (*remoteEx
 // circuit-open target falls back to least-pending.
 func (r *RemoteDeckRecommender) acquireExecutionFor(ctx context.Context, userdataKey *[32]byte) (*remoteExecution, error) {
 	if r == nil || r.client == nil || r.pool == nil || !r.pool.Enabled() {
-		return nil, fmt.Errorf("deck recommend service is not configured")
+		return nil, errDeckNotConfigured
 	}
 	ctx = normalizeRecommendContext(ctx)
 	if err := ctx.Err(); err != nil {
@@ -198,12 +199,12 @@ func (r *RemoteDeckRecommender) acquireExecutionFor(ctx context.Context, userdat
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return nil, ctxErr
 		}
-		return nil, fmt.Errorf("deck-service upstream is unavailable: %w", err)
+		return nil, deckTagged(upstreamerr.KindUnavailable, fmt.Errorf("deck-service upstream is unavailable: %w", err))
 	}
 	state := r.targetStates[remoteTargetKey(lease.Target)]
 	if state == nil {
 		lease.Release()
-		return nil, fmt.Errorf("deck-service target state is not initialized: %s", lease.Target.Name)
+		return nil, deckTagged(upstreamerr.KindNotConfigured, fmt.Errorf("deck-service target state is not initialized: %s", lease.Target.Name))
 	}
 	exec := &remoteExecution{
 		lease: lease,

@@ -2,6 +2,7 @@ package sk
 
 import (
 	"fmt"
+	"haruki-cloud/internal/i18n"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -32,7 +33,7 @@ func (c *Controller) resolveEventMeta(eventID int, region renderregion.Value) ev
 	const defaultWindow = int64(6 * time.Hour / time.Millisecond)
 	now := time.Now().UnixMilli()
 	meta := eventMeta{
-		name:        fmt.Sprintf("Event #%d", eventID),
+		name:        i18n.T("common.fallback.event", i18n.Data{"ID": eventID}),
 		startAt:     now - defaultWindow,
 		aggregateAt: now + defaultWindow,
 	}

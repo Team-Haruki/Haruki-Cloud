@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,7 +15,9 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/logger"
 )
 
@@ -1759,7 +1760,7 @@ func TestRemoteRecommendLogicalErrorsDoNotTripCircuitBreaker(t *testing.T) {
 			{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
 		},
 	})
-	if err == nil || !strings.Contains(err.Error(), "Event not found for eventId: 202") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "Event not found for eventId: 202") {
 		t.Fatalf("expected logical event-not-found error, got %v", err)
 	}
 	state := testRemoteTargetState(t, recommender)
@@ -1812,7 +1813,7 @@ func TestRemoteRecommendAutoResetsCircuitBreakerWhenHealthProbeSucceeds(t *testi
 			{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
 		},
 	})
-	if err == nil || !strings.Contains(err.Error(), "Event not found for eventId: 202") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "Event not found for eventId: 202") {
 		t.Fatalf("expected logical event-not-found error after health reset, got %v", err)
 	}
 	if failures := state.consecutiveFailures.Load(); failures != 0 {

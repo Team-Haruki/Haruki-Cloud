@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 
 	"golang.org/x/sync/singleflight"
+	"haruki-cloud/utils/usererror"
 )
 
 var skillPlaceholder = regexp.MustCompile(`{{(.*?)}}`)
@@ -80,7 +82,7 @@ func (p *dbSkillProvider) GetByID(ctx context.Context, id int) (*masterdata.Skil
 
 func (p *dbSkillProvider) matchingTypeIDs(ctx context.Context, skillType string) (map[int]struct{}, error) {
 	if p == nil || p.client == nil {
-		return nil, fmt.Errorf("skill provider is not configured")
+		return nil, usererror.Misconfigured(errors.New("skill provider is not configured"))
 	}
 	if err := p.ensureAllLoaded(ctx); err != nil {
 		return nil, err

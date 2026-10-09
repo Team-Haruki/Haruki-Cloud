@@ -6,12 +6,16 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestArrestPureHelpers(t *testing.T) {
@@ -79,20 +83,24 @@ func testArrestTextFormatting(t *testing.T) {
 		UserChallengeLiveSoloResult: sekaiapi.UserChallengeLiveSoloResult{CharacterID: 21, HighScore: 1_234_567},
 	}
 	formatted := formatArrestText(resp, []sekaiapi.MusicDifficultyType{sekaiapi.MusicDifficultyMaster, sekaiapi.MusicDifficultyExpert}, "Miku", false)
-	for _, want := range []string{"Player", "[master]", "FC:8", "Miku", "1,234,567"} {
+	for _, want := range []string{
+		"Player",
+		i18n.T("misc.arrest.difficulty", i18n.Data{"Difficulty": i18n.DifficultyLabel("master"), "Clear": 10, "FC": 8, "AP": 2}),
+		i18n.T("misc.arrest.challenge", i18n.Data{"Character": i18n.Verbatim("Miku"), "Score": "1,234,567"}),
+	} {
 		if !strings.Contains(formatted, want) {
 			t.Errorf("formatArrestText() = %q, missing %q", formatted, want)
 		}
 	}
 	resp.UserChallengeLiveSoloResult.HighScore = 0
-	if got := formatArrestText(resp, nil, "", true); strings.Contains(got, "挑战Live") || !strings.Contains(got, "1234567890") {
+	if got := formatArrestText(resp, nil, "", true); strings.Contains(got, "\n") || !strings.Contains(got, "1234567890") {
 		t.Fatalf("minimal arrest text = %q", got)
 	}
 }
 
 func testArrestValueFormatting(t *testing.T) {
 	t.Helper()
-	if arrestChallengeCharacterLabel(21, " Miku ") != "Miku" || arrestChallengeCharacterLabel(21, "") != "角色ID:21" {
+	if arrestChallengeCharacterLabel(21, " Miku ").String() != "Miku" || arrestChallengeCharacterLabel(21, "").ID != "common.fallback.character" {
 		t.Fatal("challenge character label mismatch")
 	}
 	regions := []struct {
@@ -102,14 +110,6 @@ func testArrestValueFormatting(t *testing.T) {
 	for _, tt := range regions {
 		if got := arrestCharacterRegionRank(tt.region); got != tt.want {
 			t.Errorf("arrestCharacterRegionRank(%q) = %d", tt.region, got)
-		}
-	}
-	for _, tt := range []struct {
-		value int
-		want  string
-	}{{0, "0"}, {12, "12"}, {1234, "1,234"}, {-1234567, "-1,234,567"}} {
-		if got := formatInt(tt.value); got != tt.want {
-			t.Errorf("formatInt(%d) = %q", tt.value, got)
 		}
 	}
 	if arrestDisplayUID(1234567890, true) != "1234567890" || arrestDisplayUID(1234567890, false) == "1234567890" {
@@ -153,7 +153,7 @@ func TestMusicFormattingAndListHelpers(t *testing.T) {
 
 func testMusicBPMFormatting(t *testing.T) {
 	t.Helper()
-	if got := formatMusicBPMResult(nil); got != "未找到 BPM 信息" {
+	if got := formatMusicBPMResult(nil); got != i18n.T("music.bpm.no_data") {
 		t.Fatalf("nil BPM result = %q", got)
 	}
 	result := &rendermusic.BPMResult{
@@ -162,10 +162,16 @@ func testMusicBPMFormatting(t *testing.T) {
 		Duration: 125.4, BarCount: 42,
 	}
 	formatted := formatMusicBPMResult(result)
-	for _, want := range []string{"【7】Song", "EXPERT", "主 BPM：120", "120 / 150.5", "2:05", "42"} {
-		if !strings.Contains(formatted, want) {
-			t.Errorf("formatMusicBPMResult() = %q, missing %q", formatted, want)
-		}
+	want := strings.Join([]string{
+		i18n.T("music.caption", i18n.Data{"ID": 7, "Title": "Song"}),
+		i18n.T("music.bpm.detail.difficulty", i18n.Data{"Difficulty": "EXPERT"}),
+		i18n.T("music.bpm.detail.main", i18n.Data{"BPM": "120"}),
+		i18n.T("music.bpm.detail.changes", i18n.Data{"Sequence": "120 / 150.5 / 0"}),
+		i18n.T("music.bpm.detail.duration", i18n.Data{"Duration": i18n.FormatDuration(125 * time.Second)}),
+		i18n.T("music.bpm.detail.bars", i18n.Data{"Count": 42}),
+	}, "\n")
+	if formatted != want {
+		t.Errorf("formatMusicBPMResult() = %q, want %q", formatted, want)
 	}
 	result.Music = nil
 	result.Difficulty = "unknown"
@@ -173,13 +179,13 @@ func testMusicBPMFormatting(t *testing.T) {
 	result.Events = nil
 	result.Duration = 0
 	result.BarCount = 0
-	if got := formatMusicBPMResult(result); got != "歌曲 BPM" {
+	if got := formatMusicBPMResult(result); got != i18n.T("music.bpm.detail.title") {
 		t.Fatalf("minimal BPM result = %q", got)
 	}
 	if got := formatMusicBPMSequence(nil); got != "" {
 		t.Fatalf("empty BPM sequence = %q", got)
 	}
-	if formatMusicDuration(-1) != "0:00" || formatMusicDuration(65.6) != "1:06" {
+	if formatMusicDuration(-1).String() != i18n.FormatDuration(0).String() || formatMusicDuration(65.6).String() != i18n.FormatDuration(66*time.Second).String() {
 		t.Fatal("duration formatting mismatch")
 	}
 }
@@ -201,22 +207,11 @@ func testMusicDifficultyFormatting(t *testing.T) {
 
 func testMusicAmbiguousTitles(t *testing.T) {
 	t.Helper()
-	fallback := "匹配到多个歌曲，请使用 /查歌 <id> 查询："
-	if got := buildAmbiguousMusicDetailListTitle(nil); got != fallback {
-		t.Fatalf("detail fallback = %q", got)
+	if got := buildAmbiguousMusicDetailListTitle(); got != i18n.T("music.ambiguous_list.detail") {
+		t.Fatalf("detail title = %q", got)
 	}
-	if got := buildAmbiguousMusicDetailListTitle(errors.New("failed to search music: 请改用 music<id>")); got != "请使用 /查歌 <id>" {
-		t.Fatalf("detail rewrite = %q", got)
-	}
-	if got := buildAmbiguousMusicDetailListTitle(errors.New("匹配到多个歌曲：1,2")); got != fallback {
-		t.Fatalf("detail ambiguous fallback = %q", got)
-	}
-	bpmFallback := "匹配到多个歌曲，请使用 /查BPM <id> 查询："
-	if got := buildAmbiguousMusicBPMListTitle(nil); got != bpmFallback {
-		t.Fatalf("BPM fallback = %q", got)
-	}
-	if got := buildAmbiguousMusicBPMListTitle(errors.New("failed to search music: 请使用查BPM music<id>")); !strings.Contains(got, "/查BPM") {
-		t.Fatalf("BPM rewrite = %q", got)
+	if got := buildAmbiguousMusicBPMListTitle(); got != i18n.T("music.ambiguous_list.bpm") {
+		t.Fatalf("BPM title = %q", got)
 	}
 }
 
@@ -230,12 +225,6 @@ func testMusicMatchHelpers(t *testing.T) {
 	}
 	if dedupeBPMMatchesByMusic(nil) != nil {
 		t.Fatal("nil matches should remain nil")
-	}
-	if got := buildMusicLookupListTitle("BPM", "120", "master"); got != "BPM 120 MASTER 匹配结果" {
-		t.Fatalf("lookup title = %q", got)
-	}
-	if got := buildMusicLookupListTitle("BPM", "120", ""); got != "BPM 120 匹配结果" {
-		t.Fatalf("plain lookup title = %q", got)
 	}
 }
 func TestMusicLevelParserInvalidAndBoundaryCases(t *testing.T) {
@@ -294,10 +283,10 @@ func TestMusicEmptyRenderInputsReturnErrors(t *testing.T) {
 	if message := renderMusicBPMDetailMessage(rc, &rendermusic.BPMResult{}); len(message) != 1 || message[0].Type != onebot11.TypeText {
 		t.Fatalf("BPM detail message = %+v", message)
 	}
-	if _, err := renderMusicLookupListMessages(rc, nil, "jp", "BPM", "120", "", "", nil); err == nil {
+	if _, err := renderMusicLookupListMessages(rc, nil, "jp", "title", "", nil); err == nil {
 		t.Fatal("expected empty detailed lookup error")
 	}
-	if _, err := renderMusicBriefLookupListMessages(rc, nil, "jp", "BPM", "120", nil); err == nil {
+	if _, err := renderMusicBriefLookupListMessages(rc, nil, "jp", "title", nil); err == nil {
 		t.Fatal("expected empty brief lookup error")
 	}
 	if _, err := renderAmbiguousMusicDetailListMessages(rc, nil, "jp", nil, nil); err == nil {
@@ -393,69 +382,69 @@ func testMessageErrorHelpers(t *testing.T) {
 	if got := unsupportedModeError("music", "bad").Error(); !strings.Contains(got, "unsupported music mode") {
 		t.Fatalf("unsupported error = %q", got)
 	}
-	original := errors.New("original")
-	if normalizeBindingLookupError(nil, "fallback") != nil {
+	notBound := i18n.M("binding.target_not_bound")
+	if normalizeBindingLookupError(nil, notBound) != nil {
 		t.Fatal("nil binding error changed")
 	}
-	if got := normalizeBindingLookupError(accountdata.ErrNoBinding, "fallback"); got != accountdata.ErrNoBinding {
-		t.Fatalf("no binding error changed: %v", got)
+	testutil.RequireUserError(t, normalizeBindingLookupError(accountdata.ErrNoBinding, i18n.Message{}), usererror.CodeSetup, "binding.required")
+	testutil.RequireUserError(t, normalizeBindingLookupError(accountdata.ErrNoBinding, notBound), usererror.CodeNotFound, "binding.target_not_bound")
+	original := errors.New("original")
+	wrapped := testutil.RequireUserError(t, normalizeBindingLookupError(original, notBound), usererror.CodeUnavailable, "common.unavailable")
+	if !errors.Is(wrapped, original) {
+		t.Fatalf("binding storage failure must keep its cause: %v", wrapped)
 	}
-	if got := normalizeBindingLookupError(original, ""); got != original {
-		t.Fatalf("empty fallback changed error: %v", got)
-	}
-	if got := normalizeBindingLookupError(original, "lookup failed"); !strings.Contains(got.Error(), "lookup failed") || !errors.Is(got, original) {
-		t.Fatalf("wrapped lookup error = %v", got)
+	typed := usererror.ReadOnly()
+	if normalizeBindingLookupError(typed, notBound) != typed {
+		t.Fatal("a typed error must pass through")
 	}
 }
 
 func testBindingDisplayHelpers(t *testing.T) {
 	t.Helper()
-	bindings := []*accountdata.ResolvedBinding{
-		nil,
-		{Server: "jp"},
-		{PJSKUserID: "12345678901234", Visible: true},
-		{Server: "jp", PJSKUserID: "12345678901234", Visible: false},
+	if _, ok := bindingAccountLabel(nil); ok {
+		t.Fatal("nil binding must have no account label")
 	}
-	wants := []string{"", "JP服", "12345678901234", "JP服123********234"}
-	for i, binding := range bindings {
-		if got := formatUserFacingBindingAccount(binding); got != wants[i] {
-			t.Errorf("binding account %d = %q, want %q", i, got, wants[i])
-		}
+	if _, ok := bindingAccountLabel(&accountdata.ResolvedBinding{Server: "jp"}); ok {
+		t.Fatal("a binding without UID must have no account label")
+	}
+	binding := &accountdata.ResolvedBinding{Server: "jp", PJSKUserID: "12345678901234", Visibility: accountdata.UniformVisibility(false)}
+	label, ok := bindingAccountLabel(binding)
+	if !ok || label.String() != i18n.AccountLabel("jp", "12345678901234", false).String() {
+		t.Fatalf("binding account label = %q, %v", label, ok)
 	}
 }
 
 func testPrivateDataMessages(t *testing.T) {
 	t.Helper()
-	binding := &accountdata.ResolvedBinding{Server: "jp", PJSKUserID: "12345678901234", Visible: false}
-	if got := buildPrivateDataHiddenMessage("mysekai", binding); !strings.Contains(got, "/展示烤森抓包") || !strings.Contains(got, "mysekai") {
-		t.Fatalf("hidden MySekai message = %q", got)
+	binding := &accountdata.ResolvedBinding{Server: "jp", PJSKUserID: "12345678901234", Visibility: accountdata.UniformVisibility(false)}
+	for _, tc := range []struct {
+		got  i18n.Message
+		id   string
+		data string
+	}{
+		{privateDataHiddenMessage("mysekai", binding), "binding.data.hidden_mysekai", ""},
+		{privateDataHiddenMessage("unknown", nil), "binding.data.hidden_suite", ""},
+		{privateDataNotFoundMessage("", nil), "binding.data.not_found", "binding.data_kind.suite"},
+		{privateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{}), "binding.data.not_found", "binding.data_kind.mysekai"},
+		{privateDataNotFoundMessage("mysekai", binding), "binding.data.not_found_account", "binding.data_kind.mysekai"},
+		{toolboxAccessDeniedMessage("suite", nil), "binding.toolbox.access_denied", "binding.data_kind.suite"},
+		{toolboxAccessDeniedMessage("suite", binding), "binding.toolbox.access_denied_account", "binding.data_kind.suite"},
+	} {
+		if tc.got.ID != tc.id {
+			t.Errorf("message = %s, want %s", tc.got.ID, tc.id)
+		}
+		if tc.data != "" && tc.got.Data["Data"].(i18n.Message).ID != tc.data {
+			t.Errorf("%s data kind = %+v, want %s", tc.id, tc.got.Data["Data"], tc.data)
+		}
 	}
-	if got := buildPrivateDataHiddenMessage("unknown", nil); !strings.Contains(got, "/展示抓包") || !strings.Contains(got, "suite") {
-		t.Fatalf("hidden suite message = %q", got)
-	}
-	if got := buildPrivateDataNotFoundMessage("", nil); !strings.Contains(got, "suite") {
-		t.Fatalf("nil binding not found message = %q", got)
-	}
-	if got := buildPrivateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{}); !strings.Contains(got, "mysekai") {
-		t.Fatalf("incomplete binding not found message = %q", got)
-	}
-	if got := buildPrivateDataNotFoundMessage("mysekai", binding); !strings.Contains(got, "JP服") {
-		t.Fatalf("bound not found message = %q", got)
-	}
-	if got := buildToolboxAccessDeniedMessage("suite", nil); !strings.Contains(got, "当前QQ号") {
-		t.Fatalf("anonymous toolbox denial = %q", got)
-	}
-	if got := buildToolboxAccessDeniedMessage("suite", binding); !strings.Contains(got, "查询账号") {
-		t.Fatalf("bound toolbox denial = %q", got)
-	}
-	if normalizeToolboxDataLabel(" MySekai ") != "mysekai" || normalizeToolboxDataLabel("other") != "suite" {
-		t.Fatal("toolbox data label mismatch")
+	if normalizePrivateDataKind(" MySekai ") != "mysekai" || normalizePrivateDataKind("other") != "suite" {
+		t.Fatal("private data kind mismatch")
 	}
 }
 
 func testMaskingAndFallbackText(t *testing.T) {
 	t.Helper()
-	if maskUserFacingGameID("", false) != "" || maskUserFacingGameID("123", false) != "123" || maskUserFacingGameID("1234567890", true) != "1234567890" || maskUserFacingGameID("1234567890", false) != "123****890" {
+	if i18n.MaskUID("", false) != "" || i18n.MaskUID("123", false) != "123" || i18n.MaskUID("1234567890", true) != "1234567890" || i18n.MaskUID("1234567890", false) != "123****890" {
 		t.Fatal("game ID masking mismatch")
 	}
 	if stringPtr("") != nil {
@@ -463,17 +452,5 @@ func testMaskingAndFallbackText(t *testing.T) {
 	}
 	if value := stringPtr(" value "); value == nil || *value != "value" {
 		t.Fatalf("string pointer = %v", value)
-	}
-	if got := sanitizeUserFacingText(" safe message "); got != "safe message" {
-		t.Fatalf("sanitized safe text = %q", got)
-	}
-	if sanitizeUserFacingText("") != genericUserFacingErrorText || sanitizeUserFacingText("failed at http://localhost/private/token") != genericUserFacingErrorText {
-		t.Fatal("sensitive text was not replaced")
-	}
-	if fallbackCommandHelpMarkdown("", "", "body") != "# 指令帮助\n\nbody" {
-		t.Fatal("generic fallback help mismatch")
-	}
-	if fallbackCommandHelpMarkdown("/cmd", "path", "body") != "# /cmd\n\nbody" {
-		t.Fatal("trigger fallback help mismatch")
 	}
 }

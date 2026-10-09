@@ -18,10 +18,10 @@ import (
 // The render-cache key pipeline (cache_helpers.go, cache_hash.go,
 // cache_clone_sanitized.go, sonar_constants.go, cache_types.go:79-94,
 // request_dt.go:14 and the rule table in cache_rules.go) decides the keys
-// already persisted in the image cache index. These golden values were
-// computed from the tree before the storage abstraction work started and
-// must never change: a diff here means every stored render-cache key would
-// be invalidated.
+// already persisted in the image cache index. A diff here means every stored
+// render-cache key is invalidated, so these values change only together with
+// an intentional renderCacheKeyVersion bump (version 4: image labels moved to
+// the i18n catalog).
 
 func renderCacheKeyGoldenFixtures() []struct {
 	name, endpoint string
@@ -80,20 +80,20 @@ func renderCacheKeyGoldenFixtures() []struct {
 }
 
 var renderCacheKeyGoldenValues = map[string]string{
-	"Profile/Asia/Tokyo":        "5b61b66eabf6907d88212e3d1d213dcf489941dec0688723e37568787ba71293",
-	"Profile/Asia/Shanghai":     "73be3495725fb4b802b82c63bf9a90f970f5345db8bfe9525da690a73a38f133",
-	"CardBox100/Asia/Tokyo":     "04b6f3e83caf0c9695915976f1e1f69f23dc48a0c4eea4fda81529983a1f9e61",
-	"CardBox100/Asia/Shanghai":  "6c71a6d2affb027dfc1f86177b26c0990e2d51b2fbf18fcd8fd2eb80830aa480",
-	"CardBox1000/Asia/Tokyo":    "d263d50499532e2a0187c1f8ed583018e5bfdac11e8e2aa6da2ffc778f8753bc",
-	"CardBox1000/Asia/Shanghai": "f5303a021d53d41fc04eb39710a10c09db24851022365d81a169fd8f5593c721",
+	"Profile/Asia/Tokyo":        "534b8c6eb911e694d68ad0f2c6a387f001ae2576ba73cd2a4aaa011de21252e7",
+	"Profile/Asia/Shanghai":     "3d752a42f2cde6916ff12c77d3e452cb59c9486a0204de8afd99f70c0b58660f",
+	"CardBox100/Asia/Tokyo":     "7f5d7422b45da3d030a90295e3726bdbd95ed4a1d52e0fba0e93e4cbfadfd344",
+	"CardBox100/Asia/Shanghai":  "3238bf11fda7f2394346b82cdd568b9b99d7036b4405de79f0eceeeaaf3698c3",
+	"CardBox1000/Asia/Tokyo":    "020e89b62a898ed67a985c1defd809712e5d365f6081f797662f9394ff4e6a3f",
+	"CardBox1000/Asia/Shanghai": "03de1e66ffef95d9b2780d826e3005ac97cfb9f1bd767028cff27676bbbaed0e",
 	"EventList/Asia/Tokyo":      "683ea9922ab0b86fcc6ba00b696ae861fba0e3fa816a3b73e7a80de40e6200fa",
 	"EventList/Asia/Shanghai":   "59d87ab661bc720d7f9003994e941676288f39bc375b0d3b28972c68e5f7c4b3",
-	"MusicList/Asia/Tokyo":      "ab274a8e8e411bf8696639a258f3e1b8831c00317dd544ae33644190209a2c9b",
-	"MusicList/Asia/Shanghai":   "45d71c2ea5231d7d46d68bf3abb25984ac7fd72b8f01811693edb44943dd4a45",
+	"MusicList/Asia/Tokyo":      "3d7522e5b075e34418c9e63cf124312692f38acd952e21ceb95492afad85cacb",
+	"MusicList/Asia/Shanghai":   "a475baf4a654c6409c0394f63e5ce26b2da417561148dacda5dfbad42e266a4e",
 	// Chart keys were computed before T16 added the /api/pjsk/chart rule: the
 	// rule changes only the TTL, never the key.
-	"Chart/Asia/Tokyo":    "bc82d2007cc5518cfef0b6fec537293bc9e4bdb055aff63cdc8dab50d6a1ef19",
-	"Chart/Asia/Shanghai": "2ea7b1a62250cbd5f9ee4006f4ec9114fcf71f304a50dd95b11a3f66634f66ab",
+	"Chart/Asia/Tokyo":    "9020f343812d65d8081085c28601bb086dd95428da3bd1b01fb3ed6b622ed1e6",
+	"Chart/Asia/Shanghai": "07332d8fd7e38270f9e907e8b151bcb485d272b81b83c04639c61dcb114b2fd9",
 }
 
 func computeRenderCacheGoldenKey(t *testing.T, endpoint string, request any, zone string) string {
@@ -138,9 +138,9 @@ func TestRenderCacheKeyGolden(t *testing.T) {
 
 // TestRenderCacheKeyGoldenEventListUsesVersionFive proves the event/list
 // golden key is derived from key version 5 while every other endpoint stays
-// on version 3.
+// on version 4.
 func TestRenderCacheKeyGoldenEventListUsesVersionFive(t *testing.T) {
-	if renderCacheKeyVersion != 3 || renderCacheEventListKeyVersion != 5 {
+	if renderCacheKeyVersion != 4 || renderCacheEventListKeyVersion != 5 {
 		t.Fatalf("key versions changed: default=%d event/list=%d", renderCacheKeyVersion, renderCacheEventListKeyVersion)
 	}
 	for _, fixture := range renderCacheKeyGoldenFixtures() {
@@ -157,8 +157,8 @@ func TestRenderCacheKeyGoldenEventListUsesVersionFive(t *testing.T) {
 		if got := keyWithVersion(t, policy, 5); got != want {
 			t.Fatalf("version 5 key = %s, want golden %s", got, want)
 		}
-		if got := keyWithVersion(t, policy, 3); got == want {
-			t.Fatal("event/list golden key must not match the version 3 derivation")
+		if got := keyWithVersion(t, policy, 4); got == want {
+			t.Fatal("event/list golden key must not match the version 4 derivation")
 		}
 		return
 	}

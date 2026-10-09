@@ -24,13 +24,18 @@ import (
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	"entgo.io/ent/dialect/sql"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
 	DefaultBirthdayMonitorMinutes = 90
 	MaxBirthdayMonitorMinutes     = 120
-	EmptyBirthdayMonitorMessage   = "本次生日材料更新未发现你订阅的材料。"
 )
+
+// EmptyBirthdayMonitorMessage is pushed when a monitored update contains
+// none of the subscribed materials.
+var EmptyBirthdayMonitorMessage = i18n.T("subscription.birthday.empty_result")
 
 type BirthdayMaterial struct {
 	Name        string
@@ -44,31 +49,31 @@ var BirthdayMaterials = []BirthdayMaterial{
 		Name:        "diamond",
 		ResourceID:  12,
 		ResourceKey: "mysekai_material_12",
-		Aliases:     []string{"钻石", "ダイヤモンド", "diamond"},
+		Aliases:     []string{"钻石", "ダイヤモンド", "diamond"}, //copylint:ignore parser keywords users type
 	},
 	{
 		Name:        "yuugiri",
 		ResourceID:  5,
 		ResourceKey: "mysekai_material_5",
-		Aliases:     []string{"夕桐", "yuugiri", "yugiri"},
+		Aliases:     []string{"夕桐", "yuugiri", "yugiri"}, //copylint:ignore parser keywords users type
 	},
 	{
 		Name:        "clover",
 		ResourceID:  20,
 		ResourceKey: "mysekai_material_20",
-		Aliases:     []string{"四叶草", "四葉草", "四葉のクローバー", "clover"},
+		Aliases:     []string{"四叶草", "四葉草", "四葉のクローバー", "clover"}, //copylint:ignore parser keywords users type
 	},
 	{
 		Name:        "battery",
 		ResourceID:  17,
 		ResourceKey: "mysekai_material_17",
-		Aliases:     []string{"电池", "電池", "battery"},
+		Aliases:     []string{"电池", "電池", "battery"}, //copylint:ignore parser keywords users type
 	},
 	{
 		Name:        "amethyst",
 		ResourceID:  11,
 		ResourceKey: "mysekai_material_11",
-		Aliases:     []string{"紫水晶", "闪耀石英", "閃耀石英", "きらきらクォーツ", "amethyst", "quartz"},
+		Aliases:     []string{"紫水晶", "闪耀石英", "閃耀石英", "きらきらクォーツ", "amethyst", "quartz"}, //copylint:ignore parser keywords users type
 	},
 }
 
@@ -200,10 +205,10 @@ func (s *Service) CreateOrUpdate(
 		return nil, err
 	}
 	if strings.TrimSpace(platformGroupID) == "" {
-		return nil, fmt.Errorf("生日材料监听只支持群聊")
+		return nil, usererror.Invalid(i18n.M("subscription.birthday.group_only"))
 	}
 	if strings.TrimSpace(selfID) == "" {
-		return nil, fmt.Errorf("缺少 OneBot self_id，请更新 Client")
+		return nil, usererror.Misconfigured(errors.New("birthday monitor request has no OneBot self_id"))
 	}
 
 	command, err := ParseBirthdayMonitorCommand(message)
@@ -211,7 +216,7 @@ func (s *Service) CreateOrUpdate(
 		return nil, err
 	}
 	if command.Cancel {
-		return nil, fmt.Errorf("请使用取消监听接口")
+		return nil, errors.New("birthday monitor: cancel command sent to the subscribe endpoint")
 	}
 	if command.RegionExplicit {
 		server = command.Region
@@ -223,10 +228,10 @@ func (s *Service) CreateOrUpdate(
 		return nil, err
 	}
 	if binding == nil {
-		return nil, fmt.Errorf("未找到可监听的绑定账号")
+		return nil, usererror.Setup(i18n.M("subscription.birthday.no_binding"))
 	}
 	if !binding.Verified {
-		return nil, fmt.Errorf("该账号尚未验证，请先在工具箱验证账号再发送\"/pjsk验证\"后才可使用")
+		return nil, usererror.Setup(i18n.M("subscription.birthday.unverified"))
 	}
 
 	version, token, err := randomVersionedToken()
@@ -339,14 +344,14 @@ func (s *Service) Cancel(
 		return nil, err
 	}
 	if strings.TrimSpace(platformGroupID) == "" {
-		return nil, fmt.Errorf("生日材料监听只支持群聊")
+		return nil, usererror.Invalid(i18n.M("subscription.birthday.group_only"))
 	}
 	command, err := ParseBirthdayMonitorCommand(message)
 	if err != nil {
 		return nil, err
 	}
 	if !command.Cancel {
-		return nil, fmt.Errorf("请使用监听接口")
+		return nil, errors.New("birthday monitor: subscribe command sent to the cancel endpoint")
 	}
 	if command.RegionExplicit {
 		server = command.Region
@@ -369,7 +374,7 @@ func (s *Service) Cancel(
 		).
 		Only(ctx)
 	if pjskdb.IsNotFound(err) {
-		return nil, fmt.Errorf("当前账号没有活跃的生日材料监听")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("subscription.birthday.none_active"))
 	}
 	if err != nil {
 		return nil, err
@@ -379,7 +384,7 @@ func (s *Service) Cancel(
 		sub.PlatformGroupID != strings.TrimSpace(platformGroupID) ||
 		sub.CloudBotID != strings.TrimSpace(cloudBotID) ||
 		sub.SelfID != strings.TrimSpace(selfID) {
-		return nil, fmt.Errorf("当前账号没有由你创建的活跃生日材料监听")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("subscription.birthday.not_owner"))
 	}
 	if err := s.deleteBirthdayMonitor(ctx, sub.ID, tokenVersion(sub.Token)); err != nil {
 		return nil, err
@@ -421,7 +426,7 @@ func (s *Service) ActiveForUpload(ctx context.Context, region string, uid string
 
 func (s *Service) syncBirthdayMonitor(ctx context.Context, subscriptionID int, version string, region string, uid string, materials []string, expiresAt time.Time, notifyEmpty bool) error {
 	if s == nil || s.toolbox == nil {
-		return fmt.Errorf("toolbox 监听同步服务未配置，订阅失败，请稍后重试")
+		return usererror.Misconfigured(errors.New("birthday monitor: toolbox client is not configured"))
 	}
 	if err := s.toolbox.UpsertMysekaiBirthdayMonitor(ctx, sekaiapi.MysekaiBirthdayMonitorUpsertRequest{
 		SubscriptionID:      strconv.Itoa(subscriptionID),
@@ -433,7 +438,7 @@ func (s *Service) syncBirthdayMonitor(ctx context.Context, subscriptionID int, v
 		ExpiresAt:           expiresAt.Unix(),
 		NotifyEmpty:         notifyEmpty,
 	}); err != nil {
-		return fmt.Errorf("同步 Toolbox 监听失败，订阅未生效，请稍后重试: %w", err)
+		return usererror.Wrap(usererror.CodeUnavailable, i18n.M("subscription.birthday.sync_failed"), fmt.Errorf("upsert toolbox birthday monitor: %w", err))
 	}
 	return nil
 }
@@ -443,7 +448,7 @@ func (s *Service) deleteBirthdayMonitor(ctx context.Context, subscriptionID int,
 		return nil
 	}
 	if err := s.toolbox.DeleteMysekaiBirthdayMonitor(ctx, strconv.Itoa(subscriptionID), version); err != nil {
-		return fmt.Errorf("清理 Toolbox 监听失败，请稍后重试: %w", err)
+		return usererror.Wrap(usererror.CodeUnavailable, i18n.M("subscription.birthday.cleanup_failed"), fmt.Errorf("delete toolbox birthday monitor: %w", err))
 	}
 	return nil
 }
@@ -752,7 +757,7 @@ func (s *Service) resolveBinding(ctx context.Context, platform string, platformU
 	}
 	if err != nil {
 		if errors.Is(err, accountdata.ErrNoBinding) {
-			return nil, fmt.Errorf("未找到可监听的绑定账号，请先绑定并验证账号")
+			return nil, usererror.Setup(i18n.M("subscription.birthday.no_binding"))
 		}
 		return nil, err
 	}
@@ -761,21 +766,21 @@ func (s *Service) resolveBinding(ctx context.Context, platform string, platformU
 
 func (s *Service) requireReady() error {
 	if !s.Ready() {
-		return fmt.Errorf("生日材料监听服务未就绪")
+		return usererror.Unavailable(i18n.M("subscription.birthday.feature"), errors.New("birthday monitor service is not ready"))
 	}
 	return nil
 }
 
 func (s *Service) requireDB() error {
 	if s == nil || s.db == nil {
-		return fmt.Errorf("生日材料监听数据库未就绪")
+		return usererror.Misconfigured(errors.New("birthday monitor database is not configured"))
 	}
 	return nil
 }
 
 func (s *Service) requireWritable() error {
 	if s == nil {
-		return fmt.Errorf("生日材料监听服务未就绪")
+		return usererror.Unavailable(i18n.M("subscription.birthday.feature"), errors.New("birthday monitor service is not ready"))
 	}
 	return cluster.EnsureWritable(s.readOnly)
 }
@@ -785,7 +790,7 @@ func ParseBirthdayMonitorCommand(message string) (BirthdayMonitorCommand, error)
 	region, regionExplicit, normalizedCommand := stripBirthdayMonitorRegionPrefix(trimmed)
 	commandText, cancel, ok := stripBirthdayMonitorCommand(normalizedCommand)
 	if !ok {
-		return BirthdayMonitorCommand{}, fmt.Errorf("未识别的生日材料监听命令")
+		return BirthdayMonitorCommand{}, usererror.Unrecognized()
 	}
 	fields := strings.Fields(commandText)
 	result := BirthdayMonitorCommand{
@@ -816,7 +821,7 @@ func ParseBirthdayMonitorCommand(message string) (BirthdayMonitorCommand, error)
 		}
 	}
 	if len(result.Materials) == 0 {
-		return BirthdayMonitorCommand{}, fmt.Errorf("至少需要开启一种监听材料")
+		return BirthdayMonitorCommand{}, usererror.Invalid(i18n.M("subscription.birthday.materials_required"))
 	}
 	return result, nil
 }
@@ -836,10 +841,10 @@ func applyBirthdayMonitorField(result *BirthdayMonitorCommand, enabled map[strin
 			return false, nil
 		}
 		if minutes <= 0 {
-			return false, fmt.Errorf("监听时长必须大于 0 分钟")
+			return false, usererror.Invalid(i18n.M("subscription.birthday.duration_range", i18n.Data{"Max": MaxBirthdayMonitorMinutes}))
 		}
 		if minutes > MaxBirthdayMonitorMinutes {
-			return false, fmt.Errorf("监听时长不能超过 %d 分钟", MaxBirthdayMonitorMinutes)
+			return false, usererror.Invalid(i18n.M("subscription.birthday.duration_range", i18n.Data{"Max": MaxBirthdayMonitorMinutes}))
 		}
 		result.DurationMinutes = minutes
 		return false, nil
@@ -851,7 +856,7 @@ func applyBirthdayMonitorField(result *BirthdayMonitorCommand, enabled map[strin
 		enabled[name] = value
 		return true, nil
 	}
-	return false, fmt.Errorf("无法识别参数：%s", token)
+	return false, usererror.BadParam(token, i18n.M("subscription.birthday.param_unknown"))
 }
 
 func MaterialIDs(materials []string) []int {
@@ -896,11 +901,11 @@ func stripBirthdayMonitorCommand(message string) (string, bool, bool) {
 		cancel  bool
 	}{
 		{"/mysekai birthday unmonitor", true},
-		{"/烤森生日取消监听", true},
-		{"/ms生日取消监听", true},
+		{"/烤森生日取消监听", true}, //copylint:ignore command trigger
+		{"/ms生日取消监听", true}, //copylint:ignore command trigger
 		{"/mysekai birthday monitor", false},
-		{"/烤森生日监听", false},
-		{"/ms生日监听", false},
+		{"/烤森生日监听", false}, //copylint:ignore command trigger
+		{"/ms生日监听", false}, //copylint:ignore command trigger
 	}
 	lowerMessage := strings.ToLower(message)
 	for _, alias := range aliases {
@@ -946,7 +951,7 @@ func stripBirthdayMonitorRegionPrefix(message string) (string, bool, string) {
 }
 
 func parseDurationToken(token string) (int, bool) {
-	token = strings.TrimSuffix(strings.TrimSpace(token), "分钟")
+	token = strings.TrimSuffix(strings.TrimSpace(token), "分钟") //copylint:ignore parser keyword
 	if token == "" {
 		return 0, false
 	}
@@ -962,14 +967,14 @@ func parseDurationToken(token string) (int, bool) {
 func parseMaterialToken(token string) (string, bool, bool) {
 	raw := strings.TrimSpace(token)
 	value := true
-	for _, suffix := range []string{"开启", "打开", "启用", "on"} {
+	for _, suffix := range []string{"开启", "打开", "启用", "on"} { //copylint:ignore parser keywords
 		if strings.HasSuffix(strings.ToLower(raw), strings.ToLower(suffix)) {
 			raw = strings.TrimSpace(raw[:len(raw)-len(suffix)])
 			value = true
 			break
 		}
 	}
-	for _, suffix := range []string{"关闭", "关", "禁用", "off"} {
+	for _, suffix := range []string{"关闭", "关", "禁用", "off"} { //copylint:ignore parser keywords
 		if strings.HasSuffix(strings.ToLower(raw), strings.ToLower(suffix)) {
 			raw = strings.TrimSpace(raw[:len(raw)-len(suffix)])
 			value = false

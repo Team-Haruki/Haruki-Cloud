@@ -2,6 +2,7 @@ package groupguard
 
 import (
 	"fmt"
+	"haruki-cloud/internal/i18n"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -189,7 +190,7 @@ func TestCheckBindingReturnsServiceUnavailableWhenToolboxMissing(t *testing.T) {
 	if resp.Status != fiber.StatusServiceUnavailable {
 		t.Fatalf("unexpected response: %+v", resp)
 	}
-	if resp.Message != "绑定查询服务未就绪，请稍后再试" {
+	if resp.Message != i18n.T("account.api.binding_lookup_unavailable") {
 		t.Fatalf("unexpected message: %s", resp.Message)
 	}
 }
@@ -204,7 +205,7 @@ func TestCheckBindingDoesNotExposeToolboxErrorDetails(t *testing.T) {
 	if resp.Status != fiber.StatusBadGateway {
 		t.Fatalf("unexpected response: %+v", resp)
 	}
-	if resp.Message != "查询绑定状态失败，请稍后再试" {
+	if resp.Message != i18n.T("account.api.binding_lookup_failed") {
 		t.Fatalf("unexpected message: %s", resp.Message)
 	}
 	if strings.Contains(resp.Message, "http://") || strings.Contains(resp.Message, "https://") || strings.Contains(resp.Message, "token") {

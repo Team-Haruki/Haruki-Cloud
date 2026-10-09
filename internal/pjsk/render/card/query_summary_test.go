@@ -2,8 +2,10 @@ package card
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
@@ -23,14 +25,14 @@ func TestControllerQuerySummaryEntryPoints(t *testing.T) {
 			got: func() string {
 				return controller.SummaryForDetail(Query{Region: " cn ", Query: " 1001 "})
 			},
-			want: "CN / 查卡 / 卡牌ID1001",
+			want: i18n.RegionLabel("cn").String() + " / " + i18n.T("render_card.summary.mode.detail") + " / " + i18n.T("render_card.summary.card_id", i18n.Data{"ID": 1001}),
 		},
 		{
 			name: "list describes explicit card IDs",
 			got: func() string {
 				return controller.SummaryForList(ListRequest{Region: "cn", CardIDs: []int{1001, 1002}})
 			},
-			want: "CN / 卡牌列表 / 卡牌ID 1001, 1002",
+			want: i18n.RegionLabel("cn").String() + " / " + i18n.T("render_card.summary.mode.list") + " / " + i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": "1001、1002"}),
 		},
 		{
 			name: "box includes presentation options",
@@ -44,7 +46,7 @@ func TestControllerQuerySummaryEntryPoints(t *testing.T) {
 					UseAfterTraining: &beforeTraining,
 				})
 			},
-			want: "CN / 卡牌一览 / 四星 / 显示ID / 显示持有 / 花前",
+			want: strings.Join([]string{i18n.RegionLabel("cn").String(), i18n.T("render_card.summary.mode.box"), i18n.T("render_card.summary.rarity.rarity_4"), i18n.T("render_card.summary.show_id"), i18n.T("render_card.summary.show_box"), i18n.T("render_card.summary.before_training")}, " / "),
 		},
 	}
 
@@ -121,7 +123,7 @@ func TestFormatQuerySummaryFallbacks(t *testing.T) {
 			controller: nilController,
 			region:     " jp ",
 			mode:       "unsupported",
-			want:       "JP / 查卡",
+			want:       i18n.RegionLabel("jp").String() + " / " + i18n.T("render_card.summary.mode.detail"),
 		},
 		{
 			name:       "missing source falls back to requested region",
@@ -129,7 +131,7 @@ func TestFormatQuerySummaryFallbacks(t *testing.T) {
 			region:     "tw",
 			mode:       "list",
 			rawQuery:   "not-a-card-query",
-			want:       "TW / 卡牌列表 / not-a-card-query",
+			want:       i18n.RegionLabel("tw").String() + " / " + i18n.T("render_card.summary.mode.list") + " / not-a-card-query",
 		},
 		{
 			name:       "unknown region preserves caller label",
@@ -137,7 +139,7 @@ func TestFormatQuerySummaryFallbacks(t *testing.T) {
 			region:     "unknown",
 			mode:       "list",
 			rawQuery:   "not-a-card-query",
-			want:       "UNKNOWN / 卡牌列表 / not-a-card-query",
+			want:       "UNKNOWN / " + i18n.T("render_card.summary.mode.list") + " / not-a-card-query",
 		},
 		{
 			name:       "blank region is omitted",
@@ -145,7 +147,7 @@ func TestFormatQuerySummaryFallbacks(t *testing.T) {
 			region:     " ",
 			mode:       "list",
 			rawQuery:   "not-a-card-query",
-			want:       "卡牌列表 / not-a-card-query",
+			want:       i18n.T("render_card.summary.mode.list") + " / not-a-card-query",
 		},
 		{
 			name:       "after-training box omits before-training marker",
@@ -153,7 +155,7 @@ func TestFormatQuerySummaryFallbacks(t *testing.T) {
 			region:     "jp",
 			mode:       "box",
 			after:      &afterTraining,
-			want:       "JP / 卡牌一览 / 全部已上线卡牌",
+			want:       i18n.RegionLabel("jp").String() + " / " + i18n.T("render_card.summary.mode.box") + " / " + i18n.T("render_card.summary.all_released"),
 		},
 	}
 
@@ -211,14 +213,14 @@ func TestDescribeQueryParts(t *testing.T) {
 		cardIDs    []int
 		want       []string
 	}{
-		{name: "explicit IDs", controller: nilController, mode: "list", cardIDs: []int{10, 20}, want: []string{"卡牌ID 10, 20"}},
+		{name: "explicit IDs", controller: nilController, mode: "list", cardIDs: []int{10, 20}, want: []string{i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": "10、20"})}},
 		{name: "empty invalid IDs", controller: nilController, mode: "list", cardIDs: []int{0, -1}},
-		{name: "empty box", controller: nilController, mode: "box", want: []string{"全部已上线卡牌"}},
+		{name: "empty box", controller: nilController, mode: "box", want: []string{i18n.T("render_card.summary.all_released")}},
 		{name: "empty detail", controller: nilController, mode: "detail"},
-		{name: "strict filter", controller: nilController, mode: "list", rawQuery: " 4星 ", strict: true, want: []string{"四星"}},
-		{name: "detail ID", controller: nilController, mode: "detail", rawQuery: "1001", want: []string{"卡牌ID1001"}},
-		{name: "preferred filter", controller: nilController, mode: "list", rawQuery: "4星", want: []string{"四星"}},
-		{name: "custom nickname sequence", controller: customController, mode: "detail", rawQuery: "hero-2", want: []string{"hero最新第2张"}},
+		{name: "strict filter", controller: nilController, mode: "list", rawQuery: " 4星 ", strict: true, want: []string{i18n.T("render_card.summary.rarity.rarity_4")}},
+		{name: "detail ID", controller: nilController, mode: "detail", rawQuery: "1001", want: []string{i18n.T("render_card.summary.card_id", i18n.Data{"ID": 1001})}},
+		{name: "preferred filter", controller: nilController, mode: "list", rawQuery: "4星", want: []string{i18n.T("render_card.summary.rarity.rarity_4")}},
+		{name: "custom nickname sequence", controller: customController, mode: "detail", rawQuery: "hero-2", want: []string{i18n.T("render_card.summary.latest_character", i18n.Data{"Character": "hero", "N": 2})}},
 		{name: "strict parse failure preserves query", controller: customController, mode: "list", rawQuery: "1001", strict: true, want: []string{"1001"}},
 		{name: "parse failure preserves query", controller: customController, mode: "list", rawQuery: "not-a-card-query", want: []string{"not-a-card-query"}},
 	}
@@ -241,9 +243,9 @@ func TestDescribeExplicitCardIDs(t *testing.T) {
 	}{
 		{name: "none"},
 		{name: "only invalid", ids: []int{-1, 0}},
-		{name: "single", ids: []int{-1, 42, 0}, want: []string{"卡牌ID42"}},
-		{name: "up to five", ids: []int{1, 2, 3, 4, 5}, want: []string{"卡牌ID 1, 2, 3, 4, 5"}},
-		{name: "more than five", ids: []int{1, 2, 3, 4, 5, 6}, want: []string{"6张指定卡牌"}},
+		{name: "single", ids: []int{-1, 42, 0}, want: []string{i18n.T("render_card.summary.card_id", i18n.Data{"ID": 42})}},
+		{name: "up to five", ids: []int{1, 2, 3, 4, 5}, want: []string{i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": "1、2、3、4、5"})}},
+		{name: "more than five", ids: []int{1, 2, 3, 4, 5, 6}, want: []string{i18n.T("render_card.summary.card_count", i18n.Data{"Count": 6})}},
 	}
 
 	for _, tt := range tests {
@@ -268,12 +270,12 @@ func TestDescribeCardQueryInfo(t *testing.T) {
 		want []string
 	}{
 		{name: "nil info"},
-		{name: "ID", info: &PjskCardQueryInfo{Type: QueryTypeID, Value: 42}, want: []string{"卡牌ID42"}},
+		{name: "ID", info: &PjskCardQueryInfo{Type: QueryTypeID, Value: 42}, want: []string{i18n.T("render_card.summary.card_id", i18n.Data{"ID": 42})}},
 		{name: "invalid ID uses original", info: &PjskCardQueryInfo{Type: QueryTypeID, Original: " raw ID "}, want: []string{"raw ID"}},
-		{name: "global latest", info: &PjskCardQueryInfo{Type: QueryTypeLatest, Sequence: -3}, want: []string{"全局最新第3张"}},
+		{name: "global latest", info: &PjskCardQueryInfo{Type: QueryTypeLatest, Sequence: -3}, want: []string{i18n.T("render_card.summary.latest_global", i18n.Data{"N": 3})}},
 		{name: "invalid latest uses original", info: &PjskCardQueryInfo{Type: QueryTypeLatest, Sequence: 1, Original: "latest"}, want: []string{"latest"}},
-		{name: "character latest", info: &PjskCardQueryInfo{Type: QueryTypeSeq, CharacterID: 5, Sequence: -2}, want: []string{"花里实乃理最新第2张"}},
-		{name: "character ordinal", info: &PjskCardQueryInfo{Type: QueryTypeSeq, CharacterID: 6, Sequence: 2}, want: []string{"桐谷遥第2张"}},
+		{name: "character latest", info: &PjskCardQueryInfo{Type: QueryTypeSeq, CharacterID: 5, Sequence: -2}, want: []string{i18n.T("render_card.summary.latest_character", i18n.Data{"Character": "花里实乃理", "N": 2})}},
+		{name: "character ordinal", info: &PjskCardQueryInfo{Type: QueryTypeSeq, CharacterID: 6, Sequence: 2}, want: []string{i18n.T("render_card.summary.character_seq", i18n.Data{"Character": "桐谷遥", "N": 2})}},
 		{name: "invalid character sequence uses original", info: &PjskCardQueryInfo{Type: QueryTypeSeq, CharacterID: 6, Original: "haruka"}, want: []string{"haruka"}},
 		{
 			name: "complete filter",
@@ -292,7 +294,7 @@ func TestDescribeCardQueryInfo(t *testing.T) {
 				SupplyType:  SupplyFes,
 				Year:        2025,
 			},
-			want: []string{"event7", "花里实乃理2箱活", "桐谷遥", "粉", "大分", "分卡", "MMJV", "四星", "fes", "2025年"},
+			want: []string{"event7", i18n.T("render_card.summary.ban_event", i18n.Data{"Character": "花里实乃理", "N": 2}), "桐谷遥", i18n.T("render_card.summary.attr.cute"), i18n.T("render_card.summary.skill.big_score"), i18n.T("render_card.summary.skill_type.score_up"), "MMJV", i18n.T("render_card.summary.rarity.rarity_4"), "fes", i18n.T("render_card.summary.year", i18n.Data{"Year": 2025})},
 		},
 		{name: "empty filter", info: &PjskCardQueryInfo{Type: QueryTypeFilter}},
 		{name: "unknown type uses original", info: &PjskCardQueryInfo{Type: QueryTypeUnknown, Original: " raw "}, want: []string{"raw"}},
@@ -338,7 +340,7 @@ func TestSummaryCharacterLabel(t *testing.T) {
 			character: 8,
 			want:      "a",
 		},
-		{name: "numeric fallback", source: nil, nicknames: map[string]int{"other": 1}, character: 99, want: "角色99"},
+		{name: "numeric fallback", source: nil, nicknames: map[string]int{"other": 1}, character: 99, want: i18n.T("common.fallback.character", i18n.Data{"ID": 99})},
 	}
 
 	for _, tt := range tests {
@@ -383,17 +385,17 @@ func TestSummaryStringLabels(t *testing.T) {
 		{
 			name:  "mode",
 			label: cardSummaryModeLabel,
-			items: map[string]string{"detail": "查卡", "list": "卡牌列表", "box": "卡牌一览", "unknown": "查卡"},
+			items: map[string]string{"detail": i18n.T("render_card.summary.mode.detail"), "list": i18n.T("render_card.summary.mode.list"), "box": i18n.T("render_card.summary.mode.box"), "unknown": i18n.T("render_card.summary.mode.detail")},
 		},
 		{
 			name:  "attribute",
 			label: summaryAttributeLabel,
-			items: map[string]string{" cute ": "粉", "cool": "蓝", "pure": "绿", "happy": "橙", "mysterious": "紫", "unknown": ""},
+			items: map[string]string{" cute ": i18n.T("render_card.summary.attr.cute"), "cool": i18n.T("render_card.summary.attr.cool"), "pure": i18n.T("render_card.summary.attr.pure"), "happy": i18n.T("render_card.summary.attr.happy"), "mysterious": i18n.T("render_card.summary.attr.mysterious"), "unknown": ""},
 		},
 		{
 			name:  "skill type",
 			label: summarySkillTypeLabel,
-			items: map[string]string{" life_recovery ": "奶卡", "score_up": "分卡", "judgment_up": "判卡", "unknown": ""},
+			items: map[string]string{" life_recovery ": i18n.T("render_card.summary.skill_type.life_recovery"), "score_up": i18n.T("render_card.summary.skill_type.score_up"), "judgment_up": i18n.T("render_card.summary.skill_type.judgment_up"), "unknown": ""},
 		},
 		{
 			name:  "attached virtual singer unit",
@@ -408,7 +410,7 @@ func TestSummaryStringLabels(t *testing.T) {
 		{
 			name:  "rarity",
 			label: summaryRarityLabel,
-			items: map[string]string{" rarity_4 ": "四星", "rarity_3": "三星", "rarity_2": "二星", "rarity_1": "一星", "rarity_birthday": "生日", "unknown": ""},
+			items: map[string]string{" rarity_4 ": i18n.T("render_card.summary.rarity.rarity_4"), "rarity_3": i18n.T("render_card.summary.rarity.rarity_3"), "rarity_2": i18n.T("render_card.summary.rarity.rarity_2"), "rarity_1": i18n.T("render_card.summary.rarity.rarity_1"), "rarity_birthday": i18n.T("render_card.summary.rarity.birthday"), "unknown": ""},
 		},
 		{
 			name:  "supply",
@@ -417,11 +419,11 @@ func TestSummaryStringLabels(t *testing.T) {
 				" " + SupplyFes + " ": "fes",
 				SupplyCFes:            "cfes",
 				SupplyBFes:            "bfes",
-				SupplyWL:              "wl限定",
-				SupplyCollab:          "联动限定",
-				SupplyLimited:         "限定",
-				SupplyNormal:          "非限",
-				SupplyBirthday:        "生日",
+				SupplyWL:              i18n.T("render_card.summary.supply.wl"),
+				SupplyCollab:          i18n.T("render_card.summary.supply.collab"),
+				SupplyLimited:         i18n.T("render_card.summary.supply.limited"),
+				SupplyNormal:          i18n.T("render_card.summary.supply.normal"),
+				SupplyBirthday:        i18n.T("render_card.summary.supply.birthday"),
 				"unknown":             "",
 			},
 		},
@@ -445,12 +447,12 @@ func TestSummaryDetailedSkillLabel(t *testing.T) {
 		want string
 	}{
 		{name: "none", want: ""},
-		{name: "large score", ids: []int{4}, want: "大分"},
-		{name: "perfect score", ids: []int{11}, want: "P分"},
-		{name: "life score", ids: []int{12}, want: "血分"},
-		{name: "judgment score", ids: []int{13}, want: "判分"},
-		{name: "unit score", ids: []int{15, 16, 17, 18, 19}, want: "团分"},
-		{name: "generic IDs skip invalid", ids: []int{0, 2, -1, 7}, want: "技能2,7"},
+		{name: "large score", ids: []int{4}, want: i18n.T("render_card.summary.skill.big_score")},
+		{name: "perfect score", ids: []int{11}, want: i18n.T("render_card.summary.skill.perfect_score")},
+		{name: "life score", ids: []int{12}, want: i18n.T("render_card.summary.skill.life_score")},
+		{name: "judgment score", ids: []int{13}, want: i18n.T("render_card.summary.skill.judgment_score")},
+		{name: "unit score", ids: []int{15, 16, 17, 18, 19}, want: i18n.T("render_card.summary.skill.unit_score")},
+		{name: "generic IDs skip invalid", ids: []int{0, 2, -1, 7}, want: i18n.T("render_card.summary.skill.ids", i18n.Data{"IDs": "2、7"})},
 		{name: "only invalid IDs", ids: []int{0, -1}, want: ""},
 	}
 
@@ -470,10 +472,10 @@ func TestSummaryUnitFilterLabel(t *testing.T) {
 		want string
 	}{
 		{name: "nil", info: nil, want: ""},
-		{name: "original virtual singer", info: &PjskCardQueryInfo{MainUnit: "piapro", SupportUnit: "none"}, want: "原V"},
+		{name: "original virtual singer", info: &PjskCardQueryInfo{MainUnit: "piapro", SupportUnit: "none"}, want: i18n.T("render_card.summary.unit.original_vs")},
 		{name: "attached virtual singer", info: &PjskCardQueryInfo{MainUnit: "piapro", SupportUnit: "street"}, want: "VBSV"},
 		{name: "unknown attachment falls back to unit", info: &PjskCardQueryInfo{MainUnit: "piapro", SupportUnit: "unknown", Unit: "idol"}, want: "MMJ"},
-		{name: "pure original unit", info: &PjskCardQueryInfo{MainUnit: "theme_park", SupportUnit: "none"}, want: "纯WS"},
+		{name: "pure original unit", info: &PjskCardQueryInfo{MainUnit: "theme_park", SupportUnit: "none"}, want: i18n.T("render_card.summary.unit.pure", i18n.Data{"Unit": "WS"})},
 		{name: "unknown pure unit falls back", info: &PjskCardQueryInfo{MainUnit: "unknown", SupportUnit: "none", Unit: "piapro"}, want: "VS"},
 		{name: "mixed main unit falls back", info: &PjskCardQueryInfo{MainUnit: "idol", SupportUnit: "street", Unit: "light_sound"}, want: "L/N"},
 		{name: "ordinary unit", info: &PjskCardQueryInfo{Unit: "school_refusal"}, want: "25H"},

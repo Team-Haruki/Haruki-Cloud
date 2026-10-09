@@ -1,18 +1,19 @@
 package handler
 
 import (
-	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/common"
+	"haruki-cloud/utils/usererror"
 )
 
 var (
-	profileHorizontalKeywords = []string{"横屏", "横向", "横版"}
-	profileVerticalKeywords   = []string{"竖屏", "竖向", "竖版", "纵向"}
+	profileHorizontalKeywords = []string{"横屏", "横向", "横版"}       //copylint:ignore 解析关键字
+	profileVerticalKeywords   = []string{"竖屏", "竖向", "竖版", "纵向"} //copylint:ignore 解析关键字
 )
 
 func extractProfileVerticalArg(args string) (*bool, string) {
@@ -52,7 +53,7 @@ func extractFirstImageURL(ctx HarrukiSekaiHandlerContext) string {
 
 func parseProfileBGAdjustArgs(args string) (accountdata.ProfileSettingsCommandParams, error) {
 	params := accountdata.ProfileSettingsCommandParams{}
-	args = strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(args, "度", ""), "%", ""))
+	args = strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(args, "度", ""), "%", "")) //copylint:ignore 解析关键字
 	if args == "" {
 		return params, nil
 	}
@@ -80,24 +81,24 @@ func parseProfileBGAdjustArgs(args string) (accountdata.ProfileSettingsCommandPa
 func parseProfileBGToken(tokens []string, index int) (string, string, int, error) {
 	token := strings.TrimSpace(tokens[index])
 	switch strings.ToLower(token) {
-	case "模糊", "blur", "透明", "alpha":
+	case "模糊", "blur", "透明", "alpha": //copylint:ignore 解析关键字
 		if index+1 >= len(tokens) {
-			return "", "", 0, onebot11.NewReplayError("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")
+			return "", "", 0, usererror.Misuse(i18n.M("profile.bg.adjust_usage"))
 		}
 		return profileBGTokenKind(token), tokens[index+1], 1, nil
 	default:
-		if strings.HasPrefix(token, "模糊") {
-			return "blur", strings.TrimPrefix(token, "模糊"), 0, nil
+		if strings.HasPrefix(token, "模糊") { //copylint:ignore 解析关键字
+			return "blur", strings.TrimPrefix(token, "模糊"), 0, nil //copylint:ignore 解析关键字
 		}
-		if strings.HasPrefix(token, "透明") {
-			return "alpha", strings.TrimPrefix(token, "透明"), 0, nil
+		if strings.HasPrefix(token, "透明") { //copylint:ignore 解析关键字
+			return "alpha", strings.TrimPrefix(token, "透明"), 0, nil //copylint:ignore 解析关键字
 		}
-		return "", "", 0, fmt.Errorf("无法识别的个人信息背景参数: %s", token)
+		return "", "", 0, usererror.BadParam(token, i18n.M("profile.bg.param_unknown"))
 	}
 }
 
 func profileBGTokenKind(token string) string {
-	if strings.EqualFold(token, "blur") || token == "模糊" {
+	if strings.EqualFold(token, "blur") || token == "模糊" { //copylint:ignore 解析关键字
 		return "blur"
 	}
 	return "alpha"
@@ -113,17 +114,17 @@ func profileBGValueLimit(kind string) int {
 func parseProfileBGInt(raw string, minValue, maxValue int) (int, error) {
 	value := strings.TrimSpace(raw)
 	if value == "" {
-		return 0, fmt.Errorf("请提供正确的数值")
+		return 0, usererror.BadParam(value, i18n.M("common.param.integer"))
 	}
 	n := 0
 	for _, ch := range value {
 		if ch < '0' || ch > '9' {
-			return 0, fmt.Errorf("请提供正确的数值")
+			return 0, usererror.BadParam(value, i18n.M("common.param.integer"))
 		}
 		n = n*10 + int(ch-'0')
 	}
 	if n < minValue || n > maxValue {
-		return 0, fmt.Errorf("数值超出范围，需要在 %d~%d 之间", minValue, maxValue)
+		return 0, usererror.OutOfRange(i18n.M("common.param_name.value"), minValue, maxValue)
 	}
 	return n, nil
 }
@@ -136,21 +137,21 @@ func resolveProfileBGSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 	if isBindingSelector(uidArg) {
 		return uidArg, nil
 	}
-	return "", onebot11.NewReplayError("此设置仅支持操作自己的账号\n使用方式：%s [u序号] ...", ctx.originalTriggerCmd)
+	return "", usererror.Forbidden(i18n.M("profile.settings.self_only"))
 }
 
 func (sekaiHandlers) ProfileUploadBGHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
 			"/pjsk upload profile bg", "/pjsk upload profile background",
-			"/上传个人信息背景", "/上传个人信息图片", "/上传个人背景", "/上传个人信息",
+			"/上传个人信息背景", "/上传个人信息图片", "/上传个人背景", "/上传个人信息", "/上传背景",
 		},
 		Path:        "profile/bg/upload",
 		ParseUIDArg: common.BoolPtr(true),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			imageURL := extractFirstImageURL(ctx)
 			if imageURL == "" {
-				return nil, onebot11.NewReplayError("请在命令中附带一张个人信息背景图片")
+				return nil, usererror.Misuse(i18n.M("profile.bg.image_required"))
 			}
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
@@ -167,7 +168,7 @@ func (sekaiHandlers) ProfileClearBGHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
 			"/pjsk clear profile bg", "/pjsk clear profile background",
-			"/清空个人信息背景", "/清除个人信息背景", "/清空个人信息图片", "/清除个人信息图片",
+			"/清空个人信息背景", "/清除个人信息背景", "/清空个人信息图片", "/清除个人信息图片", "/清除背景",
 		},
 		Path:        "profile/bg/clear",
 		ParseUIDArg: common.BoolPtr(true),
@@ -185,7 +186,7 @@ func (sekaiHandlers) ProfileAdjustBGHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
 			"/pjsk adjust profile", "/pjsk adjust profile bg", "/pjsk adjust profile background",
-			"/调整个人信息背景", "/调整个人信息", "/设置个人信息", "/设置个人信息背景",
+			"/调整个人信息背景", "/调整个人信息", "/设置个人信息", "/设置个人信息背景", "/调整背景",
 		},
 		Path:        "profile/bg/adjust",
 		ParseUIDArg: common.BoolPtr(true),

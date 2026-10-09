@@ -1,6 +1,7 @@
 package displaytime
 
 import (
+	"context"
 	"slices"
 	"testing"
 )
@@ -61,5 +62,15 @@ func TestResolveUserTimeZoneInputInvalid(t *testing.T) {
 
 	if _, _, err := ResolveUserTimeZoneInput("Not/A_Timezone"); err == nil {
 		t.Fatal("ResolveUserTimeZoneInput(Not/A_Timezone) expected error, got nil")
+	}
+}
+
+func TestRequestLocation(t *testing.T) {
+	if got := RequestLocation(context.Background()).String(); got != DefaultTimeZone {
+		t.Fatalf("default RequestLocation() = %q", got)
+	}
+	ctx := WithRequestTimeZone(context.Background(), "Asia/Tokyo")
+	if got := RequestLocation(ctx).String(); got != "Asia/Tokyo" {
+		t.Fatalf("RequestLocation() = %q", got)
 	}
 }

@@ -2,14 +2,17 @@ package deck
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"os"
 	"slices"
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
+	json "haruki-cloud/internal/jsonutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) prepareMusicCompareSelections(region renderregion.Value, recType string, query AutoQuery, option map[string]any, musicMeta []byte, musicMetaPath string) ([]MusicCompareSelection, int, error) {
@@ -24,20 +27,10 @@ func (c *Controller) prepareMusicCompareSelections(region renderregion.Value, re
 		return cloneMusicCompareSelections(query.MusicCompareSelections), len(query.MusicCompareSelections), nil
 	}
 	if len(query.MusicCompareQueries) > 0 {
-		return nil, 0, fmt.Errorf("歌曲比较的歌曲列表尚未解析")
+		return nil, 0, errors.New("deck music compare queries are not resolved")
 	}
 	if !hasCompleteFixedDeckOption(option) {
-		return nil, 0, fmt.Errorf("%s", strings.TrimSpace(`
-如果不限定要比较的歌曲，则必须固定一个卡组！
-1. 固定5个卡牌ID:
-/指令 ... 歌曲比较 #1 2 3 4 5
-2. 固定为你的主队配置(实时更新):
-/指令 ... 歌曲比较 当前
-3. 限定比较的歌曲（难度默认ma）:
-/指令 ... 歌曲比较 龙 虾ex 群青apd
-4. 限定比较的歌曲并固定卡组:
-/指令 ... 歌曲比较 龙 虾ex #1 2 3 4 5
-`))
+		return nil, 0, usererror.Misuse(i18n.M("deck.compare.needs_fixed_deck"))
 	}
 
 	payload, err := resolveMusicCompareMetaPayload(musicMeta, musicMetaPath)
@@ -57,7 +50,7 @@ func resolveMusicCompareMetaPayload(payload []byte, path string) ([]byte, error)
 	}
 	path = strings.TrimSpace(path)
 	if path == "" {
-		return nil, fmt.Errorf("deck music compare requires music meta data")
+		return nil, usererror.Unavailable(i18n.FeatureDeck, errors.New("deck music compare requires music meta data"))
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -121,7 +114,7 @@ func (c *Controller) buildMusicCompareCandidateSelections(region renderregion.Va
 		})
 	}
 	if len(values) == 0 {
-		return nil, fmt.Errorf("没有找到可比较的歌曲数据")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("deck.compare.no_data"))
 	}
 
 	sort.SliceStable(values, func(i, j int) bool {
@@ -184,10 +177,10 @@ func compareMusicCandidateValue(item map[string]any, liveType string, useEventRa
 
 func (c *Controller) recommendMusicCompare(ctx context.Context, recommender PjskDeckRecommender, req RecommendRequest, option map[string]any, selections []MusicCompareSelection, showNum int, recType string) (*RecommendResult, []MusicCompareSelection, error) {
 	if recommender == nil {
-		return nil, nil, fmt.Errorf("deck recommender is not configured")
+		return nil, nil, usererror.Misconfigured(errors.New("deck recommender is not configured"))
 	}
 	if len(selections) == 0 {
-		return nil, nil, fmt.Errorf("歌曲比较未提供可用的歌曲")
+		return nil, nil, usererror.Misuse(i18n.M("deck.compare.no_music"))
 	}
 
 	accumulator := newMusicCompareAccumulator(len(selections))

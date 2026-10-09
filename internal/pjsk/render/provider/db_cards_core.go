@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/predicate"
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
@@ -36,6 +37,9 @@ func (p *dbCardProvider) GetByID(ctx context.Context, id int) (*masterdata.Card,
 		Where(card.ServerRegionEQ(p.region.String()), card.GameIDEQ(int64(id))).
 		Only(ctx)
 	if err != nil {
+		if sekaiDB.IsNotFound(err) {
+			return nil, notfound.CardID(id).WithCause(err)
+		}
 		return nil, fmt.Errorf("query card %d: %w", id, err)
 	}
 
@@ -63,19 +67,19 @@ func (p *dbCardProvider) GetByCharacterAndSeq(ctx context.Context, characterID, 
 		return nil, fmt.Errorf("query cards by character: %w", err)
 	}
 	if len(entities) == 0 {
-		return nil, fmt.Errorf("no cards found for character %d", characterID)
+		return nil, notfound.Card("")
 	}
 
 	var entity *sekaiDB.Card
 	if seq < 0 {
 		index := len(entities) + seq
 		if index < 0 || index >= len(entities) {
-			return nil, fmt.Errorf("card sequence out of range: %d (total: %d)", seq, len(entities))
+			return nil, notfound.Card("")
 		}
 		entity = entities[index]
 	} else {
 		if seq < 1 || seq > len(entities) {
-			return nil, fmt.Errorf("card sequence out of range: %d (total: %d)", seq, len(entities))
+			return nil, notfound.Card("")
 		}
 		entity = entities[seq-1]
 	}

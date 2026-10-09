@@ -5,9 +5,11 @@ import (
 	"sort"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 // BuildMusicRecordRequest builds the request for rendering MySekai music record view.
@@ -29,14 +31,14 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 
 	profile := c.mysekaiProfileCard(region, merged, query.Profile, false)
 	if profile == nil {
-		return nil, fmt.Errorf("mysekai music record requires profile data")
+		return nil, fmt.Errorf("mysekai music record requires profile data: %w", snapshot.ErrMySekaiUnavailable)
 	}
 	request := &drawing.MysekaiMusicrecordRequest{
 		Profile:              *profile,
 		CategoryMusicrecords: categories,
 	}
 	if totalCount > 0 {
-		request.ProgressMessage = new(fmt.Sprintf("总收集进度: %d/%d (%.1f%%)", obtainedCount, totalCount, percent(obtainedCount, totalCount)))
+		request.ProgressMessage = new(i18n.T("mysekai.image.music_record.progress", i18n.Data{"Obtained": obtainedCount, "Total": totalCount, "Percent": i18n.Percent(percent(obtainedCount, totalCount))}))
 	}
 	return request, nil
 }
@@ -146,7 +148,7 @@ func (c *Controller) buildMusicRecordCategory(region renderregion.Value, showID 
 	return &drawing.MysekaiCategoryMusicrecord{
 		Tag:             tag,
 		TagIconPath:     icon,
-		ProgressMessage: new(fmt.Sprintf("%d/%d (%.1f%%)", obtainedCount, total, percent(obtainedCount, total))),
+		ProgressMessage: new(i18n.T("mysekai.image.progress", i18n.Data{"Obtained": obtainedCount, "Total": total, "Percent": i18n.Percent(percent(obtainedCount, total))})),
 		Musicrecords:    records,
 	}, total, obtainedCount
 }
@@ -203,7 +205,7 @@ func (c *Controller) RenderMusicRecord(query MusicRecordQuery) ([]byte, error) {
 
 func (c *Controller) RenderMusicRecordImage(query MusicRecordQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildMusicRecordRequest(query)

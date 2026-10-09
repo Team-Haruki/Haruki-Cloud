@@ -1,0 +1,271 @@
+# 别名：查别名、提交别名、删除别名，以及别名审核（待审核、同意、拒绝、查提交者、禁止提交）。
+
+[alias.feature]
+description = "功能名，用在 common.unavailable 的 Feature 占位符里：别名服务。"
+other = "别名服务"
+
+[alias.kind.music]
+description = "别名类型名称：歌曲。用在 alias.* 的 Kind 占位符里。"
+other = "歌曲"
+
+[alias.kind.character]
+description = "别名类型名称：角色。用在 alias.* 的 Kind 占位符里。"
+other = "角色"
+
+[alias.name_kind.music]
+description = "实体名称类型：歌曲名。用在 alias.conflicts_name 的 NameKind 占位符里。"
+other = "歌曲名"
+
+[alias.name_kind.character]
+description = "实体名称类型：角色名。用在 alias.conflicts_name 的 NameKind 占位符里。"
+other = "角色名"
+
+[alias.target_required.music]
+description = "歌曲别名指令没有写要查的歌曲。"
+other = "请写歌曲名、歌曲 ID 或已审核的别名"
+
+[alias.target_required.character]
+description = "角色别名指令没有写要查的角色。"
+other = "请写角色名、角色 ID 或已审核的别名"
+
+[alias.target_not_found.music]
+description = "歌曲别名指令找不到写的歌曲。"
+other = "未找到对应的歌曲，请检查歌曲名、歌曲 ID 或别名"
+
+[alias.target_not_found.character]
+description = "角色别名指令找不到写的角色。"
+other = "未找到对应的角色，请检查角色名、角色 ID 或别名"
+
+[alias.id_not_found.music]
+description = "写的歌曲 ID 不存在。占位符：UserID=用户写的歌曲 ID。"
+other = "未找到歌曲 ID {{.UserID}}"
+
+[alias.id_not_found.music_no_echo]
+description = "alias.id_not_found.music 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "未找到这个歌曲 ID"
+
+[alias.id_not_found.character]
+description = "写的角色 ID 不存在。占位符：UserID=用户写的角色 ID。"
+other = "未找到角色 ID {{.UserID}}"
+
+[alias.id_not_found.character_no_echo]
+description = "alias.id_not_found.character 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "未找到这个角色 ID"
+
+[alias.ambiguous]
+description = "别名或名称匹配到多个歌曲或角色，下面逐行列出候选。占位符：Kind=别名类型（alias.kind.*）；Candidates=候选列表，每行一个（alias.ambiguous_candidate 或 music.ambiguous_candidate）。"
+other = "匹配到多个{{.Kind}}，请改用 ID：\n{{.Candidates}}"
+
+[alias.ambiguous_candidate]
+description = "alias.ambiguous 的候选列表里的一行。占位符：ID=ID；Name=名称（游戏数据原文）。"
+other = "ID {{.ID}}：{{.Name}}"
+
+[alias.type_unsupported]
+description = "别名类型不支持（内部参数错误）。"
+other = "不支持这种别名类型"
+
+[alias.already_approved]
+description = "提交的别名已经在已审核列表里（回复提交者，按参数回显规则）。占位符：Kind=别名类型（alias.kind.*）；UserAlias=别名原文。"
+other = "{{.Kind}}别名“{{.UserAlias}}”已经在已审核列表中"
+
+[alias.already_approved_no_echo]
+description = "alias.already_approved 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=别名类型（alias.kind.*）。"
+other = "这个{{.Kind}}别名已经在已审核列表中"
+
+[alias.already_pending]
+description = "提交的别名已经在待审核列表里。占位符：Kind=别名类型（alias.kind.*）；UserAlias=别名原文。"
+other = "{{.Kind}}别名“{{.UserAlias}}”已经在待审核列表中"
+
+[alias.already_pending_no_echo]
+description = "alias.already_pending 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=别名类型（alias.kind.*）。"
+other = "这个{{.Kind}}别名已经在待审核列表中"
+
+[alias.conflicts_name]
+description = "提交的别名与已有的歌曲名或角色名相同（回复提交者，按参数回显规则）。占位符：Kind=别名类型（alias.kind.*）；UserAlias=别名原文；NameKind=名称类型（alias.name_kind.*）。"
+other = "{{.Kind}}别名“{{.UserAlias}}”与已有{{.NameKind}}重复"
+
+[alias.conflicts_name_no_echo]
+description = "alias.conflicts_name 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=别名类型（alias.kind.*）；NameKind=名称类型（alias.name_kind.*）。"
+other = "这个{{.Kind}}别名与已有{{.NameKind}}重复"
+
+[alias.duplicate_in_batch]
+description = "/同意别名：一次通过的待审核别名里有重复。只有别名审核管理员能收到，别名原文总是显示。占位符：UserFirst=管理员写的先出现的待审核 ID；UserSecond=管理员写的重复的待审核 ID；Kind=别名类型（alias.kind.*）；Alias=别名原文。"
+other = "待审核 ID {{.UserFirst}} 与 {{.UserSecond}} 是重复的{{.Kind}}别名“{{.Alias}}”"
+
+[alias.duplicate_in_batch_no_echo]
+description = "alias.duplicate_in_batch 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示管理员写的待审核 ID，别名原文照常显示。占位符：Kind=别名类型（alias.kind.*）；Alias=别名原文。"
+other = "要通过的待审核别名里有重复的{{.Kind}}别名“{{.Alias}}”"
+
+[alias.review.already_approved]
+description = "/同意别名：要通过的别名已经在已审核列表里。只有别名审核管理员能收到，别名原文总是显示。占位符：Kind=别名类型（alias.kind.*）；Alias=别名原文。"
+other = "{{.Kind}}别名“{{.Alias}}”已经在已审核列表中"
+
+[alias.review.conflicts_name]
+description = "/同意别名：要通过的别名与已有的歌曲名或角色名相同。只有别名审核管理员能收到，别名原文总是显示。占位符：Kind=别名类型（alias.kind.*）；Alias=别名原文；NameKind=名称类型（alias.name_kind.*）。"
+other = "{{.Kind}}别名“{{.Alias}}”与已有{{.NameKind}}重复"
+
+[alias.duplicate_in_request]
+description = "一次提交的别名里有重复。占位符：UserFirst=先出现的别名；UserSecond=重复的别名。"
+other = "别名“{{.UserFirst}}”与“{{.UserSecond}}”重复"
+
+[alias.duplicate_in_request_no_echo]
+description = "alias.duplicate_in_request 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "提交的别名里有重复，请删掉重复的别名"
+
+[alias.aliases_required]
+description = "提交或删除别名时没有写任何别名。"
+other = "请至少写一个别名"
+
+[alias.review_ids_required]
+description = "审核指令没有写待审核 ID。"
+other = "请至少写一个待审核 ID"
+
+[alias.review_id_positive]
+description = "待审核 ID 不是正整数。"
+other = "待审核 ID 必须为正整数"
+
+[alias.review_not_found]
+description = "找不到写的待审核 ID。占位符：UserIDs=用户写的找不到的待审核 ID，用“、”分隔。"
+other = "未找到待审核别名 ID：{{.UserIDs}}"
+
+[alias.review_not_found_no_echo]
+description = "alias.review_not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "未找到对应的待审核别名"
+
+[alias.reject_reason_required]
+description = "/拒绝别名 没有写拒绝原因。"
+other = "请写拒绝原因"
+
+[alias.ban_target_required]
+description = "禁止提交别名时没有写用户。"
+other = "请写要禁止提交别名的用户（@群友或 QQ 号）"
+
+[alias.not_admin]
+description = "非别名审核管理员使用审核指令。"
+other = "你不是别名审核管理员"
+
+[alias.submitter_banned]
+description = "被禁止提交别名的用户提交别名。"
+other = "你已被禁止提交别名"
+
+[alias.approved_not_found]
+description = "删除别名时找不到该别名。占位符：Kind=别名类型（alias.kind.*）；Target=歌曲或角色名称；UserAlias=别名原文。"
+other = "{{.Target}}下没有已审核的{{.Kind}}别名“{{.UserAlias}}”"
+
+[alias.approved_not_found_no_echo]
+description = "alias.approved_not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=别名类型（alias.kind.*）；Target=歌曲或角色名称。"
+other = "{{.Target}}下没有这个已审核的{{.Kind}}别名"
+
+[alias.bulk_usage]
+description = "提交或删除别名的格式不对。"
+other = "第一行写歌曲或角色，第二行起每行写一个别名"
+
+[alias.reject_usage]
+description = "/拒绝别名 的格式不对。"
+other = "请写待审核 ID 和拒绝原因"
+
+[alias.single_review_id]
+description = "需要一个待审核 ID 的指令写了多个或没写。"
+other = "请写一个待审核 ID"
+
+[alias.submitter_target_usage]
+description = "查提交者、禁止提交时没有写用户。"
+other = "请写一个用户（@群友或 QQ 号）"
+
+# ---- 成功回复 ----
+
+[alias.query.music]
+description = "/歌曲别名 的文字回复开头（别名较少、不转图片时）。占位符：ID=歌曲 ID；Name=歌曲名（游戏数据原文）。"
+other = "歌曲 ID：{{.ID}}\n歌曲名：{{.Name}}"
+
+[alias.query.character]
+description = "/角色别名 的文字回复开头（别名较少、不转图片时）。占位符：ID=角色 ID；Name=角色名（游戏数据原文）。"
+other = "角色 ID：{{.ID}}\n角色名：{{.Name}}"
+
+[alias.query.none]
+description = "/歌曲别名、/角色别名：还没有已审核的别名，接在 alias.query.music 或 alias.query.character 后面。"
+other = "已审核别名：无"
+
+[alias.query.result]
+description = "/歌曲别名、/角色别名 的文字回复：歌曲或角色信息加已审核别名。占位符：Header=歌曲或角色信息（alias.query.music 或 alias.query.character）；List=已审核别名（alias.query.list 或 alias.query.none）。"
+other = "{{.Header}}\n{{.List}}"
+
+[alias.query.list]
+description = "/歌曲别名、/角色别名：已审核别名列表，接在 alias.query.music 或 alias.query.character 后面。占位符：Count=别名数量；Aliases=别名原文，每行一个。"
+other = "已审核别名（{{.Count}} 条）：\n{{.Aliases}}"
+
+[alias.image.title.music]
+description = "别名较多时转成图片，图片标题：歌曲别名。"
+other = "歌曲别名"
+
+[alias.image.title.character]
+description = "别名较多时转成图片，图片标题：角色别名。"
+other = "角色别名"
+
+[alias.image.entity_label.music]
+description = "别名图片里 ID 标签的前缀，后面接歌曲 ID 数字。"
+other = "歌曲 ID"
+
+[alias.image.entity_label.character]
+description = "别名图片里 ID 标签的前缀，后面接角色 ID 数字。"
+other = "角色 ID"
+
+[alias.record.pending]
+description = "提交别名的回复里的一条待审核别名（回复提交者）。别名还没有审核，不开启参数回显时换成只有待审核 ID 的不回显形式。占位符：ReviewID=待审核 ID；Kind=别名类型（alias.kind.*）；Name=歌曲或角色名称（游戏数据原文）；EntityID=歌曲或角色 ID；UserAlias=用户提交、还没有审核的别名原文。"
+other = "待审核 ID {{.ReviewID}}：{{.Kind}}「{{.Name}}」（ID {{.EntityID}}）的别名“{{.UserAlias}}”"
+
+[alias.record.pending_no_echo]
+description = "alias.record.pending 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：ReviewID=待审核 ID；Kind=别名类型（alias.kind.*）；Name=歌曲或角色名称（游戏数据原文）；EntityID=歌曲或角色 ID。"
+other = "待审核别名 #{{.ReviewID}}：{{.Kind}}「{{.Name}}」（ID {{.EntityID}}）"
+
+[alias.record.review]
+description = "只有别名审核管理员能收到的回复里的一条待审核别名：待审核列表、查提交者、同意、拒绝、批量拒绝。管理员要审核原文，所以不论是否开启参数回显都显示别名原文。占位符：ReviewID=待审核 ID；Kind=别名类型（alias.kind.*）；Name=歌曲或角色名称（游戏数据原文）；EntityID=歌曲或角色 ID；Alias=别名原文。"
+other = "待审核 ID {{.ReviewID}}：{{.Kind}}「{{.Name}}」（ID {{.EntityID}}）的别名“{{.Alias}}”"
+
+[alias.record.approved]
+description = "一条已删除的已审核别名，用在 /删除歌曲别名、/删除角色别名 的回复里。占位符：AliasID=别名 ID；Kind=别名类型（alias.kind.*）；Name=歌曲或角色名称（游戏数据原文）；EntityID=歌曲或角色 ID；Alias=别名原文。"
+other = "别名 ID {{.AliasID}}：{{.Kind}}「{{.Name}}」（ID {{.EntityID}}）的别名“{{.Alias}}”"
+
+[alias.record.rejected]
+description = "一条被拒绝的别名及拒绝原因。占位符：Record=待审核别名（alias.record.review）；Reason=拒绝原因（管理员输入的原文，批量拒绝时为 alias.batch_reject.reason）。"
+other = "{{.Record}}\n原因：{{.Reason}}"
+
+[alias.add.done]
+description = "提交别名成功，下面每行一条待审核别名（alias.record.pending）。没有开启参数回显时不显示别名原文（alias.record.pending_no_echo）。占位符：Count=提交的别名数量；Kind=别名类型（alias.kind.*）；Records=待审核别名，每行一条。"
+other = "已提交 {{.Count}} 条{{.Kind}}别名，等待审核：\n{{.Records}}"
+
+[alias.delete.done]
+description = "管理员删除已审核别名成功，下面每行一条（alias.record.approved）。占位符：Count=删除的别名数量；Kind=别名类型（alias.kind.*）；Records=被删除的别名，每行一条。"
+other = "已删除 {{.Count}} 条{{.Kind}}别名：\n{{.Records}}"
+
+[alias.pending.none]
+description = "/待审核别名：没有待审核的别名。"
+other = "当前没有待审核别名"
+
+[alias.pending.list]
+description = "/待审核别名：待审核别名列表。占位符：Count=待审核别名数量；Records=待审核别名，每行一条（alias.record.review，管理员总能看到原文）。"
+other = "当前共有 {{.Count}} 条待审核别名：\n{{.Records}}"
+
+[alias.submitter.result]
+description = "/查询别名提交者 的回复。占位符：Record=待审核别名（alias.record.review）；Submitter=提交者，格式为“平台:用户 ID”，例如“qq:123456789”，可以直接用在 /禁用别名提交 里。"
+other = "{{.Record}}\n提交者：{{.Submitter}}"
+
+[alias.ban.done]
+description = "/禁用别名提交 成功。占位符：User=被禁止的用户，格式为“平台:用户 ID”，例如“qq:123456789”。"
+other = "已禁止用户 {{.User}} 提交别名"
+
+[alias.approve.done]
+description = "/同意别名 成功。占位符：Count=通过的别名数量；Records=通过的别名，每行一条（alias.record.review）。"
+other = "已通过 {{.Count}} 条别名：\n{{.Records}}"
+
+[alias.reject.done]
+description = "/拒绝别名 成功。占位符：Record=被拒绝的别名及原因（alias.record.rejected）。"
+other = "已拒绝别名：\n{{.Record}}"
+
+[alias.batch_reject.done]
+description = "/批量拒绝别名 成功。占位符：Count=拒绝的别名数量；Records=被拒绝的别名及原因，每条见 alias.record.rejected。"
+other = "已拒绝 {{.Count}} 条别名：\n{{.Records}}"
+
+[alias.batch_reject.reason]
+description = "/批量拒绝别名 记录的固定拒绝原因（会保存到审核记录里）。"
+other = "批量拒绝"

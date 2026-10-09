@@ -1,8 +1,10 @@
 package handler
 
 import (
-	"haruki-cloud/internal/onebot11"
 	"strings"
+
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 func parseMysekaiShopArgs(args string) (map[string]any, error) {
@@ -11,20 +13,20 @@ func parseMysekaiShopArgs(args string) (map[string]any, error) {
 	for _, token := range strings.Fields(strings.ToLower(args)) {
 		value := ""
 		switch token {
-		case "全部", "full", "all":
+		case "全部", "full", "all": //copylint:ignore 解析关键字
 			params["show_all"] = true
 			continue
-		case "蓝图", "blueprint":
+		case "蓝图", "blueprint": //copylint:ignore 解析关键字
 			value = "blueprint"
-		case "工具", "tool":
+		case "工具", "tool": //copylint:ignore 解析关键字
 			value = "tool"
-		case "素材", "材料", "material":
+		case "素材", "材料", "material": //copylint:ignore 解析关键字
 			value = "material"
 		default:
-			return nil, onebot11.NewReplayError("未识别的商店参数：%s\n用法：/烤森商店 [蓝图/工具/材料] [全部]", token)
+			return nil, usererror.BadParam(token, i18n.M("mysekai.shop.param_unknown"))
 		}
 		if shopType != "" && shopType != value {
-			return nil, onebot11.NewReplayError("一次只能选择一种商品类型，可与“全部”组合")
+			return nil, usererror.Invalid(i18n.M("mysekai.shop.type_once"))
 		}
 		shopType = value
 	}

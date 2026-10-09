@@ -1,0 +1,209 @@
+# 活动：查活动、活动列表、活动记录、活动规划。
+
+[event.not_found_in_region]
+description = "在某个区服找不到指定 ID 的活动。占位符：Region=区服显示名；UserID=用户写的活动 ID。"
+other = "{{.Region}}未找到活动 {{.UserID}}"
+
+[event.not_found_in_region_no_echo]
+description = "event.not_found_in_region 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Region=区服显示名。"
+other = "{{.Region}}未找到对应的活动"
+
+[event.query_required]
+description = "查活动但没有写参数。"
+other = "请写要查询的活动"
+
+[event.not_found]
+description = "查活动时找不到匹配的活动（不确定区服时）。"
+other = "未找到对应的活动"
+
+[event.not_found_in_region_hint]
+description = "在某个区服查活动时找不到匹配的活动，提示可以加区服前缀查其他区服。占位符：Region=区服显示名。"
+other = "{{.Region}}未找到对应的活动\n查询其他区服的活动请加区服前缀，例如 /cn查活动"
+
+[event.unreleased]
+description = "查询的活动还没有开始。"
+other = "该活动还未开始"
+
+[event.no_ongoing]
+description = "需要当前活动的指令，但当前没有进行中的活动。"
+other = "当前没有进行中的活动"
+
+[event.no_match]
+description = "按条件筛选活动后没有结果。"
+other = "没有符合条件的活动"
+
+[event.record.no_history]
+description = "活动记录：该账号没有任何活动记录。"
+other = "没有找到活动记录"
+
+[event.planner.target_required]
+description = "活动规划没有写目标 PT 或目标名次。"
+other = "请写目标 PT 或目标名次，例如 pt1000w 或 t100"
+
+[event.planner.no_songs]
+description = "活动规划没有可计算的歌曲。"
+other = "没有可计算的歌曲"
+
+[event.planner.no_deck]
+description = "活动规划：组卡服务没有返回某首歌的卡组数据或 PT。占位符：UserSong=用户写的歌曲。"
+other = "组卡服务没有返回“{{.UserSong}}”的卡组数据，请稍后再试"
+
+[event.planner.no_deck_no_echo]
+description = "event.planner.no_deck 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "组卡服务没有返回其中一首歌曲的卡组数据，请稍后再试"
+
+[event.planner.no_current]
+description = "活动规划没有指定活动，且当前没有进行中的活动。占位符：Region=区服显示名。"
+other = "{{.Region}}当前没有进行中的活动，请在指令里写活动 ID，例如 event123"
+
+[event.planner.simulated_rank]
+description = "模拟活动按名次规划（模拟活动没有榜线）。占位符：UserRank=用户写的名次。"
+other = "模拟活动不能按 T{{.UserRank}} 读取榜线，请直接写目标 PT"
+
+[event.planner.simulated_rank_no_echo]
+description = "event.planner.simulated_rank 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "模拟活动不能按名次读取榜线，请直接写目标 PT"
+
+[event.planner.no_line]
+description = "活动规划按名次读取榜线，但查榜服务没有该名次的有效榜线。占位符：UserRank=用户写的名次。"
+other = "查榜服务没有 T{{.UserRank}} 的有效榜线"
+
+[event.planner.no_line_no_echo]
+description = "event.planner.no_line 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "查榜服务没有这个名次的有效榜线"
+
+[event.planner.no_line_wl]
+description = "活动规划按 WL 章节名次读取榜线，但查榜服务没有该名次的有效榜线。占位符：UserRank=用户写的名次。"
+other = "查榜服务没有该 WL 章节 T{{.UserRank}} 的有效榜线"
+
+[event.planner.no_line_wl_no_echo]
+description = "event.planner.no_line_wl 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "查榜服务没有该 WL 章节这个名次的有效榜线"
+
+[event.planner.wl_character_required]
+description = "活动规划在 WL 活动按章节单榜规划，但没有写章节角色。"
+other = "WL 章节单榜需要写章节角色，要按活动总榜规划请加“总榜”"
+
+[event.planner.boost_range]
+description = "活动规划每次 Live 消耗的演出能量（用户写作“5火”）不在 1~10。"
+other = "消耗的演出能量（火）只能是 1~10"
+
+[event.planner.title]
+description = "活动规划图片的标题。"
+other = "活动规划"
+
+[event.planner.warn_current_event]
+description = "活动规划图片里的提示：用户没有指定活动，自动使用了当前活动。占位符：Event=当前活动的名称（游戏数据原文）。"
+other = "未指定活动，已使用当前活动「{{.Event}}」"
+
+[event.planner.warn_simulated]
+description = "活动规划图片里的提示：用户写了团/属性/WL 等模拟活动条件，按模拟活动规划。"
+other = "已按模拟活动条件规划"
+
+[event.planner.simulated]
+description = "活动规划按模拟活动规划时，图片里显示的活动名。"
+other = "模拟活动"
+
+[event.planner.simulated_wl]
+description = "活动规划按 WL 模拟活动规划时，图片里显示的活动名。占位符：Turn=WL 期数（第几次 WL）。"
+other = "WL{{.Turn}} 模拟活动"
+
+[event.planner.simulated_wl_finale]
+description = "活动规划按 WL 终章模拟活动规划时，图片里显示的活动名。占位符：Turn=WL 期数（第几次 WL）。"
+other = "WL{{.Turn}} 终章模拟活动"
+
+[event.planner.source.input]
+description = "活动规划图片里目标 PT 的来源（Drawing 显示为“来源 <本文>”）：用户直接写了目标 PT。"
+other = "直接输入"
+
+[event.planner.source.ranking]
+description = "活动规划图片里目标 PT 的来源（Drawing 显示为“来源 <本文>”）：按名次读取的实时榜线。占位符：Rank=名次。"
+other = "实时榜线 T{{.Rank}}"
+
+[event.planner.source.ranking_wl]
+description = "活动规划图片里目标 PT 的来源（Drawing 显示为“来源 <本文>”）：按名次读取的 WL 章节实时榜线。占位符：Rank=名次。"
+other = "WL 章节实时榜线 T{{.Rank}}"
+
+[event.planner.current_zero.unavailable]
+description = "活动规划图片里的提示：用户没有写当前 PT，查榜服务不可用，当前 PT 按 0 计算。"
+other = "未写当前 PT，查榜服务暂时不可用，当前 PT 按 0 计算"
+
+[event.planner.current_zero.simulated]
+description = "活动规划图片里的提示：用户没有写当前 PT，模拟活动没有排行榜，当前 PT 按 0 计算。"
+other = "未写当前 PT，模拟活动没有排行榜，当前 PT 按 0 计算"
+
+[event.planner.current_zero.uid_invalid]
+description = "活动规划图片里的提示：用户没有写当前 PT，绑定的游戏 UID 无效，无法查排行榜，当前 PT 按 0 计算。"
+other = "未写当前 PT，绑定的游戏 UID 无效，当前 PT 按 0 计算"
+
+[event.planner.current_zero.wl_chapter_unknown]
+description = "活动规划图片里的提示：用户没有写当前 PT，也无法确定要查哪个 WL 章节，当前 PT 按 0 计算。"
+other = "未写当前 PT，无法确定 WL 章节，当前 PT 按 0 计算"
+
+[event.planner.current_zero.not_ranked]
+description = "活动规划图片里的提示：用户没有写当前 PT，查榜服务只记录前 100 名，没有用户在当前活动的记录。"
+other = "未写当前 PT，查榜服务没有你在当前活动前 100 名的记录，当前 PT 按 0 计算"
+
+[event.planner.current_zero.not_ranked_wl]
+description = "活动规划图片里的提示：用户没有写当前 PT，查榜服务只记录前 100 名，没有用户在该 WL 章节的记录。"
+other = "未写当前 PT，查榜服务没有你在该 WL 章节前 100 名的记录，当前 PT 按 0 计算"
+
+[event.planner.current_zero.read_failed]
+description = "活动规划图片里的提示：用户没有写当前 PT，读取当前活动的 PT 失败。"
+other = "未写当前 PT，暂时无法读取你在当前活动的 PT，当前 PT 按 0 计算"
+
+[event.planner.current_zero.read_failed_wl]
+description = "活动规划图片里的提示：用户没有写当前 PT，读取该 WL 章节的 PT 失败。"
+other = "未写当前 PT，暂时无法读取你在该 WL 章节的 PT，当前 PT 按 0 计算"
+
+[event.planner.deck.optimal]
+description = "活动规划图片里卡组摘要的第一段：按最优卡组计算。"
+other = "最优卡组"
+
+[event.planner.deck.fixed]
+description = "活动规划图片里卡组摘要的第一段：用户指定了卡牌或角色。"
+other = "指定卡组"
+
+[event.planner.deck.current]
+description = "活动规划图片里卡组摘要的第一段：使用用户游戏里当前的卡组。"
+other = "当前卡组"
+
+[event.planner.deck.max_profile]
+description = "活动规划图片里卡组摘要的第一段：按顶配（全卡满养成）计算。"
+other = "顶配卡组"
+
+[event.planner.deck.sub_max_profile]
+description = "活动规划图片里卡组摘要的第一段：按次顶配计算。"
+other = "次顶配卡组"
+
+[event.planner.deck.power]
+description = "活动规划图片里卡组摘要的一段：卡组综合力。占位符：Power=综合力，5 位以上加千分位。"
+other = "综合力 {{.Power}}"
+
+[event.planner.deck.bonus]
+description = "活动规划图片里卡组摘要的一段：活动加成。占位符：Bonus=活动加成百分比，例如 250%。"
+other = "活动加成 {{.Bonus}}"
+
+[event.planner.deck.skill_up]
+description = "活动规划图片里卡组摘要的一段：多人 Live 实效。占位符：SkillUp=实效百分比，例如 200%。"
+other = "多人 Live 实效 {{.SkillUp}}"
+
+[event.record.rank_note]
+description = "活动记录图片底部的说明，只在国服、台服、韩服显示：这些区服拿不到具体名次，只能按称号显示档位。占位符：Region=区服显示名。"
+other = "{{.Region}}没有具体名次数据，只显示获得的档位（例如 T100）"
+
+[event.record.tier]
+description = "活动记录图片里每期活动的档位（按获得的称号推算）。占位符：Tier=档位，例如 100 表示前 100 名。"
+other = "T{{.Tier}}"
+
+[event.type.marathon]
+description = "活动列表图和活动详情图里的活动类型名：马拉松活动。"
+other = "马拉松"
+
+[event.type.cheerful_carnival]
+description = "活动列表图和活动详情图里的活动类型名：欢乐嘉年华活动。显示名固定为“欢乐嘉年华(5v5)”，半角括号；用户输入仍写 5v5。"
+other = "欢乐嘉年华(5v5)"
+
+[event.type.world_bloom]
+description = "活动列表图和活动详情图里的活动类型名：World Link 活动。"
+other = "WL"

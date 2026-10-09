@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/core/urlhost"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
@@ -34,11 +35,11 @@ const (
 
 // ErrArtifactBytesUnavailable reports that neither the image_cache store nor
 // the public image hosts could produce the bytes of an artifact ref.
-var ErrArtifactBytesUnavailable = errors.New("drawing artifact bytes are unavailable")
+var ErrArtifactBytesUnavailable error = upstreamerr.NewSentinel(upstreamerr.ServiceRender, upstreamerr.KindUnavailable, 0, "drawing artifact bytes are unavailable")
 
 // errDrawingBadArtifact marks a JSON body that claims to be an artifact ref
 // but fails validation. It is a render error: the body is never image bytes.
-var errDrawingBadArtifactRef = errors.New("drawing returned an invalid artifact ref")
+var errDrawingBadArtifactRef error = upstreamerr.NewSentinel(upstreamerr.ServiceRender, upstreamerr.KindBadResponse, 0, "drawing returned an invalid artifact ref")
 
 func errDrawingBadArtifact(err error) error {
 	return fmt.Errorf("%w: %w", errDrawingBadArtifactRef, err)

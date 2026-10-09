@@ -1,0 +1,177 @@
+# 查榜：榜线、查榜、时速、查房、查水表、追踪、预测、胜率，以及 @群友 和账号相关的查榜提示。
+
+[sk.predict.user_unsupported]
+description = "榜线预测指令按玩家（游戏 UID 或 @群友）查询时的提示。"
+other = "榜线预测不支持按玩家查询，请使用名次"
+
+[sk.predict.not_ready]
+description = "榜线预测：预测数据还没有准备好（正在刷新或预测源出错）。"
+other = "预测数据暂时不可用，请稍后再试"
+
+[sk.predict.no_tiers]
+description = "榜线预测：请求的档位暂时没有预测数据。"
+other = "暂时没有这些档位的预测数据"
+
+[sk.predict.stopped]
+description = "榜线预测：活动结束前最后 1 小时不再提供预测。"
+other = "活动结束前最后 1 小时停止提供预测"
+
+[sk.event_required]
+description = "查榜类指令没有指定活动，也无法推断当前活动。"
+other = "当前没有可推断的活动，请指定活动 ID"
+
+[sk.target_required]
+description = "查榜类指令既没有名次也没有玩家。"
+other = "请指定名次或游戏 UID"
+
+[sk.wl_only]
+description = "查榜类指令指定了 WL 章节角色，但该活动不是 WL 活动。"
+other = "WL 章节角色只能用于 WL 活动"
+
+[sk.speed.user_unsupported]
+description = "时速指令按玩家查询时的提示。"
+other = "时速不支持按玩家查询，请使用名次"
+
+[sk.arrest.single_only]
+description = "查水表一次指定了多个名次。"
+other = "查水表一次只能查询一个名次"
+
+[sk.room.top100_only]
+description = "查房或查水表的名次超过 100。"
+other = "查房和查水表只支持前 100 名"
+
+[sk.trace.no_user_data]
+description = "玩家追踪：没有该玩家的追踪数据。"
+other = "没有找到该玩家的追踪数据"
+
+[sk.trace.no_rank_data]
+description = "玩家追踪：没有该名次的追踪数据。占位符：UserRank=用户写的名次。"
+other = "没有找到第 {{.UserRank}} 名的追踪数据"
+
+[sk.trace.no_rank_data_no_echo]
+description = "sk.trace.no_rank_data 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "没有找到这个名次的追踪数据"
+
+[sk.player_trace.max_two]
+description = "玩家追踪一次指定了 2 个以上名次。"
+other = "玩家追踪最多同时比较 2 个名次"
+
+[sk.player_trace.data_insufficient]
+description = "玩家追踪：渲染服务认为轨迹点太少，无法画图。"
+other = "玩家轨迹数据不足，暂时无法生成图片"
+
+[sk.rank_trace.user_unsupported]
+description = "名次追踪指令按玩家查询时的提示。"
+other = "名次追踪不支持按玩家查询，请使用名次"
+
+[sk.winrate.teams_required]
+description = "胜率指令没有可比较的队伍。"
+other = "没有可比较的队伍"
+
+[sk.ranks_too_many]
+description = "一次查询的名次太多。占位符：Max=最多名次数。"
+other = "一次最多查询 {{.Max}} 个名次"
+
+[sk.mention_unsupported]
+description = "该查榜指令不支持 @群友。"
+other = "该指令不支持 @群友，请直接写游戏 UID"
+
+[sk.rank_positive]
+description = "名次小于等于 0。也用作 common.bad_param 的原因行。"
+other = "名次必须大于 0"
+
+[sk.user_unsupported]
+description = "该查榜指令不支持按玩家查询。"
+other = "该指令不支持按玩家查询，请使用名次"
+
+[sk.self_not_ranked]
+description = "查自己的排名时，排行榜里没有请求者的数据。占位符：Region=区服显示名。"
+other = "{{.Region}}当前活动的排行榜里没有你的数据"
+
+[sk.compare_rank_format]
+description = "玩家追踪的对比名次写法不对，作为 common.bad_param 的原因行。"
+other = "对比名次写成 #名次，例如 #100"
+
+[sk.compare_rank_once]
+description = "玩家追踪指定了多个对比名次。"
+other = "只能指定一个对比名次"
+
+[sk.wl.not_wl_event]
+description = "指定的活动不是 WL 活动。占位符：Event=活动（common.event_label）。"
+other = "{{.Event}}不是 WL 活动"
+
+[sk.wl.no_current]
+description = "查 WL 榜线时当前没有进行中的 WL 活动。占位符：Region=区服显示名；Command=该区服的查榜指令，例如 /jpsk。"
+other = "{{.Region}}当前没有进行中的 WL 活动，查询总榜请使用 {{.Command}}"
+
+[sk.wl.no_chapters]
+description = "该活动没有 WL 章节数据。占位符：Event=活动（common.event_label）。"
+other = "{{.Event}}没有可用的 WL 章节"
+
+[sk.wl.no_started_chapter]
+description = "用 wl 查当前章节，但该活动还没有开始任何章节。占位符：Event=活动（common.event_label）。"
+other = "{{.Event}}还没有开始任何 WL 章节，请写章节序号（如“wl2”）或角色（如“wlmiku”）指定章节"
+
+[sk.wl.no_chapter_no]
+description = "指定的章节序号不存在。占位符：Event=活动（common.event_label）；UserChapter=用户写的章节序号。"
+other = "{{.Event}}没有第 {{.UserChapter}} 章 WL 单榜"
+
+[sk.wl.no_chapter_no_no_echo]
+description = "sk.wl.no_chapter_no 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Event=活动（common.event_label）。"
+other = "{{.Event}}没有这一章 WL 单榜"
+
+[sk.wl.chapter_required]
+description = "查 WL 榜线时没有指定章节。"
+other = "查询 WL 榜线需要指定章节：写“wl”查询当前章节，或写章节序号（如“wl2”）、角色（如“wlmiku”）"
+
+[sk.wl.no_character_chapter]
+description = "该活动没有指定角色的 WL 章节。占位符：Event=活动（common.event_label）；Character=角色名（取自游戏数据，找不到时为 common.fallback.character）。"
+other = "{{.Event}}没有“{{.Character}}”的 WL 章节"
+
+[sk.wl.chapter_incomplete]
+description = "WL 章节数据缺少角色信息（数据异常）。占位符：Event=活动（common.event_label）。"
+other = "{{.Event}}的 WL 章节数据不完整，请稍后再试"
+
+[sk.stale_self_record]
+description = "查自己的榜线/排名时，图片前的一行提示：你已掉出查榜服务的记录范围（前 100 名等），图里是最后一次记录到的数据。"
+other = "你已不在记录范围内，只显示最后一次记录到的数据"
+
+[sk.forecast.title]
+description = "榜线预测图片的标题。占位符：Event=活动名称（游戏数据原文，或 common.fallback.event）。"
+other = "{{.Event}} 预测"
+
+[sk.forecast.notice]
+description = "榜线预测图片底部的免责说明。"
+other = "预测数据仅供参考，请以实际榜线为准安排冲榜计划"
+
+[sk.forecast.source.kit33]
+description = "榜线预测图片里一列预测的标题：来自 33Kit 的预测。"
+other = "33Kit 预测"
+
+[sk.forecast.source.moesekai]
+description = "榜线预测图片里一列预测的标题：来自 Moesekai 的预测。"
+other = "Moesekai 预测"
+
+[sk.forecast.source.sekarun]
+description = "榜线预测图片里一列预测的标题：来自 SekaRun 的预测。"
+other = "SekaRun 预测"
+
+[sk.forecast.source.local]
+description = "榜线预测图片里一列预测的标题：Bot 自己计算的预测。"
+other = "本地预测"
+
+[sk.forecast.source.generic]
+description = "榜线预测图片里一列预测的标题：来源不细分的预测。"
+other = "预测"
+
+[sk.speed.unit_hour]
+description = "时速图片的单位字，渲染服务会拼成“时速”“近 1 小时换算时速”。只能是一个字，改动前先确认渲染服务的拼接方式。"
+other = "时"
+
+[sk.speed.unit_day]
+description = "日速图片的单位字，渲染服务会拼成“日速”“近 1 天换算日速”。只能是一个字，改动前先确认渲染服务的拼接方式。"
+other = "日"
+
+[sk.rank_fallback_name]
+description = "查榜图片里某个名次拿不到玩家昵称时代替昵称。占位符：Rank=名次。"
+other = "第 {{.Rank}} 名"

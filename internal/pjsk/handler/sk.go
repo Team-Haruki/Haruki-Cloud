@@ -3,12 +3,12 @@ package handler
 import (
 	"context"
 	"errors"
-	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"strconv"
 	"strings"
 
 	sekaidb "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/i18n"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -18,6 +18,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/sk"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/logger"
+	"haruki-cloud/utils/usererror"
 )
 
 var skTrackerDebugLogger = logger.NewLoggerFromGlobal("SKTracker")
@@ -117,7 +118,7 @@ func (sekaiHandlers) SKPlayerTraceHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path: "sk/player-trace",
 		Commands: []string{
-			"/sk-player-trace", "/sk玩家轨迹", "/玩家轨迹", "/ptr", "/pjsk玩家追踪", "/pjsk ptr",
+			"/sk-player-trace", "/sk玩家轨迹", "/玩家轨迹", "/玩家追踪", "/ptr", "/pjsk玩家追踪", "/pjsk ptr",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -137,7 +138,7 @@ func (sekaiHandlers) SKRankTraceHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path: "sk/rank-trace",
 		Commands: []string{
-			"/sk-rank-trace", "/sk档线轨迹", "/档线轨迹", "/rtr", "/skt", "/sklt", "/sktl", "/pjsk追踪", "/pjsk sk追踪",
+			"/sk-rank-trace", "/sk档线轨迹", "/档线轨迹", "/排名追踪", "/rtr", "/skt", "/sklt", "/sktl", "/pjsk追踪", "/pjsk sk追踪",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -167,7 +168,7 @@ func (sekaiHandlers) SKDailySpeedHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path: "sk/daily-speed",
 		Commands: []string{
-			"/pjsk sk daily speed", "/pjsk board daily speed", "/日速", "/skds", "/skdv", "/sk日速",
+			"/pjsk sk daily speed", "/pjsk board daily speed", "/日速", "/每日时速", "/skds", "/skdv", "/sk日速",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -237,7 +238,7 @@ func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
 	}()
 
 	if rc == nil || rc.App == nil || rc.App.SK == nil {
-		return nil, fmt.Errorf("sk service unavailable: tracker controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("sk service unavailable: tracker controller is not configured"))
 	}
 	skCtrl := rc.App.SK.WithContext(rc.Ctx)
 	result, err := executeSKMode(rc, skCtrl)
@@ -475,10 +476,7 @@ func normalizeSKSelfRankingNotFoundError(selfQuery bool, region string, err erro
 	if !selfQuery || err == nil || !errors.Is(err, sekaiapi.ErrRankingNotFound) {
 		return err
 	}
-	return onebot11.NewReplayError(
-		"当前%s服活动没有找到你的排行榜数据",
-		musicNotFoundRegionLabel(region),
-	)
+	return usererror.Wrap(usererror.CodeNotFound, i18n.M("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel(regionWithDefault(region))}), err)
 }
 
 func executeSKPredict(rc *RequestContext, skCtrl *sk.Controller) (drawing.ImageResult, error) {
@@ -560,7 +558,7 @@ func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, r
 	if req.WlCharacterID != nil {
 		chapter := findWorldBloomChapterByCharacterID(chapters, *req.WlCharacterID)
 		if chapter == nil {
-			return fmt.Errorf("活动 %s-%d 没有角色 %d 的 World Link 章节", strings.ToUpper(region.String()), req.EventID, *req.WlCharacterID)
+			return usererror.Invalid(i18n.M("sk.wl.no_character_chapter", i18n.Data{"Event": eventLabel(region.String(), req.EventID), "Character": characterLabel(ctx, app, *req.WlCharacterID)}))
 		}
 		applyTrackerWorldBloomChapterTiming(req, chapter)
 		skTrackerDebugLogger.DebugContext(ctx, "world link tracker selection resolved",
@@ -578,7 +576,7 @@ func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, r
 		return err
 	}
 	if chapter.GameCharacterID <= 0 {
-		return fmt.Errorf("活动 %s-%d 的 World Link 章节缺少角色信息", strings.ToUpper(region.String()), req.EventID)
+		return usererror.New(usererror.CodeUnavailable, i18n.M("sk.wl.chapter_incomplete", i18n.Data{"Event": eventLabel(region.String(), req.EventID)}))
 	}
 
 	charID := int(chapter.GameCharacterID)
@@ -638,21 +636,21 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 		return accountdata.ErrBindingServiceUnavailable
 	}
 
-	binding, err := resolveTrackerTargetBinding(ctx, app.Bindings, req, targetPlatform, targetUserID, targetSelector)
+	isSelfTarget := trackerTargetIsRequester(targetPlatform, targetUserID, requesterPlatform, requesterUserID)
+	binding, err := resolveTrackerTargetBinding(ctx, app.Bindings, req, targetPlatform, targetUserID, targetSelector, isSelfTarget)
 	if err != nil {
 		return err
 	}
 	if binding == nil {
 		return accountdata.ErrNoBinding
 	}
-	isSelfTarget := trackerTargetIsRequester(targetPlatform, targetUserID, requesterPlatform, requesterUserID)
-	if targetSelector == "" && !binding.Visible && !isSelfTarget {
-		return fmt.Errorf("@用户 %s 已隐藏个人信息，无法查询", targetUserID)
+	if targetSelector == "" && !binding.Visibility.SK && !isSelfTarget {
+		return hiddenTargetError(accountdata.ExposureSK)
 	}
 
 	uid, parseErr := strconv.ParseInt(strings.TrimSpace(binding.PJSKUserID), 10, 64)
 	if parseErr != nil || uid <= 0 {
-		return fmt.Errorf("@用户 %s 的绑定UID无效: %s", targetUserID, binding.PJSKUserID)
+		return usererror.New(usererror.CodeInternal, i18n.M("binding.target_uid_invalid"))
 	}
 	req.UserID = &uid
 	if !req.RegionExplicit {
@@ -666,11 +664,20 @@ func resolveTrackerTargetBinding(
 	bindings *accountdata.BindingService,
 	req *sk.TrackerRankQuery,
 	targetPlatform, targetUserID, targetSelector string,
+	self bool,
 ) (*accountdata.ResolvedBinding, error) {
+	// The requester's own lookup gets the usual "please bind first" reply;
+	// another user's names that user.
+	notBound := func(message i18n.Message) i18n.Message {
+		if self {
+			return i18n.Message{}
+		}
+		return message
+	}
 	if targetSelector != "" {
 		_, binding, err := bindings.ResolveUserBindingBySelector(ctx, targetPlatform, targetUserID, selectorBindingServer(normalizeTrackerRegion(req.Region), req.RegionExplicit), targetSelector)
 		if err != nil {
-			return nil, normalizeBindingLookupError(err, fmt.Sprintf("无法解析账号选择器 %s", targetSelector))
+			return nil, normalizeBindingLookupError(err, notBound(i18n.M("binding.target_not_bound")))
 		}
 		return binding, nil
 	}
@@ -678,7 +685,7 @@ func resolveTrackerTargetBinding(
 		region := normalizeTrackerRegion(req.Region)
 		_, binding, err := bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, region)
 		if err != nil {
-			return nil, normalizeBindingLookupError(err, fmt.Sprintf("@用户 %s 在 %s 服没有绑定账号", targetUserID, strings.ToUpper(region)))
+			return nil, normalizeBindingLookupError(err, notBound(i18n.M("binding.target_not_bound_region", i18n.Data{"Region": i18n.RegionLabel(region)})))
 		}
 		return binding, nil
 	}
@@ -688,7 +695,7 @@ func resolveTrackerTargetBinding(
 	}
 	_, binding, err = bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, DefaultRegionStr)
 	if err != nil {
-		return nil, normalizeBindingLookupError(err, fmt.Sprintf("@用户 %s 没有可用绑定", targetUserID))
+		return nil, normalizeBindingLookupError(err, notBound(i18n.M("binding.target_not_bound")))
 	}
 	return binding, nil
 }

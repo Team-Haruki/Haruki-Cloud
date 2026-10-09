@@ -4,8 +4,11 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/testutil"
 )
 
 func jp700Controller(lists map[string][]map[string]any) *Controller {
@@ -78,7 +81,7 @@ func TestBuildShopRequestGroupsJPShopRows(t *testing.T) {
 
 func TestBuildShopRequestOldRegionReportsUnavailable(t *testing.T) {
 	controller := jp700Controller(map[string][]map[string]any{"mysekaiMaterials.json": {{"id": 1}}})
-	if _, err := controller.BuildShopRequest(ShopQuery{Region: "tw"}); err == nil || !strings.Contains(err.Error(), "mysekai shop is not available in region") {
+	if _, err := controller.BuildShopRequest(ShopQuery{Region: "tw"}); err == nil || testutil.MessageID(err) != "mysekai.shop.region_unavailable" {
 		t.Fatalf("expected shop unavailable, got %v", err)
 	}
 }
@@ -144,14 +147,14 @@ func TestBuildBlueprintTermRequestENTermsWithoutNewColumns(t *testing.T) {
 	if entry.CraftLimit != nil || entry.CostMaterials != nil {
 		t.Fatalf("EN entry must not invent limits or costs: %+v", entry)
 	}
-	if _, err := controller.BuildBlueprintTermRequest(BlueprintTermQuery{Region: "en", NowMillis: 10000}); err == nil || !strings.Contains(err.Error(), "no current term") {
+	if _, err := controller.BuildBlueprintTermRequest(BlueprintTermQuery{Region: "en", NowMillis: 10000}); err == nil || testutil.MessageID(err) != "mysekai.blueprint_term.none_current" {
 		t.Fatalf("expected no current term, got %v", err)
 	}
 }
 
 func TestBuildBlueprintTermRequestRegionWithoutTerms(t *testing.T) {
 	controller := jp700Controller(map[string][]map[string]any{"mysekaiBlueprints.json": {{"id": 1}}})
-	if _, err := controller.BuildBlueprintTermRequest(BlueprintTermQuery{Region: "tw"}); err == nil || !strings.Contains(err.Error(), "mysekai blueprint terms are not available in region") {
+	if _, err := controller.BuildBlueprintTermRequest(BlueprintTermQuery{Region: "tw"}); err == nil || testutil.MessageID(err) != "mysekai.blueprint_term.region_unavailable" {
 		t.Fatalf("expected terms unavailable, got %v", err)
 	}
 }
@@ -173,7 +176,14 @@ func TestFixtureDetailShowsBlueprintTermLines(t *testing.T) {
 		t.Fatalf("BuildFixtureDetailRequests() error = %v", err)
 	}
 	info := strings.Join(reqs[0].BasicInfo, "\n")
-	for _, want := range []string{"生日/周年蓝图", "(未开始)", "【限时期间最多制作1次】", "【限时额外材料：思い出のかけら×3】"} {
+	period := i18n.T("mysekai.image.blueprint_term.period_upcoming", i18n.Data{
+		"Tab":   i18n.M("mysekai.image.blueprint_term.tab_birthday"),
+		"Start": i18n.FormatUserTime(time.UnixMilli(5000), nil),
+		"End":   i18n.FormatUserTime(time.UnixMilli(9000), nil),
+	})
+	limit := i18n.T("mysekai.image.blueprint_term.craft_limit", i18n.Data{"Count": 1})
+	materials := i18n.T("mysekai.image.blueprint_term.extra_materials", i18n.Data{"Materials": i18n.M("mysekai.image.material_quantity", i18n.Data{"Name": "思い出のかけら", "Quantity": 3})})
+	for _, want := range []string{period, limit, materials} {
 		if !strings.Contains(info, want) {
 			t.Fatalf("basic info missing %q:\n%s", want, info)
 		}

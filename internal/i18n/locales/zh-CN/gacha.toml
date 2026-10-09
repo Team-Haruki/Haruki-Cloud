@@ -1,0 +1,17 @@
+# 卡池：查卡池、卡池列表。
+
+[gacha.not_found]
+description = "查卡池时找不到匹配的卡池。"
+other = "未找到对应的卡池"
+
+[gacha.unreleased]
+description = "查询的卡池还没有开放。"
+other = "该卡池还未开放"
+
+[gacha.query_required]
+description = "查卡池但没有写要查的卡池。"
+other = "请写要查询的卡池"
+
+[gacha.no_match]
+description = "按条件筛选卡池后没有结果。"
+other = "没有符合条件的卡池"

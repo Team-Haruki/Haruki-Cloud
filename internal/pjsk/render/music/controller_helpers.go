@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -75,7 +76,7 @@ func (c *Controller) buildPlaceholderProfile(region renderregion.Value) drawing.
 	return drawing.DetailedProfileCardRequest{
 		ID:              "service",
 		Region:          strings.ToUpper(renderregion.WithDefault(region).String()),
-		Nickname:        "Lunabot",
+		Nickname:        i18n.T("music.image.placeholder_nickname"),
 		Source:          "lunabot-service",
 		UpdateTime:      time.Now().UnixMilli(),
 		Mode:            new("service"),
@@ -109,7 +110,8 @@ func convertDetailedProfileToCard(detail drawing.DetailedProfileCardRequest) dra
 		},
 		DataSources: []drawing.ProfileDataSource{
 			{
-				Name:       "User Data",
+				Name:       common.DataSourceLabel(drawing.DataSourceSuite),
+				Kind:       drawing.DataSourceSuite,
 				Source:     &source,
 				UpdateTime: &update,
 				Mode:       common.CloneStringPtr(detail.Mode),

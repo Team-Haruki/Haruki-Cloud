@@ -18,6 +18,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/storage"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -109,7 +110,7 @@ func (c *housingCompetitionBannerCache) BytesContext(ctx context.Context, imageP
 		return nil, fmt.Errorf("empty housing competition banner path")
 	}
 	if c == nil {
-		return nil, fmt.Errorf("housing competition banner cache is not configured")
+		return nil, usererror.Misconfigured(errors.New("housing competition banner cache is not configured"))
 	}
 
 	cacheKey := c.cacheKey(imagePath)
@@ -138,7 +139,7 @@ func (c *housingCompetitionBannerCache) BytesContext(ctx context.Context, imageP
 
 func (c *housingCompetitionBannerCache) readSource(ctx context.Context, imagePath string) ([]byte, error) {
 	if c == nil {
-		return nil, fmt.Errorf("housing competition banner cache is not configured")
+		return nil, usererror.Misconfigured(errors.New("housing competition banner cache is not configured"))
 	}
 	if c.reader != nil {
 		finishRead := commandtrace.MeasureOperation(ctx, "housing_banner.asset_read")

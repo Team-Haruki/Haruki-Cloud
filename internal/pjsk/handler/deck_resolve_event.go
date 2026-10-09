@@ -17,7 +17,10 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderprovider "haruki-cloud/internal/pjsk/render/provider"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/notfound"
+	"haruki-cloud/utils/usererror"
 )
 
 func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app *renderapp.App) error {
@@ -117,7 +120,7 @@ func prepareDeckWorldBloomFinaleSimulation(q *deck.AutoQuery, turn int) error {
 		return nil
 	}
 	if q.ForcedLeaderCharacterID == nil && strings.TrimSpace(q.ForcedLeaderCharacterQuery) == "" {
-		return fmt.Errorf("wl%d 终章需要指定队长角色，例如 wl%d 终章 miku", turn, turn)
+		return usererror.Misuse(i18n.M("deck.wl.finale_needs_leader", i18n.Data{"UserTurn": i18n.UserNumber(turn)}))
 	}
 
 	q.EventID = nil
@@ -264,7 +267,7 @@ func (r *deckEventSelectionResolver) loadEvent() (bool, error) {
 func (r *deckEventSelectionResolver) resolveNonWorldBloom() error {
 	q := r.query
 	if q.WorldBloomCharacterQuery != "" && isDeckWorldBloomSelectorQuery(q.WorldBloomCharacterQuery) {
-		return fmt.Errorf("活动 %s-%d 不是WL活动，无法指定章节", strings.ToUpper(r.region.String()), r.eventID)
+		return usererror.Invalid(i18n.M("deck.wl.not_wl_event", i18n.Data{"Event": eventLabel(r.region.String(), r.eventID)}))
 	}
 	q.WorldBloomCharacterID = nil
 	return nil
@@ -318,7 +321,7 @@ func hasNoDeckWorldBloomCharacter(q *deck.AutoQuery) bool {
 func (r *deckEventSelectionResolver) resolveCharacterID() error {
 	charID := *r.query.WorldBloomCharacterID
 	if !trackerWorldBloomHasCharacter(r.chapters, charID) {
-		return fmt.Errorf("活动 %s-%d 没有角色 %d 的 World Link 章节", strings.ToUpper(r.region.String()), r.eventID, charID)
+		return usererror.Invalid(i18n.M("sk.wl.no_character_chapter", i18n.Data{"Event": eventLabel(r.region.String(), r.eventID), "Character": characterLabel(r.ctx, r.app, charID)}))
 	}
 	ensureDeckWorldBloomEventTurnMetadata(r.ctx, r.app, r.region, r.eventInfo, r.chapters, r.query)
 	return nil
@@ -354,7 +357,7 @@ func (r *deckEventSelectionResolver) selectDefaultChapter() error {
 
 func (r *deckEventSelectionResolver) applyChapterCharacter(chapter *sekaidb.Worldbloom) error {
 	if chapter.GameCharacterID <= 0 {
-		return fmt.Errorf("活动 %s-%d 的 World Link 章节缺少角色信息", strings.ToUpper(r.region.String()), r.eventID)
+		return usererror.New(usererror.CodeUnavailable, i18n.M("sk.wl.chapter_incomplete", i18n.Data{"Event": eventLabel(r.region.String(), r.eventID)}))
 	}
 	charID := int(chapter.GameCharacterID)
 	r.query.WorldBloomCharacterID = drawing.IntPtr(charID)
@@ -699,7 +702,7 @@ func pickDeckAutoEvent(ctx context.Context, app *renderapp.App, region renderreg
 		return nil, fmt.Errorf("query deck events failed: %w", err)
 	}
 	if len(events) == 0 {
-		return nil, fmt.Errorf("当前没有可用活动")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("deck.event.none_available"))
 	}
 
 	dbEventIDs, err := queryDeckDBEventIDs(ctx, app, region)
@@ -782,7 +785,7 @@ func (c deckAutoEventCandidates) selectEvent(isJPEventFallback bool) (*sekaidb.E
 	if c.active != nil {
 		return c.active, nil
 	}
-	return nil, fmt.Errorf("当前没有可用活动")
+	return nil, usererror.New(usererror.CodeNotFound, i18n.M("deck.event.none_available"))
 }
 
 func ensureDeckEventUnlocked(ctx context.Context, app *renderapp.App, region renderregion.Value, eventInfo *sekaidb.Event) error {
@@ -888,7 +891,7 @@ func clearDeckAutoEventSelection(q *deck.AutoQuery) {
 
 func resolveDeckWorldBloomFinaleEventByTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, turn int) (*sekaidb.Event, error) {
 	if turn < 2 {
-		return nil, fmt.Errorf("WL终章从 wl2 开始，无法解析 wl%d 终章", turn)
+		return nil, usererror.Invalid(i18n.M("deck.wl.finale_turn_invalid", i18n.Data{"UserTurn": i18n.UserNumber(turn)}))
 	}
 	if turn == 2 {
 		return &sekaidb.Event{GameID: 180}, nil
@@ -927,11 +930,16 @@ type deckFutureWorldBloomFinaleTurnError struct {
 	Available int
 }
 
-func (e *deckFutureWorldBloomFinaleTurnError) Error() string {
+func (e *deckFutureWorldBloomFinaleTurnError) Error() string { return e.userError().Error() }
+
+// Unwrap exposes the typed user reply.
+func (e *deckFutureWorldBloomFinaleTurnError) Unwrap() error { return e.userError() }
+
+func (e *deckFutureWorldBloomFinaleTurnError) userError() *usererror.Error {
 	if e == nil {
-		return "无法解析未来 WL 终章"
+		return usererror.Invalid(i18n.M("deck.wl.turn_invalid"))
 	}
-	return fmt.Sprintf("当前 masterdata 仅包含到 wl%d 终章，无法解析 wl%d 终章", e.Available, e.Turn)
+	return usererror.Invalid(i18n.M("deck.wl.future_finale", i18n.Data{"Available": e.Available, "UserTurn": i18n.UserNumber(e.Turn)}))
 }
 
 func deckWorldBloomHasFinaleChapter(chapters []*sekaidb.Worldbloom) bool {
@@ -946,15 +954,15 @@ func deckWorldBloomHasFinaleChapter(chapters []*sekaidb.Worldbloom) bool {
 func missingDeckWorldBloomChapterError(q *deck.AutoQuery, eventID int) error {
 	switch strings.ToLower(strings.TrimSpace(q.RecommendType)) {
 	case "mysekai":
-		return fmt.Errorf("请指定一个要查询的WL角色章节，例如 烤森组卡 wl1 miku 或 烤森组卡 event%d miku", eventID)
+		return usererror.Misuse(i18n.M("deck.wl.chapter_required_mysekai", i18n.Data{"UserEventID": i18n.UserNumber(eventID)}))
 	default:
-		return fmt.Errorf("请指定一个要查询的WL角色章节，例如 wl1 miku 或 event%d miku", eventID)
+		return usererror.Misuse(i18n.M("deck.wl.chapter_required", i18n.Data{"UserEventID": i18n.UserNumber(eventID)}))
 	}
 }
 
 func resolveDeckWorldBloomEventByTurnSelection(ctx context.Context, app *renderapp.App, region renderregion.Value, q *deck.AutoQuery) (*sekaidb.Event, error) {
 	if q == nil || q.WorldBloomEventTurn == nil || *q.WorldBloomEventTurn <= 0 {
-		return nil, fmt.Errorf("无效的 WL 活动序号")
+		return nil, usererror.Invalid(i18n.M("deck.wl.turn_invalid"))
 	}
 
 	turn := *q.WorldBloomEventTurn
@@ -967,12 +975,12 @@ func resolveDeckWorldBloomEventByTurnSelection(ctx context.Context, app *rendera
 		return resolveDeckWorldBloomEventByUnitTurn(ctx, app, region, turn, unit)
 	}
 
-	return nil, fmt.Errorf("wl%d 需要指定角色，例如 wl%d miku", turn, turn)
+	return nil, usererror.Misuse(i18n.M("deck.wl.turn_needs_character", i18n.Data{"UserTurn": i18n.UserNumber(turn)}))
 }
 
 func resolveDeckWorldBloomEventByCharacterTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, turn, charID int) (*sekaidb.Event, error) {
 	if charID <= 0 {
-		return nil, fmt.Errorf("无效的 WL 角色ID: %d", charID)
+		return nil, usererror.Invalid(i18n.M("deck.wl.character_invalid"))
 	}
 
 	worldBloomEvents, err := queryDeckWorldBloomEvents(ctx, app, region)
@@ -1004,7 +1012,7 @@ func resolveDeckWorldBloomEventByCharacterTurn(ctx context.Context, app *rendera
 func resolveDeckWorldBloomEventByUnitTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, turn int, unit string) (*sekaidb.Event, error) {
 	unit = normalizeDeckUnit(unit)
 	if unit == "" {
-		return nil, fmt.Errorf("wl%d 需要指定角色或团名", turn)
+		return nil, usererror.Misuse(i18n.M("deck.wl.turn_needs_character_or_unit", i18n.Data{"UserTurn": i18n.UserNumber(turn)}))
 	}
 
 	worldBloomEvents, err := queryDeckWorldBloomEvents(ctx, app, region)
@@ -1048,14 +1056,20 @@ type deckFutureWorldBloomTurnError struct {
 	Unit      string
 }
 
-func (e *deckFutureWorldBloomTurnError) Error() string {
-	if e == nil {
-		return "无法解析未来 WL 轮次"
+func (e *deckFutureWorldBloomTurnError) Error() string { return e.userError().Error() }
+
+// Unwrap exposes the typed user reply.
+func (e *deckFutureWorldBloomTurnError) Unwrap() error { return e.userError() }
+
+func (e *deckFutureWorldBloomTurnError) userError() *usererror.Error {
+	switch {
+	case e == nil:
+		return usererror.Invalid(i18n.M("deck.wl.turn_invalid"))
+	case e.Character > 0:
+		return usererror.Invalid(i18n.M("deck.wl.future_turn_character", i18n.Data{"Available": e.Available, "UserTurn": i18n.UserNumber(e.Turn)}))
+	default:
+		return usererror.Invalid(i18n.M("deck.wl.future_turn_unit", i18n.Data{"Available": e.Available, "UserTurn": i18n.UserNumber(e.Turn)}))
 	}
-	if e.Character > 0 {
-		return fmt.Sprintf("角色 %d 当前仅有 %d 次 WL，无法解析 wl%d", e.Character, e.Available, e.Turn)
-	}
-	return fmt.Sprintf("团 %s 当前仅有 %d 次 WL，无法解析 wl%d", e.Unit, e.Available, e.Turn)
 }
 
 func shouldKeepDeckWorldBloomSimulationSelection(q *deck.AutoQuery) bool {
@@ -1079,7 +1093,7 @@ func queryDeckWorldBloomEvents(ctx context.Context, app *renderapp.App, region r
 		worldBloomEvents = append(worldBloomEvents, eventInfo)
 	}
 	if len(worldBloomEvents) == 0 {
-		return nil, fmt.Errorf("当前没有可用的 WL 活动")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("deck.wl.none_available"))
 	}
 	return worldBloomEvents, nil
 }
@@ -1129,7 +1143,7 @@ func queryDeckEvents(ctx context.Context, app *renderapp.App, region renderregio
 
 func queryDeckEventByID(ctx context.Context, app *renderapp.App, region renderregion.Value, eventID int) (*sekaidb.Event, error) {
 	if eventID <= 0 {
-		return nil, fmt.Errorf("event id is required")
+		return nil, usererror.Misuse(i18n.M("event.query_required"))
 	}
 	if provider := deckEventProviderForRegion(app, region); provider != nil && provider.Events() != nil {
 		item, err := provider.Events().GetByID(ctx, eventID)
@@ -1138,7 +1152,7 @@ func queryDeckEventByID(ctx context.Context, app *renderapp.App, region renderre
 		}
 	}
 	if app == nil || app.Sekai == nil {
-		return nil, fmt.Errorf("event %d not found", eventID)
+		return nil, notfound.Event()
 	}
 	return app.Sekai.Event.Query().
 		Where(eventdb.ServerRegionEQ(region.String()), eventdb.GameIDEQ(int64(eventID))).

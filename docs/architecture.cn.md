@@ -93,7 +93,9 @@ Haruki-Cloud/
 │   ├── core/urlhost/             #   按节点选择公开主机（image_cache.hosts / assets_base_urls）
 │   ├── core/trustsign/           #   Ed25519 分离载荷签名契约（keyset / manifest）
 │   ├── core/upstream/            #   上游连接池 / Transport
+│   ├── core/upstreamerr/         #   上游错误分类（跨仓库错误约定 + 契约测试）
 │   ├── handler/                  #   统一命令注册表（handler.go + bot_route.go）
+│   ├── i18n/                     #   全部用户文案：locales/<语言>/*.toml 目录 + help/*.md 帮助文档（见 docs/i18n.md）
 │   ├── identity/                 #   平台用户身份解析
 │   ├── jsonutil/                 #   JSON 门面（json/v2 引擎 + v1 兼容语义）
 │   ├── middleware/secure/        #   安全中间件
@@ -375,7 +377,12 @@ domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1" }
    （生产必配 Noise 密钥；未配置时仅测试用 JSON 明文）
 3. 会话 token 在请求体顶层字段 `session_token` 里随密文传输，不再放请求头；
    `/pjsk` 下所有 POST（含 birthday-monitor 的 render / ack）都必须携带
-4. `BotCommandRequest.enableParamEcho` 默认为 `false`；客户端只有显式传 `true` 时，参数解析错误才会回显具体参数
+4. `BotCommandRequest.enableParamEcho` 默认为 `false`：错误回复（参数错误、找不到、
+   匹配到多个、用法提示等）只来自文案目录，且不回显用户输入（查询词、参数值、名称、
+   别名、未注册的指令、从指令里解析出的数字）；还没有审核的别名原文在回复提交者时
+   也只在开启回显时出现（只有别名审核管理员能收到的审核回复总是显示原文）。客户端只有显式传 `true` 时才回显。
+   带回显的消息都有一条不回显的同名 `_no_echo` 消息（约定见 `docs/i18n.md`）。共享执行
+   的结果同时带两种回复，由实际投递的 bot 按自己的设置选择
 5. `BotCommandRequest` 另有四个可选字段：
    - `event_time` / `event_id`：平台事件时间戳（OneBot time）用于事件级去重——
      同一条消息被多个 bot 观测到时时间一致，已消费的响应选举保留 120s，可区分
@@ -655,8 +662,7 @@ internal/handler/                 # 统一命令注册表
 
 internal/onebot11/                # OneBot11 协议工具（已从 pjsk 上移）
 ├── segment.go                    # 消息段类型与构造器
-├── parse.go                      # CQ 码解析
-└── error.go                      # ReplayError
+└── parse.go                      # CQ 码解析
 
 internal/pjsk/handler/            # PJSK 功能命令（已扁平化，无子包）
 ├── handler.go                    # Trie 注册、命令匹配、参数截取
@@ -743,7 +749,7 @@ internal/pjsk/chartstyle/
 | 本地用户快照 | `render/snapshot/local.go` 读取本地 JSON 文件（user.json, music_metas.json, mysekai.json），应迁移至 DB 驱动 |
 | MySekai Masterdata | 依赖本地文件，未完全转为 DB 驱动 |
 | Deck 引擎 | 简化版实现，原生 CGo 引擎未迁入 |
-| Profile 扩展命令未完成 | `internal/pjsk/handler/profile.go` 等 | 绑定/解绑/默认绑定、`swap bind`（`profile/bind/swap`）、隐藏/展示抓包、隐藏/展示 ID（`profile_settings.go`）、注册时间（`arrest.go`）已接入；服务状态、抓包模式尚无对应命令 |
+| Profile 扩展命令未完成 | `internal/pjsk/handler/profile.go` 等 | 绑定/解绑/默认绑定、`swap bind`（`profile/bind/swap`）、隐藏/展示抓包、按暴露方式拆分的隐藏/展示（游戏 UID、活动排名、个人信息、逮捕，`/隐藏全部`、`/隐私设置`；`profile_settings.go`）、注册时间（`arrest.go`）已接入；服务状态、抓包模式尚无对应命令 |
 
 ---
 
@@ -829,7 +835,7 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | `response_election*.go` | 多 bot 响应选举（窗口、key、roster、生成） | — |
 | `bot_response_envelope.go` | 响应封装 | — |
 | `command_trace.go` | 命令执行追踪接入 | — |
-| `param_echo.go` / `param_guidance.go` | 参数回显与参数引导 | — |
+| `error_reply.go` / `param_guidance.go` | 错误回复（带类型错误、上游分类、按路由的参数引导、按 `enableParamEcho` 决定是否回显用户输入、最终脱敏） | — |
 | `birthday_monitor.go` | MySekai 生日订阅推送 | — |
 | `seed.go` | 从 handler registry 同步 command manifest 到 bot DB | — |
 | `struct.go` | `BotCommandRequest`、`ManifestEntry`、`ManifestResponse` | — |
@@ -843,7 +849,6 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | `docs/database-schemas.cn.md` | 数据库 Schema 详解 |
 | `docs/pjsk-command-system.cn.md` | PJSK 指令解析 + 请求构建系统技术文档 |
 | `docs/toolbox-api.cn.md` | 上游 Toolbox API 契约 |
-| `docs/deck_refer_help.md` | `deck` 命令族用户帮助文本 |
 
 ---
 

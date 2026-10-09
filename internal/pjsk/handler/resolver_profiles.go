@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 func resolveCardBoxDetailedProfile(rc *RequestContext) *drawing.DetailedProfileCardRequest {
@@ -38,12 +39,12 @@ func resolveCardCatalogTitle(rc *RequestContext) *string {
 	binding, _ := rc.GetBinding()
 	if binding == nil {
 		if rc.bindingErr == nil || errors.Is(rc.bindingErr, accountdata.ErrNoBinding) {
-			return stringPtr(CardCatalogTitleNoBinding)
+			return stringPtr(i18n.T("card.catalog_notice.no_binding"))
 		}
 		return nil
 	}
 	if !binding.SuiteVisible {
-		return stringPtr(CardCatalogTitleNoSuite)
+		return stringPtr(i18n.T("card.catalog_notice.no_suite"))
 	}
 
 	snap := rc.ResolveSnapshot(false)
@@ -51,29 +52,25 @@ func resolveCardCatalogTitle(rc *RequestContext) *string {
 		if snapshotErr := rc.SnapshotError(false); snapshotErr != nil {
 			return stringPtr(cardCatalogSnapshotErrorTitle(snapshotErr, binding))
 		}
-		return stringPtr(CardCatalogTitleNoSuite)
+		return stringPtr(i18n.T("card.catalog_notice.no_suite"))
 	}
 	detail := snap.DetailedProfile(rc.Region)
 	if detail == nil || len(detail.UserCards) == 0 {
-		return stringPtr(CardCatalogTitleNoSuite)
+		return stringPtr(i18n.T("card.catalog_notice.no_suite"))
 	}
 	return nil
 }
 
 func cardCatalogSnapshotErrorTitle(err error, binding *accountdata.ResolvedBinding) string {
 	if errors.Is(err, sekaiapi.ErrGameDataNotFound) || errors.Is(err, sekaiapi.ErrAccountBindingNotFound) {
-		return CardCatalogTitleNoSuite
+		return i18n.T("card.catalog_notice.no_suite")
 	}
-	normalized := normalizeToolboxDataFetchError(err, "suite", binding)
-	var replyErr onebot11.ReplayError
-	if !errors.As(normalized, &replyErr) {
-		return CardCatalogTitleSuiteUnavailable
+	typed, ok := usererror.As(normalizeToolboxDataFetchError(err, privateDataSuite, binding))
+	if !ok || typed.Code != usererror.CodeSetup && typed.Code != usererror.CodeForbidden {
+		return i18n.T("card.catalog_notice.suite_unavailable")
 	}
-	firstLine := strings.TrimSpace(strings.SplitN(string(replyErr), "\n", 2)[0])
-	if firstLine == "" {
-		return CardCatalogTitleSuiteUnavailable
-	}
-	return firstLine + "；当前显示全服卡牌"
+	reason := strings.TrimSpace(strings.SplitN(typed.Error(), "\n", 2)[0])
+	return i18n.T("card.catalog_notice.with_reason", i18n.Data{"Reason": reason})
 }
 
 func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
@@ -85,7 +82,7 @@ func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardR
 	}
 
 	queryParams := rc.requestScopedSelfQuery()
-	target, err := resolveGameTarget(rc.Ctx, queryParams, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
+	target, err := resolveGameTarget(rc.Ctx, queryParams, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App, accountdata.ExposureProfile)
 	if err != nil {
 		return nil, nil
 	}
@@ -127,7 +124,7 @@ func cloneDetailedProfileForTarget(detail *drawing.DetailedProfileCardRequest, t
 	}
 	cloned.Rank = commonCloneIntPtr(detail.Rank)
 	cloned.UserCards = append([]any(nil), detail.UserCards...)
-	cloned.IsHideUID = !target.Visible
+	cloned.IsHideUID = !target.UIDVisible
 	if resolvedRegion := strings.TrimSpace(resolvedTargetRegion(region, target)); resolvedRegion != "" {
 		cloned.Region = strings.ToUpper(resolvedRegion)
 	}
@@ -167,7 +164,7 @@ func cloneProfileCardForTarget(card *drawing.ProfileCardRequest, target Resolved
 		if card.Profile.FramePaths != nil {
 			profile.FramePaths = new(*card.Profile.FramePaths)
 		}
-		profile.IsHideUID = !target.Visible
+		profile.IsHideUID = !target.UIDVisible
 		if resolvedRegion := strings.TrimSpace(resolvedTargetRegion(region, target)); resolvedRegion != "" {
 			profile.Region = strings.ToUpper(resolvedRegion)
 		}
@@ -251,7 +248,7 @@ func buildPublicMusicProfilesFromResolvedTarget(
 
 	q := profile.Query{
 		Region:     region,
-		Visible:    target.Visible,
+		Visible:    target.UIDVisible,
 		BgSettings: target.BgSettings,
 	}
 	profileCtrl := app.Profiles.WithContext(ctx)
@@ -299,7 +296,7 @@ func buildPublicProfileCardForTargetWithPrefetch(ctx context.Context, target Res
 	}
 	q := profile.Query{
 		Region:     region,
-		Visible:    target.Visible,
+		Visible:    target.UIDVisible,
 		BgSettings: target.BgSettings,
 	}
 	var (

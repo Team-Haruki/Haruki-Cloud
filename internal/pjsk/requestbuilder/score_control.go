@@ -2,13 +2,16 @@ package requestbuilder
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -41,7 +44,7 @@ type scoreControlSelection struct {
 
 func BuildScoreControlRequest(ctx context.Context, r *CommandInput, app *renderapp.App) (*drawing.ScoreControlRequest, error) {
 	if app == nil || app.Music == nil {
-		return nil, fmt.Errorf("score music service unavailable: music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("score music service unavailable: music controller is not configured"))
 	}
 	if ctx == nil {
 		ctx = context.TODO()
@@ -56,7 +59,7 @@ func BuildScoreControlRequest(ctx context.Context, r *CommandInput, app *rendera
 		return nil, err
 	}
 	if params.TargetPoint <= 0 {
-		return nil, fmt.Errorf("invalid score control request")
+		return nil, usererror.Misuse(i18n.M("score.control.invalid"))
 	}
 
 	query := strings.TrimSpace(params.Query)
@@ -69,18 +72,18 @@ func BuildScoreControlRequest(ctx context.Context, r *CommandInput, app *rendera
 		return nil, err
 	}
 	if len(requests) == 0 {
-		return nil, fmt.Errorf("invalid score control request")
+		return nil, usererror.Misuse(i18n.M("score.control.invalid"))
 	}
 
 	metaReq := requests[0]
 	basicPoint := selectScoreControlBasicPoint(metaReq.Metas)
 	if basicPoint <= 0 {
-		return nil, fmt.Errorf("music %d has no basic point data", metaReq.MusicID)
+		return nil, usererror.Wrap(usererror.CodeNotFound, i18n.M("score.music_basic_point_missing"), fmt.Errorf("music %d has no basic point data", metaReq.MusicID))
 	}
 
 	validScores := findValidScoreRanges(params.TargetPoint, basicPoint, params.WL, scoreControlMaxShownSolutions)
 	if len(validScores) == 0 {
-		return nil, fmt.Errorf("找不到符合条件的分数范围")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("score.control.no_range"))
 	}
 
 	return &drawing.ScoreControlRequest{
@@ -105,17 +108,17 @@ func resolveScoreControlSelection(r *CommandInput) (scoreControlSelection, error
 	}
 
 	if r == nil {
-		return scoreControlSelection{}, fmt.Errorf("invalid score control request")
+		return scoreControlSelection{}, usererror.Misuse(i18n.M("score.control.invalid"))
 	}
 
 	parts := strings.SplitN(strings.TrimSpace(r.Query), " ", 2)
 	if len(parts) == 0 {
-		return scoreControlSelection{}, fmt.Errorf("invalid score control request")
+		return scoreControlSelection{}, usererror.Misuse(i18n.M("score.control.invalid"))
 	}
 
 	target, err := strconv.Atoi(strings.TrimSpace(parts[0]))
 	if err != nil || target <= 0 {
-		return scoreControlSelection{}, fmt.Errorf("invalid score control request")
+		return scoreControlSelection{}, usererror.Misuse(i18n.M("score.control.invalid"))
 	}
 	params.TargetPoint = target
 	if len(parts) > 1 {

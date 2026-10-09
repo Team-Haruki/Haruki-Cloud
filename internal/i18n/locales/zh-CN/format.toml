@@ -1,0 +1,122 @@
+# 共享的显示格式：区服、账号、时间、时长、数字、分页、难度、Live 类型。
+# 这些消息由 internal/i18n 的格式化函数生成，调用方不直接引用这些 ID。
+
+[format.region.name.jp]
+description = "区服名称（RegionName），用在 format.region.label 里；单独使用只限渲染服务自己会加括号的位置（生日图片）。"
+other = "日服"
+
+[format.region.name.cn]
+description = "区服名称（RegionName），用在 format.region.label 里；单独使用只限渲染服务自己会加括号的位置（生日图片）。"
+other = "国服"
+
+[format.region.name.tw]
+description = "区服名称（RegionName），用在 format.region.label 里；单独使用只限渲染服务自己会加括号的位置（生日图片）。"
+other = "台服"
+
+[format.region.name.kr]
+description = "区服名称（RegionName），用在 format.region.label 里；单独使用只限渲染服务自己会加括号的位置（生日图片）。"
+other = "韩服"
+
+[format.region.name.en]
+description = "区服名称（RegionName），用在 format.region.label 里；单独使用只限渲染服务自己会加括号的位置（生日图片）。"
+other = "国际服"
+
+[format.region.label]
+description = "区服显示名（RegionLabel），例如“日服(JP)”。按规范使用半角括号、大写代码、不加空格。占位符：Name=区服名称；Code=大写区服代码。"
+other = "{{.Name}}({{.Code}})"
+
+[format.account.label]
+description = "一个已绑定游戏账号（AccountLabel），例如“[日服(JP)] 123***789”。占位符：Region=区服显示名；UID=游戏 UID，未公开时中间打码。"
+other = "[{{.Region}}] {{.UID}}"
+
+[format.time.datetime]
+description = "按用户时区显示的时间（FormatUserTime），例如“2026-10-09 14:05 (UTC+8)”。占位符：DateTime=日期和时间，格式 2006-01-02 15:04；Offset=UTC 偏移，如 +8、+5:30、-3。"
+other = "{{.DateTime}} (UTC{{.Offset}})"
+
+[format.time.unknown]
+description = "时间缺失时的显示（FormatUserTime 收到零值）。"
+other = "未知时间"
+
+[format.duration.seconds]
+description = "不足 1 分钟的时长（FormatDuration），例如“45秒”。占位符：Seconds=秒数。"
+other = "{{.Seconds}}秒"
+
+[format.duration.minutes]
+description = "不足 1 小时的时长（FormatDuration），例如“2分03秒”。占位符：Minutes=分钟数；Seconds=两位秒数。"
+other = "{{.Minutes}}分{{.Seconds}}秒"
+
+[format.duration.hours]
+description = "1 小时及以上的时长（FormatDuration），例如“1小时02分03秒”。占位符：Hours=小时数；Minutes=两位分钟数；Seconds=两位秒数。"
+other = "{{.Hours}}小时{{.Minutes}}分{{.Seconds}}秒"
+
+[format.wan]
+description = "以万为单位的大数（Wan），例如“12.35万”。占位符：Value=除以 10000 后的数值，最多两位小数。"
+other = "{{.Value}}万"
+
+[format.page]
+description = "分页列表的当前页（PageLabel），例如“第 1/3 页”。占位符：Page=当前页；Total=总页数。"
+other = "第 {{.Page}}/{{.Total}} 页"
+
+[format.difficulty.easy]
+description = "谱面难度显示名（DifficultyLabel）。"
+other = "EASY"
+
+[format.difficulty.normal]
+description = "谱面难度显示名（DifficultyLabel）。"
+other = "NORMAL"
+
+[format.difficulty.hard]
+description = "谱面难度显示名（DifficultyLabel）。"
+other = "HARD"
+
+[format.difficulty.expert]
+description = "谱面难度显示名（DifficultyLabel）。"
+other = "EXPERT"
+
+[format.difficulty.master]
+description = "谱面难度显示名（DifficultyLabel）。"
+other = "MASTER"
+
+[format.difficulty.append]
+description = "谱面难度显示名（DifficultyLabel）。"
+other = "APPEND"
+
+[format.live_type.solo]
+description = "Live 类型显示名（LiveTypeLabel），对应 solo。"
+other = "单人 Live"
+
+[format.live_type.multi]
+description = "Live 类型显示名（LiveTypeLabel），对应 multi。"
+other = "多人 Live"
+
+[format.live_type.auto]
+description = "Live 类型显示名（LiveTypeLabel），对应 auto。"
+other = "自动 Live"
+
+[format.live_type.challenge]
+description = "Live 类型显示名（LiveTypeLabel），对应 challenge。"
+other = "挑战 Live"
+
+[format.ago.just_now]
+description = "距今多久（TimeAgo）：不到 1 分钟。用在数据状态的上传时间和 /注册时间 里。"
+other = "刚刚"
+
+[format.ago.minutes]
+description = "距今多久（TimeAgo）：不到 1 小时，例如“5分钟前”。时长写法与 format.duration.* 一致，数字和单位之间不加空格。占位符：Minutes=分钟数。"
+other = "{{.Minutes}}分钟前"
+
+[format.ago.hours]
+description = "距今多久（TimeAgo）：整小时数，例如“3小时前”。占位符：Hours=小时数。"
+other = "{{.Hours}}小时前"
+
+[format.ago.hours_minutes]
+description = "距今多久（TimeAgo）：不到 1 天，例如“3小时20分钟前”。占位符：Hours=小时数；Minutes=分钟数。"
+other = "{{.Hours}}小时{{.Minutes}}分钟前"
+
+[format.ago.days]
+description = "距今多久（TimeAgo）：整天数，例如“2天前”。占位符：Days=天数。"
+other = "{{.Days}}天前"
+
+[format.ago.days_hours]
+description = "距今多久（TimeAgo）： 1 天以上，例如“2天3小时前”。占位符：Days=天数；Hours=小时数。"
+other = "{{.Days}}天{{.Hours}}小时前"

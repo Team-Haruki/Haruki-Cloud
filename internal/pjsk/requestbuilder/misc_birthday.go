@@ -2,6 +2,7 @@ package requestbuilder
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -9,12 +10,14 @@ import (
 	"time"
 
 	"haruki-cloud/database/sekai/gamecharacter"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
+	"haruki-cloud/utils/usererror"
 )
 
 type miscBirthdaySelection struct {
@@ -43,13 +46,6 @@ var (
 		renderregion.TW: 8,
 		renderregion.EN: 0,
 		renderregion.KR: 9,
-	}
-	birthdayRegionNames = map[renderregion.Value]string{
-		renderregion.JP: "日服",
-		renderregion.CN: "国服",
-		renderregion.TW: "台服",
-		renderregion.EN: "国际服",
-		renderregion.KR: "韩服",
 	}
 	birthdayFifthAnnivRegions = map[renderregion.Value]struct{}{
 		renderregion.JP: {},
@@ -86,6 +82,7 @@ var (
 		25: {Month: 11, Day: 5},
 		26: {Month: 2, Day: 17},
 	}
+	//copylint:ignore-block 角色昵称（解析关键字）
 	miscBirthdayDefaultNicknames = map[string]int{
 		"ick": 1, "ichika": 1, "星乃一歌": 1,
 		"saki": 2, "咲希": 2, "天马咲希": 2,
@@ -118,7 +115,7 @@ var (
 
 func BuildMiscBirthdayRequest(ctx context.Context, r *CommandInput, app *renderapp.App) (*drawing.CharaBirthdayRequest, error) {
 	if app == nil || app.Sekai == nil {
-		return nil, fmt.Errorf("misc birthday service unavailable: sekai client not configured")
+		return nil, usererror.Misconfigured(errors.New("misc birthday service unavailable: sekai client not configured"))
 	}
 	if ctx == nil {
 		ctx = context.TODO()
@@ -213,7 +210,7 @@ func normalizeBirthdaySelection(r *CommandInput) (miscBirthdaySelection, error) 
 
 	if index, err := strconv.Atoi(rawQuery); err == nil {
 		if index <= 0 {
-			return miscBirthdaySelection{}, fmt.Errorf("角色生日索引超出范围")
+			return miscBirthdaySelection{}, usererror.Invalid(i18n.M("misc.birthday.index_range", i18n.Data{"Max": 26}))
 		}
 		selection.UpcomingIndex = index
 		return selection, nil
@@ -250,7 +247,7 @@ func selectBirthdayInfo(infos []birthdayCharacterInfo, selection miscBirthdaySel
 				return info, nil
 			}
 		}
-		return birthdayCharacterInfo{}, fmt.Errorf("invalid birthday request")
+		return birthdayCharacterInfo{}, usererror.Unrecognized()
 	}
 
 	index := selection.UpcomingIndex
@@ -258,7 +255,7 @@ func selectBirthdayInfo(infos []birthdayCharacterInfo, selection miscBirthdaySel
 		index = 1
 	}
 	if index > len(infos) {
-		return birthdayCharacterInfo{}, fmt.Errorf("角色生日索引超出范围")
+		return birthdayCharacterInfo{}, usererror.Invalid(i18n.M("misc.birthday.index_range", i18n.Data{"Max": len(infos)}))
 	}
 	return infos[index-1], nil
 }
@@ -266,7 +263,7 @@ func selectBirthdayInfo(infos []birthdayCharacterInfo, selection miscBirthdaySel
 func resolveBirthdayCharacterID(ctx context.Context, app *renderapp.App, region renderregion.Value, query string) (int, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return 0, fmt.Errorf("请输入角色名")
+		return 0, usererror.Misuse(i18n.M("character.query_required"))
 	}
 
 	if charID, ok := rendercard.ResolveDefaultCharacterNickname(query); ok && charID > 0 {
@@ -292,17 +289,17 @@ func resolveBirthdayCharacterID(ctx context.Context, app *renderapp.App, region 
 	}
 	switch len(ids) {
 	case 0:
-		return 0, fmt.Errorf("未找到对应角色: %s", query)
+		return 0, usererror.New(usererror.CodeNotFound, i18n.M("character.not_found", i18n.Data{"UserQuery": i18n.EchoQuery(query)}))
 	case 1:
 		return ids[0], nil
 	default:
-		return 0, fmt.Errorf("角色名存在歧义: %s", query)
+		return 0, usererror.New(usererror.CodeAmbiguous, i18n.M("character.ambiguous", i18n.Data{"UserQuery": i18n.EchoQuery(query)}))
 	}
 }
 
 func lookupBirthdayCharacterIDs(ctx context.Context, app *renderapp.App, region renderregion.Value, query string) ([]int, error) {
 	if app == nil || app.Sekai == nil {
-		return nil, fmt.Errorf("misc birthday service unavailable: sekai client not configured")
+		return nil, usererror.Misconfigured(errors.New("misc birthday service unavailable: sekai client not configured"))
 	}
 	if ctx == nil {
 		ctx = context.TODO()

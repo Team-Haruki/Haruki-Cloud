@@ -8,8 +8,10 @@ import (
 	"strconv"
 	"strings"
 
+	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/eventmusic"
 	"haruki-cloud/database/sekai/music"
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
@@ -17,7 +19,7 @@ import (
 func (p *dbMusicProvider) Search(ctx context.Context, query string) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return nil, fmt.Errorf("music not found: empty query")
+		return nil, notfound.Music("")
 	}
 	if p.local != nil {
 		if musicInfo, err := p.local.Search(ctx, query); err == nil && musicInfo != nil {
@@ -40,7 +42,7 @@ func (p *dbMusicProvider) Search(ctx context.Context, query string) (*masterdata
 			return common.CloneMusic(m), nil
 		}
 	}
-	return nil, fmt.Errorf("music not found: %s", query)
+	return nil, notfound.Music(query)
 }
 
 func (p *dbMusicProvider) GetByID(ctx context.Context, id int) (*masterdata.Music, error) {
@@ -68,6 +70,9 @@ func (p *dbMusicProvider) GetByID(ctx context.Context, id int) (*masterdata.Musi
 		Where(music.ServerRegionEQ(p.region.String()), music.GameIDEQ(int64(id))).
 		Only(ctx)
 	if err != nil {
+		if sekaiDB.IsNotFound(err) {
+			return nil, notfound.MusicID(id).WithCause(err)
+		}
 		return nil, fmt.Errorf("query music %d: %w", id, err)
 	}
 

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"haruki-cloud/internal/i18n"
 	"os"
 	"path/filepath"
 	"testing"
@@ -306,7 +307,7 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedEventRankDisplayFromHonor(t 
 	}
 	{
 		testutil.Require(t, !(req.RankNote == nil), "expected CN rank note, got %+v", req.RankNote)
-		testutil.Require(t, !(*req.RankNote != "CN/KR/TW服没有排名数据，仅显示Txxx名"), "expected CN rank note, got %+v", req.RankNote)
+		testutil.Require(t, !(*req.RankNote != i18n.T("event.record.rank_note", i18n.Data{"Region": i18n.RegionLabel("cn")})), "expected CN rank note, got %+v", req.RankNote)
 	}
 
 }

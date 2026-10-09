@@ -1,14 +1,13 @@
 package cluster
 
 import (
-	"errors"
-
 	"haruki-cloud/config"
+	"haruki-cloud/utils/usererror"
 )
 
-const ReadOnlyMessage = "当前 Cloud 节点处于只读模式，暂时不能修改用户数据，请稍后重试"
-
-var ErrReadOnly = errors.New(ReadOnlyMessage)
+// ErrReadOnly is returned by every write while the node is read-only. It is
+// a typed user error (usererror.CodeReadOnly); compare with errors.Is.
+var ErrReadOnly error = usererror.ReadOnly()
 
 func IsReadOnly() bool {
 	return config.Cfg.Node.ReadOnly

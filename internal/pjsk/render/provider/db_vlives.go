@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -9,6 +10,7 @@ import (
 	"haruki-cloud/database/sekai/virtuallive"
 	json "haruki-cloud/internal/jsonutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 type dbVLiveProvider struct {
@@ -21,7 +23,7 @@ type dbVLiveProvider struct {
 
 func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Value) ([]*VLive, error) {
 	if p.client == nil {
-		return nil, fmt.Errorf("vlive provider is not configured")
+		return nil, usererror.Misconfigured(errors.New("vlive provider is not configured"))
 	}
 
 	queryRegion := renderregion.WithDefault(region)

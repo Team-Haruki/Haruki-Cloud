@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"fmt"
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,26 +12,14 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
 	"haruki-cloud/internal/pjsk/render/gacha"
+	"haruki-cloud/utils/usererror"
 )
-
-const querySingleGachaHelp = `【查单个卡池格式】
-1. 卡池ID：123
-2. 倒数第几个已开始卡池：-1 -2
-3. 活动卡池：event123`
-
-const queryMultiGachaHelp = `【查多个卡池格式】
-1. 页码：p2 2页
-2. 年份：25年 去年
-3. 卡牌：card123
-4. 卡池类型：复刻 回响
-5. 时间范围：当前`
-
-const gachaSearchHelp = querySingleGachaHelp + "\n\n" + queryMultiGachaHelp
 
 var (
 	reGachaCardFilter = regexp.MustCompile(`(?i)\bcard(\d+)\b`)
 	reGachaPageP      = regexp.MustCompile(`(?i)\bp(\d+)\b`)
-	reGachaPageCN     = regexp.MustCompile(`(\d+)页`)
+	//copylint:ignore-block 解析关键字
+	reGachaPageCN = regexp.MustCompile(`(\d+)页`)
 )
 
 func (sekaiHandlers) GachaHandle() HarukiSekaiCommandHandler {
@@ -40,7 +28,6 @@ func (sekaiHandlers) GachaHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/pjsk gacha", "/卡池列表", "/卡池一览", "/卡池", "/查卡池",
 		},
-		Helper: gachaSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveGachaDetailOrList(ctx)
 		},
@@ -69,7 +56,7 @@ func resolveGachaDetailOrList(ctx HarrukiSekaiHandlerContext) (*CommandRequest, 
 }
 
 func gachaSearchUsageError(trigger string) error {
-	return onebot11.NewReplayError("卡池查询参数格式不正确。查看完整用法请发送：%s -help", trigger)
+	return usererror.Unrecognized()
 }
 
 func parseSingleGachaQuery(args string) (map[string]any, bool, error) {
@@ -83,7 +70,7 @@ func parseSingleGachaQuery(args string) (map[string]any, bool, error) {
 		eventText := strings.TrimSpace(args[len("event"):])
 		eventID, err := strconv.Atoi(eventText)
 		if err != nil || eventID <= 0 {
-			return nil, false, fmt.Errorf("invalid event gacha query")
+			return nil, false, usererror.Unrecognized()
 		}
 		return map[string]any{"event_id": eventID}, true, nil
 	}
@@ -98,7 +85,7 @@ func parseSingleGachaQuery(args string) (map[string]any, bool, error) {
 	case value < 0:
 		return map[string]any{"neg_index": value}, true, nil
 	default:
-		return nil, false, fmt.Errorf("invalid gacha id")
+		return nil, false, usererror.Unrecognized()
 	}
 }
 
@@ -108,16 +95,16 @@ func parseMultiGachaQuery(args string) (map[string]any, string) {
 		"include_past": true,
 	}
 
-	if strings.Contains(remaining, "复刻") {
-		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "复刻", ""))
+	if strings.Contains(remaining, "复刻") { //copylint:ignore 解析关键字
+		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "复刻", "")) //copylint:ignore 解析关键字
 		params["is_rerelease"] = true
 	}
-	if strings.Contains(remaining, "回响") {
-		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "回响", ""))
+	if strings.Contains(remaining, "回响") { //copylint:ignore 解析关键字
+		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "回响", "")) //copylint:ignore 解析关键字
 		params["is_recall"] = true
 	}
-	if strings.Contains(remaining, "当前") {
-		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "当前", ""))
+	if strings.Contains(remaining, "当前") { //copylint:ignore 解析关键字
+		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "当前", "")) //copylint:ignore 解析关键字
 		params["only_current"] = true
 	}
 
@@ -152,7 +139,7 @@ func executeGacha(rc *RequestContext) (message onebot11.Message, err error) {
 	}()
 
 	if rc.App.Gachas == nil {
-		return nil, fmt.Errorf("gacha service unavailable: sekai client not configured")
+		return nil, usererror.Misconfigured(errors.New("gacha service unavailable: sekai client not configured"))
 	}
 	gachaCtrl := rc.App.Gachas.WithContext(rc.Ctx)
 	var data drawing.ImageResult

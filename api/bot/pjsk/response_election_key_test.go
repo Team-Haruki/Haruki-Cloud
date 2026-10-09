@@ -61,7 +61,7 @@ func TestResponseElectionIdentityExcludesClientConfiguration(t *testing.T) {
 	first := responseElectionIdentityTestRequest()
 	second := responseElectionIdentityTestRequest()
 	second.Server = "cn"
-	second.EnableParamEcho = !first.EnableParamEcho
+	second.NotifyEmpty = !first.NotifyEmpty
 
 	if got, want := responseElectionIdentity(second), responseElectionIdentity(first); got != want {
 		t.Fatalf("client configuration changed event identity: got %s, want %s", got, want)
@@ -187,6 +187,5 @@ func responseElectionIdentityTestRequest() BotCommandRequest {
 			onebot11.At("123456"),
 			onebot11.Image("image.png", "https://example.invalid/image.png"),
 		},
-		EnableParamEcho: true,
 	}
 }

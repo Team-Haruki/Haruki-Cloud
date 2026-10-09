@@ -2,16 +2,19 @@ package inventory
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewController(
@@ -51,7 +54,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 
 func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.InventoryListRequest, error) {
 	if c == nil {
-		return nil, fmt.Errorf("inventory controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("inventory controller is not initialized"))
 	}
 
 	snap, err := c.inventorySnapshot(query.Snapshot)
@@ -90,7 +93,7 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 		}
 		for i := range sections {
 			if sections[i].Key == "boost" {
-				sections[i].Title = fmt.Sprintf("%s · 可恢复体力 %dx🔥", sections[i].Title, total)
+				sections[i].Title = i18n.T("inventory.image.boost_total", i18n.Data{"Title": sections[i].Title, "Total": total})
 			}
 		}
 	}
@@ -110,7 +113,7 @@ func (c *Controller) inventorySnapshot(querySnapshot snapshot.Snapshot) (snapsho
 		querySnapshot = c.snapshot
 	}
 	if querySnapshot == nil {
-		return nil, fmt.Errorf("local user snapshot is not configured")
+		return nil, snapshot.ErrNotConfigured
 	}
 	if err := querySnapshot.Require(); err != nil {
 		return nil, err
@@ -171,8 +174,8 @@ func inventoryItemCapacity(raw *snapshot.RawUserData) int {
 func (c *Controller) inventoryCurrencyItems(region renderregion.Value, raw *snapshot.RawUserData) []drawing.InventoryItem {
 	items := []drawing.InventoryItem{{
 		ID:           0,
-		Name:         "金币",
-		Description:  "游戏内基础货币，可用于成员育成等消耗。",
+		Name:         i18n.T("inventory.image.coin.title"),
+		Description:  i18n.T("inventory.image.coin.desc"),
 		Category:     "currency",
 		ResourceType: "coin",
 		Quantity:     raw.UserGamedata.Coin,
@@ -181,8 +184,8 @@ func (c *Controller) inventoryCurrencyItems(region renderregion.Value, raw *snap
 	if raw.UserChargedCurrency.Free > 0 {
 		items = append(items, drawing.InventoryItem{
 			ID:           -1,
-			Name:         "免费水晶",
-			Description:  "免费获得的水晶，可用于招募等用途。",
+			Name:         i18n.T("inventory.image.jewel_free.title"),
+			Description:  i18n.T("inventory.image.jewel_free.desc"),
 			Category:     "currency",
 			ResourceType: "jewel",
 			Quantity:     raw.UserChargedCurrency.Free,
@@ -192,8 +195,8 @@ func (c *Controller) inventoryCurrencyItems(region renderregion.Value, raw *snap
 	if raw.UserChargedCurrency.Paid > 0 {
 		items = append(items, drawing.InventoryItem{
 			ID:           -2,
-			Name:         "付费水晶",
-			Description:  "购买获得的付费水晶，可用于招募等用途。",
+			Name:         i18n.T("inventory.image.jewel_paid.title"),
+			Description:  i18n.T("inventory.image.jewel_paid.desc"),
 			Category:     "currency",
 			ResourceType: "jewel",
 			Quantity:     raw.UserChargedCurrency.Paid,
@@ -203,8 +206,8 @@ func (c *Controller) inventoryCurrencyItems(region renderregion.Value, raw *snap
 	if raw.UserGamedata.VirtualCoin > 0 {
 		items = append(items, drawing.InventoryItem{
 			ID:           -3,
-			Name:         "虚拟币",
-			Description:  "虚拟演唱会等玩法中使用的货币。",
+			Name:         i18n.T("inventory.image.virtual_coin.title"),
+			Description:  i18n.T("inventory.image.virtual_coin.desc"),
 			Category:     "currency",
 			ResourceType: "virtual_coin",
 			Quantity:     raw.UserGamedata.VirtualCoin,
@@ -223,7 +226,7 @@ func (c *Controller) inventoryMaterialItems(region renderregion.Value, raw *snap
 		meta := md.materials[mat.MaterialID]
 		name := strings.TrimSpace(meta.Name)
 		if name == "" {
-			name = fmt.Sprintf("材料 %d", mat.MaterialID)
+			name = i18n.T("inventory.image.unnamed.material", i18n.Data{"ID": mat.MaterialID})
 		}
 		category := inventoryCategoryForMaterial(meta.MaterialType, name)
 		items = append(items, drawing.InventoryItem{
@@ -248,7 +251,7 @@ func (c *Controller) inventoryGachaTicketItems(region renderregion.Value, raw *s
 		meta := md.gachaTickets[ticket.GachaTicketID]
 		name := strings.TrimSpace(meta.Name)
 		if name == "" {
-			name = fmt.Sprintf("招募券 %d", ticket.GachaTicketID)
+			name = i18n.T("inventory.image.unnamed.gacha_ticket", i18n.Data{"ID": ticket.GachaTicketID})
 		}
 		items = append(items, drawing.InventoryItem{
 			ID:           ticket.GachaTicketID,
@@ -272,7 +275,7 @@ func (c *Controller) inventoryPracticeTicketItems(region renderregion.Value, raw
 		meta := md.practiceTickets[ticket.PracticeTicketID]
 		name := strings.TrimSpace(meta.Name)
 		if name == "" {
-			name = fmt.Sprintf("练习乐谱 %d", ticket.PracticeTicketID)
+			name = i18n.T("inventory.image.unnamed.practice_ticket", i18n.Data{"ID": ticket.PracticeTicketID})
 		}
 		items = append(items, drawing.InventoryItem{
 			ID:           ticket.PracticeTicketID,
@@ -296,7 +299,7 @@ func (c *Controller) inventorySkillTicketItems(region renderregion.Value, raw *s
 		meta := md.skillPracticeTickets[ticket.SkillPracticeTicketID]
 		name := strings.TrimSpace(meta.Name)
 		if name == "" {
-			name = fmt.Sprintf("技能升级乐谱 %d", ticket.SkillPracticeTicketID)
+			name = i18n.T("inventory.image.unnamed.skill_practice_ticket", i18n.Data{"ID": ticket.SkillPracticeTicketID})
 		}
 		items = append(items, drawing.InventoryItem{
 			ID:           ticket.SkillPracticeTicketID,
@@ -320,7 +323,7 @@ func (c *Controller) inventoryGachaCeilItems(region renderregion.Value, raw *sna
 		meta := md.gachaCeilItems[item.GachaCeilItemID]
 		name := strings.TrimSpace(meta.Name)
 		if name == "" {
-			name = fmt.Sprintf("招募贴纸 %d", item.GachaCeilItemID)
+			name = i18n.T("inventory.image.unnamed.gacha_ceil_item", i18n.Data{"ID": item.GachaCeilItemID})
 		}
 		items = append(items, drawing.InventoryItem{
 			ID:           item.GachaCeilItemID,
@@ -344,7 +347,7 @@ func (c *Controller) inventoryMysekaiMaterialItems(region renderregion.Value, ra
 		meta := md.mysekaiMaterials[material.MysekaiMaterialID]
 		name := strings.TrimSpace(meta.Name)
 		if name == "" {
-			name = fmt.Sprintf("MySekai 材料 %d", material.MysekaiMaterialID)
+			name = i18n.T("common.fallback.mysekai_material", i18n.Data{"ID": material.MysekaiMaterialID})
 		}
 		category := "mysekai"
 		if isMysekaiMemory(meta) {
@@ -372,7 +375,7 @@ func (c *Controller) inventoryBoostItems(region renderregion.Value, raw *snapsho
 		meta := md.boostItems[boost.BoostItemID]
 		name := strings.TrimSpace(meta.Name)
 		if name == "" {
-			name = fmt.Sprintf("演出能量道具 %d", boost.BoostItemID)
+			name = i18n.T("inventory.image.unnamed.boost_item", i18n.Data{"ID": boost.BoostItemID})
 		}
 		var recovery *int
 		if meta.RecoveryValue > 0 {
@@ -403,7 +406,7 @@ func (c *Controller) RenderList(query Query) ([]byte, error) {
 
 func (c *Controller) RenderListImage(query Query) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildListRequestFromSnapshot(query)
@@ -534,7 +537,7 @@ func buildInventorySections(items []drawing.InventoryItem) []drawing.InventorySe
 		})
 		sections = append(sections, drawing.InventorySection{
 			Key:   def.key,
-			Title: def.title,
+			Title: def.title.String(),
 			Items: group,
 		})
 	}
@@ -572,9 +575,9 @@ func validateFilterForRegion(region renderregion.Value, filter Filter) error {
 	}
 	switch normalizeFilter(filter) {
 	case FilterMysekai:
-		return fmt.Errorf("国服 MySekai 功能永不开启，无法查询 MySekai 材料")
+		return usererror.Invalid(i18n.M("inventory.mysekai_cn_unavailable", i18n.Data{"Region": i18n.RegionLabel("cn")}))
 	case FilterMemory:
-		return fmt.Errorf("国服暂不支持查询记忆")
+		return usererror.Invalid(i18n.M("inventory.memory_cn_unavailable", i18n.Data{"Region": i18n.RegionLabel("cn")}))
 	default:
 		return nil
 	}
@@ -636,7 +639,7 @@ func isMysekaiMemory(meta mysekaiMaterialMeta) bool {
 		strings.Contains(icon, "memoria") ||
 		strings.Contains(icon, "memory") ||
 		strings.Contains(name, "メモリア") ||
-		strings.Contains(name, "记忆")
+		strings.Contains(name, "记忆") //copylint:ignore 游戏数据原文（匹配键）
 }
 
 func cleanInventoryDescription(description string) string {

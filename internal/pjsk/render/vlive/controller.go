@@ -9,13 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
-	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/provider"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/utils/usererror"
 )
 
 var ErrNoLives = errors.New("no virtual lives")
@@ -75,7 +76,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 
 func (c *Controller) ResolveLives(query ListQuery) ([]ResolvedLive, renderregion.Value, error) {
 	if c == nil || c.sources == nil {
-		return nil, renderregion.Unknown, fmt.Errorf("vlive controller is not configured")
+		return nil, renderregion.Unknown, usererror.Misconfigured(errors.New("vlive controller is not configured"))
 	}
 
 	region := c.resolveRegion(query.Region)
@@ -243,7 +244,7 @@ func (c *Controller) RenderList(query ListQuery) ([]byte, error) {
 
 func (c *Controller) RenderListImage(query ListQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildListRequest(query)
@@ -252,47 +253,6 @@ func (c *Controller) RenderListImage(query ListQuery) (drawing.ImageResult, erro
 		return drawing.ImageResult{}, err
 	}
 	return c.drawing.GenerateVLiveListImage(req)
-}
-
-func (c *Controller) RenderText(query ListQuery) (string, error) {
-	lives, region, err := c.ResolveLives(query)
-	if err != nil {
-		return "", err
-	}
-	if len(lives) == 0 {
-		return "当前没有虚拟Live", nil
-	}
-
-	loc, timeZone := displaytime.LoadLocation(query.TimeZone)
-
-	var groups map[int]*Group
-	if source, ok := c.sources.SourceForRegion(region); ok {
-		groups = c.groupsFor(source, region, lives)
-	}
-
-	var builder strings.Builder
-	builder.WriteString(fmt.Sprintf("%s 虚拟Live列表", strings.ToUpper(region.String())))
-	for _, live := range collapseSoloGroups(lives, groups) {
-		builder.WriteString("\n\n")
-		builder.WriteString(fmt.Sprintf("【%d】%s\n", live.ID, fallbackLiveName(live.Name, live.ID)))
-		if len(live.Members) > 0 {
-			builder.WriteString(fmt.Sprintf("共%d场个人Live\n", len(live.Members)))
-		}
-		builder.WriteString(fmt.Sprintf("开始: %s\n", displaytime.FormatTime(live.StartAt.In(loc), virtualLiveTimeLayout)))
-		builder.WriteString(fmt.Sprintf("结束: %s\n", displaytime.FormatTime(live.EndAt.In(loc), virtualLiveTimeLayout)))
-		builder.WriteString("状态: ")
-		switch {
-		case live.Living:
-			builder.WriteString("当前Live进行中")
-		case live.Current != nil:
-			builder.WriteString(fmt.Sprintf("下一场: %s", displaytime.FormatTime(live.Current.StartAt.In(loc), virtualLiveTimeLayout)))
-		default:
-			builder.WriteString("已结束")
-		}
-		builder.WriteString(fmt.Sprintf(" | 剩余场次: %d", live.RestCount))
-	}
-	builder.WriteString(fmt.Sprintf("\n\n时区: %s", timeZone))
-	return builder.String(), nil
 }
 
 func (c *Controller) resolveRegion(region string) renderregion.Value {
@@ -492,7 +452,7 @@ func unixTime(value int64) time.Time {
 
 func fallbackLiveName(name string, id int) string {
 	if strings.TrimSpace(name) == "" {
-		return fmt.Sprintf("Virtual Live #%d", id)
+		return i18n.T("vlive.fallback_name", i18n.Data{"ID": id})
 	}
 	return name
 }

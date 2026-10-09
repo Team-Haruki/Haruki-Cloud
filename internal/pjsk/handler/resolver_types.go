@@ -21,9 +21,10 @@ type userQueryParams struct {
 type ResolvedGameTarget struct {
 	HarukiUserID int
 	PJSKUserID   string
-	Visible      bool
-	BgSettings   *drawing.ProfileBgSettings
-	Binding      *accountdata.ResolvedBinding
+	// UIDVisible is false when the target's full game UID must be masked.
+	UIDVisible bool
+	BgSettings *drawing.ProfileBgSettings
+	Binding    *accountdata.ResolvedBinding
 }
 
 type mySekaiRenderContext struct {
@@ -31,4 +32,6 @@ type mySekaiRenderContext struct {
 	Profile      *drawing.ProfileCardRequest
 	Region       string
 	HarukiUserID int
+	// Binding is the resolved account, when the command targets one.
+	Binding *accountdata.ResolvedBinding
 }

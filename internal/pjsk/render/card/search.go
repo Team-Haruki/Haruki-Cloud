@@ -1,8 +1,11 @@
 package card
 
 import (
+	"errors"
 	"fmt"
 
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
 	"haruki-cloud/utils/usererror"
@@ -27,7 +30,7 @@ func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 	now := currentCardVisibilityTime()
 	info, err := s.parser.Parse(query)
 	if err != nil || info == nil {
-		return nil, usererror.Inputf("无法解析的指令: %s", query)
+		return nil, usererror.Unrecognized()
 	}
 	switch info.Type {
 	case QueryTypeID:
@@ -64,12 +67,12 @@ func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 			if len(items) > 0 {
 				return nil, releasecheck.New(releasecheck.KindCard, query, 0)
 			}
-			return nil, fmt.Errorf("card not found (filter): %s", query)
+			return nil, notfound.Card(query)
 		}
 		sortCardsByReleaseAndID(visibleItems)
 		return visibleItems[len(visibleItems)-1], nil
 	default:
-		return nil, usererror.Inputf("无法解析的指令: %s", query)
+		return nil, usererror.Unrecognized()
 	}
 }
 
@@ -77,7 +80,7 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 	now := currentCardVisibilityTime()
 	info, err := s.parser.ParsePreferFilter(query)
 	if err != nil || info == nil {
-		return nil, usererror.Inputf("无法解析的列表查询指令: %s", query)
+		return nil, usererror.Unrecognized()
 	}
 	switch info.Type {
 	case QueryTypeFilter:
@@ -89,7 +92,7 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 			items = filterVisibleCards(items, now)
 		}
 		if len(items) == 0 {
-			return nil, fmt.Errorf("no cards found for filter: %s", query)
+			return nil, notfound.Card(query)
 		}
 		sortCardsByReleaseAndID(items)
 		return items, nil
@@ -115,13 +118,13 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 		}
 		return []*masterdata.Card{card}, nil
 	default:
-		return nil, usererror.Inputf("无法解析的列表查询指令: %s", query)
+		return nil, usererror.Unrecognized()
 	}
 }
 
 func (s *SearchService) cardByCharacterAndSeq(characterID, sequence int, now int64) (*masterdata.Card, error) {
 	if s == nil || s.source == nil {
-		return nil, fmt.Errorf("card data source is not configured")
+		return nil, usererror.Misconfigured(errors.New("card data source is not configured"))
 	}
 	if characterID == 0 {
 		return nil, fmt.Errorf("character id is required")
@@ -139,7 +142,7 @@ func (s *SearchService) cardByCharacterAndSeq(characterID, sequence int, now int
 		if len(items) > 0 {
 			return nil, releasecheck.New(releasecheck.KindCard, "", 0)
 		}
-		return nil, fmt.Errorf("card not found: %d/%d", characterID, sequence)
+		return nil, notfound.Card("")
 	}
 
 	sortCardsByReleaseAndID(visibleItems)
@@ -151,14 +154,14 @@ func (s *SearchService) cardByCharacterAndSeq(characterID, sequence int, now int
 		index = sequence - 1
 	}
 	if index < 0 || index >= len(visibleItems) {
-		return nil, fmt.Errorf("card not found: %d/%d", characterID, sequence)
+		return nil, notfound.Card("")
 	}
 	return visibleItems[index], nil
 }
 
 func (s *SearchService) latestCard(sequence int, now int64) (*masterdata.Card, error) {
 	if s == nil || s.source == nil {
-		return nil, fmt.Errorf("card data source is not configured")
+		return nil, usererror.Misconfigured(errors.New("card data source is not configured"))
 	}
 	if sequence >= 0 {
 		return nil, fmt.Errorf("card sequence must be negative: %d", sequence)
@@ -173,13 +176,13 @@ func (s *SearchService) latestCard(sequence int, now int64) (*masterdata.Card, e
 		if len(items) > 0 {
 			return nil, releasecheck.New(releasecheck.KindCard, "", 0)
 		}
-		return nil, fmt.Errorf("no released cards found")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("card.none_released"))
 	}
 
 	sortCardsByReleaseAndID(visibleItems)
 	index := len(visibleItems) + sequence
 	if index < 0 || index >= len(visibleItems) {
-		return nil, fmt.Errorf("card not found: latest/%d", sequence)
+		return nil, notfound.Card("")
 	}
 	return visibleItems[index], nil
 }

@@ -5,13 +5,18 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/utils/usererror"
 
 	"haruki-cloud/internal/pjsk/accountdata"
 )
 
-func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (ResolvedGameTarget, error) {
+// resolveGameTarget resolves the account a query is about. For another
+// user's account (@群友), exposure is what the command shows of it; an owner
+// who hid that exposure gets the request refused (hiddenTargetError).
+func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App, exposure accountdata.Exposure) (ResolvedGameTarget, error) {
 	if app == nil || app.Bindings == nil {
 		return ResolvedGameTarget{}, accountdata.ErrBindingServiceUnavailable
 	}
@@ -34,36 +39,49 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 		}
 		if err != nil {
-			return ResolvedGameTarget{}, normalizeBindingLookupError(err, "解析绑定账号失败")
+			return ResolvedGameTarget{}, normalizeBindingLookupError(err, i18n.Message{})
 		}
 		return ResolvedGameTarget{
 			HarukiUserID: hid,
 			PJSKUserID:   binding.PJSKUserID,
-			Visible:      binding.Visible,
+			UIDVisible:   binding.Visibility.UID,
 			BgSettings:   binding.Bg,
 			Binding:      binding,
 		}, nil
 	case "at_user":
 		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.AtUserID, region)
 		if err != nil {
-			return ResolvedGameTarget{}, normalizeBindingLookupError(err, "未找到该用户的绑定账号")
+			return ResolvedGameTarget{}, normalizeBindingLookupError(err, i18n.M("binding.target_not_bound"))
 		}
-		if !binding.Visible {
-			return ResolvedGameTarget{}, fmt.Errorf("该用户已隐藏个人信息")
+		if !binding.Visibility.Allows(exposure) {
+			return ResolvedGameTarget{}, hiddenTargetError(exposure)
 		}
 		return ResolvedGameTarget{
 			PJSKUserID: binding.PJSKUserID,
-			Visible:    binding.Visible,
+			UIDVisible: binding.Visibility.UID,
 			BgSettings: binding.Bg,
 			Binding:    binding,
 		}, nil
 	case "uid":
 		return ResolvedGameTarget{
 			PJSKUserID: p.PJSKUserID,
-			Visible:    true,
+			UIDVisible: true,
 		}, nil
 	default:
-		return ResolvedGameTarget{}, fmt.Errorf("未知的查询模式：%q", p.Mode)
+		return ResolvedGameTarget{}, fmt.Errorf("unknown query mode %q", p.Mode)
+	}
+}
+
+// hiddenTargetError is the reply when another user's account hides what a
+// command would show of it.
+func hiddenTargetError(exposure accountdata.Exposure) error {
+	switch exposure {
+	case accountdata.ExposureSK:
+		return usererror.Forbidden(i18n.M("binding.target_hidden_sk"))
+	case accountdata.ExposureArrest:
+		return usererror.Forbidden(i18n.M("binding.target_hidden_arrest"))
+	default:
+		return usererror.Forbidden(i18n.M("binding.target_hidden"))
 	}
 }
 

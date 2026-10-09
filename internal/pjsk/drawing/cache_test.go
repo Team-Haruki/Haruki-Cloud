@@ -14,6 +14,7 @@ import (
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/displaytime"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/logger"
 )
 
@@ -827,7 +828,7 @@ func TestBuildRenderCachePolicyEventDetailIsDisabled(t *testing.T) {
 			"end_at": endAt,
 		},
 	})
-	if err == nil || !strings.Contains(err.Error(), "render cache disabled") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "render cache disabled") {
 		t.Fatalf("expected disabled render cache error, got %v", err)
 	}
 }

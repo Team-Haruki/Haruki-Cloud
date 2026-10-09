@@ -14,6 +14,7 @@ import (
 	renderdeck "haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestDeckWorldBloomFinaleSimulationHelpers(t *testing.T) {
@@ -339,7 +340,7 @@ func TestDeckWorldBloomErrorAndClearingHelpers(t *testing.T) {
 	}
 
 	var nilFinale *deckFutureWorldBloomFinaleTurnError
-	testutil.Require(t, !(nilFinale.Error() != "无法解析未来 WL 终章"), "nil finale error = %q", nilFinale.Error())
+	testutil.RequireUserError(t, nilFinale, usererror.CodeInput, "deck.wl.turn_invalid")
 	{
 
 		got := (&deckFutureWorldBloomFinaleTurnError{Turn: 4, Available: 2}).Error()
@@ -384,16 +385,14 @@ func TestDeckWorldBloomErrorAndClearingHelpers(t *testing.T) {
 	}
 
 	var nilTurn *deckFutureWorldBloomTurnError
-	testutil.Require(t, !(nilTurn.Error() != "无法解析未来 WL 轮次"), "nil turn error = %q", nilTurn.Error())
+	testutil.RequireUserError(t, nilTurn, usererror.CodeInput, "deck.wl.turn_invalid")
 	{
 
-		got := (&deckFutureWorldBloomTurnError{Turn: 3, Available: 1, Character: 21}).Error()
-		testutil.Require(t, strings.Contains(got, "角色 21"), "character turn error = %q", got)
+		testutil.RequireUserError(t, &deckFutureWorldBloomTurnError{Turn: 3, Available: 1, Character: 21}, usererror.CodeInput, "deck.wl.future_turn_character")
 	}
 	{
 
-		got := (&deckFutureWorldBloomTurnError{Turn: 3, Available: 1, Unit: "piapro"}).Error()
-		testutil.Require(t, strings.Contains(got, "团 piapro"), "unit turn error = %q", got)
+		testutil.RequireUserError(t, &deckFutureWorldBloomTurnError{Turn: 3, Available: 1, Unit: "piapro"}, usererror.CodeInput, "deck.wl.future_turn_unit")
 	}
 	{
 		testutil.RequireArgs(t, !(shouldKeepDeckWorldBloomSimulationSelection(nil)), "simulation retention mismatch")
@@ -409,7 +408,7 @@ func TestDeckWorldBloomDataConversionAndAvailability(t *testing.T) {
 		_, err := queryDeckWorldBloomEvents(ctx, nil, renderregion.JP)
 		{
 			testutil.Require(t, !(err == nil), "nil world-bloom query error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "world bloom"), "nil world-bloom query error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "world bloom"), "nil world-bloom query error = %v", err)
 		}
 	}
 	{

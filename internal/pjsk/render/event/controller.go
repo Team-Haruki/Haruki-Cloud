@@ -6,14 +6,17 @@ import (
 	"sort"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/eventutil"
+	"haruki-cloud/internal/pjsk/notfound"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
@@ -70,7 +73,7 @@ func (c *Controller) RenderEventDetail(query DetailQuery) ([]byte, error) {
 
 func (c *Controller) RenderEventDetailImage(query DetailQuery) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	req, err := c.BuildEventDetailRequest(query)
@@ -85,7 +88,7 @@ func (c *Controller) BuildEventListRequest(query ListQuery) (*drawing.EventListR
 	query.Region = c.sources.ResolveRegion(query.Region)
 	src, ok := c.sources.SourceForRegion(query.Region)
 	if !ok {
-		return nil, fmt.Errorf("no event data source for region %s", query.Region)
+		return nil, usererror.Misconfigured(fmt.Errorf("no event data source for region %s", query.Region))
 	}
 	return NewBuilder(src, c.assets).BuildEventListRequest(query)
 }
@@ -100,7 +103,7 @@ func (c *Controller) RenderEventList(query ListQuery) ([]byte, error) {
 
 func (c *Controller) RenderEventListImage(query ListQuery) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	req, err := c.BuildEventListRequest(query)
@@ -113,7 +116,7 @@ func (c *Controller) RenderEventListImage(query ListQuery) (drawing.ImageResult,
 
 func (c *Controller) BuildEventRecordRequest(req drawing.EventRecordRequest) (*drawing.EventRecordRequest, error) {
 	if len(req.EventInfo) == 0 && len(req.WlEventInfo) == 0 {
-		return nil, fmt.Errorf("event record requires at least one history entry")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("event.record.no_history"))
 	}
 	if req.UserInfo.Region == "" {
 		return nil, fmt.Errorf("user_info.region is required")
@@ -137,7 +140,7 @@ func (c *Controller) RenderEventRecord(req drawing.EventRecordRequest) ([]byte, 
 
 func (c *Controller) RenderEventRecordImage(req drawing.EventRecordRequest) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildEventRecordRequest(req)
@@ -152,7 +155,7 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 	query.Region = c.sources.ResolveRegion(query.Region)
 	src, ok := c.sources.SourceForRegion(query.Region)
 	if !ok {
-		return query, nil, fmt.Errorf("no event data source for region %s", query.Region)
+		return query, nil, usererror.Misconfigured(fmt.Errorf("no event data source for region %s", query.Region))
 	}
 	if query.EventID != 0 {
 		return validateEventDetailAccess(query, src)
@@ -164,7 +167,7 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 
 	events := sortEventsByStart(src.GetEvents())
 	if len(events) == 0 {
-		return query, src, fmt.Errorf("no events found for region %s", query.Region)
+		return query, src, notfound.Event()
 	}
 
 	if query.Keyword != "" {
@@ -176,7 +179,7 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 	}
 
 	if !query.UseCurrent {
-		return query, src, fmt.Errorf("event id is required")
+		return query, src, usererror.Misuse(i18n.M("event.query_required"))
 	}
 	index, err := resolveOngoingEventIndex(events)
 	if err != nil {
@@ -199,14 +202,14 @@ func validateEventDetailAccess(query DetailQuery, src DataSource) (DetailQuery, 
 
 func resolveBanEventDetailQuery(query DetailQuery, src DataSource) (DetailQuery, DataSource, error) {
 	if query.BanSeq <= 0 {
-		return query, src, fmt.Errorf("ban sequence must be greater than 0")
+		return query, src, notfound.Event()
 	}
 	events := sortEventsByStart(src.GetBanEvents(query.BanCharID))
 	if len(events) == 0 {
-		return query, src, fmt.Errorf("character %d does not have ban events", query.BanCharID)
+		return query, src, notfound.Event()
 	}
 	if query.BanSeq > len(events) {
-		return query, src, fmt.Errorf("character %d only has %d ban events", query.BanCharID, len(events))
+		return query, src, notfound.Event()
 	}
 	query.EventID = events[query.BanSeq-1].ID
 	return validateEventDetailAccess(query, src)
@@ -228,7 +231,7 @@ func resolveIndexedEventDetailQuery(query DetailQuery, src DataSource, events []
 	}
 	targetIndex := baseIndex + eventIndexOffset(*query.Index)
 	if targetIndex < 0 || targetIndex >= len(events) {
-		return query, src, fmt.Errorf("event index %d is out of range", *query.Index)
+		return query, src, notfound.Event()
 	}
 	query.EventID = events[targetIndex].ID
 	return query, src, nil
@@ -303,7 +306,7 @@ func (indexes eventTimelineIndexes) resolveFallback(fallback string) (int, error
 			return indexes.previous, nil
 		}
 	}
-	return -1, fmt.Errorf("no current event found")
+	return -1, notfound.Event()
 }
 
 func resolveOngoingEventIndex(events []*masterdata.Event) (int, error) {
@@ -340,12 +343,12 @@ func resolveEventKeywordIndex(events []*masterdata.Event, keyword string) (int, 
 		if prevIndex >= 0 {
 			return prevIndex, nil
 		}
-		return -1, fmt.Errorf("no previous event found")
+		return -1, notfound.Event()
 	case "next":
 		if nextIndex >= 0 {
 			return nextIndex, nil
 		}
-		return -1, fmt.Errorf("no next event found")
+		return -1, notfound.Event()
 	default:
 		return -1, fmt.Errorf("unsupported event keyword %q", keyword)
 	}

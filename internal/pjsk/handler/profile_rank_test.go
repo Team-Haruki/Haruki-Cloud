@@ -8,7 +8,7 @@ import (
 
 func TestProfileClonesKeepRank(t *testing.T) {
 	rank := 321
-	target := ResolvedGameTarget{Visible: true, PJSKUserID: "12345"}
+	target := ResolvedGameTarget{UIDVisible: true, PJSKUserID: "12345"}
 
 	detail := cloneDetailedProfileForTarget(&drawing.DetailedProfileCardRequest{ID: "1", Rank: &rank}, target, "jp")
 	if detail.Rank == nil || *detail.Rank != rank || detail.Rank == &rank {

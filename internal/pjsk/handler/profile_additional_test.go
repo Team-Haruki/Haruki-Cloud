@@ -340,7 +340,7 @@ func TestProfileAndCheckDataExecutionGuards(t *testing.T) {
 		_, err := executeProfile(rc)
 		{
 			testutil.Require(t, !(err == nil), "profile render guard error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "profile service unavailable"), "profile render guard error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "profile service unavailable"), "profile render guard error = %v", err)
 		}
 	}
 
@@ -349,7 +349,7 @@ func TestProfileAndCheckDataExecutionGuards(t *testing.T) {
 		_, err := executeProfile(rc)
 		{
 			testutil.Require(t, !(err == nil), "unsupported profile error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "unsupported profile mode"), "unsupported profile error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "unsupported profile mode"), "unsupported profile error = %v", err)
 		}
 	}
 	{
@@ -372,15 +372,15 @@ func TestProfileAndCheckDataExecutionGuards(t *testing.T) {
 		p    userQueryParams
 		want string
 	}{
-		{mode: "mysekai", p: userQueryParams{Mode: "uid"}, want: "MySekai抓包相关内容仅支持"},
-		{mode: "suite", p: userQueryParams{Mode: "uid"}, want: "suite抓包相关内容仅支持"},
+		{mode: "mysekai", p: userQueryParams{Mode: "uid"}, want: "common.self_only"},
+		{mode: "suite", p: userQueryParams{Mode: "uid"}, want: "common.self_only"},
 	} {
 		params, _ := json.Marshal(tt.p)
 		rc.Cmd.Mode = tt.mode
 		rc.Cmd.Params = params
 		{
 			_, err := executeCheckData(rc)
-			testutil.Check(t, !(err == nil || !strings.Contains(err.Error(), tt.want)), "executeCheckData(%q) error = %v", tt.mode, err)
+			testutil.Check(t, testutil.MessageID(err) == tt.want, "executeCheckData(%q) error = %v", tt.mode, err)
 		}
 
 	}

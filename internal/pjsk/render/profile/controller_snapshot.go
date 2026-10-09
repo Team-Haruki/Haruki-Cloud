@@ -1,6 +1,7 @@
 package profile
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -9,14 +10,16 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, error) {
 	if c == nil || c.sources == nil {
-		return nil, fmt.Errorf("profile controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("profile controller is not initialized"))
 	}
 	if c.snapshot == nil {
-		return nil, fmt.Errorf("local user snapshot is not configured")
+		return nil, snapshot.ErrNotConfigured
 	}
 	if err := c.snapshot.Require(); err != nil {
 		return nil, err
@@ -25,7 +28,7 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 	region := c.sources.ResolveRegion(renderregion.Normalize(query.Region))
 	source, ok := c.sources.SourceForRegion(region)
 	if !ok {
-		return nil, fmt.Errorf("profile data source is not configured")
+		return nil, usererror.Misconfigured(errors.New("profile data source is not configured"))
 	}
 
 	raw := c.snapshot.RawData()
@@ -120,7 +123,7 @@ func (c *Controller) RenderProfile(query Query) ([]byte, error) {
 
 func (c *Controller) RenderProfileImage(query Query) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildProfileRequest(query)

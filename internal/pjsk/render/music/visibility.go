@@ -1,10 +1,10 @@
 package music
 
 import (
-	"fmt"
 	"sort"
 	"time"
 
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
@@ -36,20 +36,20 @@ func ensureAccessibleMusic(musicInfo *masterdata.Music, now int64, fallback any,
 		if musicInfo != nil {
 			return nil, releasecheck.New(releasecheck.KindMusic, "", value)
 		}
-		return nil, fmt.Errorf("music not found: %d", value)
+		return nil, notfound.MusicID(value)
 	case string:
 		value = stringsTrimSpace(value)
 		if value != "" {
 			if musicInfo != nil {
 				return nil, releasecheck.New(releasecheck.KindMusic, value, 0)
 			}
-			return nil, fmt.Errorf("music not found: %s", value)
+			return nil, notfound.Music(value)
 		}
 	}
 	if musicInfo != nil {
 		return nil, releasecheck.New(releasecheck.KindMusic, "", musicInfo.ID)
 	}
-	return nil, fmt.Errorf("music not found")
+	return nil, notfound.Music("")
 }
 
 func filterAccessibleMusics(items []*masterdata.Music, now int64, allowUnreleased bool) []*masterdata.Music {

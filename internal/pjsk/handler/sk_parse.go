@@ -1,12 +1,14 @@
 package handler
 
 import (
-	"fmt"
-	"haruki-cloud/internal/pjsk/parser"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
+
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/utils/usererror"
 )
 
 func extractSKMetaArgs(args string, defaultFull bool, wlMode bool) (eventID int, wlCharacterID int, wlCharacterQuery string, full bool, rankArgs string) {
@@ -168,7 +170,7 @@ func isValidSKRankExpression(args string) bool {
 func parseSKRanks(args string, allowUID bool) ([]int, *int64, error) {
 	cmd, err := parser.NewCommandParser().Parse(strings.TrimSpace(args))
 	if err != nil {
-		return nil, nil, fmt.Errorf("无法解析排名参数: %w", err)
+		return nil, nil, unrecognizedUnlessTyped(err)
 	}
 
 	switch cmd.Type {
@@ -179,7 +181,7 @@ func parseSKRanks(args string, allowUID bool) ([]int, *int64, error) {
 	case parser.CmdTypeEventQueryMultiRank:
 		ranks := normalizeRanks(cmd.MultiArgs)
 		if len(ranks) > 20 {
-			return nil, nil, fmt.Errorf("一次最多查询20个排名")
+			return nil, nil, usererror.Invalid(i18n.M("sk.ranks_too_many", i18n.Data{"Max": 20}))
 		}
 		return ranks, nil, nil
 	case parser.CmdTypeEventQueryRankRange:
@@ -189,19 +191,19 @@ func parseSKRanks(args string, allowUID bool) ([]int, *int64, error) {
 		uid, uidErr := parseSKUID(cmd.TargetID, allowUID)
 		return nil, uid, uidErr
 	case parser.CmdTypeEventQueryAt:
-		return nil, nil, fmt.Errorf("暂不支持@用户查询，请直接输入游戏UID")
+		return nil, nil, usererror.Misuse(i18n.M("sk.mention_unsupported"))
 	default:
-		return nil, nil, fmt.Errorf("暂不支持该查询格式")
+		return nil, nil, usererror.Unrecognized()
 	}
 }
 
 func buildSKRankRange(first, last int) ([]int, error) {
 	if first <= 0 || last <= 0 {
-		return nil, fmt.Errorf("排名必须大于 0")
+		return nil, usererror.Invalid(i18n.M("sk.rank_positive"))
 	}
 	count := last - first + 1
 	if count > 20 {
-		return nil, fmt.Errorf("排名区间最多20个排名")
+		return nil, usererror.Invalid(i18n.M("sk.ranks_too_many", i18n.Data{"Max": 20}))
 	}
 	ranks := make([]int, 0, max(count, 0))
 	for rank := first; rank <= last; rank++ {
@@ -212,11 +214,11 @@ func buildSKRankRange(first, last int) ([]int, error) {
 
 func parseSKUID(raw string, allow bool) (*int64, error) {
 	if !allow {
-		return nil, fmt.Errorf("该命令暂不支持按用户查询，请改用排名")
+		return nil, usererror.Misuse(i18n.M("sk.user_unsupported"))
 	}
 	uid, err := strconv.ParseInt(raw, 10, 64)
 	if err != nil || uid <= 0 {
-		return nil, fmt.Errorf("无效的UID: %s", raw)
+		return nil, usererror.BadParam(raw, i18n.M("common.param.uid_digits"))
 	}
 	return &uid, nil
 }

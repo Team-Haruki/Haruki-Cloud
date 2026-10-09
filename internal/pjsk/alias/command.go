@@ -3,11 +3,20 @@ package alias
 import (
 	"context"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"strings"
+
+	"haruki-cloud/internal/i18n"
+	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/utils/usererror"
 )
 
-func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json.RawMessage) ([]byte, error) {
+// ExecuteCommand runs an alias command and returns its reply. The reply is a
+// catalog message, not rendered text: the submission reply repeats alias
+// text nobody has reviewed yet only when the bot client enabled parameter
+// echo, so the delivering layer renders the message for its own client.
+// Replies only alias review admins can receive (pending list, submitter
+// lookup, approve, reject) always show the text.
+func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json.RawMessage) (i18n.Message, error) {
 	switch mode {
 	case ModeDelete:
 		return executeDeleteCommand(ctx, service, raw)
@@ -28,99 +37,90 @@ func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json
 	case ModeBatchReject:
 		return executeBatchRejectCommand(ctx, service, raw)
 	default:
-		return nil, fmt.Errorf("bridge: unsupported alias mode %q", mode)
+		return i18n.Message{}, fmt.Errorf("bridge: unsupported alias mode %q", mode)
 	}
 }
 
-func executeDeleteCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeDeleteCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeDeleteParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	records, err := service.Delete(ctx, params.AliasType, params.Platform, params.PlatformUserID, params.Target, params.Aliases)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	lines := []string{fmt.Sprintf("已删除 %d 条%s已审核别名：", len(records), aliasTypeLabel(params.AliasType))}
+	lines := make([]i18n.Message, 0, len(records))
 	for _, record := range records {
-		lines = append(lines, formatApprovedAliasRecord(record))
+		lines = append(lines, approvedAliasRecordMessage(record))
 	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return i18n.M("alias.delete.done", i18n.Data{"Count": len(records), "Kind": aliasKind(params.AliasType), "Records": lines}), nil
 }
 
-func executeAddCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeAddCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeAddParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	records, err := service.Submit(ctx, params.AliasType, params.Platform, params.PlatformUserID, params.Target, params.Aliases)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	lines := []string{fmt.Sprintf("已提交 %d 条%s别名审核申请，审核ID如下：", len(records), aliasTypeLabel(params.AliasType))}
-	for _, record := range records {
-		lines = append(lines, formatAliasRecord(record))
-	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return i18n.M("alias.add.done", i18n.Data{"Count": len(records), "Kind": aliasKind(params.AliasType), "Records": aliasRecordMessages(records)}), nil
 }
 
-func executeQueryCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeQueryCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeQueryParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	result, err := service.Query(ctx, params.AliasType, params.Target)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	lines := []string{
-		fmt.Sprintf("%s: %d", aliasTypeIDLabel(params.AliasType), result.Entity.ID),
-		fmt.Sprintf("%s: %s", aliasTypeNameLabel(params.AliasType), result.Entity.Name),
+	entity := i18n.Data{"ID": result.Entity.ID, "Name": result.Entity.Name}
+	header := i18n.M("alias.query.music", entity)
+	if params.AliasType == PjskAliasTypeCharacter {
+		header = i18n.M("alias.query.character", entity)
 	}
-	if len(result.Aliases) == 0 {
-		lines = append(lines, "已审核别名: 无")
-	} else {
-		lines = append(lines, fmt.Sprintf("已审核别名（%d 条）:", len(result.Aliases)))
-		lines = append(lines, result.Aliases...)
+	list := i18n.M("alias.query.none")
+	if len(result.Aliases) > 0 {
+		list = i18n.M("alias.query.list", i18n.Data{"Count": len(result.Aliases), "Aliases": strings.Join(result.Aliases, "\n")})
 	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return i18n.M("alias.query.result", i18n.Data{"Header": header, "List": list}), nil
 }
 
-func executePendingListCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executePendingListCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeReviewListParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	records, err := service.ListPending(ctx, params.Platform, params.PlatformUserID)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	if len(records) == 0 {
-		return []byte("当前没有待审核别名"), nil
+		return i18n.M("alias.pending.none"), nil
 	}
-	lines := []string{fmt.Sprintf("当前共有 %d 条待审核别名：", len(records))}
-	for _, record := range records {
-		lines = append(lines, formatAliasRecord(record))
-	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return i18n.M("alias.pending.list", i18n.Data{"Count": len(records), "Records": reviewAliasRecordMessages(records)}), nil
 }
 
-func executeSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeSubmitterParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	record, err := service.GetSubmitter(ctx, params.Platform, params.PlatformUserID, params.ReviewID)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	return []byte(fmt.Sprintf("别名提交者：\n%s\n提交者: %s", formatAliasRecord(*record), record.SubmittedBy)), nil
+	return i18n.M("alias.submitter.result", i18n.Data{"Record": reviewAliasRecordMessage(*record), "Submitter": record.SubmittedBy}), nil
 }
 
-func executeBanSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeBanSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeBanSubmitterParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	record, err := service.BanSubmitter(
 		ctx,
@@ -130,55 +130,50 @@ func executeBanSubmitterCommand(ctx context.Context, service *Service, raw json.
 		params.TargetPlatformUserID,
 	)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	return []byte(fmt.Sprintf("已禁止用户 %s:%s 提交别名", record.Platform, record.PlatformUserID)), nil
+	return i18n.M("alias.ban.done", i18n.Data{"User": record.Platform + ":" + record.PlatformUserID}), nil
 }
 
-func executeApproveCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeApproveCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeApproveParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	records, err := service.Approve(ctx, params.Platform, params.PlatformUserID, params.ReviewIDs)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	lines := []string{fmt.Sprintf("已通过 %d 条别名审核：", len(records))}
-	for _, record := range records {
-		lines = append(lines, formatAliasRecord(record))
-	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return i18n.M("alias.approve.done", i18n.Data{"Count": len(records), "Records": reviewAliasRecordMessages(records)}), nil
 }
 
-func executeRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeRejectParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
 	record, err := service.Reject(ctx, params.Platform, params.PlatformUserID, params.ReviewID, params.Reason)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	lines := []string{"已拒绝别名审核：", formatRejectedAliasRecord(*record, params.Reason)}
-	return []byte(strings.Join(lines, "\n")), nil
+	return i18n.M("alias.reject.done", i18n.Data{"Record": rejectedAliasRecordMessage(*record, params.Reason)}), nil
 }
 
-func executeBatchRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+func executeBatchRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
 	params, err := decodeBatchRejectParams(raw)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	const reason = "批量拒绝"
+	reason := i18n.T("alias.batch_reject.reason")
 	records, err := service.RejectMany(ctx, params.Platform, params.PlatformUserID, params.ReviewIDs, reason)
 	if err != nil {
-		return nil, err
+		return i18n.Message{}, err
 	}
-	lines := []string{fmt.Sprintf("已批量拒绝 %d 条别名审核：", len(records))}
+	lines := make([]i18n.Message, 0, len(records))
 	for _, record := range records {
-		lines = append(lines, formatRejectedAliasRecord(record, reason))
+		lines = append(lines, rejectedAliasRecordMessage(record, reason))
 	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return i18n.M("alias.batch_reject.done", i18n.Data{"Count": len(records), "Records": lines}), nil
 }
 
 func decodeDeleteParams(raw json.RawMessage) (DeleteCommandParams, error) {
@@ -199,7 +194,7 @@ func decodeDeleteParams(raw json.RawMessage) (DeleteCommandParams, error) {
 		return params, fmt.Errorf("bridge: missing alias delete identity context")
 	}
 	if params.Target == "" {
-		return params, fmt.Errorf("请输入%s", entityTokenPrompt(params.AliasType))
+		return params, aliasTargetRequired(params.AliasType)
 	}
 	return params, nil
 }
@@ -219,7 +214,7 @@ func decodeAddParams(raw json.RawMessage) (AddCommandParams, error) {
 		return params, err
 	}
 	if params.Target == "" {
-		return params, fmt.Errorf("请输入%s", entityTokenPrompt(params.AliasType))
+		return params, aliasTargetRequired(params.AliasType)
 	}
 	return params, nil
 }
@@ -237,7 +232,7 @@ func decodeQueryParams(raw json.RawMessage) (QueryCommandParams, error) {
 		return params, err
 	}
 	if params.Target == "" {
-		return params, fmt.Errorf("请输入%s", entityTokenPrompt(params.AliasType))
+		return params, aliasTargetRequired(params.AliasType)
 	}
 	return params, nil
 }
@@ -272,7 +267,7 @@ func decodeSubmitterParams(raw json.RawMessage) (SubmitterCommandParams, error) 
 		return params, fmt.Errorf("bridge: missing alias submitter identity context")
 	}
 	if params.ReviewID <= 0 {
-		return params, fmt.Errorf("请输入正确的待审核ID")
+		return params, usererror.Invalid(i18n.M("alias.review_id_positive"))
 	}
 	return params, nil
 }
@@ -293,7 +288,7 @@ func decodeBanSubmitterParams(raw json.RawMessage) (BanSubmitterCommandParams, e
 		return params, fmt.Errorf("bridge: missing alias ban submitter identity context")
 	}
 	if params.TargetPlatform == "" || params.TargetPlatformUserID == "" {
-		return params, fmt.Errorf("请输入要禁用的用户ID")
+		return params, usererror.Misuse(i18n.M("alias.ban_target_required"))
 	}
 	return params, nil
 }
@@ -345,7 +340,16 @@ func decodeBatchRejectParams(raw json.RawMessage) (BatchRejectCommandParams, err
 		return params, fmt.Errorf("bridge: missing alias batch reject identity context")
 	}
 	if len(params.ReviewIDs) == 0 {
-		return params, fmt.Errorf("请至少输入一个待审核ID")
+		return params, usererror.Misuse(i18n.M("alias.review_ids_required"))
 	}
 	return params, nil
+}
+
+// aliasTargetRequired is the reply when an alias command names no song or
+// character.
+func aliasTargetRequired(aliasType string) error {
+	if aliasType == PjskAliasTypeCharacter {
+		return usererror.Misuse(i18n.M("alias.target_required.character"))
+	}
+	return usererror.Misuse(i18n.M("alias.target_required.music"))
 }

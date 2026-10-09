@@ -2,17 +2,16 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 
 	"haruki-cloud/config"
-	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
@@ -22,6 +21,8 @@ import (
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestEventDetailHandleUsesCurrentEventWhenArgsEmpty(t *testing.T) {
@@ -370,9 +371,7 @@ func TestEventHandleReturnsHelpHintOnInvalidQuery(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if got, want := err.Error(), "活动查询参数格式不正确。查看完整用法请发送：/活动 -help"; got != want {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeUsage, "common.unrecognized_args")
 }
 
 func TestEventRecordHandleEmbedsSelfSelector(t *testing.T) {
@@ -505,7 +504,7 @@ func TestEventPlannerOmakaseSongDoesNotRequireMusicController(t *testing.T) {
 	if req.MusicID == nil || *req.MusicID != eventPlannerOmakaseMusicID {
 		t.Fatalf("unexpected music id: %+v", req.MusicID)
 	}
-	if req.MusicTitle == nil || !strings.Contains(*req.MusicTitle, "おまかせ") {
+	if req.MusicTitle == nil || *req.MusicTitle != i18n.T("deck.music.omakase") {
 		t.Fatalf("unexpected music title: %+v", req.MusicTitle)
 	}
 	if req.MusicCoverPath == nil || *req.MusicCoverPath != "static_images/omakase.png" {
@@ -590,9 +589,7 @@ func TestEventPlannerDailyPointUsesFullEventTimeWhenCurrentPointUnknown(t *testi
 
 func TestEventPlannerFixedCardIDsDoNotBecomeTargetPoint(t *testing.T) {
 	_, err := parseEventPlannerParams("#12345 23456 34567 45678 56789 歌 虾 5火", "/cn活动规划")
-	if err == nil || !strings.Contains(err.Error(), "需要提供目标 pt") {
-		t.Fatalf("expected missing target error, got %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "event.planner.target_required")
 	if strings.Contains(err.Error(), "活动规划用法") {
 		t.Fatalf("expected concise missing target error, got %v", err)
 	}
@@ -633,10 +630,10 @@ func TestEventPlannerUsesWorldBloomFinaleSimulation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolveEventPlannerEventFromQuery() error = %v", err)
 	}
-	if eventInfo == nil || eventInfo.ID != 0 || eventInfo.Name != "WL3终章模拟活动" || eventInfo.EventType != "world_bloom" {
+	if eventInfo == nil || eventInfo.ID != 0 || eventInfo.Name != i18n.T("event.planner.simulated_wl_finale", i18n.Data{"Turn": 3}) || eventInfo.EventType != "world_bloom" {
 		t.Fatalf("unexpected simulated finale event: %+v", eventInfo)
 	}
-	if warning != "已使用模拟活动设置进行规划" {
+	if warning != i18n.T("event.planner.warn_simulated") {
 		t.Fatalf("unexpected warning: %q", warning)
 	}
 }
@@ -718,7 +715,7 @@ func TestEventPlannerCurrentPointFallsBackToZeroWhenTrackerMisses(t *testing.T) 
 		renderdeck.AutoQuery{},
 		eventPlannerCommandParams{},
 	)
-	if point != 0 || !known || !strings.Contains(warning, "前100") {
+	if point != 0 || !known || warning != i18n.T("event.planner.current_zero.not_ranked") {
 		t.Fatalf("unexpected current point fallback: point=%d known=%v warning=%q", point, known, warning)
 	}
 }
@@ -745,7 +742,7 @@ func TestEventPlannerTargetRankUsesWorldBloomRankingByDefault(t *testing.T) {
 	if gotPath != "/api/v2/cloud/events/jp/170/leaderboards/world-bloom/17/sk/line" {
 		t.Fatalf("unexpected tracker path: %s", gotPath)
 	}
-	if point != 456789 || !strings.Contains(source, "WL章节") {
+	if point != 456789 || source != i18n.T("event.planner.source.ranking_wl", i18n.Data{"Rank": 100}) {
 		t.Fatalf("unexpected target result: point=%d source=%q", point, source)
 	}
 }
@@ -772,7 +769,7 @@ func TestEventPlannerTargetRankTotalRankingUsesNormalRanking(t *testing.T) {
 	if gotPath != "/api/v2/cloud/events/jp/170/leaderboards/total/sk/line" {
 		t.Fatalf("unexpected tracker path: %s", gotPath)
 	}
-	if point != 987654 || strings.Contains(source, "WL章节") {
+	if point != 987654 || source != i18n.T("event.planner.source.ranking", i18n.Data{"Rank": 100}) {
 		t.Fatalf("unexpected target result: point=%d source=%q", point, source)
 	}
 }
@@ -827,13 +824,7 @@ func TestExecuteEventRecordReturnsBindingErrorBeforeSuiteMessage(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	var replyErr onebot11.ReplayError
-	if !errors.As(WrapDomainError(err), &replyErr) {
-		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
-	}
-	if string(replyErr) != ErrMsgBindingNotFound {
-		t.Fatalf("unexpected replay error: %q", replyErr)
-	}
+	testutil.RequireUserError(t, WrapDomainError(err), usererror.CodeSetup, "binding.required")
 }
 
 func TestExecuteEventRecordReturnsContextualSuiteMessageWhenSnapshotMissing(t *testing.T) {
@@ -853,11 +844,11 @@ func TestExecuteEventRecordReturnsContextualSuiteMessageWhenSnapshotMissing(t *t
 		Events:   renderevent.NewController(nil, nil, nil),
 		Bindings: service,
 	}))
-	if err == nil || err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+	if err == nil || err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
-	}) {
+		Visibility: accountdata.UniformVisibility(false),
+	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

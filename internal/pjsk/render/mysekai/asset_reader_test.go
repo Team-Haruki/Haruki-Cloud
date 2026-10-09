@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/internal/storage/storagetest"
+	"haruki-cloud/internal/testutil"
 )
 
 const fixtureReactionKey = "jp-assets/ondemand/mysekai/system/fixture_reaction_data/fixture_reaction_data.json"
@@ -92,7 +93,7 @@ func TestHousingBannerSourceFromStore(t *testing.T) {
 	failing := storagetest.NewMemory()
 	failing.FailGet = func(storage.Key) error { return errors.New("backend down") }
 	broken := newHousingCompetitionBannerCache(nil, assets.NewAssetReader(nil, failing), urlhost.Single("https://assets.example"))
-	if _, err := broken.Bytes("asset/jp-assets/ondemand/mysekai/banner.png"); err == nil || !strings.Contains(err.Error(), "backend down") {
+	if _, err := broken.Bytes("asset/jp-assets/ondemand/mysekai/banner.png"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "backend down") {
 		t.Fatalf("store failure = %v", err)
 	}
 }
@@ -134,7 +135,7 @@ func TestHousingBannerHTTPFallbackRotatesHosts(t *testing.T) {
 	allDown.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return nil, errors.New("transport")
 	})}
-	if _, err := allDown.Bytes("asset/jp-assets/ondemand/mysekai/other.png"); err == nil || !strings.Contains(err.Error(), "transport") {
+	if _, err := allDown.Bytes("asset/jp-assets/ondemand/mysekai/other.png"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "transport") {
 		t.Fatalf("all hosts down = %v", err)
 	}
 

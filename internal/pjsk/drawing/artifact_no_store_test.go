@@ -81,7 +81,7 @@ func TestNoStorePathSkipsIndexAndReturnsBytes(t *testing.T) {
 		}
 		headers, hits := server.seen("/api/pjsk/sk/speed")
 		ttl := strconv.FormatInt(directiveTTLSeconds(resolveRenderCacheRule("/api/pjsk/sk/speed").TTL, false), 10)
-		requireFullDirective(t, harukiHeaders(headers), "0", ttl, "3", "api/pjsk/sk/speed")
+		requireFullDirective(t, harukiHeaders(headers), "0", ttl, "4", "api/pjsk/sk/speed")
 		// Nothing is retained in-process: a repeat renders again.
 		if hits != round {
 			t.Fatalf("round %d: drawing hits = %d", round, hits)

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +9,7 @@ import (
 	"testing"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 
 	"haruki-cloud/internal/onebot11"
@@ -20,7 +20,9 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
+	"haruki-cloud/utils/usererror"
 )
 
 func newInfoPanelDrawingServer(t *testing.T, gotPath *string, body *map[string]any) *httptest.Server {
@@ -84,10 +86,7 @@ func TestProfileInfoPanelHandleRequiresASource(t *testing.T) {
 			Context: context.Background(), Platform: "qq", UserId: "12345",
 			TriggerCmd: "/信息面板", ArgText: args,
 		})
-		var replay onebot11.ReplayError
-		if !errors.As(err, &replay) || !strings.Contains(string(replay), "/信息面板 su") || !strings.Contains(string(replay), "/信息面板 all") {
-			t.Fatalf("Handle(%q) error = %v, want usage", args, err)
-		}
+		testutil.RequireUserError(t, err, usererror.CodeUsage, "common.unrecognized_args")
 	}
 }
 
@@ -138,8 +137,8 @@ func TestExecuteSuiteInfoPanelRendersTheSuiteCard(t *testing.T) {
 	if len(sources) != 1 {
 		t.Fatalf("data_sources = %#v, want the Suite source", body["data_sources"])
 	}
-	if name, _ := sources[0].(map[string]any)["name"].(string); name != "Suite数据" {
-		t.Fatalf("data source = %q, want Suite数据", name)
+	if name, _ := sources[0].(map[string]any)["name"].(string); name != i18n.T("profile.data_source.suite") {
+		t.Fatalf("data source = %q, want the suite label", name)
 	}
 	if _, ok := body["dt"]; !ok {
 		t.Fatal("request carries no dt for the watermark")
@@ -274,7 +273,7 @@ func allInfoPanelProfile() *drawing.ProfileCardRequest {
 	suiteTime := int64(1790838000000)
 	return &drawing.ProfileCardRequest{
 		Profile:     &drawing.BasicProfile{ID: "1", Region: "JP", Nickname: "Panel", LeaderImagePath: "leader.png"},
-		DataSources: []drawing.ProfileDataSource{{Name: "Suite数据", UpdateTime: &suiteTime}},
+		DataSources: []drawing.ProfileDataSource{{Name: i18n.T("profile.data_source.suite"), UpdateTime: &suiteTime}},
 	}
 }
 
@@ -304,7 +303,7 @@ func TestInfoPanelAllRendersBothSourcesWithMySekaiLevel(t *testing.T) {
 		name, _ := source.(map[string]any)["name"].(string)
 		names = append(names, name)
 	}
-	if strings.Join(names, ",") != "Suite数据,Mysekai数据" {
+	if strings.Join(names, ",") != i18n.T("profile.data_source.suite")+","+i18n.T("profile.data_source.mysekai") {
 		t.Fatalf("data sources = %v, want Suite then MySekai", names)
 	}
 	if level, _ := body["mysekai_level"].(float64); level != 9 {
@@ -320,11 +319,11 @@ func TestInfoPanelAllRequiresVisibleSuite(t *testing.T) {
 	message, err := executeResolvedMysekaiMode(rc, mySekaiRenderContext{
 		Controller: newAllInfoPanelController(t, server.URL), Region: "jp", Profile: allInfoPanelProfile(),
 	})
-	var replay onebot11.ReplayError
-	if message != nil || !errors.As(err, &replay) {
+	if message != nil {
 		t.Fatalf("hidden suite = %+v, %v; want the suite reply", message, err)
 	}
-	if want := newSuiteDataNotFoundReplayErrorForBinding(rc.binding); err.Error() != want.Error() {
+	testutil.RequireUserError(t, err, usererror.CodeSetup, "")
+	if want := suiteDataNotFoundError(rc.binding); err.Error() != want.Error() {
 		t.Fatalf("reply = %q, want the /信息面板 su reply %q", err, want)
 	}
 	if gotPath != "" {
@@ -349,7 +348,7 @@ func TestInfoPanelAllFollowsTheMySekaiCNGate(t *testing.T) {
 		return message
 	}
 	ms, all := run(mySekaiInfoPanelCommand), run(mySekaiInfoPanelAllCommand)
-	if got := rejectionText(t, all); got != cnMySekaiNeverOpensNotice || got != rejectionText(t, ms) {
+	if got := rejectionText(t, all); got != cnMySekaiNotice() || got != rejectionText(t, ms) {
 		t.Fatalf("all = %q, ms = %q; want the same CN MySekai warning", got, rejectionText(t, ms))
 	}
 }

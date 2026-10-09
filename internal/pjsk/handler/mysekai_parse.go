@@ -1,11 +1,12 @@
 package handler
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/filteralias"
+	"haruki-cloud/utils/usererror"
 )
 
 var mysekaiMapIndexToID = map[int]int{
@@ -59,7 +60,7 @@ func parseMysekaiMapToken(field string) ([]int, error) {
 	index, _ := strconv.Atoi(token)
 	mapID, ok := mysekaiMapIndexToID[index]
 	if !ok {
-		return nil, fmt.Errorf("地图编号仅支持 1-4（对应地图ID 5-8）")
+		return nil, usererror.Invalid(i18n.M("mysekai.map.id_invalid"))
 	}
 	return []int{mapID}, nil
 }
@@ -133,7 +134,7 @@ func extractMysekaiFullFlag(args string) (bool, string) {
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
 		switch strings.ToLower(strings.TrimSpace(field)) {
-		case "", "all", "full", "全部":
+		case "", "all", "full", "全部": //copylint:ignore 解析关键字
 			if strings.TrimSpace(field) != "" {
 				full = true
 			}
@@ -208,7 +209,7 @@ func extractMysekaiAllFlag(args string) (bool, string) {
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
 		switch strings.ToLower(strings.TrimSpace(field)) {
-		case "", "all", "全部":
+		case "", "all", "全部": //copylint:ignore 解析关键字
 			if strings.TrimSpace(field) != "" {
 				showAll = true
 			}

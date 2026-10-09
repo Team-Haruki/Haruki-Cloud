@@ -13,7 +13,6 @@ import (
 
 	"haruki-cloud/config"
 	json "haruki-cloud/internal/jsonutil"
-	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -21,6 +20,8 @@ import (
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 const warmTestOverlapWait = 2 * time.Second
@@ -203,9 +204,7 @@ func TestWarmSuiteAndPublicProfileKeepsSnapshotErrorAndProfile(t *testing.T) {
 	if warmedErr == nil || serialErr == nil || warmedErr.Error() != serialErr.Error() {
 		t.Fatalf("snapshot error changed: warmed=%v serial=%v", warmedErr, serialErr)
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](warmedErr); !ok {
-		t.Fatalf("expected replay error, got %T", warmedErr)
-	}
+	testutil.RequireUserError(t, warmedErr, "", "")
 	if resp := warmed.GetPublicProfileResponse(); resp == nil {
 		t.Fatal("expected profile fetch to complete despite snapshot failure")
 	}
@@ -365,18 +364,14 @@ func TestResolveMySekaiRenderContextPrefetchesProfile(t *testing.T) {
 		newWarmProfileServer(t, uid, nil, true)
 		app := newApp(t, warmMySekaiPayloadProvider{err: sekaiapi.ErrGameDataNotFound})
 		_, err := resolveMySekaiRenderContextWithOptions(context.Background(), app, params, "jp", false, opts)
-		if err == nil || !strings.Contains(err.Error(), "mysekai 数据") || strings.Contains(err.Error(), "SekaiAPI") {
-			t.Fatalf("expected the mysekai payload error to win, got %v", err)
-		}
+		testutil.RequireUserError(t, err, usererror.CodeSetup, "binding.data.not_found_account")
 	})
 
 	t.Run("profile error after payload", func(t *testing.T) {
 		newWarmProfileServer(t, uid, nil, true)
 		app := newApp(t, warmMySekaiPayloadProvider{})
 		_, err := resolveMySekaiRenderContextWithOptions(context.Background(), app, params, "jp", false, opts)
-		if err == nil || !strings.Contains(err.Error(), "找不到该玩家公开信息") {
-			t.Fatalf("expected normalized SekaiAPI error, got %v", err)
-		}
+		testutil.RequireUserError(t, err, usererror.CodeNotFound, "upstream.game_data.player_not_found")
 	})
 }
 

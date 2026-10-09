@@ -2,10 +2,9 @@ package handler
 
 import (
 	"errors"
-	"fmt"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"strings"
 
-	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/deck"
@@ -14,38 +13,54 @@ import (
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	"golang.org/x/sync/errgroup"
+	"haruki-cloud/internal/core/upstreamerr"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
+	"haruki-cloud/utils/usererror"
 )
 
+// formatDeckQuerySummary is the " / "-separated summary of a deck query
+// shown above the deck image, e.g. "日服(JP) / 活动组卡 / 活动 123 / EXPERT".
 func formatDeckQuerySummary(q deck.AutoQuery) string {
-	parts := make([]string, 0, 6)
-	if region := strings.ToUpper(strings.TrimSpace(q.Region)); region != "" {
-		parts = append(parts, region)
+	parts := make([]string, 0, 8)
+	if region := strings.TrimSpace(q.Region); region != "" {
+		parts = append(parts, i18n.RegionLabel(region).String())
 	}
-	switch strings.ToLower(strings.TrimSpace(q.RecommendType)) {
-	case "event":
-		parts = append(parts, "活动组卡")
-	case "challenge":
-		parts = append(parts, "挑战组卡")
-	case "no_event":
-		parts = append(parts, "长草组卡")
-	case "bonus":
-		parts = append(parts, "加成组卡")
-	case "mysekai":
-		parts = append(parts, "烤森组卡")
-	default:
-		parts = append(parts, "组卡")
-	}
+	parts = append(parts, deckRecommendTypeLabel(q.RecommendType).String())
 	if q.EventID != nil && *q.EventID > 0 {
-		parts = append(parts, fmt.Sprintf("event%d", *q.EventID))
+		parts = append(parts, i18n.T("deck.summary.event", i18n.Data{"ID": *q.EventID}))
 	}
 	parts = appendNonEmpty(parts, firstNonEmpty(q.MusicTitle, q.MusicQuery))
 	if q.MusicDiff != "" {
-		parts = append(parts, strings.ToUpper(q.MusicDiff))
+		parts = append(parts, i18n.DifficultyLabel(q.MusicDiff).String())
 	}
-	parts = appendNonEmpty(parts, deckCharacterSummary(q.WorldBloomCharacterQuery, q.WorldBloomCharacterID, "wl角色"))
-	parts = appendNonEmpty(parts, deckCharacterSummary(q.ForcedLeaderCharacterQuery, q.ForcedLeaderCharacterID, "队长角色"))
-	parts = appendNonEmpty(parts, deckCharacterSummary(q.ChallengeLiveCharacterQuery, q.ChallengeLiveCharacterID, "挑战角色"))
+	if character, ok := deckCharacterSummary(q.WorldBloomCharacterQuery, q.WorldBloomCharacterID); ok {
+		parts = append(parts, i18n.T("deck.summary.wl_character", i18n.Data{"Character": character}))
+	}
+	if character, ok := deckCharacterSummary(q.ForcedLeaderCharacterQuery, q.ForcedLeaderCharacterID); ok {
+		parts = append(parts, i18n.T("deck.summary.leader", i18n.Data{"Character": character}))
+	}
+	if character, ok := deckCharacterSummary(q.ChallengeLiveCharacterQuery, q.ChallengeLiveCharacterID); ok {
+		parts = append(parts, i18n.T("deck.summary.challenge_character", i18n.Data{"Character": character}))
+	}
 	return strings.Join(parts, " / ")
+}
+
+func deckRecommendTypeLabel(recommendType string) i18n.Message {
+	switch strings.ToLower(strings.TrimSpace(recommendType)) {
+	case "event":
+		return i18n.M("deck.mode.event")
+	case "challenge":
+		return i18n.M("deck.mode.challenge")
+	case "no_event":
+		return i18n.M("deck.mode.no_event")
+	case "bonus":
+		return i18n.M("deck.mode.bonus")
+	case "mysekai":
+		return i18n.M("deck.mode.mysekai")
+	default:
+		return i18n.M("deck.mode.generic")
+	}
 }
 
 func firstNonEmpty(values ...string) string {
@@ -64,14 +79,16 @@ func appendNonEmpty(values []string, value string) []string {
 	return append(values, value)
 }
 
-func deckCharacterSummary(query string, id *int, prefix string) string {
+// deckCharacterSummary is the character a deck query names: the user's own
+// words, or the character ID when only that is known.
+func deckCharacterSummary(query string, id *int) (i18n.Message, bool) {
 	if query != "" {
-		return query
+		return i18n.Verbatim(query), true
 	}
 	if id == nil || *id <= 0 {
-		return ""
+		return i18n.Message{}, false
 	}
-	return fmt.Sprintf("%s%d", prefix, *id)
+	return i18n.M("common.fallback.character", i18n.Data{"ID": *id}), true
 }
 
 func applyDefaultChallengeDeckAutoQueryMusic(q *deck.AutoQuery) {
@@ -128,7 +145,7 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 		if binding != nil {
 			region = resolvedTargetRegion(region, ResolvedGameTarget{Binding: binding})
 			if snapshot == nil {
-				return nil, nil, region, nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+				return nil, nil, region, nil, suiteDataNotFoundError(binding)
 			}
 		}
 		detail := rc.GetDetailedProfile()
@@ -143,7 +160,7 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 		Platform:       rc.Platform,
 		PlatformUserID: rc.PlatformUserID,
 		Selector:       selector,
-	}, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
+	}, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App, accountdata.ExposureProfile)
 	if err != nil {
 		return nil, nil, "", nil, err
 	}
@@ -171,7 +188,7 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 	}
 
 	if target.Binding != nil && snapshot == nil {
-		return nil, nil, region, nil, newSuiteDataNotFoundReplayErrorForBinding(target.Binding)
+		return nil, nil, region, nil, suiteDataNotFoundError(target.Binding)
 	}
 	detail := buildDeckDetailedProfileForTargetWithResponse(rc, target, region, snapshot, resp)
 	if detail == nil && snapshot != nil {
@@ -218,7 +235,7 @@ func buildDeckDetailedProfileForTargetWithResponse(rc *RequestContext, target Re
 
 	q := profile.Query{
 		Region:     region,
-		Visible:    target.Visible,
+		Visible:    target.UIDVisible,
 		BgSettings: target.BgSettings,
 	}
 	finishBuild := measurePayloadBuild(rc.Ctx)
@@ -238,66 +255,19 @@ func normalizeDeckUserFacingErrorForCommand(err error, region string, mode strin
 	if err == nil {
 		return nil
 	}
-
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
-		return err
+	if errors.Is(err, deck.ErrUserDataRequired) || errors.Is(err, rendersnapshot.ErrNotConfigured) {
+		return withCause(suiteDataNotFoundError(nil), err)
 	}
-
-	var deckLocked *deckEventLockedError
-	if errors.As(err, &deckLocked) {
-		return onebot11.NewReplayError("该活动组卡将于卡池开放后解禁")
+	if isUserFacingError(err) {
+		return notfound.InRegion(err, regionWithDefault(region), "")
 	}
-
-	message := strings.TrimSpace(err.Error())
-	if _, ok := extractMusicNotFoundQuery(err, ""); ok {
-		if mode == deckEventCommand {
-			return onebot11.NewReplayError("当前区服没有该歌曲")
-		}
-		musicQuery, _ := extractMusicNotFoundQuery(err, "")
-		return newMusicNotFoundReplayError(region, musicQuery)
+	if mode == deckEventCommand && upstreamerr.Is(err, upstreamerr.KindDataNotSynced) {
+		return usererror.Wrap(usererror.CodeUnavailable, i18n.M("deck.event.data_not_synced"), err)
 	}
-
-	switch {
-	case isDeckEventMasterdataMissingMessage(message):
-		if mode == deckEventCommand {
-			return onebot11.NewReplayError("组卡服务找不到该活动的数据，请使用/组卡模拟对应颜色和团的组卡")
-		}
-		return onebot11.NewReplayError("组卡服务找不到该活动的 masterdata，请更新 masterdata 后重试")
-	case strings.Contains(message, "local user snapshot is not configured"),
-		strings.Contains(message, "user data is required for deck auto recommend"):
-		return newSuiteDataNotFoundReplayError()
-	case strings.Contains(message, "解析绑定账号失败"):
-		return newBindingRequiredReplayError()
-	case strings.Contains(message, "未找到该用户的绑定账号"):
-		return newBindingRequiredReplayError()
-	case strings.Contains(message, "toolbox: request failed after retries"),
-		strings.Contains(message, "sekai api: request failed after retries"),
-		strings.Contains(message, "context deadline exceeded"):
-		return onebot11.NewReplayError("获取组卡所需数据超时，请稍后重试")
-	}
-
 	if wrapped := WrapDomainError(err); wrapped != err {
 		return wrapped
 	}
-
-	if normalized := normalizeDeckServiceUserFacingError(err); normalized != err {
-		return normalized
-	}
-
-	if normalized := normalizeDrawingUserFacingError(err); normalized != err {
-		return normalized
-	}
-
-	return err
-}
-
-func isDeckEventMasterdataMissingMessage(message string) bool {
-	lower := strings.ToLower(strings.TrimSpace(message))
-	detailLower := strings.ToLower(strings.TrimSpace(parseEmbeddedErrorText(message)))
-	return strings.Contains(lower, "event not found for eventid:") ||
-		strings.Contains(lower, "master data not found") ||
-		strings.Contains(detailLower, "event not found for eventid:") ||
-		strings.Contains(detailLower, "master data not found")
+	return normalizeDeckServiceUserFacingError(err)
 }
 
 func validateDeckCharacterIDs(values []int) error {
@@ -305,23 +275,26 @@ func validateDeckCharacterIDs(values []int) error {
 		return nil
 	}
 	if len(values) > 5 {
-		return fmt.Errorf("固定角色最多只能指定5个")
+		return usererror.Invalid(i18n.M("deck.fixed.too_many_characters"))
 	}
 	seen := make(map[int]struct{}, len(values))
 	for _, value := range values {
 		if value <= 0 {
-			return fmt.Errorf("固定角色ID必须为正整数")
+			return usererror.Invalid(i18n.M("deck.fixed.character_id_positive"))
 		}
 		if _, ok := seen[value]; ok {
-			return fmt.Errorf("固定角色ID不能重复")
+			return usererror.Invalid(i18n.M("deck.fixed.duplicate_characters"))
 		}
 		seen[value] = struct{}{}
 	}
 	return nil
 }
 
+// isCharacterNotFoundError reports the typed "no character matches" error of
+// resolveGameCharacterIDByQuery (by message ID).
 func isCharacterNotFoundError(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "未找到角色")
+	typed, ok := usererror.As(err)
+	return ok && typed.Message.ID == "character.not_found"
 }
 
 func resolveDeckCharacterUnit(charID int) string {

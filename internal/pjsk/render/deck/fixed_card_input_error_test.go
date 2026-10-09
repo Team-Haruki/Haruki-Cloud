@@ -8,6 +8,7 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/usererror"
 )
 
@@ -20,9 +21,7 @@ func TestRestoreFixedCardUnknownTypedIDIsUserInput(t *testing.T) {
 	if err == nil || !usererror.IsInput(err) {
 		t.Fatalf("typed unknown card error = %v (input %v)", err, usererror.IsInput(err))
 	}
-	if want := "当前CN服未找到卡牌 1378（可能尚未在该服实装），请检查固定卡牌ID"; err.Error() != want {
-		t.Fatalf("typed unknown card message = %q, want %q", err.Error(), want)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeInput, "deck.fixed.card_not_in_region")
 
 	// With "当前" the IDs come from the game's own deck: a missing card is a
 	// master-data gap and must stay an internal error.

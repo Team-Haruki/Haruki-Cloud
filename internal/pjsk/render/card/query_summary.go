@@ -6,7 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/common"
 )
 
 func (c *Controller) SummaryForDetail(query Query) string {
@@ -61,25 +63,28 @@ func (c *Controller) summaryRegionSource(region string) (string, DataSource) {
 	if c != nil {
 		resolved, source, _, err := c.resolveBuilder(region)
 		if err == nil {
-			return strings.ToUpper(strings.TrimSpace(resolved.String())), source
+			return i18n.RegionLabel(resolved.String()).String(), source
 		}
 	}
-	label := strings.ToUpper(strings.TrimSpace(renderregion.Normalize(region).String()))
-	if label != "" && label != "UNKNOWN" {
-		return label, nil
+	code := strings.TrimSpace(renderregion.Normalize(region).String())
+	if code != "" && !strings.EqualFold(code, "unknown") {
+		return i18n.RegionLabel(code).String(), nil
 	}
-	return strings.ToUpper(strings.TrimSpace(region)), nil
+	if strings.TrimSpace(region) == "" {
+		return "", nil
+	}
+	return i18n.RegionLabel(region).String(), nil
 }
 
 func appendBoxSummaryOptions(parts []string, showID, showBox bool, useAfterTraining *bool) []string {
 	if showID {
-		parts = append(parts, "显示ID")
+		parts = append(parts, i18n.T("render_card.summary.show_id"))
 	}
 	if showBox {
-		parts = append(parts, "显示持有")
+		parts = append(parts, i18n.T("render_card.summary.show_box"))
 	}
 	if useAfterTraining != nil && !*useAfterTraining {
-		parts = append(parts, "花前")
+		parts = append(parts, i18n.T("render_card.summary.before_training"))
 	}
 	return parts
 }
@@ -121,7 +126,7 @@ func (c *Controller) describeQueryParts(mode string, rawQuery string, strictFilt
 			return describeExplicitCardIDs(cardIDs)
 		}
 		if mode == "box" {
-			return []string{"全部已上线卡牌"}
+			return []string{i18n.T("render_card.summary.all_released")}
 		}
 		return nil
 	}
@@ -169,16 +174,16 @@ func describeExplicitCardIDs(cardIDs []int) []string {
 		return nil
 	}
 	if len(cleaned) == 1 {
-		return []string{fmt.Sprintf("卡牌ID%d", cleaned[0])}
+		return []string{i18n.T("render_card.summary.card_id", i18n.Data{"ID": cleaned[0]})}
 	}
 	if len(cleaned) <= 5 {
 		labels := make([]string, 0, len(cleaned))
 		for _, cardID := range cleaned {
 			labels = append(labels, strconv.Itoa(cardID))
 		}
-		return []string{fmt.Sprintf("卡牌ID %s", strings.Join(labels, ", "))}
+		return []string{i18n.T("render_card.summary.card_ids", i18n.Data{"IDs": strings.Join(labels, "、")})}
 	}
-	return []string{fmt.Sprintf("%d张指定卡牌", len(cleaned))}
+	return []string{i18n.T("render_card.summary.card_count", i18n.Data{"Count": len(cleaned)})}
 }
 
 func describeCardQueryInfo(info *PjskCardQueryInfo, source DataSource, nicknames map[string]int) []string {
@@ -201,14 +206,14 @@ func describeCardQueryInfo(info *PjskCardQueryInfo, source DataSource, nicknames
 
 func describeCardIDQuery(info *PjskCardQueryInfo) []string {
 	if info.Value > 0 {
-		return []string{fmt.Sprintf("卡牌ID%d", info.Value)}
+		return []string{i18n.T("render_card.summary.card_id", i18n.Data{"ID": info.Value})}
 	}
 	return describeOriginalCardQuery(info)
 }
 
 func describeCardLatestQuery(info *PjskCardQueryInfo) []string {
 	if info.Sequence < 0 {
-		return []string{fmt.Sprintf("全局最新第%d张", -info.Sequence)}
+		return []string{i18n.T("render_card.summary.latest_global", i18n.Data{"N": -info.Sequence})}
 	}
 	return describeOriginalCardQuery(info)
 }
@@ -219,9 +224,9 @@ func describeCardSequenceQuery(info *PjskCardQueryInfo, source DataSource, nickn
 	}
 	name := summaryCharacterLabel(source, nicknames, info.CharacterID)
 	if info.Sequence < 0 {
-		return []string{fmt.Sprintf("%s最新第%d张", name, -info.Sequence)}
+		return []string{i18n.T("render_card.summary.latest_character", i18n.Data{"Character": name, "N": -info.Sequence})}
 	}
-	return []string{fmt.Sprintf("%s第%d张", name, info.Sequence)}
+	return []string{i18n.T("render_card.summary.character_seq", i18n.Data{"Character": name, "N": info.Sequence})}
 }
 
 func describeCardFilterQuery(info *PjskCardQueryInfo, source DataSource, nicknames map[string]int) []string {
@@ -230,7 +235,7 @@ func describeCardFilterQuery(info *PjskCardQueryInfo, source DataSource, nicknam
 		parts = append(parts, fmt.Sprintf("event%d", info.EventID))
 	}
 	if info.BanCharID > 0 && info.BanSeq > 0 {
-		parts = append(parts, fmt.Sprintf("%s%d箱活", summaryCharacterLabel(source, nicknames, info.BanCharID), info.BanSeq))
+		parts = append(parts, i18n.T("render_card.summary.ban_event", i18n.Data{"Character": summaryCharacterLabel(source, nicknames, info.BanCharID), "N": info.BanSeq}))
 	}
 	if info.CharacterID > 0 {
 		parts = append(parts, summaryCharacterLabel(source, nicknames, info.CharacterID))
@@ -244,7 +249,7 @@ func describeCardFilterQuery(info *PjskCardQueryInfo, source DataSource, nicknam
 		summarySupplyLabel(info.SupplyType),
 	)
 	if info.Year > 0 {
-		parts = append(parts, fmt.Sprintf("%d年", info.Year))
+		parts = append(parts, i18n.T("render_card.summary.year", i18n.Data{"Year": info.Year}))
 	}
 	return parts
 }
@@ -267,14 +272,12 @@ func describeOriginalCardQuery(info *PjskCardQueryInfo) []string {
 
 func cardSummaryModeLabel(mode string) string {
 	switch mode {
-	case "detail":
-		return "查卡"
 	case "list":
-		return "卡牌列表"
+		return i18n.T("render_card.summary.mode.list")
 	case "box":
-		return "卡牌一览"
+		return i18n.T("render_card.summary.mode.box")
 	default:
-		return "查卡"
+		return i18n.T("render_card.summary.mode.detail")
 	}
 }
 
@@ -288,7 +291,7 @@ func summaryCharacterLabel(source DataSource, nicknames map[string]int, characte
 	if nickname := bestSummaryCharacterNickname(nicknames, characterID); nickname != "" {
 		return nickname
 	}
-	return fmt.Sprintf("角色%d", characterID)
+	return common.CharacterFallbackName(characterID)
 }
 
 func summaryCharacterSourceName(source DataSource, characterID int) string {
@@ -336,15 +339,15 @@ func betterSummaryNickname(candidate string, current string) bool {
 func summaryAttributeLabel(attr string) string {
 	switch strings.TrimSpace(attr) {
 	case "cute":
-		return "粉"
+		return i18n.T("render_card.summary.attr.cute")
 	case "cool":
-		return "蓝"
+		return i18n.T("render_card.summary.attr.cool")
 	case "pure":
-		return "绿"
+		return i18n.T("render_card.summary.attr.pure")
 	case "happy":
-		return "橙"
+		return i18n.T("render_card.summary.attr.happy")
 	case "mysterious":
-		return "紫"
+		return i18n.T("render_card.summary.attr.mysterious")
 	default:
 		return ""
 	}
@@ -353,11 +356,11 @@ func summaryAttributeLabel(attr string) string {
 func summarySkillTypeLabel(skillType string) string {
 	switch strings.TrimSpace(skillType) {
 	case "life_recovery":
-		return "奶卡"
+		return i18n.T("render_card.summary.skill_type.life_recovery")
 	case "score_up":
-		return "分卡"
+		return i18n.T("render_card.summary.skill_type.score_up")
 	case "judgment_up":
-		return "判卡"
+		return i18n.T("render_card.summary.skill_type.judgment_up")
 	default:
 		return ""
 	}
@@ -368,19 +371,19 @@ func summaryDetailedSkillLabel(skillIDs []int) string {
 		return ""
 	}
 	if slices.Equal(skillIDs, []int{4}) {
-		return "大分"
+		return i18n.T("render_card.summary.skill.big_score")
 	}
 	if slices.Equal(skillIDs, []int{11}) {
-		return "P分"
+		return i18n.T("render_card.summary.skill.perfect_score")
 	}
 	if slices.Equal(skillIDs, []int{12}) {
-		return "血分"
+		return i18n.T("render_card.summary.skill.life_score")
 	}
 	if slices.Equal(skillIDs, []int{13}) {
-		return "判分"
+		return i18n.T("render_card.summary.skill.judgment_score")
 	}
 	if slices.Equal(skillIDs, []int{15, 16, 17, 18, 19}) {
-		return "团分"
+		return i18n.T("render_card.summary.skill.unit_score")
 	}
 	labels := make([]string, 0, len(skillIDs))
 	for _, skillID := range skillIDs {
@@ -392,7 +395,7 @@ func summaryDetailedSkillLabel(skillIDs []int) string {
 	if len(labels) == 0 {
 		return ""
 	}
-	return "技能" + strings.Join(labels, ",")
+	return i18n.T("render_card.summary.skill.ids", i18n.Data{"IDs": strings.Join(labels, "、")})
 }
 
 func summaryUnitFilterLabel(info *PjskCardQueryInfo) string {
@@ -402,14 +405,14 @@ func summaryUnitFilterLabel(info *PjskCardQueryInfo) string {
 	if info.MainUnit != "" {
 		if info.MainUnit == "piapro" {
 			if info.SupportUnit == "none" {
-				return "原V"
+				return i18n.T("render_card.summary.unit.original_vs")
 			}
 			if label := summaryAttachedVSLabel(info.SupportUnit); label != "" {
 				return label
 			}
 		} else if info.SupportUnit == "none" {
 			if label := summaryUnitLabel(info.MainUnit); label != "" {
-				return "纯" + label
+				return i18n.T("render_card.summary.unit.pure", i18n.Data{"Unit": label})
 			}
 		}
 	}
@@ -455,15 +458,15 @@ func summaryUnitLabel(unit string) string {
 func summaryRarityLabel(rarity string) string {
 	switch strings.TrimSpace(rarity) {
 	case "rarity_4":
-		return "四星"
+		return i18n.T("render_card.summary.rarity.rarity_4")
 	case "rarity_3":
-		return "三星"
+		return i18n.T("render_card.summary.rarity.rarity_3")
 	case "rarity_2":
-		return "二星"
+		return i18n.T("render_card.summary.rarity.rarity_2")
 	case "rarity_1":
-		return "一星"
+		return i18n.T("render_card.summary.rarity.rarity_1")
 	case "rarity_birthday":
-		return "生日"
+		return i18n.T("render_card.summary.rarity.birthday")
 	default:
 		return ""
 	}
@@ -478,15 +481,15 @@ func summarySupplyLabel(supply string) string {
 	case SupplyBFes:
 		return "bfes"
 	case SupplyWL:
-		return "wl限定"
+		return i18n.T("render_card.summary.supply.wl")
 	case SupplyCollab:
-		return "联动限定"
+		return i18n.T("render_card.summary.supply.collab")
 	case SupplyLimited:
-		return "限定"
+		return i18n.T("render_card.summary.supply.limited")
 	case SupplyNormal:
-		return "非限"
+		return i18n.T("render_card.summary.supply.normal")
 	case SupplyBirthday:
-		return "生日"
+		return i18n.T("render_card.summary.supply.birthday")
 	default:
 		return ""
 	}

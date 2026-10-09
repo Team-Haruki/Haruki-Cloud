@@ -2,20 +2,22 @@ package accountdata
 
 import (
 	"context"
-	"entgo.io/ent/dialect/sql"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqljson"
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/profilebgcleanup"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -25,11 +27,11 @@ const (
 	profileBGDeleteTimeout   = 10 * time.Second
 )
 
-var errProfileBGChanged = errors.New("个人信息背景已被另一请求修改，请重试")
+var errProfileBGChanged = usererror.New(usererror.CodeUnavailable, i18n.M("profile.bg.changed"))
 
 func loadProfileBackgroundRevision(ctx context.Context, db *pjskdb.Client, accountID int) (*drawing.ProfileBgSettings, int64, error) {
 	if db == nil || accountID <= 0 {
-		return nil, 0, fmt.Errorf("profile background account is not configured")
+		return nil, 0, usererror.Misconfigured(errors.New("profile background account is not configured"))
 	}
 	account, err := db.GameAccount.Get(ctx, accountID)
 	if err != nil {

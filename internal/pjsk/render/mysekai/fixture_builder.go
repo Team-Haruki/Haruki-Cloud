@@ -1,21 +1,24 @@
 package mysekai
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 // BuildFixtureListRequest builds the request for rendering MySekai fixture list view.
 func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.MysekaiFixtureListRequest, error) {
 	c = c.withRegion(query.Region)
 	if c == nil {
-		return nil, fmt.Errorf("mysekai controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("mysekai controller is not initialized"))
 	}
 
 	options := fixtureListOptionsFromQuery(query)
@@ -53,7 +56,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		MainGenres: collector.mainGenres(mainGenreMap, subGenreMap),
 	}
 	if options.showProgress && collector.totalAll > 0 {
-		message := fmt.Sprintf("总收集进度（不含生日家具）: %d/%d (%.1f%%)", collector.totalObtained, collector.totalAll, percent(collector.totalObtained, collector.totalAll))
+		message := i18n.T("mysekai.image.fixture.progress", i18n.Data{"Obtained": collector.totalObtained, "Total": collector.totalAll, "Percent": i18n.Percent(percent(collector.totalObtained, collector.totalAll))})
 		request.ProgressMessage = &message
 	}
 	return request, nil
@@ -88,7 +91,7 @@ func (c *Controller) prepareFixtureListData(regionQuery string, options fixtureL
 	region := c.resolveRegion(regionQuery)
 	if !options.showObtained && !options.showProfile && !options.showProgress {
 		if c.masterdata == nil || !c.masterdata.Configured() {
-			return nil, region, fmt.Errorf("mysekai masterdata is not configured")
+			return nil, region, usererror.Misconfigured(errors.New("mysekai masterdata is not configured"))
 		}
 		return map[string]any{}, region, nil
 	}
@@ -279,7 +282,7 @@ func (c *fixtureListCollector) progressMessage(obtained, total int) *string {
 	if !c.options.showProgress || total <= 0 {
 		return nil
 	}
-	message := fmt.Sprintf("%d/%d (%.1f%%)", obtained, total, percent(obtained, total))
+	message := i18n.T("mysekai.image.progress", i18n.Data{"Obtained": obtained, "Total": total, "Percent": i18n.Percent(percent(obtained, total))})
 	return &message
 }
 
@@ -314,7 +317,7 @@ func (c *Controller) RenderFixtureList(query FixtureListQuery) ([]byte, error) {
 
 func (c *Controller) RenderFixtureListImage(query FixtureListQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildFixtureListRequest(query)
@@ -334,7 +337,7 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 
 	fixtureIDs := parseIntTokens(query.Query)
 	if len(fixtureIDs) == 0 {
-		return nil, fmt.Errorf("mysekai fixture detail invalid query: %s", query.Query)
+		return nil, usererror.BadParam(query.Query, i18n.M("mysekai.fixture.id_invalid"))
 	}
 
 	fixtureMap := c.masterdata.loadMapByID("mysekaiFixtures.json")
@@ -362,7 +365,7 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 		subGenre := subGenreMap[subGenreID]
 
 		request := drawing.MysekaiFixtureDetailRequest{
-			Title:              fmt.Sprintf("【%s-%d】%s", strings.ToUpper(region.String()), fixtureID, stringValue(fixture["name"])),
+			Title:              i18n.T("mysekai.image.fixture.title", i18n.Data{"Region": i18n.RegionLabel(region.String()), "ID": fixtureID, "Name": stringValue(fixture["name"])}),
 			Images:             fixtureColorImages(func(p string) string { return c.regionPath(region, p) }, fixture),
 			MainGenreName:      stringValue(mainGenre["name"]),
 			MainGenreImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(mainGenre["assetbundleName"]))),
@@ -400,7 +403,7 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 	}
 
 	if len(requests) == 0 {
-		return nil, fmt.Errorf("mysekai fixture detail found no valid fixtures")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.fixture.not_found"))
 	}
 	return requests, nil
 }
@@ -416,7 +419,7 @@ func (c *Controller) RenderFixtureDetail(query FixtureDetailQuery) ([]byte, erro
 
 func (c *Controller) RenderFixtureDetailImage(query FixtureDetailQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	requests, err := c.BuildFixtureDetailRequests(query)
@@ -425,7 +428,7 @@ func (c *Controller) RenderFixtureDetailImage(query FixtureDetailQuery) (drawing
 		return drawing.ImageResult{}, err
 	}
 	if len(requests) != 1 {
-		return drawing.ImageResult{}, fmt.Errorf("mysekai fixture detail render requires exactly one fixture id")
+		return drawing.ImageResult{}, usererror.Misuse(i18n.M("mysekai.fixture.one_only"))
 	}
 	return c.drawing.GenerateMysekaiFixtureDetailImage(&requests[0])
 }

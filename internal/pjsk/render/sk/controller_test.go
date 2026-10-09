@@ -13,11 +13,14 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 type testForecastProvider struct {
@@ -3129,7 +3132,7 @@ func TestBuildSpeedRequestFromTrackerDerivesSpeedWhenGrowthFieldsMissing(t *test
 	if len(payload.Ranks) != 1 {
 		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
 	}
-	if payload.RequestType != "时" {
+	if payload.RequestType != i18n.T("sk.speed.unit_hour") {
 		t.Fatalf("unexpected request type: %q", payload.RequestType)
 	}
 	if payload.Period != 60*60 {
@@ -3168,7 +3171,7 @@ func TestBuildSpeedRequestFromTrackerConvertsCustomMinuteWindowToHourlySpeed(t *
 	if err != nil {
 		t.Fatalf("build speed request: %v", err)
 	}
-	if payload.RequestType != "时" {
+	if payload.RequestType != i18n.T("sk.speed.unit_hour") {
 		t.Fatalf("unexpected request type: %q", payload.RequestType)
 	}
 	if payload.Period != 30*60 {
@@ -3387,7 +3390,7 @@ func TestBuildDailySpeedRequestFromTrackerUsesDayPeriod(t *testing.T) {
 	if err != nil {
 		t.Fatalf("build daily speed request: %v", err)
 	}
-	if payload.RequestType != "日" {
+	if payload.RequestType != i18n.T("sk.speed.unit_day") {
 		t.Fatalf("unexpected request type: %q", payload.RequestType)
 	}
 	if payload.Period != 24*60*60 {
@@ -3426,7 +3429,7 @@ func TestBuildDailySpeedRequestFromTrackerKeepsDailyNormalizationForCustomWindow
 	if err != nil {
 		t.Fatalf("build daily speed request: %v", err)
 	}
-	if payload.RequestType != "日" {
+	if payload.RequestType != i18n.T("sk.speed.unit_day") {
 		t.Fatalf("unexpected request type: %q", payload.RequestType)
 	}
 	if payload.Period != 2*24*60*60 {
@@ -3738,9 +3741,7 @@ func TestBuildCSBRequestFromTrackerRejectsMultipleRanks(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected single-target error, got nil")
 	}
-	if got := err.Error(); got != "查水表目前仅支持单人查询" {
-		t.Fatalf("unexpected error: %v", got)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeUsage, "sk.arrest.single_only")
 }
 
 func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
@@ -3804,10 +3805,10 @@ func assertForecastScorePayload(t *testing.T, payload *LineRequest, tracker *bat
 
 func assertForecastCurrentRanks(t *testing.T, payload *LineRequest, tracker *batchLineMetricsTrackerSource) {
 	t.Helper()
-	if payload.Name != "Tracker Event 预测" {
+	if payload.Name != i18n.T("sk.forecast.title", i18n.Data{"Event": "Tracker Event"}) {
 		t.Fatalf("unexpected payload name: %s", payload.Name)
 	}
-	if payload.PredictionNotice != skPredictionNotice {
+	if payload.PredictionNotice != i18n.T("sk.forecast.notice") {
 		t.Fatalf("unexpected prediction notice: %q", payload.PredictionNotice)
 	}
 	if len(payload.Ranks) != 2 {
@@ -3837,7 +3838,7 @@ func assertForecastColumns(t *testing.T, payload *LineRequest) {
 	if len(payload.ForecastColumns) != 3 {
 		t.Fatalf("unexpected forecast column len: %d", len(payload.ForecastColumns))
 	}
-	if payload.ForecastColumns[0].Key != "33kit" || payload.ForecastColumns[0].Name != "33Kit预测" {
+	if payload.ForecastColumns[0].Key != "33kit" || payload.ForecastColumns[0].Name != i18n.T("sk.forecast.source.kit33") {
 		t.Fatalf("unexpected first forecast column: %+v", payload.ForecastColumns[0])
 	}
 	if len(payload.ForecastColumns[0].Ranks) != 2 {
@@ -3846,7 +3847,7 @@ func assertForecastColumns(t *testing.T, payload *LineRequest) {
 	if payload.ForecastColumns[0].Ranks[0].Rank != 50 || payload.ForecastColumns[0].Ranks[0].Score == nil || *payload.ForecastColumns[0].Ranks[0].Score != 12_345_678 {
 		t.Fatalf("unexpected 33kit p50 payload: %+v", payload.ForecastColumns[0].Ranks[0])
 	}
-	if payload.ForecastColumns[1].Key != "local" || payload.ForecastColumns[1].Name != "本地预测" {
+	if payload.ForecastColumns[1].Key != "local" || payload.ForecastColumns[1].Name != i18n.T("sk.forecast.source.local") {
 		t.Fatalf("unexpected second forecast column: %+v", payload.ForecastColumns[1])
 	}
 	if payload.ForecastColumns[2].Key != "sekarun" {
@@ -3910,13 +3911,13 @@ func TestBuildPredictLineRequestFromTrackerUsesWorldBloomChapterMeta(t *testing.
 	if err != nil {
 		t.Fatalf("build wl chapter predict line request: %v", err)
 	}
-	if payload.Name != "WL Event 预测" {
+	if payload.Name != i18n.T("sk.forecast.title", i18n.Data{"Event": "WL Event"}) {
 		t.Fatalf("unexpected payload name: %s", payload.Name)
 	}
 	if payload.AggregateAt != now+int64(2*time.Hour/time.Millisecond) {
 		t.Fatalf("expected chapter aggregate time, got %d", payload.AggregateAt)
 	}
-	if payload.PredictionNotice != skPredictionNotice {
+	if payload.PredictionNotice != i18n.T("sk.forecast.notice") {
 		t.Fatalf("unexpected prediction notice: %q", payload.PredictionNotice)
 	}
 	if payload.WlCid == nil || *payload.WlCid != 21 {
@@ -4035,7 +4036,7 @@ func assertWorldBloomTotalForecastPayload(t *testing.T, totalPayload *LineReques
 
 func assertWorldBloomChapterForecastPayload(t *testing.T, chapterPayload *LineRequest, charaID int) {
 	t.Helper()
-	if chapterPayload.Name != "WL Event 预测" {
+	if chapterPayload.Name != i18n.T("sk.forecast.title", i18n.Data{"Event": "WL Event"}) {
 		t.Fatalf("unexpected wl chapter predict payload name: %s", chapterPayload.Name)
 	}
 	if chapterPayload.WlCid == nil || *chapterPayload.WlCid != charaID {
@@ -4088,9 +4089,7 @@ func TestBuildPredictLineRequestFromTrackerStopsInLastEventHour(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected last-hour prediction stop error, got nil")
 	}
-	if got := err.Error(); got != skPredictionStopMessage {
-		t.Fatalf("unexpected error: %v", got)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeForbidden, "sk.predict.stopped")
 }
 
 func TestBuildPredictLineRequestFromTrackerReportsNoActiveAfterEventEnded(t *testing.T) {
@@ -4120,9 +4119,7 @@ func TestBuildPredictLineRequestFromTrackerReportsNoActiveAfterEventEnded(t *tes
 	if err == nil {
 		t.Fatal("expected no-active prediction error, got nil")
 	}
-	if got := err.Error(); got != skPredictionNoActiveMsg {
-		t.Fatalf("unexpected error: %v", got)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeNotFound, "event.no_ongoing")
 }
 
 func TestBuildPredictLineRequestFromTrackerStopsInLastWorldBloomChapterHour(t *testing.T) {
@@ -4164,9 +4161,7 @@ func TestBuildPredictLineRequestFromTrackerStopsInLastWorldBloomChapterHour(t *t
 	if err == nil {
 		t.Fatal("expected last-hour prediction stop error, got nil")
 	}
-	if got := err.Error(); got != skPredictionStopMessage {
-		t.Fatalf("unexpected error: %v", got)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeForbidden, "sk.predict.stopped")
 }
 
 func TestBuildPredictLineRequestFromTrackerDoesNotFallbackWhenForecastCacheMissing(t *testing.T) {
@@ -4195,9 +4190,7 @@ func TestBuildPredictLineRequestFromTrackerDoesNotFallbackWhenForecastCacheMissi
 	if err == nil {
 		t.Fatal("expected missing forecast cache error, got nil")
 	}
-	if got := err.Error(); !strings.Contains(got, "预测数据尚未就绪") {
-		t.Fatalf("unexpected error: %v", got)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeUnavailable, "sk.predict.not_ready")
 }
 
 func TestBuildPredictLineRequestFromTrackerUsesCachedGenericForecast(t *testing.T) {

@@ -2,14 +2,14 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	json "haruki-cloud/internal/jsonutil"
 
-	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderinventory "haruki-cloud/internal/pjsk/render/inventory"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestInventoryListHandleParsesFilterAndSelector(t *testing.T) {
@@ -76,8 +76,5 @@ func TestInventoryListHandleRejectsUnknownFilter(t *testing.T) {
 	if err == nil {
 		t.Fatal("Handle() error = nil, want replay error")
 	}
-	var replay onebot11.ReplayError
-	if !errors.As(err, &replay) {
-		t.Fatalf("error = %T %v, want ReplayError", err, err)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeBadParam, "common.bad_param")
 }

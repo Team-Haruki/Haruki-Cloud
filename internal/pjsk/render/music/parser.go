@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"haruki-cloud/utils/usererror"
 )
 
 func NewParser(banCharacterNicknames map[string]int) *Parser {
@@ -55,7 +57,7 @@ func (p *Parser) Parse(args string) (*QueryInfo, error) {
 		}, nil
 	}
 
-	return nil, fmt.Errorf("unable to parse music query: %s", args)
+	return nil, usererror.Unrecognized().WithCause(fmt.Errorf("unable to parse music query: %s", args))
 }
 
 func (p *Parser) ParseChart(args string) (*QueryInfo, error) {

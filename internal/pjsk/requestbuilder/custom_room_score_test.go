@@ -97,7 +97,7 @@ func TestBuildCustomRoomScoreRequestRequiresController(t *testing.T) {
 		_, err := BuildCustomRoomScoreRequest(&CommandInput{Query: "22"}, nil)
 		{
 			testutil.Require(t, !(err == nil), "nil app error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "music controller"), "nil app error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "music controller"), "nil app error = %v", err)
 		}
 	}
 
@@ -123,7 +123,7 @@ func TestBuildCustomRoomScoreRequestValidationAndMusicErrors(t *testing.T) {
 		_, err := BuildCustomRoomScoreRequest(&CommandInput{Query: "22"}, app)
 		{
 			testutil.Require(t, !(err == nil), "missing music source error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "data source"), "missing music source error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "data source"), "missing music source error = %v", err)
 		}
 	}
 

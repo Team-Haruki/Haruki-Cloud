@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	json "haruki-cloud/internal/jsonutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -10,12 +9,15 @@ import (
 	"strings"
 	"testing"
 
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	"haruki-cloud/internal/pjsk/render/provider"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func writeMysekaiJP700JSON(t *testing.T, dir, name string, data any) {
@@ -90,7 +92,7 @@ func TestExecuteMysekaiShopRendersJPShop(t *testing.T) {
 	_, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
 		Module: parser.ModuleMysekai, Mode: mySekaiShopCommand, Region: "jp", Params: []byte(`{"shop_type":"material"}`),
 	}, app))
-	assertReplayErrorText(t, err, "绘图服务暂不支持该功能，请稍后再试")
+	testutil.RequireUserError(t, err, usererror.CodeMisconfigured, "common.misconfigured")
 	if len(got.Shops) != 1 || got.Shops[0].ShopType != "material" || len(got.Shops[0].Items) != 1 || got.Shops[0].Items[0].Costs[0].Quantity != 100 {
 		t.Fatalf("shop request = %+v", got)
 	}
@@ -106,8 +108,8 @@ func TestExecuteMysekaiNewViewsOnOldRegionReplyNotOpen(t *testing.T) {
 	defer server.Close()
 	app := newMysekaiJP700App(t, server.URL)
 
-	assertReplayErrorText(t, executeMysekaiJP700(app, mySekaiShopCommand, "en"), "该区服暂未开放烤森商店")
-	assertReplayErrorText(t, executeMysekaiJP700(app, mySekaiBlueprintTermCommand, "en"), "该区服暂无限时蓝图数据")
+	testutil.RequireUserError(t, executeMysekaiJP700(app, mySekaiShopCommand, "en"), "", "mysekai.shop.region_unavailable")
+	testutil.RequireUserError(t, executeMysekaiJP700(app, mySekaiBlueprintTermCommand, "en"), "", "mysekai.blueprint_term.region_unavailable")
 }
 
 func TestMysekaiJP700CommandsParse(t *testing.T) {
@@ -157,9 +159,9 @@ func TestMysekaiShopParameters(t *testing.T) {
 
 func TestMysekaiShopRequiresPlayerData(t *testing.T) {
 	app := newMysekaiJP700App(t, "")
-	assertReplayErrorText(t, executeMysekaiJP700(app, mySekaiShopCommand, "jp"), newMySekaiDataNotFoundReplayError().Error())
+	testutil.RequireUserError(t, executeMysekaiJP700(app, mySekaiShopCommand, "jp"), usererror.CodeSetup, "binding.data.not_found")
 	app.MySekai = app.MySekai.WithMySekaiData([]byte(`{"userMysekaiColorfulPass":null}`))
-	assertReplayErrorText(t, executeMysekaiJP700(app, mySekaiShopCommand, "jp"), "上传的数据缺少烤森商店信息，请重新上传完整游戏数据后再试")
+	testutil.RequireUserError(t, executeMysekaiJP700(app, mySekaiShopCommand, "jp"), "", "mysekai.shop.snapshot_missing")
 }
 
 func TestMysekaiShopResolvesMergedSnapshot(t *testing.T) {

@@ -6,9 +6,11 @@ import (
 	"sync"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 const skCheckRoomRankLimit = 100
@@ -30,7 +32,7 @@ var queryAdjacentRanksWorldLink = []int{
 
 func (c *Controller) BuildQueryRequest(req drawing.SKRequest) (*drawing.SKRequest, error) {
 	if len(req.Ranks) == 0 {
-		return nil, fmt.Errorf("sk query request has no ranks")
+		return nil, usererror.Misuse(i18n.M("sk.target_required"))
 	}
 	return &req, nil
 }
@@ -45,7 +47,7 @@ func (c *Controller) RenderQuery(req drawing.SKRequest) ([]byte, error) {
 
 func (c *Controller) RenderQueryImage(req drawing.SKRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildQueryRequest(req)
@@ -177,7 +179,7 @@ func queryAdjacentSKLineRanks(rank int, wlMode bool) (prev int, next int, hasPre
 
 func (c *Controller) BuildCheckRoomRequest(req drawing.CFRequest) (*drawing.CFRequest, error) {
 	if len(req.Ranks) == 0 {
-		return nil, fmt.Errorf("sk check-room request has no ranks")
+		return nil, usererror.Misuse(i18n.M("sk.target_required"))
 	}
 	if err := validateSKCheckRoomSupportedRanks(req.Ranks); err != nil {
 		return nil, err
@@ -341,7 +343,7 @@ func (c *Controller) RenderCheckRoom(req drawing.CFRequest) ([]byte, error) {
 
 func (c *Controller) RenderCheckRoomImage(req drawing.CFRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildCheckRoomRequest(req)
@@ -354,7 +356,7 @@ func (c *Controller) RenderCheckRoomImage(req drawing.CFRequest) (drawing.ImageR
 
 func (c *Controller) BuildCSBRequest(req drawing.CSBRequest) (*drawing.CSBRequest, error) {
 	if len(req.Ranks) == 0 {
-		return nil, fmt.Errorf("sk csb request has no ranks")
+		return nil, usererror.Misuse(i18n.M("sk.target_required"))
 	}
 	if err := validateSKCheckRoomSupportedRank(req.Ranks[len(req.Ranks)-1].Rank); err != nil {
 		return nil, err
@@ -370,7 +372,7 @@ func (c *Controller) BuildCSBRequestFromTracker(req TrackerRankQuery) (*drawing.
 		return nil, err
 	}
 	if normalized.UserID == nil && len(normalized.Ranks) > 1 {
-		return nil, fmt.Errorf("查水表目前仅支持单人查询")
+		return nil, usererror.Misuse(i18n.M("sk.arrest.single_only"))
 	}
 
 	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
@@ -422,7 +424,7 @@ func (c *Controller) resolveCSBUserTrace(query TrackerRankQuery) ([]drawing.Rank
 
 func (c *Controller) resolveCSBRankTrace(query TrackerRankQuery) ([]drawing.RankInfo, error) {
 	if len(query.Ranks) == 0 {
-		return nil, fmt.Errorf("查水表目前仅支持单人查询")
+		return nil, usererror.Misuse(i18n.M("sk.arrest.single_only"))
 	}
 	info, userID, hasUserID, err := c.buildSingleRankBaseFromTracker(query.Region, query.EventID, query.Ranks[0], query.WlCharacterID)
 	if err != nil {
@@ -450,7 +452,7 @@ func (c *Controller) RenderCSB(req drawing.CSBRequest) ([]byte, error) {
 
 func (c *Controller) RenderCSBImage(req drawing.CSBRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildCSBRequest(req)
@@ -472,7 +474,7 @@ func validateSKCheckRoomSupportedRanks(ranks []drawing.RankInfo) error {
 
 func validateSKCheckRoomSupportedRank(rank int) error {
 	if rank > skCheckRoomRankLimit {
-		return fmt.Errorf("查房/查水表目前仅支持前100名查询")
+		return usererror.Invalid(i18n.M("sk.room.top100_only"))
 	}
 	return nil
 }

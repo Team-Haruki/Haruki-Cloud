@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,14 +11,16 @@ import (
 	sekaidb "haruki-cloud/database/sekai"
 	eventdb "haruki-cloud/database/sekai/event"
 	worldbloomdb "haruki-cloud/database/sekai/worldbloom"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/eventutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/utils/usererror"
 )
 
 func resolveTrackerWorldBloomEvent(ctx context.Context, app *renderapp.App, region renderregion.Value, eventID int) (*sekaidb.Event, []*sekaidb.Worldbloom, error) {
 	if app == nil || app.Sekai == nil {
-		return nil, nil, fmt.Errorf("sk service unavailable: sekai client not configured")
+		return nil, nil, usererror.Misconfigured(errors.New("sk service unavailable: sekai client not configured"))
 	}
 
 	if eventID > 0 {
@@ -26,12 +29,12 @@ func resolveTrackerWorldBloomEvent(ctx context.Context, app *renderapp.App, regi
 			Only(ctx)
 		if err != nil {
 			if sekaidb.IsNotFound(err) {
-				return nil, nil, fmt.Errorf("未找到活动：%s-%d", strings.ToUpper(region.String()), eventID)
+				return nil, nil, usererror.New(usererror.CodeNotFound, i18n.M("event.not_found_in_region", i18n.Data{"Region": i18n.RegionLabel(region.String()), "UserID": i18n.UserNumber(eventID)}))
 			}
 			return nil, nil, fmt.Errorf("query sk event %d failed: %w", eventID, err)
 		}
 		if !strings.EqualFold(eventInfo.EventType, "world_bloom") {
-			return nil, nil, fmt.Errorf("活动 %s-%d 不是 World Link 活动", strings.ToUpper(region.String()), eventID)
+			return nil, nil, usererror.Invalid(i18n.M("sk.wl.not_wl_event", i18n.Data{"Event": eventLabel(region.String(), eventID)}))
 		}
 		chapters, err := queryTrackerWorldBloomChapters(ctx, app, region, eventID)
 		if err != nil {
@@ -77,9 +80,10 @@ func pickCurrentWorldBloomEvent(ctx context.Context, app *renderapp.App, region 
 }
 
 func currentWorldBloomUnavailableError(region renderregion.Value) error {
-	server := strings.ToUpper(region.String())
-	commandPrefix := strings.ToLower(region.String())
-	return fmt.Errorf("当前%s服不在wl活动期间，请使用/%ssk", server, commandPrefix)
+	return usererror.New(usererror.CodeNotFound, i18n.M("sk.wl.no_current", i18n.Data{
+		"Region":  i18n.RegionLabel(region.String()),
+		"Command": "/" + strings.ToLower(region.String()) + "sk",
+	}))
 }
 
 func queryTrackerWorldBloomChapters(ctx context.Context, app *renderapp.App, region renderregion.Value, eventID int) ([]*sekaidb.Worldbloom, error) {
@@ -91,7 +95,7 @@ func queryTrackerWorldBloomChapters(ctx context.Context, app *renderapp.App, reg
 		return nil, fmt.Errorf("query World Link chapters for event %s-%d failed: %w", strings.ToUpper(region.String()), eventID, err)
 	}
 	if len(chapters) == 0 {
-		return nil, fmt.Errorf("活动 %s-%d 没有可用的 World Link 章节", strings.ToUpper(region.String()), eventID)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("sk.wl.no_chapters", i18n.Data{"Event": eventLabel(region.String(), eventID)}))
 	}
 	return chapters, nil
 }
@@ -110,7 +114,7 @@ func resolveTrackerWorldBloomChapterSelection(
 	if strings.EqualFold(query, "wl") {
 		chapter := pickCurrentWorldBloomChapter(chapters)
 		if chapter == nil {
-			return nil, fmt.Errorf("活动 %s-%d 还没有开始任何 World Link 章节，请使用 wl2 或 wlmiku 指定章节", strings.ToUpper(region.String()), eventID)
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("sk.wl.no_started_chapter", i18n.Data{"Event": eventLabel(region.String(), eventID)}))
 		}
 		return chapter, nil
 	}
@@ -118,7 +122,7 @@ func resolveTrackerWorldBloomChapterSelection(
 	if chapterNo, ok := parseTrackerWorldBloomChapterNo(query); ok {
 		chapter := findWorldBloomChapterByNo(chapters, chapterNo)
 		if chapter == nil {
-			return nil, fmt.Errorf("活动 %s-%d 没有第 %d 章 World Link 单榜", strings.ToUpper(region.String()), eventID, chapterNo)
+			return nil, usererror.Invalid(i18n.M("sk.wl.no_chapter_no", i18n.Data{"Event": eventLabel(region.String(), eventID), "UserChapter": i18n.UserNumber(chapterNo)}))
 		}
 		return chapter, nil
 	}
@@ -128,7 +132,7 @@ func resolveTrackerWorldBloomChapterSelection(
 		charQuery = strings.TrimSpace(charQuery[2:])
 	}
 	if charQuery == "" {
-		return nil, fmt.Errorf("查询 World Link 榜线需要指定章节，可使用 wl / wl2 / wlmiku")
+		return nil, usererror.Misuse(i18n.M("sk.wl.chapter_required"))
 	}
 
 	charID, err := resolveGameCharacterIDByQuery(ctx, app, region, charQuery, "sk")
@@ -138,7 +142,7 @@ func resolveTrackerWorldBloomChapterSelection(
 
 	chapter := findWorldBloomChapterByCharacterID(chapters, charID)
 	if chapter == nil {
-		return nil, fmt.Errorf("活动 %s-%d 没有角色 %s 的 World Link 章节", strings.ToUpper(region.String()), eventID, charQuery)
+		return nil, usererror.Invalid(i18n.M("sk.wl.no_character_chapter", i18n.Data{"Event": eventLabel(region.String(), eventID), "Character": characterLabel(ctx, app, charID)}))
 	}
 	return chapter, nil
 }

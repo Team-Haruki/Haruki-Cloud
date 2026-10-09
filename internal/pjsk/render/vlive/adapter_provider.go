@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
@@ -73,7 +75,7 @@ func (a *ProviderAdapter) GetGameCharacterUnit(id int) (*masterdata.GameCharacte
 
 func (a *ProviderAdapter) GetEventByVirtualLiveID(id int) (*masterdata.Event, error) {
 	if id <= 0 {
-		return nil, fmt.Errorf("virtual live id is required")
+		return nil, usererror.Misuse(i18n.M("vlive.query_required"))
 	}
 	for _, item := range a.P.Events().GetAll(a.Context()) {
 		if item == nil || item.VirtualLiveID != id {
@@ -82,7 +84,7 @@ func (a *ProviderAdapter) GetEventByVirtualLiveID(id int) (*masterdata.Event, er
 		clone := *item
 		return &clone, nil
 	}
-	return nil, fmt.Errorf("event for virtual live %d not found", id)
+	return nil, usererror.Wrap(usererror.CodeNotFound, i18n.M("vlive.not_found"), fmt.Errorf("event for virtual live %d not found", id))
 }
 
 func (a *ProviderAdapter) GetResourceBoxByPurpose(purpose string, id int) *provider.ResourceBox {

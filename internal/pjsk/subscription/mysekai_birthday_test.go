@@ -19,6 +19,8 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestParseBirthdayMonitorCommandDefaultsToDiamond(t *testing.T) {
@@ -74,14 +76,14 @@ func TestParseBirthdayMonitorCommandSupportsRegionPrefix(t *testing.T) {
 
 func TestParseBirthdayMonitorCommandRejectsAllMaterialsDisabled(t *testing.T) {
 	_, err := ParseBirthdayMonitorCommand("/烤森生日监听 钻石关闭")
-	if err == nil || !strings.Contains(err.Error(), "至少需要开启一种监听材料") {
+	if testutil.MessageID(err) != "subscription.birthday.materials_required" {
 		t.Fatalf("error = %v, want all-disabled error", err)
 	}
 }
 
 func TestParseBirthdayMonitorCommandRejectsDurationOverLimit(t *testing.T) {
 	_, err := ParseBirthdayMonitorCommand("/烤森生日监听 121")
-	if err == nil || !strings.Contains(err.Error(), "监听时长不能超过 120 分钟") {
+	if testutil.MessageID(err) != "subscription.birthday.duration_range" {
 		t.Fatalf("error = %v, want duration limit error", err)
 	}
 }
@@ -173,10 +175,7 @@ func TestCreateOrUpdateRejectsUnverifiedBindingWithGuidance(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected unverified binding error")
 	}
-	want := "该账号尚未验证，请先在工具箱验证账号再发送\"/pjsk验证\"后才可使用"
-	if err.Error() != want {
-		t.Fatalf("error = %q, want %q", err.Error(), want)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeSetup, "subscription.birthday.unverified")
 }
 
 type birthdayMonitorProfileValidator struct{}

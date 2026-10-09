@@ -1,0 +1,179 @@
+package pjsk
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"testing"
+
+	"haruki-cloud/internal/core/upstreamerr"
+	"haruki-cloud/internal/i18n"
+	commandhandler "haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/notfound"
+	"haruki-cloud/utils/usererror"
+)
+
+func TestCommandErrorTextShowsTypedReplies(t *testing.T) {
+	ctx := i18n.WithParamEcho(context.Background(), true)
+	notFound := notfound.Card("662")
+	if got := commandErrorText(ctx, fmt.Errorf("failed to search card: %w", notFound), "card/detail", "/card 662"); got != notFound.Message.String() {
+		t.Fatalf("wrapped typed reply = %q, want %q", got, notFound.Message)
+	}
+	if got := commandErrorText(context.Background(), notFound, "card/detail", "/card 662"); got != i18n.T("card.not_found_no_echo") {
+		t.Fatalf("typed reply without echo = %q", got)
+	}
+	readOnly := usererror.ReadOnly()
+	if got := commandErrorText(ctx, readOnly, "profile/bind", "/绑定"); got != readOnly.Message.String() {
+		t.Fatalf("read-only reply = %q", got)
+	}
+}
+
+func TestCommandErrorTextReplacesUnrecognizedWithRouteGuidance(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+	ctx := context.Background()
+	got := commandErrorText(ctx, usererror.Unrecognized(), "event", "/查活动 super-secret")
+	want := i18n.WithUsage(i18n.M("guidance.event"), "/查活动").String()
+	if got != want {
+		t.Fatalf("unrecognized reply = %q, want %q", got, want)
+	}
+	if strings.Contains(got, "super-secret") {
+		t.Fatalf("reply echoed the arguments: %q", got)
+	}
+
+	// A route without its own guidance keeps the generic reason. An
+	// unregistered command is user input: named only with echo.
+	echoCtx := i18n.WithParamEcho(ctx, true)
+	got = commandErrorText(echoCtx, usererror.Unrecognized(), "no/such-route", "/cmd")
+	if want := i18n.WithUsage(i18n.Unrecognized(), "/cmd").String(); got != want {
+		t.Fatalf("generic unrecognized reply = %q, want %q", got, want)
+	}
+	got = commandErrorText(ctx, usererror.Unrecognized(), "no/such-route", "/cmd")
+	if want := i18n.Unrecognized().String(); got != want {
+		t.Fatalf("generic unrecognized reply without echo = %q, want %q", got, want)
+	}
+
+	// A help pointer needs a slash command.
+	got = commandErrorText(ctx, usererror.Unrecognized(), "event", "event 1")
+	if want := i18n.M("guidance.event").String(); got != want {
+		t.Fatalf("reply without a slash trigger = %q, want %q", got, want)
+	}
+}
+
+func TestCommandErrorTextAddsHelpPointerToMisuseAndBadParams(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+	ctx := context.Background()
+	reason := i18n.M("deck.compare.too_many", i18n.Data{"Max": 5})
+	if got, want := commandErrorText(ctx, usererror.Misuse(reason), "deck/event", "/活动组卡"), i18n.WithUsage(reason, "/活动组卡").String(); got != want {
+		t.Fatalf("misuse reply = %q, want %q", got, want)
+	}
+	bad := usererror.BadParam("xyz", i18n.M("inventory.filter_unknown"))
+	if got, want := commandErrorText(ctx, bad, "inventory/list", "/查背包 xyz"), i18n.WithUsage(bad.Message, "/查背包").Render(i18n.RenderOptions{NoEcho: true}); got != want || strings.Contains(got, "xyz") {
+		t.Fatalf("bad parameter reply = %q, want %q", got, want)
+	}
+	if got, want := commandErrorText(i18n.WithParamEcho(ctx, true), bad, "inventory/list", "/查背包 xyz"), i18n.WithUsage(bad.Message, "/查背包").String(); got != want {
+		t.Fatalf("bad parameter reply with echo = %q, want %q", got, want)
+	}
+	// Errors that are not about the command's shape get no help pointer.
+	notFound := notfound.Music("x")
+	if got := commandErrorText(ctx, notFound, "music", "/查曲 x"); got != notFound.Message.Render(i18n.RenderOptions{NoEcho: true}) {
+		t.Fatalf("not-found reply = %q", got)
+	}
+}
+
+func TestHelpTriggerKeepsMultiWordCommands(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+	for trigger, want := range map[string]string{
+		"/pjsk vlive":     "/pjsk vlive",
+		"/pjsk vlive 12":  "/pjsk vlive",
+		"/jp查曲 tyw":       "/jp查曲",
+		"/查活动  super":     "/查活动",
+		"/not-registered": "/not-registered",
+		"event 1":         "",
+	} {
+		if got := helpTrigger(trigger, true); got != want {
+			t.Errorf("helpTrigger(%q, echo) = %q, want %q", trigger, got, want)
+		}
+	}
+	// Without echo only a registered command may be named.
+	for trigger, want := range map[string]string{
+		"/pjsk vlive 12":  "/pjsk vlive",
+		"/jp查曲 tyw":       "/jp查曲",
+		"/not-registered": "",
+	} {
+		if got := helpTrigger(trigger, false); got != want {
+			t.Errorf("helpTrigger(%q, no echo) = %q, want %q", trigger, got, want)
+		}
+	}
+}
+
+func TestCommandErrorTextHidesUntypedErrors(t *testing.T) {
+	ctx := context.Background()
+	for _, err := range []error{
+		errors.New(`Get "http://192.0.2.10:8080/api/private/x": connection refused`),
+		errors.New("无法识别的指令: super-secret"),
+		fmt.Errorf("failed to search card: %w", errors.New("sekai: card not found")),
+	} {
+		if got := commandErrorText(ctx, err, "card/detail", "/card"); got != i18n.RequestFailed().String() {
+			t.Fatalf("untyped error %q reply = %q", err, got)
+		}
+	}
+}
+
+func TestCommandErrorTextClassifiesUpstreamFailures(t *testing.T) {
+	ctx := context.Background()
+	timeout := upstreamerr.Transport(upstreamerr.ServiceRanking, "tracker: request failed", context.DeadlineExceeded)
+	if got, want := commandErrorText(ctx, timeout, "sk", "/sk"), i18n.Timeout(i18n.FeatureRanking).String(); got != want {
+		t.Fatalf("upstream timeout reply = %q, want %q", got, want)
+	}
+}
+
+func TestSanitizeErrorReplyDropsNonCatalogLines(t *testing.T) {
+	ctx := context.Background()
+	// A raw cause that slipped into a placeholder of a usage reply.
+	leaky := i18n.M("common.with_usage", i18n.Data{
+		"Reason": "raw upstream detail: token=abc",
+		"Usage":  i18n.Usage("/绑定"),
+	})
+	got := sanitizeErrorReply(ctx, leaky, i18n.RenderOptions{Locale: i18n.DefaultLocale})
+	if want := i18n.Usage("/绑定").String(); got != want {
+		t.Fatalf("sanitized reply = %q, want %q", got, want)
+	}
+	onlyRaw := i18n.M("common.with_usage", i18n.Data{"Reason": "raw upstream detail", "Usage": "unexpected EOF"})
+	if got := sanitizeErrorReply(ctx, onlyRaw, i18n.RenderOptions{Locale: i18n.DefaultLocale}); got != i18n.RequestFailed().String() {
+		t.Fatalf("a reply with no catalog line must become the generic reply: %q", got)
+	}
+}
+
+func TestEveryRouteGuidanceHasCatalogText(t *testing.T) {
+	for route, guidance := range routeGuidance {
+		if text := guidance.String(); text == "" || text == guidance.ID {
+			t.Errorf("route %s guidance %s has no catalog text", route, guidance.ID)
+		}
+	}
+}
+
+func TestCommandErrorTextRepliesTimeoutForRequestDeadline(t *testing.T) {
+	ctx := context.Background()
+	got := commandErrorText(ctx, fmt.Errorf("x: %w", context.DeadlineExceeded), "card/detail", "/card 1")
+	if want := i18n.M("common.request_timeout").String(); got != want {
+		t.Fatalf("deadline reply = %q, want %q", got, want)
+	}
+	transport := upstreamerr.Transport(upstreamerr.ServiceGameData, "", context.DeadlineExceeded)
+	got = commandErrorText(ctx, transport, "card/detail", "/card 1")
+	if want := i18n.Timeout(i18n.FeatureGameData).String(); got != want {
+		t.Fatalf("game data deadline reply = %q, want %q", got, want)
+	}
+}
+
+// The Haruki toolbox address line survives the sanitizer.
+func TestSanitizeErrorReplyKeepsToolboxLink(t *testing.T) {
+	reply := i18n.M("binding.toolbox.not_bound", i18n.Data{"Data": i18n.M("binding.data_kind.suite"), "ToolboxLink": i18n.M("binding.toolbox_link")})
+	want := reply.String()
+	if !strings.Contains(want, "https://") {
+		t.Fatalf("reply has no toolbox address: %q", want)
+	}
+	if got := sanitizeErrorReply(context.Background(), reply, i18n.RenderOptions{Locale: i18n.DefaultLocale}); got != want {
+		t.Fatalf("sanitized reply = %q, want %q", got, want)
+	}
+}

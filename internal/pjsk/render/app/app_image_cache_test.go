@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/meta"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/internal/storage/storagetest"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -59,7 +60,7 @@ func TestOpenAppImageStoreErrors(t *testing.T) {
 	if store, err := openAppImageStore(ctx, " ", imagecache.PGStoreOptions{}); store != nil || err != nil {
 		t.Fatalf("empty DSN = %v, %v", store, err)
 	}
-	if store, err := openAppImageStore(ctx, "://invalid", imagecache.PGStoreOptions{MaxOpen: 4}); store != nil || err == nil || !strings.Contains(err.Error(), "image cache index") {
+	if store, err := openAppImageStore(ctx, "://invalid", imagecache.PGStoreOptions{MaxOpen: 4}); store != nil || err == nil || !strings.Contains(testutil.ErrorDetail(err), "image cache index") {
 		t.Fatalf("invalid DSN = %v, %v", store, err)
 	}
 
@@ -99,7 +100,7 @@ func TestOpenAppImageStoreErrors(t *testing.T) {
 		mock.ExpectClose()
 	})
 	store, err = openAppImageStoreWith(ctx, "postgres://index", imagecache.PGStoreOptions{MaxOpen: 4}, open)
-	if store != nil || err == nil || !strings.Contains(err.Error(), "image cache index schema") {
+	if store != nil || err == nil || !strings.Contains(testutil.ErrorDetail(err), "image cache index schema") {
 		t.Fatalf("schema failure = %v, %v", store, err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {

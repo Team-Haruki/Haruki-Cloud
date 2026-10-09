@@ -19,6 +19,7 @@ import (
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/storage"
+	"haruki-cloud/internal/testutil"
 )
 
 type denseListTestSource struct {
@@ -443,7 +444,7 @@ func TestBuildCostumeDetailRequestRejectsWrongExpectedPartType(t *testing.T) {
 	}}, nil, nil)
 
 	_, err := controller.BuildCostumeDetailRequest(Query{ID: 33001, ExpectedPartType: "hair"})
-	if err == nil || !strings.Contains(err.Error(), "not") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "not") {
 		t.Fatalf("expected part type mismatch, got %v", err)
 	}
 }
@@ -489,7 +490,7 @@ func TestBuildCostumeDetailRequestFiltersNamedMikuOutfitByUnit(t *testing.T) {
 	if err != nil || detail.Costume.CostumeID != 246002 || detail.Costume.OutfitID != 246 {
 		t.Fatalf("named Miku outfit did not respect the role unit: detail=%+v err=%v", detail, err)
 	}
-	if _, err := controller.BuildCostumeDetailRequest(Query{ID: 247002, ExpectedPartType: "body", Character3DID: 23}); err == nil || !strings.Contains(err.Error(), "不适用于角色ID") {
+	if _, err := controller.BuildCostumeDetailRequest(Query{ID: 247002, ExpectedPartType: "body", Character3DID: 23}); err == nil || testutil.MessageID(err) != "costume.not_for_character" {
 		t.Fatalf("raw outfit from another Miku unit must be rejected, got %v", err)
 	}
 }
@@ -929,7 +930,7 @@ func TestParseComboQuerySupportsComponentLocalColors(t *testing.T) {
 	if _, err := parseComboQuery(ComboQuery{Query: "角色23 饰品301 饰品531"}); err == nil {
 		t.Fatal("expected duplicate accessories to be rejected")
 	}
-	if _, err := parseComboQuery(ComboQuery{Query: "角色23 颜色2"}); err == nil || !strings.Contains(err.Error(), "紧跟") {
+	if _, err := parseComboQuery(ComboQuery{Query: "角色23 颜色2"}); err == nil || testutil.MessageID(err) != "costume.combo.color_position" {
 		t.Fatalf("expected detached color to be rejected, got %v", err)
 	}
 }
@@ -981,10 +982,10 @@ func TestParseComboQuerySupportsExactCharacterAliases(t *testing.T) {
 		}
 	}
 
-	if _, err := parseComboQuery(ComboQuery{Query: "miku 发型1"}); err == nil || !strings.Contains(err.Error(), "团队") {
+	if _, err := parseComboQuery(ComboQuery{Query: "miku 发型1"}); err == nil || testutil.MessageID(err) != "costume.query.miku_unit_required" {
 		t.Fatalf("expected Miku without a team to be rejected, got %v", err)
 	}
-	if _, err := parseComboQuery(ComboQuery{Query: "miku ln mmj 发型1"}); err == nil || !strings.Contains(err.Error(), "一个团队") {
+	if _, err := parseComboQuery(ComboQuery{Query: "miku ln mmj 发型1"}); err == nil || testutil.MessageID(err) != "costume.query.miku_one_unit" {
 		t.Fatalf("expected conflicting Miku teams to be rejected, got %v", err)
 	}
 	if _, err := parseComboQuery(ComboQuery{Query: "miku mm 发型1"}); err == nil {
@@ -1056,21 +1057,6 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 	}
 }
 
-func TestBuildListPromptIncludesPagingAndDetailHint(t *testing.T) {
-	controller := NewController(denseListTestSource{costumes: makeDenseListTestCostumes(500)}, nil, nil)
-
-	request, err := controller.BuildCostumeListRequest(ListQuery{Query: "女装"})
-	if err != nil {
-		t.Fatalf("BuildCostumeListRequest failed: %v", err)
-	}
-	prompt := BuildListPrompt(request)
-	for _, want := range []string{"第 1/3 页", "本页 240 项", "共 500 项", "/查服装 服装ID 角色ID", "/查饰品 饰品ID 角色ID", "p2"} {
-		if !strings.Contains(prompt, want) {
-			t.Fatalf("expected prompt to contain %q, got %q", want, prompt)
-		}
-	}
-}
-
 func TestParseLookupQueryUsesShortIDRoleAndOptionalColor(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -1120,7 +1106,7 @@ func TestParseLookupQueryRequiresRoleAndValidColor(t *testing.T) {
 	if _, ok, err := ParseLookupQuery("MIKU MIKU POP!", "body"); ok || err != nil {
 		t.Fatalf("masterdata name must remain a list search, ok=%v err=%v", ok, err)
 	}
-	if _, ok, err := ParseLookupQuery("1 miku", "body"); !ok || err == nil || !strings.Contains(err.Error(), "团队") {
+	if _, ok, err := ParseLookupQuery("1 miku", "body"); !ok || err == nil || testutil.MessageID(err) != "costume.query.miku_unit_required" {
 		t.Fatalf("Miku detail query without a team should fail clearly, ok=%v err=%v", ok, err)
 	}
 }
@@ -1157,7 +1143,7 @@ func TestParseNamedLookupQueryRequiresNameAndRole(t *testing.T) {
 	if _, ok, err := ParseNamedLookupQuery("MIKU MIKU POP! 角色32", "body"); !ok || err == nil {
 		t.Fatalf("invalid explicit role should return a recognized error, ok=%v err=%v", ok, err)
 	}
-	if _, ok, err := ParseNamedLookupQuery("MIKU MIKU POP! miku", "body"); !ok || err == nil || !strings.Contains(err.Error(), "团队") {
+	if _, ok, err := ParseNamedLookupQuery("MIKU MIKU POP! miku", "body"); !ok || err == nil || testutil.MessageID(err) != "costume.query.miku_unit_required" {
 		t.Fatalf("Miku named lookup without a team should fail clearly, ok=%v err=%v", ok, err)
 	}
 }
@@ -1171,7 +1157,7 @@ func TestNormalizeListQuerySupportsCharacterAliases(t *testing.T) {
 	if err != nil || miku.Character3DID != 22 || miku.PartType != "hair" {
 		t.Fatalf("unexpected Miku list query: %+v err=%v", miku, err)
 	}
-	if _, err := normalizeListQuery(ListQuery{Query: "发型 miku"}); err == nil || !strings.Contains(err.Error(), "团队") {
+	if _, err := normalizeListQuery(ListQuery{Query: "发型 miku"}); err == nil || testutil.MessageID(err) != "costume.query.miku_unit_required" {
 		t.Fatalf("expected Miku list query without a team to fail, got %v", err)
 	}
 	keyword, err := normalizeListQuery(ListQuery{Query: "foo idol bar"})
@@ -1259,7 +1245,7 @@ func TestBuildCostumeDetailRequestSeparatesExclusiveAndSharedAccessoryIDs(t *tes
 		Character3DID:    2,
 		ColorID:          1,
 		ExpectedPartType: "head",
-	}); err == nil || !strings.Contains(err.Error(), "legacy id") || !strings.Contains(err.Error(), "ids=[797001 797002]") {
+	}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "legacy id") || !strings.Contains(err.Error(), "ids=[797001 797002]") {
 		t.Fatalf("legacy collapsed accessory id must list both independent ids without selecting either: %v", err)
 	}
 }

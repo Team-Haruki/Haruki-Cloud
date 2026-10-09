@@ -2,6 +2,7 @@ package stamp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"path/filepath"
@@ -9,12 +10,14 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
@@ -79,7 +82,7 @@ func (c *Controller) BuildStampListRequests(query ListQuery) ([]*drawing.StampLi
 		page = 1
 	}
 	if page > totalPages {
-		return nil, fmt.Errorf("页数错误，当前仅有%d页", totalPages)
+		return nil, usererror.OutOfRange(i18n.M("common.param_name.page"), 1, totalPages)
 	}
 
 	buildPage := func(pageNum int) *drawing.StampListRequest {
@@ -91,7 +94,7 @@ func (c *Controller) BuildStampListRequests(query ListQuery) ([]*drawing.StampLi
 		pageItems := slices.Clone(items[start:end])
 		return &drawing.StampListRequest{
 			PromptMessage: &prompt,
-			PageMessage:   new(fmt.Sprintf("第 %d / %d 页", pageNum, totalPages)),
+			PageMessage:   new(i18n.PageLabel(pageNum, totalPages).String()),
 			Stamps:        pageItems,
 		}
 	}
@@ -117,7 +120,7 @@ func (c *Controller) RenderStampList(query ListQuery) ([]byte, error) {
 
 func (c *Controller) RenderStampListImage(query ListQuery) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	req, err := c.BuildStampListRequest(query)
 	if err != nil {
@@ -144,7 +147,7 @@ func (c *Controller) RenderStampListPages(query ListQuery) ([][]byte, error) {
 
 func (c *Controller) RenderStampListPagesImage(query ListQuery) ([]drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return nil, drawing.ErrNotConfigured
 	}
 	requests, err := c.BuildStampListRequests(query)
 	if err != nil {
@@ -165,7 +168,7 @@ func (c *Controller) collectStampItems(query ListQuery) ([]drawing.StampData, st
 	query.Region = c.sources.ResolveRegion(query.Region)
 	src, ok := c.sources.SourceForRegion(query.Region)
 	if !ok {
-		return nil, "", fmt.Errorf("stamp data source not configured")
+		return nil, "", usererror.Misconfigured(errors.New("stamp data source not configured"))
 	}
 
 	stamps, err := src.GetStamps()
@@ -198,7 +201,7 @@ func (c *Controller) collectStampItems(query ListQuery) ([]drawing.StampData, st
 		items = items[:query.Limit]
 	}
 	if len(items) == 0 {
-		return nil, "", fmt.Errorf("no stamps matched the query")
+		return nil, "", usererror.New(usererror.CodeNotFound, i18n.M("stamp.no_match"))
 	}
 
 	return items, stampPrompt(query.PromptMessage), nil
@@ -232,13 +235,7 @@ func stampPrompt(value string) string {
 	if prompt := strings.TrimSpace(value); prompt != "" {
 		return prompt
 	}
-	return strings.Join([]string{
-		`发送"/stamp 序号"获取单张表情`,
-		`发送"/stamp 序号 序号"获取多张表情`,
-		`发送"/stamp 角色名"按角色筛选表情`,
-		`发送"/stamp page 2"查看指定页`,
-		`发送"/stamp all"返回全部页`,
-	}, "\n")
+	return i18n.T("stamp.image.usage")
 }
 
 func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregion.Value) (string, bool) {

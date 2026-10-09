@@ -1,19 +1,20 @@
 package music
 
 import (
-	"fmt"
 	"slices"
 	"sort"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) buildMusicBoardRows(region renderregion.Value, source DataSource, builder *Builder, query musicBoardResolvedQuery) ([]musicBoardRow, error) {
 	metaMap := c.loadMusicBoardMetaMap(region.String())
 	if len(metaMap) == 0 {
-		return nil, fmt.Errorf("music board request has no items")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_match"))
 	}
 
 	sortedSkills := resolveMusicBoardSkills(query)

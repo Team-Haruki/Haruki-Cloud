@@ -1,16 +1,19 @@
 package handler
 
 import (
-	"fmt"
 	"log/slog"
 	"strings"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 )
 
-const cnMySekaiNeverOpensNotice = "国服 MySekai 功能永不开启，请勿再尝试。"
+// cnMySekaiNotice is the reply to a blocked CN MySekai command.
+func cnMySekaiNotice() string {
+	return i18n.T("mysekai.cn_gate.notice", i18n.Data{"Region": i18n.RegionLabel("cn")})
+}
 
 func isMySekaiRegionAllowed(cmd *CommandRequest, region string) bool {
 	region = strings.ToLower(strings.TrimSpace(region))
@@ -56,7 +59,7 @@ func isMySekaiRegionAllowedForMode(cmd *CommandRequest, region string) bool {
 // MySekai commands. Tracking failures still return the notice.
 func rejectCNMySekai(rc *RequestContext) (onebot11.Message, error) {
 	if rc == nil || rc.App == nil || rc.Cmd == nil {
-		return onebot11.Message{onebot11.Text(cnMySekaiNeverOpensNotice)}, nil
+		return onebot11.Message{onebot11.Text(cnMySekaiNotice())}, nil
 	}
 	attempt, err := rc.App.BanChecker.RecordCNMySekaiAttempt(
 		rc.Ctx,
@@ -69,7 +72,7 @@ func rejectCNMySekai(rc *RequestContext) (onebot11.Message, error) {
 			slog.String("user_id", rc.Cmd.RequesterUserID),
 			slog.String("error", err.Error()),
 		)
-		return onebot11.Message{onebot11.Text(cnMySekaiNeverOpensNotice)}, nil
+		return onebot11.Message{onebot11.Text(cnMySekaiNotice())}, nil
 	}
 	if attempt.Silenced {
 		return onebot11.Message{}, nil
@@ -79,11 +82,11 @@ func rejectCNMySekai(rc *RequestContext) (onebot11.Message, error) {
 
 func cnMySekaiRejectionText(attempt accountdata.CNMySekaiAttempt) string {
 	if attempt.Attempts <= 0 {
-		return cnMySekaiNeverOpensNotice
+		return cnMySekaiNotice()
 	}
-	text := fmt.Sprintf("%s（%d/%d）", cnMySekaiNeverOpensNotice, attempt.Attempts, attempt.Threshold)
+	region := i18n.RegionLabel("cn")
 	if attempt.Attempts >= attempt.Threshold {
-		text += "\n后续国服 MySekai 请求将不再回复。"
+		return i18n.T("mysekai.cn_gate.notice_last", i18n.Data{"Region": region, "Attempts": attempt.Attempts, "Threshold": attempt.Threshold})
 	}
-	return text
+	return i18n.T("mysekai.cn_gate.notice_counted", i18n.Data{"Region": region, "Attempts": attempt.Attempts, "Threshold": attempt.Threshold})
 }

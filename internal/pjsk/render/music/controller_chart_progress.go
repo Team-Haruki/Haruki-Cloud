@@ -1,6 +1,7 @@
 package music
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) BuildMusicChartRequest(query ChartQuery) (*drawing.GenerateMusicChartRequest, error) {
@@ -48,7 +50,7 @@ func (c *Controller) RenderMusicChart(query ChartQuery) ([]byte, error) {
 
 func (c *Controller) RenderMusicChartImage(query ChartQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	payload, err := c.BuildMusicChartRequest(query)
 	if err != nil {
@@ -69,7 +71,7 @@ func (c *Controller) RenderMusicChartRequest(payload *drawing.GenerateMusicChart
 // path, so an artifact-mode chart comes back as a ref instead of bytes.
 func (c *Controller) RenderMusicChartRequestImage(payload *drawing.GenerateMusicChartRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	if payload == nil {
 		return drawing.ImageResult{}, fmt.Errorf("music chart payload is required")
@@ -112,7 +114,7 @@ func (c *Controller) RenderMusicProgress(query ProgressQuery) ([]byte, error) {
 
 func (c *Controller) RenderMusicProgressImage(query ProgressQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicProgressRequest(query)
@@ -125,7 +127,7 @@ func (c *Controller) RenderMusicProgressImage(query ProgressQuery) (drawing.Imag
 
 func (c *Controller) BuildMusicProgressRequestFromSnapshot(query ProgressQuery, snapshot snapshot.Snapshot, fallbackProfile *drawing.ProfileCardRequest) (*drawing.PlayProgressRequest, error) {
 	if c == nil {
-		return nil, fmt.Errorf("music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music controller is not configured"))
 	}
 	controller := c
 	if snapshot != nil {
@@ -153,7 +155,7 @@ func (c *Controller) RenderMusicProgressFromSnapshot(query ProgressQuery, snapsh
 
 func (c *Controller) RenderMusicProgressFromSnapshotImage(query ProgressQuery, snapshot snapshot.Snapshot, fallbackProfile *drawing.ProfileCardRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicProgressRequestFromSnapshot(query, snapshot, fallbackProfile)

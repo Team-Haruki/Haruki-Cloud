@@ -1,9 +1,11 @@
 package mysekai
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -12,7 +14,7 @@ import (
 func (c *Controller) buildBlueprintShopGroups(query ShopQuery, merged map[string]any, rules []map[string]any, passActive bool, resolver mysekaiResourceResolver) ([]drawing.MysekaiShopGroup, error) {
 	if len(rules) == 0 {
 		if len(nestedList(merged, "userMysekaiBlueprintShopItems")) > 0 || query.ShopType == "blueprint" {
-			return nil, fmt.Errorf("mysekai shop masterdata missing blueprint rules")
+			return nil, shopMasterdataMissing(errors.New("mysekai shop masterdata missing blueprint rules"))
 		}
 		return nil, nil
 	}
@@ -47,13 +49,13 @@ func (c *Controller) buildBlueprintShopGroups(query ShopQuery, merged map[string
 		period := stringValue(row["mysekaiBlueprintShopItemLotteryType"])
 		rule := ruleByType[period]
 		if (period != "daily" && period != "weekly") || rule == nil {
-			return nil, fmt.Errorf("mysekai shop masterdata missing blueprint rule %s", period)
+			return nil, shopMasterdataMissing(fmt.Errorf("mysekai shop masterdata missing blueprint rule %s", period))
 		}
 		id := intNumber(row["mysekaiBlueprintId"], 0)
 		blueprint := blueprints[id]
 		fixture := fixtures[intNumber(blueprint["craftTargetId"], 0)]
 		if blueprint == nil || fixture == nil {
-			return nil, fmt.Errorf("mysekai shop masterdata missing blueprint %d", id)
+			return nil, shopMasterdataMissing(fmt.Errorf("mysekai shop masterdata missing blueprint %d", id))
 		}
 		bought := boolValue(row["isBought"])
 		available := passActive && !bought
@@ -78,7 +80,7 @@ func (c *Controller) buildBlueprintShopGroups(query ShopQuery, merged map[string
 		shopType := "blueprint_" + period
 		group := groups[shopType]
 		if group == nil {
-			title := mysekaiShopTypeTitles[shopType]
+			title := mysekaiShopTypeTitle(shopType)
 			group = &drawing.MysekaiShopGroup{ShopType: shopType, Title: &title}
 			groups[shopType] = group
 		}
@@ -97,28 +99,28 @@ func decorateShopRequest(request *drawing.MysekaiShopRequest) {
 	for gi := range request.Shops {
 		for ii := range request.Shops[gi].Items {
 			item := &request.Shops[gi].Items[ii]
-			name := fmt.Sprintf("ID %d", item.ID)
+			name := i18n.T("mysekai.image.shop.item_unnamed", i18n.Data{"ID": item.ID})
 			if item.Name != nil && *item.Name != "" {
 				name = *item.Name
 			}
 			if item.Owned != nil {
 				if *item.Owned {
-					name += "【已持有】"
+					name += i18n.T("mysekai.image.shop.tag_owned")
 				} else {
-					name += "【未持有】"
+					name += i18n.T("mysekai.image.shop.tag_not_owned")
 				}
 			}
 			if item.MaterialCapacityCount != nil && *item.MaterialCapacityCount == 0 {
-				name += "【材料仓库已满】"
+				name += i18n.T("mysekai.image.shop.tag_storage_full")
 			}
 			if request.PassActive != nil && !*request.PassActive {
-				name += "【需通行证】"
+				name += i18n.T("mysekai.image.shop.tag_pass_required")
 			}
 			if item.IsBought != nil && *item.IsBought {
-				name += "【本期已购买】"
+				name += i18n.T("mysekai.image.shop.tag_bought")
 			}
 			if item.RemainingCount != nil && item.IsBought == nil {
-				name += fmt.Sprintf("【剩余%d次】", *item.RemainingCount)
+				name += i18n.T("mysekai.image.shop.tag_remaining", i18n.Data{"Count": *item.RemainingCount})
 			}
 			item.Name = &name
 		}

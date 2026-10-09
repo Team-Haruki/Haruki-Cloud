@@ -10,9 +10,12 @@ import (
 	"haruki-cloud/database/sekai/card"
 	gachaent "haruki-cloud/database/sekai/gacha"
 	gachaceilitement "haruki-cloud/database/sekai/gachaceilitem"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 type dbGachaProvider struct {
@@ -41,7 +44,7 @@ func (p *dbGachaProvider) init() {
 
 func (p *dbGachaProvider) GetByID(ctx context.Context, id int) (*masterdata.Gacha, error) {
 	if id == 0 {
-		return nil, fmt.Errorf("gacha id is required")
+		return nil, usererror.Misuse(i18n.M("gacha.query_required"))
 	}
 	p.init()
 
@@ -56,6 +59,9 @@ func (p *dbGachaProvider) GetByID(ctx context.Context, id int) (*masterdata.Gach
 		Where(gachaent.ServerRegionEQ(p.region.String()), gachaent.GameIDEQ(int64(id))).
 		Only(ctx)
 	if err != nil {
+		if sekaiDB.IsNotFound(err) {
+			return nil, notfound.Gacha().WithCause(err)
+		}
 		return nil, fmt.Errorf("query gacha %d: %w", id, err)
 	}
 

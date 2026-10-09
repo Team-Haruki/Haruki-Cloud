@@ -2,14 +2,14 @@ package costume
 
 import "testing"
 
-func TestCostumePartLabelBranches(t *testing.T) {
+func TestPartTypeLabelBranches(t *testing.T) {
 	for partType, want := range map[string]string{
-		"head": "饰品",
-		"hair": "发型",
-		"body": "服装",
+		"head": "costume.part.accessory",
+		"hair": "costume.part.hair",
+		"body": "costume.part.outfit",
 	} {
-		if got := costumePartLabel(partType); got != want {
-			t.Fatalf("costumePartLabel(%q) = %q, want %q", partType, got, want)
+		if got := partTypeLabel(partType); got.ID != want {
+			t.Fatalf("partTypeLabel(%q) = %s, want %s", partType, got.ID, want)
 		}
 	}
 }

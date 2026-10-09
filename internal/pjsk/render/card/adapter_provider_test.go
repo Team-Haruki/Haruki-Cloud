@@ -2,17 +2,18 @@ package card
 
 import (
 	"context"
-	json "haruki-cloud/internal/jsonutil"
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 
+	json "haruki-cloud/internal/jsonutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 type adapterTestCardProvider struct {
@@ -180,9 +181,7 @@ func TestProviderAdapterFilterCardsRejectsOutOfRangeBanEvent(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected out-of-range ban event query to fail")
 	}
-	if !strings.Contains(err.Error(), "out of range") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeNotFound, "card.not_found_unspecified")
 	if cardProvider.lastFilter != nil {
 		t.Fatalf("provider filter should not be called on invalid ban event: %+v", cardProvider.lastFilter)
 	}

@@ -195,7 +195,7 @@ func TestExecuteProfileArrestAndRegTimeCoverage(t *testing.T) {
 		t.Fatalf("registration message = %#v", regMessage)
 	}
 	regText, regTextOK := regMessage[0].Data.(onebot11.TextData)
-	if !regTextOK || !strings.Contains(regText.Text, "注册时间") {
+	if !regTextOK || !strings.Contains(regText.Text, userID) || !strings.Contains(regText.Text, "(UTC") {
 		t.Fatalf("registration message = %#v", regMessage)
 	}
 

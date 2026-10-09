@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/storage/storagetest"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/logger"
 )
 
@@ -132,7 +133,7 @@ func TestArtifactHeadersOnCachedAllowListedRequest(t *testing.T) {
 		t.Fatalf("card box = %q, %v", data, err)
 	}
 	ttl := strconv.FormatInt(directiveTTLSeconds(resolveRenderCacheRule("/api/pjsk/card/box").TTL, false), 10)
-	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/card/box")), "1", ttl, "3", "api/pjsk/card/box")
+	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/card/box")), "1", ttl, "4", "api/pjsk/card/box")
 
 	if _, err := client.GenerateEventList(&EventListRequest{}); err != nil {
 		t.Fatalf("event list: %v", err)
@@ -199,15 +200,15 @@ func TestArtifactHeadersOnUncachedCallSites(t *testing.T) {
 	if data, err := client.GenerateEventDetail(&EventDetailRequest{}); err != nil || string(data) != "plain-png" {
 		t.Fatalf("event detail = %q, %v", data, err)
 	}
-	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/event/detail")), "0", "86400", "3", "api/pjsk/event/detail")
+	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/event/detail")), "0", "86400", "4", "api/pjsk/event/detail")
 	server.setShape(shapeDegraded)
 	if data, err := client.GenerateAliasList(&AliasListRequest{}); err != nil || string(data) != "degraded-png" {
 		t.Fatalf("alias list = %q, %v", data, err)
 	}
-	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/misc/alias-list")), "0", "0", "3", "api/pjsk/misc/alias-list")
+	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/misc/alias-list")), "0", "0", "4", "api/pjsk/misc/alias-list")
 
 	server.setShape(shapeRef)
-	if data, err := client.GenerateAliasList(&AliasListRequest{}); err == nil || data != nil || !strings.Contains(err.Error(), "uncached endpoint /api/pjsk/misc/alias-list") {
+	if data, err := client.GenerateAliasList(&AliasListRequest{}); err == nil || data != nil || !strings.Contains(testutil.ErrorDetail(err), "uncached endpoint /api/pjsk/misc/alias-list") {
 		t.Fatalf("Store: 0 answered with a ref = %q, %v", data, err)
 	}
 	server.setShape(shapeBadJSON)
@@ -326,7 +327,7 @@ func TestDirectiveRejectionLogsErrorAndCounts(t *testing.T) {
 	client.logger = logger.NewLogger("drawing-test", "DEBUG", &logs)
 	server.setShape(shapeRejected)
 	_, err := client.WithContext(context.Background()).GenerateEventDetail(&EventDetailRequest{})
-	if err == nil || !strings.Contains(err.Error(), "status 400") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "status 400") {
 		t.Fatalf("rejected directive err = %v", err)
 	}
 	if client.DirectiveRejectedCount() != 1 {

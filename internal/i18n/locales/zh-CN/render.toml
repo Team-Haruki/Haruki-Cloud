@@ -1,0 +1,14 @@
+# 图片渲染：Cloud 发给 Drawing、会被画进图片的通用标签（各图片共用）。
+# 卡牌图片的标签在 render_card.toml，其他图片的标签在各领域的目录里（*.image.*）。
+
+[render.live_short.solo]
+description = "Live 类型的短标签，用在空间很小的位置（歌曲详情图片里排行矩阵的行头）。完整写法见 format.live_type.*。"
+other = "单人"
+
+[render.live_short.multi]
+description = "Live 类型的短标签，用在空间很小的位置（歌曲详情图片里排行矩阵的行头）。完整写法见 format.live_type.*。"
+other = "多人"
+
+[render.live_short.auto]
+description = "Live 类型的短标签，用在空间很小的位置（歌曲详情图片里排行矩阵的行头）。完整写法见 format.live_type.*。"
+other = "自动"

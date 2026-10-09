@@ -1,14 +1,14 @@
 package handler
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
-	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/parser"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/utils/usererror"
 )
 
 func extractDeckFixedTargets(args string, params *deckAutoQueryParams) (string, error) {
@@ -20,7 +20,7 @@ func extractDeckFixedTargets(args string, params *deckAutoQueryParams) (string, 
 	prefix, suffix, _ := strings.Cut(args, "#")
 	fields := strings.Fields(strings.TrimSpace(suffix))
 	if len(fields) == 0 {
-		return "", fmt.Errorf("固定卡牌或固定角色不能为空")
+		return "", usererror.Misuse(i18n.M("deck.fixed.empty"))
 	}
 	targets := deckFixedTargets{
 		cards:            make([]int, 0, len(fields)),
@@ -48,11 +48,11 @@ type deckFixedTargets struct {
 func (t *deckFixedTargets) add(field string) error {
 	token := strings.TrimLeft(strings.TrimSpace(field), "#")
 	if token == "" {
-		return fmt.Errorf("格式错误，#后面请填写卡牌ID或角色")
+		return usererror.Misuse(i18n.M("deck.fixed.empty"))
 	}
 	if value, err := strconv.Atoi(token); err == nil {
 		if value <= 0 {
-			return fmt.Errorf("固定卡牌ID必须为正整数")
+			return usererror.BadParam(token, i18n.M("deck.fixed.card_id_positive"))
 		}
 		t.cards = append(t.cards, value)
 		return nil
@@ -63,7 +63,7 @@ func (t *deckFixedTargets) add(field string) error {
 		return nil
 	}
 	if charQuery == "" {
-		return fmt.Errorf("格式错误，#后面请填写卡牌ID或角色")
+		return usererror.Misuse(i18n.M("deck.fixed.empty"))
 	}
 	t.characterQueries = append(t.characterQueries, charQuery)
 	return nil
@@ -71,18 +71,18 @@ func (t *deckFixedTargets) add(field string) error {
 
 func (t deckFixedTargets) validate() error {
 	if len(t.cards)+len(t.characters)+len(t.characterQueries) > 5 {
-		return fmt.Errorf("固定卡牌和固定角色总数不能超过5个")
+		return usererror.Invalid(i18n.M("deck.fixed.too_many"))
 	}
 	if len(t.cards) > 0 {
-		if err := validateDeckUniqueIDs(t.cards, 5, "固定卡牌"); err != nil {
+		if err := validateDeckUniqueIDs(t.cards, 5, i18n.M("deck.fixed.empty"), i18n.M("deck.fixed.too_many"), i18n.M("deck.fixed.duplicate_cards")); err != nil {
 			return err
 		}
 	}
 	if len(t.characters) > 0 && len(t.characterQueries) == 0 {
-		return validateDeckUniqueIDs(t.characters, 5, "固定角色")
+		return validateDeckUniqueIDs(t.characters, 5, i18n.M("deck.fixed.empty"), i18n.M("deck.fixed.too_many_characters"), i18n.M("deck.fixed.duplicate_characters"))
 	}
 	if len(t.cards)+len(t.characters)+len(t.characterQueries) == 0 {
-		return fmt.Errorf("固定卡牌或固定角色不能为空")
+		return usererror.Misuse(i18n.M("deck.fixed.empty"))
 	}
 	return nil
 }
@@ -135,7 +135,7 @@ func applyDeckWorldBloomFinaleSelection(args string, params *deckAutoQueryParams
 		return "", false, nil
 	}
 	if turn < 2 {
-		return "", true, onebot11.NewReplayError("终章从 wl2 开始，请使用 wl2 终章 或 wl3 终章")
+		return "", true, usererror.Invalid(i18n.M("deck.wl.finale_from_wl2"))
 	}
 	params.WorldBloomFinaleTurn = intPtr(turn)
 	remaining, err := extractDeckFinaleLeaderSelection(remaining, params)
@@ -150,7 +150,7 @@ func applyDeckSimulatedEventSelection(args string, params *deckAutoQueryParams, 
 		return remaining, true, nil
 	}
 	if partial {
-		return "", true, onebot11.NewReplayError("使用方式:\n%s event123\n%s 团名 属性\n%s 角色名 wl1", trigger, trigger, trigger)
+		return "", true, usererror.Misuse(i18n.M("deck.simulated.usage"))
 	}
 	return "", false, nil
 }
@@ -227,11 +227,11 @@ func extractDeckFinaleLeaderSelection(args string, params *deckAutoQueryParams) 
 }
 
 func extractDeckWorldBloomFinaleTurn(args string) (int, string, bool) {
-	if !strings.Contains(args, "终章") {
+	if !strings.Contains(args, "终章") { //copylint:ignore 解析关键字
 		return 0, normalizeDeckSpaces(args), false
 	}
 
-	remaining := normalizeDeckSpaces(strings.Replace(args, "终章", " ", 1))
+	remaining := normalizeDeckSpaces(strings.Replace(args, "终章", " ", 1)) //copylint:ignore 解析关键字
 	matches := deckWlTurnRegex.FindStringSubmatch(remaining)
 	if len(matches) < 2 {
 		return 0, remaining, false
@@ -328,21 +328,17 @@ func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, charQuer
 }
 
 func invalidDeckWorldBloomMixedSelectorError() error {
-	return onebot11.NewReplayError("不能同时指定 WL 章节和角色，请只保留其中一种写法")
+	return usererror.Misuse(i18n.M("deck.wl.mixed_selector"))
 }
 
 func invalidDeckWorldBloomTurnUsageError(trigger string) error {
-	trigger = strings.TrimSpace(trigger)
-	if trigger == "" {
-		return onebot11.NewReplayError("不再支持 wl2 这种 WL 章节写法，请改用 wl1 miku 或 event123 miku")
-	}
-	return onebot11.NewReplayError("不再支持 wl2 这种 WL 章节写法，请改用:\n%s wl1 miku\n%s event123 miku", trigger, trigger)
+	return usererror.Misuse(i18n.M("deck.wl.turn_syntax_removed"))
 }
 
 func extractDeckExplicitEventID(args string) (*int, string) {
 	normalized := normalizeDeckSpaces(args)
-	if strings.Contains(args, "终章") {
-		return intPtr(180), normalizeDeckSpaces(strings.Replace(args, "终章", "", 1))
+	if strings.Contains(args, "终章") { //copylint:ignore 解析关键字
+		return intPtr(180), normalizeDeckSpaces(strings.Replace(args, "终章", "", 1)) //copylint:ignore 解析关键字
 	}
 	matches := deckEventIDRegex.FindStringSubmatch(normalized)
 	if len(matches) < 3 {
@@ -506,16 +502,11 @@ func validateNoEventDeckArgs(args, trigger string) error {
 	if normalizeDeckSpaces(remaining) != "" {
 		return nil
 	}
-	return onebot11.NewReplayError(
-		"使用方式:\n%s\n%s 歌曲名 难度\n%s 团名 属性",
-		trigger,
-		trigger,
-		normalizeNoEventDeckHintTrigger(trigger),
-	)
+	return usererror.Misuse(i18n.M("deck.no_event.simulated_unsupported", i18n.Data{"Command": normalizeNoEventDeckHintTrigger(trigger)}))
 }
 
 func normalizeNoEventDeckHintTrigger(trigger string) string {
-	trigger = strings.Replace(trigger, "最强", "", 1)
-	trigger = strings.Replace(trigger, "长草", "", 1)
+	trigger = strings.Replace(trigger, "最强", "", 1) //copylint:ignore 解析关键字
+	trigger = strings.Replace(trigger, "长草", "", 1) //copylint:ignore 解析关键字
 	return trigger
 }

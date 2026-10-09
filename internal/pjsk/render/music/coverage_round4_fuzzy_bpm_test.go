@@ -189,7 +189,7 @@ func TestMusicFuzzyResolutionEdgeBranches(t *testing.T) {
 		_, err := resolveFuzzyMusicQuery(source, "unrelated", false)
 		{
 			testutil.Require(t, !(err == nil), "missing fuzzy error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "not found"), "missing fuzzy error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.not_found", "missing fuzzy error = %v", err)
 		}
 	}
 
@@ -238,7 +238,7 @@ func TestMusicBPMValidationAndPathHelpers(t *testing.T) {
 		_, err := controller.ResolveMusicCover(Query{Query: "missing", Region: "jp"})
 		{
 			testutil.Require(t, !(err == nil), "cover search error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "failed to search"), "cover search error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "failed to search"), "cover search error = %v", err)
 		}
 	}
 
@@ -247,7 +247,7 @@ func TestMusicBPMValidationAndPathHelpers(t *testing.T) {
 		_, err := controller.ResolveMusicCover(Query{Query: "No Jacket", Region: "jp"})
 		{
 			testutil.Require(t, !(err == nil), "missing jacket error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "jacket"), "missing jacket error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "jacket"), "missing jacket error = %v", err)
 		}
 	}
 	{
@@ -270,7 +270,7 @@ func TestMusicBPMValidationAndPathHelpers(t *testing.T) {
 		_, err := controller.FindMusicChartsByBPM(BPMQuery{BPM: 123.5, Region: "jp", Difficulty: "expert"})
 		{
 			testutil.Require(t, !(err == nil), "no BPM matches error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "123.5"), "no BPM matches error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.bpm.no_chart", "no BPM matches error = %v", err)
 		}
 	}
 	{
@@ -295,7 +295,7 @@ func TestMusicBPMValidationAndPathHelpers(t *testing.T) {
 		_, err := controller.ResolveMusicBPM(Query{Query: "missing", Region: "jp"})
 		{
 			testutil.Require(t, !(err == nil), "BPM search error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "failed to search"), "BPM search error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "failed to search"), "BPM search error = %v", err)
 		}
 	}
 	{
@@ -303,7 +303,7 @@ func TestMusicBPMValidationAndPathHelpers(t *testing.T) {
 		_, err := controller.ResolveMusicBPM(Query{Query: "master No Jacket", Region: "jp"})
 		{
 			testutil.Require(t, !(err == nil), "missing chart error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "本地谱面"), "missing chart error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "common.misconfigured", "missing chart error = %v", err)
 		}
 	}
 
@@ -361,7 +361,7 @@ func TestParseChartBPMMalformedAndDuplicateBranches(t *testing.T) {
 		_, err := parseChartBPM(nil, nil)
 		{
 			testutil.Require(t, !(err == nil), "missing chart error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "open"), "missing chart error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "open"), "missing chart error = %v", err)
 		}
 	}
 

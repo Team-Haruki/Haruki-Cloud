@@ -6,9 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/utils/usererror"
 )
 
 // BlueprintTermQuery requests the limited-time blueprint view built from
@@ -21,23 +23,20 @@ type BlueprintTermQuery struct {
 	NowMillis int64 `json:"-"`
 }
 
-var blueprintTermTabTitles = map[string]string{
-	"limited_term":         "限时蓝图",
-	"birthday_anniversary": "生日/周年蓝图",
+var blueprintTermTabTitles = map[string]i18n.Message{
+	"limited_term":         i18n.M("mysekai.image.blueprint_term.tab_limited"),
+	"birthday_anniversary": i18n.M("mysekai.image.blueprint_term.tab_birthday"),
 }
 
 var blueprintTermTabOrder = map[string]int{"limited_term": 0, "birthday_anniversary": 1}
 
-// blueprintTermTabTitle names a tab; a region whose terms carry no tab type
-// gets one generic tab.
+// blueprintTermTabTitle names a tab; a region whose terms carry no tab type,
+// or a tab type this build does not know yet, gets the generic tab name.
 func blueprintTermTabTitle(tabType string) string {
 	if title, ok := blueprintTermTabTitles[tabType]; ok {
-		return title
+		return title.String()
 	}
-	if tabType == "" {
-		return "限时蓝图"
-	}
-	return tabType
+	return i18n.T("mysekai.image.blueprint_term.tab_limited")
 }
 
 // BuildBlueprintTermRequest lists the current and upcoming limited-time
@@ -50,7 +49,7 @@ func (c *Controller) BuildBlueprintTermRequest(query BlueprintTermQuery) (*drawi
 	region := c.resolveRegion(query.Region)
 	terms := c.masterdata.loadList("mysekaiBlueprintTerms.json")
 	if len(terms) == 0 {
-		return nil, fmt.Errorf("mysekai blueprint terms are not available in region %s", region)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.blueprint_term.region_unavailable"))
 	}
 	now := query.NowMillis
 	if now == 0 {
@@ -99,7 +98,7 @@ func (c *Controller) BuildBlueprintTermRequest(query BlueprintTermQuery) (*drawi
 		tab.Blueprints = append(tab.Blueprints, entry)
 	}
 	if len(tabs) == 0 {
-		return nil, fmt.Errorf("mysekai blueprint terms have no current term in region %s", region)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.blueprint_term.none_current"))
 	}
 	request := &drawing.MysekaiBlueprintTermRequest{Tabs: make([]drawing.MysekaiBlueprintTermTab, 0, len(tabs))}
 	for _, tab := range tabs {
@@ -164,21 +163,26 @@ func (c *Controller) fixtureBlueprintTermInfo(blueprintID int, now int64) []stri
 	}
 	start := int64(intNumber(chosen["startAt"], 0))
 	end := int64(intNumber(chosen["endAt"], 0))
-	label := blueprintTermTabTitle(stringValue(chosen["mysekaiBlueprintTermTabType"]))
-	period := fmt.Sprintf("%s ~ %s", formatBlueprintTermTime(start), formatBlueprintTermTime(end))
-	status := ""
+	loc := displaytime.RequestLocation(c.requestCtx)
+	period := i18n.Data{
+		"Tab":   blueprintTermTabTitle(stringValue(chosen["mysekaiBlueprintTermTabType"])),
+		"Start": i18n.FormatUserTime(time.UnixMilli(start), loc),
+		"End":   i18n.FormatUserTime(time.UnixMilli(end), loc),
+	}
+	var info []string
 	switch {
 	case end < now:
-		status = "(已结束)"
+		info = append(info, i18n.T("mysekai.image.blueprint_term.period_ended", period))
 	case start > now:
-		status = "(未开始)"
+		info = append(info, i18n.T("mysekai.image.blueprint_term.period_upcoming", period))
+	default:
+		info = append(info, i18n.T("mysekai.image.blueprint_term.period", period))
 	}
-	info := []string{fmt.Sprintf("【⏰%s %s%s】", label, period, status)}
 	if limit := intNumber(chosen["craftLimit"], 0); limit > 0 {
-		info = append(info, fmt.Sprintf("【限时期间最多制作%d次】", limit))
+		info = append(info, i18n.T("mysekai.image.blueprint_term.craft_limit", i18n.Data{"Count": limit}))
 	}
 	if costs := c.blueprintTermCostText(intNumber(chosen["mysekaiBlueprintTermMysekaiMaterialCostGroupId"], 0)); costs != "" {
-		info = append(info, fmt.Sprintf("【限时额外材料：%s】", costs))
+		info = append(info, i18n.T("mysekai.image.blueprint_term.extra_materials", i18n.Data{"Materials": costs}))
 	}
 	return info
 }
@@ -197,15 +201,11 @@ func (c *Controller) blueprintTermCostText(groupID int) string {
 		materialID := intNumber(row["mysekaiMaterialId"], 0)
 		name := stringValue(materials[materialID]["name"])
 		if name == "" {
-			name = fmt.Sprintf("素材#%d", materialID)
+			name = i18n.T("common.fallback.mysekai_material", i18n.Data{"ID": materialID})
 		}
-		parts = append(parts, fmt.Sprintf("%s×%d", name, intNumber(row["quantity"], 0)))
+		parts = append(parts, i18n.T("mysekai.image.material_quantity", i18n.Data{"Name": name, "Quantity": intNumber(row["quantity"], 0)}))
 	}
 	return strings.Join(parts, "、")
-}
-
-func formatBlueprintTermTime(ms int64) string {
-	return displaytime.FormatTime(displaytime.TimeFromUnixMillis(ms, displaytime.DefaultTimeZone), "2006-01-02 15:04")
 }
 
 // RenderBlueprintTerm renders the limited-time blueprint view.
@@ -219,7 +219,7 @@ func (c *Controller) RenderBlueprintTerm(query BlueprintTermQuery) ([]byte, erro
 
 func (c *Controller) RenderBlueprintTermImage(query BlueprintTermQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	request, err := c.BuildBlueprintTermRequest(query)

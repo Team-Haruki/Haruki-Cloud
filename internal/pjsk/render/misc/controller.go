@@ -7,6 +7,7 @@ import (
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/utils/usererror"
 )
 
 type Controller struct {
@@ -30,7 +31,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 
 func (c *Controller) BuildCharaBirthdayRequest(req drawing.CharaBirthdayRequest) (*drawing.CharaBirthdayRequest, error) {
 	if req.Cid <= 0 || req.Month <= 0 || req.Day <= 0 {
-		return nil, fmt.Errorf("invalid birthday request")
+		return nil, usererror.Unrecognized()
 	}
 	if len(req.Cards) == 0 {
 		return nil, fmt.Errorf("birthday cards are required")
@@ -48,7 +49,7 @@ func (c *Controller) RenderCharaBirthday(req drawing.CharaBirthdayRequest) ([]by
 
 func (c *Controller) RenderCharaBirthdayImage(req drawing.CharaBirthdayRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	validated, err := c.BuildCharaBirthdayRequest(req)
@@ -88,7 +89,7 @@ func (c *Controller) RenderAliasList(req drawing.AliasListRequest) ([]byte, erro
 
 func (c *Controller) RenderAliasListImage(req drawing.AliasListRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	validated, err := c.BuildAliasListRequest(req)

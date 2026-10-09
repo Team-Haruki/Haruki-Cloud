@@ -358,7 +358,12 @@ type sharedCommandOperation struct {
 }
 
 type sharedCommandResult struct {
+	// Response is the reply without parameter echo. EchoResponse, set only
+	// for an error reply that differs with echo, is the reply for a client
+	// that enabled EnableParamEcho. Both are kept because the bot that
+	// delivers a shared result may not be the one that executed it.
 	Response      encodedBotResponse       `msgpack:"response"`
+	EchoResponse  encodedBotResponse       `msgpack:"echo_response,omitempty"`
 	Metadata      sharedCommandMetadata    `msgpack:"metadata"`
 	Operations    []sharedCommandOperation `msgpack:"operations,omitempty"`
 	ForceExecutor bool                     `msgpack:"force_executor"`

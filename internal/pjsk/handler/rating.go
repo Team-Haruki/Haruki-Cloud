@@ -1,11 +1,10 @@
 package handler
 
 import (
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 )
-
-const ratingUnavailableMessage = "官方并没有提供详细定数，故不提供该服务"
 
 func (sekaiHandlers) B30Handle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
@@ -21,5 +20,5 @@ func (sekaiHandlers) B30Handle() HarukiSekaiCommandHandler {
 }
 
 func executeRatingUnavailable(*RequestContext) (onebot11.Message, error) {
-	return onebot11.Message{onebot11.Text(ratingUnavailableMessage)}, nil
+	return onebot11.Message{onebot11.Text(i18n.T("music.b30.unavailable"))}, nil
 }

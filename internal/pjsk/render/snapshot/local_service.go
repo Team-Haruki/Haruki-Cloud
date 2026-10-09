@@ -82,7 +82,7 @@ func (s *Service) Configured() bool {
 
 func (s *Service) Require() error {
 	if s == nil || !s.configured {
-		return fmt.Errorf("local user snapshot is not configured")
+		return ErrNotConfigured
 	}
 	if s.initErr != nil {
 		return s.initErr
@@ -129,7 +129,8 @@ func (s *Service) ProfileCard(region renderregion.Value) *drawing.ProfileCardReq
 		},
 		DataSources: []drawing.ProfileDataSource{
 			{
-				Name:       "Suite数据",
+				Name:       common.DataSourceLabel(drawing.DataSourceSuite),
+				Kind:       drawing.DataSourceSuite,
 				Source:     new(detail.Source),
 				UpdateTime: new(detail.UpdateTime),
 				Mode:       common.CloneStringPtr(detail.Mode),

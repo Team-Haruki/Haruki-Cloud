@@ -7,32 +7,33 @@ import (
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
-func unverifiedBindingProfileBGError(binding *pjskdb.UserBinding, action string) error {
+func unverifiedBindingProfileBGError(binding *pjskdb.UserBinding) error {
 	server := strings.ToLower(strings.TrimSpace(bindingServer(binding)))
-	return fmt.Errorf(
-		"当前%s服绑定账号尚未验证，无法%s个人信息背景，请前往工具箱https://haruki.seiunx.com/通过游戏账号验证后再发送/%spjsk verify来进行验证",
-		strings.ToUpper(server),
-		action,
-		server,
-	)
+	return usererror.Setup(i18n.M("profile.bg.unverified", i18n.Data{
+		"Region":      i18n.RegionLabel(server),
+		"Command":     "/" + server + "pjsk验证", //copylint:ignore 指令触发词
+		"ToolboxLink": i18n.M("binding.toolbox_link"),
+	}))
 }
 
 func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding, imageURL string) (*BindingListItem, error) {
 	if s == nil || s.bgStorage == nil {
-		return nil, fmt.Errorf("pjsk: profile background storage is not configured")
+		return nil, usererror.Misconfigured(errors.New("pjsk: profile background storage is not configured"))
 	}
 	if err := s.requireWritable(); err != nil {
 		return nil, err
 	}
 	if binding == nil {
-		return nil, fmt.Errorf("未找到要设置背景的绑定账号")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("profile.bg.binding_missing"))
 	}
 	if !binding.Verified {
-		return nil, unverifiedBindingProfileBGError(binding, "设置")
+		return nil, unverifiedBindingProfileBGError(binding)
 	}
 
 	if err := s.validateProfileBGUpload(ctx, binding, imageURL); err != nil {
@@ -77,26 +78,26 @@ func (s *BindingService) validateProfileBGUpload(
 ) error {
 	userSettings, err := GetUserSettings(ctx, s.pjskDB, binding.HarukiUserID)
 	if err != nil && !errors.Is(err, ErrUserSettingsNotFound) {
-		return fmt.Errorf("读取用户设置失败: %w", err)
+		return usererror.Unavailable(i18n.FeatureAccount, fmt.Errorf("read user settings: %w", err))
 	}
 	currentCount := 0
 	if userSettings != nil {
 		currentCount = userSettings.NoncompliantBGCount
 	}
 	if currentCount >= 3 {
-		return fmt.Errorf("已达到背景图片违规上传上限（%d/3），背景上传功能已被禁用", currentCount)
+		return usererror.Forbidden(i18n.M("profile.bg.upload_disabled", i18n.Data{"Count": currentCount, "Max": 3}))
 	}
 	if s.censor == nil || s.censor.CensorImage(ctx, binding.HarukiUserID, imageURL) {
 		return nil
 	}
 	newCount, err := IncrNoncompliantBGCount(ctx, s.pjskDB, binding.HarukiUserID)
 	if err != nil {
-		return fmt.Errorf("背景图片内容审核未通过，且无法更新违规计数: %w", err)
+		return usererror.Wrap(usererror.CodeInput, i18n.M("profile.bg.rejected", i18n.Data{"Count": currentCount + 1, "Max": 3}), fmt.Errorf("update noncompliant background count: %w", err))
 	}
 	if newCount >= 3 {
-		return fmt.Errorf("背景图片内容审核未通过，背景上传功能已被禁用（违规次数已达 3/3）")
+		return usererror.Forbidden(i18n.M("profile.bg.rejected_disabled", i18n.Data{"Max": 3}))
 	}
-	return fmt.Errorf("背景图片内容审核未通过，请更换图片（违规次数：%d/3）", newCount)
+	return usererror.Invalid(i18n.M("profile.bg.rejected", i18n.Data{"Count": newCount, "Max": 3}))
 }
 
 func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding) (*BindingListItem, error) {
@@ -104,10 +105,10 @@ func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, pl
 		return nil, err
 	}
 	if binding == nil {
-		return nil, fmt.Errorf("未找到要清除背景的绑定账号")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("profile.bg.binding_missing"))
 	}
 	if !binding.Verified {
-		return nil, unverifiedBindingProfileBGError(binding, "清除")
+		return nil, unverifiedBindingProfileBGError(binding)
 	}
 	gameAccountID := bindingGameAccountID(binding)
 	settings, revision, err := loadProfileBackgroundRevision(ctx, s.pjskDB, gameAccountID)
@@ -127,10 +128,10 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 		return nil, err
 	}
 	if binding == nil {
-		return nil, fmt.Errorf("未找到要调整背景的绑定账号")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("profile.bg.binding_missing"))
 	}
 	if !binding.Verified {
-		return nil, unverifiedBindingProfileBGError(binding, "调整")
+		return nil, unverifiedBindingProfileBGError(binding)
 	}
 	gameAccountID := bindingGameAccountID(binding)
 	currentBg, revision, err := loadProfileBackgroundRevision(ctx, s.pjskDB, gameAccountID)
@@ -138,7 +139,7 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 		return nil, err
 	}
 	if currentBg == nil || currentBg.ImgPath == nil || strings.TrimSpace(*currentBg.ImgPath) == "" {
-		return nil, fmt.Errorf("当前%s服还没有自定义个人信息背景", strings.ToUpper(bindingServer(binding)))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("profile.bg.none", i18n.Data{"Region": i18n.RegionLabel(bindingServer(binding))}))
 	}
 
 	settings := cloneProfileBGSettings(currentBg)
@@ -158,7 +159,8 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 }
 
-// SetBindingVisible sets the visibility flag for the current binding.
+// SetBindingVisible shows or hides every exposure (UID, ranking, profile,
+// arrest) of the current binding at once, like /显示全部 and /隐藏全部.
 func (s *BindingService) SetBindingVisible(ctx context.Context, platform, platformUserID, server string, visible bool) (*BindingListItem, error) {
 	if err := s.requireWritable(); err != nil {
 		return nil, err
@@ -167,8 +169,7 @@ func (s *BindingService) SetBindingVisible(ctx context.Context, platform, platfo
 	if err != nil {
 		return nil, err
 	}
-	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
-		SetVisible(visible).
+	if _, err := setBindingVisibility(s.pjskDB.UserBinding.UpdateOneID(binding.ID), UniformVisibility(visible)).
 		Save(ctx); err != nil {
 		return nil, err
 	}
@@ -238,7 +239,7 @@ func (s *BindingService) verifyBindingEntity(ctx context.Context, platform, plat
 		}
 	}
 	if !matched {
-		return nil, false, fmt.Errorf("当前%s服绑定账号未出现在快速验证列表中", strings.ToUpper(bindingServer(binding)))
+		return nil, false, usererror.Setup(i18n.M("binding.verify.not_listed", i18n.Data{"Region": i18n.RegionLabel(bindingServer(binding))}))
 	}
 	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
 		SetVerified(true).
@@ -252,7 +253,7 @@ func (s *BindingService) verifyBindingEntity(ctx context.Context, platform, plat
 // VerifyCurrentBinding verifies the current binding using fast verification.
 func (s *BindingService) VerifyCurrentBinding(ctx context.Context, platform, platformUserID, server string) (*BindingListItem, bool, error) {
 	if s == nil || s.fastVerifier == nil {
-		return nil, false, fmt.Errorf("pjsk: fast verification provider is not configured")
+		return nil, false, usererror.Misconfigured(errors.New("pjsk: fast verification provider is not configured"))
 	}
 	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
 	if err != nil {
@@ -268,7 +269,7 @@ func (s *BindingService) ListVerifiedBindings(ctx context.Context, platform, pla
 	}
 	server = strings.TrimSpace(strings.ToLower(server))
 	if server == "" {
-		return nil, fmt.Errorf("请提供区服")
+		return nil, usererror.Misuse(i18n.M("binding.region_required"))
 	}
 	items, err := s.List(ctx, platform, platformUserID)
 	if err != nil {

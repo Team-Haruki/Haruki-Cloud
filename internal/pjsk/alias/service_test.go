@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"haruki-cloud/internal/identity"
 
 	_ "github.com/mattn/go-sqlite3"
+	"haruki-cloud/internal/testutil"
 )
 
 type aliasTestDeps struct {
@@ -278,7 +278,7 @@ func TestServiceGetSubmitterAndBanAliasSubmissions(t *testing.T) {
 		t.Fatalf("unexpected submission ban: %+v", ban)
 	}
 
-	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "12345", "5210", []string{"再次提交"}); err == nil || !strings.Contains(err.Error(), "已被禁止提交别名") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "12345", "5210", []string{"再次提交"}); testutil.MessageID(err) != "alias.submitter_banned" {
 		t.Fatalf("expected banned submission error, got %v", err)
 	}
 	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "54321", "5210", []string{"其他用户提交"}); err != nil {
@@ -299,10 +299,10 @@ func TestServiceSubmitterModerationRequiresAdmin(t *testing.T) {
 		t.Fatalf("Submit() error = %v", err)
 	}
 
-	if _, err := deps.service.GetSubmitter(ctx, "qq", "not-admin", records[0].ReviewID); err == nil || !strings.Contains(err.Error(), "你不是别名审核管理员") {
+	if _, err := deps.service.GetSubmitter(ctx, "qq", "not-admin", records[0].ReviewID); testutil.MessageID(err) != "alias.not_admin" {
 		t.Fatalf("expected non-admin submitter query error, got %v", err)
 	}
-	if _, err := deps.service.BanSubmitter(ctx, "qq", "not-admin", "qq", "12346"); err == nil || !strings.Contains(err.Error(), "你不是别名审核管理员") {
+	if _, err := deps.service.BanSubmitter(ctx, "qq", "not-admin", "qq", "12346"); testutil.MessageID(err) != "alias.not_admin" {
 		t.Fatalf("expected non-admin submission ban error, got %v", err)
 	}
 }
@@ -429,16 +429,16 @@ func TestServiceReviewRequiresAdmin(t *testing.T) {
 		t.Fatalf("Submit() error = %v", err)
 	}
 
-	if _, err := deps.service.ListPending(ctx, "qq", "not-admin"); err == nil || !strings.Contains(err.Error(), "你不是别名审核管理员") {
+	if _, err := deps.service.ListPending(ctx, "qq", "not-admin"); testutil.MessageID(err) != "alias.not_admin" {
 		t.Fatalf("expected non-admin list error, got %v", err)
 	}
-	if _, err := deps.service.Approve(ctx, "qq", "not-admin", []int64{records[0].ReviewID}); err == nil || !strings.Contains(err.Error(), "你不是别名审核管理员") {
+	if _, err := deps.service.Approve(ctx, "qq", "not-admin", []int64{records[0].ReviewID}); testutil.MessageID(err) != "alias.not_admin" {
 		t.Fatalf("expected non-admin approve error, got %v", err)
 	}
-	if _, err := deps.service.Reject(ctx, "qq", "not-admin", records[0].ReviewID, "no"); err == nil || !strings.Contains(err.Error(), "你不是别名审核管理员") {
+	if _, err := deps.service.Reject(ctx, "qq", "not-admin", records[0].ReviewID, "no"); testutil.MessageID(err) != "alias.not_admin" {
 		t.Fatalf("expected non-admin reject error, got %v", err)
 	}
-	if _, err := deps.service.Delete(ctx, PjskAliasTypeMusic, "qq", "not-admin", "5203", []string{"梦航旧称"}); err == nil || !strings.Contains(err.Error(), "你不是别名审核管理员") {
+	if _, err := deps.service.Delete(ctx, PjskAliasTypeMusic, "qq", "not-admin", "5203", []string{"梦航旧称"}); testutil.MessageID(err) != "alias.not_admin" {
 		t.Fatalf("expected non-admin delete error, got %v", err)
 	}
 }
@@ -454,7 +454,7 @@ func TestServiceRejectManyIsAtomic(t *testing.T) {
 	}
 
 	_, err = deps.service.RejectMany(ctx, "qq", "9011", []int64{records[0].ReviewID, records[1].ReviewID + 1000}, "批量拒绝")
-	if err == nil || !strings.Contains(err.Error(), "未找到待审核别名ID") {
+	if err == nil || testutil.MessageID(err) != "alias.review_not_found" {
 		t.Fatalf("expected missing ID error, got %v", err)
 	}
 	pendingCount, err := deps.pjsk.PendingAlias.Query().Count(ctx)
@@ -493,19 +493,19 @@ func TestServiceSubmitRejectsMusicConflicts(t *testing.T) {
 	deps.addMusic(t, ctx, 5205, "天ノ弱")
 	deps.addApprovedAlias(t, ctx, PjskAliasTypeMusic, 5204, "蓝歌")
 
-	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"重复歌", " 重复歌 "}); err == nil || !strings.Contains(err.Error(), "重复") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"重复歌", " 重复歌 "}); testutil.MessageID(err) != "alias.duplicate_in_request" {
 		t.Fatalf("expected duplicate alias submission error, got %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"天ノ弱"}); err == nil || !strings.Contains(err.Error(), "与已有曲名重复") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"天ノ弱"}); testutil.MessageID(err) != "alias.conflicts_name" {
 		t.Fatalf("expected title conflict error, got %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"蓝歌"}); err == nil || !strings.Contains(err.Error(), "已审核列表") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"蓝歌"}); testutil.MessageID(err) != "alias.already_approved" {
 		t.Fatalf("expected approved alias conflict error, got %v", err)
 	}
 	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"待审核歌"}); err != nil {
 		t.Fatalf("Submit() for pending conflict setup error = %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"待审核歌"}); err == nil || !strings.Contains(err.Error(), "待审核列表") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"待审核歌"}); testutil.MessageID(err) != "alias.already_pending" {
 		t.Fatalf("expected pending alias conflict error, got %v", err)
 	}
 }
@@ -517,19 +517,19 @@ func TestServiceSubmitRejectsCharacterConflicts(t *testing.T) {
 	deps.addCharacter(t, ctx, 4, "天马", "司", "Tenma", "Tsukasa")
 	deps.addApprovedAlias(t, ctx, PjskAliasTypeCharacter, 4, "司君")
 
-	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"葱", " 葱 "}); err == nil || !strings.Contains(err.Error(), "重复") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"葱", " 葱 "}); testutil.MessageID(err) != "alias.duplicate_in_request" {
 		t.Fatalf("expected duplicate alias submission error, got %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"天马司"}); err == nil || !strings.Contains(err.Error(), "与已有角色名重复") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"天马司"}); testutil.MessageID(err) != "alias.conflicts_name" {
 		t.Fatalf("expected character name conflict error, got %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"司君"}); err == nil || !strings.Contains(err.Error(), "已审核列表") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"司君"}); testutil.MessageID(err) != "alias.already_approved" {
 		t.Fatalf("expected approved alias conflict error, got %v", err)
 	}
 	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"王子殿下"}); err != nil {
 		t.Fatalf("Submit() for pending conflict setup error = %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"王子殿下"}); err == nil || !strings.Contains(err.Error(), "待审核列表") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"王子殿下"}); testutil.MessageID(err) != "alias.already_pending" {
 		t.Fatalf("expected pending alias conflict error, got %v", err)
 	}
 }

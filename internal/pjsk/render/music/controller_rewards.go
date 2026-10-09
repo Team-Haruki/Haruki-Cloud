@@ -1,8 +1,6 @@
 package music
 
 import (
-	"fmt"
-
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/snapshot"
@@ -30,7 +28,7 @@ func (c *Controller) RenderMusicRewardsDetail(query RewardsDetailQuery) ([]byte,
 
 func (c *Controller) RenderMusicRewardsDetailImage(query RewardsDetailQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicRewardsDetailRequest(query)
@@ -51,7 +49,7 @@ func (c *Controller) RenderMusicRewardsDetailFromAchievements(query RewardsDetai
 
 func (c *Controller) RenderMusicRewardsDetailFromAchievementsImage(query RewardsDetailQuery, achievementsJSON []byte) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicRewardsDetailRequestFromAchievements(query, achievementsJSON)
@@ -72,7 +70,7 @@ func (c *Controller) RenderMusicRewardsDetailFromSnapshot(query RewardsDetailQue
 
 func (c *Controller) RenderMusicRewardsDetailFromSnapshotImage(query RewardsDetailQuery, snapshot snapshot.Snapshot) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicRewardsDetailRequestFromSnapshot(query, snapshot)
@@ -93,7 +91,7 @@ func (c *Controller) RenderMusicRewardsDetailRequest(payload *drawing.DetailMusi
 
 func (c *Controller) RenderMusicRewardsDetailRequestImage(payload *drawing.DetailMusicRewardsRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	return c.drawing.GenerateDetailMusicRewardsImage(payload)
 }
@@ -128,7 +126,7 @@ func (c *Controller) RenderMusicRewardsBasic(query RewardsBasicQuery) ([]byte, e
 
 func (c *Controller) RenderMusicRewardsBasicImage(query RewardsBasicQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicRewardsBasicRequest(query)
@@ -149,7 +147,7 @@ func (c *Controller) RenderMusicRewardsBasicEstimate(query RewardsBasicQuery, cl
 
 func (c *Controller) RenderMusicRewardsBasicEstimateImage(query RewardsBasicQuery, clearCounts []sekai.AnotherUserMusicDifficultyClearCount, reason string) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicRewardsBasicEstimateRequest(query, clearCounts, reason)

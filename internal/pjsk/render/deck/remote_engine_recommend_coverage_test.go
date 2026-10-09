@@ -11,6 +11,7 @@ import (
 
 	"haruki-cloud/internal/core/upstream"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/logger"
 
 	"golang.org/x/sync/singleflight"
@@ -57,11 +58,11 @@ func TestDoRecommendBatchCoversProtocolErrors(t *testing.T) {
 	exec := testRemoteExecution(t, remote)
 	defer exec.Release()
 	request := testRemoteRecommendRequest()
-	if _, err := remote.doRecommendBatch(context.Background(), exec, request); err == nil || !strings.Contains(err.Error(), "empty userdata_hash") {
+	if _, err := remote.doRecommendBatch(context.Background(), exec, request); err == nil || !strings.Contains(testutil.ErrorDetail(err), "empty userdata_hash") {
 		t.Fatalf("empty hash error = %v", err)
 	}
 	mode.Store(1)
-	if _, err := remote.doRecommendBatch(context.Background(), exec, request); err == nil || !strings.Contains(err.Error(), "HTTP 400") {
+	if _, err := remote.doRecommendBatch(context.Background(), exec, request); err == nil || !strings.Contains(testutil.ErrorDetail(err), "HTTP 400") {
 		t.Fatalf("recommend error = %v", err)
 	}
 	request.BatchOption = []map[string]any{{"unsupported": make(chan int)}}

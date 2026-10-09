@@ -1,7 +1,6 @@
 package displaytime
 
 import (
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -81,30 +80,4 @@ func FormatTime(t time.Time, layout string) string {
 		layout = defaultLayout
 	}
 	return t.Format(layout)
-}
-
-func FormatRelativeDuration(d time.Duration) string {
-	if d < time.Minute {
-		return "刚刚"
-	}
-	mins := int(d.Minutes()) % 60
-	hrs := int(d.Hours()) % 24
-	days := int(d.Hours()) / 24
-	if days > 0 {
-		if hrs == 0 && mins == 0 {
-			return "约" + itoa(days) + "天前"
-		}
-		return "约" + itoa(days) + "天" + itoa(hrs) + "小时前"
-	}
-	if hrs > 0 {
-		if mins == 0 {
-			return "约" + itoa(hrs) + "小时前"
-		}
-		return "约" + itoa(hrs) + "小时" + itoa(mins) + "分钟前"
-	}
-	return "约" + itoa(mins) + "分钟前"
-}
-
-func itoa(v int) string {
-	return strconv.Itoa(v)
 }

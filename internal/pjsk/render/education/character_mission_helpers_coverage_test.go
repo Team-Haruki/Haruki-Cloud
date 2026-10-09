@@ -6,13 +6,15 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestCharacterMissionQueryHelpers(t *testing.T) {
-	if got := CharacterMissionShortName("play_live"); got != "队长次数" {
+	if got := CharacterMissionShortName("play_live"); got != i18n.T("education.mission.play_live") {
 		t.Fatalf("known short name = %q", got)
 	}
 	if got := CharacterMissionShortName("future_type"); got != "future_type" {
@@ -48,6 +50,12 @@ func TestCharacterMissionQueryHelpers(t *testing.T) {
 		{input: "一歌 大树", wantType: "area_item_level_up_all_character"},
 		{input: "一歌 想いの大樹", wantType: "area_item_level_up_all_character"},
 		{input: "一歌 花树", wantType: "area_item_level_up_reality_world"},
+		{input: "一歌 属性道具（树&花）升级次数", wantType: "area_item_level_up_reality_world"},
+		{input: "一歌 技能等级升级次数（★1~★3）", wantType: "skill_level_up_standard"},
+		{input: "一歌 专精等级升级次数(★4&生日卡)", wantType: "master_rank_up_rare"},
+		{input: "一歌 队长次数（EX）", wantType: "play_live"},
+		{input: "一歌 MySekai家具数量", wantType: "collect_mysekai_fixture"},
+		{input: "一歌 waiting_room_ex", wantType: "waiting_room_ex"},
 		{input: "  一歌  ", wantQuery: "一歌"},
 	}
 	for _, tt := range typeTests {
@@ -122,7 +130,7 @@ func assertCharacterMissionMetadataLookups(t *testing.T, mission *CharacterMissi
 	if got := characterMissionDisplayName(1); got != "星乃一歌" {
 		t.Fatalf("known character display name = %q", got)
 	}
-	if got := characterMissionDisplayName(99); got != "角色99" {
+	if got := characterMissionDisplayName(99); got != i18n.T("common.fallback.character", i18n.Data{"ID": 99}) {
 		t.Fatalf("fallback character display name = %q", got)
 	}
 }
@@ -212,14 +220,14 @@ func assertCharacterMissionRoundHelpers(t *testing.T, groups []*CharacterMission
 
 func TestCharacterMissionSnapshotValidation(t *testing.T) {
 	var nilController *Controller
-	if _, err := nilController.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(err.Error(), "not initialized") {
+	if _, err := nilController.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "not initialized") {
 		t.Fatalf("nil controller error = %v", err)
 	}
 
 	source := &testSource{region: renderregion.JP}
 	controller := NewController(nil, nil, nil, renderregion.JP)
 	controller.RegisterSource(source)
-	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(err.Error(), "snapshot") {
+	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "snapshot") {
 		t.Fatalf("missing snapshot error = %v", err)
 	}
 
@@ -232,26 +240,43 @@ func TestCharacterMissionSnapshotValidation(t *testing.T) {
 
 	profile := &drawing.DetailedProfileCardRequest{ID: "1", Region: "JP"}
 	controller = NewController(nil, nil, &educationSnapshotStub{profile: profile, raw: &rendersnapshot.RawUserData{}}, renderregion.JP)
-	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(err.Error(), "data source") {
+	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "data source") {
 		t.Fatalf("missing source error = %v", err)
 	}
 
 	controller.RegisterSource(source)
-	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(err.Error(), "character id") {
+	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "character id") {
 		t.Fatalf("missing character id error = %v", err)
 	}
-	if _, err := controller.BuildCharacterMissionAllRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(err.Error(), "mission type") {
+	if _, err := controller.BuildCharacterMissionAllRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "mission type") {
 		t.Fatalf("missing mission type error = %v", err)
 	}
 
 	controller = NewController(nil, nil, &educationSnapshotStub{profile: profile}, renderregion.JP)
 	controller.RegisterSource(source)
-	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(err.Error(), "raw suite") {
+	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "raw suite") {
 		t.Fatalf("missing raw data error = %v", err)
 	}
 	controller = NewController(nil, nil, &educationSnapshotStub{raw: &rendersnapshot.RawUserData{}}, renderregion.JP)
 	controller.RegisterSource(source)
-	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(err.Error(), "profile") {
+	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "profile") {
 		t.Fatalf("missing profile error = %v", err)
+	}
+}
+
+// A title copied from the character mission image selects its own mission
+// type (an EX title its base type), with full-width or half-width
+// parentheses.
+func TestCharacterMissionTitlesParseToTheirOwnType(t *testing.T) {
+	for missionType, title := range characterMissionTitles {
+		want := missionType
+		if _, ex := CharacterMissionExTypes[missionType]; ex {
+			want = strings.TrimSuffix(missionType, "_ex")
+		}
+		for _, query := range []string{title.String(), normalizeCharacterMissionQuery(title.String())} {
+			if got, rest := ExtractCharacterMissionType("miku all " + query); got != want {
+				t.Errorf("title %q parsed to %q (rest %q), want %q", query, got, rest, want)
+			}
+		}
 	}
 }

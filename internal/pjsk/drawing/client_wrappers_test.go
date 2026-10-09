@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestDrawingClientConstructorsAndNilBehavior(t *testing.T) {
@@ -21,7 +22,7 @@ func TestDrawingClientConstructorsAndNilBehavior(t *testing.T) {
 	if client == nil || client.client.GetClient().Timeout != 3*time.Second || client.client.RetryCount != 2 {
 		t.Fatalf("configured client = %#v", client)
 	}
-	if _, err := client.postPrepared("/render", map[string]any{}); err == nil || !strings.Contains(err.Error(), "base_url is empty") {
+	if _, err := client.postPrepared("/render", map[string]any{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "base_url is empty") {
 		t.Fatalf("empty base URL error = %v", err)
 	}
 	client.SetRenderCache(nil)

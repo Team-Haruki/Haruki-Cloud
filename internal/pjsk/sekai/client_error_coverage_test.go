@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/testutil"
 )
 
 func newSekaiResponseClient(t *testing.T, status int, body string) *HarukiSekaiAPIClient {
@@ -94,16 +95,16 @@ func TestSekaiAPINilReceiverScoreMethods(t *testing.T) {
 
 func TestSekaiAPIRejectsMalformedJSONResponses(t *testing.T) {
 	client := newSekaiResponseClient(t, http.StatusOK, "not-json")
-	if _, err := client.GetUserProfile("jp", "1"); err == nil || !strings.Contains(err.Error(), "profile response") {
+	if _, err := client.GetUserProfile("jp", "1"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "profile response") {
 		t.Fatalf("profile error = %v", err)
 	}
-	if _, err := client.GetSystem("jp"); err == nil || !strings.Contains(err.Error(), "system response") {
+	if _, err := client.GetSystem("jp"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "system response") {
 		t.Fatalf("system error = %v", err)
 	}
-	if _, err := client.GetInformation("jp"); err == nil || !strings.Contains(err.Error(), "information response") {
+	if _, err := client.GetInformation("jp"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "information response") {
 		t.Fatalf("information error = %v", err)
 	}
-	if _, err := client.GetCustomMusicScorePublished("jp", "score"); err == nil || !strings.Contains(err.Error(), "custom music score response") {
+	if _, err := client.GetCustomMusicScorePublished("jp", "score"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "custom music score response") {
 		t.Fatalf("custom score error = %v", err)
 	}
 }
@@ -133,10 +134,10 @@ func TestSekaiAPIMapsResponseStatuses(t *testing.T) {
 }
 
 func TestSekaiAPIReportsMissingBaseURL(t *testing.T) {
-	if _, err := NewSekaiAPIClient(nil).GetSystem("jp"); err == nil || !strings.Contains(err.Error(), "base_url is empty") {
+	if _, err := NewSekaiAPIClient(nil).GetSystem("jp"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "base_url is empty") {
 		t.Fatalf("nil config error = %v", err)
 	}
-	if _, err := NewSekaiAPIClient(&config.SekaiAPIConfig{}).GetSystem("jp"); err == nil || !strings.Contains(err.Error(), "base_url is empty") {
+	if _, err := NewSekaiAPIClient(&config.SekaiAPIConfig{}).GetSystem("jp"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "base_url is empty") {
 		t.Fatalf("empty config error = %v", err)
 	}
 }
@@ -319,7 +320,7 @@ func toolboxBindingError(t *testing.T, status int, body string) error {
 func TestToolboxRejectsMalformedBindings(t *testing.T) {
 	client := newToolboxResponseClient(t, http.StatusOK, "not-json")
 	_, err := client.GetToolboxUserFastVerificationGameAccountBindingsContext(context.Background(), "qq", "2")
-	if err == nil || !strings.Contains(err.Error(), "failed to parse game bindings") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "failed to parse game bindings") {
 		t.Fatalf("bindings error = %v", err)
 	}
 }

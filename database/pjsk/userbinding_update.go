@@ -105,6 +105,86 @@ func (_u *UserBindingUpdate) SetNillableVisible(v *bool) *UserBindingUpdate {
 	return _u
 }
 
+// SetUIDVisible sets the "uid_visible" field.
+func (_u *UserBindingUpdate) SetUIDVisible(v bool) *UserBindingUpdate {
+	_u.mutation.SetUIDVisible(v)
+	return _u
+}
+
+// SetNillableUIDVisible sets the "uid_visible" field if the given value is not nil.
+func (_u *UserBindingUpdate) SetNillableUIDVisible(v *bool) *UserBindingUpdate {
+	if v != nil {
+		_u.SetUIDVisible(*v)
+	}
+	return _u
+}
+
+// ClearUIDVisible clears the value of the "uid_visible" field.
+func (_u *UserBindingUpdate) ClearUIDVisible() *UserBindingUpdate {
+	_u.mutation.ClearUIDVisible()
+	return _u
+}
+
+// SetSkVisible sets the "sk_visible" field.
+func (_u *UserBindingUpdate) SetSkVisible(v bool) *UserBindingUpdate {
+	_u.mutation.SetSkVisible(v)
+	return _u
+}
+
+// SetNillableSkVisible sets the "sk_visible" field if the given value is not nil.
+func (_u *UserBindingUpdate) SetNillableSkVisible(v *bool) *UserBindingUpdate {
+	if v != nil {
+		_u.SetSkVisible(*v)
+	}
+	return _u
+}
+
+// ClearSkVisible clears the value of the "sk_visible" field.
+func (_u *UserBindingUpdate) ClearSkVisible() *UserBindingUpdate {
+	_u.mutation.ClearSkVisible()
+	return _u
+}
+
+// SetProfileVisible sets the "profile_visible" field.
+func (_u *UserBindingUpdate) SetProfileVisible(v bool) *UserBindingUpdate {
+	_u.mutation.SetProfileVisible(v)
+	return _u
+}
+
+// SetNillableProfileVisible sets the "profile_visible" field if the given value is not nil.
+func (_u *UserBindingUpdate) SetNillableProfileVisible(v *bool) *UserBindingUpdate {
+	if v != nil {
+		_u.SetProfileVisible(*v)
+	}
+	return _u
+}
+
+// ClearProfileVisible clears the value of the "profile_visible" field.
+func (_u *UserBindingUpdate) ClearProfileVisible() *UserBindingUpdate {
+	_u.mutation.ClearProfileVisible()
+	return _u
+}
+
+// SetArrestVisible sets the "arrest_visible" field.
+func (_u *UserBindingUpdate) SetArrestVisible(v bool) *UserBindingUpdate {
+	_u.mutation.SetArrestVisible(v)
+	return _u
+}
+
+// SetNillableArrestVisible sets the "arrest_visible" field if the given value is not nil.
+func (_u *UserBindingUpdate) SetNillableArrestVisible(v *bool) *UserBindingUpdate {
+	if v != nil {
+		_u.SetArrestVisible(*v)
+	}
+	return _u
+}
+
+// ClearArrestVisible clears the value of the "arrest_visible" field.
+func (_u *UserBindingUpdate) ClearArrestVisible() *UserBindingUpdate {
+	_u.mutation.ClearArrestVisible()
+	return _u
+}
+
 // SetSuiteVisible sets the "suite_visible" field.
 func (_u *UserBindingUpdate) SetSuiteVisible(v bool) *UserBindingUpdate {
 	_u.mutation.SetSuiteVisible(v)
@@ -249,6 +329,30 @@ func (_u *UserBindingUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.Visible(); ok {
 		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.UIDVisible(); ok {
+		_spec.SetField(userbinding.FieldUIDVisible, field.TypeBool, value)
+	}
+	if _u.mutation.UIDVisibleCleared() {
+		_spec.ClearField(userbinding.FieldUIDVisible, field.TypeBool)
+	}
+	if value, ok := _u.mutation.SkVisible(); ok {
+		_spec.SetField(userbinding.FieldSkVisible, field.TypeBool, value)
+	}
+	if _u.mutation.SkVisibleCleared() {
+		_spec.ClearField(userbinding.FieldSkVisible, field.TypeBool)
+	}
+	if value, ok := _u.mutation.ProfileVisible(); ok {
+		_spec.SetField(userbinding.FieldProfileVisible, field.TypeBool, value)
+	}
+	if _u.mutation.ProfileVisibleCleared() {
+		_spec.ClearField(userbinding.FieldProfileVisible, field.TypeBool)
+	}
+	if value, ok := _u.mutation.ArrestVisible(); ok {
+		_spec.SetField(userbinding.FieldArrestVisible, field.TypeBool, value)
+	}
+	if _u.mutation.ArrestVisibleCleared() {
+		_spec.ClearField(userbinding.FieldArrestVisible, field.TypeBool)
 	}
 	if value, ok := _u.mutation.SuiteVisible(); ok {
 		_spec.SetField(userbinding.FieldSuiteVisible, field.TypeBool, value)
@@ -429,6 +533,86 @@ func (_u *UserBindingUpdateOne) SetNillableVisible(v *bool) *UserBindingUpdateOn
 	return _u
 }
 
+// SetUIDVisible sets the "uid_visible" field.
+func (_u *UserBindingUpdateOne) SetUIDVisible(v bool) *UserBindingUpdateOne {
+	_u.mutation.SetUIDVisible(v)
+	return _u
+}
+
+// SetNillableUIDVisible sets the "uid_visible" field if the given value is not nil.
+func (_u *UserBindingUpdateOne) SetNillableUIDVisible(v *bool) *UserBindingUpdateOne {
+	if v != nil {
+		_u.SetUIDVisible(*v)
+	}
+	return _u
+}
+
+// ClearUIDVisible clears the value of the "uid_visible" field.
+func (_u *UserBindingUpdateOne) ClearUIDVisible() *UserBindingUpdateOne {
+	_u.mutation.ClearUIDVisible()
+	return _u
+}
+
+// SetSkVisible sets the "sk_visible" field.
+func (_u *UserBindingUpdateOne) SetSkVisible(v bool) *UserBindingUpdateOne {
+	_u.mutation.SetSkVisible(v)
+	return _u
+}
+
+// SetNillableSkVisible sets the "sk_visible" field if the given value is not nil.
+func (_u *UserBindingUpdateOne) SetNillableSkVisible(v *bool) *UserBindingUpdateOne {
+	if v != nil {
+		_u.SetSkVisible(*v)
+	}
+	return _u
+}
+
+// ClearSkVisible clears the value of the "sk_visible" field.
+func (_u *UserBindingUpdateOne) ClearSkVisible() *UserBindingUpdateOne {
+	_u.mutation.ClearSkVisible()
+	return _u
+}
+
+// SetProfileVisible sets the "profile_visible" field.
+func (_u *UserBindingUpdateOne) SetProfileVisible(v bool) *UserBindingUpdateOne {
+	_u.mutation.SetProfileVisible(v)
+	return _u
+}
+
+// SetNillableProfileVisible sets the "profile_visible" field if the given value is not nil.
+func (_u *UserBindingUpdateOne) SetNillableProfileVisible(v *bool) *UserBindingUpdateOne {
+	if v != nil {
+		_u.SetProfileVisible(*v)
+	}
+	return _u
+}
+
+// ClearProfileVisible clears the value of the "profile_visible" field.
+func (_u *UserBindingUpdateOne) ClearProfileVisible() *UserBindingUpdateOne {
+	_u.mutation.ClearProfileVisible()
+	return _u
+}
+
+// SetArrestVisible sets the "arrest_visible" field.
+func (_u *UserBindingUpdateOne) SetArrestVisible(v bool) *UserBindingUpdateOne {
+	_u.mutation.SetArrestVisible(v)
+	return _u
+}
+
+// SetNillableArrestVisible sets the "arrest_visible" field if the given value is not nil.
+func (_u *UserBindingUpdateOne) SetNillableArrestVisible(v *bool) *UserBindingUpdateOne {
+	if v != nil {
+		_u.SetArrestVisible(*v)
+	}
+	return _u
+}
+
+// ClearArrestVisible clears the value of the "arrest_visible" field.
+func (_u *UserBindingUpdateOne) ClearArrestVisible() *UserBindingUpdateOne {
+	_u.mutation.ClearArrestVisible()
+	return _u
+}
+
 // SetSuiteVisible sets the "suite_visible" field.
 func (_u *UserBindingUpdateOne) SetSuiteVisible(v bool) *UserBindingUpdateOne {
 	_u.mutation.SetSuiteVisible(v)
@@ -603,6 +787,30 @@ func (_u *UserBindingUpdateOne) sqlSave(ctx context.Context) (_node *UserBinding
 	}
 	if value, ok := _u.mutation.Visible(); ok {
 		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.UIDVisible(); ok {
+		_spec.SetField(userbinding.FieldUIDVisible, field.TypeBool, value)
+	}
+	if _u.mutation.UIDVisibleCleared() {
+		_spec.ClearField(userbinding.FieldUIDVisible, field.TypeBool)
+	}
+	if value, ok := _u.mutation.SkVisible(); ok {
+		_spec.SetField(userbinding.FieldSkVisible, field.TypeBool, value)
+	}
+	if _u.mutation.SkVisibleCleared() {
+		_spec.ClearField(userbinding.FieldSkVisible, field.TypeBool)
+	}
+	if value, ok := _u.mutation.ProfileVisible(); ok {
+		_spec.SetField(userbinding.FieldProfileVisible, field.TypeBool, value)
+	}
+	if _u.mutation.ProfileVisibleCleared() {
+		_spec.ClearField(userbinding.FieldProfileVisible, field.TypeBool)
+	}
+	if value, ok := _u.mutation.ArrestVisible(); ok {
+		_spec.SetField(userbinding.FieldArrestVisible, field.TypeBool, value)
+	}
+	if _u.mutation.ArrestVisibleCleared() {
+		_spec.ClearField(userbinding.FieldArrestVisible, field.TypeBool)
 	}
 	if value, ok := _u.mutation.SuiteVisible(); ok {
 		_spec.SetField(userbinding.FieldSuiteVisible, field.TypeBool, value)

@@ -1,14 +1,16 @@
 package handler
 
 import (
-	"fmt"
+	"strconv"
+	"strings"
+
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/requestbuilder"
-	"strconv"
-	"strings"
+	"haruki-cloud/utils/usererror"
 )
 
 type miscBirthdayParams struct {
@@ -41,7 +43,7 @@ func buildMiscBirthdayParams(args string) (miscBirthdayParams, error) {
 
 	if index, err := strconv.Atoi(args); err == nil {
 		if index <= 0 || index > 26 {
-			return miscBirthdayParams{}, fmt.Errorf("角色生日索引超出范围")
+			return miscBirthdayParams{}, usererror.Invalid(i18n.M("misc.birthday.index_range", i18n.Data{"Max": 26}))
 		}
 		return miscBirthdayParams{UpcomingIndex: index}, nil
 	}
@@ -52,7 +54,7 @@ func (sekaiHandlers) ProfileHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path: "profile",
 		Commands: []string{
-			"/个人中心", "/profile", "/个人信息",
+			"/个人中心", "/profile", "/个人信息", "/个人资料",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			p, err := resolveUserQueryParams(ctx)

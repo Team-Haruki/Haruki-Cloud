@@ -2,11 +2,12 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/displaytime"
@@ -15,6 +16,7 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/common"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 // UserQueryParams holds the resolved identity context for commands that query
@@ -64,7 +66,7 @@ func resolveUserQueryParams(ctx HarrukiSekaiHandlerContext) (UserQueryParams, er
 		p.Mode = "uid"
 		p.PJSKUserID = uidArg
 	default:
-		return p, onebot11.NewReplayError("无效的参数：%q\n使用方式：%s [@用户 | 游戏ID | u序号]", uidArg, ctx.originalTriggerCmd)
+		return p, usererror.BadParam(uidArg, i18n.M("profile.target_invalid"))
 	}
 	return p, nil
 }
@@ -86,7 +88,7 @@ func resolveSelfOnlyQueryParams(ctx HarrukiSekaiHandlerContext) (UserQueryParams
 		p.Selector = uidArg
 		return p, nil
 	}
-	return p, onebot11.NewReplayError("此命令仅支持查询自己的数据\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
+	return p, usererror.Forbidden(i18n.M("common.self_only"))
 }
 
 func (sekaiHandlers) ArrestHandle() HarukiSekaiCommandHandler {
@@ -128,18 +130,18 @@ func executeArrest(rc *RequestContext) (onebot11.Message, error) {
 
 	region := regionWithDefault(rc.Cmd.Region)
 
-	target, err := resolveGameTarget(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App)
+	target, err := resolveGameTarget(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App, accountdata.ExposureArrest)
 	if err != nil {
 		return nil, err
 	}
 	region = resolvedTargetRegion(region, target)
 	harukiUserID := target.HarukiUserID
 	pjskUserID := target.PJSKUserID
-	visible := target.Visible
+	visible := target.UIDVisible
 
 	resp, err := fetchCachedSekaiUserProfile(rc.Ctx, rc.App, region, pjskUserID)
 	if err != nil {
-		return nil, fmt.Errorf("获取玩家信息失败：%w", err)
+		return nil, playerProfileFetchError(err)
 	}
 
 	if rc.App.Censor != nil {
@@ -167,9 +169,11 @@ func defaultEnabledDiffs() []sekaiapi.MusicDifficultyType {
 }
 
 func formatArrestText(resp *sekaiapi.GetAnotherProfileResponse, diffs []sekaiapi.MusicDifficultyType, challengeCharacterName string, uidVisible bool) string {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("逮捕: %s (UID: %s) Lv.%d\n",
-		resp.User.Name, arrestDisplayUID(resp.User.UserID, uidVisible), resp.User.Rank))
+	lines := []i18n.Message{i18n.M("misc.arrest.header", i18n.Data{
+		"Name": resp.User.Name,
+		"UID":  arrestDisplayUID(resp.User.UserID, uidVisible),
+		"Rank": resp.User.Rank,
+	})}
 
 	countByDiff := make(map[sekaiapi.MusicDifficultyType]sekaiapi.AnotherUserMusicDifficultyClearCount)
 	for _, c := range resp.UserMusicDifficultyClearCount {
@@ -181,17 +185,22 @@ func formatArrestText(resp *sekaiapi.GetAnotherProfileResponse, diffs []sekaiapi
 		if !ok {
 			continue
 		}
-		sb.WriteString(fmt.Sprintf("[%s] Clear:%d FC:%d AP:%d\n",
-			diff, c.LiveClear, c.FullCombo, c.AllPerfect))
+		lines = append(lines, i18n.M("misc.arrest.difficulty", i18n.Data{
+			"Difficulty": i18n.DifficultyLabel(string(diff)),
+			"Clear":      c.LiveClear,
+			"FC":         c.FullCombo,
+			"AP":         c.AllPerfect,
+		}))
 	}
 
 	if resp.UserChallengeLiveSoloResult.HighScore > 0 {
-		label := arrestChallengeCharacterLabel(resp.UserChallengeLiveSoloResult.CharacterID, challengeCharacterName)
-		sb.WriteString(fmt.Sprintf("挑战Live(%s): %s分",
-			label, formatInt(resp.UserChallengeLiveSoloResult.HighScore)))
+		lines = append(lines, i18n.M("misc.arrest.challenge", i18n.Data{
+			"Character": arrestChallengeCharacterLabel(resp.UserChallengeLiveSoloResult.CharacterID, challengeCharacterName),
+			"Score":     i18n.Thousands(int64(resp.UserChallengeLiveSoloResult.HighScore)),
+		}))
 	}
 
-	return strings.TrimRight(sb.String(), "\n")
+	return i18n.LinesText(lines)
 }
 
 func resolveArrestChallengeCharacterName(ctx context.Context, app *renderapp.App, characterID int) string {
@@ -230,15 +239,15 @@ func resolveArrestChallengeCharacterName(ctx context.Context, app *renderapp.App
 	return strings.TrimSpace(bestName)
 }
 
-func arrestChallengeCharacterLabel(characterID int, resolvedName string) string {
+func arrestChallengeCharacterLabel(characterID int, resolvedName string) i18n.Message {
 	if name := strings.TrimSpace(resolvedName); name != "" {
-		return name
+		return i18n.Verbatim(name)
 	}
-	return fmt.Sprintf("角色ID:%d", characterID)
+	return i18n.M("common.fallback.character", i18n.Data{"ID": characterID})
 }
 
 func arrestDisplayUID(uid int64, visible bool) string {
-	return maskPJSKUID(strconv.FormatInt(uid, 10), visible)
+	return i18n.MaskUID(strconv.FormatInt(uid, 10), visible)
 }
 
 func arrestCharacterRegionRank(region string) int {
@@ -258,35 +267,13 @@ func arrestCharacterRegionRank(region string) int {
 	}
 }
 
-func formatInt(n int) string {
-	if n < 0 {
-		return "-" + formatInt(-n)
-	}
-	s := strconv.Itoa(n)
-	if len(s) <= 3 {
-		return s
-	}
-	var buf strings.Builder
-	remainder := len(s) % 3
-	if remainder > 0 {
-		buf.WriteString(s[:remainder])
-	}
-	for i := remainder; i < len(s); i += 3 {
-		if i > 0 {
-			buf.WriteByte(',')
-		}
-		buf.WriteString(s[i : i+3])
-	}
-	return buf.String()
-}
-
 func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
 	var p userQueryParams
 	mergeParams(rc.Cmd.Params, &p)
 
 	region := regionWithDefault(rc.Cmd.Region)
 
-	target, err := resolveGameTarget(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App)
+	target, err := resolveGameTarget(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App, accountdata.ExposureProfile)
 	if err != nil {
 		return nil, err
 	}
@@ -299,12 +286,13 @@ func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
 	}
 
 	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, target.HarukiUserID)
-	regTime := displaytime.TimeFromUnixSeconds(ts, timeZone)
-	relDur := displaytime.FormatRelativeDuration(displaytime.Now(timeZone).Sub(displaytime.TimeFromUnixSeconds(ts, timeZone)))
-	maskedUID := maskPJSKUID(pjskUserID, target.Visible)
-
-	text := fmt.Sprintf("UID %s 注册时间如下\n%s (%s) (%s)",
-		maskedUID, displaytime.FormatTime(regTime, "2006-01-02 15:04:05"), timeZone, relDur)
+	loc, _ := displaytime.LoadLocation(timeZone)
+	regTime := time.Unix(ts, 0)
+	text := i18n.T("misc.reg_time.result", i18n.Data{
+		"UID":  i18n.MaskUID(pjskUserID, target.UIDVisible),
+		"Time": i18n.FormatUserTime(regTime, loc),
+		"Ago":  i18n.TimeAgo(time.Since(regTime)),
+	})
 	return onebot11.Message{onebot11.Text(text)}, nil
 }
 
@@ -312,20 +300,20 @@ func calcRegistrationTime(userID string, server string) (int64, error) {
 	switch renderregion.Normalize(server) {
 	case renderregion.JP, renderregion.EN:
 		if len(userID) <= 3 {
-			return 0, fmt.Errorf("账号ID格式不正确")
+			return 0, usererror.BadParam(userID, i18n.M("common.param.uid_digits"))
 		}
 		n, err := strconv.ParseInt(userID[:len(userID)-3], 10, 64)
 		if err != nil {
-			return 0, fmt.Errorf("无效的账号ID：%w", err)
+			return 0, usererror.BadParam(userID, i18n.M("common.param.uid_digits")).WithCause(err)
 		}
 		return 1600218000 + int64(float64(n)/(1024*4096)), nil
 	case renderregion.TW, renderregion.KR, renderregion.CN:
 		n, err := strconv.ParseInt(userID, 10, 64)
 		if err != nil {
-			return 0, fmt.Errorf("无效的账号ID：%w", err)
+			return 0, usererror.BadParam(userID, i18n.M("common.param.uid_digits")).WithCause(err)
 		}
 		return int64(float64(n) / (1024 * 1024 * 4096)), nil
 	default:
-		return 0, fmt.Errorf("不支持的服务器：%s", server)
+		return 0, usererror.Invalid(i18n.M("profile.registration.unsupported_region"))
 	}
 }

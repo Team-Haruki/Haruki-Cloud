@@ -3,11 +3,11 @@ package handler
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	harukiConfig "haruki-cloud/config"
 	usersenttest "haruki-cloud/database/users/enttest"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/parser"
@@ -32,7 +32,7 @@ func rejectionText(t *testing.T, message onebot11.Message) string {
 func TestRejectCNMySekaiWithoutTrackingStillNotifies(t *testing.T) {
 	for _, rc := range []*RequestContext{nil, {Ctx: context.Background(), App: &renderapp.App{}, Cmd: &CommandRequest{RequesterPlatform: "qq", RequesterUserID: "1"}}} {
 		msg, err := rejectCNMySekai(rc)
-		if err != nil || rejectionText(t, msg) != cnMySekaiNeverOpensNotice {
+		if err != nil || rejectionText(t, msg) != cnMySekaiNotice() {
 			t.Fatalf("message = %+v, %v", msg, err)
 		}
 	}
@@ -69,11 +69,13 @@ func TestCNMySekaiWarningsAreSharedAcrossCommandsAndGroups(t *testing.T) {
 		}
 		if i < 3 {
 			text := rejectionText(t, msg)
-			if !strings.Contains(text, fmt.Sprintf("（%d/3）", i+1)) {
-				t.Fatalf("warning %d: %q", i+1, text)
+			id := "mysekai.cn_gate.notice_counted"
+			if i == 2 {
+				id = "mysekai.cn_gate.notice_last"
 			}
-			if i == 2 && !strings.Contains(text, "后续国服 MySekai 请求将不再回复") {
-				t.Fatalf("third warning: %q", text)
+			want := i18n.T(id, i18n.Data{"Region": i18n.RegionLabel("cn"), "Attempts": i + 1, "Threshold": 3})
+			if text != want {
+				t.Fatalf("warning %d: %q, want %q", i+1, text, want)
 			}
 		} else {
 			assertEmptyMySekaiMessage(t, msg)

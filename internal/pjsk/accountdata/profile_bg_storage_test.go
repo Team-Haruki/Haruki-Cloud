@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/internal/storage/storagetest"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/logger"
 )
 
@@ -136,7 +137,7 @@ func TestProfileBGStoreDisabledReportsNotConfigured(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := store.SaveProfileBackground(ctx, "jp", "1", "https://example.test/bg.png")
-			if !errors.Is(err, storage.ErrNotConfigured) || !strings.Contains(err.Error(), "profile background storage is not configured") {
+			if !errors.Is(err, storage.ErrNotConfigured) || !strings.Contains(testutil.ErrorDetail(err), "profile background storage is not configured") {
 				t.Fatalf("save error = %v", err)
 			}
 			rel := DefaultProfileBGRelativeDir + "/jp/x.jpg"
@@ -153,7 +154,7 @@ func TestProfileBGStoreDisabledReportsNotConfigured(t *testing.T) {
 	// the not-configured error.
 	raw := pngBytes(t, 2, 2)
 	lateDisabled := profileBGStoreWith(profileBGFailingStore{Store: storagetest.NewMemory(), putErr: storage.ErrNotConfigured}, raw)
-	if _, err := lateDisabled.SaveProfileBackground(ctx, "jp", "1", "https://example.test/bg.png"); !errors.Is(err, storage.ErrNotConfigured) || !strings.Contains(err.Error(), "not configured") {
+	if _, err := lateDisabled.SaveProfileBackground(ctx, "jp", "1", "https://example.test/bg.png"); !errors.Is(err, storage.ErrNotConfigured) || !strings.Contains(testutil.ErrorDetail(err), "not configured") {
 		t.Fatalf("late not-configured error = %v", err)
 	}
 }
@@ -163,14 +164,14 @@ func TestProfileBGStoreFailuresSurface(t *testing.T) {
 	raw := pngBytes(t, 2, 2)
 	putErr := errors.New("put exploded")
 	failing := profileBGStoreWith(profileBGFailingStore{Store: storagetest.NewMemory(), putErr: putErr}, raw)
-	if _, err := failing.SaveProfileBackground(ctx, "jp", "1", "https://example.test/bg.png"); !errors.Is(err, putErr) || !strings.Contains(err.Error(), "写入背景图片失败") {
+	if _, err := failing.SaveProfileBackground(ctx, "jp", "1", "https://example.test/bg.png"); !errors.Is(err, putErr) || testutil.MessageID(err) != "profile.bg.save_failed" {
 		t.Fatalf("put failure = %v", err)
 	}
 
 	deleteErr := errors.New("delete exploded")
 	rel := DefaultProfileBGRelativeDir + "/jp/x.jpg"
 	failingDelete := NewProfileBGStore(profileBGFailingStore{Store: storagetest.NewMemory(), deleteErr: deleteErr})
-	if err := failingDelete.DeleteProfileBackground(ctx, &drawing.ProfileBgSettings{ImgPath: &rel}); !errors.Is(err, deleteErr) || !strings.Contains(err.Error(), "删除背景图片失败") {
+	if err := failingDelete.DeleteProfileBackground(ctx, &drawing.ProfileBgSettings{ImgPath: &rel}); !errors.Is(err, deleteErr) || !strings.Contains(testutil.ErrorDetail(err), "delete background image") {
 		t.Fatalf("delete failure = %v", err)
 	}
 	notExist := NewProfileBGStore(profileBGFailingStore{Store: storagetest.NewMemory(), deleteErr: storage.NotExistError("delete", "x")})
@@ -180,7 +181,7 @@ func TestProfileBGStoreFailuresSurface(t *testing.T) {
 
 	escape := profileBGStoreWith(storagetest.NewMemory(), raw)
 	escape.relativeDir = "../outside"
-	if _, err := escape.SaveProfileBackground(ctx, "jp", "1", "https://example.test/bg.png"); err == nil || !strings.Contains(err.Error(), "不允许的背景图片路径") {
+	if _, err := escape.SaveProfileBackground(ctx, "jp", "1", "https://example.test/bg.png"); err == nil || !strings.Contains(err.Error(), "is not allowed") {
 		t.Fatalf("escaping key error = %v", err)
 	}
 }

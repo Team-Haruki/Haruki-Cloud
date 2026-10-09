@@ -1,200 +1,222 @@
 package pjsk
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"strings"
 	"testing"
+
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/onebot11"
+	commandhandler "haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/notfound"
+	"haruki-cloud/utils/usererror"
 )
 
-func TestClientErrorTextRedactsParamEcho(t *testing.T) {
-	tests := []struct {
-		name    string
-		in      string
-		trigger string
-		path    string
-		want    string
-	}{
-		{
-			name:    "quoted event args",
-			in:      "活动查询参数错误: \"super-secret\"\n【查单个活动格式】",
-			trigger: "/查活动",
-			path:    "event",
-			want:    "参数解析失败：活动查询参数\n要求：使用活动 ID、event123、活动名称或帮助中列出的筛选条件\n查看完整用法请发送：/查活动 -help",
-		},
-		{
-			name: "replay error args",
-			in:   "无效的参数：\"super-secret\"\n使用方式：/cmd",
-			want: "参数解析失败：命令参数\n要求：检查参数数量、顺序和格式\n查看完整用法请发送：/cmd -help",
-		},
-		{
-			name: "english token",
-			in:   "invalid token \"super-secret\"",
-			want: "参数解析失败：命令参数\n要求：检查参数数量、顺序和格式",
-		},
-		{
-			name: "wrapped card query",
-			in:   "failed to search card: query card 662: sekai: card not found",
-			want: "参数解析失败：卡牌\n要求：使用卡牌 ID、角色名或更明确的筛选条件",
-		},
-		{
-			name: "music not found",
-			in:   "CN服找不到特定的歌: super-secret\n如果需要查其他服务器歌曲请加区服前缀",
-			want: "CN服找不到特定的歌\n如果需要查其他服务器歌曲请加区服前缀",
-		},
-		{
-			name: "card not found",
-			in:   "CN服找不到特定的卡牌: super-secret\n如果需要查其他服务器卡牌请加区服前缀",
-			want: "CN服找不到特定的卡牌\n如果需要查其他服务器卡牌请加区服前缀",
-		},
-		{
-			name: "non echo error",
-			in:   "event_id is required",
-			want: "当前没有可推断的活动，请指定活动ID",
-		},
-		{
-			name: "service error",
-			in:   "misc birthday service unavailable: sekai client not configured",
-			want: "生日服务未就绪，请稍后再试",
-		},
-		{
-			name: "deck fixed conflict",
-			in:   "fixed_characters and fixed_cards cannot be used together",
-			want: "组卡服务版本过旧，暂不支持同时固定角色和卡牌，请更新组卡服务后重试",
-		},
-		{
-			name: "drawing api error",
-			in:   "api request failed with status: 500, body: {\"detail\":\"Content size is too large\"}",
-			want: "渲染请求失败，请稍后再试",
-		},
-		{
-			name: "drawing timeout",
-			in:   `Post "http://haruki-drawing:8000/api/pjsk/misc/chara-birthday": context deadline exceeded (Client.Timeout exceeded while awaiting headers)`,
-			want: "连接渲染服务超时或网络异常，请稍后再试",
-		},
-		{
-			name: "sekai api error",
-			in:   "sekai api error: status 401, message: \"Invalid token\"",
-			want: "SekaiAPI 拉取失败，请稍后再试",
-		},
-		{
-			name: "custom chart upstream url",
-			in:   `获取自制谱面 JSON 失败: sekai api error: status 502, message: "Fetch failed from https://production-game-api.sekai.colorfulpalette.org/image/blob/custom-music-score/full/a/b"`,
-			want: "获取自制谱面数据失败，请稍后再试",
-		},
-		{
-			name: "unknown private url",
-			in:   "upstream failed: https://production-game-api.sekai.colorfulpalette.org/api/jp/user/123/profile",
-			want: "请求处理失败，请稍后再试",
-		},
-		{
-			name: "public toolbox url",
-			in:   "工具箱地址：https://haruki.seiunx.com/",
-			want: "工具箱地址：https://haruki.seiunx.com/",
-		},
-		{
-			name: "unknown english error",
-			in:   "handler returned nil\nsuper-secret",
-			want: "请求处理失败，请稍后再试",
-		},
-		{
-			name: "mixed chinese latin error",
-			in:   "BPM 必须大于 0",
-			want: "BPM 必须大于 0",
-		},
-	}
+const paramEchoSecret = "super-secret"
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := clientErrorTextForCommand(tt.in, false, tt.trigger, tt.path); got != tt.want {
-				t.Fatalf("clientErrorText() = %q, want %q", got, tt.want)
+// paramEchoTypedErrors are typed errors that carry the user's input. Without
+// parameter echo their reply must not repeat it; with echo it may.
+func paramEchoTypedErrors() map[string]struct {
+	err         error
+	path, typed string
+} {
+	return map[string]struct {
+		err         error
+		path, typed string
+	}{
+		"bad parameter":       {usererror.BadParam(paramEchoSecret, i18n.M("common.param.uid_digits")), "profile/bind", "/绑定 " + paramEchoSecret},
+		"music not found":     {notfound.Music(paramEchoSecret), "music", "/查曲 " + paramEchoSecret},
+		"music in region":     {notfound.InRegion(notfound.Music(paramEchoSecret), "cn", ""), "music", "/cn查曲 " + paramEchoSecret},
+		"card not found":      {fmt.Errorf("failed to search card: %w", notfound.Card(paramEchoSecret)), "card/detail", "/查卡 " + paramEchoSecret},
+		"card fallback query": {notfound.InRegion(notfound.Card(""), "jp", paramEchoSecret), "card/detail", "/查卡 " + paramEchoSecret},
+		"generic not found":   {usererror.NotFound(i18n.M("common.param_name.value"), paramEchoSecret), "event", "/查活动 " + paramEchoSecret},
+		"generic ambiguous":   {usererror.Ambiguous(i18n.M("common.param_name.value"), paramEchoSecret), "event", "/查活动 " + paramEchoSecret},
+		"character":           {usererror.New(usererror.CodeNotFound, i18n.M("character.not_found", i18n.Data{"UserQuery": i18n.EchoQuery(paramEchoSecret)})), "misc/birthday", "/生日 " + paramEchoSecret},
+		"alias pending": {usererror.Invalid(i18n.M("alias.already_pending", i18n.Data{
+			"Kind": i18n.M("alias.kind.music"), "UserAlias": i18n.EchoQuery(paramEchoSecret),
+		})), "alias/music/add", "/添加歌曲别名"},
+		"virtual live": {usererror.New(usererror.CodeNotFound, i18n.M("vlive.solo.not_found", i18n.Data{"UserQuery": i18n.EchoQuery(paramEchoSecret)})), "vlive", "/vlive " + paramEchoSecret},
+	}
+}
+
+// paramEchoNumber is a number "typed" by the user in paramEchoNumericErrors.
+const paramEchoNumber = 987654321
+
+// paramEchoNumericErrors are typed errors that carry a number parsed from the
+// user's command (IDs, ranks, counts, WL turns, BPM, QQ numbers, pages).
+// Numbers are user input too.
+func paramEchoNumericErrors() map[string]struct {
+	err         error
+	path, typed string
+} {
+	n := i18n.UserNumber(paramEchoNumber)
+	typed := fmt.Sprint(paramEchoNumber)
+	region := i18n.RegionLabel("jp")
+	event := i18n.M("common.event_label", i18n.Data{"Region": region, "UserID": n})
+	return map[string]struct {
+		err         error
+		path, typed string
+	}{
+		"event id":         {usererror.New(usererror.CodeNotFound, i18n.M("event.not_found_in_region", i18n.Data{"Region": region, "UserID": n})), "event", "/查活动 event" + typed},
+		"event label":      {usererror.Invalid(i18n.M("sk.wl.not_wl_event", i18n.Data{"Event": event})), "sk", "/sk event" + typed},
+		"wl chapter":       {usererror.Invalid(i18n.M("sk.wl.no_chapter_no", i18n.Data{"Event": event, "UserChapter": n})), "sk", "/sk wl" + typed},
+		"planner rank":     {usererror.New(usererror.CodeNotFound, i18n.M("event.planner.no_line", i18n.Data{"UserRank": n})), "event/planner", "/活动规划 t" + typed},
+		"trace rank":       {usererror.New(usererror.CodeNotFound, i18n.M("sk.trace.no_rank_data", i18n.Data{"UserRank": n})), "sk/player-trace", "/玩家追踪 " + typed},
+		"wl turn":          {usererror.Misuse(i18n.M("deck.wl.turn_needs_character", i18n.Data{"UserTurn": n})), "deck/event", "/活动组卡 wl" + typed},
+		"wl future turn":   {usererror.Invalid(i18n.M("deck.wl.future_turn_unit", i18n.Data{"Available": 3, "UserTurn": n})), "deck/event", "/活动组卡 wl" + typed},
+		"fixed card":       {usererror.Invalid(i18n.M("deck.fixed.card_not_in_region", i18n.Data{"Region": region, "UserCardID": n})), "deck/event", "/活动组卡 #" + typed},
+		"note count":       {usererror.New(usererror.CodeNotFound, i18n.M("music.note_count.no_chart", i18n.Data{"UserCount": n})), "music", "/物量 " + typed},
+		"bpm":              {usererror.New(usererror.CodeNotFound, i18n.M("music.bpm.no_chart", i18n.Data{"UserBPM": n})), "music", "/bpm " + typed},
+		"alias song id":    {usererror.New(usererror.CodeNotFound, i18n.M("alias.id_not_found.music", i18n.Data{"UserID": n})), "alias/music/add", "/添加歌曲别名"},
+		"review ids":       {usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"UserIDs": n})), "alias/approve", "/同意别名 " + typed},
+		"housing id":       {usererror.New(usererror.CodeNotFound, i18n.M("mysekai.housing.not_found", i18n.Data{"UserID": n})), "mysekai/housing", "/百景 " + typed},
+		"custom card page": {usererror.New(usererror.CodeNotFound, i18n.M("profile.custom_card.not_found_page", i18n.Data{"UserPage": n, "Total": 2})), "profile/custom-profile-card", "/自定义资料卡 " + typed},
+		"costume":          {usererror.Invalid(i18n.M("costume.not_for_character", i18n.Data{"Part": i18n.M("costume.part.outfit"), "UserID": n, "UserCharacter": n})), "costume", "/查服装 " + typed},
+		"bound uid":        {usererror.New(usererror.CodeNotFound, i18n.M("binding.selector_uid_not_bound", i18n.Data{"UserUID": n})), "profile", "/个人信息 " + typed},
+	}
+}
+
+func TestCommandErrorTextHidesNumbersWithoutParamEcho(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+	secret := fmt.Sprint(paramEchoNumber)
+	for name, tc := range paramEchoNumericErrors() {
+		t.Run(name, func(t *testing.T) {
+			got := commandErrorText(context.Background(), tc.err, tc.path, tc.typed)
+			if strings.Contains(got, secret) {
+				t.Fatalf("reply echoed the number: %q", got)
+			}
+			if got == i18n.RequestFailed().String() {
+				t.Fatalf("echo-free reply fell back to the generic reply")
+			}
+			echo := commandErrorText(i18n.WithParamEcho(context.Background(), true), tc.err, tc.path, tc.typed)
+			if !strings.Contains(echo, secret) {
+				t.Fatalf("reply with echo lost the number: %q", echo)
 			}
 		})
 	}
 }
 
-func TestClientErrorTextStillRedactsParamEchoWhenEnabled(t *testing.T) {
-	in := "活动查询参数错误: \"super-secret\"\n【查单个活动格式】"
-	want := "参数解析失败：活动查询参数\n要求：使用活动 ID、event123、活动名称或帮助中列出的筛选条件\n查看完整用法请发送：/查活动 -help"
-	if got := clientErrorTextForCommand(in, true, "/查活动", "event"); got != want {
-		t.Fatalf("clientErrorText() = %q, want %q", got, want)
-	}
-}
-
-func TestClientErrorTextUsesBranchSpecificParameterGuidance(t *testing.T) {
-	tests := []struct {
-		name    string
-		message string
-		path    string
-		trigger string
-		want    string
-	}{
-		{
-			name:    "event deck music",
-			message: `failed to resolve deck music selection "do-not-echo"`,
-			path:    "deck/event",
-			trigger: "/活动组卡",
-			want:    "参数解析失败：活动组卡参数 · 歌曲\n要求：使用歌曲 ID、歌曲名或可识别的别名，可追加支持的难度\n查看完整用法请发送：/活动组卡 -help",
-		},
-		{
-			name:    "no event deck usage",
-			message: "使用方式:\n/长草组卡 [歌曲/组卡参数...]",
-			path:    "deck/no-event",
-			trigger: "/长草组卡",
-			want:    "参数解析失败：长草组卡参数\n要求：检查歌曲、难度、目标、算法、固定卡/角色等参数\n查看完整用法请发送：/长草组卡 -help",
-		},
-		{
-			name:    "bonus deck generic",
-			message: `无效的参数："do-not-echo"`,
-			path:    "deck/bonus",
-			trigger: "/加成组卡",
-			want:    "参数解析失败：加成组卡参数\n要求：可先写 event123，再填写一个或多个正整数目标加成\n查看完整用法请发送：/加成组卡 -help",
-		},
-		{
-			name:    "challenge deck branch",
-			message: `无法识别的指令格式: "do-not-echo"`,
-			path:    "deck/challenge",
-			trigger: "/挑战组卡",
-			want:    "参数解析失败：挑战组卡参数\n要求：先提供挑战角色；歌曲、难度及组卡筛选项按帮助填写\n查看完整用法请发送：/挑战组卡 -help",
-		},
-		{
-			name:    "mysekai deck branch",
-			message: `无效的参数："do-not-echo"`,
-			path:    "deck/mysekai",
-			trigger: "/烤森组卡",
-			want:    "参数解析失败：烤森组卡参数\n要求：检查活动、WL角色、固定卡/角色和培养条件；不要填写普通歌曲、火数或队友参数\n查看完整用法请发送：/烤森组卡 -help",
-		},
-		{
-			name:    "score up deck branch",
-			message: "使用方式: /实效 队长技能 技能2 技能3 技能4 技能5",
-			path:    "deck/score-up",
-			trigger: "/实效",
-			want:    "参数解析失败：实效计算参数\n要求：必须依次提供 5 个非负技能数值：队长、技能2、技能3、技能4、技能5\n查看完整用法请发送：/实效 -help",
-		},
-		{
-			name:    "score board bonus",
-			message: `解析活动加成失败: "do-not-echo"`,
-			path:    "score/music-board",
-			trigger: "/歌曲榜",
-			want:    "参数解析失败：歌曲排行榜参数 · 活动加成\n要求：使用“加成数字”或“加成数字%”\n查看完整用法请发送：/歌曲榜 -help",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := clientErrorTextForCommand(tt.message, false, tt.trigger, tt.path)
-			if got != tt.want {
-				t.Fatalf("clientErrorTextForCommand() = %q, want %q", got, tt.want)
+func TestCommandErrorTextHidesUserInputWithoutParamEcho(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+	for name, tc := range paramEchoTypedErrors() {
+		t.Run(name, func(t *testing.T) {
+			got := commandErrorText(context.Background(), tc.err, tc.path, tc.typed)
+			if strings.Contains(got, paramEchoSecret) {
+				t.Fatalf("reply echoed the input: %q", got)
 			}
-			if strings.Contains(got, "do-not-echo") {
-				t.Fatalf("response echoed original parameter: %q", got)
+			if got == i18n.RequestFailed().String() {
+				t.Fatalf("echo-free reply fell back to the generic reply")
+			}
+			for _, pair := range []string{"“”", "「」", "：\n"} {
+				if strings.Contains(got, pair) || strings.HasSuffix(got, "：") {
+					t.Fatalf("reply leaves %q: %q", pair, got)
+				}
 			}
 		})
 	}
 }
 
-func TestClientErrorTextCompactsStandaloneUsage(t *testing.T) {
-	in := "使用方式:\n/区域道具 团名\n/区域道具 角色名\n/区域道具 full"
-	want := "参数格式不正确\n查看完整用法请发送：/区域道具 -help"
-	if got := clientErrorText(in, false); got != want {
-		t.Fatalf("clientErrorText() = %q, want %q", got, want)
+func TestCommandErrorTextEchoesUserInputWhenEnabled(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+	ctx := i18n.WithParamEcho(context.Background(), true)
+	for name, tc := range paramEchoTypedErrors() {
+		t.Run(name, func(t *testing.T) {
+			if got := commandErrorText(ctx, tc.err, tc.path, tc.typed); !strings.Contains(got, paramEchoSecret) {
+				t.Fatalf("reply with echo lost the input: %q", got)
+			}
+		})
+	}
+}
+
+// Untyped errors (raw parser, upstream or internal text) never reach users,
+// with or without echo; the old prefix redaction table is no longer needed.
+func TestCommandErrorTextNeverEchoesUntypedErrors(t *testing.T) {
+	for _, raw := range []error{
+		errors.New(`活动查询参数错误: "super-secret"`),
+		errors.New(`无效的参数："super-secret"`),
+		errors.New(`invalid token "super-secret"`),
+		errors.New(`failed to resolve deck music selection "super-secret"`),
+		errors.New(`CN服找不到特定的歌: super-secret`),
+		errors.New("handler returned nil\nsuper-secret"),
+	} {
+		for _, echo := range []bool{false, true} {
+			ctx := i18n.WithParamEcho(context.Background(), echo)
+			got := commandErrorText(ctx, raw, "event", "/查活动 super-secret")
+			if strings.Contains(got, paramEchoSecret) {
+				t.Fatalf("raw error %q (echo %v) reply = %q", raw, echo, got)
+			}
+		}
+	}
+}
+
+// The route guidance for unrecognized arguments never quotes the arguments,
+// and the help pointer names the registered command, not the user's text.
+func TestCommandErrorTextGuidanceDoesNotEchoArguments(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+	for _, echo := range []bool{false, true} {
+		ctx := i18n.WithParamEcho(context.Background(), echo)
+		got := commandErrorText(ctx, usererror.Unrecognized(), "deck/event", "/活动组卡 "+paramEchoSecret)
+		if want := i18n.WithUsage(i18n.M("guidance.deck_event"), "/活动组卡").String(); got != want {
+			t.Fatalf("echo %v: guidance reply = %q, want %q", echo, got, want)
+		}
+	}
+	// An unregistered command word is user input.
+	if got := commandErrorText(context.Background(), usererror.Unrecognized(), "event", "/"+paramEchoSecret); strings.Contains(got, paramEchoSecret) {
+		t.Fatalf("help pointer echoed an unregistered command: %q", got)
+	}
+}
+
+// A success reply that repeats unreviewed alias text (onebot11.LocalizedText)
+// carries the reply without the text and, separately, the echo reply.
+func TestSucceededSharedBotCommandKeepsBothVariants(t *testing.T) {
+	submitted := i18n.M("alias.add.done", i18n.Data{
+		"Count": 1,
+		"Kind":  i18n.M("alias.kind.music"),
+		"Records": []i18n.Message{i18n.M("alias.record.pending", i18n.Data{
+			"ReviewID": 12, "Kind": i18n.M("alias.kind.music"), "Name": "Tell Your World", "EntityID": 74,
+			"UserAlias": i18n.UserText(paramEchoSecret),
+		})},
+	})
+	result := succeededSharedBotCommand(context.Background(), onebot11.Message{onebot11.LocalizedText(submitted)}, sharedCommandMetadata{Outcome: "ok"}, false)
+	for _, body := range [][]byte{result.Response.JSONBody, result.Response.MsgPackBody} {
+		if strings.Contains(string(body), paramEchoSecret) {
+			t.Fatalf("default reply repeats the unreviewed alias: %s", body)
+		}
+	}
+	if !strings.Contains(string(result.Response.JSONBody), "待审核别名 #12") {
+		t.Fatalf("default reply lost the review ID: %s", result.Response.JSONBody)
+	}
+	for _, body := range [][]byte{result.EchoResponse.JSONBody, result.EchoResponse.MsgPackBody} {
+		if !strings.Contains(string(body), paramEchoSecret) {
+			t.Fatalf("echo reply lost the alias: %s", body)
+		}
+	}
+	if echo := result.responseFor(BotCommandRequest{EnableParamEcho: true}); !strings.Contains(string(echo.JSONBody), paramEchoSecret) {
+		t.Fatalf("echo client got %s", echo.JSONBody)
+	}
+
+	plain := succeededSharedBotCommand(context.Background(), onebot11.Message{onebot11.Text("已绑定")}, sharedCommandMetadata{Outcome: "ok"}, false)
+	if len(plain.EchoResponse.JSONBody) != 0 {
+		t.Fatalf("a reply without user input needs no echo variant: %s", plain.EchoResponse.JSONBody)
+	}
+}
+
+// Review replies only alias admins receive show the alias text to every
+// client, with or without echo.
+func TestAdminAliasReviewReplyShowsTextWithoutEcho(t *testing.T) {
+	list := i18n.M("alias.pending.list", i18n.Data{
+		"Count": 1,
+		"Records": []i18n.Message{i18n.M("alias.record.review", i18n.Data{
+			"ReviewID": 12, "Kind": i18n.M("alias.kind.music"), "Name": "Tell Your World", "EntityID": 74, "Alias": paramEchoSecret,
+		})},
+	})
+	result := succeededSharedBotCommand(context.Background(), onebot11.Message{onebot11.LocalizedText(list)}, sharedCommandMetadata{Outcome: "ok"}, false)
+	if !strings.Contains(string(result.Response.JSONBody), paramEchoSecret) {
+		t.Fatalf("admin reply without echo hides the alias: %s", result.Response.JSONBody)
+	}
+	if len(result.EchoResponse.JSONBody) != 0 {
+		t.Fatalf("an admin review reply needs no echo variant: %s", result.EchoResponse.JSONBody)
 	}
 }

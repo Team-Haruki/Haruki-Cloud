@@ -2,7 +2,7 @@ package accountdata
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -10,9 +10,15 @@ import (
 	usersdb "haruki-cloud/database/users"
 	"haruki-cloud/database/users/user"
 	"haruki-cloud/internal/cluster"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/identity"
+	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/utils/usererror"
 )
+
+// BanReasonMaxRunes is the longest ban reason /kill accepts.
+const BanReasonMaxRunes = 255
 
 // BanService checks per-user feature ban states stored in the users database.
 // It applies a three-level hierarchy: global ban → module ban → feature ban.
@@ -105,7 +111,7 @@ func (s *BanService) IsGloballyBanned(ctx context.Context, platform, userID stri
 // applies to future first use.
 func (s *BanService) Kill(ctx context.Context, qqID, reason string, expiresAt *time.Time) (GlobalBanStatus, error) {
 	if s == nil || s.db == nil || s.identity == nil {
-		return GlobalBanStatus{}, fmt.Errorf("用户封禁服务未就绪，请稍后再试")
+		return GlobalBanStatus{}, usererror.Misconfigured(errBanServiceNotConfigured)
 	}
 	if err := cluster.EnsureWritable(s.readOnly); err != nil {
 		return GlobalBanStatus{}, err
@@ -113,13 +119,13 @@ func (s *BanService) Kill(ctx context.Context, qqID, reason string, expiresAt *t
 	qqID = strings.TrimSpace(qqID)
 	reason = strings.TrimSpace(reason)
 	if qqID == "" || reason == "" {
-		return GlobalBanStatus{}, fmt.Errorf("QQ号和封禁原因不能为空")
+		return GlobalBanStatus{}, usererror.Usage(i18n.M("moderation.kill.usage_reason"), "/kill")
 	}
-	if len([]rune(reason)) > 255 {
-		return GlobalBanStatus{}, fmt.Errorf("封禁原因不能超过255个字符")
+	if len([]rune(reason)) > BanReasonMaxRunes {
+		return GlobalBanStatus{}, usererror.Invalid(i18n.M("moderation.kill.reason_too_long", i18n.Data{"Max": BanReasonMaxRunes}))
 	}
 	if expiresAt != nil && !expiresAt.After(time.Now()) {
-		return GlobalBanStatus{}, fmt.Errorf("封禁到期时间必须晚于当前时间")
+		return GlobalBanStatus{}, usererror.Invalid(i18n.M("moderation.kill.expiry_past"))
 	}
 	if _, err := s.identity.ResolveOrCreate(ctx, "qq", qqID); err != nil {
 		return GlobalBanStatus{}, err
@@ -197,14 +203,14 @@ func (s *BanService) RecordCNMySekaiAttempt(ctx context.Context, platform, userI
 // Back removes a global ban and all of its metadata from a QQ identity.
 func (s *BanService) Back(ctx context.Context, qqID string) error {
 	if s == nil || s.db == nil {
-		return fmt.Errorf("用户封禁服务未就绪，请稍后再试")
+		return usererror.Misconfigured(errBanServiceNotConfigured)
 	}
 	if err := cluster.EnsureWritable(s.readOnly); err != nil {
 		return err
 	}
 	qqID = strings.TrimSpace(qqID)
 	if qqID == "" {
-		return fmt.Errorf("QQ号不能为空")
+		return usererror.Usage(i18n.M("moderation.back.usage_reason"), "/back")
 	}
 	count, err := s.db.User.Update().
 		Where(user.PlatformEQ("qq"), user.UserIDEQ(qqID)).
@@ -216,13 +222,14 @@ func (s *BanService) Back(ctx context.Context, qqID string) error {
 		return err
 	}
 	if count == 0 {
-		return fmt.Errorf("未找到QQ用户 %s", qqID)
+		return usererror.New(usererror.CodeNotFound, i18n.M("moderation.back.not_found", i18n.Data{"UserQQ": i18n.UserText(qqID)}))
 	}
 	return nil
 }
 
-// CheckBan returns a non-nil error (containing the ban reason) if the user
-// identified by (platform, userID) is banned for the given module.
+// CheckBan returns a typed usererror (CodeForbidden, with the ban reason and,
+// for a timed global ban, the expiry in the requester's time zone) if the
+// user identified by (platform, userID) is banned for the given module.
 // Returns nil if the user is allowed or has no record.
 func (s *BanService) CheckBan(ctx context.Context, platform, userID string, module parser.TargetModule) error {
 	if s == nil || s.db == nil {
@@ -236,7 +243,7 @@ func (s *BanService) CheckBan(ctx context.Context, platform, userID string, modu
 		return nil // Missing record or DB error: fail open (don't block users).
 	}
 	if status := globalBanStatusForUser(u); status.Active {
-		return globalBanError(status)
+		return globalBanError(status, displaytime.RequestLocation(ctx))
 	}
 
 	if !isPJSKModule(module) {
@@ -247,23 +254,23 @@ func (s *BanService) CheckBan(ctx context.Context, platform, userID string, modu
 
 func pjskBanError(u *usersdb.User, feature featureCategory) error {
 	if u.PjskBanState {
-		return banError("PJSK 功能", u.PjskBanReason)
+		return banError(i18n.M("moderation.feature.pjsk"), u.PjskBanReason)
 	}
 	switch feature {
 	case featureMain:
-		return activeFeatureBanError(u.PjskMainBanState, "PJSK 主要功能", u.PjskMainBanReason)
+		return activeFeatureBanError(u.PjskMainBanState, i18n.M("moderation.feature.main"), u.PjskMainBanReason)
 	case featureRanking:
-		return activeFeatureBanError(u.PjskRankingBanState, "PJSK 排名功能", u.PjskRankingBanReason)
+		return activeFeatureBanError(u.PjskRankingBanState, i18n.M("moderation.feature.ranking"), u.PjskRankingBanReason)
 	case featureAlias:
-		return activeFeatureBanError(u.PjskAliasBanState, "PJSK 别名功能", u.PjskAliasBanReason)
+		return activeFeatureBanError(u.PjskAliasBanState, i18n.M("moderation.feature.alias"), u.PjskAliasBanReason)
 	case featureMysekai:
-		return activeFeatureBanError(u.PjskMysekaiBanState, "PJSK MySekai 功能", u.PjskMysekaiBanReason)
+		return activeFeatureBanError(u.PjskMysekaiBanState, i18n.M("moderation.feature.mysekai"), u.PjskMysekaiBanReason)
 	default:
 		return nil
 	}
 }
 
-func activeFeatureBanError(active bool, label, reason string) error {
+func activeFeatureBanError(active bool, label i18n.Message, reason string) error {
 	if !active {
 		return nil
 	}
@@ -281,12 +288,20 @@ func globalBanStatusForUser(u *usersdb.User) GlobalBanStatus {
 	}
 }
 
-func globalBanError(status GlobalBanStatus) error {
-	err := banError("所有功能", status.Reason)
+func globalBanError(status GlobalBanStatus, loc *time.Location) error {
+	feature := i18n.M("moderation.feature.all")
 	if status.ExpiresAt == nil {
-		return err
+		return banError(feature, status.Reason)
 	}
-	return fmt.Errorf("%s，封禁至：%s", err.Error(), status.ExpiresAt.Format("2006-01-02 15:04:05 MST"))
+	expiresAt := i18n.FormatUserTime(*status.ExpiresAt, loc)
+	if status.Reason == "" {
+		return usererror.Forbidden(i18n.M("moderation.banned_until", i18n.Data{"Feature": feature, "ExpiresAt": expiresAt}))
+	}
+	return usererror.Forbidden(i18n.M("moderation.banned_reason_until", i18n.Data{
+		"Feature":   feature,
+		"Reason":    status.Reason,
+		"ExpiresAt": expiresAt,
+	}))
 }
 
 type featureCategory int
@@ -325,9 +340,12 @@ func featureBanFor(m parser.TargetModule) featureCategory {
 	}
 }
 
-func banError(featureName, reason string) error {
+var errBanServiceNotConfigured = errors.New("ban service: users database is not configured")
+
+func banError(feature i18n.Message, reason string) error {
+	reason = strings.TrimSpace(reason)
 	if reason == "" {
-		return fmt.Errorf("您已被禁止使用%s", featureName)
+		return usererror.Forbidden(i18n.M("moderation.banned", i18n.Data{"Feature": feature}))
 	}
-	return fmt.Errorf("您已被禁止使用%s，原因：%s", featureName, reason)
+	return usererror.Forbidden(i18n.M("moderation.banned_reason", i18n.Data{"Feature": feature, "Reason": reason}))
 }

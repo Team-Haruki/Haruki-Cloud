@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/version"
 
@@ -103,9 +104,9 @@ func (c *HarukiToolboxClient) UpsertMysekaiBirthdayMonitor(ctx context.Context, 
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return ctx.Err()
+			return requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
-		return fmt.Errorf("toolbox: birthday monitor upsert failed: %w", sanitizeNetworkError(err))
+		return sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: birthday monitor upsert failed", err)
 	}
 	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
 		return &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(resp.Body())}
@@ -124,9 +125,9 @@ func (c *HarukiToolboxClient) DeleteMysekaiBirthdayMonitor(ctx context.Context, 
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return ctx.Err()
+			return requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
-		return fmt.Errorf("toolbox: birthday monitor delete failed: %w", sanitizeNetworkError(err))
+		return sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: birthday monitor delete failed", err)
 	}
 	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
 		return &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(resp.Body())}
@@ -148,9 +149,9 @@ func (c *HarukiToolboxClient) GetMysekaiBirthdayEvent(ctx context.Context, req M
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return nil, ctx.Err()
+			return nil, requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
-		return nil, fmt.Errorf("toolbox: birthday event fetch failed: %w", sanitizeNetworkError(err))
+		return nil, sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: birthday event fetch failed", err)
 	}
 	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(resp.Body())}
@@ -160,7 +161,7 @@ func (c *HarukiToolboxClient) GetMysekaiBirthdayEvent(ctx context.Context, req M
 	decodeErr := json.Unmarshal(resp.Body(), &event)
 	finishDecode()
 	if decodeErr != nil {
-		return nil, fmt.Errorf("toolbox: failed to parse birthday event response: %w", decodeErr)
+		return nil, upstreamerr.Tag(upstreamerr.ServiceToolbox, upstreamerr.KindBadResponse, "", fmt.Errorf("toolbox: failed to parse birthday event response: %w", decodeErr))
 	}
 	return &event, nil
 }
@@ -176,9 +177,9 @@ func (c *HarukiToolboxClient) AckMysekaiBirthdayEvent(ctx context.Context, req M
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return ctx.Err()
+			return requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
-		return fmt.Errorf("toolbox: birthday event ack failed: %w", sanitizeNetworkError(err))
+		return sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: birthday event ack failed", err)
 	}
 	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
 		return &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(resp.Body())}
@@ -303,9 +304,9 @@ func (c *HarukiToolboxClient) getPrivateDataWithKey(ctx context.Context, server 
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return nil, false, ctx.Err()
+			return nil, false, requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
-		return nil, false, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
+		return nil, false, sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", err)
 	}
 
 	switch resp.StatusCode() {
@@ -328,10 +329,10 @@ func (c *HarukiToolboxClient) mapPrivateDataStatusError(ctx context.Context, res
 	switch resp.StatusCode() {
 	case http.StatusForbidden:
 		msg := parseMessage(c.toolboxResponseBodyContext(ctx, resp))
-		switch {
-		case strings.Contains(msg, "invalid platform or platform_user_id"):
+		switch upstreamerr.MatchMessage(upstreamerr.ServiceToolbox, msg) {
+		case upstreamerr.KindAccessDenied:
 			return ErrInvalidPlatformUser
-		case strings.Contains(msg, "account owner is banned"):
+		case upstreamerr.KindOwnerBanned:
 			return ErrAccountOwnerBanned
 		default:
 			return &ToolboxAPIError{StatusCode: http.StatusForbidden, Message: msg}
@@ -339,17 +340,17 @@ func (c *HarukiToolboxClient) mapPrivateDataStatusError(ctx context.Context, res
 
 	case http.StatusNotFound:
 		msg := parseMessage(c.toolboxResponseBodyContext(ctx, resp))
-		switch {
-		case strings.Contains(msg, "account binding not found"):
+		switch upstreamerr.MatchMessage(upstreamerr.ServiceToolbox, msg) {
+		case upstreamerr.KindAccountNotBound:
 			return ErrAccountBindingNotFound
-		case strings.Contains(msg, "game data not found"):
+		case upstreamerr.KindDataNotUploaded:
 			return ErrGameDataNotFound
 		default:
 			return &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
 		}
 
 	case http.StatusServiceUnavailable:
-		return &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: c.parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
+		return &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: c.parseToolboxErrorMessageContext(ctx, resp, upstreamerr.ToolboxMessageServiceDown)}
 
 	default:
 		return &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(c.toolboxResponseBodyContext(ctx, resp))}
@@ -409,9 +410,9 @@ func (c *HarukiToolboxClient) GetPrivateDataValueContext(ctx context.Context, se
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return nil, ctx.Err()
+			return nil, requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
-		return nil, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
+		return nil, sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", err)
 	}
 
 	if resp.StatusCode() == http.StatusOK {
@@ -449,7 +450,7 @@ func (c *HarukiToolboxClient) GetUploadTimeContext(ctx context.Context, server s
 func parseUploadTimeBytes(raw []byte) (int64, error) {
 	ts, err := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("toolbox: invalid upload_time value: %w", err)
+		return 0, upstreamerr.Tag(upstreamerr.ServiceToolbox, upstreamerr.KindBadResponse, "", fmt.Errorf("toolbox: invalid upload_time value: %w", err))
 	}
 	return ts, nil
 }
@@ -527,9 +528,9 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindingsC
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return nil, ctx.Err()
+			return nil, requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
-		return nil, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
+		return nil, sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", err)
 	}
 
 	switch resp.StatusCode() {
@@ -542,17 +543,17 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindingsC
 		finishDecode := commandtrace.MeasureOperation(ctx, "toolbox.decode")
 		if err := json.Unmarshal(body, &bindings); err != nil {
 			finishDecode()
-			return nil, fmt.Errorf("toolbox: failed to parse game bindings response: %w", err)
+			return nil, upstreamerr.Tag(upstreamerr.ServiceToolbox, upstreamerr.KindBadResponse, "", fmt.Errorf("toolbox: failed to parse game bindings response: %w", err))
 		}
 		finishDecode()
 		return bindings, nil
 
 	case http.StatusForbidden:
 		msg := parseMessage(c.toolboxResponseBodyContext(ctx, resp))
-		switch {
-		case strings.Contains(msg, "invalid platform or platform_user_id"):
+		switch upstreamerr.MatchMessage(upstreamerr.ServiceToolbox, msg) {
+		case upstreamerr.KindAccessDenied:
 			return nil, ErrInvalidPlatformUser
-		case strings.Contains(msg, "account owner is banned"):
+		case upstreamerr.KindOwnerBanned:
 			return nil, ErrAccountOwnerBanned
 		default:
 			return nil, &ToolboxAPIError{StatusCode: http.StatusForbidden, Message: msg}
@@ -560,13 +561,13 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindingsC
 
 	case http.StatusNotFound:
 		msg := parseMessage(c.toolboxResponseBodyContext(ctx, resp))
-		if strings.Contains(msg, "account binding not found") {
+		if upstreamerr.MatchMessage(upstreamerr.ServiceToolbox, msg) == upstreamerr.KindAccountNotBound {
 			return nil, ErrAccountBindingNotFound
 		}
 		return nil, &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
 
 	case http.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: c.parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
+		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: c.parseToolboxErrorMessageContext(ctx, resp, upstreamerr.ToolboxMessageServiceDown)}
 
 	default:
 		msg := parseMessage(c.toolboxResponseBodyContext(ctx, resp))

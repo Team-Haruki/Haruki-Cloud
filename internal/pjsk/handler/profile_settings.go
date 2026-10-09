@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/common"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 func newProfileBindingParams(ctx HarrukiSekaiHandlerContext, selector, scope string) accountdata.ProfileBindingCommandParams {
@@ -42,7 +45,7 @@ func newProfileSettingsParams(ctx HarrukiSekaiHandlerContext, selector ...string
 func resolveSettingsSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 	args := strings.TrimSpace(ctx.GetArgs())
 	if args != "" {
-		return "", onebot11.NewReplayError("使用方式:\n%s [u序号]", ctx.originalTriggerCmd)
+		return "", usererror.Misuse(i18n.M("profile.settings.selector_only"))
 	}
 	uidArg := ctx.UIDArg()
 	if uidArg == "" {
@@ -51,11 +54,11 @@ func resolveSettingsSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 	if isBindingSelector(uidArg) {
 		return uidArg, nil
 	}
-	return "", onebot11.NewReplayError("此设置仅支持操作自己的账号\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
+	return "", usererror.Forbidden(i18n.M("profile.settings.self_only"))
 }
 
 var profileTimeZoneBaseCommands = []string{
-	"/pjsk时区", "/pjsktimezone", "/pjsktz",
+	"/pjsk时区", "/pjsktimezone", "/pjsktz", "/时区", //copylint:ignore 指令触发词
 }
 
 func profileTimeZoneCommands() []string {
@@ -119,9 +122,9 @@ func parseProfileDifficultyToken(raw string) sekaiapi.MusicDifficultyType {
 
 func parseProfileDifficultyState(raw string) (bool, bool) {
 	switch strings.ToLower(strings.TrimSpace(raw)) {
-	case "开启", "开", "on", "enable", "enabled", "true", "1":
+	case "开启", "开", "on", "enable", "enabled", "true", "1": //copylint:ignore 解析关键字
 		return true, true
-	case "关闭", "关", "off", "disable", "disabled", "false", "0":
+	case "关闭", "关", "off", "disable", "disabled", "false", "0": //copylint:ignore 解析关键字
 		return false, true
 	default:
 		return false, false
@@ -134,7 +137,7 @@ func parseProfileDifficultyCompactToggle(raw string) (accountdata.ProfileDifficu
 		return accountdata.ProfileDifficultyToggle{}, false
 	}
 
-	for _, suffix := range []string{"开启", "关闭", "开", "关"} {
+	for _, suffix := range []string{"开启", "关闭", "开", "关"} { //copylint:ignore 解析关键字
 		if !strings.HasSuffix(lower, suffix) {
 			continue
 		}
@@ -150,7 +153,7 @@ func parseProfileDifficultyCompactToggle(raw string) (accountdata.ProfileDifficu
 }
 
 func parseProfileDifficultyToggles(raw string) ([]accountdata.ProfileDifficultyToggle, error) {
-	normalized := strings.NewReplacer("，", " ", ",", " ", "、", " ", "\n", " ", "\t", " ").Replace(strings.TrimSpace(raw))
+	normalized := strings.NewReplacer("，", " ", ",", " ", "、", " ", "\n", " ", "\t", " ").Replace(strings.TrimSpace(raw)) //copylint:ignore 解析关键字
 	fields := strings.Fields(normalized)
 	if len(fields) == 0 {
 		return nil, fmt.Errorf("empty")
@@ -215,7 +218,7 @@ func (sekaiHandlers) ProfileShowSuiteHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) ProfileHideMySekaiHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
-			"/pjsk hide mysekai", "/pjsk隐藏烤森抓包", "/隐藏烤森抓包",
+			"/pjsk hide mysekai", "/pjsk隐藏烤森抓包", "/隐藏烤森抓包", "/隐藏烤森",
 		},
 		Path: "profile/mysekai/hide",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -231,7 +234,7 @@ func (sekaiHandlers) ProfileHideMySekaiHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) ProfileShowMySekaiHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
-			"/pjsk show mysekai", "/pjsk显示烤森抓包", "/pjsk展示烤森抓包", "/展示烤森抓包",
+			"/pjsk show mysekai", "/pjsk显示烤森抓包", "/pjsk展示烤森抓包", "/展示烤森抓包", "/显示烤森",
 		},
 		Path: "profile/mysekai/show",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -244,37 +247,91 @@ func (sekaiHandlers) ProfileShowMySekaiHandle() HarukiSekaiCommandHandler {
 	}, executeProfile)
 }
 
-func (sekaiHandlers) ProfileHideIDHandle() HarukiSekaiCommandHandler {
+// visibilitySettingHandler is a command that changes (or, for
+// ProfileModeVisibility, lists) the visibility settings of one of the
+// requester's own bindings, chosen with an optional u序号.
+func visibilitySettingHandler(path, mode string, commands ...string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		Commands: []string{
-			"/pjsk hide id", "/pjsk隐藏id", "/pjsk隐藏ID", "/隐藏id", "/隐藏ID",
-		},
-		Path: "profile/visibility/hide",
+		Commands: commands,
+		Path:     path,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeHideID, newProfileSettingsParams(ctx, selector)), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, mode, newProfileSettingsParams(ctx, selector)), nil
 		},
 	}, executeProfile)
 }
 
+// ProfileHideIDHandle masks the game UID in replies and images. It used to
+// hide every exposure; /隐藏全部 does that now.
+func (sekaiHandlers) ProfileHideIDHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/visibility/hide", accountdata.ProfileModeHideID,
+		"/pjsk hide id", "/pjsk隐藏id", "/pjsk隐藏ID", "/隐藏id", "/隐藏ID", "/隐藏uid", //copylint:ignore 指令触发词
+	)
+}
+
 func (sekaiHandlers) ProfileShowIDHandle() HarukiSekaiCommandHandler {
-	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		Commands: []string{
-			"/pjsk show id", "/pjsk显示id", "/pjsk显示ID", "/pjsk展示id", "/pjsk展示ID",
-			"/展示id", "/展示ID", "/显示id", "/显示ID",
-		},
-		Path: "profile/visibility/show",
-		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			selector, err := resolveSettingsSelector(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowID, newProfileSettingsParams(ctx, selector)), nil
-		},
-	}, executeProfile)
+	return visibilitySettingHandler("profile/visibility/show", accountdata.ProfileModeShowID,
+		"/pjsk show id", "/pjsk显示id", "/pjsk显示ID", "/pjsk展示id", "/pjsk展示ID", //copylint:ignore 指令触发词
+		"/展示id", "/展示ID", "/显示id", "/显示ID", "/显示uid", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileHideSKHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/sk/hide", accountdata.ProfileModeHideSK,
+		"/pjsk hide sk", "/pjsk隐藏sk", "/pjsk隐藏SK", "/隐藏sk", "/隐藏SK", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileShowSKHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/sk/show", accountdata.ProfileModeShowSK,
+		"/pjsk show sk", "/pjsk显示sk", "/pjsk显示SK", "/pjsk展示sk", "/pjsk展示SK", //copylint:ignore 指令触发词
+		"/显示sk", "/显示SK", "/展示sk", "/展示SK", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileHideInfoHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/info/hide", accountdata.ProfileModeHideInfo,
+		"/pjsk hide profile", "/pjsk隐藏个人信息", "/隐藏个人信息", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileShowInfoHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/info/show", accountdata.ProfileModeShowInfo,
+		"/pjsk show profile", "/pjsk显示个人信息", "/pjsk展示个人信息", "/显示个人信息", "/展示个人信息", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileHideArrestHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/arrest/hide", accountdata.ProfileModeHideArrest,
+		"/pjsk hide arrest", "/pjsk隐藏逮捕", "/隐藏逮捕", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileShowArrestHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/arrest/show", accountdata.ProfileModeShowArrest,
+		"/pjsk show arrest", "/pjsk显示逮捕", "/pjsk展示逮捕", "/显示逮捕", "/展示逮捕", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileHideAllHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/visibility/hide-all", accountdata.ProfileModeHideAll,
+		"/pjsk hide all", "/pjsk隐藏全部", "/隐藏全部", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileShowAllHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/visibility/show-all", accountdata.ProfileModeShowAll,
+		"/pjsk show all", "/pjsk显示全部", "/pjsk展示全部", "/显示全部", "/展示全部", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileVisibilityHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/visibility/status", accountdata.ProfileModeVisibility,
+		"/pjsk privacy", "/pjsk隐私设置", "/隐私设置", "/可见性设置", //copylint:ignore 指令触发词
+	)
 }
 
 func (sekaiHandlers) ProfileTimeZoneHandle() HarukiSekaiCommandHandler {
@@ -285,14 +342,7 @@ func (sekaiHandlers) ProfileTimeZoneHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := extractProfileTimeZoneArg(ctx)
 			if args == "" {
-				return nil, onebot11.NewReplayError(
-					"使用方式:\n%s <时区名|偏移量>\n示例:\n%s Asia/Shanghai\n%s +8\n%s +09:00\n%s +28800",
-					ctx.originalTriggerCmd,
-					ctx.originalTriggerCmd,
-					ctx.originalTriggerCmd,
-					ctx.originalTriggerCmd,
-					ctx.originalTriggerCmd,
-				)
+				return nil, usererror.Misuse(i18n.M("profile.timezone.required"))
 			}
 			params := newProfileSettingsParams(ctx)
 			params.TimeZone = args
@@ -312,10 +362,7 @@ func (sekaiHandlers) ProfileChartStyleHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, onebot11.NewReplayError(
-					"使用方式:\n%s <white|black>",
-					ctx.originalTriggerCmd,
-				)
+				return nil, usererror.Misuse(i18n.M("profile.chart_style.required"))
 			}
 			params := newProfileSettingsParams(ctx)
 			params.ChartStyle = args
@@ -327,13 +374,13 @@ func (sekaiHandlers) ProfileChartStyleHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) ProfileEnableModularHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
-			"/开启模块个人信息", "/开启模块化个人信息", "/pjsk modular profile on",
+			"/开启模块个人信息", "/开启模块化个人信息", "/pjsk modular profile on", "/开启模块化资料",
 		},
 		Path:        "profile/modular/enable",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError(formattedUsage, ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("common.no_args"))
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeEnableModular, newProfileSettingsParams(ctx)), nil
 		},
@@ -343,13 +390,13 @@ func (sekaiHandlers) ProfileEnableModularHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) ProfileDisableModularHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
-			"/关闭模块个人信息", "/关闭模块化个人信息", "/pjsk modular profile off",
+			"/关闭模块个人信息", "/关闭模块化个人信息", "/pjsk modular profile off", "/关闭模块化资料",
 		},
 		Path:        "profile/modular/disable",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError(formattedUsage, ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("common.no_args"))
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeDisableModular, newProfileSettingsParams(ctx)), nil
 		},
@@ -366,18 +413,12 @@ func (sekaiHandlers) ProfileArrestDifficultyHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, onebot11.NewReplayError(
-					"使用方式:\n%s easy关闭 normal关闭 hard关闭 expert关闭 master开启 append开启",
-					ctx.originalTriggerCmd,
-				)
+				return nil, usererror.Misuse(i18n.M("profile.arrest_difficulty.required"))
 			}
 
 			toggles, err := parseProfileDifficultyToggles(args)
 			if err != nil {
-				return nil, onebot11.NewReplayError(
-					"无效的逮捕难度参数\n使用方式:\n%s easy关闭 normal关闭 hard关闭 expert关闭 master开启 append开启",
-					ctx.originalTriggerCmd,
-				)
+				return nil, usererror.Misuse(i18n.M("profile.arrest_difficulty.invalid")).WithCause(err)
 			}
 
 			params := newProfileSettingsParams(ctx)
@@ -391,7 +432,7 @@ func (sekaiHandlers) ProfileCheckDataHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
 			"/pjsk check data", "/pjsk抓包", "/pjsk抓包状态", "/pjsk抓包数据", "/pjsk抓包查询",
-			"/抓包数据", "/抓包状态", "/抓包信息", "/sud",
+			"/抓包数据", "/抓包状态", "/抓包信息", "/sud", "/检查数据",
 		},
 		Path: "profile/check-data",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -409,7 +450,7 @@ func (sekaiHandlers) MsdHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/msd",
 			"/pjsk check mysekai data",
-			"/pjsk烤森抓包数据", "/pjsk烤森抓包", "/烤森抓包", "/烤森抓包数据",
+			"/pjsk烤森抓包数据", "/pjsk烤森抓包", "/烤森抓包", "/烤森抓包数据", "/检查烤森数据",
 		},
 		Path: "profile/check-data-mysekai",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -447,7 +488,7 @@ func (sekaiHandlers) ProfileVerifyListHandle() HarukiSekaiCommandHandler {
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError(formattedUsage, ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("common.no_args"))
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeVerifyList, newProfileSettingsParams(ctx)), nil
 		},
@@ -482,7 +523,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			},
 		)
 		if err != nil {
-			return nil, 0, normalizeBindingLookupError(err, "解析绑定账号失败")
+			return nil, 0, normalizeBindingLookupError(err, i18n.Message{})
 		}
 		return binding, hid, nil
 	}
@@ -493,7 +534,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			return rejectCNMySekai(rc)
 		}
 		if p.Mode != "self" {
-			return nil, fmt.Errorf("MySekai抓包相关内容仅支持查询自己的数据")
+			return nil, usererror.Forbidden(i18n.M("common.self_only"))
 		}
 
 		binding, hid, err := resolveBinding(false, true)
@@ -501,43 +542,43 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			return nil, err
 		}
 		if !hasUsableMySekaiData(binding) {
-			return nil, newMySekaiDataNotFoundReplayErrorForBinding(binding)
+			return nil, mysekaiDataNotFoundError(binding)
 		}
 		currentBinding = binding
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("无效的账号ID：%w", err)
+			return nil, usererror.Internal(fmt.Errorf("invalid bound game UID: %w", err))
 		}
 		platform = p.Platform
 		platformUserID = p.PlatformUserID
 		dataType = sekaiapi.ToolboxDataTypeMySekai
-		label = "MySekai"
+		label = privateDataMySekai
 		pjskUID = binding.PJSKUserID
-		bindingVisible = binding.Visible
+		bindingVisible = binding.Visibility.UID
 		resolvedHarukiID = hid
 		bindingServer = binding.Server
 	default:
 		if p.Mode != "self" {
-			return nil, fmt.Errorf("suite抓包相关内容仅支持查询自己的数据")
+			return nil, usererror.Forbidden(i18n.M("common.self_only"))
 		}
 		binding, hid, err := resolveBinding(true, false)
 		if err != nil {
 			return nil, err
 		}
 		if !hasUsableSuiteData(binding) {
-			return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+			return nil, suiteDataNotFoundError(binding)
 		}
 		currentBinding = binding
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("无效的账号ID：%w", err)
+			return nil, usererror.Internal(fmt.Errorf("invalid bound game UID: %w", err))
 		}
 		platform = p.Platform
 		platformUserID = p.PlatformUserID
 		dataType = sekaiapi.ToolboxDataTypeSuite
-		label = "Suite"
+		label = privateDataSuite
 		pjskUID = binding.PJSKUserID
-		bindingVisible = binding.Visible
+		bindingVisible = binding.Visibility.UID
 		resolvedHarukiID = hid
 		bindingServer = binding.Server
 	}
@@ -548,23 +589,19 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 
 	raw, err := rc.App.Toolbox.GetUploadTimeContext(rc.Ctx, bindingServer, dataType, uid, platform, platformUserID)
 	if err != nil {
-		if normalized := normalizeToolboxDataFetchError(err, label, currentBinding); normalized != nil {
-			return nil, normalized
-		}
-		return nil, fmt.Errorf("获取%s更新时间失败：%w", label, err)
+		return nil, normalizeToolboxDataFetchError(err, label, currentBinding)
 	}
 
 	ts, err := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("解析更新时间失败：%w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.data_status.invalid_time"), fmt.Errorf("parse upload time: %w", err))
 	}
 
 	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, resolvedHarukiID)
-	uploadTime := displaytime.TimeFromUnixSeconds(ts, timeZone)
-	relDur := displaytime.FormatRelativeDuration(displaytime.Now(timeZone).Sub(displaytime.TimeFromUnixSeconds(ts, timeZone)))
-	maskedUID := maskPJSKUID(pjskUID, bindingVisible)
-
-	text := fmt.Sprintf("UID %s 的%s数据更新时间:\n%s (%s) (%s)",
-		maskedUID, label, displaytime.FormatTime(uploadTime, "2006-01-02 15:04:05"), timeZone, relDur)
-	return onebot11.Message{onebot11.Text(text)}, nil
+	uploaded := uploadedLine(time.Unix(ts, 0), timeZone)
+	account := i18n.AccountLabel(bindingServer, pjskUID, bindingVisible)
+	if label == privateDataMySekai {
+		return onebot11.Message{onebot11.Text(i18n.T("profile.data_status.mysekai", i18n.Data{"Account": account, "Uploaded": uploaded}))}, nil
+	}
+	return onebot11.Message{onebot11.Text(i18n.T("profile.data_status.suite", i18n.Data{"Account": account, "Uploaded": uploaded}))}, nil
 }

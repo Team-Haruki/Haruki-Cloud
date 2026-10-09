@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -21,6 +22,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 )
 
 func newPhotoTestController(t *testing.T, mysekaiJSON string) *Controller {
@@ -92,13 +94,13 @@ func TestResolvePhotoValidatesInputAndImagePath(t *testing.T) {
   }
 }`)
 
-	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 0}); err == nil || err.Error() != "请输入正确的照片编号（从1或-1开始）" {
+	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 0}); testutil.MessageID(err) != "mysekai.photo.index_invalid" {
 		t.Fatalf("unexpected seq=0 error: %v", err)
 	}
-	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 2}); err == nil || err.Error() != "照片编号大于照片数量(1)" {
+	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 2}); testutil.MessageID(err) != "mysekai.photo.out_of_range" {
 		t.Fatalf("unexpected seq=2 error: %v", err)
 	}
-	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 1}); err == nil || err.Error() != "该照片缺少 imagePath，无法下载" {
+	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 1}); !strings.Contains(testutil.ErrorDetail(err), "photo has no imagePath") {
 		t.Fatalf("unexpected missing imagePath error: %v", err)
 	}
 }
@@ -850,7 +852,7 @@ func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Suite数据", Source: new("suite_dump"), Mode: new("leader")},
+			{Name: i18n.T("profile.data_source.suite"), Source: new("suite_dump"), Mode: new("leader")},
 		},
 	}
 	merged := map[string]any{
@@ -872,7 +874,7 @@ func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 	if len(got.DataSources) != 2 {
 		t.Fatalf("expected 2 data sources, got %+v", got.DataSources)
 	}
-	if got.DataSources[1].Name != "Mysekai数据" {
+	if got.DataSources[1].Name != i18n.T("profile.data_source.mysekai") {
 		t.Fatalf("unexpected mysekai data source: %+v", got.DataSources[1])
 	}
 	if got.DataSources[1].UpdateTime == nil || *got.DataSources[1].UpdateTime != 1776000000123 {
@@ -897,7 +899,7 @@ func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testin
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Sekai API", Mode: new("leader")},
+			{Name: i18n.T("profile.data_source.public"), Mode: new("leader")},
 		},
 	}
 	merged := map[string]any{
@@ -912,7 +914,7 @@ func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testin
 	if got == nil || len(got.DataSources) != 1 {
 		t.Fatalf("expected one mysekai data source, got %+v", got)
 	}
-	if got.DataSources[0].Name != "Mysekai数据" {
+	if got.DataSources[0].Name != i18n.T("profile.data_source.mysekai") {
 		t.Fatalf("expected single source renamed to Mysekai数据, got %+v", got.DataSources[0])
 	}
 	if got.DataSources[0].UpdateTime == nil || *got.DataSources[0].UpdateTime != 1776000000000 {
@@ -936,7 +938,7 @@ func TestMysekaiProfileCardKeepsBothSourcesWhenRequested(t *testing.T) {
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Suite数据", Source: new("suite_dump"), Mode: new("leader")},
+			{Name: i18n.T("profile.data_source.suite"), Source: new("suite_dump"), Mode: new("leader")},
 		},
 	}
 	merged := map[string]any{
@@ -951,7 +953,7 @@ func TestMysekaiProfileCardKeepsBothSourcesWhenRequested(t *testing.T) {
 	if got == nil || len(got.DataSources) != 2 {
 		t.Fatalf("expected suite + mysekai data sources, got %+v", got)
 	}
-	if got.DataSources[0].Name != "Suite数据" || got.DataSources[1].Name != "Mysekai数据" {
+	if got.DataSources[0].Name != i18n.T("profile.data_source.suite") || got.DataSources[1].Name != i18n.T("profile.data_source.mysekai") {
 		t.Fatalf("unexpected data source order: %+v", got.DataSources)
 	}
 	if got.DataSources[0].Source != nil || got.DataSources[0].Mode != nil {
@@ -987,7 +989,7 @@ func TestResolveTalkCharacterHandlesVirtualSingerUnits(t *testing.T) {
 
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
 
-	if _, _, err := controller.resolveTalkCharacter("miku"); err == nil || !strings.Contains(err.Error(), "需要同时指定组合") {
+	if _, _, err := controller.resolveTalkCharacter("miku"); err == nil || testutil.MessageID(err) != "mysekai.talk.virtual_singer_unit" {
 		t.Fatalf("resolveTalkCharacter(miku) error = %v", err)
 	}
 
@@ -1481,7 +1483,7 @@ func TestBuildDoorUpgradeRequestUsesMysekaiSourceOnly(t *testing.T) {
 				LeaderImagePath: "user/leader.png",
 			},
 			DataSources: []drawing.ProfileDataSource{
-				{Name: "Suite数据"},
+				{Name: i18n.T("profile.data_source.suite")},
 			},
 		},
 	})
@@ -1491,8 +1493,8 @@ func TestBuildDoorUpgradeRequestUsesMysekaiSourceOnly(t *testing.T) {
 	if req.Profile == nil || len(req.Profile.DataSources) != 1 {
 		t.Fatalf("expected one top data source, got %+v", req.Profile)
 	}
-	if req.Profile.DataSources[0].Name != "Suite数据" {
-		t.Fatalf("expected top source to be Suite数据, got %+v", req.Profile.DataSources)
+	if req.Profile.DataSources[0].Name != i18n.T("profile.data_source.suite") {
+		t.Fatalf("expected top source to be the suite label, got %+v", req.Profile.DataSources)
 	}
 	if req.Profile.DataSources[0].Source != nil || req.Profile.DataSources[0].Mode != nil {
 		t.Fatalf("expected single source details to be hidden, got %+v", req.Profile.DataSources[0])
@@ -1535,7 +1537,7 @@ func TestBuildResourceRequestUsesMysekaiSourceOnly(t *testing.T) {
 				LeaderImagePath: "user/leader.png",
 			},
 			DataSources: []drawing.ProfileDataSource{
-				{Name: "Suite数据"},
+				{Name: i18n.T("profile.data_source.suite")},
 			},
 		},
 	})
@@ -1545,7 +1547,7 @@ func TestBuildResourceRequestUsesMysekaiSourceOnly(t *testing.T) {
 	if len(req.Profile.DataSources) != 1 {
 		t.Fatalf("expected one top data source, got %+v", req.Profile.DataSources)
 	}
-	if req.Profile.DataSources[0].Name != "Mysekai数据" {
+	if req.Profile.DataSources[0].Name != i18n.T("profile.data_source.mysekai") {
 		t.Fatalf("expected top source to be Mysekai数据, got %+v", req.Profile.DataSources)
 	}
 	if req.Profile.DataSources[0].Source != nil || req.Profile.DataSources[0].Mode != nil {

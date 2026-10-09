@@ -1,18 +1,20 @@
 package music
 
 import (
-	"fmt"
+	"errors"
 	"math"
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/meta"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int, limit int) (map[int][]map[string]any, error) {
 	if c == nil {
-		return nil, fmt.Errorf("music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music controller is not configured"))
 	}
 	if len(eventRates) == 0 {
 		return map[int][]map[string]any{}, nil
@@ -25,7 +27,7 @@ func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int,
 
 	view := c.resolveMusicMetaView(resolvedRegion.String())
 	if view == nil {
-		return nil, fmt.Errorf("music meta data is unavailable")
+		return nil, usererror.Unavailable(i18n.FeatureGameData, errors.New("music meta data is unavailable"))
 	}
 
 	wantedRates := positiveEventRates(eventRates)

@@ -2,6 +2,7 @@ package education
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	rendersource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewController(drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, defaultRegion renderregion.Value) *Controller {
@@ -77,7 +79,7 @@ func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) 
 
 func (c *Controller) resolveChallengeLiveRequestContext(query ChallengeLiveQuery) (renderregion.Value, DataSource, *snapshot.ChallengeLiveData, *drawing.DetailedProfileCardRequest, error) {
 	if c == nil || c.sources == nil {
-		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("education controller is not initialized")
+		return renderregion.Unknown, nil, nil, nil, usererror.Misconfigured(errors.New("education controller is not initialized"))
 	}
 
 	snap := query.Snapshot
@@ -85,7 +87,7 @@ func (c *Controller) resolveChallengeLiveRequestContext(query ChallengeLiveQuery
 		snap = c.snapshot
 	}
 	if snap == nil {
-		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("local user snapshot is not configured")
+		return renderregion.Unknown, nil, nil, nil, snapshot.ErrNotConfigured
 	}
 	if err := snap.Require(); err != nil {
 		return renderregion.Unknown, nil, nil, nil, err
@@ -94,19 +96,19 @@ func (c *Controller) resolveChallengeLiveRequestContext(query ChallengeLiveQuery
 	region := c.sources.ResolveRegion(query.Region)
 	source, ok := c.sources.SourceForRegion(region)
 	if !ok {
-		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("education data source is not configured")
+		return renderregion.Unknown, nil, nil, nil, usererror.Misconfigured(errors.New("education data source is not configured"))
 	}
 
 	challenge := snap.ChallengeLive()
 	if challenge == nil {
-		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("user snapshot is missing challenge live data")
+		return renderregion.Unknown, nil, nil, nil, errSuiteIncomplete("user snapshot is missing challenge live data")
 	}
 	profile := query.Profile
 	if profile == nil {
 		profile = snap.DetailedProfile(region)
 	}
 	if profile == nil {
-		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("user snapshot is missing profile data")
+		return renderregion.Unknown, nil, nil, nil, errSuiteIncomplete("user snapshot is missing profile data")
 	}
 	return region, source, challenge, profile, nil
 }
@@ -169,7 +171,7 @@ func (c *Controller) RenderChallengeLiveDetails(query ChallengeLiveQuery) ([]byt
 
 func (c *Controller) RenderChallengeLiveDetailsImage(query ChallengeLiveQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildChallengeLiveDetailsRequest(query)
@@ -197,7 +199,7 @@ func (c *Controller) RenderPowerBonusDetail(req drawing.PowerBonusDetailRequest)
 
 func (c *Controller) RenderPowerBonusDetailImage(req drawing.PowerBonusDetailRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildPowerBonusDetailRequest(req)
@@ -225,7 +227,7 @@ func (c *Controller) RenderAreaItemUpgradeMaterials(req drawing.AreaItemUpgradeM
 
 func (c *Controller) RenderAreaItemUpgradeMaterialsImage(req drawing.AreaItemUpgradeMaterialsRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildAreaItemUpgradeMaterialsRequest(req)
@@ -253,7 +255,7 @@ func (c *Controller) RenderBonds(req drawing.BondsRequest) ([]byte, error) {
 
 func (c *Controller) RenderBondsImage(req drawing.BondsRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildBondsRequest(req)
@@ -281,7 +283,7 @@ func (c *Controller) RenderLeaderCount(req drawing.LeaderCountRequest) ([]byte, 
 
 func (c *Controller) RenderLeaderCountImage(req drawing.LeaderCountRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildLeaderCountRequest(req)

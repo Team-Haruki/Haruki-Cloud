@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -125,7 +126,7 @@ func TestBuildMusicRewardsBasicEstimateCoversEligibilityAndClamping(t *testing.T
 	testutil.Require(t, !(err != nil), "default-message estimate error = %v", err)
 	{
 		testutil.Require(t, !(defaultMessage.Profile.ErrorMessage == nil), "default estimate message = %+v", defaultMessage.Profile.ErrorMessage)
-		testutil.Require(t, strings.Contains(*defaultMessage.Profile.ErrorMessage, "当前未使用"), "default estimate message = %+v", defaultMessage.Profile.ErrorMessage)
+		testutil.Require(t, *defaultMessage.Profile.ErrorMessage == i18n.T("music.image.rewards.estimate"), "default estimate message = %+v", defaultMessage.Profile.ErrorMessage)
 	}
 	testutil.Require(t, !(defaultMessage.ComboRewards["append"] != "45 (15×3)"), "negative full-combo estimate = %q", defaultMessage.ComboRewards["append"])
 
@@ -174,7 +175,7 @@ func TestRewardsDetailAchievementAndSnapshotErrors(t *testing.T) {
 		_, err := controller.BuildMusicRewardsDetailRequestFromAchievements(RewardsDetailQuery{Region: "jp"}, []byte(`{`))
 		{
 			testutil.Require(t, !(err == nil), "invalid achievements error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "decode"), "invalid achievements error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "decode"), "invalid achievements error = %v", err)
 		}
 	}
 

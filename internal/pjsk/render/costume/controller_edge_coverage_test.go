@@ -1,11 +1,11 @@
 package costume
 
 import (
-	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestCostumeAccessoryRepresentativeEdges(t *testing.T) {
@@ -133,7 +133,7 @@ func TestLookupLabeledIDEdges(t *testing.T) {
 	if err := state.applyLabeledID("outfit_color", 3, "color3"); err == nil {
 		t.Fatal("duplicate color unexpectedly accepted")
 	}
-	if err := state.applyLabeledID("unknown", 1, "unknown1"); err == nil || !strings.Contains(err.Error(), "unknown1") {
+	if err := state.applyLabeledID("unknown", 1, "unknown1"); err == nil || testutil.MessageID(err) != "common.bad_param" {
 		t.Fatalf("unknown label error = %v", err)
 	}
 }

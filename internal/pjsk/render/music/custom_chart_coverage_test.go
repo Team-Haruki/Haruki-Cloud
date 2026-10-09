@@ -8,10 +8,12 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 type customChartErrorClient struct {
@@ -44,7 +46,7 @@ func testCustomChartTitlesAndArtists(t *testing.T) {
 		{customChartEntry{UserName: " Maker ", ID: " score "}, "Maker/score"},
 		{customChartEntry{UserName: "Maker"}, "Maker"},
 		{customChartEntry{ID: "score"}, "score"},
-		{customChartEntry{}, "自制谱"},
+		{customChartEntry{}, i18n.T("music.image.custom_chart.artist_unknown")},
 	}
 	for _, tc := range artistCases {
 		if got := buildCustomChartArtist(tc.entry); got != tc.want {
@@ -392,7 +394,7 @@ func testCustomChartBPMFormatting(t *testing.T) {
 		{EventType: 0, ChangeValue: 240},
 		{EventType: 0, ChangeValue: 90},
 	}
-	if got := formatCustomChartBPMs(events); got != "90-240（4段）" {
+	if got := formatCustomChartBPMs(events); got != i18n.T("music.image.custom_chart.bpm_range", i18n.Data{"Min": "90", "Max": "240", "Segments": 4}) {
 		t.Fatalf("formatted BPMs = %q", got)
 	}
 	if got := formatCustomChartBPMs(events[:3]); got != "" {
@@ -510,7 +512,7 @@ func TestCustomChartRequestFailureAndFallbackBranches(t *testing.T) {
 	}
 
 	controller.SetCustomMusicScoreClient(customChartErrorClient{infoErr: errors.New("upstream")})
-	if _, err := controller.BuildMusicChartRequest(query); err == nil || !strings.Contains(err.Error(), "获取自定义谱面信息失败") {
+	if _, err := controller.BuildMusicChartRequest(query); err == nil || testutil.MessageID(err) != "music.custom_chart.fetch_failed" {
 		t.Fatalf("published error = %v", err)
 	}
 	controller.SetCustomMusicScoreClient(customChartErrorClient{published: &sekaiapi.UserCustomMusicScorePublishedResponse{UserCustomMusicScoreID: scoreID}})
@@ -527,18 +529,18 @@ func TestCustomChartRequestFailureAndFallbackBranches(t *testing.T) {
 		},
 	}
 	controller.SetCustomMusicScoreClient(customChartErrorClient{published: published, scoreErr: errors.New("score")})
-	if _, err := controller.BuildMusicChartRequest(query); err == nil || !strings.Contains(err.Error(), "JSON") {
+	if _, err := controller.BuildMusicChartRequest(query); err == nil || testutil.MessageID(err) != "music.custom_chart.fetch_failed" {
 		t.Fatalf("score fetch error = %v", err)
 	}
 	controller.SetCustomMusicScoreClient(customChartErrorClient{published: published, score: []byte("bad")})
-	if _, err := controller.BuildMusicChartRequest(query); err == nil || !strings.Contains(err.Error(), "格式无效") {
+	if _, err := controller.BuildMusicChartRequest(query); err == nil || !strings.Contains(testutil.ErrorDetail(err), "not valid JSON") {
 		t.Fatalf("score decode error = %v", err)
 	}
 
 	missingSource := &customChartDirectSource{vocalBuilderTestSource: &vocalBuilderTestSource{}}
 	missingController := NewController(missingSource, nil, assets.NewAssetHelper("", nil), nil, nil)
 	missingController.SetCustomMusicScoreClient(customChartErrorClient{published: published, score: []byte(`{}`)})
-	if _, err := missingController.BuildMusicChartRequest(query); err == nil || !strings.Contains(err.Error(), "原曲数据不存在") {
+	if _, err := missingController.BuildMusicChartRequest(query); err == nil || testutil.MessageID(err) != "music.custom_chart.original_missing" {
 		t.Fatalf("missing original music error = %v", err)
 	}
 

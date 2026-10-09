@@ -2,10 +2,11 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"testing"
 	"time"
+
+	"haruki-cloud/internal/i18n"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -23,8 +24,8 @@ func TestCommandHelpPureFallbackBranches(t *testing.T) {
 
 func testCommandHelpNormalization(t *testing.T) {
 	t.Helper()
-	if commandHelpRequestPath(nil) != "" || commandHelpDocKey(" ") != "" || commandHelpFamily(" ") != "generic" || commandHelpFamily("music") != "music" {
-		t.Fatal("command help empty/family path mismatch")
+	if commandHelpRequestPath(nil) != "" || commandHelpDocKey(" ") != "" {
+		t.Fatal("command help empty path mismatch")
 	}
 	if got := normalizeCommandHelpTrigger("/jp"); got != "/jp" {
 		t.Fatalf("bare region trigger = %q", got)
@@ -44,44 +45,34 @@ func testCommandHelpNormalization(t *testing.T) {
 	if keys := commandHelpLookupKeys(""); len(keys) != 1 || keys[0] != "generic" {
 		t.Fatalf("empty lookup keys = %#v", keys)
 	}
+	if keys := commandHelpLookupKeys("music/bpm"); len(keys) != 1 || keys[0] != "music_bpm" {
+		t.Fatalf("route lookup keys = %#v", keys)
+	}
 }
 
 func testCommandHelpMarkdownFallbacks(t *testing.T) {
 	t.Helper()
-	resolved := &CommandRequest{CommandPath: "missing/child", TriggerCommand: "/fallback", HelpText: "usage details"}
-	markdown, err := commandHelpMarkdown(resolved)
-	if err != nil || !strings.Contains(markdown, "usage details") {
-		t.Fatalf("fallback markdown = %q, %v", markdown, err)
+	if _, err := commandHelpMarkdown(&CommandRequest{CommandPath: "missing/child"}); err == nil {
+		t.Fatal("expected an error for a route without a help document")
 	}
-	if title := commandHelpTitle(nil, "plain text"); title != "指令帮助" {
+	if title := commandHelpTitle(i18n.DefaultLocale, "plain text"); title != i18n.T("usage.help.title") {
 		t.Fatalf("default title = %q", title)
 	}
-	if title := commandHelpTitle(&CommandRequest{CommandPath: "path"}, "plain text"); title != "path" {
-		t.Fatalf("path title = %q", title)
-	}
-	if title := commandHelpTitle(&CommandRequest{TriggerCommand: "/trigger"}, "plain text"); title != "/trigger" {
-		t.Fatalf("trigger title = %q", title)
-	}
-	if title := commandHelpTitle(nil, "## Heading\nbody"); title != "Heading" {
+	if title := commandHelpTitle(i18n.DefaultLocale, "## Heading\nbody"); title != "Heading" {
 		t.Fatalf("markdown title = %q", title)
-	}
-	if got := fallbackCommandHelpMarkdown("", "", "body"); !strings.Contains(got, "指令帮助") {
-		t.Fatalf("generic fallback = %q", got)
-	}
-	if got := fallbackCommandHelpMarkdown("", "path", "body"); !strings.Contains(got, "path") {
-		t.Fatalf("path fallback = %q", got)
 	}
 }
 
 func testCommandHelpAliasFallbacks(t *testing.T) {
 	t.Helper()
-	if got := withCommandHelpAliasSection("body", ""); got != "body" || missingCommandHelpAliases("body", "") != nil || commandHelpAliases("") != nil {
+	if got := withGeneratedHelpSections(i18n.DefaultLocale, "body", ""); got != "body" || missingCommandHelpAliases("body", "") != nil || commandHelpAliases("") != nil {
 		t.Fatal("empty alias section mismatch")
 	}
 	if message, err := commandHelpMessage(context.Background(), nil, nil); err != nil || len(message) != 1 {
 		t.Fatalf("generic text help = %#v, %v", message, err)
 	}
 }
+
 func TestMusicHandlerAndParserEdgeBranches(t *testing.T) {
 	testMusicHandlerErrorBranches(t)
 	testMusicResultFilterEdges(t)
@@ -178,7 +169,7 @@ func testMusicLevelRangeEdges(t *testing.T) {
 
 func testMusicFormattingHelperEdges(t *testing.T) {
 	t.Helper()
-	if got := formatMusicDuration(-1); got != "0:00" {
+	if got := formatMusicDuration(-1); got.String() != i18n.FormatDuration(0).String() {
 		t.Fatalf("negative duration = %q", got)
 	}
 	if got := formatMusicBPMSequence([]rendermusic.BPMEvent{{BPM: 0}, {BPM: 120}, {BPM: 120}, {BPM: 130}}); got != "0 / 120 / 130" {
@@ -190,10 +181,8 @@ func testMusicFormattingHelperEdges(t *testing.T) {
 	if dedupeBPMMatchesByMusic(nil) != nil {
 		t.Fatal("nil BPM matches should stay nil")
 	}
-	for _, err := range []error{errors.New(""), errors.New("匹配到多个歌曲 1,2"), errors.New("custom title")} {
-		if buildAmbiguousMusicDetailListTitle(err) == "" || buildAmbiguousMusicBPMListTitle(err) == "" {
-			t.Fatal("ambiguous title should never be empty")
-		}
+	if buildAmbiguousMusicDetailListTitle() == "" || buildAmbiguousMusicBPMListTitle() == "" {
+		t.Fatal("ambiguous title should never be empty")
 	}
 	if eventPlannerBoostMultiplier(99) != 1 {
 		t.Fatal("unknown event-planner boost multiplier should be one")

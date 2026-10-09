@@ -3,6 +3,8 @@ package sekai
 import (
 	"errors"
 	"testing"
+
+	"haruki-cloud/internal/core/upstreamerr"
 )
 
 func TestSanitizeNetworkErrorHidesSensitiveURLs(t *testing.T) {
@@ -26,11 +28,11 @@ func TestSanitizeNetworkErrorHidesSensitiveURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := sanitizeNetworkError(tt.err)
+			got := sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", tt.err)
 			if got == nil {
 				t.Fatal("expected error")
 			}
-			if got.Error() != "network request failed" {
+			if got.Error() != "toolbox: request failed after retries: network request failed" {
 				t.Fatalf("sanitizeNetworkError() = %q", got.Error())
 			}
 		})
@@ -38,8 +40,12 @@ func TestSanitizeNetworkErrorHidesSensitiveURLs(t *testing.T) {
 }
 
 func TestSanitizeNetworkErrorKeepsNonURLMessages(t *testing.T) {
-	got := sanitizeNetworkError(errors.New("connection refused"))
-	if got == nil || got.Error() != "connection refused" {
+	cause := errors.New("connection refused")
+	got := sanitizeNetworkError(upstreamerr.ServiceRanking, "tracker: request failed after retries", cause)
+	if got == nil || got.Error() != "tracker: request failed after retries: connection refused" {
 		t.Fatalf("sanitizeNetworkError() = %v", got)
+	}
+	if !errors.Is(got, cause) || !upstreamerr.IsService(got, upstreamerr.ServiceRanking) {
+		t.Fatalf("sanitizeNetworkError() must keep the cause and the service: %v", got)
 	}
 }

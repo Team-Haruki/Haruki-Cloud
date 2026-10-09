@@ -11,6 +11,7 @@ import (
 
 	"haruki-cloud/config"
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/testutil"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/klauspost/compress/zstd"
@@ -43,7 +44,7 @@ func TestToolboxDecompressionRejectsOversizedPayload(t *testing.T) {
 
 	client := NewToolboxClient(nil)
 	defer client.Close()
-	if _, err := client.decompressContextLimit(context.Background(), resp, 8); err == nil || !strings.Contains(err.Error(), "exceeds") {
+	if _, err := client.decompressContextLimit(context.Background(), resp, 8); err == nil || !strings.Contains(testutil.ErrorDetail(err), "exceeds") {
 		t.Fatalf("oversized decompression error = %v", err)
 	}
 }
@@ -371,7 +372,7 @@ func TestToolboxConditionalFetchPropagatesInvalidUploadTime(t *testing.T) {
 
 	client := NewToolboxClient(&config.ToolboxConfig{BaseURL: server.URL})
 	data, notModified, err := client.GetSuiteDataConditionalContext(context.Background(), "jp", 123456789, "qq", "10001", 1710000000)
-	if err == nil || !strings.Contains(err.Error(), "invalid upload_time") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "invalid upload_time") {
 		t.Fatalf("parse error must propagate, got %v", err)
 	}
 	if notModified || data != nil {

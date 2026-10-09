@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
+	"haruki-cloud/internal/testutil"
 )
 
 type errorStampSource struct{ err error }
@@ -38,7 +39,7 @@ func TestStampControllerErrorsRenderingAndAssetHelpers(t *testing.T) {
 	if _, err := NewController(errorStampSource{err: errors.New("boom")}, nil, nil).BuildStampListRequest(ListQuery{}); err == nil || err.Error() != "boom" {
 		t.Fatalf("expected source error, got %v", err)
 	}
-	if _, err := controller.BuildStampListRequest(ListQuery{}); err == nil || !strings.Contains(err.Error(), "no stamp data") {
+	if _, err := controller.BuildStampListRequest(ListQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "no stamp data") {
 		t.Fatalf("expected empty-source error, got %v", err)
 	}
 

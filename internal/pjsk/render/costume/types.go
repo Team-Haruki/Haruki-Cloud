@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -48,6 +50,14 @@ type LegacyAccessoryIDError struct {
 
 func (e *LegacyAccessoryIDError) Error() string {
 	return fmt.Sprintf("3d combo accessory legacy id: accessory=%d character3d=%d ids=%v", e.LegacyID, e.Character3DID, e.AccessoryIDs)
+}
+
+// Unwrap exposes the typed user reply: the full accessory IDs to use.
+func (e *LegacyAccessoryIDError) Unwrap() error {
+	if len(e.AccessoryIDs) == 0 {
+		return usererror.Invalid(i18n.M("costume.preview3d.accessory_legacy"))
+	}
+	return usererror.Invalid(i18n.M("costume.preview3d.accessory_legacy_ids", i18n.Data{"IDs": joinCostumeIDs(e.AccessoryIDs)}))
 }
 
 type ListQuery struct {

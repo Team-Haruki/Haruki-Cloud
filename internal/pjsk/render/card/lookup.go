@@ -1,19 +1,22 @@
 package card
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 	if c == nil {
-		return nil, fmt.Errorf("card controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("card controller is not configured"))
 	}
 
 	region, source, _, err := c.resolveBuilder(query.Region)
@@ -28,7 +31,7 @@ func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 
 	paths := resolveCardOriginalImagePaths(c.assets, region, cardInfo)
 	if len(paths) == 0 {
-		return nil, fmt.Errorf("card %d does not have original image assets", cardInfo.ID)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("card.no_original_image"))
 	}
 
 	cp := *cardInfo

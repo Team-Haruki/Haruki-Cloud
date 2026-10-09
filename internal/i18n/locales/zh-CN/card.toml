@@ -1,0 +1,65 @@
+# 卡牌：查卡、卡牌列表、卡箱、卡面。
+
+[card.catalog_notice.no_binding]
+description = "卡牌列表图片的提示标题：请求者没有绑定账号，所以显示全部卡牌而不是自己拥有的卡牌。"
+other = "未绑定账号，当前显示全部卡牌"
+
+[card.catalog_notice.no_suite]
+description = "卡牌列表图片的提示标题：没有拿到请求者抓包数据里的卡牌，所以显示全部卡牌。"
+other = "未获取到抓包数据中的卡牌，当前显示全部卡牌"
+
+[card.catalog_notice.suite_unavailable]
+description = "卡牌列表图片的提示标题：抓包数据暂时取不到（工具箱出错），所以显示全部卡牌。"
+other = "抓包数据暂时不可用，当前显示全部卡牌"
+
+[card.catalog_notice.with_reason]
+description = "卡牌列表图片的提示标题：取抓包数据失败，先写失败原因（错误提示的第一行），再说明显示全部卡牌。占位符：Reason=失败原因，一句话。"
+other = "{{.Reason}}；当前显示全部卡牌"
+
+[card.not_found]
+description = "查卡牌时找不到匹配的卡牌（不确定区服时）。占位符：UserQuery=用户写的卡牌 ID 或筛选条件，超过 30 个字截断。"
+other = "未找到卡牌：“{{.UserQuery}}”"
+
+[card.not_found_no_echo]
+description = "card.not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "未找到对应的卡牌"
+
+[card.not_found_unspecified]
+description = "查卡牌时找不到匹配的卡牌，且没有可显示的查询内容（不确定区服时）。"
+other = "未找到对应的卡牌"
+
+[card.not_found_in_region]
+description = "在某个区服查卡牌时找不到匹配的卡牌，提示可以加区服前缀查其他区服。占位符：Region=区服显示名；UserQuery=用户写的卡牌 ID 或筛选条件，超过 30 个字截断。"
+other = "{{.Region}}未找到卡牌：“{{.UserQuery}}”\n查询其他区服的卡牌请加区服前缀，例如 /cn查卡"
+
+[card.not_found_in_region_no_echo]
+description = "card.not_found_in_region 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Region=区服显示名。"
+other = "{{.Region}}未找到对应的卡牌\n查询其他区服的卡牌请加区服前缀，例如 /cn查卡"
+
+[card.not_found_unspecified_in_region]
+description = "在某个区服查卡牌时找不到匹配的卡牌，且没有可显示的查询内容。占位符：Region=区服显示名。"
+other = "{{.Region}}未找到对应的卡牌\n查询其他区服的卡牌请加区服前缀，例如 /cn查卡"
+
+[card.query_required]
+description = "查卡牌但没有写要查的卡牌。"
+other = "请写要查询的卡牌"
+
+[card.none_released]
+description = "该区服还没有已上线的卡牌。"
+other = "当前没有已上线的卡牌"
+
+[card.no_original_image]
+description = "查卡面原图，但该卡牌没有可用的原图资源。"
+other = "该卡牌没有可用的卡面原图"
+
+[card.unreleased]
+description = "查询的卡牌还没有上线。"
+other = "该卡牌还未上线"
+
+[card.box_needs_suite]
+description = "卡箱模式（显示持有、只看未持有、按时间分组）需要用户的抓包数据。"
+other = "卡箱需要你的抓包数据，请先在 Haruki 工具箱上传抓包数据（Suite）"
+
+[card.time_mode_conflict]
+description = "卡箱的时间模式与属性分组或“未持有”一起使用。"
+other = "时间模式只显示已拥有的卡牌，不能和属性分组或“未持有”一起使用"

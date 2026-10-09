@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestFinalCustomProfileCardEdges(t *testing.T) {
@@ -75,11 +76,11 @@ func testFinalCustomProfileExecutionGuards(t *testing.T) {
 		t.Fatal("nil custom profile request accepted")
 	}
 	rc := &RequestContext{Ctx: context.Background(), Cmd: &CommandRequest{}, App: &renderapp.App{}}
-	if _, err := executeProfileCustomProfileCard(rc); err == nil || !strings.Contains(err.Error(), "sekai api") {
+	if _, err := executeProfileCustomProfileCard(rc); err == nil || !strings.Contains(testutil.ErrorDetail(err), "sekai api") {
 		t.Fatalf("missing Sekai API error = %v", err)
 	}
 	rc.App.SekaiAPI = sekaiapi.NewSekaiAPIClient(nil)
-	if _, err := executeProfileCustomProfileCard(rc); err == nil || !strings.Contains(err.Error(), "drawing") {
+	if _, err := executeProfileCustomProfileCard(rc); err == nil || !strings.Contains(testutil.ErrorDetail(err), "drawing") {
 		t.Fatalf("missing drawing error = %v", err)
 	}
 	rc.App.Drawing = drawing.NewHarukiDrawingClient("")
@@ -157,7 +158,7 @@ func testFinalProfileCloneEdges(t *testing.T) {
 		t.Fatal("nil profile card clone should stay nil")
 	}
 	level := 7
-	cloned := cloneProfileCardForTarget(&drawing.ProfileCardRequest{MysekaiLevel: &level}, ResolvedGameTarget{Visible: true}, "jp")
+	cloned := cloneProfileCardForTarget(&drawing.ProfileCardRequest{MysekaiLevel: &level}, ResolvedGameTarget{UIDVisible: true}, "jp")
 	if cloned.MysekaiLevel == &level || *cloned.MysekaiLevel != level {
 		t.Fatal("MySekai level was not deeply cloned")
 	}
@@ -180,19 +181,19 @@ func TestFinalTargetSnapshotAndPlannerEdges(t *testing.T) {
 
 func testFinalTargetAndRegionResolution(t *testing.T) {
 	ctx := context.Background()
-	if _, err := resolveGameTarget(ctx, userQueryParams{Mode: "uid", PJSKUserID: "1"}, "jp", true, nil); !errors.Is(err, accountdata.ErrBindingServiceUnavailable) {
+	if _, err := resolveGameTarget(ctx, userQueryParams{Mode: "uid", PJSKUserID: "1"}, "jp", true, nil, accountdata.ExposureProfile); !errors.Is(err, accountdata.ErrBindingServiceUnavailable) {
 		t.Fatalf("nil binding service error = %v", err)
 	}
 	service := newHandlerTestBindingService(t)
 	app := &renderapp.App{Bindings: service}
-	uidTarget, err := resolveGameTarget(ctx, userQueryParams{Mode: "uid", PJSKUserID: "123"}, "jp", true, app)
-	if err != nil || uidTarget.PJSKUserID != "123" || !uidTarget.Visible {
+	uidTarget, err := resolveGameTarget(ctx, userQueryParams{Mode: "uid", PJSKUserID: "123"}, "jp", true, app, accountdata.ExposureProfile)
+	if err != nil || uidTarget.PJSKUserID != "123" || !uidTarget.UIDVisible {
 		t.Fatalf("UID target = %+v, %v", uidTarget, err)
 	}
-	if _, err := resolveGameTarget(ctx, userQueryParams{Mode: "unknown"}, "jp", true, app); err == nil {
+	if _, err := resolveGameTarget(ctx, userQueryParams{Mode: "unknown"}, "jp", true, app, accountdata.ExposureProfile); err == nil {
 		t.Fatal("unknown target mode accepted")
 	}
-	if _, err := resolveGameTarget(ctx, userQueryParams{Mode: "at_user", Platform: "qq", AtUserID: "missing"}, "jp", true, app); err == nil {
+	if _, err := resolveGameTarget(ctx, userQueryParams{Mode: "at_user", Platform: "qq", AtUserID: "missing"}, "jp", true, app, accountdata.ExposureProfile); err == nil {
 		t.Fatal("missing at-user binding resolved")
 	}
 	if got := resolveRegionFromDefaultBinding(ctx, &CommandRequest{Region: "tw", RegionExplicit: true}, nil); got != "tw" {

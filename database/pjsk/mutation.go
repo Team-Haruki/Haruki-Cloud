@@ -6927,6 +6927,10 @@ type UserBindingMutation struct {
 	display_order       *int
 	adddisplay_order    *int
 	visible             *bool
+	uid_visible         *bool
+	sk_visible          *bool
+	profile_visible     *bool
+	arrest_visible      *bool
 	suite_visible       *bool
 	mysekai_visible     *bool
 	verified            *bool
@@ -7242,6 +7246,202 @@ func (m *UserBindingMutation) ResetVisible() {
 	m.visible = nil
 }
 
+// SetUIDVisible sets the "uid_visible" field.
+func (m *UserBindingMutation) SetUIDVisible(b bool) {
+	m.uid_visible = &b
+}
+
+// UIDVisible returns the value of the "uid_visible" field in the mutation.
+func (m *UserBindingMutation) UIDVisible() (r bool, exists bool) {
+	v := m.uid_visible
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUIDVisible returns the old "uid_visible" field's value of the UserBinding entity.
+// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBindingMutation) OldUIDVisible(ctx context.Context) (v *bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUIDVisible is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUIDVisible requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUIDVisible: %w", err)
+	}
+	return oldValue.UIDVisible, nil
+}
+
+// ClearUIDVisible clears the value of the "uid_visible" field.
+func (m *UserBindingMutation) ClearUIDVisible() {
+	m.uid_visible = nil
+	m.clearedFields[userbinding.FieldUIDVisible] = struct{}{}
+}
+
+// UIDVisibleCleared returns if the "uid_visible" field was cleared in this mutation.
+func (m *UserBindingMutation) UIDVisibleCleared() bool {
+	_, ok := m.clearedFields[userbinding.FieldUIDVisible]
+	return ok
+}
+
+// ResetUIDVisible resets all changes to the "uid_visible" field.
+func (m *UserBindingMutation) ResetUIDVisible() {
+	m.uid_visible = nil
+	delete(m.clearedFields, userbinding.FieldUIDVisible)
+}
+
+// SetSkVisible sets the "sk_visible" field.
+func (m *UserBindingMutation) SetSkVisible(b bool) {
+	m.sk_visible = &b
+}
+
+// SkVisible returns the value of the "sk_visible" field in the mutation.
+func (m *UserBindingMutation) SkVisible() (r bool, exists bool) {
+	v := m.sk_visible
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSkVisible returns the old "sk_visible" field's value of the UserBinding entity.
+// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBindingMutation) OldSkVisible(ctx context.Context) (v *bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSkVisible is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSkVisible requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSkVisible: %w", err)
+	}
+	return oldValue.SkVisible, nil
+}
+
+// ClearSkVisible clears the value of the "sk_visible" field.
+func (m *UserBindingMutation) ClearSkVisible() {
+	m.sk_visible = nil
+	m.clearedFields[userbinding.FieldSkVisible] = struct{}{}
+}
+
+// SkVisibleCleared returns if the "sk_visible" field was cleared in this mutation.
+func (m *UserBindingMutation) SkVisibleCleared() bool {
+	_, ok := m.clearedFields[userbinding.FieldSkVisible]
+	return ok
+}
+
+// ResetSkVisible resets all changes to the "sk_visible" field.
+func (m *UserBindingMutation) ResetSkVisible() {
+	m.sk_visible = nil
+	delete(m.clearedFields, userbinding.FieldSkVisible)
+}
+
+// SetProfileVisible sets the "profile_visible" field.
+func (m *UserBindingMutation) SetProfileVisible(b bool) {
+	m.profile_visible = &b
+}
+
+// ProfileVisible returns the value of the "profile_visible" field in the mutation.
+func (m *UserBindingMutation) ProfileVisible() (r bool, exists bool) {
+	v := m.profile_visible
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProfileVisible returns the old "profile_visible" field's value of the UserBinding entity.
+// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBindingMutation) OldProfileVisible(ctx context.Context) (v *bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProfileVisible is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProfileVisible requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProfileVisible: %w", err)
+	}
+	return oldValue.ProfileVisible, nil
+}
+
+// ClearProfileVisible clears the value of the "profile_visible" field.
+func (m *UserBindingMutation) ClearProfileVisible() {
+	m.profile_visible = nil
+	m.clearedFields[userbinding.FieldProfileVisible] = struct{}{}
+}
+
+// ProfileVisibleCleared returns if the "profile_visible" field was cleared in this mutation.
+func (m *UserBindingMutation) ProfileVisibleCleared() bool {
+	_, ok := m.clearedFields[userbinding.FieldProfileVisible]
+	return ok
+}
+
+// ResetProfileVisible resets all changes to the "profile_visible" field.
+func (m *UserBindingMutation) ResetProfileVisible() {
+	m.profile_visible = nil
+	delete(m.clearedFields, userbinding.FieldProfileVisible)
+}
+
+// SetArrestVisible sets the "arrest_visible" field.
+func (m *UserBindingMutation) SetArrestVisible(b bool) {
+	m.arrest_visible = &b
+}
+
+// ArrestVisible returns the value of the "arrest_visible" field in the mutation.
+func (m *UserBindingMutation) ArrestVisible() (r bool, exists bool) {
+	v := m.arrest_visible
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldArrestVisible returns the old "arrest_visible" field's value of the UserBinding entity.
+// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBindingMutation) OldArrestVisible(ctx context.Context) (v *bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldArrestVisible is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldArrestVisible requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldArrestVisible: %w", err)
+	}
+	return oldValue.ArrestVisible, nil
+}
+
+// ClearArrestVisible clears the value of the "arrest_visible" field.
+func (m *UserBindingMutation) ClearArrestVisible() {
+	m.arrest_visible = nil
+	m.clearedFields[userbinding.FieldArrestVisible] = struct{}{}
+}
+
+// ArrestVisibleCleared returns if the "arrest_visible" field was cleared in this mutation.
+func (m *UserBindingMutation) ArrestVisibleCleared() bool {
+	_, ok := m.clearedFields[userbinding.FieldArrestVisible]
+	return ok
+}
+
+// ResetArrestVisible resets all changes to the "arrest_visible" field.
+func (m *UserBindingMutation) ResetArrestVisible() {
+	m.arrest_visible = nil
+	delete(m.clearedFields, userbinding.FieldArrestVisible)
+}
+
 // SetSuiteVisible sets the "suite_visible" field.
 func (m *UserBindingMutation) SetSuiteVisible(b bool) {
 	m.suite_visible = &b
@@ -7465,7 +7665,7 @@ func (m *UserBindingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserBindingMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 11)
 	if m.haruki_user_id != nil {
 		fields = append(fields, userbinding.FieldHarukiUserID)
 	}
@@ -7477,6 +7677,18 @@ func (m *UserBindingMutation) Fields() []string {
 	}
 	if m.visible != nil {
 		fields = append(fields, userbinding.FieldVisible)
+	}
+	if m.uid_visible != nil {
+		fields = append(fields, userbinding.FieldUIDVisible)
+	}
+	if m.sk_visible != nil {
+		fields = append(fields, userbinding.FieldSkVisible)
+	}
+	if m.profile_visible != nil {
+		fields = append(fields, userbinding.FieldProfileVisible)
+	}
+	if m.arrest_visible != nil {
+		fields = append(fields, userbinding.FieldArrestVisible)
 	}
 	if m.suite_visible != nil {
 		fields = append(fields, userbinding.FieldSuiteVisible)
@@ -7503,6 +7715,14 @@ func (m *UserBindingMutation) Field(name string) (ent.Value, bool) {
 		return m.DisplayOrder()
 	case userbinding.FieldVisible:
 		return m.Visible()
+	case userbinding.FieldUIDVisible:
+		return m.UIDVisible()
+	case userbinding.FieldSkVisible:
+		return m.SkVisible()
+	case userbinding.FieldProfileVisible:
+		return m.ProfileVisible()
+	case userbinding.FieldArrestVisible:
+		return m.ArrestVisible()
 	case userbinding.FieldSuiteVisible:
 		return m.SuiteVisible()
 	case userbinding.FieldMysekaiVisible:
@@ -7526,6 +7746,14 @@ func (m *UserBindingMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldDisplayOrder(ctx)
 	case userbinding.FieldVisible:
 		return m.OldVisible(ctx)
+	case userbinding.FieldUIDVisible:
+		return m.OldUIDVisible(ctx)
+	case userbinding.FieldSkVisible:
+		return m.OldSkVisible(ctx)
+	case userbinding.FieldProfileVisible:
+		return m.OldProfileVisible(ctx)
+	case userbinding.FieldArrestVisible:
+		return m.OldArrestVisible(ctx)
 	case userbinding.FieldSuiteVisible:
 		return m.OldSuiteVisible(ctx)
 	case userbinding.FieldMysekaiVisible:
@@ -7568,6 +7796,34 @@ func (m *UserBindingMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetVisible(v)
+		return nil
+	case userbinding.FieldUIDVisible:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUIDVisible(v)
+		return nil
+	case userbinding.FieldSkVisible:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSkVisible(v)
+		return nil
+	case userbinding.FieldProfileVisible:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProfileVisible(v)
+		return nil
+	case userbinding.FieldArrestVisible:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetArrestVisible(v)
 		return nil
 	case userbinding.FieldSuiteVisible:
 		v, ok := value.(bool)
@@ -7650,6 +7906,18 @@ func (m *UserBindingMutation) ClearedFields() []string {
 	if m.FieldCleared(userbinding.FieldGameAccountID) {
 		fields = append(fields, userbinding.FieldGameAccountID)
 	}
+	if m.FieldCleared(userbinding.FieldUIDVisible) {
+		fields = append(fields, userbinding.FieldUIDVisible)
+	}
+	if m.FieldCleared(userbinding.FieldSkVisible) {
+		fields = append(fields, userbinding.FieldSkVisible)
+	}
+	if m.FieldCleared(userbinding.FieldProfileVisible) {
+		fields = append(fields, userbinding.FieldProfileVisible)
+	}
+	if m.FieldCleared(userbinding.FieldArrestVisible) {
+		fields = append(fields, userbinding.FieldArrestVisible)
+	}
 	return fields
 }
 
@@ -7666,6 +7934,18 @@ func (m *UserBindingMutation) ClearField(name string) error {
 	switch name {
 	case userbinding.FieldGameAccountID:
 		m.ClearGameAccountID()
+		return nil
+	case userbinding.FieldUIDVisible:
+		m.ClearUIDVisible()
+		return nil
+	case userbinding.FieldSkVisible:
+		m.ClearSkVisible()
+		return nil
+	case userbinding.FieldProfileVisible:
+		m.ClearProfileVisible()
+		return nil
+	case userbinding.FieldArrestVisible:
+		m.ClearArrestVisible()
 		return nil
 	}
 	return fmt.Errorf("unknown UserBinding nullable field %s", name)
@@ -7686,6 +7966,18 @@ func (m *UserBindingMutation) ResetField(name string) error {
 		return nil
 	case userbinding.FieldVisible:
 		m.ResetVisible()
+		return nil
+	case userbinding.FieldUIDVisible:
+		m.ResetUIDVisible()
+		return nil
+	case userbinding.FieldSkVisible:
+		m.ResetSkVisible()
+		return nil
+	case userbinding.FieldProfileVisible:
+		m.ResetProfileVisible()
+		return nil
+	case userbinding.FieldArrestVisible:
+		m.ResetArrestVisible()
 		return nil
 	case userbinding.FieldSuiteVisible:
 		m.ResetSuiteVisible()

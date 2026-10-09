@@ -4,20 +4,31 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
 	pjskschema "haruki-cloud/ent/pjsk/schema"
+	"haruki-cloud/internal/i18n"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/chartstyle"
 	"haruki-cloud/internal/pjsk/displaytime"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
 	ProfileModeHideID         = "profile-hide-id"
 	ProfileModeShowID         = "profile-show-id"
+	ProfileModeHideSK         = "profile-hide-sk"
+	ProfileModeShowSK         = "profile-show-sk"
+	ProfileModeHideInfo       = "profile-hide-info"
+	ProfileModeShowInfo       = "profile-show-info"
+	ProfileModeHideArrest     = "profile-hide-arrest"
+	ProfileModeShowArrest     = "profile-show-arrest"
+	ProfileModeHideAll        = "profile-hide-all"
+	ProfileModeShowAll        = "profile-show-all"
+	ProfileModeVisibility     = "profile-visibility"
 	ProfileModeHideSuite      = "profile-hide-suite"
 	ProfileModeShowSuite      = "profile-show-suite"
 	ProfileModeHideMySekai    = "profile-hide-mysekai"
@@ -94,8 +105,13 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 	resolveBinding := newProfileBindingResolver(ctx, service, params)
 	switch mode {
 	case ProfileModeHideID, ProfileModeShowID,
+		ProfileModeHideSK, ProfileModeShowSK,
+		ProfileModeHideInfo, ProfileModeShowInfo,
+		ProfileModeHideArrest, ProfileModeShowArrest,
+		ProfileModeHideAll, ProfileModeShowAll,
 		ProfileModeHideSuite, ProfileModeShowSuite,
-		ProfileModeHideMySekai, ProfileModeShowMySekai:
+		ProfileModeHideMySekai, ProfileModeShowMySekai,
+		ProfileModeVisibility:
 		return executeProfileVisibilityMode(ctx, service, mode, params, resolveBinding)
 	case ProfileModeVerify:
 		return executeProfileVerifyMode(ctx, service, params, resolveBinding)
@@ -137,32 +153,49 @@ func newProfileBindingResolver(ctx context.Context, service *BindingService, par
 	}
 }
 
+// visibilityModes maps each per-exposure toggle mode to the exposures it
+// changes and whether it shows them. /隐藏全部 and /显示全部 change the four
+// exposures the single legacy flag covered; suite and MySekai data keep
+// their own toggles because hiding them also blocks the owner's own queries.
+var visibilityModes = map[string]struct {
+	exposures []Exposure
+	shown     bool
+}{
+	ProfileModeHideID:     {[]Exposure{ExposureUID}, false},
+	ProfileModeShowID:     {[]Exposure{ExposureUID}, true},
+	ProfileModeHideSK:     {[]Exposure{ExposureSK}, false},
+	ProfileModeShowSK:     {[]Exposure{ExposureSK}, true},
+	ProfileModeHideInfo:   {[]Exposure{ExposureProfile}, false},
+	ProfileModeShowInfo:   {[]Exposure{ExposureProfile}, true},
+	ProfileModeHideArrest: {[]Exposure{ExposureArrest}, false},
+	ProfileModeShowArrest: {[]Exposure{ExposureArrest}, true},
+	ProfileModeHideAll:    {Exposures, false},
+	ProfileModeShowAll:    {Exposures, true},
+}
+
 func executeProfileVisibilityMode(ctx context.Context, service *BindingService, mode string, params ProfileSettingsCommandParams, resolve profileBindingResolver) ([]byte, error) {
 	binding, err := resolve()
 	if err != nil {
 		return nil, err
 	}
 	update := service.pjskDB.UserBinding.UpdateOneID(binding.ID)
-	action, subject := "", ""
-	switch mode {
-	case ProfileModeHideID:
-		action, subject = "隐藏", "ID信息"
-		_, err = update.SetVisible(false).Save(ctx)
-	case ProfileModeShowID:
-		action, subject = "展示", "ID信息"
-		_, err = update.SetVisible(true).Save(ctx)
-	case ProfileModeHideSuite:
-		action, subject = "隐藏", "抓包信息"
-		_, err = update.SetSuiteVisible(false).Save(ctx)
-	case ProfileModeShowSuite:
-		action, subject = "展示", "抓包信息"
-		_, err = update.SetSuiteVisible(true).Save(ctx)
-	case ProfileModeHideMySekai:
-		action, subject = "隐藏", "烤森抓包信息"
-		_, err = update.SetMysekaiVisible(false).Save(ctx)
-	case ProfileModeShowMySekai:
-		action, subject = "展示", "烤森抓包信息"
-		_, err = update.SetMysekaiVisible(true).Save(ctx)
+	if change, ok := visibilityModes[mode]; ok {
+		visibility := bindingVisibility(binding)
+		for _, exposure := range change.exposures {
+			visibility = visibility.With(exposure, change.shown)
+		}
+		_, err = setBindingVisibility(update, visibility).Save(ctx)
+	} else {
+		switch mode {
+		case ProfileModeHideSuite:
+			_, err = update.SetSuiteVisible(false).Save(ctx)
+		case ProfileModeShowSuite:
+			_, err = update.SetSuiteVisible(true).Save(ctx)
+		case ProfileModeHideMySekai:
+			_, err = update.SetMysekaiVisible(false).Save(ctx)
+		case ProfileModeShowMySekai:
+			_, err = update.SetMysekaiVisible(true).Save(ctx)
+		}
 	}
 	if err != nil {
 		return nil, err
@@ -171,12 +204,77 @@ func executeProfileVisibilityMode(ctx context.Context, service *BindingService, 
 	if err != nil {
 		return nil, err
 	}
-	return []byte(fmt.Sprintf("已%s [%s] %s 的%s", action, strings.ToUpper(item.Server), formatBindingUID(*item), subject)), nil
+	return []byte(profileVisibilityResultText(mode, *item)), nil
+}
+
+// profileVisibilityResultText is the reply to a visibility command: what
+// changed, then every visibility setting of the account. The status command
+// (ProfileModeVisibility) only lists the settings.
+func profileVisibilityResultText(mode string, item BindingListItem) string {
+	account := bindingAccountLabel(item)
+	settings := visibilitySettingsMessage(item)
+	if mode == ProfileModeVisibility {
+		return i18n.T("account.visibility.status", i18n.Data{"Account": account, "Settings": settings})
+	}
+	return i18n.T("account.visibility.changed", i18n.Data{"Result": profileVisibilityChange(mode, account), "Settings": settings})
+}
+
+func profileVisibilityChange(mode string, account i18n.Message) i18n.Message {
+	data := i18n.Data{"Account": account}
+	switch mode {
+	case ProfileModeHideID:
+		return i18n.M("account.visibility.hide_uid", data)
+	case ProfileModeShowID:
+		return i18n.M("account.visibility.show_uid", data)
+	case ProfileModeHideSK:
+		return i18n.M("account.visibility.hide_sk", data)
+	case ProfileModeShowSK:
+		return i18n.M("account.visibility.show_sk", data)
+	case ProfileModeHideInfo:
+		return i18n.M("account.visibility.hide_profile", data)
+	case ProfileModeShowInfo:
+		return i18n.M("account.visibility.show_profile", data)
+	case ProfileModeHideArrest:
+		return i18n.M("account.visibility.hide_arrest", data)
+	case ProfileModeShowArrest:
+		return i18n.M("account.visibility.show_arrest", data)
+	case ProfileModeHideAll:
+		return i18n.M("account.visibility.hide_all", data)
+	case ProfileModeShowAll:
+		return i18n.M("account.visibility.show_all", data)
+	case ProfileModeHideSuite:
+		return i18n.M("account.visibility.hide_suite", data)
+	case ProfileModeShowSuite:
+		return i18n.M("account.visibility.show_suite", data)
+	case ProfileModeHideMySekai:
+		return i18n.M("account.visibility.hide_mysekai", data)
+	default:
+		return i18n.M("account.visibility.show_mysekai", data)
+	}
+}
+
+// visibilitySettingsMessage lists every visibility setting of a binding, one
+// per line.
+func visibilitySettingsMessage(item BindingListItem) i18n.Message {
+	state := func(shown bool) i18n.Message {
+		if shown {
+			return i18n.M("account.visibility.state.shown")
+		}
+		return i18n.M("account.visibility.state.hidden")
+	}
+	return i18n.M("account.visibility.settings", i18n.Data{
+		"UID":     state(item.Visibility.UID),
+		"SK":      state(item.Visibility.SK),
+		"Profile": state(item.Visibility.Profile),
+		"Arrest":  state(item.Visibility.Arrest),
+		"Suite":   state(item.SuiteVisible),
+		"MySekai": state(item.MySekaiVisible),
+	})
 }
 
 func executeProfileVerifyMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams, resolve profileBindingResolver) ([]byte, error) {
 	if service.fastVerifier == nil {
-		return nil, fmt.Errorf("pjsk: fast verification provider is not configured")
+		return nil, usererror.Misconfigured(errors.New("pjsk: fast verification provider is not configured"))
 	}
 	entity, err := resolve()
 	if err != nil {
@@ -187,9 +285,9 @@ func executeProfileVerifyMode(ctx context.Context, service *BindingService, para
 		return nil, err
 	}
 	if alreadyVerified {
-		return []byte(fmt.Sprintf("当前%s服绑定账号已经验证过", strings.ToUpper(item.Server))), nil
+		return []byte(i18n.T("account.verify.already", i18n.Data{"Account": bindingAccountLabel(*item)})), nil
 	}
-	return []byte(fmt.Sprintf("已验证%s服账号 %s", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
+	return []byte(i18n.T("account.verify.done", i18n.Data{"Account": bindingAccountLabel(*item)})), nil
 }
 
 func executeProfileVerifyListMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams) ([]byte, error) {
@@ -212,7 +310,7 @@ func loadProfileUserSettings(ctx context.Context, service *BindingService, param
 	}
 	settings, err := GetUserSettings(ctx, service.pjskDB, harukiUserID)
 	if err != nil && !errors.Is(err, ErrUserSettingsNotFound) {
-		return 0, nil, fmt.Errorf("读取用户设置失败: %w", err)
+		return 0, nil, usererror.Unavailable(i18n.FeatureAccount, fmt.Errorf("read user settings: %w", err))
 	}
 	if settings == nil || errors.Is(err, ErrUserSettingsNotFound) {
 		settings = newDefaultUserSettings()
@@ -226,7 +324,7 @@ func executeProfileTimeZoneMode(ctx context.Context, service *BindingService, pa
 		return nil, err
 	}
 	if len(candidates) > 0 {
-		return []byte(formatTimeZoneCandidatesText(params.TimeZone, candidates)), nil
+		return []byte(formatTimeZoneCandidatesText(candidates)), nil
 	}
 	userID, settings, err := loadProfileUserSettings(ctx, service, params)
 	if err != nil {
@@ -234,14 +332,14 @@ func executeProfileTimeZoneMode(ctx context.Context, service *BindingService, pa
 	}
 	settings.TimeZone = resolved
 	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
-		return nil, fmt.Errorf("保存用户时区失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.settings.save_failed"), fmt.Errorf("save time zone: %w", err))
 	}
-	return []byte(fmt.Sprintf("已设置PJSK时区为 %s", resolved)), nil
+	return []byte(i18n.T("account.settings.timezone_set", i18n.Data{"TimeZone": resolved})), nil
 }
 
 func executeProfileArrestDifficultyMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams) ([]byte, error) {
 	if len(params.DifficultyToggles) == 0 {
-		return nil, fmt.Errorf("请至少指定一个逮捕难度开关")
+		return nil, usererror.Misuse(i18n.M("profile.arrest_difficulty.required"))
 	}
 	userID, settings, err := loadProfileUserSettings(ctx, service, params)
 	if err != nil {
@@ -252,15 +350,15 @@ func executeProfileArrestDifficultyMode(ctx context.Context, service *BindingSer
 		return nil, err
 	}
 	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
-		return nil, fmt.Errorf("保存逮捕难度设置失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.settings.save_failed"), fmt.Errorf("save arrest difficulties: %w", err))
 	}
-	return []byte(fmt.Sprintf("已设置逮捕难度为 %s", formatProfileDifficultySummary(settings.PJSKEnabledDifficulties))), nil
+	return []byte(formatProfileDifficultySummary(settings.PJSKEnabledDifficulties)), nil
 }
 
 func executeProfileChartStyleMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams) ([]byte, error) {
 	style := chartstyle.Normalize(params.ChartStyle)
 	if style == "" {
-		return nil, fmt.Errorf("谱面样式只支持 white 或 black")
+		return nil, usererror.Invalid(i18n.M("profile.chart_style.invalid"))
 	}
 	userID, settings, err := loadProfileUserSettings(ctx, service, params)
 	if err != nil {
@@ -268,9 +366,9 @@ func executeProfileChartStyleMode(ctx context.Context, service *BindingService, 
 	}
 	settings.ChartStyle = style
 	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
-		return nil, fmt.Errorf("保存谱面样式失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.settings.save_failed"), fmt.Errorf("save chart style: %w", err))
 	}
-	return []byte(fmt.Sprintf("已设置谱面样式为 %s", style)), nil
+	return []byte(i18n.T("account.settings.chart_style_set", i18n.Data{"Style": style})), nil
 }
 
 func executeProfileModularMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams, enabled bool) ([]byte, error) {
@@ -280,12 +378,12 @@ func executeProfileModularMode(ctx context.Context, service *BindingService, par
 	}
 	settings.ModularProfileEnabled = enabled
 	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
-		return nil, fmt.Errorf("保存模块个人信息设置失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.settings.save_failed"), fmt.Errorf("save modular profile setting: %w", err))
 	}
 	if enabled {
-		return []byte("已开启模块个人信息，之后 /个人信息 将使用模块布局"), nil
+		return []byte(i18n.T("account.settings.modular_enabled")), nil
 	}
-	return []byte("已关闭模块个人信息，之后 /个人信息 将使用经典布局"), nil
+	return []byte(i18n.T("account.settings.modular_disabled")), nil
 }
 
 func executeProfileBackgroundMode(ctx context.Context, service *BindingService, mode string, params ProfileSettingsCommandParams, resolve profileBindingResolver) ([]byte, error) {
@@ -299,13 +397,13 @@ func executeProfileBackgroundMode(ctx context.Context, service *BindingService, 
 		if err != nil {
 			return nil, err
 		}
-		return []byte(fmt.Sprintf("已更新%s服个人信息背景", strings.ToUpper(item.Server))), nil
+		return []byte(i18n.T("account.bg.uploaded", i18n.Data{"Region": i18n.RegionLabel(item.Server)})), nil
 	case ProfileModeBGClear:
 		item, err := service.clearBindingProfileBG(ctx, params.Platform, params.PlatformUserID, binding)
 		if err != nil {
 			return nil, err
 		}
-		return []byte(fmt.Sprintf("已清空%s服个人信息背景", strings.ToUpper(item.Server))), nil
+		return []byte(i18n.T("account.bg.cleared", i18n.Data{"Region": i18n.RegionLabel(item.Server)})), nil
 	case ProfileModeBGAdjust:
 		if params.Blur == nil && params.Alpha == nil && params.Vertical == nil {
 			item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
@@ -318,7 +416,7 @@ func executeProfileBackgroundMode(ctx context.Context, service *BindingService, 
 		if err != nil {
 			return nil, err
 		}
-		return []byte(fmt.Sprintf("已更新%s服个人信息背景设置", strings.ToUpper(item.Server))), nil
+		return []byte(i18n.T("account.bg.adjusted", i18n.Data{"Region": i18n.RegionLabel(item.Server)})), nil
 	default:
 		return nil, fmt.Errorf("bridge: unsupported profile background mode %q", mode)
 	}
@@ -328,6 +426,14 @@ func profileSettingsModeMutates(mode string, params ProfileSettingsCommandParams
 	switch mode {
 	case ProfileModeHideID,
 		ProfileModeShowID,
+		ProfileModeHideSK,
+		ProfileModeShowSK,
+		ProfileModeHideInfo,
+		ProfileModeShowInfo,
+		ProfileModeHideArrest,
+		ProfileModeShowArrest,
+		ProfileModeHideAll,
+		ProfileModeShowAll,
 		ProfileModeHideSuite,
 		ProfileModeShowSuite,
 		ProfileModeHideMySekai,
@@ -350,18 +456,17 @@ func profileSettingsModeMutates(mode string, params ProfileSettingsCommandParams
 func formatVerifyListText(items []BindingListItem, server string) string {
 	if len(items) == 0 {
 		if server != "" {
-			return fmt.Sprintf("你还没有绑定任何%s服PJSK账号", strings.ToUpper(server))
+			return i18n.T("binding.none_in_region", i18n.Data{"Region": i18n.RegionLabel(server)})
 		}
-		return "你还没有绑定任何PJSK账号"
+		return i18n.T("binding.none")
 	}
 
-	var lines []string
+	lines := make([]string, 0, len(items)+1)
 	if server != "" {
-		lines = []string{fmt.Sprintf("已绑定%s服账号验证状态（u序号按该区服编号）:", strings.ToUpper(server))}
+		lines = append(lines, i18n.T("account.verify_list.header_region", i18n.Data{"Region": i18n.RegionLabel(server)}))
 	} else {
-		lines = []string{"已绑定账号验证状态（u序号全局编号）:"}
+		lines = append(lines, i18n.T("account.verify_list.header"))
 	}
-
 	for i, item := range items {
 		lines = append(lines, formatVerifyListItem(item, i+1, server != ""))
 	}
@@ -369,68 +474,49 @@ func formatVerifyListText(items []BindingListItem, server string) string {
 }
 
 func formatVerifyListItem(item BindingListItem, globalIndex int, useServerIndex bool) string {
-	status := "❌"
+	status := i18n.M("account.verify_list.unverified")
 	if item.Verified {
-		status = "✅"
+		status = i18n.M("account.verify_list.verified")
 	}
 	displayIndex := globalIndex
 	if useServerIndex {
 		displayIndex = item.Index
 	}
-	line := fmt.Sprintf("u%d [%s] %s %s", displayIndex, strings.ToUpper(item.Server), formatBindingUID(item), status)
-	marks := make([]string, 0, 2)
-	if item.IsGlobalDefault {
-		marks = append(marks, "全局默认")
+	if marks := bindingDefaultMarks(item); marks != "" {
+		return i18n.T("account.verify_list.item_marked", i18n.Data{"Index": displayIndex, "Account": bindingAccountLabel(item), "Status": status, "Marks": marks})
 	}
-	if item.IsServerDefault {
-		marks = append(marks, strings.ToUpper(item.Server)+"服默认")
-	}
-	if len(marks) > 0 {
-		line += " (" + strings.Join(marks, " / ") + ")"
-	}
-	return line
+	return i18n.T("account.verify_list.item", i18n.Data{"Index": displayIndex, "Account": bindingAccountLabel(item), "Status": status})
 }
 
 func formatProfileBGSettingsText(item BindingListItem) string {
-	server := strings.ToUpper(strings.TrimSpace(item.Server))
+	region := i18n.RegionLabel(item.Server)
 	if item.Bg == nil || item.Bg.ImgPath == nil || strings.TrimSpace(*item.Bg.ImgPath) == "" {
-		return fmt.Sprintf("当前%s服还没有自定义个人信息背景", server)
+		return i18n.T("account.bg.none", i18n.Data{"Region": region})
 	}
-
-	lines := []string{
-		fmt.Sprintf("当前%s服个人信息背景设置:", server),
-		fmt.Sprintf("ID: %s", formatBindingUID(item)),
-	}
+	orientation := i18n.M("account.bg.horizontal")
 	if item.Bg.Vertical {
-		lines = append(lines, "方向: 竖屏")
-	} else {
-		lines = append(lines, "方向: 横屏")
+		orientation = i18n.M("account.bg.vertical")
 	}
-	lines = append(lines,
-		fmt.Sprintf("模糊度: %d", item.Bg.Blur),
-		fmt.Sprintf("透明度: %d", item.Bg.Alpha),
-	)
-	return strings.Join(lines, "\n")
+	return i18n.T("account.bg.settings", i18n.Data{
+		"Region":      region,
+		"Account":     bindingAccountLabel(item),
+		"Orientation": orientation,
+		"Blur":        item.Bg.Blur,
+		"Alpha":       item.Bg.Alpha,
+	})
 }
 
-func formatTimeZoneCandidatesText(raw string, candidates []string) string {
+func formatTimeZoneCandidatesText(candidates []string) string {
 	const maxCandidates = 20
 
-	lines := []string{
-		fmt.Sprintf("偏移量 %q 匹配到多个时区，请使用时区名重新设置：", strings.TrimSpace(raw)),
-	}
-
-	limit := len(candidates)
-	if limit > maxCandidates {
-		limit = maxCandidates
-	}
-	for i := 0; i < limit; i++ {
-		lines = append(lines, candidates[i])
-	}
+	limit := min(len(candidates), maxCandidates)
+	listed := append([]string(nil), candidates[:limit]...)
 	if len(candidates) > limit {
-		lines = append(lines, fmt.Sprintf("... 以及另外 %d 个候选", len(candidates)-limit))
+		listed = append(listed, i18n.T("account.settings.timezone_more", i18n.Data{"Count": len(candidates) - limit}))
 	}
-	return strings.Join(lines, "\n")
+	return i18n.T("account.settings.timezone_candidates", i18n.Data{
+		"Candidates": strings.Join(listed, "\n"),
+	})
 }
 
 func normalizeProfileDifficulty(value sekai.MusicDifficultyType) sekai.MusicDifficultyType {
@@ -463,7 +549,7 @@ func applyProfileDifficultyToggles(current []sekai.MusicDifficultyType, toggles 
 	for _, toggle := range toggles {
 		diff := normalizeProfileDifficulty(toggle.Difficulty)
 		if diff == "" {
-			return nil, fmt.Errorf("不支持的难度: %q", toggle.Difficulty)
+			return nil, usererror.BadParam(string(toggle.Difficulty), i18n.M("profile.arrest_difficulty.unknown"))
 		}
 		enabled[diff] = toggle.Enabled
 	}
@@ -477,6 +563,8 @@ func applyProfileDifficultyToggles(current []sekai.MusicDifficultyType, toggles 
 	return result, nil
 }
 
+// formatProfileDifficultySummary is the reply after changing the arrest
+// difficulties: the enabled and the disabled ones, in game order.
 func formatProfileDifficultySummary(enabled []sekai.MusicDifficultyType) string {
 	enabledSet := make(map[sekai.MusicDifficultyType]bool, len(enabled))
 	for _, diff := range enabled {
@@ -486,15 +574,26 @@ func formatProfileDifficultySummary(enabled []sekai.MusicDifficultyType) string 
 		}
 	}
 
-	parts := make([]string, 0, len(sekai.AllMusicDifficulties))
+	var on, off []string
 	for _, diff := range sekai.AllMusicDifficulties {
-		status := "关闭"
+		label := i18n.DifficultyLabel(string(diff)).String()
 		if enabledSet[diff] {
-			status = "开启"
+			on = append(on, label)
+		} else {
+			off = append(off, label)
 		}
-		parts = append(parts, fmt.Sprintf("%s%s", diff, status))
 	}
-	return strings.Join(parts, " ")
+	return i18n.T("account.settings.arrest_difficulty_set", i18n.Data{
+		"Enabled":  difficultyListOrNone(on),
+		"Disabled": difficultyListOrNone(off),
+	})
+}
+
+func difficultyListOrNone(labels []string) string {
+	if len(labels) == 0 {
+		return i18n.T("account.settings.none")
+	}
+	return strings.Join(labels, "、")
 }
 
 func newDefaultUserSettings() *pjskschema.UserSettings {

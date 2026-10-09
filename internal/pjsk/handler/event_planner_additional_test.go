@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"haruki-cloud/internal/i18n"
 	"reflect"
 	"strings"
 	"testing"
@@ -187,11 +188,11 @@ func TestEventPlannerQueryAndSimulationHelpers(t *testing.T) {
 
 	turn := 3
 	simulated, warning, err := resolveEventPlannerEventFromQuery(context.Background(), nil, renderregion.JP, renderdeck.AutoQuery{WorldBloomEventTurn: &turn})
-	if err != nil || simulated.EventType != "world_bloom" || simulated.Name != "WL3模拟活动" || warning == "" {
+	if err != nil || simulated.EventType != "world_bloom" || simulated.Name != i18n.T("event.planner.simulated_wl", i18n.Data{"Turn": 3}) || warning == "" {
 		t.Fatalf("simulated event = %+v, warning = %q, err = %v", simulated, warning, err)
 	}
 	simulated, _, err = resolveEventPlannerEventFromQuery(context.Background(), nil, renderregion.JP, renderdeck.AutoQuery{EventAttr: "cool"})
-	if err != nil || simulated.Name != "模拟活动" || simulated.EventType != "" {
+	if err != nil || simulated.Name != i18n.T("event.planner.simulated") || simulated.EventType != "" {
 		t.Fatalf("attribute simulation = %+v, err = %v", simulated, err)
 	}
 	if _, _, err := resolveEventPlannerEventFromQuery(context.Background(), nil, renderregion.JP, renderdeck.AutoQuery{}); err == nil {
@@ -216,7 +217,7 @@ func testEventPlannerTargetAndCurrentPoints(t *testing.T) {
 	event := &masterdata.Event{ID: 123, EventType: "world_bloom"}
 
 	point, source, err := resolveEventPlannerTargetPoint(rc, renderregion.JP, event, renderdeck.AutoQuery{}, eventPlannerCommandParams{TargetPoint: 99})
-	if err != nil || point != 99 || source != "直接输入" {
+	if err != nil || point != 99 || source != i18n.T("event.planner.source.input") {
 		t.Fatalf("direct target = %d %q %v", point, source, err)
 	}
 	if _, _, err := resolveEventPlannerTargetPoint(rc, renderregion.JP, event, renderdeck.AutoQuery{}, eventPlannerCommandParams{}); err == nil {
@@ -234,7 +235,7 @@ func testEventPlannerTargetAndCurrentPoints(t *testing.T) {
 		t.Fatalf("explicit current = %d %v %q", current, known, warning)
 	}
 	current, known, warning = resolveEventPlannerCurrentPoint(rc, nil, renderregion.JP, event, renderdeck.AutoQuery{}, eventPlannerCommandParams{})
-	if current != 0 || !known || !strings.Contains(warning, "未配置 Tracker") {
+	if current != 0 || !known || warning != i18n.T("event.planner.current_zero.unavailable") {
 		t.Fatalf("missing tracker current = %d %v %q", current, known, warning)
 	}
 
@@ -308,14 +309,14 @@ func testEventPlannerDailyAndDeckFormatting(t *testing.T) {
 		query renderdeck.AutoQuery
 		label string
 	}{
-		{query: renderdeck.AutoQuery{FixedCards: []int{1}}, label: "指定卡组"},
-		{query: renderdeck.AutoQuery{UseCurrentDeck: true}, label: "当前主队"},
-		{query: renderdeck.AutoQuery{MaxProfile: true}, label: "顶配组卡"},
-		{query: renderdeck.AutoQuery{SubMaxProfile: true}, label: "次顶配组卡"},
-		{query: renderdeck.AutoQuery{}, label: "最优组卡"},
+		{query: renderdeck.AutoQuery{FixedCards: []int{1}}, label: i18n.T("event.planner.deck.fixed")},
+		{query: renderdeck.AutoQuery{UseCurrentDeck: true}, label: i18n.T("event.planner.deck.current")},
+		{query: renderdeck.AutoQuery{MaxProfile: true}, label: i18n.T("event.planner.deck.max_profile")},
+		{query: renderdeck.AutoQuery{SubMaxProfile: true}, label: i18n.T("event.planner.deck.sub_max_profile")},
+		{query: renderdeck.AutoQuery{}, label: i18n.T("event.planner.deck.optimal")},
 	} {
 		got := buildEventPlannerDeckSummary(tt.query, 123456, 12.34, 45)
-		if !strings.Contains(got, tt.label) || !strings.Contains(got, "123,456") || !strings.Contains(got, "12.3%") {
+		if !strings.HasPrefix(got, tt.label+" / ") || !strings.Contains(got, "123,456") || !strings.Contains(got, "12.3%") {
 			t.Errorf("summary = %q", got)
 		}
 	}
@@ -334,12 +335,6 @@ func testEventPlannerPointerFormatting(t *testing.T) {
 	}
 	if eventPlannerStringValue(nil, "fallback") != "fallback" || eventPlannerStringValue(new(string), "fallback") != "fallback" || eventPlannerStringValue(&textValue, "fallback") != textValue {
 		t.Fatal("string pointer helper mismatch")
-	}
-	if formatEventPlannerPlainInt(12) != "12" || formatEventPlannerPlainInt(1_234_567) != "1,234,567" {
-		t.Fatal("plain integer formatting mismatch")
-	}
-	if formatEventPlannerRate(12) != "12" || formatEventPlannerRate(12.34) != "12.3" {
-		t.Fatal("rate formatting mismatch")
 	}
 
 }

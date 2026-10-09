@@ -2,14 +2,13 @@ package sk
 
 import (
 	"errors"
-	"strings"
 	"time"
 
+	"haruki-cloud/internal/core/upstreamerr"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
-
-const StaleSelfRecordWarning = "你已不在可记录范围内，仅展示最后被记录到的信息"
 
 const staleSelfRecordThreshold = 5 * time.Minute
 
@@ -21,7 +20,7 @@ func (c *Controller) StaleSelfRecordWarning(req TrackerRankQuery, ranks []drawin
 	if !c.shouldWarnStaleSelfRecord(normalized, ranks, time.Now().UTC()) {
 		return ""
 	}
-	return StaleSelfRecordWarning
+	return i18n.T("sk.stale_self_record")
 }
 
 func (c *Controller) StaleSelfLatestRecordWarning(req TrackerRankQuery) string {
@@ -120,34 +119,5 @@ func trackerEventStatusIsHealthy(status *sekaiapi.EventStatusResponse) bool {
 	if status == nil {
 		return false
 	}
-	desc := strings.ToLower(strings.TrimSpace(status.StatusDesc))
-	if desc != "" {
-		switch {
-		case strings.Contains(desc, "error"),
-			strings.Contains(desc, "fail"),
-			strings.Contains(desc, "down"),
-			strings.Contains(desc, "maintenance"),
-			strings.Contains(desc, "timeout"),
-			strings.Contains(desc, "异常"),
-			strings.Contains(desc, "错误"),
-			strings.Contains(desc, "失败"),
-			strings.Contains(desc, "维护"),
-			strings.Contains(desc, "超时"),
-			strings.Contains(desc, "不可用"):
-			return false
-		case strings.Contains(desc, "ok"),
-			strings.Contains(desc, "normal"),
-			strings.Contains(desc, "healthy"),
-			strings.Contains(desc, "running"),
-			strings.Contains(desc, "success"),
-			strings.Contains(desc, "available"),
-			strings.Contains(desc, "active"),
-			strings.Contains(desc, "正常"),
-			strings.Contains(desc, "可用"),
-			strings.Contains(desc, "运行"),
-			strings.Contains(desc, "成功"):
-			return true
-		}
-	}
-	return status.Status == 0 || status.Status == 1
+	return upstreamerr.RankingStatusHealthy(int(status.Status), status.StatusDesc)
 }

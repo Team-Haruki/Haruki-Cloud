@@ -3,17 +3,16 @@ package handler
 import (
 	"context"
 	"fmt"
-	"haruki-cloud/internal/observability/commandtrace"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/displaytime"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/utils/usererror"
 )
-
-const genericUserFacingErrorText = "请求处理失败，请稍后再试"
 
 // ExecutionRuntime captures the request-scoped runtime prepared before a PJSK
 // command enters its domain-specific executor.
@@ -39,13 +38,20 @@ func PrepareExecutionRuntime(ctx context.Context, resolved *CommandRequest, app 
 		return nil, nil, fmt.Errorf("bridge: nil render app")
 	}
 
+	// The time zone is resolved first so a ban reply shows the expiry in the
+	// requester's time zone.
+	finishTimeZone := commandtrace.MeasureOperation(ctx, "runtime.timezone_resolve")
+	timeZone := resolveRequesterHarukiUserTimeZone(ctx, app, resolved.RequesterPlatform, resolved.RequesterUserID)
+	finishTimeZone()
+	ctx = displaytime.WithRequestTimeZone(ctx, timeZone)
+
 	if platform := strings.TrimSpace(resolved.RequesterPlatform); platform != "" {
 		if userID := strings.TrimSpace(resolved.RequesterUserID); userID != "" {
 			finishBan := commandtrace.MeasureOperation(ctx, "runtime.ban_check")
 			err := app.BanChecker.CheckBan(ctx, platform, userID, resolved.Module)
 			finishBan()
 			if err != nil {
-				return nil, onebot11.Message{onebot11.Text(sanitizeUserFacingText(err.Error()))}, nil
+				return nil, onebot11.Message{onebot11.Text(banReplyText(ctx, err))}, nil
 			}
 		}
 	}
@@ -53,10 +59,6 @@ func PrepareExecutionRuntime(ctx context.Context, resolved *CommandRequest, app 
 	finishRegion := commandtrace.MeasureOperation(ctx, "runtime.region_resolve")
 	resolved.Region = resolveRegionFromDefaultBinding(ctx, resolved, app)
 	finishRegion()
-	finishTimeZone := commandtrace.MeasureOperation(ctx, "runtime.timezone_resolve")
-	timeZone := resolveRequesterHarukiUserTimeZone(ctx, app, resolved.RequesterPlatform, resolved.RequesterUserID)
-	finishTimeZone()
-	ctx = displaytime.WithRequestTimeZone(ctx, timeZone)
 	ctx = rendersnapshot.WithRequestCache(ctx)
 	ctx = applyForceRender(ctx, resolved, commandForceLimiter, forceRenderCooldown())
 
@@ -68,10 +70,17 @@ func PrepareExecutionRuntime(ctx context.Context, resolved *CommandRequest, app 
 	}, nil, nil
 }
 
-func sanitizeUserFacingText(message string) string {
-	message = strings.TrimSpace(message)
-	if message == "" || usererror.MessageContainsSensitiveURL(message) {
-		return genericUserFacingErrorText
+// banReplyText is the reply for a refused (banned) requester: the typed ban
+// message, or the generic reply for any other error.
+func banReplyText(ctx context.Context, err error) string {
+	locale := i18n.LocaleFromContext(ctx)
+	typed, ok := usererror.As(err)
+	if !ok {
+		return i18n.RequestFailed().In(locale)
 	}
-	return message
+	text := strings.TrimSpace(typed.Text(locale))
+	if text == "" || usererror.MessageContainsSensitiveURL(text) {
+		return i18n.RequestFailed().In(locale)
+	}
+	return text
 }

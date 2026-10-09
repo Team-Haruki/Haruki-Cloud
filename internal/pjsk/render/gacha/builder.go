@@ -1,23 +1,26 @@
 package gacha
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 const gachaEndPaddingMillis = int64(time.Minute / time.Millisecond)
 const defaultGachaListPageSize = 100
 
 var (
+	//copylint:ignore-block 卡池名前缀（游戏数据原文）
 	gachaRereleasePrefixes = []string{"[it's back]", "[재등장]", "[复刻]", "[復刻]"}
-	gachaRecallPrefixes    = []string{"[回响]"}
+	//copylint:ignore-block 卡池名前缀（游戏数据原文）
+	gachaRecallPrefixes = []string{"[回响]"}
 )
 
 func NewBuilder(source DataSource, assetHelper *assets.AssetHelper) *Builder {
@@ -31,7 +34,7 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 	page, pageSize := normalizeGachaListPage(query.Page, query.PageSize)
 	filtered := filterGachaListItems(b.source.GetGachas(), query, time.Now())
 	if len(filtered) == 0 {
-		return nil, fmt.Errorf("no gacha data matched filters")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("gacha.no_match"))
 	}
 	sort.Slice(filtered, func(i, j int) bool {
 		if filtered[i].StartAt == filtered[j].StartAt {

@@ -1,0 +1,305 @@
+# 组卡：活动组卡、挑战组卡、长草组卡、加成组卡、烤森组卡、实效计算、歌曲比较。
+
+[deck.compare.too_many]
+description = "歌曲比较写的歌曲太多。占位符：Max=最多可比较的歌曲数。"
+other = "最多只能比较 {{.Max}} 首歌曲"
+
+[deck.compare.music_invalid]
+description = "歌曲比较里的某首歌曲无法识别，作为 common.bad_param 的原因行。"
+other = "找不到要比较的歌曲，请写歌曲 ID、歌曲名或别名"
+
+[deck.compare.needs_fixed_deck]
+description = "歌曲比较没有限定歌曲，也没有固定卡组。"
+other = "不限定比较的歌曲时必须固定卡组，可以加上“#”和 5 个卡牌 ID（如“#123 456 789 1011 1213”）或“当前”"
+
+[deck.compare.no_data]
+description = "歌曲比较没有得到任何可比较的结果。"
+other = "没有可比较的歌曲数据"
+
+[deck.compare.no_music]
+description = "歌曲比较没有可用的歌曲。"
+other = "请写要比较的歌曲"
+
+[deck.skill_order.usage]
+description = "技能顺序参数写法不对。"
+other = "技能顺序请写“技能顺序最优”“技能顺序最差”“技能顺序平均”，或“技能顺序 12345”这样的 5 位顺序"
+
+[deck.skill_order.needs_fixed]
+description = "指定了具体技能顺序，但没有固定卡组。"
+other = "只有固定卡组时（例如加上“当前”）才能指定具体的技能顺序"
+
+[deck.bonus.usage]
+description = "加成组卡没有写目标加成，或目标加成不是正整数。"
+other = "请写一个或多个正整数目标加成，例如 event123 120 160"
+
+[deck.score_up.usage]
+description = "实效计算的参数不是 5 个非负数。"
+other = "请依次写 5 个非负技能数值：队长、技能 2、技能 3、技能 4、技能 5，例如 160 160 150 150 150"
+
+[deck.multilive.teammate_power]
+description = "多人 Live 组卡的队友综合力无法识别。"
+other = "队友综合力应为数字，例如“队友综合 25w”"
+
+[deck.multilive.teammate_score_up]
+description = "多人 Live 组卡的队友实效无法识别。"
+other = "队友实效应为整数，例如“队友实效 200”"
+
+[deck.multilive.score_up_lower_bound]
+description = "多人 Live 组卡的实效下限无法识别。"
+other = "实效下限应为整数，例如“实效 200”"
+
+[deck.fixed.empty]
+description = "组卡的 # 后面没有写固定卡牌或角色。"
+other = "# 后面请写固定的卡牌 ID 或角色名"
+
+[deck.fixed.card_id_positive]
+description = "固定卡牌 ID 不是正整数。"
+other = "固定卡牌 ID 必须为正整数"
+
+[deck.fixed.too_many]
+description = "固定卡牌和固定角色合计超过 5 个。"
+other = "固定卡牌和固定角色合计最多 5 个"
+
+[deck.fixed.duplicate_cards]
+description = "固定卡牌有重复。"
+other = "固定卡牌不能重复"
+
+[deck.fixed.too_many_characters]
+description = "固定角色超过 5 个。"
+other = "固定角色最多 5 个"
+
+[deck.fixed.character_id_positive]
+description = "固定角色 ID 不是正整数。"
+other = "固定角色 ID 必须为正整数"
+
+[deck.fixed.duplicate_characters]
+description = "固定角色有重复。"
+other = "固定角色不能重复"
+
+[deck.fixed.card_not_in_region]
+description = "固定的卡牌在该区服不存在（可能还没有上线）。占位符：Region=区服显示名；UserCardID=用户写的卡牌 ID。"
+other = "{{.Region}}没有卡牌 {{.UserCardID}}（可能还没有在该区服上线），请检查固定卡牌 ID"
+
+[deck.fixed.card_not_in_region_no_echo]
+description = "deck.fixed.card_not_in_region 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Region=区服显示名。"
+other = "{{.Region}}没有指定的固定卡牌（可能还没有在该区服上线），请检查固定卡牌 ID"
+
+[deck.current.incomplete]
+description = "使用“当前”参数，但当前卡组不足 5 张。"
+other = "你的当前卡组不足 5 张，不能使用“当前”"
+
+[deck.current.not_found]
+description = "使用“当前”参数，但抓包数据里找不到当前卡组。"
+other = "找不到你的当前卡组"
+
+[deck.current.card_missing]
+description = "当前卡组里的卡牌不在抓包数据里（抓包数据过旧）。占位符：CardID=卡牌 ID。"
+other = "当前卡组中的卡牌 {{.CardID}} 不在抓包数据中，请在 Haruki 工具箱重新上传抓包数据"
+
+[deck.area_item_level_max]
+description = "组卡指定的区域道具等级超过该区服上限。占位符：Max=该区服的最高等级。"
+other = "该区服区域道具等级最多为 {{.Max}}"
+
+[deck.challenge.compare_needs_character]
+description = "挑战组卡做歌曲比较，但没有指定挑战角色。"
+other = "挑战组卡做歌曲比较时必须指定一个角色"
+
+[deck.challenge.current_needs_character]
+description = "挑战组卡使用“当前”参数，但没有指定挑战角色。"
+other = "挑战组卡使用“当前”时必须指定挑战角色"
+
+[deck.challenge.current_not_found]
+description = "挑战组卡使用“当前”参数，但抓包数据里找不到该角色的挑战卡组。"
+other = "找不到你该角色的当前挑战卡组，更新挑战卡组需要重新上传抓包数据"
+
+[deck.challenge.current_incomplete]
+description = "挑战组卡使用“当前”参数，但该角色的挑战卡组不足 5 张。"
+other = "你该角色的当前挑战卡组不足 5 张，不能使用“当前”，更新挑战卡组需要重新上传抓包数据"
+
+[deck.simulated.usage]
+description = "活动组卡只写了团名或属性中的一个。"
+other = "模拟活动组卡需要同时写团名和属性，也可以写活动 ID（例如 event123）或角色名加 wl 序号"
+
+[deck.no_event.simulated_unsupported]
+description = "长草组卡写了团名和属性（模拟活动）。占位符：Command=活动组卡指令，例如 /组卡。"
+other = "长草组卡不能模拟活动，按团名和属性组卡请使用“{{.Command}} 团名 属性”"
+
+[deck.event.locked]
+description = "未开始活动的组卡要等卡池开放后才能使用。"
+other = "该活动的组卡将在卡池开放后开放"
+
+[deck.event.none_available]
+description = "组卡需要活动，但当前没有可用的活动。"
+other = "当前没有可用于组卡的活动"
+
+[deck.event.data_not_synced]
+description = "活动组卡：组卡服务还没有该活动的数据。"
+other = "组卡服务还没有该活动的数据，可以用“/组卡 团名 属性”模拟活动组卡"
+
+[deck.wl.not_wl_event]
+description = "组卡指定了 WL 章节，但该活动不是 WL 活动。占位符：Event=活动（common.event_label）。"
+other = "{{.Event}}不是 WL 活动，不能指定章节"
+
+[deck.wl.finale_from_wl2]
+description = "组卡指定了 wl1 终章（终章从 wl2 开始）。"
+other = "终章从“wl2”开始，请写“wl2 终章”或“wl3 终章”"
+
+[deck.wl.finale_needs_leader]
+description = "WL 终章组卡没有指定队长角色。占位符：UserTurn=用户写的 WL 期数。"
+other = "wl{{.UserTurn}} 终章需要指定队长角色，例如 wl{{.UserTurn}} 终章 miku"
+
+[deck.wl.finale_needs_leader_no_echo]
+description = "deck.wl.finale_needs_leader 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "WL 终章需要指定队长角色，例如 wl2 终章 miku"
+
+[deck.wl.finale_turn_invalid]
+description = "WL 终章期数小于 2。占位符：UserTurn=用户写的期数。"
+other = "WL 终章从 wl2 开始，无法查询 wl{{.UserTurn}} 终章"
+
+[deck.wl.finale_turn_invalid_no_echo]
+description = "deck.wl.finale_turn_invalid 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "WL 终章从 wl2 开始，无法查询这一期终章"
+
+[deck.wl.chapter_required]
+description = "WL 活动组卡没有指定角色章节。占位符：UserEventID=活动 ID（可能是用户写的，一律按用户输入处理）。"
+other = "请指定要查询的 WL 角色章节，例如 wl1 miku 或 event{{.UserEventID}} miku"
+
+[deck.wl.chapter_required_no_echo]
+description = "deck.wl.chapter_required 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "请指定要查询的 WL 角色章节，例如 wl1 miku"
+
+[deck.wl.chapter_required_mysekai]
+description = "烤森组卡在 WL 活动没有指定角色章节。占位符：UserEventID=活动 ID（可能是用户写的，一律按用户输入处理）。"
+other = "请指定要查询的 WL 角色章节，例如“/烤森组卡 wl1 miku”或“/烤森组卡 event{{.UserEventID}} miku”"
+
+[deck.wl.chapter_required_mysekai_no_echo]
+description = "deck.wl.chapter_required_mysekai 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "请指定要查询的 WL 角色章节，例如“/烤森组卡 wl1 miku”"
+
+[deck.wl.turn_invalid]
+description = "WL 活动序号无效。"
+other = "WL 活动序号无效"
+
+[deck.wl.turn_needs_character]
+description = "wl 序号没有指定角色。占位符：UserTurn=用户写的 WL 期数。"
+other = "wl{{.UserTurn}} 需要指定角色，例如 wl{{.UserTurn}} miku"
+
+[deck.wl.turn_needs_character_no_echo]
+description = "deck.wl.turn_needs_character 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "按 WL 期数组卡需要指定角色，例如 wl1 miku"
+
+[deck.wl.turn_needs_character_or_unit]
+description = "wl 序号没有指定角色或团名。占位符：UserTurn=用户写的 WL 期数。"
+other = "wl{{.UserTurn}} 需要指定角色或团名"
+
+[deck.wl.turn_needs_character_or_unit_no_echo]
+description = "deck.wl.turn_needs_character_or_unit 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "按 WL 期数组卡需要指定角色或团名"
+
+[deck.wl.character_invalid]
+description = "WL 角色无效。"
+other = "WL 角色无效"
+
+[deck.wl.none_available]
+description = "组卡需要 WL 活动，但当前没有可用的 WL 活动。"
+other = "当前没有可用的 WL 活动"
+
+[deck.wl.mixed_selector]
+description = "同时写了 WL 章节和角色。"
+other = "不能同时指定 WL 章节和角色，请只保留其中一种写法"
+
+[deck.wl.turn_syntax_removed]
+description = "组卡时把“wl<数字>”当作 WL 章节写在活动 ID 或角色后面（这种写法已不再支持）。组卡里 wl 后面的数字是 WL 活动的期数，要写在开头。"
+other = "“wl”加数字表示 WL 活动的期数，请写成“wl1 miku”；已指定活动时直接写角色，例如“event123 miku”"
+
+[deck.wl.future_finale]
+description = "请求的 WL 终章期数超过了已有数据。占位符：Available=已有数据的最后一期；UserTurn=用户写的期数。"
+other = "目前只有到 wl{{.Available}} 的终章数据，无法查询 wl{{.UserTurn}} 终章"
+
+[deck.wl.future_finale_no_echo]
+description = "deck.wl.future_finale 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Available=已有数据的最后一期。"
+other = "目前只有到 wl{{.Available}} 的终章数据，无法查询这一期终章"
+
+[deck.wl.future_turn_character]
+description = "该角色的 WL 期数不足。占位符：Available=该角色已有的 WL 期数；UserTurn=用户写的期数。"
+other = "该角色目前只有 {{.Available}} 期 WL，无法查询 wl{{.UserTurn}}"
+
+[deck.wl.future_turn_character_no_echo]
+description = "deck.wl.future_turn_character 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Available=该角色已有的 WL 期数。"
+other = "该角色目前只有 {{.Available}} 期 WL，无法查询这一期"
+
+[deck.wl.future_turn_unit]
+description = "该团的 WL 期数不足。占位符：Available=该团已有的 WL 期数；UserTurn=用户写的期数。"
+other = "该团目前只有 {{.Available}} 期 WL，无法查询 wl{{.UserTurn}}"
+
+[deck.wl.future_turn_unit_no_echo]
+description = "deck.wl.future_turn_unit 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Available=该团已有的 WL 期数。"
+other = "该团目前只有 {{.Available}} 期 WL，无法查询这一期"
+
+[deck.score_up.result]
+description = "/实效 的计算结果。占位符：Leader=队长技能加成（百分比）；Internal=5 张卡技能加成之和（内部值）；ScoreUp=实效（百分比）；Multiplier=倍率，即 1 + 实效 / 100。"
+other = "队长技能加成：{{.Leader}}\n内部值：{{.Internal}}\n实效：{{.ScoreUp}}\n倍率：{{.Multiplier}}"
+
+[deck.done_toolbox_hint]
+description = "活动组卡结果后的第二行，引导用户使用工具箱的组卡推荐。"
+other = "需要更精确、更快或参数更多的组卡，请使用 Haruki 工具箱的组卡推荐功能"
+
+[deck.disabled]
+description = "Bot 管理员停用了组卡功能（没有填写原因）时，所有组卡指令的回复。"
+other = "组卡功能已停用\n需要组卡请暂时使用 Haruki 工具箱的组卡推荐功能"
+
+[deck.disabled_reason]
+description = "Bot 管理员停用了组卡功能时，所有组卡指令的回复。占位符：Reason=管理员在配置里写的停用原因，原样显示。"
+other = "组卡功能已停用\n原因：{{.Reason}}\n需要组卡请暂时使用 Haruki 工具箱的组卡推荐功能"
+
+[deck.mode.event]
+description = "组卡条件摘要（common.processed）里的组卡类型：活动组卡。"
+other = "活动组卡"
+
+[deck.mode.challenge]
+description = "组卡条件摘要（common.processed）里的组卡类型：挑战 Live 组卡。"
+other = "挑战组卡"
+
+[deck.mode.no_event]
+description = "组卡条件摘要（common.processed）里的组卡类型：不考虑活动加成的长草组卡。"
+other = "长草组卡"
+
+[deck.mode.bonus]
+description = "组卡条件摘要（common.processed）里的组卡类型：凑活动加成的加成组卡。"
+other = "加成组卡"
+
+[deck.mode.mysekai]
+description = "组卡条件摘要（common.processed）里的组卡类型：烤森组卡。"
+other = "烤森组卡"
+
+[deck.mode.generic]
+description = "组卡条件摘要（common.processed）里无法细分时的组卡类型。"
+other = "组卡"
+
+[deck.summary.event]
+description = "组卡条件摘要（common.processed）里指定的活动。占位符：ID=活动 ID。"
+other = "活动 {{.ID}}"
+
+[deck.summary.wl_character]
+description = "组卡条件摘要（common.processed）里指定的 WL 章节角色。占位符：Character=用户写的角色名，或 common.fallback.character。"
+other = "WL 章节角色：{{.Character}}"
+
+[deck.summary.leader]
+description = "组卡条件摘要（common.processed）里指定的队长角色。占位符：Character=用户写的角色名，或 common.fallback.character。"
+other = "指定队长：{{.Character}}"
+
+[deck.summary.challenge_character]
+description = "组卡条件摘要（common.processed）里指定的挑战 Live 角色。占位符：Character=用户写的角色名，或 common.fallback.character。"
+other = "挑战角色：{{.Character}}"
+
+[deck.live.mysekai]
+description = "烤森组卡图片的 Live 类型名（其他 Live 类型用 format.live_type.*）。"
+other = "烤森"
+
+[deck.music.omakase]
+description = "组卡图片里歌曲选“おまかせ”（随机歌曲）时显示的歌曲名，表示按所有歌曲平均计算。"
+other = "おまかせ（所有歌曲平均）"
+
+[deck.auto_score_notice]
+description = "组卡图片里的提示：WL 终章期间自动 Live 使用限定的判定系数。占位符：Coefficient=判定系数，保留 1 位小数。"
+other = "使用终章期间限定的 AUTO 数值（判定系数 {{.Coefficient}}）"

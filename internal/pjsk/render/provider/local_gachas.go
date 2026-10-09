@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"sort"
 
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 // ===========================================================================
@@ -87,14 +90,14 @@ func (p *localGachaProvider) ensureCeils() error {
 
 func (p *localGachaProvider) GetByID(_ context.Context, id int) (*masterdata.Gacha, error) {
 	if id == 0 {
-		return nil, fmt.Errorf("gacha id is required")
+		return nil, usererror.Misuse(i18n.M("gacha.query_required"))
 	}
 	if err := p.ensureGachas(); err != nil {
 		return nil, err
 	}
 	g, ok := p.gachas.v().byID[id]
 	if !ok {
-		return nil, fmt.Errorf("gacha %d not found", id)
+		return nil, notfound.Gacha()
 	}
 	return common.CloneGacha(g), nil
 }

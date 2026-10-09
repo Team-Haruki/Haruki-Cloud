@@ -1,6 +1,11 @@
 package mysekai
 
-import "strings"
+import (
+	"strings"
+
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
+)
 
 type fixtureCategoryFilter struct {
 	mainIDs map[int]struct{}
@@ -90,6 +95,14 @@ func (e *fixtureCategoryNotFoundError) Error() string {
 		return "mysekai fixture category not found"
 	}
 	return "mysekai fixture category not found: " + strings.TrimSpace(e.query)
+}
+
+// Unwrap exposes the typed user reply.
+func (e *fixtureCategoryNotFoundError) Unwrap() error {
+	if e == nil || strings.TrimSpace(e.query) == "" {
+		return usererror.New(usererror.CodeNotFound, i18n.M("mysekai.fixture.category_not_found_any"))
+	}
+	return usererror.New(usererror.CodeNotFound, i18n.M("mysekai.fixture.category_not_found", i18n.Data{"UserQuery": i18n.EchoQuery(e.query)}))
 }
 
 func matchesFixtureCategoryToken(token string, info map[string]any) bool {

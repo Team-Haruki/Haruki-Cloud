@@ -34,6 +34,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/shamaton/msgpack/v3"
+	"haruki-cloud/internal/i18n"
 )
 
 func newAPIBirthdayDB(t *testing.T) *pjskdb.Client {
@@ -224,10 +225,10 @@ func TestBirthdayMonitorRenderAndAckHandlerBranches(t *testing.T) {
 	}
 
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(missingPayload.EventID), fiber.MIMEApplicationJSON)
-	testutil.Require(t, strings.Contains(string(body), "缺少可绘制数据"), "missing-payload render body=%s", body)
+	testutil.Require(t, strings.Contains(string(body), i18n.T("subscription.birthday.event_no_data")), "missing-payload render body=%s", body)
 
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(nonEmpty.EventID), fiber.MIMEApplicationJSON)
-	testutil.Require(t, strings.Contains(string(body), "服务未就绪"), "unready render body=%s", body)
+	testutil.Require(t, strings.Contains(string(body), i18n.Misconfigured().String()), "unready render body=%s", body)
 
 	badToken := requestFor(nonEmpty.EventID)
 	badToken.Token = "wrong"
@@ -237,11 +238,11 @@ func TestBirthdayMonitorRenderAndAckHandlerBranches(t *testing.T) {
 	mysekaiController := rendermysekai.NewController(nil, nil, renderregion.JP, assets.NewAssetHelper("", nil), rendermysekai.MasterdataOptions{})
 	renderApp.MySekai = mysekaiController
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(nonEmpty.EventID), fiber.MIMEApplicationJSON)
-	testutil.Require(t, strings.Contains(string(body), "服务未就绪"), "nil-cache render body=%s", body)
+	testutil.Require(t, strings.Contains(string(body), i18n.Misconfigured().String()), "nil-cache render body=%s", body)
 
 	renderApp.ImageCache = imagecache.New("https://cache.invalid", t.TempDir())
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(nonEmpty.EventID), fiber.MIMEApplicationJSON)
-	testutil.Require(t, strings.Contains(string(body), "渲染服务未就绪"), "render failure body=%s", body)
+	testutil.Require(t, strings.Contains(string(body), i18n.Misconfigured().String()), "render failure body=%s", body)
 
 	invalidReq := httptest.NewRequest(http.MethodPost, "/bots/bot-1/render", strings.NewReader("{"))
 	invalidReq.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
@@ -478,7 +479,7 @@ func TestBirthdayMonitorCommandHandlerCreateAndCancelSuccess(t *testing.T) {
 	resp, body := birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/monitor", request, fiber.MIMEApplicationJSON)
 	{
 		testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "create monitor status=%d body=%s", resp.StatusCode, body)
-		testutil.Require(t, strings.Contains(string(body), "有效期 10 分钟"), "create monitor status=%d body=%s", resp.StatusCode, body)
+		testutil.Require(t, strings.Contains(string(body), i18n.T("subscription.birthday.updated", i18n.Data{"Minutes": 10})), "create monitor status=%d body=%s", resp.StatusCode, body)
 		testutil.Require(t, strings.Contains(string(body), "client_actions"), "create monitor status=%d body=%s", resp.StatusCode, body)
 		testutil.Require(t, strings.Contains(string(body), "hmes_sse"), "create monitor status=%d body=%s", resp.StatusCode, body)
 	}
@@ -488,7 +489,7 @@ func TestBirthdayMonitorCommandHandlerCreateAndCancelSuccess(t *testing.T) {
 	resp, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/monitor", request, fiber.MIMEApplicationJSON)
 	{
 		testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "cancel monitor status=%d body=%s", resp.StatusCode, body)
-		testutil.Require(t, strings.Contains(string(body), "监听已取消"), "cancel monitor status=%d body=%s", resp.StatusCode, body)
+		testutil.Require(t, strings.Contains(string(body), i18n.T("subscription.birthday.cancelled")), "cancel monitor status=%d body=%s", resp.StatusCode, body)
 	}
 	testutil.Require(t, !(guard.completed != 2), "guard completion count = %d", guard.completed)
 

@@ -12,14 +12,14 @@ var musicDifficultyAliases = []difficultyAlias{
 	{Canonical: "expert", Alias: "expert"},
 	{Canonical: "master", Alias: "master"},
 	{Canonical: "normal", Alias: "normal"},
-	{Canonical: "append", Alias: "粉谱"},
-	{Canonical: "expert", Alias: "红谱"},
-	{Canonical: "master", Alias: "紫谱"},
-	{Canonical: "normal", Alias: "蓝谱"},
+	{Canonical: "append", Alias: "粉谱"}, //copylint:ignore 解析关键字
+	{Canonical: "expert", Alias: "红谱"}, //copylint:ignore 解析关键字
+	{Canonical: "master", Alias: "紫谱"}, //copylint:ignore 解析关键字
+	{Canonical: "normal", Alias: "蓝谱"}, //copylint:ignore 解析关键字
 	{Canonical: "easy", Alias: "easy"},
 	{Canonical: "hard", Alias: "hard"},
-	{Canonical: "easy", Alias: "绿谱"},
-	{Canonical: "hard", Alias: "黄谱"},
+	{Canonical: "easy", Alias: "绿谱"}, //copylint:ignore 解析关键字
+	{Canonical: "hard", Alias: "黄谱"}, //copylint:ignore 解析关键字
 	{Canonical: "append", Alias: "apd"},
 	{Canonical: "append", Alias: "app"},
 	{Canonical: "expert", Alias: "exp"},

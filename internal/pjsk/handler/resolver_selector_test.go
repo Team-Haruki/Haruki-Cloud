@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"testing"
 
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -32,7 +33,7 @@ func TestResolveGameTargetSelectorUsesGlobalIndicesWithoutExplicitRegion(t *test
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Selector:       "u2",
-	}, "jp", false, &renderapp.App{Bindings: service})
+	}, "jp", false, &renderapp.App{Bindings: service}, accountdata.ExposureProfile)
 	if err != nil {
 		t.Fatalf("resolveGameTarget() error = %v", err)
 	}
@@ -66,7 +67,7 @@ func TestResolveGameTargetSelectorUsesServerScopedIndicesWithExplicitRegion(t *t
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Selector:       "u2",
-	}, "jp", true, &renderapp.App{Bindings: service})
+	}, "jp", true, &renderapp.App{Bindings: service}, accountdata.ExposureProfile)
 	if err != nil {
 		t.Fatalf("resolveGameTarget() error = %v", err)
 	}

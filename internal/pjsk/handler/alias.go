@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"log/slog"
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	aliases "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/displaytime"
@@ -15,6 +17,7 @@ import (
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/utils/usererror"
 )
 
 const aliasImageThreshold = 20
@@ -27,8 +30,7 @@ func (sekaiHandlers) MusicAliasQueryHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasQueryHandler(
 		aliases.PjskAliasTypeMusic,
 		"alias/music",
-		[]string{"/pjsk alias", "/music alias", "/歌曲别名", "/查歌曲别名"},
-		"/music alias",
+		[]string{"/pjsk alias", "/music alias", "/歌曲别名", "/查歌曲别名"}, //copylint:ignore command triggers
 	)
 }
 
@@ -36,8 +38,7 @@ func (sekaiHandlers) MusicAliasAddHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasAddHandler(
 		aliases.PjskAliasTypeMusic,
 		"alias/music/add",
-		[]string{"/music alias add", "/pjsk alias add", "/pjskalias add", "/添加歌曲别名", "/歌曲别名添加"},
-		"/music alias add",
+		[]string{"/music alias add", "/pjsk alias add", "/pjskalias add", "/添加歌曲别名", "/歌曲别名添加"}, //copylint:ignore command triggers
 	)
 }
 
@@ -45,8 +46,7 @@ func (sekaiHandlers) MusicAliasDeleteHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasDeleteHandler(
 		aliases.PjskAliasTypeMusic,
 		"alias/music/del",
-		[]string{"/music alias del", "/pjsk alias del", "/pjskalias del", "/删除歌曲别名", "/歌曲别名删除"},
-		"/music alias del",
+		[]string{"/music alias del", "/pjsk alias del", "/pjskalias del", "/删除歌曲别名", "/歌曲别名删除"}, //copylint:ignore command triggers
 	)
 }
 
@@ -54,8 +54,7 @@ func (sekaiHandlers) CharacterAliasQueryHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasQueryHandler(
 		aliases.PjskAliasTypeCharacter,
 		"alias/character",
-		[]string{"/pjsk chara alias", "/chara alias", "/character alias", "/角色别名", "/查角色别名"},
-		"/chara alias",
+		[]string{"/pjsk chara alias", "/chara alias", "/character alias", "/角色别名", "/查角色别名"}, //copylint:ignore command triggers
 	)
 }
 
@@ -63,8 +62,7 @@ func (sekaiHandlers) CharacterAliasAddHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasAddHandler(
 		aliases.PjskAliasTypeCharacter,
 		"alias/character/add",
-		[]string{"/pjsk chara alias add", "/chara alias add", "/character alias add", "/添加角色别名", "/角色别名添加"},
-		"/chara alias add",
+		[]string{"/pjsk chara alias add", "/chara alias add", "/character alias add", "/添加角色别名", "/角色别名添加"}, //copylint:ignore command triggers
 	)
 }
 
@@ -72,8 +70,7 @@ func (sekaiHandlers) CharacterAliasDeleteHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasDeleteHandler(
 		aliases.PjskAliasTypeCharacter,
 		"alias/character/del",
-		[]string{"/pjsk chara alias del", "/chara alias del", "/character alias del", "/删除角色别名", "/角色别名删除"},
-		"/chara alias del",
+		[]string{"/pjsk chara alias del", "/chara alias del", "/character alias del", "/删除角色别名", "/角色别名删除"}, //copylint:ignore command triggers
 	)
 }
 
@@ -84,11 +81,10 @@ func (sekaiHandlers) AliasPendingHandle() HarukiSekaiCommandHandler {
 			"/待审核别名", "/别名待审核",
 			"/歌曲别名待审核", "/角色别名待审核",
 		},
-		Helper:      "使用方式:\n/待审核别名",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError("使用方式:\n/待审核别名")
+				return nil, usererror.Misuse(i18n.M("common.no_args"))
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleAlias, aliases.ModePendingList, aliases.ReviewListCommandParams{
 				Platform:       ctx.GetPlatform(),
@@ -99,14 +95,12 @@ func (sekaiHandlers) AliasPendingHandle() HarukiSekaiCommandHandler {
 }
 
 func (sekaiHandlers) AliasSubmitterHandle() HarukiSekaiCommandHandler {
-	const usage = "使用方式:\n/查询别名提交者 待审核ID"
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        "alias/submitter",
 		Commands:    []string{"/查询别名提交者", "/别名提交者"},
-		Helper:      usage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			reviewID, err := parseAliasReviewID(strings.TrimSpace(ctx.GetArgs()), usage)
+			reviewID, err := parseAliasReviewID(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
 			}
@@ -120,18 +114,15 @@ func (sekaiHandlers) AliasSubmitterHandle() HarukiSekaiCommandHandler {
 }
 
 func (sekaiHandlers) AliasBanSubmitterHandle() HarukiSekaiCommandHandler {
-	const usage = "使用方式:\n/禁用别名提交 用户ID\n/禁用别名提交 @用户"
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        "alias/ban_submitter",
 		Commands:    []string{"/禁用别名提交", "/禁止别名提交"},
-		Helper:      usage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			targetPlatform, targetUserID, err := parseAliasSubmissionTarget(
 				strings.TrimSpace(ctx.GetArgs()),
 				ctx.GetPlatform(),
 				ctx.GetAtIds(),
-				usage,
 			)
 			if err != nil {
 				return nil, err
@@ -152,7 +143,6 @@ func (sekaiHandlers) AliasApproveHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/同意别名", "/通过别名",
 		},
-		Helper:      "使用方式:\n/同意别名 待审核ID1 待审核ID2 ...",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			reviewIDs, err := parseAliasReviewIDs(strings.TrimSpace(ctx.GetArgs()))
@@ -174,7 +164,6 @@ func (sekaiHandlers) AliasRejectHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/拒绝别名",
 		},
-		Helper:      rejectAliasUsage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			reviewID, reason, err := parseAliasRejectArgs(strings.TrimSpace(ctx.GetArgs()))
@@ -192,14 +181,12 @@ func (sekaiHandlers) AliasRejectHandle() HarukiSekaiCommandHandler {
 }
 
 func (sekaiHandlers) AliasBatchRejectHandle() HarukiSekaiCommandHandler {
-	const usage = "使用方式:\n/批量拒绝别名 待审核ID1 待审核ID2 ..."
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        "alias/batch-reject",
 		Commands:    []string{"/批量拒绝别名"},
-		Helper:      usage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			reviewIDs, err := parseAliasReviewIDsWithUsage(strings.TrimSpace(ctx.GetArgs()), usage)
+			reviewIDs, err := parseAliasReviewIDs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
 			}
@@ -212,16 +199,15 @@ func (sekaiHandlers) AliasBatchRejectHandle() HarukiSekaiCommandHandler {
 	}, executeAlias)
 }
 
-func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
+func newEntityAliasQueryHandler(aliasType, path string, commands []string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        path,
 		Commands:    commands,
-		Helper:      aliasQueryHelp(aliasType, sampleCommand),
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			target := strings.TrimSpace(ctx.GetArgs())
 			if target == "" {
-				return nil, onebot11.NewReplayError("%s", aliasQueryHelp(aliasType, sampleCommand))
+				return nil, aliasTargetRequiredError(aliasType)
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleAlias, aliases.ModeQuery, aliases.QueryCommandParams{
 				AliasType: aliasType,
@@ -231,14 +217,13 @@ func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampl
 	}, executeAlias)
 }
 
-func newEntityAliasAddHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
+func newEntityAliasAddHandler(aliasType, path string, commands []string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        path,
 		Commands:    commands,
-		Helper:      aliasAddHelp(aliasType, sampleCommand),
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasAddHelp(aliasType, sampleCommand))
+			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
 			}
@@ -253,14 +238,13 @@ func newEntityAliasAddHandler(aliasType, path string, commands []string, sampleC
 	}, executeAlias)
 }
 
-func newEntityAliasDeleteHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
+func newEntityAliasDeleteHandler(aliasType, path string, commands []string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        path,
 		Commands:    commands,
-		Helper:      aliasDeleteHelp(aliasType, sampleCommand),
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasDeleteHelp(aliasType, sampleCommand))
+			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
 			}
@@ -275,75 +259,25 @@ func newEntityAliasDeleteHandler(aliasType, path string, commands []string, samp
 	}, executeAlias)
 }
 
-func aliasQueryHelp(aliasType, sampleCommand string) string {
-	return fmt.Sprintf(`使用方式:
-%s %s
-
-说明:
-- 按 %s 的顺序查找
-- 只能查询已审核通过的%s别名`, sampleCommand, aliasQueryTokenPrompt(aliasType), aliasQueryTokenPrompt(aliasType), aliasTypeLabel(aliasType))
-}
-
-func aliasAddHelp(aliasType, sampleCommand string) string {
-	return fmt.Sprintf(`使用方式:
-%s
-%s
-别名1
-别名2
-...
-
-说明:
-- 第二行开始每行填写一个别名
-- 至少提供一个非空别名
-- 新别名会进入待审核列表，不会直接生效`, sampleCommand, aliasQueryTokenPrompt(aliasType))
-}
-
-func aliasDeleteHelp(aliasType, sampleCommand string) string {
-	return fmt.Sprintf(`使用方式:
-%s
-%s
-别名1
-别名2
-...
-
-说明:
-- 只能删除已审核通过的%s别名
-- 第二行开始每行填写一个要删除的别名
-- 仅别名审核管理员可用`, sampleCommand, aliasQueryTokenPrompt(aliasType), aliasTypeLabel(aliasType))
-}
-
-func aliasTypeLabel(aliasType string) string {
-	switch aliasType {
-	case aliases.PjskAliasTypeMusic:
-		return "歌曲"
-	case aliases.PjskAliasTypeCharacter:
-		return "角色"
-	default:
-		return "目标"
+// aliasTargetRequiredError is the reply when an alias query names no song
+// or character.
+func aliasTargetRequiredError(aliasType string) error {
+	if aliasType == aliases.PjskAliasTypeCharacter {
+		return usererror.Misuse(i18n.M("alias.target_required.character"))
 	}
+	return usererror.Misuse(i18n.M("alias.target_required.music"))
 }
 
-func aliasQueryTokenPrompt(aliasType string) string {
-	switch aliasType {
-	case aliases.PjskAliasTypeMusic:
-		return "歌曲ID 或 曲名 或 已审核别名"
-	case aliases.PjskAliasTypeCharacter:
-		return "角色ID 或 角色名 或 已审核别名"
-	default:
-		return "ID 或 名称 或 已审核别名"
-	}
-}
-
-func parseEntityAliasBulkArgs(args, usage string) (string, []string, error) {
+func parseEntityAliasBulkArgs(args string) (string, []string, error) {
 	args = strings.TrimSpace(strings.ReplaceAll(args, "\r\n", "\n"))
 	if args == "" {
-		return "", nil, onebot11.NewReplayError("%s", usage)
+		return "", nil, usererror.Misuse(i18n.M("alias.bulk_usage"))
 	}
 
 	lines := strings.Split(args, "\n")
 	target := strings.TrimSpace(lines[0])
 	if target == "" {
-		return "", nil, onebot11.NewReplayError("%s", usage)
+		return "", nil, usererror.Misuse(i18n.M("alias.bulk_usage"))
 	}
 
 	aliasValues := make([]string, 0, len(lines)-1)
@@ -355,63 +289,59 @@ func parseEntityAliasBulkArgs(args, usage string) (string, []string, error) {
 		aliasValues = append(aliasValues, aliasText)
 	}
 	if len(aliasValues) == 0 {
-		return "", nil, onebot11.NewReplayError("请至少提供一个非空别名\n\n%s", usage)
+		return "", nil, usererror.Misuse(i18n.M("alias.aliases_required"))
 	}
 	return target, aliasValues, nil
 }
 
 func parseAliasReviewIDs(args string) ([]int64, error) {
-	return parseAliasReviewIDsWithUsage(args, "使用方式:\n/同意别名 待审核ID1 待审核ID2 ...")
-}
-
-func parseAliasReviewIDsWithUsage(args, usage string) ([]int64, error) {
 	fields := strings.Fields(strings.TrimSpace(args))
 	if len(fields) == 0 {
-		return nil, onebot11.NewReplayError("%s", usage)
+		return nil, usererror.Misuse(i18n.M("alias.review_ids_required"))
 	}
 	result := make([]int64, 0, len(fields))
 	for _, field := range fields {
 		reviewID, err := strconv.ParseInt(field, 10, 64)
 		if err != nil || reviewID <= 0 {
-			return nil, onebot11.NewReplayError(positivePendingAliasIDMessage)
+			return nil, usererror.Invalid(i18n.M("alias.review_id_positive"))
 		}
 		result = append(result, reviewID)
 	}
 	return result, nil
 }
 
-func parseAliasReviewID(args, usage string) (int64, error) {
+func parseAliasReviewID(args string) (int64, error) {
 	fields := strings.Fields(strings.TrimSpace(args))
 	if len(fields) != 1 {
-		return 0, onebot11.NewReplayError("%s", usage)
+		return 0, usererror.Misuse(i18n.M("alias.single_review_id"))
 	}
 	reviewID, err := strconv.ParseInt(fields[0], 10, 64)
 	if err != nil || reviewID <= 0 {
-		return 0, onebot11.NewReplayError(positivePendingAliasIDMessage)
+		return 0, usererror.Invalid(i18n.M("alias.review_id_positive"))
 	}
 	return reviewID, nil
 }
 
-func parseAliasSubmissionTarget(args, currentPlatform string, atIDs []string, usage string) (string, string, error) {
+func parseAliasSubmissionTarget(args, currentPlatform string, atIDs []string) (string, string, error) {
 	currentPlatform = strings.TrimSpace(currentPlatform)
 	if len(atIDs) > 0 && strings.TrimSpace(atIDs[0]) != "" {
 		return currentPlatform, strings.TrimSpace(atIDs[0]), nil
 	}
 	fields := strings.Fields(strings.TrimSpace(args))
 	if len(fields) != 1 {
-		return "", "", onebot11.NewReplayError("%s", usage)
+		return "", "", usererror.Misuse(i18n.M("alias.submitter_target_usage"))
 	}
 	target := fields[0]
 	if platform, userID, ok := strings.Cut(target, ":"); ok {
 		platform = strings.TrimSpace(platform)
 		userID = strings.TrimSpace(userID)
 		if platform == "" || userID == "" {
-			return "", "", onebot11.NewReplayError("%s", usage)
+			return "", "", usererror.Misuse(i18n.M("alias.submitter_target_usage"))
 		}
 		return platform, userID, nil
 	}
 	if currentPlatform == "" {
-		return "", "", onebot11.NewReplayError("缺少平台信息")
+		return "", "", usererror.Misuse(i18n.M("alias.submitter_target_usage"))
 	}
 	return currentPlatform, target, nil
 }
@@ -419,35 +349,35 @@ func parseAliasSubmissionTarget(args, currentPlatform string, atIDs []string, us
 func parseAliasRejectArgs(args string) (int64, string, error) {
 	args = strings.TrimSpace(args)
 	if args == "" {
-		return 0, "", onebot11.NewReplayError(rejectAliasUsage)
+		return 0, "", usererror.Misuse(i18n.M("alias.reject_usage"))
 	}
 	parts := strings.Fields(args)
 	if len(parts) < 2 {
-		return 0, "", onebot11.NewReplayError(rejectAliasUsage)
+		return 0, "", usererror.Misuse(i18n.M("alias.reject_usage"))
 	}
 	reviewID, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil || reviewID <= 0 {
-		return 0, "", onebot11.NewReplayError(positivePendingAliasIDMessage)
+		return 0, "", usererror.Invalid(i18n.M("alias.review_id_positive"))
 	}
 	reason := strings.TrimSpace(strings.TrimPrefix(args, parts[0]))
 	if reason == "" {
-		return 0, "", onebot11.NewReplayError("请输入拒绝原因")
+		return 0, "", usererror.Misuse(i18n.M("alias.reject_reason_required"))
 	}
 	return reviewID, reason, nil
 }
 
 func executeAlias(rc *RequestContext) (onebot11.Message, error) {
 	if rc.App == nil || rc.App.Aliases == nil {
-		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
+		return nil, usererror.Unavailable(i18n.M("alias.feature"), errors.New("alias service is not configured"))
 	}
 	if message, ok, err := tryRenderAliasQueryAsImage(rc); ok {
 		return message, err
 	}
-	data, err := aliases.ExecuteCommand(rc.Ctx, rc.App.Aliases, rc.Cmd.Mode, rc.Cmd.Params)
+	reply, err := aliases.ExecuteCommand(rc.Ctx, rc.App.Aliases, rc.Cmd.Mode, rc.Cmd.Params)
 	if err != nil {
 		return nil, err
 	}
-	return onebot11.Message{onebot11.Text(string(data))}, nil
+	return onebot11.Message{onebot11.LocalizedText(reply)}, nil
 }
 
 func tryRenderAliasQueryAsImage(rc *RequestContext) (onebot11.Message, bool, error) {
@@ -528,8 +458,8 @@ func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType str
 	switch strings.TrimSpace(aliasType) {
 	case aliases.PjskAliasTypeMusic:
 		req := drawing.AliasListRequest{
-			Title:       "歌曲别名",
-			EntityLabel: "歌曲ID",
+			Title:       i18n.T("alias.image.title.music"),
+			EntityLabel: i18n.T("alias.image.entity_label.music"),
 			EntityID:    result.Entity.ID,
 			EntityName:  result.Entity.Name,
 			TimeZone:    timeZone,
@@ -544,8 +474,8 @@ func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType str
 		return req, true
 	case aliases.PjskAliasTypeCharacter:
 		return drawing.AliasListRequest{
-			Title:                   "角色别名",
-			EntityLabel:             "角色ID",
+			Title:                   i18n.T("alias.image.title.character"),
+			EntityLabel:             i18n.T("alias.image.entity_label.character"),
 			EntityID:                result.Entity.ID,
 			EntityName:              result.Entity.Name,
 			TimeZone:                timeZone,

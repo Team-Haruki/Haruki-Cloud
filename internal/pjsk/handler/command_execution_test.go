@@ -5,8 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"haruki-cloud/internal/core/urlhost"
-	json "haruki-cloud/internal/jsonutil"
 	"image"
 	"image/color"
 	"image/png"
@@ -25,7 +23,9 @@ import (
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	eventdb "haruki-cloud/database/sekai/event"
 	usersenttest "haruki-cloud/database/users/enttest"
+	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/identity"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
@@ -46,7 +46,12 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	rendervlive "haruki-cloud/internal/pjsk/render/vlive"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
+
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
+	"haruki-cloud/utils/usererror"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -164,11 +169,11 @@ func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if err.Error() != buildPrivateDataHiddenMessage("mysekai", &accountdata.ResolvedBinding{
+	if err.Error() != privateDataHiddenMessage("mysekai", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
-	}) {
+		Visibility: accountdata.UniformVisibility(false),
+	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -203,7 +208,7 @@ func TestExecuteCheckDataMySekaiWarnsOnCNWhenNotAllowed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeCheckData() error = %v", err)
 	}
-	if rejectionText(t, message) != cnMySekaiNeverOpensNotice {
+	if rejectionText(t, message) != cnMySekaiNotice() {
 		t.Fatalf("unexpected message: %+v", message)
 	}
 }
@@ -392,9 +397,7 @@ func TestResolveTrackerTargetUserRejectsHiddenAtTarget(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected hidden-target error, got nil")
 	}
-	if !strings.Contains(err.Error(), "已隐藏个人信息") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeForbidden, "binding.target_hidden_sk")
 	if req.UserID != nil {
 		t.Fatalf("expected unresolved user id, got %+v", req.UserID)
 	}
@@ -621,7 +624,7 @@ func (r *bridgeAmbiguousMusicAliasResolver) TryResolveMusicTitleOrAliasID(_ cont
 	if strings.ToLower(strings.TrimSpace(token)) != "shared alias" {
 		return 0, false, nil
 	}
-	return 0, false, fmt.Errorf("别名匹配到多个歌曲，请改用 music<id> 查询：\nmusic1/Song A\nmusic2/Song B")
+	return 0, false, &pjskalias.AmbiguousError{AliasType: pjskalias.PjskAliasTypeMusic, IDs: []int{1, 2}}
 }
 
 func (s *bridgeMusicSource) SearchMusic(query string) (*masterdata.Music, error) {
@@ -701,7 +704,7 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode music-list request: %v", err)
 			}
-			if req.Title == nil || *req.Title != "物量 777 匹配结果" {
+			if req.Title == nil || *req.Title != i18n.T("music.lookup_list.note_count", i18n.Data{"Count": 777}) {
 				t.Fatalf("unexpected list title: %+v", req.Title)
 			}
 			if len(req.MusicList) != 1 {
@@ -809,7 +812,7 @@ func TestExecuteMusicChartUsesBriefListForAmbiguousAlias(t *testing.T) {
 	if chartCalls != 0 {
 		t.Fatalf("expected no chart render calls for ambiguous alias, got %d", chartCalls)
 	}
-	if len(titles) != 1 || titles[0] != "匹配到多个歌曲，请使用 /查歌 <id> 查询：" {
+	if len(titles) != 1 || titles[0] != i18n.T("music.ambiguous_list.detail") {
 		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }
@@ -885,7 +888,7 @@ func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.
 	if briefListCalls != 1 {
 		t.Fatalf("expected 1 music-brief-list render call, got %d", briefListCalls)
 	}
-	if len(titles) != 1 || titles[0] != "BPM 200 匹配结果" {
+	if len(titles) != 1 || titles[0] != i18n.T("music.lookup_list.bpm", i18n.Data{"BPM": "200"}) {
 		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }
@@ -945,7 +948,7 @@ func TestExecuteMusicBPMUsesListImageForSingleMatch(t *testing.T) {
 	if briefListCalls != 1 {
 		t.Fatalf("expected 1 music-brief-list render call, got %d", briefListCalls)
 	}
-	if len(titles) != 1 || titles[0] != "BPM 200 匹配结果" {
+	if len(titles) != 1 || titles[0] != i18n.T("music.lookup_list.bpm", i18n.Data{"BPM": "200"}) {
 		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }
@@ -990,7 +993,7 @@ func TestExecuteMusicDetailUsesBriefListForAmbiguousAlias(t *testing.T) {
 	if briefListCalls != 1 {
 		t.Fatalf("expected 1 brief-list render call, got %d", briefListCalls)
 	}
-	if len(titles) != 1 || titles[0] != "匹配到多个歌曲，请使用 /查歌 <id> 查询：" {
+	if len(titles) != 1 || titles[0] != i18n.T("music.ambiguous_list.detail") {
 		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }
@@ -1042,7 +1045,7 @@ func TestExecuteMusicNoteCountUsesSingleMusicListImageWithoutSummaryText(t *test
 	if listCalls != 1 {
 		t.Fatalf("expected 1 music-list render call, got %d", listCalls)
 	}
-	if len(titles) != 1 || titles[0] != "物量 777 EXPERT 匹配结果" {
+	if len(titles) != 1 || titles[0] != i18n.T("music.lookup_list.note_count_difficulty", i18n.Data{"Count": 777, "Difficulty": "EXPERT"}) {
 		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }
@@ -1148,11 +1151,11 @@ func TestExecuteMusicListRequiresSuiteSnapshotWhenBindingVisible(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing suite snapshot to fail")
 	}
-	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
-	}) {
+		Visibility: accountdata.UniformVisibility(false),
+	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -1649,7 +1652,7 @@ func TestExecuteProfileBGAdjustReturnsPreviewImage(t *testing.T) {
 	if !ok {
 		t.Fatalf("unexpected text segment data: %+v", message[1].Data)
 	}
-	if !strings.Contains(textData.Text, "已更新JP服个人信息背景设置") {
+	if !strings.Contains(textData.Text, i18n.T("account.bg.adjusted", i18n.Data{"Region": i18n.RegionLabel("jp")})) {
 		t.Fatalf("unexpected text summary: %q", textData.Text)
 	}
 	if captured.BgSettings == nil {
@@ -1875,11 +1878,11 @@ func TestExecuteMusicProgressRequiresResolvableSuiteSnapshot(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected snapshot error, got nil")
 	}
-	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
-	}) {
+		Visibility: accountdata.UniformVisibility(false),
+	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -1925,11 +1928,11 @@ func TestExecuteMusicRewardsRequiresSuiteSnapshot(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing suite snapshot to fail")
 	}
-	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
-	}) {
+		Visibility: accountdata.UniformVisibility(false),
+	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -2482,14 +2485,14 @@ func TestFormatArrestTextUsesResolvedChallengeCharacterName(t *testing.T) {
 	}
 
 	text := formatArrestText(resp, defaultEnabledDiffs(), resolveArrestChallengeCharacterName(ctx, app, 21), true)
-	if !strings.Contains(text, "逮捕: ArrestUser (UID: 123456789) Lv.88") {
+	if !strings.Contains(text, i18n.T("misc.arrest.header", i18n.Data{"Name": "ArrestUser", "UID": "123456789", "Rank": 88})) {
 		t.Fatalf("unexpected arrest text: %s", text)
 	}
-	if !strings.Contains(text, "挑战Live(") || !strings.Contains(text, "123,456") {
+	if !strings.HasSuffix(text, i18n.T("misc.arrest.challenge", i18n.Data{"Character": i18n.Verbatim(resolveArrestChallengeCharacterName(ctx, app, 21)), "Score": "123,456"})) {
 		t.Fatalf("unexpected arrest text: %s", text)
 	}
 	masked := formatArrestText(resp, defaultEnabledDiffs(), resolveArrestChallengeCharacterName(ctx, app, 21), false)
-	if !strings.Contains(masked, "UID: 123***789") {
+	if !strings.Contains(masked, "123***789") || strings.Contains(masked, "123456789") {
 		t.Fatalf("expected masked uid, got: %s", masked)
 	}
 }
@@ -3772,9 +3775,7 @@ func TestResolveDeckCharacterSelectionsRejectsWorldBloomSelectorOnNonWorldBloomE
 	if err == nil {
 		t.Fatalf("expected non-world bloom event to reject wl selector")
 	}
-	if !strings.Contains(err.Error(), "不是WL活动") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "deck.wl.not_wl_event")
 }
 
 func TestResolveDeckCharacterSelectionsClearsWorldBloomCharacterForNonWorldBloomEvent(t *testing.T) {
@@ -4157,8 +4158,9 @@ func TestResolveTrackerCharacterSelectionRejectsWhenNoCurrentWorldBloomEvent(t *
 	if err == nil {
 		t.Fatalf("expected current world bloom error")
 	}
-	if err.Error() != "当前JP服不在wl活动期间，请使用/jpsk" {
-		t.Fatalf("unexpected error: %v", err)
+	typed := testutil.RequireUserError(t, err, "", "sk.wl.no_current")
+	if typed.Message.Data["Command"] != "/jpsk" {
+		t.Fatalf("no-current-WL reply must point at the region's ranking command: %+v", typed.Message.Data)
 	}
 
 	req.EventID = 401
@@ -4282,7 +4284,7 @@ func TestExecuteMysekaiPhoto(t *testing.T) {
 	if !ok {
 		t.Fatalf("unexpected text data type: %T", message[1].Data)
 	}
-	if !strings.HasPrefix(textData.Text, "拍摄时间: ") {
+	if textData.Text != i18n.T("mysekai.photo.taken_at", i18n.Data{"Time": i18n.FormatUserTime(time.UnixMilli(1700000000000), nil)}) {
 		t.Fatalf("unexpected photo text: %q", textData.Text)
 	}
 }
@@ -4545,7 +4547,7 @@ type missingBridgeCardSource struct {
 }
 
 func (s *missingBridgeCardSource) GetCardByID(id int) (*masterdata.Card, error) {
-	return nil, errors.New("sekai: card not found")
+	return nil, notfound.CardID(id)
 }
 
 func (s *bridgeCardSource) DefaultRegion() renderregion.Value {
@@ -4730,7 +4732,7 @@ func TestExecuteCardImageReportsRegionSpecificMissingCard(t *testing.T) {
 		Query:  "662",
 		Region: "cn",
 	}, app))
-	assertReplayErrorText(t, err, "CN服找不到特定的卡牌: 662\n如果需要查其他服务器卡牌请加区服前缀")
+	testutil.RequireUserError(t, err, usererror.CodeNotFound, "card.not_found_in_region")
 }
 
 func TestExecuteCardDetailOmitsSummaryText(t *testing.T) {
@@ -4852,8 +4854,8 @@ func TestExecuteCardBoxAllowsNoBindingFallbackWithQuery(t *testing.T) {
 	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected message: %+v", message)
 	}
-	if captured.Title == nil || *captured.Title != CardCatalogTitleNoBinding {
-		t.Fatalf("expected no-binding title %q, got %+v", CardCatalogTitleNoBinding, captured.Title)
+	if captured.Title == nil || *captured.Title != i18n.T("card.catalog_notice.no_binding") {
+		t.Fatalf("expected no-binding title %q, got %+v", i18n.T("card.catalog_notice.no_binding"), captured.Title)
 	}
 }
 
@@ -4923,8 +4925,8 @@ func TestExecuteCardBoxAddsNoSuiteTitleToDrawing(t *testing.T) {
 	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected message: %+v", message)
 	}
-	if captured.Title == nil || *captured.Title != CardCatalogTitleNoSuite {
-		t.Fatalf("expected no-suite title %q, got %+v", CardCatalogTitleNoSuite, captured.Title)
+	if captured.Title == nil || *captured.Title != i18n.T("card.catalog_notice.no_suite") {
+		t.Fatalf("expected no-suite title %q, got %+v", i18n.T("card.catalog_notice.no_suite"), captured.Title)
 	}
 }
 
@@ -4957,11 +4959,11 @@ func TestExecuteCardBoxWithoutQueryRequiresSuiteData(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing suite data to fail")
 	}
-	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
-	}) {
+		Visibility: accountdata.UniformVisibility(false),
+	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -5091,7 +5093,7 @@ func TestExecuteCardListAutoFallbackToCardBoxOmitsUserInfo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeCard list: %v", err)
 	}
-	assertCardSummaryMessage(t, message, "已处理JP / 卡牌列表 / 90张指定卡牌。")
+	assertCardSummaryMessage(t, message, i18n.T("common.processed", i18n.Data{"Summary": i18n.RegionLabel("jp").String() + " / " + i18n.T("render_card.summary.mode.list") + " / " + i18n.T("render_card.summary.card_count", i18n.Data{"Count": 90})}))
 	if captured.UserInfo != nil {
 		t.Fatalf("expected auto-fallback card box to omit user info, got %+v", captured.UserInfo)
 	}
@@ -5132,11 +5134,11 @@ func TestExecuteCardBoxRequiresOwnedCardDataWhenShowBoxEnabled(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing owned-card data to fail")
 	}
-	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
-	}) {
+		Visibility: accountdata.UniformVisibility(false),
+	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -5281,7 +5283,7 @@ func TestExecuteMusicChartServesRenderIndexHit(t *testing.T) {
 }
 
 func TestRenderMusicChartMessageErrorBranches(t *testing.T) {
-	if _, err := renderMusicChartMessage(nil, nil, music.ChartQuery{}); err == nil || !strings.Contains(err.Error(), "not configured") {
+	if _, err := renderMusicChartMessage(nil, nil, music.ChartQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "not configured") {
 		t.Fatalf("unconfigured renderer err = %v", err)
 	}
 

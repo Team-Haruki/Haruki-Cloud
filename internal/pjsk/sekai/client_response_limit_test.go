@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestSekaiAndTrackerClientsLimitResponseBodies(t *testing.T) {
@@ -63,7 +64,7 @@ func TestSekaiAndTrackerClientsRejectOversizedResponseWithoutLeakingBody(t *test
 			if err == nil {
 				t.Fatal("expected oversized response error")
 			}
-			if !strings.Contains(err.Error(), "response body too large") {
+			if !strings.Contains(testutil.ErrorDetail(err), "response body too large") {
 				t.Fatalf("unexpected error: %v", err)
 			}
 			if strings.Contains(err.Error(), secret) {

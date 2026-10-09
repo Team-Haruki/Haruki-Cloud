@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 type additionalEpisodeSource struct {
@@ -143,7 +144,7 @@ func assertBuildMaxProfileErrors(t *testing.T) {
 	}
 	basic := &additionalBasicCardSource{region: renderregion.JP, card: &masterdata.Card{ID: 1}}
 	controller := NewController(basic, nil, nil, nil, nil, renderregion.JP)
-	if _, err := controller.buildMaxProfileCards(renderregion.JP, 1); err == nil || !strings.Contains(err.Error(), "does not support") {
+	if _, err := controller.buildMaxProfileCards(renderregion.JP, 1); err == nil || !strings.Contains(testutil.ErrorDetail(err), "does not support") {
 		t.Fatalf("basic card source error = %v", err)
 	}
 	allErr := errors.New("all cards failed")

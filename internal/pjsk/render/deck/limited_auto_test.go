@@ -1,9 +1,10 @@
 package deck
 
 import (
-	"haruki-cloud/internal/pjsk/drawing"
-	"strings"
 	"testing"
+
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func TestLimitedAutoScoreMetadata(t *testing.T) {
@@ -12,7 +13,7 @@ func TestLimitedAutoScoreMetadata(t *testing.T) {
 		request := &drawing.DeckRequest{}
 		applyLimitedAutoScoreNotice(request, decks)
 		if coefficient > 0.7 {
-			if request.AutoScoreNotice == nil || !strings.Contains(*request.AutoScoreNotice, "终章期间限定 AUTO 数值") || !strings.Contains(*request.AutoScoreNotice, "1.8") {
+			if request.AutoScoreNotice == nil || *request.AutoScoreNotice != i18n.T("deck.auto_score_notice", i18n.Data{"Coefficient": "1.8"}) {
 				t.Fatalf("missing applied coefficient notice: %+v", request.AutoScoreNotice)
 			}
 		} else if request.AutoScoreNotice != nil {

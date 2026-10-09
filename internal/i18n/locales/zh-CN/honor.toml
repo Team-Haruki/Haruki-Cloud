@@ -1,0 +1,5 @@
+# 称号：查称号。
+
+[honor.not_found]
+description = "找不到对应的称号。"
+other = "未找到对应的称号"

@@ -2,14 +2,16 @@ package handler
 
 import (
 	"context"
-	json "haruki-cloud/internal/jsonutil"
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestNoteNumHandleBuildsCommandRequest(t *testing.T) {
@@ -151,36 +153,26 @@ func TestBPMSearchHandleBuildsCommandRequest(t *testing.T) {
 	}
 }
 
-func TestBPMHandleReturnsUpdatedHelp(t *testing.T) {
+func TestBPMHandleRequiresQuery(t *testing.T) {
 	h := sekaiHandlers{}.BPMHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
-	if h.GetHelper() != bpmDetailHelp {
-		t.Fatalf("unexpected helper: %q", h.GetHelper())
-	}
 
 	_, err := h.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/查BPM",
 	})
-	if err == nil || !strings.Contains(err.Error(), "请输入要查询 BPM 的歌曲名") {
-		t.Fatalf("expected updated BPM help, got %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "music.bpm.query_required")
 }
 
-func TestBPMSearchHandleReturnsUpdatedHelp(t *testing.T) {
+func TestBPMSearchHandleRequiresValue(t *testing.T) {
 	h := sekaiHandlers{}.BPMSearchHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
-	if h.GetHelper() != bpmSearchHelp {
-		t.Fatalf("unexpected helper: %q", h.GetHelper())
-	}
 
 	_, err := h.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/bpms",
 	})
-	if err == nil || !strings.Contains(err.Error(), "请输入要反查的 BPM 数值") {
-		t.Fatalf("expected BPM search help, got %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "music.bpm.value_required")
 }
 
 func TestFormatMusicBPMSequenceDoesNotTruncate(t *testing.T) {
@@ -230,7 +222,7 @@ func TestB30HandleReturnsUnavailableMessage(t *testing.T) {
 		t.Fatalf("unexpected message: %+v", message)
 	}
 	data, ok := message[0].Data.(onebot11.TextData)
-	if !ok || data.Text != ratingUnavailableMessage {
+	if !ok || data.Text != i18n.T("music.b30.unavailable") {
 		t.Fatalf("unexpected text data: %+v", message[0].Data)
 	}
 }

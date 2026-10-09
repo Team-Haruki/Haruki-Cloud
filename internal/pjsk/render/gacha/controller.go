@@ -6,13 +6,16 @@ import (
 	"sort"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/notfound"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
@@ -55,7 +58,7 @@ func (c *Controller) BuildGachaListRequest(query ListQuery) (*drawing.GachaListR
 	query.Region = c.sources.ResolveRegion(query.Region)
 	src, ok := c.sources.SourceForRegion(query.Region)
 	if !ok {
-		return nil, fmt.Errorf("no gacha data source for region %s", query.Region)
+		return nil, usererror.Misconfigured(fmt.Errorf("no gacha data source for region %s", query.Region))
 	}
 	return NewBuilder(src, c.assets).BuildGachaListRequest(query)
 }
@@ -70,7 +73,7 @@ func (c *Controller) RenderGachaList(query ListQuery) ([]byte, error) {
 
 func (c *Controller) RenderGachaListImage(query ListQuery) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildGachaListRequest(query)
@@ -99,7 +102,7 @@ func (c *Controller) RenderGachaDetail(query DetailQuery) ([]byte, error) {
 
 func (c *Controller) RenderGachaDetailImage(query DetailQuery) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildGachaDetailRequest(query)
@@ -114,7 +117,7 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 	query.Region = c.sources.ResolveRegion(query.Region)
 	src, ok := c.sources.SourceForRegion(query.Region)
 	if !ok {
-		return query, nil, fmt.Errorf("no gacha data source for region %s", query.Region)
+		return query, nil, usererror.Misconfigured(fmt.Errorf("no gacha data source for region %s", query.Region))
 	}
 	var err error
 	switch {
@@ -125,7 +128,7 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 	case query.EventID != 0:
 		query.GachaID, err = resolveEventGachaID(src, query.EventID)
 	default:
-		err = fmt.Errorf("gacha id is required")
+		err = usererror.Misuse(i18n.M("gacha.query_required"))
 	}
 	return query, src, err
 }
@@ -141,7 +144,7 @@ func validateGachaRelease(src DataSource, gachaID int) error {
 func resolveGachaNegativeIndex(src DataSource, region renderregion.Value, negativeIndex int) (int, error) {
 	gachas := releasedGachas(src.GetGachas(), time.Now().UnixMilli())
 	if len(gachas) == 0 {
-		return 0, fmt.Errorf("no gacha data available for region %s", region)
+		return 0, notfound.Gacha()
 	}
 	sort.Slice(gachas, func(i, j int) bool {
 		if gachas[i].StartAt == gachas[j].StartAt {
@@ -151,7 +154,7 @@ func resolveGachaNegativeIndex(src DataSource, region renderregion.Value, negati
 	})
 	index := len(gachas) + negativeIndex
 	if index < 0 || index >= len(gachas) {
-		return 0, fmt.Errorf("gacha index %d is out of range", negativeIndex)
+		return 0, notfound.Gacha()
 	}
 	return gachas[index].ID, nil
 }
@@ -172,7 +175,7 @@ func resolveEventGachaID(src DataSource, eventID int) (int, error) {
 		return 0, err
 	}
 	if gachaInfo == nil {
-		return 0, fmt.Errorf("no gacha found for event %d", eventID)
+		return 0, notfound.Gacha()
 	}
 	if err := futureGachaError(gachaInfo); err != nil {
 		return 0, err

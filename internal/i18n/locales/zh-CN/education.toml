@@ -1,0 +1,129 @@
+# 养成：区域道具、羁绊等级、挑战等级、角色任务、队长次数、综合力加成。
+
+[education.character_mission.usage]
+description = "角色任务指令参数不对。"
+other = "请写角色名，可加 all 和任务分类"
+
+[education.area.big_tree_unavailable]
+description = "该区服还没有「想いの大樹」（大树）区域道具。"
+other = "该区服还没有开放「想いの大樹」（大树）区域道具"
+
+[education.area.not_on_sale]
+description = "查询的区域道具还没有开放升级（不知道开放时间）。"
+other = "查询的区域道具还没有开放升级\n可以在指令后加 full 查看全部等级所需材料"
+
+[education.area.opens_at]
+description = "查询的区域道具将来才开放升级。占位符：OpensAt=开放时间（format.time.*）。"
+other = "查询的区域道具将于 {{.OpensAt}} 开放升级\n可以在指令后加 full 查看全部等级所需材料"
+
+[education.area.usage]
+description = "区域道具没有写分类或写了无法识别的参数。"
+other = "请写要查询的区域道具分类，例如“mmj”“miku”或“花树”"
+
+[education.area.full_usage]
+description = "区域道具只写了 full。"
+other = "full 需要和区域道具分类一起使用，例如 mmj full"
+
+[education.mission.play_live]
+description = "角色任务图片里的任务类型名（任务类型 play_live：以该角色为队长完成 Live 的次数）。"
+other = "队长次数"
+
+[education.mission.play_live_ex]
+description = "角色任务图片里的任务类型名（任务类型 play_live_ex：队长次数的 EX 阶段）。"
+other = "队长次数（EX）"
+
+[education.mission.waiting_room]
+description = "角色任务图片里的任务类型名（任务类型 waiting_room：在休息室与该角色互动的次数）。"
+other = "休息室次数"
+
+[education.mission.waiting_room_ex]
+description = "角色任务图片里的任务类型名（任务类型 waiting_room_ex：休息室次数的 EX 阶段）。"
+other = "休息室次数（EX）"
+
+[education.mission.collect_costume_3d]
+description = "角色任务图片里的任务类型名（任务类型 collect_costume_3d：收集该角色的服装数量）。"
+other = "服装"
+
+[education.mission.collect_stamp]
+description = "角色任务图片里的任务类型名（任务类型 collect_stamp：收集该角色的贴纸数量）。"
+other = "贴纸"
+
+[education.mission.read_area_talk]
+description = "角色任务图片里的任务类型名（任务类型 read_area_talk：阅读该角色的区域对话数量）。"
+other = "区域对话"
+
+[education.mission.read_card_episode_first]
+description = "角色任务图片里的任务类型名（任务类型 read_card_episode_first：阅读该角色卡面剧情前篇的数量）。"
+other = "卡面剧情前篇"
+
+[education.mission.read_card_episode_second]
+description = "角色任务图片里的任务类型名（任务类型 read_card_episode_second：阅读该角色卡面剧情后篇的数量）。"
+other = "卡面剧情后篇"
+
+[education.mission.collect_another_vocal]
+description = "角色任务图片里的任务类型名（任务类型 collect_another_vocal：收集该角色的 Another Vocal 数量）。"
+other = "Another Vocal"
+
+[education.mission.area_item_level_up_character]
+description = "角色任务图片里的任务类型名（任务类型 area_item_level_up_character：升级该角色个人区域道具的次数）。"
+other = "单人家具升级次数"
+
+[education.mission.area_item_level_up_unit]
+description = "角色任务图片里的任务类型名（任务类型 area_item_level_up_unit：升级该角色所属团区域道具的次数）。"
+other = "团家具升级次数"
+
+[education.mission.area_item_level_up_reality_world]
+description = "角色任务图片里的任务类型名（任务类型 area_item_level_up_reality_world：升级属性区域道具（树和花）的次数）。"
+other = "属性道具（树和花）升级次数"
+
+[education.mission.area_item_level_up_all_character]
+description = "角色任务图片里的任务类型名（任务类型 area_item_level_up_all_character：升级全角色区域道具「想いの大樹」的次数）。"
+other = "「想いの大樹」升级次数"
+
+[education.mission.collect_member]
+description = "角色任务图片里的任务类型名（任务类型 collect_member：收集该角色的卡牌数量）。"
+other = "卡面"
+
+[education.mission.skill_level_up_rare]
+description = "角色任务图片里的任务类型名（任务类型 skill_level_up_rare：升级该角色 ★4 卡和生日卡技能等级的次数）。"
+other = "技能等级升级次数（★4 和生日卡）"
+
+[education.mission.skill_level_up_standard]
+description = "角色任务图片里的任务类型名（任务类型 skill_level_up_standard：升级该角色 ★1~★3 卡技能等级的次数）。"
+other = "技能等级升级次数（★1~★3）"
+
+[education.mission.master_rank_up_rare]
+description = "角色任务图片里的任务类型名（任务类型 master_rank_up_rare：提升该角色 ★4 卡和生日卡专精等级的次数）。"
+other = "专精等级升级次数（★4 和生日卡）"
+
+[education.mission.master_rank_up_standard]
+description = "角色任务图片里的任务类型名（任务类型 master_rank_up_standard：提升该角色 ★1~★3 卡专精等级的次数）。"
+other = "专精等级升级次数（★1~★3）"
+
+[education.mission.collect_character_archive_voice]
+description = "角色任务图片里的任务类型名（任务类型 collect_character_archive_voice：收集该角色的台词（语音）数量）。"
+other = "台词"
+
+[education.mission.collect_mysekai_fixture]
+description = "角色任务图片里的任务类型名（任务类型 collect_mysekai_fixture：在烤森收集该角色相关家具的数量）。"
+other = "烤森家具数量"
+
+[education.mission.collect_mysekai_canvas]
+description = "角色任务图片里的任务类型名（任务类型 collect_mysekai_canvas：在烤森收集该角色画布的数量）。"
+other = "烤森画布数量"
+
+[education.mission.read_mysekai_fixture_unique_character_talk]
+description = "角色任务图片里的任务类型名（任务类型 read_mysekai_fixture_unique_character_talk：阅读该角色烤森家具专属对话的数量）。"
+other = "烤森对话"
+
+[education.mission.ex_round]
+description = "角色任务图片里 EX 任务当前所在的轮次。占位符：Round=轮次，从 1 开始。"
+other = "EX 第 {{.Round}} 轮"
+
+[education.area.all_characters]
+description = "区域道具图片里，对所有角色生效的道具（例如「想いの大樹」）没有目标图标，用这段文字代替。"
+other = "全角色"
+
+[education.suite_incomplete]
+description = "养成类指令（挑战信息、加成信息、区域道具、羁绊、队长次数、角色任务等）发现用户上传的抓包数据缺少需要的部分。"
+other = "抓包数据不完整，请在 Haruki 工具箱重新上传抓包数据（Suite）"

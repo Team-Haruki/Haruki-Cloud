@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 func newRenderCoverageController(t *testing.T, drawingClient *drawing.HarukiDrawingClient) *Controller {
@@ -110,7 +111,7 @@ func TestMusicControllerRenderEntrypointsRejectMissingClientsAndPayloads(t *test
 	controller := newRenderCoverageController(t, nil)
 	assertMissingDrawing := func(name string, _ []byte, err error) {
 		t.Helper()
-		if err == nil || !strings.Contains(err.Error(), "drawing client") {
+		if err == nil || !strings.Contains(testutil.ErrorDetail(err), "drawing client") {
 			t.Fatalf("%s error = %v", name, err)
 		}
 	}
@@ -147,7 +148,7 @@ func TestMusicControllerRenderEntrypointsRejectMissingClientsAndPayloads(t *test
 	if _, err := drawingController.RenderMusicRewardsBasic(RewardsBasicQuery{Region: "jp"}); err == nil {
 		t.Fatal("drawing HTTP error was not returned")
 	}
-	if _, err := drawingController.RenderMusicChartRequest(nil); err == nil || !strings.Contains(err.Error(), "payload") {
+	if _, err := drawingController.RenderMusicChartRequest(nil); err == nil || !strings.Contains(testutil.ErrorDetail(err), "payload") {
 		t.Fatalf("nil chart payload error = %v", err)
 	}
 }

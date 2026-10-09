@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
@@ -59,7 +60,7 @@ func (c *Controller) RenderCharacterMissionOverview(req drawing.CharacterMission
 
 func (c *Controller) RenderCharacterMissionOverviewImage(req drawing.CharacterMissionOverviewRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	return c.drawing.GenerateCharacterMissionOverviewImage(&req)
 }
@@ -74,7 +75,7 @@ func (c *Controller) RenderCharacterMissionAll(req drawing.CharacterMissionAllRe
 
 func (c *Controller) RenderCharacterMissionAllImage(req drawing.CharacterMissionAllRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	return c.drawing.GenerateCharacterMissionAllImage(&req)
 }
@@ -458,7 +459,7 @@ func characterMissionRoundDetails(groups []*CharacterMissionParameterGroup, curr
 		return 0, 0, 0, ""
 	}
 	round, progress, need := characterMissionCurrentRound(groups, current)
-	return round, progress, need, fmt.Sprintf("EX %d 回目", round)
+	return round, progress, need, i18n.T("education.mission.ex_round", i18n.Data{"Round": round})
 }
 
 func isCharacterMissionExType(missionType string) bool {
@@ -473,9 +474,10 @@ func characterMissionDisplayName(cid int) string {
 	if nickname, ok := characterNicknameFallbacks[cid]; ok {
 		return nickname
 	}
-	return fmt.Sprintf("角色%d", cid)
+	return i18n.T("common.fallback.character", i18n.Data{"ID": cid})
 }
 
+//copylint:ignore-block 角色名（游戏数据）
 var characterIDDisplayNames = map[int]string{
 	1:  "星乃一歌",
 	2:  "天马咲希",

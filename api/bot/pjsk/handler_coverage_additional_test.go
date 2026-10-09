@@ -14,6 +14,7 @@ import (
 	botauth "haruki-cloud/api/bot/auth"
 	usersenttest "haruki-cloud/database/users/enttest"
 	commandregistry "haruki-cloud/internal/handler"
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -49,8 +50,8 @@ func testSharedCommandEncodingAndValidation(t *testing.T) {
 	}
 
 	validationErr := &botValidationError{msg: "wrong route", actualPath: "profile/other"}
-	envelope := commandErrorEnvelope(validationErr, "profile/want", "/want", false)
-	if envelope.HTTPStatus != fiber.StatusBadRequest || envelope.Message != "指令与当前接口不匹配" {
+	envelope := commandErrorEnvelope(context.Background(), validationErr, "profile/want", "/want")
+	if envelope.HTTPStatus != fiber.StatusBadRequest || envelope.Message != i18n.T("account.api.command_path_mismatch") {
 		t.Fatalf("validation envelope = %+v", envelope)
 	}
 	wire, ok := envelope.Data.(BotCommandErrorResponse)
@@ -440,7 +441,7 @@ func TestBotCommandMatchFallbackBranches(t *testing.T) {
 		"/closed",
 	)
 	var validationErr *botValidationError
-	if !errors.As(err, &validationErr) || validationErr.msg != "matched_command 未开放给 Bot API: /closed" {
+	if !errors.As(err, &validationErr) || validationErr.msg != "matched_command is not open to the bot API: /closed" {
 		t.Fatalf("closed command error = %v", err)
 	}
 
@@ -450,7 +451,7 @@ func TestBotCommandMatchFallbackBranches(t *testing.T) {
 		false,
 		"/missing",
 	)
-	if !errors.As(err, &validationErr) || validationErr.msg != "matched_command 未注册: /missing" {
+	if !errors.As(err, &validationErr) || validationErr.msg != "matched_command is not registered: /missing" {
 		t.Fatalf("missing command error = %v", err)
 	}
 }

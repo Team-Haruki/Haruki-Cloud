@@ -233,15 +233,15 @@ func init() {
 	// userbinding.DefaultVisible holds the default value on creation for the visible field.
 	userbinding.DefaultVisible = userbindingDescVisible.Default.(bool)
 	// userbindingDescSuiteVisible is the schema descriptor for suite_visible field.
-	userbindingDescSuiteVisible := userbindingFields[5].Descriptor()
+	userbindingDescSuiteVisible := userbindingFields[9].Descriptor()
 	// userbinding.DefaultSuiteVisible holds the default value on creation for the suite_visible field.
 	userbinding.DefaultSuiteVisible = userbindingDescSuiteVisible.Default.(bool)
 	// userbindingDescMysekaiVisible is the schema descriptor for mysekai_visible field.
-	userbindingDescMysekaiVisible := userbindingFields[6].Descriptor()
+	userbindingDescMysekaiVisible := userbindingFields[10].Descriptor()
 	// userbinding.DefaultMysekaiVisible holds the default value on creation for the mysekai_visible field.
 	userbinding.DefaultMysekaiVisible = userbindingDescMysekaiVisible.Default.(bool)
 	// userbindingDescVerified is the schema descriptor for verified field.
-	userbindingDescVerified := userbindingFields[7].Descriptor()
+	userbindingDescVerified := userbindingFields[11].Descriptor()
 	// userbinding.DefaultVerified holds the default value on creation for the verified field.
 	userbinding.DefaultVerified = userbindingDescVerified.Default.(bool)
 	userdefaultbindingFields := schema.UserDefaultBinding{}.Fields()

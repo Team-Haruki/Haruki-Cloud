@@ -9,6 +9,7 @@ import (
 
 	"haruki-cloud/config"
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/core/upstreamerr"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
 
@@ -92,7 +93,7 @@ func (c *HarukiSekaiAPIClient) GetUserProfile(server, userID string) (*GetAnothe
 	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {
-		return nil, fmt.Errorf("sekai api: failed to unmarshal profile response: %w", decodeErr)
+		return nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindBadResponse, "", fmt.Errorf("sekai api: failed to unmarshal profile response: %w", decodeErr))
 	}
 	return &result, nil
 }
@@ -119,7 +120,7 @@ func (c *HarukiSekaiAPIClient) GetSystem(server string) (*GetSystemResponse, err
 	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {
-		return nil, fmt.Errorf("sekai api: failed to unmarshal system response: %w", decodeErr)
+		return nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindBadResponse, "", fmt.Errorf("sekai api: failed to unmarshal system response: %w", decodeErr))
 	}
 	return &result, nil
 }
@@ -141,7 +142,7 @@ func (c *HarukiSekaiAPIClient) GetInformation(server string) (*GetInformationRes
 	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {
-		return nil, fmt.Errorf("sekai api: failed to unmarshal information response: %w", decodeErr)
+		return nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindBadResponse, "", fmt.Errorf("sekai api: failed to unmarshal information response: %w", decodeErr))
 	}
 	return &result, nil
 }
@@ -294,7 +295,7 @@ func (c *HarukiSekaiAPIClient) GetCustomMusicScorePublished(server, scoreID stri
 	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {
-		return nil, fmt.Errorf("sekai api: failed to unmarshal custom music score response: %w", decodeErr)
+		return nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindBadResponse, "", fmt.Errorf("sekai api: failed to unmarshal custom music score response: %w", decodeErr))
 	}
 	if result.UserCustomMusicScoreInfoJSON == nil {
 		return nil, ErrUserNotFound
@@ -331,9 +332,9 @@ func (c *HarukiSekaiAPIClient) get(path string) ([]byte, error) {
 	finishHTTP()
 	if err != nil {
 		if ctxErr := c.requestContext().Err(); ctxErr != nil {
-			return nil, ctxErr
+			return nil, requestContextError(upstreamerr.ServiceGameData, ctxErr)
 		}
-		return nil, fmt.Errorf("sekai api: request failed after retries: %w", sanitizeNetworkError(err))
+		return nil, sanitizeNetworkError(upstreamerr.ServiceGameData, "sekai api: request failed after retries", err)
 	}
 
 	return handleSekaiAPIResponse(resp)
@@ -357,9 +358,9 @@ func (c *HarukiSekaiAPIClient) post(path string, body any) ([]byte, error) {
 	finishHTTP()
 	if err != nil {
 		if ctxErr := c.requestContext().Err(); ctxErr != nil {
-			return nil, ctxErr
+			return nil, requestContextError(upstreamerr.ServiceGameData, ctxErr)
 		}
-		return nil, fmt.Errorf("sekai api: request failed after retries: %w", sanitizeNetworkError(err))
+		return nil, sanitizeNetworkError(upstreamerr.ServiceGameData, "sekai api: request failed after retries", err)
 	}
 	return handleSekaiAPIResponse(resp)
 }
@@ -387,16 +388,16 @@ func (c *HarukiSekaiAPIClient) acquireTarget() (string, *upstream.Lease, error) 
 		lease, err := c.pool.Acquire(c.requestContext())
 		finishQueue()
 		if err != nil {
-			return "", nil, fmt.Errorf("sekai api: upstream unavailable: %w", err)
+			return "", nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindUnavailable, "", fmt.Errorf("sekai api: upstream unavailable: %w", err))
 		}
 		return lease.Target.BaseURL, lease, nil
 	}
 	if c.config == nil {
-		return "", nil, fmt.Errorf("sekai api: base_url is empty")
+		return "", nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindNotConfigured, "sekai api: base_url is empty", nil)
 	}
 	baseURL := strings.TrimRight(strings.TrimSpace(c.config.BaseURL), "/")
 	if baseURL == "" {
-		return "", nil, fmt.Errorf("sekai api: base_url is empty")
+		return "", nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindNotConfigured, "sekai api: base_url is empty", nil)
 	}
 	return baseURL, nil, nil
 }

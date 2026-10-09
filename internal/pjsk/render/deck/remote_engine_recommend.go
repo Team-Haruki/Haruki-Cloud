@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/core/upstreamerr"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
@@ -99,7 +100,7 @@ func (r *RemoteDeckRecommender) ensureCircuitClosed(ctx context.Context, state *
 	if r.logger != nil {
 		r.logger.WarnContext(ctx, "deck circuit breaker open", "consecutive_failures", failures)
 	}
-	return fmt.Errorf("deck-service unavailable: %d consecutive failures (circuit breaker open)", failures)
+	return deckTagged(upstreamerr.KindUnavailable, fmt.Errorf("deck-service unavailable: %d consecutive failures (circuit breaker open)", failures))
 }
 
 func (r *RemoteDeckRecommender) recommendWithRewarm(ctx context.Context, exec *remoteExecution, req RecommendRequest) ([]remoteBatchRecommendResult, error) {
@@ -202,7 +203,7 @@ func firstRemoteBatchError(results []remoteBatchRecommendResult) error {
 			return nil
 		}
 		if firstErr == nil && strings.TrimSpace(item.Error) != "" {
-			firstErr = fmt.Errorf("%s", strings.TrimSpace(item.Error))
+			firstErr = &RemoteError{Message: strings.TrimSpace(item.Error)}
 		}
 	}
 	return firstErr
@@ -303,7 +304,7 @@ func (r *RemoteDeckRecommender) doRecommendBatch(ctx context.Context, exec *remo
 	}
 	userData := req.UserData
 	if len(userData) == 0 {
-		return nil, fmt.Errorf("deck remote engine: no user data bytes available")
+		return nil, deckTagged(upstreamerr.KindUserDataInvalid, fmt.Errorf("deck remote engine: no user data bytes available"))
 	}
 
 	key := exec.userdataKey
@@ -433,7 +434,7 @@ func (r *RemoteDeckRecommender) doRecommendLegacyOption(ctx context.Context, exe
 		r.logUserDataFilePathFallback(ctx, exec, req.Region, path)
 		payload["user_data_file_path"] = path
 	} else {
-		return nil, fmt.Errorf("deck remote engine: no user data available")
+		return nil, deckTagged(upstreamerr.KindUserDataInvalid, fmt.Errorf("deck remote engine: no user data available"))
 	}
 
 	var response remoteRecommendResult

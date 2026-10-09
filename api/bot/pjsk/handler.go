@@ -1,12 +1,12 @@
 package pjsk
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"haruki-cloud/internal/core/secevent"
 	"slices"
 	"strconv"
 	"strings"
@@ -21,8 +21,10 @@ import (
 	botuser "haruki-cloud/database/bot/user"
 	"haruki-cloud/internal/cluster"
 	"haruki-cloud/internal/core/crypto"
+	"haruki-cloud/internal/core/secevent"
 	"haruki-cloud/internal/core/trustsign"
 	commandregistry "haruki-cloud/internal/handler"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/middleware/secure"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/onebot11"
@@ -95,8 +97,7 @@ type BotRouteOptions struct {
 //
 //	{"platform":"qq","platform_user_id":"12345","server":"jp",
 //	 "matched_command":"/cmd","message":[{"type":"text","data":{"text":"/cmd args"}}],
-//	 "session_token":"<jwt>","timestamp":1700000000,"nonce":"<hex>",
-//	 "enableParamEcho":false}
+//	 "session_token":"<jwt>","timestamp":1700000000,"nonce":"<hex>"}
 //
 // When NoiseKeys is set, the Noise NK transport middleware is applied to the
 // pjsk route group: clients send Noise NK Message 1 containing a MsgPack-encoded
@@ -239,14 +240,14 @@ func verifyBotOwnerNotBanned(botDBClient *botDB.Client, checker *accountdata.Ban
 		defer finish()
 		botID, err := strconv.Atoi(strings.TrimSpace(c.Params("botId")))
 		if err != nil {
-			return botResponse(c, fiber.StatusUnauthorized, "Bot 会话无效")
+			return botResponse(c, fiber.StatusUnauthorized, i18n.T("account.api.bot_session_invalid"))
 		}
 		owner, err := botDBClient.User.Query().
 			Where(botuser.BotIDEQ(botID)).
 			Only(c.Context())
 		if err != nil {
 			if botDB.IsNotFound(err) {
-				return botResponse(c, fiber.StatusUnauthorized, "Bot 会话无效")
+				return botResponse(c, fiber.StatusUnauthorized, i18n.T("account.api.bot_session_invalid"))
 			}
 			return api.InternalError(c)
 		}
@@ -292,8 +293,17 @@ func makeBotHandler(renderApp *renderapp.App, election commandResponseElection, 
 		metadata := decision.result.Metadata
 		applySharedBotCommandMetadata(c, metadata)
 		enqueueBotCommandTelemetry(c, telemetry, req, botID, metadata)
-		return writeEncodedBotResponse(c, decision.result.Response)
+		return writeEncodedBotResponse(c, decision.result.responseFor(req))
 	}
+}
+
+// responseFor is the reply for req: the echo variant only when its client
+// enabled parameter echo and the result has one.
+func (r sharedCommandResult) responseFor(req BotCommandRequest) encodedBotResponse {
+	if req.EnableParamEcho && len(r.EchoResponse.JSONBody) > 0 {
+		return r.EchoResponse
+	}
+	return r.Response
 }
 
 type botHandlerRejection struct {
@@ -305,21 +315,21 @@ func validateBotHandlerRequest(c fiber.Ctx, expectedPath string, commands []stri
 	setCommandTraceMetadata(c, "", expectedPath)
 	req, err := parseBotRequest(c)
 	if err != nil {
-		return BotCommandRequest{}, "", false, &botHandlerRejection{message: "请求格式错误", cause: err}
+		return BotCommandRequest{}, "", false, &botHandlerRejection{message: i18n.T("account.api.request_invalid"), cause: err}
 	}
 	traceCommand := allowedCommandTraceLabel(req.MatchedCommand, commands)
 	setCommandTraceMetadata(c, traceCommand, expectedPath)
 	finishValidation := commandtrace.MeasurePhase(c.Context(), "request_validate")
 	defer finishValidation()
 	if len(req.Message) == 0 {
-		return req, traceCommand, false, &botHandlerRejection{message: "缺少 message"}
+		return req, traceCommand, false, &botHandlerRejection{message: i18n.T("account.api.message_missing")}
 	}
 	if req.MatchedCommand == "" {
-		return req, traceCommand, false, &botHandlerRejection{message: "缺少 matched_command"}
+		return req, traceCommand, false, &botHandlerRejection{message: i18n.T("account.api.matched_command_missing")}
 	}
 	allowCompatReroute := allowBotCompatReroute(expectedPath)
 	if !slices.Contains(commands, req.MatchedCommand) && !allowCompatReroute {
-		return req, traceCommand, false, &botHandlerRejection{message: "当前接口不允许使用该 matched_command"}
+		return req, traceCommand, false, &botHandlerRejection{message: i18n.T("account.api.matched_command_not_allowed")}
 	}
 	return req, traceCommand, allowCompatReroute, nil
 }
@@ -436,7 +446,7 @@ func executeSharedBotCommand(
 	resolved, err := resolveBotCommandWithCompat(ctx, expectedPath, traceCommand, allowCompatReroute, req, executorBotID)
 	finishResolve()
 	if err != nil {
-		return failedSharedBotCommand(ctx, err, expectedPath, traceCommand, req.MatchedCommand, req.EnableParamEcho, metadata, false, "resolve")
+		return failedSharedBotCommand(ctx, err, expectedPath, traceCommand, req.MatchedCommand, metadata, false, "resolve")
 	}
 
 	metadata.Command = resolved.TriggerCommand
@@ -450,10 +460,39 @@ func executeSharedBotCommand(
 	metadata.Region = resolved.Region
 	forceExecutor := commandResponseDependsOnExecutor(resolved)
 	if err != nil {
-		return failedSharedBotCommand(ctx, err, resolved.CommandPath, resolved.TriggerCommand, resolved.TriggerCommand, req.EnableParamEcho, metadata, forceExecutor, "execution")
+		return failedSharedBotCommand(ctx, err, resolved.CommandPath, resolved.TriggerCommand, resolved.TriggerCommand, metadata, forceExecutor, "execution")
 	}
 	metadata.Outcome = "ok"
-	return encodeSharedCommandResult(ctx, newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK, responseData), metadata, forceExecutor)
+	return succeededSharedBotCommand(ctx, responseData, metadata, forceExecutor)
+}
+
+// succeededSharedBotCommand encodes a command's reply. Text built with
+// onebot11.LocalizedText (a success reply that repeats unreviewed user
+// input) is rendered twice: without echo for Response and with echo for
+// EchoResponse, so the delivering bot can pick by its own request.
+func succeededSharedBotCommand(ctx context.Context, responseData onebot11.Message, metadata sharedCommandMetadata, forceExecutor bool) sharedCommandResult {
+	locale := i18n.LocaleFromContext(ctx)
+	result := encodeSharedCommandResult(ctx, newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK, responseData.Render(i18n.RenderOptions{Locale: locale, NoEcho: true})), metadata, forceExecutor)
+	if !responseData.HasLocalizedText() || result.Metadata.Outcome != "ok" {
+		return result
+	}
+	return withEchoVariant(ctx, result, newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK, responseData.Render(i18n.RenderOptions{Locale: locale})))
+}
+
+// withEchoVariant adds echoEnvelope to result as the reply for clients that
+// enabled parameter echo, when it differs from result's own reply (which is
+// always the one without echo). A shared result keeps both because the bot
+// that delivers it may not be the one that executed it.
+func withEchoVariant(ctx context.Context, result sharedCommandResult, echoEnvelope botResponseEnvelope) sharedCommandResult {
+	if len(result.Response.JSONBody) == 0 {
+		return result
+	}
+	echo, err := encodeBotResponseEnvelopeContext(ctx, echoEnvelope)
+	if err != nil || bytes.Equal(echo.JSONBody, result.Response.JSONBody) {
+		return result
+	}
+	result.EchoResponse = echo
+	return result
 }
 
 func resolveBotCommandWithCompat(
@@ -504,7 +543,6 @@ func failedSharedBotCommand(
 	ctx context.Context,
 	err error,
 	commandPath, command, matchedCommand string,
-	enableParamEcho bool,
 	metadata sharedCommandMetadata,
 	forceExecutor bool,
 	stage string,
@@ -512,7 +550,7 @@ func failedSharedBotCommand(
 	if isExpectedCommandError(err) {
 		metadata.Outcome = "rejected"
 	} else {
-		metadata.ErrorMessage = usererror.RedactForLog(err.Error(), usererror.DefaultLogMessageLimit)
+		metadata.ErrorMessage = usererror.RedactForLog(usererror.LogText(err), usererror.DefaultLogMessageLimit)
 		logger.ErrorContext(ctx, "bot command "+stage+" failed",
 			"command_path", commandPath,
 			"command", command,
@@ -523,8 +561,9 @@ func failedSharedBotCommand(
 		)
 	}
 	metadata.ErrorType = fmt.Sprintf("%T", err)
-	envelope := commandErrorEnvelope(err, commandPath, matchedCommand, enableParamEcho)
-	return encodeSharedCommandResult(ctx, envelope, metadata, forceExecutor)
+	envelope := commandErrorEnvelope(i18n.WithParamEcho(ctx, false), err, commandPath, matchedCommand)
+	echoEnvelope := commandErrorEnvelope(i18n.WithParamEcho(ctx, true), err, commandPath, matchedCommand)
+	return withEchoVariant(ctx, encodeSharedCommandResult(ctx, envelope, metadata, forceExecutor), echoEnvelope)
 }
 
 func encodeSharedCommandResult(ctx context.Context, envelope botResponseEnvelope, metadata sharedCommandMetadata, forceExecutor bool) sharedCommandResult {
@@ -544,21 +583,17 @@ func encodeSharedCommandResult(ctx context.Context, envelope botResponseEnvelope
 	return sharedCommandResult{Response: fallback, Metadata: metadata, ForceExecutor: forceExecutor}
 }
 
-func commandErrorEnvelope(err error, expectedPath, matchedCommand string, enableParamEcho bool) botResponseEnvelope {
+func commandErrorEnvelope(ctx context.Context, err error, expectedPath, matchedCommand string) botResponseEnvelope {
 	if _, ok := errors.AsType[*botValidationError](err); ok {
-		return newBotResponseEnvelope(fiber.StatusBadRequest, "指令与当前接口不匹配",
+		return newBotResponseEnvelope(fiber.StatusBadRequest, i18n.T("account.api.command_path_mismatch"),
 			BotCommandErrorResponse{
 				Error:          err.Error(),
 				ExpectedPath:   expectedPath,
 				MatchedCommand: matchedCommand,
 			})
 	}
-	if replyErr, ok := errors.AsType[onebot11.ReplayError](err); ok {
-		return newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK,
-			[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(string(replyErr), enableParamEcho, matchedCommand, expectedPath))})
-	}
 	return newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK,
-		[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(err.Error(), enableParamEcho, matchedCommand, expectedPath))})
+		[]onebot11.Segment{onebot11.Text(commandErrorText(ctx, err, expectedPath, matchedCommand))})
 }
 
 func commandResponseDependsOnExecutor(resolved *commandhandler.CommandRequest) bool {
@@ -588,12 +623,9 @@ func isExpectedCommandError(err error) bool {
 		return true
 	}
 	// Unparsable queries, unknown names and out-of-range indexes are the
-	// user's input, not a failure of Cloud or its upstreams.
-	if usererror.IsInput(err) {
-		return true
-	}
-	_, ok := errors.AsType[onebot11.ReplayError](err)
-	return ok
+	// user's input, not a failure of Cloud or its upstreams; typed errors
+	// decide by their code.
+	return usererror.IsExpected(err)
 }
 
 func syncExplicitRegionToProfileParams(resolved *commandhandler.CommandRequest, region string) {
@@ -614,6 +646,15 @@ func syncExplicitRegionToProfileParams(resolved *commandhandler.CommandRequest, 
 		syncExplicitRegionToProfileBindingParams(resolved, normalized)
 	case accountdata.ProfileModeHideID,
 		accountdata.ProfileModeShowID,
+		accountdata.ProfileModeHideSK,
+		accountdata.ProfileModeShowSK,
+		accountdata.ProfileModeHideInfo,
+		accountdata.ProfileModeShowInfo,
+		accountdata.ProfileModeHideArrest,
+		accountdata.ProfileModeShowArrest,
+		accountdata.ProfileModeHideAll,
+		accountdata.ProfileModeShowAll,
+		accountdata.ProfileModeVisibility,
 		accountdata.ProfileModeHideSuite,
 		accountdata.ProfileModeShowSuite,
 		accountdata.ProfileModeHideMySekai,
@@ -832,7 +873,7 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	ctx, err := commandhandler.BuildContext(requestCtx, event)
 	finishContext()
 	if err != nil {
-		return nil, fmt.Errorf("构建指令上下文失败: %w", err)
+		return nil, fmt.Errorf("build command context: %w", err)
 	}
 	finishMatch := commandtrace.MeasureOperation(requestCtx, "command.match")
 	defer finishMatch()
@@ -842,7 +883,7 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	}
 	if matched.Handler.GetPath() != expectedPath {
 		return nil, &botValidationError{
-			msg:        fmt.Sprintf("matched_command 属于接口路径 %s", matched.Handler.GetPath()),
+			msg:        fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath()),
 			actualPath: matched.Handler.GetPath(),
 		}
 	}
@@ -857,7 +898,7 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	ctx.MessageType = messageType
 	executable, ok := matched.Handler.(commandhandler.CommandHandler)
 	if !ok {
-		return nil, fmt.Errorf("注册的指令处理器未实现 PJSK 指令接口: %T", matched.Handler)
+		return nil, fmt.Errorf("registered handler %T does not implement the PJSK command interface", matched.Handler)
 	}
 	finishParse := commandtrace.MeasureOperation(requestCtx, "command.parse")
 	resolved, err := executable.Handle(ctx)
@@ -866,7 +907,7 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 		return nil, err
 	}
 	if resolved == nil {
-		return nil, fmt.Errorf("指令处理器返回空结果")
+		return nil, fmt.Errorf("command handler returned no command")
 	}
 	resolved.RequesterPlatform = req.Platform
 	resolved.RequesterUserID = req.PlatformUserID
@@ -909,9 +950,9 @@ func fallbackBotCommandMatch(matched, actual commandregistry.MatchedHandler, loo
 		return actual, nil
 	}
 	if !botCommandMatchRegistered(matched, lookupOK) {
-		return commandregistry.MatchedHandler{}, &botValidationError{msg: fmt.Sprintf("matched_command 未注册: %s", matchedCommand)}
+		return commandregistry.MatchedHandler{}, &botValidationError{msg: fmt.Sprintf("matched_command is not registered: %s", matchedCommand)}
 	}
-	return commandregistry.MatchedHandler{}, &botValidationError{msg: fmt.Sprintf("matched_command 未开放给 Bot API: %s", matchedCommand)}
+	return commandregistry.MatchedHandler{}, &botValidationError{msg: fmt.Sprintf("matched_command is not open to the bot API: %s", matchedCommand)}
 }
 
 func resolveBotCommandArgs(message string, matched commandregistry.MatchedHandler, matchedCommand string) (string, string, error) {
@@ -921,7 +962,7 @@ func resolveBotCommandArgs(message string, matched commandregistry.MatchedHandle
 	}
 	actual := commandregistry.MatchCommandHandler(message)
 	if actual.Handler == nil || actual.Handler.IsDisabled() || actual.Handler.GetPath() != matched.Handler.GetPath() {
-		return "", "", &botValidationError{msg: fmt.Sprintf("message 与 matched_command 不匹配: %s", matchedCommand)}
+		return "", "", &botValidationError{msg: fmt.Sprintf("message does not match matched_command: %s", matchedCommand)}
 	}
 	return strings.TrimSpace(string(actual.ArgText)), actual.Command, nil
 }
@@ -971,7 +1012,7 @@ func buildManifestHandler(botDBClient *botDB.Client, preview3DEnabled bool, sign
 	return func(c fiber.Ctx) error {
 		if botDBClient == nil {
 			return api.JSONResponse(c, fiber.StatusNotImplemented,
-				"指令清单不可用：bot 数据库未配置", nil)
+				"command manifest unavailable", nil)
 		}
 		entry, failure := cache.get(time.Now(), func() ([]byte, string) {
 			return buildManifestPayload(c.Context(), botDBClient, preview3DEnabled)
@@ -1049,7 +1090,7 @@ func buildManifestPayload(ctx context.Context, botDBClient *botDB.Client, previe
 		Order(commandmanifest.ByCommandPriority(sql.OrderDesc())).
 		All(ctx)
 	if err != nil {
-		return nil, "加载指令清单失败"
+		return nil, "failed to load command manifest"
 	}
 
 	clientPolicyScopes := commandManifestClientPolicyScopes()
@@ -1076,7 +1117,7 @@ func buildManifestPayload(ctx context.Context, botDBClient *botDB.Client, previe
 	}
 	payload, err := json.Marshal(manifest)
 	if err != nil {
-		return nil, "编码指令清单失败"
+		return nil, "failed to encode command manifest"
 	}
 	return payload, ""
 }
@@ -1089,13 +1130,13 @@ func encodeManifestResponse(payload []byte, signer *trustsign.Signer) ([]byte, s
 	if signer != nil {
 		envelope, err := signer.Sign(trustsign.DomainManifest, trustsign.EncodingJSON, payload)
 		if err != nil {
-			return nil, "签名指令清单失败"
+			return nil, "failed to sign command manifest"
 		}
 		data = envelope
 	}
 	body, err := json.Marshal(api.BuildResponseMap(fiber.StatusOK, api.ResponseOK, data))
 	if err != nil {
-		return nil, "编码指令清单失败"
+		return nil, "failed to encode command manifest"
 	}
 	return body, ""
 }

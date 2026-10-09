@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"haruki-cloud/internal/i18n"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/accountdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -96,7 +98,7 @@ func TestExecuteProfileSettingsVisibilityAndModularModes(t *testing.T) {
 	if _, err := accountdata.ExecuteProfileSettingsCommand(ctx, nil, accountdata.ProfileModeHideID, params); !errors.Is(err, accountdata.ErrBindingServiceUnavailable) {
 		t.Fatalf("nil service error = %v", err)
 	}
-	if _, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, "unknown-mode", params); err == nil || !strings.Contains(err.Error(), "unsupported") {
+	if _, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, "unknown-mode", params); err == nil || !strings.Contains(testutil.ErrorDetail(err), "unsupported") {
 		t.Fatalf("unsupported mode error = %v", err)
 	}
 }
@@ -125,23 +127,24 @@ func TestExecuteProfileBackgroundCommandModes(t *testing.T) {
 		ImageURL:       "https://example.com/bg.png",
 	}
 
-	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGUpload, params); err != nil || !strings.Contains(string(text), "已更新JP服") {
+	jp := i18n.Data{"Region": i18n.RegionLabel("jp")}
+	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGUpload, params); err != nil || string(text) != i18n.T("account.bg.uploaded", jp) {
 		t.Fatalf("upload command = %q, %v", text, err)
 	}
 	params.ImageURL = ""
-	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || !strings.Contains(string(text), "模糊度") {
+	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || string(text) == i18n.T("account.bg.none", jp) || !strings.HasPrefix(string(text), i18n.RegionLabel("jp").String()) {
 		t.Fatalf("inspect command = %q, %v", text, err)
 	}
 	blur, alpha, vertical := 8, 60, true
 	params.Blur, params.Alpha, params.Vertical = &blur, &alpha, &vertical
-	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || !strings.Contains(string(text), "已更新JP服") {
+	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || string(text) != i18n.T("account.bg.adjusted", jp) {
 		t.Fatalf("adjust command = %q, %v", text, err)
 	}
-	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGClear, params); err != nil || !strings.Contains(string(text), "已清空JP服") {
+	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGClear, params); err != nil || string(text) != i18n.T("account.bg.cleared", jp) {
 		t.Fatalf("clear command = %q, %v", text, err)
 	}
 	params.Blur, params.Alpha, params.Vertical = nil, nil, nil
-	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || !strings.Contains(string(text), "还没有自定义") {
+	if text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGAdjust, params); err != nil || string(text) != i18n.T("account.bg.none", jp) {
 		t.Fatalf("empty inspect command = %q, %v", text, err)
 	}
 }

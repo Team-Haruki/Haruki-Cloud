@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/internal/core/urlhost"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/internal/storage/storagetest"
+	"haruki-cloud/internal/testutil"
 
 	"golang.org/x/sync/singleflight"
 )
@@ -123,7 +124,7 @@ func TestArtifactFetcherLimitsAndCancellation(t *testing.T) {
 	}))
 	defer oversized.Close()
 	fetcher := newArtifactFetcher(objects, urlhost.Single(oversized.URL), time.Second)
-	if _, err := fetcher.fetch(t.Context(), ref); !errors.Is(err, ErrArtifactBytesUnavailable) || !strings.Contains(err.Error(), "exceeds") {
+	if _, err := fetcher.fetch(t.Context(), ref); !errors.Is(err, ErrArtifactBytesUnavailable) || !strings.Contains(testutil.ErrorDetail(err), "exceeds") {
 		t.Fatalf("oversized err = %v", err)
 	}
 	var nilFetcher *artifactFetcher

@@ -2,7 +2,6 @@ package drawing
 
 import (
 	"context"
-	"fmt"
 
 	"haruki-cloud/internal/observability/commandtrace"
 )
@@ -57,7 +56,7 @@ func (c *RenderCacheClient) RenderImageSharedContext(ctx context.Context, endpoi
 
 func (c *HarukiDrawingClient) cachedPostImage(endpoint string, body any) (ImageResult, error) {
 	if c == nil {
-		return ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return ImageResult{}, ErrNotConfigured
 	}
 	return c.renderImageWithCacheRequestAndPrepare(endpoint, body, body, nil, func(renderCtx context.Context, prepared any) ([]byte, error) {
 		return c.WithContext(renderCtx).postPrepared(endpoint, prepared)

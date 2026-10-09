@@ -6,28 +6,14 @@ import (
 	"strings"
 	"unicode"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/card"
+	"haruki-cloud/utils/usererror"
 )
-
-const searchSingleCardHelp = `查单张卡的方式:
-1. 直接使用卡牌ID
-2. 角色昵称+负数 代表角色新卡，例如 mnr-1 代表 mnr 最新一张卡
-3. 直接使用负数代表全局倒序已上线卡，例如 -1 代表当前区服最新上线卡`
-
-const searchMultiCardHelp = `查询多张卡牌的筛选参数:
-角色昵称：miku
-团/团oc/团vs/纯vs：mmj mmjoc mmjv 纯v/原v
-稀有度/属性/技能：4 四星 生日 蓝 蓝星 判 判卡 分 分卡 奶 奶卡 p分
-限定类型：非限 限定 期间限定 fes cfes bfes 联动限定
-年份：25年 去年
-活动id或者箱活缩写：event123 mnr1
-以上参数可以混合使用，用空格分隔`
-
-const cardSearchHelp = searchSingleCardHelp + "\n\n" + searchMultiCardHelp
 
 func (sekaiHandlers) CardDetailHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
@@ -35,7 +21,6 @@ func (sekaiHandlers) CardDetailHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/card-detail", "/查卡", "/查牌", "/查卡牌", "/pjsk card",
 		},
-		Helper: cardSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveCardDetailOrList(ctx, false)
 		},
@@ -48,7 +33,6 @@ func (sekaiHandlers) CardListHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/卡牌列表", "/cards", "/pjsk cards", "/card-list",
 		},
-		Helper: cardSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveCardDetailOrList(ctx, true)
 		},
@@ -112,7 +96,7 @@ func isCardBoxQuery(args string) bool {
 	return hasCardBoxControlToken(lower, "box") ||
 		hasCardBoxControlToken(lower, "id") ||
 		hasCardBoxControlToken(lower, "before") ||
-		hasCardBoxControlToken(lower, "时间") ||
+		hasCardBoxControlToken(lower, "时间") || //copylint:ignore 解析关键字
 		hasCardBoxUnownedToken(lower)
 }
 
@@ -147,8 +131,8 @@ func newCardListParams(ctx HarrukiSekaiHandlerContext, args string, strictFilter
 }
 
 func newCardBoxParams(ctx HarrukiSekaiHandlerContext, args string, strictFilterOnly bool) (map[string]any, error) {
-	if hasCardBoxControlToken(args, "时间") && (hasCardBoxUnownedToken(args) || cardBoxGroupBy(strings.ReplaceAll(args, "时间", "")) != "") {
-		return nil, onebot11.NewReplayError("时间模式只展示已拥有卡牌，不能与属性分组或未持有同时使用")
+	if hasCardBoxControlToken(args, "时间") && (hasCardBoxUnownedToken(args) || cardBoxGroupBy(strings.ReplaceAll(args, "时间", "")) != "") { //copylint:ignore 解析关键字
+		return nil, usererror.Invalid(i18n.M("card.time_mode_conflict"))
 	}
 	params, err := newSelfQueryParamsMap(ctx)
 	if err != nil {
@@ -164,12 +148,12 @@ func newCardBoxParams(ctx HarrukiSekaiHandlerContext, args string, strictFilterO
 }
 
 func cleanCardBoxArgs(args string) string {
-	lower := strings.ToLower(strings.ReplaceAll(args, "属性", " "))
+	lower := strings.ToLower(strings.ReplaceAll(args, "属性", " ")) //copylint:ignore 解析关键字
 	tokens := strings.FieldsFunc(lower, isCardBoxTokenSeparator)
 	kept := make([]string, 0, len(tokens))
 	for _, token := range tokens {
 		switch token {
-		case "时间", "id", "box", "before", "attr", "attrs", "attribute", "attributes", "未持有", "未拥有", "unowned", "missing", "miss":
+		case "时间", "id", "box", "before", "attr", "attrs", "attribute", "attributes", "未持有", "未拥有", "unowned", "missing", "miss": //copylint:ignore 解析关键字
 			continue
 		default:
 			kept = append(kept, token)
@@ -179,11 +163,11 @@ func cleanCardBoxArgs(args string) string {
 }
 
 func cardBoxGroupBy(args string) string {
-	if hasCardBoxControlToken(args, "时间") {
+	if hasCardBoxControlToken(args, "时间") { //copylint:ignore 解析关键字
 		return card.CardBoxGroupByTime
 	}
 	lower := strings.ToLower(strings.TrimSpace(args))
-	if strings.Contains(args, "属性") ||
+	if strings.Contains(args, "属性") || //copylint:ignore 解析关键字
 		hasCardBoxControlToken(lower, "attr") ||
 		hasCardBoxControlToken(lower, "attrs") ||
 		hasCardBoxControlToken(lower, "attribute") ||
@@ -194,8 +178,8 @@ func cardBoxGroupBy(args string) string {
 }
 
 func hasCardBoxUnownedToken(text string) bool {
-	return hasCardBoxControlToken(text, "未持有") ||
-		hasCardBoxControlToken(text, "未拥有") ||
+	return hasCardBoxControlToken(text, "未持有") || //copylint:ignore 解析关键字
+		hasCardBoxControlToken(text, "未拥有") || //copylint:ignore 解析关键字
 		hasCardBoxControlToken(text, "unowned") ||
 		hasCardBoxControlToken(text, "missing") ||
 		hasCardBoxControlToken(text, "miss")
@@ -224,7 +208,7 @@ func (sekaiHandlers) CardImgHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, errors.New("请输入要查询的卡牌")
+				return nil, usererror.Misuse(i18n.M("card.query_required"))
 			}
 			return makeCommandRequest(ctx, parser.ModuleCard, "card-image"), nil
 		},
@@ -245,7 +229,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 	}()
 
 	if rc.App.Cards == nil {
-		return nil, fmt.Errorf("card service unavailable: sekai client not configured")
+		return nil, usererror.Misconfigured(errors.New("card service unavailable: sekai client not configured"))
 	}
 	cardCtrl := rc.App.Cards.WithContext(rc.Ctx)
 	switch rc.Cmd.Mode {
@@ -351,7 +335,7 @@ func prependCardSummary(image onebot11.Message, summary string) onebot11.Message
 	if strings.TrimSpace(summary) == "" {
 		return image
 	}
-	text := onebot11.Text(fmt.Sprintf("已处理%s。", summary))
+	text := onebot11.Text(i18n.T("common.processed", i18n.Data{"Summary": summary}))
 	return append(onebot11.Message{text}, image...)
 }
 
@@ -361,7 +345,7 @@ func hasCardCatalogOwnedData(detail *drawing.DetailedProfileCardRequest) bool {
 
 func requireCardCatalogDetailedProfile(rc *RequestContext) (*drawing.DetailedProfileCardRequest, error) {
 	if rc == nil {
-		return nil, onebot11.NewReplayError(ErrMsgCardCatalogRequiresSuite)
+		return nil, suiteDataNotFoundError(nil)
 	}
 	binding, _ := rc.GetBinding()
 	if binding == nil {
@@ -371,18 +355,18 @@ func requireCardCatalogDetailedProfile(rc *RequestContext) (*drawing.DetailedPro
 		return nil, accountdata.ErrNoBinding
 	}
 	if !binding.SuiteVisible {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 	snap := rc.ResolveSnapshot(false)
 	if snap == nil {
 		if snapshotErr := rc.SnapshotError(false); snapshotErr != nil {
 			return nil, normalizeToolboxDataFetchError(snapshotErr, "suite", binding)
 		}
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 	detail := snap.DetailedProfile(rc.Region)
 	if detail == nil || len(detail.UserCards) == 0 {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 	return cloneDetailedProfileForCurrentTarget(rc, detail), nil
 }

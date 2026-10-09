@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -25,6 +24,7 @@ import (
 	noiseCrypto "haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/core/trustsign"
 	"haruki-cloud/internal/identity"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -34,10 +34,12 @@ import (
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 
 	"github.com/gofiber/fiber/v3"
 	_ "github.com/mattn/go-sqlite3"
 	noiseMP "github.com/shamaton/msgpack/v3"
+	"haruki-cloud/internal/i18n"
 )
 
 const testBotID = "11451419"
@@ -813,7 +815,7 @@ func TestBotEndpointGetReturnsTextJSON(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 
-	assertSingleTextMessage(t, body, "你还没有绑定任何PJSK账号")
+	assertSingleTextMessage(t, body, i18n.T("binding.none"))
 }
 
 func TestBotEndpointRegionPrefixedBindListFiltersBindings(t *testing.T) {
@@ -842,7 +844,7 @@ func TestBotEndpointRegionPrefixedBindListFiltersBindings(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 
-	assertSingleTextMessage(t, body, "已绑定CN服账号列表（u序号按该区服编号）:\nu1 [CN] 748********663 (全局默认 / CN服默认)")
+	assertSingleTextMessage(t, body, i18n.T("account.list.header_region", i18n.Data{"Region": i18n.RegionLabel("cn")})+"\n"+i18n.T("account.list.item_marked", i18n.Data{"Index": 1, "Account": i18n.AccountLabel("cn", "748********663", true), "Marks": i18n.T("account.mark.global_default") + "、" + i18n.T("account.mark.region_default", i18n.Data{"Region": i18n.RegionLabel("cn")})}))
 }
 
 func TestBotEndpointBindListFiltersTransportRegionAfterClientStripsPrefix(t *testing.T) {
@@ -871,7 +873,7 @@ func TestBotEndpointBindListFiltersTransportRegionAfterClientStripsPrefix(t *tes
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 
-	assertSingleTextMessage(t, body, "已绑定CN服账号列表（u序号按该区服编号）:\nu1 [CN] 748********663 (全局默认 / CN服默认)")
+	assertSingleTextMessage(t, body, i18n.T("account.list.header_region", i18n.Data{"Region": i18n.RegionLabel("cn")})+"\n"+i18n.T("account.list.item_marked", i18n.Data{"Index": 1, "Account": i18n.AccountLabel("cn", "748********663", true), "Marks": i18n.T("account.mark.global_default") + "、" + i18n.T("account.mark.region_default", i18n.Data{"Region": i18n.RegionLabel("cn")})}))
 }
 
 func TestBotEndpointRegionPrefixedQueryUIDUsesRegionBinding(t *testing.T) {
@@ -964,7 +966,7 @@ func TestBotEndpointRegionPrefixedHideIDSyncsProfileSettingsParams(t *testing.T)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已隐藏 [EN] 394********123 的ID信息")
+	assertSingleTextMessageContains(t, body, i18n.T("account.visibility.hide_uid", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -973,11 +975,11 @@ func TestBotEndpointRegionPrefixedHideIDSyncsProfileSettingsParams(t *testing.T)
 	for _, item := range items {
 		switch item.Server {
 		case "jp":
-			if !item.Visible {
+			if !item.Visibility.UID {
 				t.Fatalf("jp visibility was changed by /en隐藏ID: %+v", item)
 			}
 		case "en":
-			if item.Visible {
+			if item.Visibility.UID {
 				t.Fatalf("en visibility was not hidden: %+v", item)
 			}
 		}
@@ -1016,7 +1018,7 @@ func TestBotEndpointTransportRegionShowSuiteSyncsProfileSettingsParams(t *testin
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已展示 [EN] 394********123 的抓包信息")
+	assertSingleTextMessageContains(t, body, i18n.T("account.visibility.show_suite", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -1062,7 +1064,7 @@ func TestBotEndpointRegionPrefixedHideSuiteSyncsProfileSettingsParams(t *testing
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已隐藏 [EN] 394********123 的抓包信息")
+	assertSingleTextMessageContains(t, body, i18n.T("account.visibility.hide_suite", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -1105,37 +1107,93 @@ func TestBotEndpointSuppressesParamEchoByDefault(t *testing.T) {
 	if strings.Contains(text, secretParam) {
 		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
 	}
-	if text != "活动查询参数格式不正确。查看完整用法请发送：/查活动 -help" {
+	if text != i18n.WithUsage(i18n.M("guidance.event"), "/查活动").String() {
 		t.Fatalf("expected redacted parse error with help text, got %q", text)
 	}
 }
 
-func TestBotEndpointStillRedactsParamEchoWhenEnabled(t *testing.T) {
-	app := testBotApp(t, "")
-	secretParam := "super-secret-param"
-
-	req := newBotPOSTRequest(botPJSKPath("event"), BotCommandRequest{
-		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/查活动",
-		Message:         onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/查活动 " + secretParam}}},
-		EnableParamEcho: true,
-	})
-
+// postBindWithEcho sends "/绑定 <arg>" with the given raw enableParamEcho JSON
+// member ("" leaves the field out) and returns the reply text.
+func postBindWithEcho(t *testing.T, app *fiber.App, arg, echoMember string) string {
+	t.Helper()
+	body := `{"platform":"qq","platform_user_id":"12345","server":"jp","matched_command":"/绑定",` +
+		`"message":[{"type":"text","data":{"text":"/绑定 ` + arg + `"}}]` + echoMember + `}`
+	req, _ := http.NewRequest(http.MethodPost, botPJSKPath("profile/bind"), strings.NewReader(body))
+	req.Host = "localhost"
+	req.Header.Set("Content-Type", "application/json")
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("request: %v", err)
 	}
 	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
+	raw, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, raw)
 	}
-	text := singleTextMessageText(t, body)
-	if strings.Contains(text, secretParam) {
-		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
+	return singleTextMessageText(t, raw)
+}
+
+// TestBotEndpointHidesUserInputWithoutParamEcho sends a malformed parameter
+// with "enableParamEcho" absent or false: the reply names the problem but
+// never repeats the argument, and still reads naturally.
+func TestBotEndpointHidesUserInputWithoutParamEcho(t *testing.T) {
+	app := testBotAppWithBindings(t, "", testBindingService(t))
+	const secretParam = "superSECRETparam"
+	want := i18n.WithUsage(i18n.BadParam(secretParam, i18n.M("common.param.uid_digits")), "/绑定").Render(i18n.RenderOptions{NoEcho: true})
+	for name, member := range map[string]string{"absent": "", "false": `,"enableParamEcho":false`} {
+		text := postBindWithEcho(t, app, secretParam, member)
+		if strings.Contains(text, secretParam) {
+			t.Fatalf("%s: reply echoed the parameter: %q", name, text)
+		}
+		if text != want || strings.Contains(text, "“”") {
+			t.Fatalf("%s: reply = %q, want %q", name, text, want)
+		}
 	}
-	if text != "活动查询参数格式不正确。查看完整用法请发送：/查活动 -help" {
-		t.Fatalf("expected redacted parse error with help text, got %q", text)
+}
+
+// TestBotEndpointEchoesUserInputWhenEnabled: a client that opted in with
+// "enableParamEcho": true gets the informative reply that names its input.
+func TestBotEndpointEchoesUserInputWhenEnabled(t *testing.T) {
+	app := testBotAppWithBindings(t, "", testBindingService(t))
+	const secretParam = "superSECRETparam"
+	text := postBindWithEcho(t, app, secretParam, `,"enableParamEcho":true`)
+	want := i18n.WithUsage(i18n.BadParam(secretParam, i18n.M("common.param.uid_digits")), "/绑定").String()
+	if text != want || !strings.Contains(text, secretParam) {
+		t.Fatalf("reply = %q, want %q", text, want)
+	}
+}
+
+func TestSharedCommandResultResponseFor(t *testing.T) {
+	plain := encodedBotResponse{HTTPStatus: 200, JSONBody: []byte("plain")}
+	echo := encodedBotResponse{HTTPStatus: 200, JSONBody: []byte("echo")}
+	withEcho := sharedCommandResult{Response: plain, EchoResponse: echo}
+	if got := withEcho.responseFor(BotCommandRequest{}); string(got.JSONBody) != "plain" {
+		t.Fatalf("default client got %q", got.JSONBody)
+	}
+	if got := withEcho.responseFor(BotCommandRequest{EnableParamEcho: true}); string(got.JSONBody) != "echo" {
+		t.Fatalf("echo client got %q", got.JSONBody)
+	}
+	if got := (sharedCommandResult{Response: plain}).responseFor(BotCommandRequest{EnableParamEcho: true}); string(got.JSONBody) != "plain" {
+		t.Fatalf("echo client without an echo variant got %q", got.JSONBody)
+	}
+}
+
+// TestFailedSharedBotCommandKeepsBothVariants: a shared (elected) result can
+// be delivered by a bot other than the executor, so a failed command carries
+// the echo-free reply and, separately, the echo reply.
+func TestFailedSharedBotCommandKeepsBothVariants(t *testing.T) {
+	const secret = "superSECRETparam"
+	err := usererror.BadParam(secret, i18n.M("common.param.uid_digits"))
+	result := failedSharedBotCommand(context.Background(), err, "profile/bind", "/绑定", "/绑定", sharedCommandMetadata{}, false, "execution")
+	if strings.Contains(string(result.Response.JSONBody), secret) || strings.Contains(string(result.Response.MsgPackBody), secret) {
+		t.Fatalf("default reply echoes the parameter: %s", result.Response.JSONBody)
+	}
+	if !strings.Contains(string(result.EchoResponse.JSONBody), secret) || !strings.Contains(string(result.EchoResponse.MsgPackBody), secret) {
+		t.Fatalf("echo reply lost the parameter: %s", result.EchoResponse.JSONBody)
+	}
+	same := failedSharedBotCommand(context.Background(), usererror.ReadOnly(), "profile/bind", "/绑定", "/绑定", sharedCommandMetadata{}, false, "execution")
+	if len(same.EchoResponse.JSONBody) != 0 {
+		t.Fatalf("a reply without user input needs no echo variant: %s", same.EchoResponse.JSONBody)
 	}
 }
 
@@ -1606,7 +1664,7 @@ func TestBotEndpointMysekaiOverviewAcceptsLegacyResourceEndpoint(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "没有找到有效的 mysekai 数据")
+	assertSingleTextMessageContains(t, body, i18n.T("binding.data.not_found", i18n.Data{"Data": i18n.M("binding.data_kind.mysekai"), "ToolboxLink": i18n.M("binding.toolbox_link")}))
 }
 
 func TestBotEndpointMysekaiTalkListAcceptsMSBCommand(t *testing.T) {
@@ -1629,7 +1687,7 @@ func TestBotEndpointMysekaiTalkListAcceptsMSBCommand(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "烤森服务未就绪")
+	assertSingleTextMessageContains(t, body, i18n.Misconfigured().String())
 }
 
 func TestBotEndpointMysekaiTalkListAcceptsLegacyBlueprintEndpoint(t *testing.T) {
@@ -1652,7 +1710,7 @@ func TestBotEndpointMysekaiTalkListAcceptsLegacyBlueprintEndpoint(t *testing.T) 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "烤森服务未就绪")
+	assertSingleTextMessageContains(t, body, i18n.Misconfigured().String())
 }
 
 func TestBotEndpointSKQueryTreatsRequestServerAsExplicitRegion(t *testing.T) {
@@ -2079,7 +2137,7 @@ func TestBotEndpointSKQueryReturnsTextWhenTrackerQueryFails(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "当前没有可推断的活动，请指定活动ID")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.event_required"))
 }
 
 func TestBotEndpointSKQueryDefaultsToSelfBinding(t *testing.T) {
@@ -2173,7 +2231,7 @@ func TestBotEndpointSKQueryWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *test
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertTextAndImageMessage(t, body, rendersk.StaleSelfRecordWarning)
+	assertTextAndImageMessage(t, body, i18n.T("sk.stale_self_record"))
 }
 
 func TestBotEndpointSKQueryDoesNotWarnWhenTrackerStatusIsUnhealthy(t *testing.T) {
@@ -2247,7 +2305,7 @@ func TestBotEndpointSKQueryReturnsFriendlyMessageWhenSelfRankingIsMissing(t *tes
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("jp")}))
 }
 
 func TestBotEndpointSKCheckRoomReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testing.T) {
@@ -2282,7 +2340,7 @@ func TestBotEndpointSKCheckRoomReturnsFriendlyMessageWhenSelfRankingIsMissing(t 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("jp")}))
 }
 
 func TestBotEndpointSKCSBReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testing.T) {
@@ -2317,7 +2375,7 @@ func TestBotEndpointSKCSBReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testi
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("jp")}))
 }
 
 func TestBotEndpointSKCSBDoesNotWarnWhenCurrentSelfRecordStillInRange(t *testing.T) {
@@ -2398,7 +2456,7 @@ func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenSelfRankingIsMissing(
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("jp")}))
 }
 
 func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenDrawingDataIsInsufficient(t *testing.T) {
@@ -2431,7 +2489,7 @@ func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenDrawingDataIsInsuffic
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "玩家轨迹数据不足，暂时无法渲染")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.player_trace.data_insufficient"))
 }
 
 func TestBotEndpointSKQueryRegionPrefixedCommandDoesNotFallbackToTransportServer(t *testing.T) {
@@ -2466,8 +2524,8 @@ func TestBotEndpointSKQueryRegionPrefixedCommandDoesNotFallbackToTransportServer
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "未找到绑定的游戏账号")
-	if strings.Contains(string(body), "当前CN服活动没有找到你的排行榜数据") {
+	assertSingleTextMessageContains(t, body, i18n.T("binding.required"))
+	if strings.Contains(string(body), i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("cn")})) {
 		t.Fatalf("unexpected fallback to cn binding: %s", body)
 	}
 }
@@ -2504,8 +2562,8 @@ func TestBotEndpointSKCSBRegionPrefixedCommandDoesNotFallbackToTransportServer(t
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "未找到绑定的游戏账号")
-	if strings.Contains(string(body), "当前CN服活动没有找到你的排行榜数据") {
+	assertSingleTextMessageContains(t, body, i18n.T("binding.required"))
+	if strings.Contains(string(body), i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("cn")})) {
 		t.Fatalf("unexpected fallback to cn binding: %s", body)
 	}
 }
@@ -2548,7 +2606,7 @@ func TestBotEndpointSKQueryReturnsTextWhenTargetUserIsHidden(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "已隐藏个人信息")
+	assertSingleTextMessageContains(t, body, i18n.T("binding.target_hidden_sk"))
 }
 
 func TestBotEndpointSKQueryAllowsHiddenSelfBinding(t *testing.T) {
@@ -3033,7 +3091,7 @@ func TestBotEndpointProfileTimeZoneCompatReroutesLegacyProfilePath(t *testing.T)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已设置PJSK时区为 Asia/Hong_Kong")
+	assertSingleTextMessage(t, body, i18n.T("account.settings.timezone_set", i18n.Data{"TimeZone": "Asia/Hong_Kong"}))
 }
 
 func TestBotEndpointWrongCommandRejects400(t *testing.T) {
@@ -3161,7 +3219,7 @@ func TestBotManifestEndpoint(t *testing.T) {
 	if err := json.Unmarshal(respBody, &envelope); err != nil {
 		t.Fatalf("decode manifest: %v raw=%s", err, respBody)
 	}
-	if !strings.Contains(envelope.Message, "指令清单不可用") {
+	if !strings.Contains(envelope.Message, "command manifest unavailable") {
 		t.Fatalf("expected unavailable manifest message, got: %s", envelope.Message)
 	}
 }

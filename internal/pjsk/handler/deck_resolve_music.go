@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -8,7 +9,10 @@ import (
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/music"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/notfound"
+	"haruki-cloud/utils/usererror"
 )
 
 const deckOmakaseMusicID = 10000
@@ -21,7 +25,7 @@ func resolveDeckMusicSelection(q *deck.AutoQuery, app *renderapp.App) error {
 		return nil
 	}
 	if app == nil || app.Music == nil {
-		return fmt.Errorf("deck music resolve requires music controller")
+		return usererror.Misconfigured(errors.New("deck music resolve requires music controller"))
 	}
 	if q.MusicCompare {
 		return resolveAndApplyDeckMusicCompare(q, app)
@@ -34,7 +38,7 @@ func resolveDeckMusicSelection(q *deck.AutoQuery, app *renderapp.App) error {
 		return nil
 	}
 	if result == nil || result.Music == nil || result.Music.ID <= 0 {
-		return fmt.Errorf("failed to resolve deck music selection")
+		return notfound.Music(q.MusicQuery)
 	}
 
 	q.MusicID = drawing.IntPtr(result.Music.ID)
@@ -68,7 +72,7 @@ func resolveDeckMusicCompareSelections(region string, queries []string, app *ren
 		return nil, nil
 	}
 	if app == nil || app.Music == nil {
-		return nil, fmt.Errorf("deck music resolve requires music controller")
+		return nil, usererror.Misconfigured(errors.New("deck music resolve requires music controller"))
 	}
 
 	result := make([]deck.MusicCompareSelection, 0, len(queries))
@@ -95,14 +99,14 @@ func resolveDeckMusicCompareSelection(region, query string, app *renderapp.App) 
 		diff = "master"
 	}
 	if cleaned == "" {
-		return deck.MusicCompareSelection{}, fmt.Errorf("无法解析要比较的歌曲 %q", query)
+		return deck.MusicCompareSelection{}, usererror.BadParam(query, i18n.M("deck.compare.music_invalid"))
 	}
 	coverResult, err := app.Music.ResolveMusicCoverByTitleOrAlias(music.Query{Query: cleaned, Region: region})
 	if err != nil {
 		return deck.MusicCompareSelection{}, err
 	}
 	if coverResult == nil || coverResult.Music == nil || coverResult.Music.ID <= 0 {
-		return deck.MusicCompareSelection{}, fmt.Errorf("failed to resolve compare music selection %q", query)
+		return deck.MusicCompareSelection{}, notfound.Music(query)
 	}
 	return deck.MusicCompareSelection{
 		MusicID: coverResult.Music.ID, MusicDiff: diff, MusicTitle: coverResult.Music.Title,

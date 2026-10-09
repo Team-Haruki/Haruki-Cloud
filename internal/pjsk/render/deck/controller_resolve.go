@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) resolveProfile(region renderregion.Value, override *drawing.DetailedProfileCardRequest, source string) *drawing.DetailedProfileCardRequest {
@@ -118,19 +120,19 @@ func (c eventTimeCandidates) preferredID() int {
 
 func (c *Controller) resolveCardSource(requested renderregion.Value) (renderregion.Value, CardSource, error) {
 	if c == nil || c.cardSources == nil {
-		return renderregion.WithDefault(requested), nil, fmt.Errorf("deck card source is not configured")
+		return renderregion.WithDefault(requested), nil, usererror.Misconfigured(errors.New("deck card source is not configured"))
 	}
 	normalized := renderregion.Normalize(requested.String())
 	if !normalized.IsZero() {
 		source, ok := c.cardSources.SourceForRegion(normalized)
 		if !ok {
-			return normalized, nil, fmt.Errorf("no deck card source for region %s", normalized)
+			return normalized, nil, usererror.Misconfigured(fmt.Errorf("no deck card source for region %s", normalized))
 		}
 		return normalized, source, nil
 	}
 	source, ok := c.cardSources.SourceForRegion(renderregion.Unknown)
 	if !ok {
-		return c.cardSources.ResolveRegion(renderregion.Unknown), nil, fmt.Errorf("deck card source is not configured")
+		return c.cardSources.ResolveRegion(renderregion.Unknown), nil, usererror.Misconfigured(errors.New("deck card source is not configured"))
 	}
 	return renderregion.WithDefault(source.DefaultRegion()), source, nil
 }

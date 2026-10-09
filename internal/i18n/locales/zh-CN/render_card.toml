@@ -1,0 +1,197 @@
+# 图片渲染：卡牌图片里由 Cloud 提供的标签，以及卡牌列表、卡牌一览发图前那行查询摘要。
+
+[render_card.unreleased]
+description = "卡牌列表图片里，叠在还未上线卡牌缩略图上的文字。"
+other = "未上线"
+
+[render_card.supply.permanent]
+description = "卡牌详情图片里，常驻卡的获取方式标签（限定卡的标签与 Drawing 约定，暂不在目录里）。"
+other = "常驻"
+
+[render_card.attr.cute]
+description = "卡牌一览图片按属性分组时的分组名称：可爱（粉）。"
+other = "可爱"
+
+[render_card.attr.cool]
+description = "卡牌一览图片按属性分组时的分组名称：帅气（蓝）。"
+other = "帅气"
+
+[render_card.attr.pure]
+description = "卡牌一览图片按属性分组时的分组名称：纯真（绿）。"
+other = "纯真"
+
+[render_card.attr.happy]
+description = "卡牌一览图片按属性分组时的分组名称：快乐（橙）。"
+other = "快乐"
+
+[render_card.attr.mysterious]
+description = "卡牌一览图片按属性分组时的分组名称：神秘（紫）。"
+other = "神秘"
+
+[render_card.attr.unknown]
+description = "卡牌一览图片按属性分组时，属性未知的卡牌所在的分组名称。"
+other = "未分类"
+
+[render_card.summary.mode.detail]
+description = "查卡结果前那行查询摘要里的功能名：查卡。摘要各项用“ / ”分隔，例如“国服(CN) / 卡牌列表 / 卡牌 ID 1001, 1002”。"
+other = "查卡"
+
+[render_card.summary.mode.list]
+description = "查询摘要里的功能名：卡牌列表。"
+other = "卡牌列表"
+
+[render_card.summary.mode.box]
+description = "查询摘要里的功能名：卡牌一览。"
+other = "卡牌一览"
+
+[render_card.summary.show_id]
+description = "卡牌一览查询摘要里的显示选项：显示卡牌 ID。"
+other = "显示 ID"
+
+[render_card.summary.show_box]
+description = "卡牌一览查询摘要里的显示选项：显示是否持有。"
+other = "显示持有"
+
+[render_card.summary.before_training]
+description = "卡牌一览查询摘要里的显示选项：显示特训前的卡面。"
+other = "特训前"
+
+[render_card.summary.all_released]
+description = "卡牌一览没有筛选条件时的查询摘要：全部已上线卡牌。"
+other = "全部已上线卡牌"
+
+[render_card.summary.card_id]
+description = "查询摘要：指定了一张卡牌。占位符：ID=卡牌 ID。"
+other = "卡牌 ID {{.ID}}"
+
+[render_card.summary.card_ids]
+description = "查询摘要：指定了 2~5 张卡牌。占位符：IDs=卡牌 ID 列表，用“、”分隔，例如“1001、1002”。"
+other = "卡牌 ID {{.IDs}}"
+
+[render_card.summary.card_count]
+description = "查询摘要：指定了 6 张以上卡牌。占位符：Count=卡牌数量。"
+other = "{{.Count}} 张指定卡牌"
+
+[render_card.summary.latest_global]
+description = "查询摘要：全部卡牌里最新的第几张。占位符：N=倒数第几张。"
+other = "全部卡牌中最新第 {{.N}} 张"
+
+[render_card.summary.latest_character]
+description = "查询摘要：某个角色最新的第几张卡。占位符：Character=角色名；N=倒数第几张。"
+other = "{{.Character}}最新第 {{.N}} 张"
+
+[render_card.summary.character_seq]
+description = "查询摘要：某个角色的第几张卡。占位符：Character=角色名；N=第几张。"
+other = "{{.Character}}第 {{.N}} 张"
+
+[render_card.summary.ban_event]
+description = "查询摘要：某个角色第几次箱活的卡。占位符：Character=角色名；N=第几次箱活。"
+other = "{{.Character}}第 {{.N}} 次箱活"
+
+[render_card.summary.year]
+description = "查询摘要：卡牌上线年份。占位符：Year=年份。"
+other = "{{.Year}} 年"
+
+[render_card.summary.attr.cute]
+description = "查询摘要里的属性筛选：粉（可爱）。"
+other = "粉"
+
+[render_card.summary.attr.cool]
+description = "查询摘要里的属性筛选：蓝（帅气）。"
+other = "蓝"
+
+[render_card.summary.attr.pure]
+description = "查询摘要里的属性筛选：绿（纯真）。"
+other = "绿"
+
+[render_card.summary.attr.happy]
+description = "查询摘要里的属性筛选：橙（快乐）。"
+other = "橙"
+
+[render_card.summary.attr.mysterious]
+description = "查询摘要里的属性筛选：紫（神秘）。"
+other = "紫"
+
+[render_card.summary.skill_type.life_recovery]
+description = "查询摘要里的技能类型筛选：回复技能卡。"
+other = "奶卡"
+
+[render_card.summary.skill_type.score_up]
+description = "查询摘要里的技能类型筛选：分数技能卡。"
+other = "分卡"
+
+[render_card.summary.skill_type.judgment_up]
+description = "查询摘要里的技能类型筛选：判定技能卡。"
+other = "判卡"
+
+[render_card.summary.skill.big_score]
+description = "查询摘要里的具体技能筛选：大分（技能 4）。"
+other = "大分"
+
+[render_card.summary.skill.perfect_score]
+description = "查询摘要里的具体技能筛选：P 分（技能 11）。"
+other = "P 分"
+
+[render_card.summary.skill.life_score]
+description = "查询摘要里的具体技能筛选：血分（技能 12）。"
+other = "血分"
+
+[render_card.summary.skill.judgment_score]
+description = "查询摘要里的具体技能筛选：判分（技能 13）。"
+other = "判分"
+
+[render_card.summary.skill.unit_score]
+description = "查询摘要里的具体技能筛选：团分（技能 15~19）。"
+other = "团分"
+
+[render_card.summary.skill.ids]
+description = "查询摘要里的具体技能筛选：按技能 ID。占位符：IDs=技能 ID 列表，用“、”分隔，例如“4、11”。"
+other = "技能 {{.IDs}}"
+
+[render_card.summary.unit.original_vs]
+description = "查询摘要里的团体筛选：原版虚拟歌手（不附属任何团体）。"
+other = "原 V"
+
+[render_card.summary.unit.pure]
+description = "查询摘要里的团体筛选：不带虚拟歌手的纯团体卡。占位符：Unit=团体缩写，如 MMJ。"
+other = "纯 {{.Unit}}"
+
+[render_card.summary.rarity.rarity_4]
+description = "查询摘要里的稀有度筛选：四星。"
+other = "四星"
+
+[render_card.summary.rarity.rarity_3]
+description = "查询摘要里的稀有度筛选：三星。"
+other = "三星"
+
+[render_card.summary.rarity.rarity_2]
+description = "查询摘要里的稀有度筛选：二星。"
+other = "二星"
+
+[render_card.summary.rarity.rarity_1]
+description = "查询摘要里的稀有度筛选：一星。"
+other = "一星"
+
+[render_card.summary.rarity.birthday]
+description = "查询摘要里的稀有度筛选：生日卡。"
+other = "生日"
+
+[render_card.summary.supply.wl]
+description = "查询摘要里的获取方式筛选：WL 限定。"
+other = "WL 限定"
+
+[render_card.summary.supply.collab]
+description = "查询摘要里的获取方式筛选：联动限定。"
+other = "联动限定"
+
+[render_card.summary.supply.limited]
+description = "查询摘要里的获取方式筛选：限定（不分类型）。"
+other = "限定"
+
+[render_card.summary.supply.normal]
+description = "查询摘要里的获取方式筛选：非限定（常驻）。"
+other = "非限定"
+
+[render_card.summary.supply.birthday]
+description = "查询摘要里的获取方式筛选：生日卡。"
+other = "生日"

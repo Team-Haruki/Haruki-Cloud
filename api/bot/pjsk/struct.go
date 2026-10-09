@@ -15,7 +15,9 @@ type BotCommandRequest struct {
 	MatchedCommand  string           `json:"matched_command" msgpack:"matched_command"`
 	Message         onebot11.Message `json:"message" msgpack:"message"`
 	// EnableParamEcho allows clients to opt in to receiving the concrete
-	// parameter text in parse-error responses. The default is false.
+	// parameter text in error replies (invalid or failed commands). The
+	// default is false: such replies then show no user input (the query,
+	// argument values, typed names or aliases); see AGENTS.md §12.
 	EnableParamEcho bool `json:"enableParamEcho,omitempty" msgpack:"enableParamEcho,omitempty"`
 	// EventTime is the platform-side event timestamp (OneBot `time`, unix
 	// seconds). Every bot observing the same group message reports the same

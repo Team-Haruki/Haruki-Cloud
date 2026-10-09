@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/testutil"
 )
 
 type accountCoverageReadCloser struct {
@@ -88,7 +89,7 @@ func testLocalProfileBGDownloadErrors(t *testing.T, ctx context.Context) {
 	errorClient := &http.Client{Transport: profileBGRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return nil, transportError
 	})}
-	if _, err := NewLocalProfileBGStoreWithClient(t.TempDir(), errorClient).SaveProfileBackground(ctx, "jp", "1", "https://example.test/a.png"); err == nil || !strings.Contains(err.Error(), transportError.Error()) {
+	if _, err := NewLocalProfileBGStoreWithClient(t.TempDir(), errorClient).SaveProfileBackground(ctx, "jp", "1", "https://example.test/a.png"); err == nil || !strings.Contains(testutil.ErrorDetail(err), transportError.Error()) {
 		t.Fatalf("download transport error = %v", err)
 	}
 	statusClient := &http.Client{Transport: profileBGRoundTripFunc(func(req *http.Request) (*http.Response, error) {
@@ -100,14 +101,14 @@ func testLocalProfileBGDownloadErrors(t *testing.T, ctx context.Context) {
 	readClient := &http.Client{Transport: profileBGRoundTripFunc(func(req *http.Request) (*http.Response, error) {
 		return profileBGResponse(req, http.StatusOK, accountCoverageReadCloser{err: errors.New("read failed")}), nil
 	})}
-	if _, err := NewLocalProfileBGStoreWithClient(t.TempDir(), readClient).SaveProfileBackground(ctx, "jp", "1", "https://example.test/a.png"); err == nil || !strings.Contains(err.Error(), "read failed") {
+	if _, err := NewLocalProfileBGStoreWithClient(t.TempDir(), readClient).SaveProfileBackground(ctx, "jp", "1", "https://example.test/a.png"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "read failed") {
 		t.Fatalf("background read error = %v", err)
 	}
 	largeClient := &http.Client{Transport: profileBGRoundTripFunc(func(req *http.Request) (*http.Response, error) {
 		body := io.NopCloser(io.LimitReader(accountCoverageZeroReader{}, maxProfileBGDownloadBytes+1))
 		return profileBGResponse(req, http.StatusOK, body), nil
 	})}
-	if _, err := NewLocalProfileBGStoreWithClient(t.TempDir(), largeClient).SaveProfileBackground(ctx, "jp", "1", "https://example.test/a.png"); err == nil || !strings.Contains(err.Error(), "过大") {
+	if _, err := NewLocalProfileBGStoreWithClient(t.TempDir(), largeClient).SaveProfileBackground(ctx, "jp", "1", "https://example.test/a.png"); testutil.MessageID(err) != "profile.bg.image_too_large" {
 		t.Fatalf("oversized background error = %v", err)
 	}
 	invalidImageClient := &http.Client{Transport: profileBGRoundTripFunc(func(req *http.Request) (*http.Response, error) {

@@ -122,7 +122,7 @@ func TestInventoryParsingAndExecutionGuards(t *testing.T) {
 	{
 		message, err := executeInventory(rc)
 		testutil.Require(t, err == nil, "CN MySekai runtime warning failed: %v", err)
-		testutil.Check(t, rejectionText(t, message) == cnMySekaiNeverOpensNotice, "missing CN MySekai warning")
+		testutil.Check(t, rejectionText(t, message) == cnMySekaiNotice(), "missing CN MySekai warning")
 	}
 
 	rc.Cmd.Params = nil
@@ -153,33 +153,33 @@ func TestCostumeRequestHelpersAndExecutionGuards(t *testing.T) {
 
 func TestModerationParsingHandlersAndExecutionGuards(t *testing.T) {
 	{
-		_, _, _, err := parseGlobalKillArgs("", "usage")
+		_, _, _, err := parseGlobalKillArgs("")
 		testutil.RequireArgs(t, !(err == nil), "empty kill args unexpectedly succeeded")
 	}
 	{
 
-		_, _, _, err := parseGlobalKillArgs("1 reason 2 extra", "usage")
+		_, _, _, err := parseGlobalKillArgs("1 reason 2 extra")
 		testutil.RequireArgs(t, !(err == nil), "too many kill args unexpectedly succeeded")
 	}
 	{
 
-		_, _, _, err := parseGlobalKillArgs("bad reason", "usage")
+		_, _, _, err := parseGlobalKillArgs("bad reason")
 		testutil.RequireArgs(t, !(err == nil), "invalid QQ unexpectedly succeeded")
 	}
 
 	for _, args := range []string{"1 reason 0", "1 reason nope"} {
 		{
-			_, _, _, err := parseGlobalKillArgs(args, "usage")
+			_, _, _, err := parseGlobalKillArgs(args)
 			testutil.Check(t, !(err == nil), "invalid days in %q unexpectedly succeeded", args)
 		}
 
 	}
 	{
-		_, _, _, err := parseGlobalKillArgs("1 "+strings.Repeat("理", 256), "usage")
+		_, _, _, err := parseGlobalKillArgs("1 " + strings.Repeat("理", 256))
 		testutil.RequireArgs(t, !(err == nil), "overlong reason unexpectedly succeeded")
 	}
 
-	qqID, reason, days, err := parseGlobalKillArgs("00012 spam 3", "usage")
+	qqID, reason, days, err := parseGlobalKillArgs("00012 spam 3")
 	{
 		testutil.Require(t, !(err != nil), "timed kill args = %q, %q, %v, %v", qqID, reason, days, err)
 		testutil.Require(t, !(qqID != "12"), "timed kill args = %q, %q, %v, %v", qqID, reason, days, err)
@@ -188,24 +188,24 @@ func TestModerationParsingHandlersAndExecutionGuards(t *testing.T) {
 		testutil.Require(t, !(*days != 3), "timed kill args = %q, %q, %v, %v", qqID, reason, days, err)
 	}
 
-	_, _, days, err = parseGlobalKillArgs("12 spam", "usage")
+	_, _, days, err = parseGlobalKillArgs("12 spam")
 	{
 		testutil.Require(t, !(err != nil), "permanent kill args days = %v, err = %v", days, err)
 		testutil.Require(t, !(days != nil), "permanent kill args days = %v, err = %v", days, err)
 	}
 	{
 
-		_, err := parseQQIDArg("", "usage")
+		_, err := parseQQIDArg("")
 		testutil.RequireArgs(t, !(err == nil), "empty QQ arg unexpectedly succeeded")
 	}
 	{
 
-		_, err := parseQQIDArg("1 2", "usage")
+		_, err := parseQQIDArg("1 2")
 		testutil.RequireArgs(t, !(err == nil), "multiple QQ args unexpectedly succeeded")
 	}
 	{
 
-		got, err := parseQQIDArg("00042", "usage")
+		got, err := parseQQIDArg("00042")
 		{
 			testutil.Require(t, !(err != nil), "QQ normalization = %q, %v", got, err)
 			testutil.Require(t, !(got != "42"), "QQ normalization = %q, %v", got, err)

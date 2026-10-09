@@ -1,0 +1,25 @@
+# 其他：角色生日、生日卡池等。
+
+[misc.birthday.index_range]
+description = "查生日写的序号不在允许范围。占位符：Max=最大序号。"
+other = "生日序号只能是 1~{{.Max}}"
+
+[misc.birthday.cards_missing]
+description = "生日卡池查询没有找到生日卡牌。"
+other = "没有找到对应的生日卡牌"
+
+[misc.arrest.header]
+description = "/逮捕 文字回复的第一行。占位符：Name=玩家昵称（未通过审核时为空）；UID=游戏 UID，未公开时中间打码；Rank=玩家等级。"
+other = "逮捕：{{.Name}}（游戏 UID：{{.UID}}）Lv.{{.Rank}}"
+
+[misc.arrest.difficulty]
+description = "/逮捕 文字回复里每个难度一行的通关统计。占位符：Difficulty=难度显示名（EASY…APPEND）；Clear=通关歌曲数；FC=Full Combo 歌曲数；AP=All Perfect 歌曲数。"
+other = "[{{.Difficulty}}] Clear {{.Clear}} / FC {{.FC}} / AP {{.AP}}"
+
+[misc.arrest.challenge]
+description = "/逮捕 文字回复的最后一行：挑战 Live 最高分。占位符：Character=挑战角色名，或 common.fallback.character；Score=最高分，5 位以上加千分位。"
+other = "挑战 Live（{{.Character}}）：{{.Score}} 分"
+
+[misc.reg_time.result]
+description = "/注册时间 的回复。占位符：UID=游戏 UID，未公开时中间打码；Time=按 UID 推算的注册时间（format.time.datetime，按用户时区）；Ago=距今多久（format.ago.*），例如“3天7小时前”。"
+other = "游戏 UID {{.UID}} 的注册时间：{{.Time}}（{{.Ago}}）"

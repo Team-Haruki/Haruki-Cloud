@@ -3,20 +3,13 @@ package handler
 import (
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderinventory "haruki-cloud/internal/pjsk/render/inventory"
+	"haruki-cloud/utils/usererror"
 )
-
-const inventoryListHelp = `使用方式:
-/查背包
-/查背包 水晶
-/查背包 火罐
-/查背包 ms材料
-/查背包 记忆
-
-空参数默认不展示水晶、火罐、MySekai 材料和记忆。国服 MySekai 功能永不开启，不支持 ms材料；国服也不支持记忆。`
 
 type inventoryListParams struct {
 	userQueryParams
@@ -30,7 +23,6 @@ func (sekaiHandlers) InventoryListHandle() HarukiSekaiCommandHandler {
 			"/背包一览", "/查背包", "/持有物", "/查持有物",
 			"/pjsk inventory", "/inventory",
 		},
-		Helper: inventoryListHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			params, err := buildInventoryListParams(ctx)
 			if err != nil {
@@ -68,7 +60,7 @@ func executeInventory(rc *RequestContext) (onebot11.Message, error) {
 		return nil, suiteErr
 	}
 	if suiteSnapshot == nil {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 
 	publicDetailedProfile, _ := resolveCommandDisplayProfiles(rc, suiteSnapshot)
@@ -111,20 +103,16 @@ func parseInventoryFilter(args string, trigger string) (renderinventory.Filter, 
 	switch args {
 	case "":
 		return renderinventory.FilterDefault, nil
-	case "水晶", "钻石", "石头", "彩石", "晶石":
+	case "水晶", "钻石", "石头", "彩石", "晶石": //copylint:ignore 解析关键字
 		return renderinventory.FilterJewel, nil
-	case "火罐", "演出能量", "体力", "能量":
+	case "火罐", "演出能量", "体力", "能量": //copylint:ignore 解析关键字
 		return renderinventory.FilterBoost, nil
-	case "mysekai材料", "mysekai素材", "ms材料", "ms素材", "ms":
+	case "mysekai材料", "mysekai素材", "ms材料", "ms素材", "ms": //copylint:ignore 解析关键字
 		return renderinventory.FilterMysekai, nil
-	case "记忆", "回忆", "memoria", "memory":
+	case "记忆", "回忆", "memoria", "memory": //copylint:ignore 解析关键字
 		return renderinventory.FilterMemory, nil
 	default:
-		return renderinventory.FilterDefault, onebot11.NewReplayError(
-			"未知的背包筛选参数：%s\n可用参数：水晶、火罐、ms材料、记忆\n使用方式：%s [水晶|火罐|ms材料|记忆]",
-			strings.TrimSpace(args),
-			trigger,
-		)
+		return renderinventory.FilterDefault, usererror.BadParam(strings.TrimSpace(args), i18n.M("inventory.filter_unknown"))
 	}
 }
 
@@ -134,7 +122,7 @@ func validateInventoryFilterForRegion(region renderregion.Value, filter renderin
 	}
 	switch filter {
 	case renderinventory.FilterMemory:
-		return onebot11.NewReplayError("国服暂不支持查询记忆")
+		return usererror.Invalid(i18n.M("inventory.memory_cn_unavailable", i18n.Data{"Region": i18n.RegionLabel("cn")}))
 	default:
 		return nil
 	}

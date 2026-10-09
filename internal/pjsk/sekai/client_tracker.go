@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 	"haruki-cloud/version"
@@ -90,7 +91,7 @@ func (c *TrackerClient) baseURL() (string, error) {
 	}
 	baseURL := strings.TrimRight(strings.TrimSpace(c.config.BaseURL), "/")
 	if baseURL == "" {
-		return "", fmt.Errorf("tracker: base_url is empty")
+		return "", upstreamerr.Tag(upstreamerr.ServiceRanking, upstreamerr.KindNotConfigured, "tracker: base_url is empty", nil)
 	}
 	return baseURL, nil
 }
@@ -175,7 +176,7 @@ func (c *TrackerClient) getAs[T any](path string) (*T, error) {
 	var result T
 	if err := json.Unmarshal(body, &result); err != nil {
 		finishDecode()
-		return nil, fmt.Errorf("tracker: failed to unmarshal response: %w", err)
+		return nil, upstreamerr.Tag(upstreamerr.ServiceRanking, upstreamerr.KindBadResponse, "", fmt.Errorf("tracker: failed to unmarshal response: %w", err))
 	}
 	finishDecode()
 	return &result, nil
@@ -226,7 +227,7 @@ func (c *TrackerClient) getRaw(path string) ([]byte, error) {
 		finishHTTP()
 		result := trackerRawResult{leader: callerToken}
 		if err != nil {
-			result.err = fmt.Errorf("tracker: request failed after retries: %w", sanitizeNetworkError(err))
+			result.err = sanitizeNetworkError(upstreamerr.ServiceRanking, "tracker: request failed after retries", err)
 			return complete(result), nil
 		}
 
@@ -236,7 +237,7 @@ func (c *TrackerClient) getRaw(path string) ([]byte, error) {
 		case 404:
 			result.err = ErrRankingNotFound
 		case 429:
-			result.err = &TrackerAPIError{StatusCode: 429, Message: "rate limited by tracker"}
+			result.err = &TrackerAPIError{StatusCode: 429, Message: upstreamerr.RankingMessageRateLimited}
 		case 503:
 			result.err = ErrServerMaintenance
 		default:

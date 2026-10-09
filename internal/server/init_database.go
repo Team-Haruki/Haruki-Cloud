@@ -19,8 +19,10 @@ import (
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
 	usersDB "haruki-cloud/database/users"
+	"haruki-cloud/internal/cluster"
 	"haruki-cloud/internal/core/dbpool"
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/pjsk/accountdata"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 
 	"entgo.io/ent"
@@ -161,11 +163,32 @@ func initPJSKIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app
 			}
 			return pjskDB.NewClient(pjskDB.Driver(drv)), nil
 		},
-		func(c *pjskDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
+		func(c *pjskDB.Client, ctx context.Context) error {
+			if err := c.Schema.Create(ctx); err != nil {
+				return err
+			}
+			return bootstrapPJSKData(ctx, mainLogger, c)
+		},
 	)
 
 	publicPJSK.RegisterPJSKRoutes(app, pjskClient, redisClient)
 	return pjskClient
+}
+
+// bootstrapPJSKData runs the idempotent data steps that follow an auto-migrate
+// of the PJSK database. A read-only node leaves them to the writable one.
+func bootstrapPJSKData(ctx context.Context, logger *harukiLogger.Logger, client *pjskDB.Client) error {
+	if cluster.IsReadOnly() {
+		return nil
+	}
+	updated, err := accountdata.BootstrapBindingVisibility(ctx, client)
+	if err != nil {
+		return err
+	}
+	if updated > 0 {
+		logger.Info("bootstrapped per-exposure binding visibility from the legacy visible flag", "column_updates", updated)
+	}
+	return nil
 }
 
 // wireAliasCacheInvalidation clears cached public alias responses whenever

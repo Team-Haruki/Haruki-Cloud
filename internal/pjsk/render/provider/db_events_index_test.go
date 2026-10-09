@@ -12,6 +12,7 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/testutil"
 )
 
 type sqlRecorder struct {
@@ -130,7 +131,7 @@ func TestEventGetByCardIDUsesCardLinkIndex(t *testing.T) {
 			t.Fatalf("GetByCardID(%d) = %+v, %v; want event %d", cardID, event, err, want)
 		}
 	}
-	if _, err := provider.events.GetByCardID(ctx, 99); err == nil || !strings.Contains(err.Error(), "query event by card 99: sekai: eventcard not found") {
+	if _, err := provider.events.GetByCardID(ctx, 99); err == nil || !strings.Contains(testutil.ErrorDetail(err), "query event by card 99: sekai: eventcard not found") {
 		t.Fatalf("GetByCardID(missing) error = %v", err)
 	}
 	if logs := recorder.take(); countQueries(logs, "eventcards") != 1 {

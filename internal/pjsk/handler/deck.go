@@ -1,7 +1,11 @@
 package handler
 
 import (
-	"fmt"
+	"haruki-cloud/internal/pjsk/accountdata"
+	"strconv"
+	"strings"
+
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -9,8 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/profile"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
-	"strconv"
-	"strings"
+	"haruki-cloud/utils/usererror"
 )
 
 func buildDeckParamsWithSelfQuery(ctx HarrukiSekaiHandlerContext, mode string) (deckAutoQueryParams, UserQueryParams, error) {
@@ -129,33 +132,47 @@ func (sekaiHandlers) ScoreUpHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			parts := strings.Fields(strings.TrimSpace(ctx.GetArgs()))
 			if len(parts) != 5 {
-				return nil, onebot11.NewReplayError("使用方式: %s 队长技能 技能2 技能3 技能4 技能5\n例: %s 160 160 150 150 150", ctx.GetTriggerCmd(), ctx.GetTriggerCmd())
+				return nil, usererror.Misuse(i18n.M("deck.score_up.usage"))
 			}
 
 			values := make([]float64, 0, 5)
 			for _, p := range parts {
 				v, err := strconv.ParseFloat(p, 64)
 				if err != nil || v < 0 {
-					return nil, onebot11.NewReplayError("使用方式: %s 队长技能 技能2 技能3 技能4 技能5\n例: %s 160 160 150 150 150", ctx.GetTriggerCmd(), ctx.GetTriggerCmd())
+					return nil, usererror.Misuse(i18n.M("deck.score_up.usage"))
 				}
 				values = append(values, v)
 			}
 
 			leader := values[0]
 			others := values[1] + values[2] + values[3] + values[4]
-			internalValue := values[0] + values[1] + values[2] + values[3] + values[4]
 			scoreUp := leader + others*0.2
-			multiplier := scoreUp/100.0 + 1.0
-			return makeCommandRequestWithParams(
-				ctx,
-				parser.ModuleDeck,
-				"deck-score-up",
-				fmt.Sprintf(
-					"队长技能加成: %.4g%%\n内部值: %.4g\n实效: %.4g%%\n倍率: %.4g",
-					leader, internalValue, scoreUp, multiplier,
-				)), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleDeck, "deck-score-up", deckScoreUpParams{
+				Leader:     leader,
+				Internal:   leader + others,
+				ScoreUp:    scoreUp,
+				Multiplier: scoreUp/100.0 + 1.0,
+			}), nil
 		},
 	}, executeDeck)
+}
+
+// deckScoreUpParams are the results of /实效, computed when the command is
+// parsed and shown when it is executed.
+type deckScoreUpParams struct {
+	Leader     float64 `json:"leader"`
+	Internal   float64 `json:"internal"`
+	ScoreUp    float64 `json:"score_up"`
+	Multiplier float64 `json:"multiplier"`
+}
+
+func (p deckScoreUpParams) text() string {
+	return i18n.T("deck.score_up.result", i18n.Data{
+		"Leader":     i18n.Percent(p.Leader),
+		"Internal":   i18n.Decimal(p.Internal, 1),
+		"ScoreUp":    i18n.Percent(p.ScoreUp),
+		"Multiplier": i18n.Decimal(p.Multiplier, 3),
+	})
 }
 
 type deckUserTargetParams struct {
@@ -182,11 +199,11 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	case deckMySekaiCommand:
 		return executeMySekaiDeck(rc)
 	case "deck-score-up":
-		var msg string
-		if err := json.Unmarshal(rc.Cmd.Params, &msg); err != nil {
+		var params deckScoreUpParams
+		if err := json.Unmarshal(rc.Cmd.Params, &params); err != nil {
 			return nil, err
 		}
-		return onebot11.Message{onebot11.Text(msg)}, nil
+		return onebot11.Message{onebot11.Text(params.text())}, nil
 	}
 	recommendType, ok := deckRecommendType(rc.Cmd.Mode)
 	if !ok {
@@ -211,11 +228,11 @@ func deckRecommendType(mode string) (string, bool) {
 }
 
 func buildDeckDoneText(query deck.AutoQuery) string {
-	text := fmt.Sprintf("已处理%s。", formatDeckQuerySummary(query))
+	done := i18n.M("common.processed", i18n.Data{"Summary": formatDeckQuerySummary(query)})
 	if query.RecommendType == "event" {
-		text += "\n如需更加精确、更快、更多可自定义参数的组卡功能，请前往Haruki工具箱使用组卡推荐功能"
+		return i18n.LinesText([]i18n.Message{done, i18n.M("deck.done_toolbox_hint")})
 	}
-	return text
+	return done.String()
 }
 
 func executeStandardDeck(rc *RequestContext, recommendType string) (onebot11.Message, error) {
@@ -287,7 +304,7 @@ func executeTargetMySekaiDeck(rc *RequestContext, query deck.AutoQuery, params u
 		params.Platform = strings.TrimSpace(rc.Cmd.RequesterPlatform)
 		params.PlatformUserID = strings.TrimSpace(rc.Cmd.RequesterUserID)
 	}
-	target, err := resolveGameTarget(rc.Ctx, params, regionStr, rc.Cmd.RegionExplicit, rc.App)
+	target, err := resolveGameTarget(rc.Ctx, params, regionStr, rc.Cmd.RegionExplicit, rc.App, accountdata.ExposureProfile)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +318,7 @@ func executeTargetMySekaiDeck(rc *RequestContext, query deck.AutoQuery, params u
 		return nil, normalizeToolboxDataFetchError(err, "suite", target.Binding)
 	}
 	if target.Binding != nil && targetSnapshot == nil {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(target.Binding)
+		return nil, suiteDataNotFoundError(target.Binding)
 	}
 
 	query.Region = regionStr
@@ -343,7 +360,7 @@ func applyMySekaiDeckProfile(rc *RequestContext, query *deck.AutoQuery, target R
 	if rc.App.Profiles == nil {
 		return
 	}
-	profileQuery := profile.Query{Region: regionStr, Visible: target.Visible, BgSettings: target.BgSettings}
+	profileQuery := profile.Query{Region: regionStr, Visible: target.UIDVisible, BgSettings: target.BgSettings}
 	finishBuild := measurePayloadBuild(rc.Ctx)
 	detail, err := rc.App.Profiles.WithContext(rc.Ctx).BuildDetailedProfileCardFromAPIWithSnapshot(profileQuery, resp, targetSnapshot)
 	finishBuild()
@@ -376,7 +393,10 @@ func deckRecommendDisabledMessage(rc *RequestContext) (string, bool) {
 		return "", false
 	}
 	reason := strings.TrimSpace(rc.App.Config.DeckRecommend.DisableReason)
-	return fmt.Sprintf("组卡功能已被禁用\n原因: %s\n如有组卡功能需求，请临时前往Haruki工具箱使用组卡推荐", reason), true
+	if reason == "" {
+		return i18n.T("deck.disabled"), true
+	}
+	return i18n.T("deck.disabled_reason", i18n.Data{"Reason": reason}), true
 }
 
 func isDeckRecommendMode(mode string) bool {

@@ -13,6 +13,7 @@ import (
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -190,7 +191,7 @@ func TestToolboxSnapshotProviderRejectsUnavailableAndIncompleteRequests(t *testi
 	}
 
 	provider := newValidToolboxProvider(&fakePrivateDataClient{suiteJSON: []byte(minimalSuiteJSON)})
-	if _, err := provider.Resolve(context.Background(), Selector{}, ResolveOptions{}); err == nil || !strings.Contains(err.Error(), "selector is incomplete") {
+	if _, err := provider.Resolve(context.Background(), Selector{}, ResolveOptions{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "selector is incomplete") {
 		t.Fatalf("incomplete selector error = %v", err)
 	}
 }
@@ -210,7 +211,7 @@ func TestToolboxSnapshotProviderPropagatesBindingAndUserIDErrors(t *testing.T) {
 		nil,
 		nil,
 	)
-	if _, err := provider.Resolve(context.Background(), validToolboxSelector(), ResolveOptions{}); err == nil || !strings.Contains(err.Error(), "invalid bound pjsk user id") {
+	if _, err := provider.Resolve(context.Background(), validToolboxSelector(), ResolveOptions{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "invalid bound pjsk user id") {
 		t.Fatalf("invalid user ID error = %v", err)
 	}
 }
@@ -223,7 +224,7 @@ func TestToolboxSnapshotProviderPropagatesPrivateDataErrors(t *testing.T) {
 	}
 
 	provider = newValidToolboxProvider(&fakePrivateDataClient{})
-	if _, err := provider.Resolve(context.Background(), validToolboxSelector(), ResolveOptions{}); err == nil || !strings.Contains(err.Error(), "suite snapshot is empty") {
+	if _, err := provider.Resolve(context.Background(), validToolboxSelector(), ResolveOptions{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "suite snapshot is empty") {
 		t.Fatalf("empty suite error = %v", err)
 	}
 

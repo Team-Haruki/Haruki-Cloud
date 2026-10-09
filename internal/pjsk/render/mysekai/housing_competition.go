@@ -4,14 +4,17 @@ import (
 	"context"
 	"encoding/base64"
 	stdjson "encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -19,7 +22,6 @@ const (
 	MaxHousingCompetitionSampleCount         = 10
 	DefaultHousingCompetitionRefreshInterval = 10 * time.Second
 	MaxHousingCompetitionRankCount           = 5
-	HousingCompetitionNotice                 = "基于统计得出结果并不一定精确，仅供参考"
 	housingCompetitionIdleCheckInterval      = time.Hour
 )
 
@@ -88,10 +90,10 @@ type housingCompetitionRefreshTarget struct {
 
 func (c *Controller) BuildHousingCompetitionLine(ctx context.Context, api HousingCompetitionListClient, query HousingCompetitionLineQuery) (*HousingCompetitionLineResult, error) {
 	if c == nil {
-		return nil, fmt.Errorf("mysekai controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("mysekai controller is not initialized"))
 	}
 	if api == nil {
-		return nil, fmt.Errorf("sekai api client is not configured")
+		return nil, usererror.Misconfigured(errors.New("sekai api client is not configured"))
 	}
 	if ctx == nil {
 		ctx = context.TODO()
@@ -120,7 +122,7 @@ func (c *Controller) BuildHousingCompetitionLine(ctx context.Context, api Housin
 		return nil, err
 	}
 	if len(allEntries) == 0 {
-		return nil, fmt.Errorf("没有采样到可用的百景投稿")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.housing.no_entries"))
 	}
 
 	sortHousingCompetitionEntries(allEntries)
@@ -132,7 +134,7 @@ func (c *Controller) BuildHousingCompetitionLine(ctx context.Context, api Housin
 	requestEntries := make([]drawing.MysekaiHousingCompetitionEntry, 0, len(ranks))
 	for _, rank := range ranks {
 		if rank > len(allEntries) {
-			return nil, fmt.Errorf("只采样到%d个唯一百景投稿，无法查询第%d名", len(allEntries), rank)
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.housing.rank_beyond", i18n.Data{"Count": len(allEntries), "UserRank": i18n.UserNumber(rank)}))
 		}
 		entry := allEntries[rank-1]
 		selected = append(selected, entry)
@@ -142,8 +144,8 @@ func (c *Controller) BuildHousingCompetitionLine(ctx context.Context, api Housin
 	request := drawing.MysekaiHousingCompetitionRequest{
 		CompetitionID:     competition.ID,
 		Region:            region.String(),
-		Name:              strings.TrimSpace("烤森百景 " + competition.Name),
-		Description:       drawing.StringPtr(HousingCompetitionNotice),
+		Name:              housingCompetitionTitle(competition.Name),
+		Description:       drawing.StringPtr(HousingCompetitionNotice()),
 		BannerImagePath:   stringPtrIfNotEmpty(competition.BannerImgPath),
 		BannerImageBase64: controller.housingCompetitionBannerBase64(competition),
 		SampleCount:       refreshedCount,
@@ -244,10 +246,10 @@ func (c *Controller) RenderHousingCompetitionLine(result *HousingCompetitionLine
 
 func (c *Controller) RenderHousingCompetitionLineImage(result *HousingCompetitionLineResult) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	if result == nil {
-		return drawing.ImageResult{}, fmt.Errorf("百景榜数据为空")
+		return drawing.ImageResult{}, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.housing.no_entries"))
 	}
 	return c.drawing.GenerateMysekaiHousingCompetitionImage(&result.Request)
 }
@@ -316,7 +318,7 @@ func (c *Controller) resolveHousingCompetition(query HousingCompetitionLineQuery
 				return info, nil
 			}
 		}
-		return HousingCompetitionInfo{}, fmt.Errorf("没有找到百景 housing_id=%d", query.HousingID)
+		return HousingCompetitionInfo{}, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.housing.not_found", i18n.Data{"UserID": i18n.UserNumber(query.HousingID)}))
 	}
 
 	target, err := c.resolveHousingCompetitionRefreshTarget(query)
@@ -324,7 +326,7 @@ func (c *Controller) resolveHousingCompetition(query HousingCompetitionLineQuery
 		return HousingCompetitionInfo{}, err
 	}
 	if !target.Active {
-		return HousingCompetitionInfo{}, fmt.Errorf("当前没有正在进行的烤森百景活动")
+		return HousingCompetitionInfo{}, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.housing.no_event"))
 	}
 	return target.Competition, nil
 }
@@ -427,7 +429,7 @@ func (c *Controller) housingCompetitionInfoFromMasterdata(item map[string]any) H
 		BackNumberAccentColorCode:          stringValueFrom(item, "backNumberAccentColorCode"),
 	}
 	if info.Name == "" {
-		info.Name = fmt.Sprintf("第%d期", info.ID)
+		info.Name = i18n.T("mysekai.image.housing.issue", i18n.Data{"ID": info.ID})
 	}
 	if info.BackgroundImageAssetbundleFileName != "" {
 		info.BannerImgPath = c.regionPath(
@@ -452,7 +454,7 @@ func NormalizeHousingCompetitionRanks(ranks []int) ([]int, error) {
 	out := make([]int, 0, len(ranks))
 	for _, rank := range ranks {
 		if rank <= 0 {
-			return nil, fmt.Errorf("百景排名必须大于0")
+			return nil, usererror.Invalid(i18n.M("mysekai.housing.rank_positive"))
 		}
 		if _, ok := seen[rank]; ok {
 			continue
@@ -462,7 +464,7 @@ func NormalizeHousingCompetitionRanks(ranks []int) ([]int, error) {
 	}
 	sort.Ints(out)
 	if len(out) > MaxHousingCompetitionRankCount {
-		return nil, fmt.Errorf("一次最多查询%d个百景排名", MaxHousingCompetitionRankCount)
+		return nil, usererror.Invalid(i18n.M("mysekai.housing.too_many", i18n.Data{"Max": MaxHousingCompetitionRankCount}))
 	}
 	return out, nil
 }
@@ -470,7 +472,7 @@ func NormalizeHousingCompetitionRanks(ranks []int) ([]int, error) {
 func parseHousingCompetitionEntries(raw stdjson.RawMessage) ([]HousingCompetitionEntry, int64, error) {
 	var root any
 	if err := decodeJSONUseNumber(raw, &root); err != nil {
-		return nil, 0, fmt.Errorf("解析百景投稿列表失败: %w", err)
+		return nil, 0, usererror.Wrap(usererror.CodeUnavailable, i18n.M("mysekai.housing.fetch_failed"), fmt.Errorf("decode housing entries: %w", err))
 	}
 
 	var lotteryAt int64
@@ -482,7 +484,7 @@ func parseHousingCompetitionEntries(raw stdjson.RawMessage) ([]HousingCompetitio
 	case []any:
 		rawItems = data
 	default:
-		return nil, 0, fmt.Errorf("百景投稿列表格式错误")
+		return nil, 0, usererror.Wrap(usererror.CodeUnavailable, i18n.M("mysekai.housing.fetch_failed"), errors.New("housing entries have an unexpected shape"))
 	}
 
 	entries := make([]HousingCompetitionEntry, 0, len(rawItems))
@@ -543,4 +545,17 @@ func (e HousingCompetitionEntry) uniqueKey() string {
 		return e.CacheKey
 	}
 	return housingCompetitionEntryCacheKey(e)
+}
+
+// HousingCompetitionNotice is the note under the housing ranking image.
+func HousingCompetitionNotice() string {
+	return i18n.T("mysekai.image.housing.notice")
+}
+
+// housingCompetitionTitle is the title of the housing ranking image.
+func housingCompetitionTitle(name string) string {
+	if name = strings.TrimSpace(name); name == "" {
+		return i18n.T("mysekai.image.housing.title_unnamed")
+	}
+	return i18n.T("mysekai.image.housing.title", i18n.Data{"Name": name})
 }

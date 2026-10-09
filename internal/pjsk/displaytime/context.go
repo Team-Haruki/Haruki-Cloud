@@ -1,6 +1,9 @@
 package displaytime
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type requestTimeZoneKey struct{}
 
@@ -17,4 +20,11 @@ func RequestTimeZoneFromContext(ctx context.Context) string {
 	}
 	value, _ := ctx.Value(requestTimeZoneKey{}).(string)
 	return NormalizeTimeZone(value)
+}
+
+// RequestLocation is the requester's time zone as a location, for
+// i18n.FormatUserTime. It is Asia/Shanghai when none was resolved.
+func RequestLocation(ctx context.Context) *time.Location {
+	loc, _ := LoadLocation(RequestTimeZoneFromContext(ctx))
+	return loc
 }

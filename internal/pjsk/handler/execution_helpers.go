@@ -2,16 +2,18 @@ package handler
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/requestbuilder"
+	"haruki-cloud/utils/usererror"
 )
 
 // mergeParams aliases requestbuilder.MergeParams so all bridge call sites can
@@ -31,13 +33,13 @@ func imageMessage(ctx context.Context, img []byte, app *renderapp.App, group str
 func assetImageMessage(ctx context.Context, path string, app *renderapp.App, group string) (onebot11.Message, error) {
 	path = strings.TrimSpace(path)
 	if path == "" {
-		return nil, fmt.Errorf("asset path is empty")
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("upstream.render.asset_missing"), errors.New("asset path is empty"))
 	}
 	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
 		return onebot11.Message{onebot11.Image(path, "")}, nil
 	}
 	if app == nil {
-		return nil, fmt.Errorf("image storage is not configured")
+		return nil, usererror.Misconfigured(errors.New("image storage is not configured"))
 	}
 	// With public asset hosts configured, send a direct URL built by the one
 	// Drawing-path -> URL rule instead of relaying the bytes.

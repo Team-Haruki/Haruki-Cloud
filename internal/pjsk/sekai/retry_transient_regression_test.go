@@ -2,6 +2,7 @@ package sekai
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -121,7 +122,7 @@ func TestRetryContextKeepsCancellation(t *testing.T) {
 	if elapsed := time.Since(started); elapsed > time.Second {
 		t.Fatalf("cancellation did not reach the in-flight request: returned after %s (%v)", elapsed, err)
 	}
-	if err != context.Canceled {
+	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("err = %T %v, want context.Canceled", err, err)
 	}
 }

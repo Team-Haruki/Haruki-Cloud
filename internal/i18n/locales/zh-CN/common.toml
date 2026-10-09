@@ -1,0 +1,166 @@
+# 通用回复：兜底错误、生成的错误模板和功能名。
+# 约定见 docs/i18n.md。每条消息都要有 description，写明出现位置和每个占位符的含义。
+
+[common.request_failed]
+description = "兜底错误回复：用户无法自行处理的失败（内部错误、未知错误）。原因只写日志。"
+other = "请求处理失败，请稍后再试"
+
+[common.misconfigured]
+description = "只有 Bot 管理员能处理的问题（服务未配置、凭据错误、客户端版本过旧等）。细节只写日志和 commandtrace。"
+other = "服务配置异常，请联系 Bot 管理员"
+
+[common.read_only]
+description = "服务处于只读状态时拒绝修改数据（绑定、设置、封禁等写操作）。"
+other = "服务当前处于只读状态，暂时无法修改数据，请稍后再试"
+
+[common.unavailable]
+description = "某个功能暂时不可用（未配置、拒绝连接、返回错误）。占位符：Feature=功能名，取自 common.feature.*。"
+other = "{{.Feature}}暂时不可用，请稍后再试"
+
+[common.request_timeout]
+description = "兜底超时回复：指令在时限内没有完成，且无法确定是哪个功能超时。原因只写日志。"
+other = "请求超时，请稍后再试"
+
+[common.timeout]
+description = "某个功能响应超时。占位符：Feature=功能名，取自 common.feature.*。"
+other = "连接{{.Feature}}超时，请稍后再试"
+
+[common.not_found]
+description = "按用户输入查找对象但没有结果。占位符：Kind=对象名称（如“歌曲”）；UserQuery=用户输入原文，超过 30 个字截断。"
+other = "未找到{{.Kind}}：“{{.UserQuery}}”"
+
+[common.not_found_no_echo]
+description = "common.not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=对象名称（如“歌曲”）。"
+other = "未找到对应的{{.Kind}}"
+
+[common.ambiguous]
+description = "用户输入同时匹配到多个对象。占位符：UserQuery=用户输入原文，超过 30 个字截断；Kind=对象名称（如“歌曲”）。"
+other = "“{{.UserQuery}}”匹配到多个{{.Kind}}，请写得更具体"
+
+[common.ambiguous_no_echo]
+description = "common.ambiguous 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Kind=对象名称（如“歌曲”）。"
+other = "匹配到多个{{.Kind}}，请写得更具体"
+
+[common.out_of_range]
+description = "数字参数超出允许范围。占位符：Param=参数名称（如“活动序号”）；Min=最小值；Max=最大值。"
+other = "{{.Param}}超出范围，可选范围为 {{.Min}}~{{.Max}}"
+
+[common.bad_param]
+description = "参数格式不正确。第一行回显用户写的参数，第二行写具体原因。占位符：UserParam=用户输入的参数原文，超过 30 个字截断；Reason=具体原因，一句话。"
+other = "参数格式不正确：“{{.UserParam}}”\n{{.Reason}}"
+
+[common.bad_param_no_echo]
+description = "common.bad_param 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Reason=具体原因，一句话。"
+other = "参数格式不正确\n{{.Reason}}"
+
+[common.usage]
+description = "用法错误回复的最后一行，指向指令帮助。占位符：Trigger=用户使用的指令，以 / 开头（如 /查曲）。"
+other = "发送 {{.Trigger}} -help 查看用法"
+
+[common.with_usage]
+description = "用法错误回复：一行原因，加上帮助指引。占位符：Reason=一句话原因；Usage=common.usage 生成的帮助指引。"
+other = "{{.Reason}}\n{{.Usage}}"
+
+[common.verbatim]
+description = "原样显示的值：未知的区服代码、难度、Live 类型，或不需要单位的小数字。占位符：Value=要显示的值。"
+other = "{{.Value}}"
+
+[common.feature.game_data]
+description = "功能名，用于 common.unavailable / common.timeout：获取游戏数据（卡牌、活动、歌曲、玩家公开信息等）。"
+other = "游戏数据服务"
+
+[common.feature.ranking]
+description = "功能名，用于 common.unavailable / common.timeout：查榜、榜线、追踪等排名功能。"
+other = "查榜服务"
+
+[common.feature.render]
+description = "功能名，用于 common.unavailable / common.timeout：把查询结果画成图片的服务。"
+other = "渲染服务"
+
+[common.feature.toolbox]
+description = "功能名，用于 common.unavailable / common.timeout：用户上传抓包数据（Suite）和烤森（MySekai）的 Haruki 工具箱。"
+other = "工具箱"
+
+[common.feature.deck]
+description = "功能名，用于 common.unavailable / common.timeout：组卡计算。"
+other = "组卡服务"
+
+[common.feature.account]
+description = "功能名，用于 common.unavailable / common.timeout：游戏账号绑定与设置。"
+other = "账号绑定服务"
+
+[common.unrecognized_args]
+description = "指令参数完全无法识别时的原因行。回复时会换成该指令自己的参数说明（guidance.*），后面接帮助指引。"
+other = "无法识别指令参数"
+
+[common.event_label]
+description = "某个区服的某期活动，用在错误提示里，例如“日服(JP)活动 123”。活动 ID 可能是用户写的（event123、wl 期数），也可能是当前活动，一律按用户输入处理。占位符：Region=区服显示名；UserID=活动 ID。"
+other = "{{.Region}}活动 {{.UserID}}"
+
+[common.event_label_no_echo]
+description = "common.event_label 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Region=区服显示名。"
+other = "{{.Region}}的这个活动"
+
+[common.param.uid_invalid]
+description = "参数错误的原因行（接在 common.bad_param 后）：游戏 UID 格式不对。"
+other = "游戏 UID 应为至少 10 位纯数字"
+
+[common.param.region_invalid]
+description = "写的区服代码不支持。作为 common.bad_param 的原因行，或单独作为回复（查榜类指令）。"
+other = "区服只能是 jp、cn、tw、kr、en"
+
+[common.param.uid_digits]
+description = "参数错误的原因行（接在 common.bad_param 后）：游戏 UID 不是正整数。"
+other = "游戏 UID 应为纯数字"
+
+[common.param.mention_invalid]
+description = "参数错误的原因行（接在 common.bad_param 后）：@ 后面不是有效的 QQ 号。"
+other = "@ 后面应为 QQ 号"
+
+[common.param.rank_invalid]
+description = "参数错误的原因行（接在 common.bad_param 后）：名次不是正整数。"
+other = "名次应为正整数，多个名次用空格分隔，范围写成“起始-结束”"
+
+[common.param.rank_range_order]
+description = "名次范围的起始大于结束。"
+other = "起始名次不能大于结束名次"
+
+[common.param_name.page]
+description = "参数名称，用在 common.out_of_range 的 Param 占位符里：页码。"
+other = "页码"
+
+[common.no_args]
+description = "不需要参数的指令写了参数。"
+other = "这个指令不需要参数"
+
+[common.param_name.value]
+description = "参数名称，用在 common.out_of_range 的 Param 占位符里：数值。"
+other = "数值"
+
+[common.param.integer]
+description = "参数错误的原因行（接在 common.bad_param 后）：应为整数。"
+other = "应为整数"
+
+[common.self_only]
+description = "只能查询自己的数据的指令（/sud、/msd、/查uid、/逮捕 等），但指定了别人或游戏 UID。"
+other = "这个指令只能查询自己的数据，可以用“u序号”选择自己的账号"
+
+[common.processed]
+description = "图片前的一行文字，说明这次按什么条件处理（组卡、卡牌列表等）。占位符：Summary=用“ / ”连接的条件，例如“日服(JP) / 活动组卡 / 活动 123 / EXPERT”或“国服(CN) / 卡牌列表 / 卡牌 ID 1001、1002”。"
+other = "已处理{{.Summary}}"
+
+[common.fallback.character]
+description = "游戏数据里找不到角色名时显示的占位名称（文字回复和图片里都会用到）。占位符：ID=角色 ID。"
+other = "角色 #{{.ID}}"
+
+[common.fallback.event]
+description = "游戏数据里找不到活动名时显示的占位名称（榜线图、组卡图等）。占位符：ID=活动 ID。"
+other = "活动 #{{.ID}}"
+
+[common.fallback.music]
+description = "游戏数据里找不到歌曲名时显示的占位名称（别名记录、歌曲候选列表等）。占位符：ID=歌曲 ID。"
+other = "歌曲 #{{.ID}}"
+
+[common.fallback.mysekai_material]
+description = "游戏数据里找不到烤森材料名时显示的占位名称（道具一览、限时蓝图等图片）。占位符：ID=材料 ID。"
+other = "烤森材料 #{{.ID}}"

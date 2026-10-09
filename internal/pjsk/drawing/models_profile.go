@@ -16,11 +16,27 @@ type BasicProfile struct {
 }
 
 type ProfileDataSource struct {
+	// Name is the localized label Drawing shows (e.g. 抓包数据).
 	Name       string  `json:"name"`
 	Source     *string `json:"source,omitempty"`
 	UpdateTime *int64  `json:"update_time,omitempty"`
 	Mode       *string `json:"mode,omitempty"`
+	// Kind identifies the source for Cloud's own logic, so code never
+	// matches on the localized Name. It is not sent to Drawing.
+	Kind DataSourceKind `json:"-"`
 }
+
+// DataSourceKind identifies what a ProfileDataSource describes.
+type DataSourceKind string
+
+const (
+	// DataSourceSuite is the player's uploaded suite data (抓包数据).
+	DataSourceSuite DataSourceKind = "suite"
+	// DataSourceMySekai is the player's uploaded MySekai data (烤森数据).
+	DataSourceMySekai DataSourceKind = "mysekai"
+	// DataSourcePublic is the public profile from the game (公开信息).
+	DataSourcePublic DataSourceKind = "public"
+)
 
 // InfoPanelEndpoint renders a ProfileCardRequest as the standalone info panel.
 const InfoPanelEndpoint = "/api/pjsk/profile/info-panel"

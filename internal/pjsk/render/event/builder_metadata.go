@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -161,15 +162,16 @@ func (b *Builder) unitIconPathByCharacter(charID int, region renderregion.Value)
 	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, unitIcon+".png")
 }
 
+// eventTypeNames are the display names of the event types.
+var eventTypeNames = map[string]i18n.Message{
+	"marathon":          i18n.M("event.type.marathon"),
+	"cheerful_carnival": i18n.M("event.type.cheerful_carnival"),
+	"world_bloom":       i18n.M("event.type.world_bloom"),
+}
+
 func (b *Builder) displayEventType(code string) string {
-	switch strings.ToLower(code) {
-	case "marathon":
-		return "马拉松"
-	case "cheerful_carnival":
-		return "5v5"
-	case "world_bloom":
-		return "WorldLink"
-	default:
-		return code
+	if name, ok := eventTypeNames[strings.ToLower(code)]; ok {
+		return name.String()
 	}
+	return code
 }

@@ -1,11 +1,12 @@
 package music
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/render/common"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) resolveMusicBoardSpecs(source DataSource, rows []musicBoardRow, queries []string) ([]musicBoardSpec, error) {
@@ -99,5 +100,5 @@ func appendUniqueMusicBoardSpecs(specs []musicBoardSpec, seen map[string]struct{
 }
 
 func invalidMusicBoardSpec(rawQuery string) error {
-	return fmt.Errorf("找不到歌曲或参数错误: %q", rawQuery)
+	return usererror.BadParam(rawQuery, i18n.M("music.board.spec_invalid"))
 }

@@ -1,0 +1,110 @@
+== RegionLabel(jp)
+日服(JP)
+== RegionLabel(CN)
+国服(CN)
+== RegionLabel(tw)
+台服(TW)
+== RegionLabel(kr)
+韩服(KR)
+== RegionLabel(en)
+国际服(EN)
+== RegionLabel(xx)
+XX
+== AccountLabel(jp, hidden)
+[日服(JP)] 748*************370
+== AccountLabel(cn, visible)
+[国服(CN)] 7487590788965145370
+== MaskUID(short)
+123456
+== FormatUserTime(nil loc)
+2026-10-09 14:05 (UTC+8)
+== FormatUserTime(UTC+9)
+2026-10-09 15:05 (UTC+9)
+== FormatUserTime(UTC+5:30)
+2026-10-09 11:35 (UTC+5:30)
+== FormatUserTime(UTC-3:30)
+2026-10-09 02:35 (UTC-3:30)
+== FormatUserTime(UTC)
+2026-10-09 06:05 (UTC+0)
+== FormatUserTime(zero)
+未知时间
+== FormatDuration(45s)
+45秒
+== FormatDuration(2m3s)
+2分03秒
+== FormatDuration(1h2m3s)
+1小时02分03秒
+== FormatDuration(-1s)
+0秒
+== Thousands(1234)
+1234
+== Thousands(12345)
+12,345
+== Thousands(-1234567)
+-1,234,567
+== Wan(9999)
+9999
+== Wan(123456)
+12.35万
+== Wan(3000000)
+300万
+== Percent(12.34)
+12.3%
+== Percent(50)
+50%
+== PercentN(12.3456, 2)
+12.35%
+== PageLabel(1, 3)
+第 1/3 页
+== DifficultyLabel(expert)
+EXPERT
+== DifficultyLabel(append)
+APPEND
+== DifficultyLabel(unknown)
+SPECIAL
+== LiveTypeLabel(solo)
+单人 Live
+== LiveTypeLabel(multi)
+多人 Live
+== LiveTypeLabel(auto)
+自动 Live
+== LiveTypeLabel(challenge)
+挑战 Live
+== LiveTypeLabel(unknown)
+mystery
+== RequestFailed
+请求处理失败，请稍后再试
+== Misconfigured
+服务配置异常，请联系 Bot 管理员
+== ReadOnly
+服务当前处于只读状态，暂时无法修改数据，请稍后再试
+== Unavailable(ranking)
+查榜服务暂时不可用，请稍后再试
+== Unavailable(game data)
+游戏数据服务暂时不可用，请稍后再试
+== Timeout(render)
+连接渲染服务超时，请稍后再试
+== Timeout(toolbox)
+连接工具箱超时，请稍后再试
+== Unavailable(deck)
+组卡服务暂时不可用，请稍后再试
+== Unavailable(account)
+账号绑定服务暂时不可用，请稍后再试
+== NotFound
+未找到歌曲：“tell your world”
+== NotFound(long query)
+未找到歌曲：“长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长……”
+== Ambiguous
+“mk”匹配到多个角色，请写得更具体
+== OutOfRange
+活动序号超出范围，可选范围为 1~20
+== BadParam
+参数格式不正确：“abc”
+QQ 号必须是正整数
+== Usage(/查曲)
+发送 /查曲 -help 查看用法
+== Usage(kill)
+发送 /kill -help 查看用法
+== WithUsage
+需要提供一个 QQ 号
+发送 /back -help 查看用法

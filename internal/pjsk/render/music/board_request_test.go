@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestResolveMusicBoardRequestBuildsItemsFromMeta(t *testing.T) {
@@ -350,10 +351,10 @@ func TestResolveMusicBoardRequestReturnsAmbiguousSpecError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected ambiguous spec query to fail")
 	}
-	if !strings.Contains(err.Error(), "匹配到多个歌曲") {
+	if testutil.MessageID(err) != "music.ambiguous" {
 		t.Fatalf("expected ambiguous error, got %v", err)
 	}
-	if !strings.Contains(err.Error(), "music1/Song A") || !strings.Contains(err.Error(), "music2/Song Alpha") {
+	if !strings.Contains(err.Error(), "music1：Song A") || !strings.Contains(err.Error(), "music2：Song Alpha") {
 		t.Fatalf("expected music id hints in error, got %v", err)
 	}
 }

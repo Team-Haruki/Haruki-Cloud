@@ -1,19 +1,20 @@
 package handler
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
+	"haruki-cloud/utils/usererror"
 )
 
 func executeMysekaiHousingSK(rc *RequestContext, region string) (onebot11.Message, error) {
 	if rc == nil || rc.App == nil || rc.App.MySekai == nil {
-		return nil, fmt.Errorf("mysekai service unavailable: mysekai controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("mysekai service unavailable: mysekai controller is not configured"))
 	}
 	if rc.App.SekaiAPI == nil {
-		return nil, fmt.Errorf("sekai api client is not configured")
+		return nil, usererror.Misconfigured(errors.New("sekai api client is not configured"))
 	}
 
 	query := rendermysekai.HousingCompetitionLineQuery{Region: region}

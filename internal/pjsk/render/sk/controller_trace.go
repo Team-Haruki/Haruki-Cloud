@@ -1,8 +1,6 @@
 package sk
 
 import (
-	"fmt"
-
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -20,7 +18,7 @@ func (c *Controller) resolveTrackerUserIDByRank(server string, eventID, rank int
 		return 0, err
 	}
 	if !ok {
-		return 0, fmt.Errorf("tracker cloud v2 source is not configured")
+		return 0, errTrackerSourceNotConfigured
 	}
 	return uid, nil
 }

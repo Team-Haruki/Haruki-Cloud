@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 
@@ -141,7 +142,7 @@ func (r *RemoteDeckRecommender) cachedUserdata(ctx context.Context, state *remot
 			var response remoteUserDataCacheResponse
 			err := r.postBinary(shared, &remoteExecution{state: state}, "/cache_userdata", payload, &response)
 			if err == nil && (strings.TrimSpace(response.UserdataHash) == "" || len(response.UserdataHash) > remoteUserdataMaxHashBytes) {
-				err = fmt.Errorf("deck-service cache_userdata returned empty userdata_hash or oversized hash")
+				err = deckTagged(upstreamerr.KindCacheExpired, fmt.Errorf("deck-service cache_userdata returned empty userdata_hash or oversized hash"))
 			}
 			if err == nil {
 				err = shared.Err()

@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/utils/usererror"
 )
 
 func extractMusicBoardPageArg(args string) (int, string, bool) {
@@ -20,9 +22,9 @@ func extractMusicBoardPageArg(args string) (int, string, bool) {
 }
 
 func extractMusicBoardSkills(args, liveType string) ([]float64, string, error) {
-	hadKeyword := strings.Contains(args, "技能") || strings.Contains(args, "实效")
-	cleaned := strings.ReplaceAll(args, "技能", "")
-	cleaned = strings.ReplaceAll(cleaned, "实效", "")
+	hadKeyword := strings.Contains(args, "技能") || strings.Contains(args, "实效") //copylint:ignore 解析关键字
+	cleaned := strings.ReplaceAll(args, "技能", "")                              //copylint:ignore 解析关键字
+	cleaned = strings.ReplaceAll(cleaned, "实效", "")                            //copylint:ignore 解析关键字
 	cleaned = strings.TrimSpace(cleaned)
 
 	required := 5
@@ -50,7 +52,7 @@ func extractMusicBoardSkills(args, liveType string) ([]float64, string, error) {
 		return nil, cleaned, nil
 	}
 	if len(numbers) != required {
-		return nil, "", fmt.Errorf("解析技能加分失败")
+		return nil, "", usererror.Invalid(i18n.M("score.board.skills_invalid"))
 	}
 
 	remaining := cleaned
@@ -126,8 +128,8 @@ func containsMusicBoardString(values []string, target string) bool {
 }
 
 func parseMusicBoardPage(token string) (int, bool) {
-	if strings.Contains(token, "页") || strings.Contains(token, "p") {
-		value := strings.Replace(token, "页", "", 1)
+	if strings.Contains(token, "页") || strings.Contains(token, "p") { //copylint:ignore 解析关键字
+		value := strings.Replace(token, "页", "", 1) //copylint:ignore 解析关键字
 		value = strings.Replace(value, "p", "", 1)
 		page, err := strconv.Atoi(value)
 		return page, err == nil && page > 0
@@ -142,8 +144,8 @@ func parseMusicBoardLargeNumber(raw string) (int, error) {
 	}
 	multiplier := 1.0
 	switch {
-	case strings.HasSuffix(raw, "万"):
-		raw = strings.TrimSuffix(raw, "万")
+	case strings.HasSuffix(raw, "万"): //copylint:ignore 解析关键字
+		raw = strings.TrimSuffix(raw, "万") //copylint:ignore 解析关键字
 		multiplier = 10000
 	case strings.HasSuffix(raw, "w"):
 		raw = strings.TrimSuffix(raw, "w")

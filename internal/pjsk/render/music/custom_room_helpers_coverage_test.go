@@ -111,7 +111,7 @@ func TestBuilderLocalizedTitleAndVocalCaptionBranches(t *testing.T) {
 		{"", "", "vs_bundle", renderregion.CN, "虚拟歌手"},
 		{"", "", "an_bundle", renderregion.EN, "Another Vocal"},
 		{"", "original_song", "other", renderregion.EN, "original_song"},
-		{"", "virtual singer", "other", renderregion.TW, "虚擬歌手"},
+		{"", "virtual singer", "other", renderregion.TW, "虛擬歌手"},
 		{"", "unknown", "other", renderregion.EN, "unknown"},
 	}
 	for _, tc := range captionCases {

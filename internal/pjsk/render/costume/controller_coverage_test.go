@@ -11,10 +11,13 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 type controllerCoverageContextKey struct{}
@@ -135,7 +138,7 @@ func controllerCoverageCostume(id int, partType string) *masterdata.Costume3d {
 
 func TestSingleCostumeLookupResolutionErrors(t *testing.T) {
 	unnamed := &singleCostumeLookup{query: Query{Query: "missing"}}
-	if _, err := unnamed.resolve(); err == nil || !strings.Contains(err.Error(), "no costume matched") {
+	if _, err := unnamed.resolve(); err == nil || !strings.Contains(testutil.ErrorDetail(err), "no costume matched") {
 		t.Fatalf("unnamed no-match error = %v", err)
 	}
 
@@ -144,7 +147,7 @@ func TestSingleCostumeLookupResolutionErrors(t *testing.T) {
 		partType: "body",
 		named:    true,
 	}
-	if _, err := named.resolve(); err == nil || !strings.Contains(err.Error(), "找不到角色ID") {
+	if _, err := named.resolve(); err == nil || testutil.MessageID(err) != "costume.part_name_not_found" {
 		t.Fatalf("named no-match error = %v", err)
 	}
 
@@ -152,7 +155,7 @@ func TestSingleCostumeLookupResolutionErrors(t *testing.T) {
 		controllerCoverageCostume(1, "body"),
 		controllerCoverageCostume(2, "body"),
 	}
-	if _, err := unnamed.resolve(); err == nil || !strings.Contains(err.Error(), "matched multiple costumes") {
+	if _, err := unnamed.resolve(); err == nil || !strings.Contains(testutil.ErrorDetail(err), "matched multiple costumes") {
 		t.Fatalf("ambiguous lookup error = %v", err)
 	}
 }
@@ -165,7 +168,7 @@ func TestSingleCostumeLookupUnsupportedPart(t *testing.T) {
 	if err := lookup.fetchLogicalIDs(); err != nil {
 		t.Fatalf("fetchLogicalIDs default branch failed: %v", err)
 	}
-	if _, err := lookup.rawCostumeID(1); err == nil || !strings.Contains(err.Error(), "unsupported costume part type") {
+	if _, err := lookup.rawCostumeID(1); err == nil || !strings.Contains(testutil.ErrorDetail(err), "unsupported costume part type") {
 		t.Fatalf("rawCostumeID unsupported-part error = %v", err)
 	}
 	if err := lookup.controller.applyCostumeDetailPartRole(renderregion.JP, &masterdata.Costume3d{PartType: "unknown"}, Query{}, &drawing.CostumeBasic{}); err != nil {
@@ -556,8 +559,8 @@ func testControllerCoverageCharacterAndSortHelpers(t *testing.T) {
 		character *masterdata.Character
 		want      string
 	}{
-		{nil, "角色7"},
-		{&masterdata.Character{FirstName: " ", GivenName: " "}, "角色7"},
+		{nil, i18n.T("common.fallback.character", i18n.Data{"ID": 7})},
+		{&masterdata.Character{FirstName: " ", GivenName: " "}, i18n.T("common.fallback.character", i18n.Data{"ID": 7})},
 		{&masterdata.Character{FirstName: "Hatsune", GivenName: "Miku"}, "HatsuneMiku"},
 	} {
 		if got := characterName(test.character, 7); got != test.want {
@@ -724,10 +727,10 @@ func TestControllerCoverageComboValidation(t *testing.T) {
 
 	query := ComboQuery{}
 	last := ""
-	if err := assignComboValue(&query, "unknown", 1, &last); err == nil {
+	if err := assignComboValue(&query, "unknown", "x", 1, &last); err == nil {
 		t.Fatal("unknown combo label was accepted")
 	}
-	if err := assignComboValue(&query, "outfit", 0, &last); err == nil {
+	if err := assignComboValue(&query, "outfit", "服装0", 0, &last); err == nil {
 		t.Fatal("non-positive combo ID was accepted")
 	}
 	if err := assignComboColor(&query, "unknown", 1); err == nil {
@@ -829,25 +832,6 @@ func testControllerCoverageListNormalization(t *testing.T) {
 
 func testControllerCoverageListPrompt(t *testing.T) {
 	t.Helper()
-	if prompt := BuildListPrompt(nil); prompt != "" {
-		t.Fatalf("nil list prompt = %q", prompt)
-	}
-	prompt := BuildListPrompt(&drawing.CostumeListRequest{
-		Costumes: []drawing.CostumeBasic{{HairID: 1}},
-	})
-	if !strings.Contains(prompt, "第 1/1 页") || !strings.Contains(prompt, "试穿") {
-		t.Fatalf("default hair list prompt = %q", prompt)
-	}
-	title := " Custom title "
-	prompt = BuildListPrompt(&drawing.CostumeListRequest{
-		Title:      &title,
-		Page:       3,
-		TotalPages: 2,
-	})
-	if !strings.Contains(prompt, "Custom title") || !strings.Contains(prompt, "p2") {
-		t.Fatalf("last-page prompt = %q", prompt)
-	}
-
 	for _, query := range []ListQuery{
 		{Gender: "male"},
 		{Gender: "female"},
@@ -856,6 +840,36 @@ func testControllerCoverageListPrompt(t *testing.T) {
 	} {
 		if label := buildFilterLabel(query); label == "" {
 			t.Fatalf("empty filter label for %+v", query)
+		}
+	}
+}
+
+// A label without an ID is echoed as the user typed it, never as the
+// internal part key.
+func TestParseComboQueryEchoesTypedLabel(t *testing.T) {
+	for query, want := range map[string]string{
+		"角色21 饰品颜色":    "饰品颜色",
+		"角色21 服装":      "服装",
+		"角色21 发型":      "发型",
+		"角色21 Costume": "Costume",
+	} {
+		_, err := parseComboQuery(ComboQuery{Query: query})
+		typed := testutil.RequireUserError(t, err, usererror.CodeBadParam, "common.bad_param")
+		if got := typed.Message.Data["UserParam"]; got != i18n.UserText(want) {
+			t.Errorf("parseComboQuery(%q) Param = %v, want %q", query, got, want)
+		}
+	}
+}
+
+// The unit names the Miku unit message lists are all accepted.
+func TestMikuUnitMessageListsAcceptedUnits(t *testing.T) {
+	text := i18n.T("costume.query.miku_unit_required")
+	for _, unit := range []string{"ln", "mmj", "vbs", "ws", "25h", "vs"} {
+		if !strings.Contains(text, unit) {
+			t.Errorf("message %q does not list %q", text, unit)
+		}
+		if _, ok := parseCostumeUnitAlias(unit); !ok {
+			t.Errorf("listed unit %q is not accepted", unit)
 		}
 	}
 }

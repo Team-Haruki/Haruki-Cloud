@@ -2,9 +2,19 @@ package provider
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
+
+// ErrEventCardsNotFound is returned by EventProvider.GetCards when an event
+// has no cards in the master data (an event can be listed before its cards).
+var ErrEventCardsNotFound = errors.New("no cards found for event")
+
+func eventCardsNotFound(eventID int) error {
+	return fmt.Errorf("%w %d", ErrEventCardsNotFound, eventID)
+}
 
 // EventProvider exposes event-related masterdata queries.
 type EventProvider interface {

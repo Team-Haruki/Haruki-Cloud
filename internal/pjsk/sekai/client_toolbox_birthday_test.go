@@ -11,6 +11,7 @@ import (
 
 	"haruki-cloud/config"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 )
 
 type birthdayRequestRecorder struct {
@@ -139,7 +140,7 @@ func TestToolboxBirthdayMonitorErrors(t *testing.T) {
 
 	responseStatus = http.StatusOK
 	responseBody = "not-json"
-	if _, err := client.GetMysekaiBirthdayEvent(ctx, MysekaiBirthdayEventLookupRequest{EventID: "1"}); err == nil || !strings.Contains(err.Error(), "failed to parse") {
+	if _, err := client.GetMysekaiBirthdayEvent(ctx, MysekaiBirthdayEventLookupRequest{EventID: "1"}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "failed to parse") {
 		t.Fatalf("invalid event response error = %v", err)
 	}
 

@@ -1,6 +1,7 @@
 package pjsk
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -16,7 +17,9 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/shamaton/msgpack/v3"
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/utils/usererror"
 )
 
 type birthdayMonitorClientAction struct {
@@ -71,15 +74,15 @@ type birthdayTokenValidationResponse struct {
 	PendingEvents       []subscription.PendingBirthdayEvent `json:"pending_events,omitempty"`
 }
 
-const birthdayMonitorCommandPath = "mysekai/birthday-monitor"
+const birthdayMonitorCommandPath = pjskhandler.BirthdayMonitorHelpPath
 
 var birthdayMonitorCommandPrefixes = []string{
-	"/烤森生日取消监听",
+	"/烤森生日取消监听", //copylint:ignore 指令触发词
 	"/mysekai birthday unmonitor",
-	"/ms生日取消监听",
-	"/烤森生日监听",
+	"/ms生日取消监听", //copylint:ignore 指令触发词
+	"/烤森生日监听",   //copylint:ignore 指令触发词
 	"/mysekai birthday monitor",
-	"/ms生日监听",
+	"/ms生日监听", //copylint:ignore 指令触发词
 }
 
 var birthdayMonitorCommandPrefixRegions = []string{"jp", "tw", "kr", "en", "cn"}
@@ -126,7 +129,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 			setCommandTraceOutcome(c, "rejected", err)
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
-		requestCtx := c.Context()
+		requestCtx := i18n.WithParamEcho(c.Context(), req.EnableParamEcho)
 		traceCommand := allowedCommandTraceLabel(req.MatchedCommand, birthdayMonitorManifestCommandPrefixes)
 		setCommandTraceMetadata(c, traceCommand, birthdayMonitorCommandPath)
 		finishValidation := commandtrace.MeasurePhase(requestCtx, "request_validate")
@@ -153,6 +156,18 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 		service := newBirthdayMonitorService(renderApp)
 		finishExecute := commandtrace.MeasurePhase(requestCtx, "command_execute")
 		defer finishPhaseOnPanic(finishExecute)
+		helpCommand := birthdayMonitorHelpCommand(text)
+
+		if isBirthdayMonitorHelpText(text) {
+			message, err := pjskhandler.RouteHelpMessage(requestCtx, birthdayMonitorCommandPath, renderApp)
+			finishExecute()
+			if err != nil {
+				setCommandTraceOutcome(c, "error", err)
+				return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorReply(requestCtx, err, birthdayMonitorCommandPath, helpCommand))})
+			}
+			setCommandTraceOutcome(c, "ok", nil)
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, message)
+		}
 
 		if isCancelBirthdayMonitorText(text) {
 			_, err := service.Cancel(requestCtx, req.Platform, req.PlatformUserID, req.PlatformGroupID, botID, req.SelfID, req.Server, regionExplicit, text)
@@ -164,10 +179,10 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 					"command", traceCommand,
 					"error_type", fmt.Sprintf("%T", err),
 				)
-				return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+				return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorReply(requestCtx, err, birthdayMonitorCommandPath, helpCommand))})
 			}
 			setCommandTraceOutcome(c, "ok", nil)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("烤森生日材料监听已取消。")})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(i18n.T("subscription.birthday.cancelled"))})
 		}
 
 		result, err := service.CreateOrUpdate(requestCtx, req.Platform, req.PlatformUserID, req.PlatformGroupID, botID, req.SelfID, req.Server, regionExplicit, text, req.NotifyEmpty)
@@ -179,15 +194,19 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 				"command", traceCommand,
 				"error_type", fmt.Sprintf("%T", err),
 			)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorReply(requestCtx, err, birthdayMonitorCommandPath, helpCommand))})
 		}
 
-		visible := onebot11.Message{onebot11.Text(fmt.Sprintf("烤森生日材料监听已更新，有效期 %d 分钟。", int(result.Duration.Minutes())))}
+		visible := onebot11.Message{onebot11.Text(i18n.T("subscription.birthday.updated", i18n.Data{"Minutes": int(result.Duration.Minutes())}))}
 		actions := birthdayMonitorActions(result)
 		setCommandTraceOutcome(c, "ok", nil)
 		return botResponseWithActions(c, fiber.StatusOK, api.ResponseOK, visible, actions)
 	}
 }
+
+// errBirthdayRenderNotConfigured is the logged cause when the birthday
+// monitor cannot render: no MySekai renderer or no image host.
+var errBirthdayRenderNotConfigured = errors.New("birthday monitor: mysekai renderer or image hosting is not configured")
 
 func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 	return func(c fiber.Ctx) error {
@@ -209,7 +228,7 @@ func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 		if err != nil {
 			finishExecute()
 			setCommandTraceOutcome(c, "error", err)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), err, birthdayMonitorCommandPath, ""))})
 		}
 		setResolvedCommandTraceMetadata(c, "pjsk", "birthday_monitor_render", event.Region)
 		if event.EmptyResult {
@@ -223,12 +242,12 @@ func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 		if len(event.FilteredPayload) == 0 {
 			finishExecute()
 			setCommandTraceOutcome(c, "rejected", nil)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("订阅事件缺少可绘制数据")})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), usererror.New(usererror.CodeNotFound, i18n.M("subscription.birthday.event_no_data")), birthdayMonitorCommandPath, ""))})
 		}
 		if renderApp.MySekai == nil || (renderApp.ImageCache == nil && renderApp.ImageHosts.Len() == 0) {
 			finishExecute()
 			setCommandTraceOutcome(c, "error", nil)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("烤森服务未就绪，请稍后再试")})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), usererror.Misconfigured(errBirthdayRenderNotConfigured), birthdayMonitorCommandPath, ""))})
 		}
 		data, err := renderApp.MySekai.WithContext(c.Context()).WithMySekaiData(event.FilteredPayload).RenderMapImage(rendermysekai.MapQuery{
 			Region: event.Region,
@@ -239,14 +258,14 @@ func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 		if err != nil {
 			finishExecute()
 			setCommandTraceOutcome(c, "error", err)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), err, birthdayMonitorCommandPath, ""))})
 		}
 		renderContext := &pjskhandler.RequestContext{Ctx: c.Context(), App: renderApp}
 		images, err := renderContext.RenderedImageMessage(data)
 		finishExecute()
 		if err != nil {
 			setCommandTraceOutcome(c, "error", err)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), err, birthdayMonitorCommandPath, ""))})
 		}
 		setCommandTraceOutcome(c, "ok", nil)
 		return botResponse(c, fiber.StatusOK, api.ResponseOK, append(onebot11.Message{onebot11.At(event.PlatformUserID)}, images...))
@@ -272,7 +291,7 @@ func makeBirthdayMonitorAckHandler(renderApp *renderapp.App) fiber.Handler {
 		if err := service.AckEvent(c.Context(), req.EventID, req.SubscriptionID, req.SubscriptionVersion, req.Token, botID, req.PlatformGroupID, req.PlatformUserID, req.SelfID); err != nil {
 			finishExecute()
 			setCommandTraceOutcome(c, "error", err)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), err, birthdayMonitorCommandPath, ""))})
 		}
 		finishExecute()
 		setCommandTraceOutcome(c, "ok", nil)
@@ -292,7 +311,7 @@ func makeBirthdayMonitorActiveHandler(renderApp *renderapp.App) fiber.Handler {
 		service := newBirthdayMonitorService(renderApp)
 		result, err := service.ActiveForUpload(c.Context(), c.Query("region"), c.Query("uid"))
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusInternalServerError, "查询生日监听状态失败，请稍后再试")
+			return api.JSONResponse(c, fiber.StatusInternalServerError, "failed to query birthday monitor status")
 		}
 		return c.Status(fiber.StatusOK).JSON(activeBirthdaySubscriptionResponse{
 			Active:         result.Active,
@@ -309,7 +328,7 @@ func makeBirthdayMonitorTokenValidateHandler(renderApp *renderapp.App) fiber.Han
 		service := newBirthdayMonitorService(renderApp)
 		result, err := service.ValidateToken(c.Context(), c.Query("subscription_id"), c.Query("subscription_version"), c.Query("token"))
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusInternalServerError, "校验生日监听令牌失败，请稍后再试")
+			return api.JSONResponse(c, fiber.StatusInternalServerError, "failed to validate birthday monitor token")
 		}
 		resp := birthdayTokenValidationResponse{Valid: result.Valid}
 		if result.Valid && result.Subscription != nil {
@@ -343,7 +362,7 @@ func makeBirthdayMonitorEventWriteHandler(renderApp *renderapp.App) fiber.Handle
 			FilteredPayload:    payload,
 		})
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusBadRequest, "写入生日监听事件失败")
+			return api.JSONResponse(c, fiber.StatusBadRequest, "failed to store birthday monitor event")
 		}
 		return c.Status(fiber.StatusOK).JSON(birthdayEventWriteResponse{
 			EventID:        stored.EventID,
@@ -455,6 +474,30 @@ func buildBirthdayMonitorManifestCommandPrefixes(commands []string) []string {
 		}
 	}
 	return result
+}
+
+// isBirthdayMonitorHelpText reports whether text asks for the monitor's
+// help: the command followed by "-help" or "-h".
+func isBirthdayMonitorHelpText(text string) bool {
+	fields := strings.Fields(text)
+	if len(fields) < 2 {
+		return false
+	}
+	last := strings.ToLower(fields[len(fields)-1])
+	return last == "-help" || last == "-h"
+}
+
+// birthdayMonitorHelpCommand is the monitor command text starts with, as
+// typed (region prefix included), for the help pointer of usage errors.
+func birthdayMonitorHelpCommand(text string) string {
+	text = strings.Join(strings.Fields(text), " ")
+	best := ""
+	for _, command := range birthdayMonitorManifestCommandPrefixes {
+		if len(command) > len(best) && strings.HasPrefix(strings.ToLower(text), strings.ToLower(command)) {
+			best = command
+		}
+	}
+	return best
 }
 
 func isCancelBirthdayMonitorText(text string) bool {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -486,7 +487,7 @@ func (c *Controller) applyCurrentDeckOption(_ *snapshot.RawUserData, original *s
 	if deckInfo := publicProfileCurrentDeck(query.PublicProfileResp); deckInfo != nil {
 		cards, ok := currentDeckFixedCardIDs(deckInfo)
 		if !ok {
-			return fmt.Errorf("你的当前主队不足5张，无法使用\"当前\"参数")
+			return usererror.Invalid(i18n.M("deck.current.incomplete"))
 		}
 
 		option["fixed_cards"] = slices.Clone(cards)
@@ -500,12 +501,12 @@ func (c *Controller) applyCurrentDeckOption(_ *snapshot.RawUserData, original *s
 
 	deckInfo := snapshot.FindActiveDeck(original.UserDecks, original.UserGamedata.Deck)
 	if deckInfo.DeckID == 0 {
-		return fmt.Errorf("找不到你的当前主队配置")
+		return usererror.New(usererror.CodeNotFound, i18n.M("deck.current.not_found"))
 	}
 
 	cards, ok := currentDeckFixedCardIDs(&deckInfo)
 	if !ok {
-		return fmt.Errorf("你的当前主队不足5张，无法使用\"当前\"参数")
+		return usererror.Invalid(i18n.M("deck.current.incomplete"))
 	}
 
 	option["fixed_cards"] = slices.Clone(cards)
@@ -573,13 +574,15 @@ func (c *Controller) restoreFixedCard(region renderregion.Value, raw, original *
 		// here) is the user's input. With "当前" they come from the game's own
 		// deck, where a missing card is a master-data gap and stays an error.
 		if !preferOriginal && sekaiDB.IsNotFound(err) {
-			return usererror.Inputf("当前%s服未找到卡牌 %d（可能尚未在该服实装），请检查固定卡牌ID",
-				strings.ToUpper(renderregion.WithDefault(region).String()), cardID)
+			return usererror.Invalid(i18n.M("deck.fixed.card_not_in_region", i18n.Data{
+				"Region":     i18n.RegionLabel(renderregion.WithDefault(region).String()),
+				"UserCardID": i18n.UserNumber(cardID),
+			}))
 		}
 		return err
 	}
 	if fallbackCard == nil {
-		return fmt.Errorf("当前卡组中的卡牌 %d 不在抓包数据中，请更新抓包数据", cardID)
+		return usererror.Setup(i18n.M("deck.current.card_missing", i18n.Data{"CardID": cardID}))
 	}
 	appendIndexedUserCard(raw, *fallbackCard, indexByCardID)
 	return nil
@@ -670,7 +673,7 @@ func (c *Controller) applyAreaItemLevel(region renderregion.Value, raw *snapshot
 		return nil
 	}
 	if maxLevel, exceeded := firstAreaItemCapBelow(caps, targetLevel); exceeded {
-		return fmt.Errorf("该区服区域道具等级最多为%d", maxLevel)
+		return usererror.Invalid(i18n.M("deck.area_item_level_max", i18n.Data{"Max": maxLevel}))
 	}
 	levels := collectRawAreaItemLevels(raw.UserAreas)
 	for itemID, level := range caps {

@@ -1,9 +1,11 @@
 package parser
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
+
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewCommandParser() *CommandParser {
@@ -37,7 +39,7 @@ func (p *CommandParser) Parse(args string) (*EventCommand, error) {
 			return cmd, nil
 		}
 	}
-	return nil, fmt.Errorf("无法识别的指令格式: %s", args)
+	return nil, usererror.Unrecognized()
 }
 
 func parseBindCommand(args string, cmd *EventCommand) (bool, error) {
@@ -47,7 +49,7 @@ func parseBindCommand(args string, cmd *EventCommand) (bool, error) {
 	cmd.Type = CmdTypeBind
 	cmd.TargetID = strings.TrimSpace(strings.TrimPrefix(args, "bind "))
 	if !isNumeric(cmd.TargetID) || len(cmd.TargetID) < 10 {
-		return true, fmt.Errorf("无效的游戏ID: %s", cmd.TargetID)
+		return true, usererror.BadParam(cmd.TargetID, i18n.M("common.param.uid_invalid"))
 	}
 	return true, nil
 }
@@ -59,7 +61,7 @@ func parseMentionCommand(args string, cmd *EventCommand) (bool, error) {
 	cmd.Type = CmdTypeEventQueryAt
 	cmd.TargetID = strings.TrimPrefix(args, "@")
 	if !isNumeric(cmd.TargetID) {
-		return true, fmt.Errorf("无效的用户ID: %s", cmd.TargetID)
+		return true, usererror.BadParam("@"+cmd.TargetID, i18n.M("common.param.mention_invalid"))
 	}
 	return true, nil
 }
@@ -78,7 +80,7 @@ func parseRankRangeCommand(args string, cmd *EventCommand) (bool, error) {
 		return false, nil
 	}
 	if start > end {
-		return true, fmt.Errorf("起始排名不能大于结束排名")
+		return true, usererror.Invalid(i18n.M("common.param.rank_range_order"))
 	}
 	cmd.Type = CmdTypeEventQueryRankRange
 	cmd.Param1 = start
@@ -95,7 +97,7 @@ func parseMultiRankCommand(args string, cmd *EventCommand) (bool, error) {
 	for _, field := range fields {
 		rank, err := strconv.Atoi(field)
 		if err != nil {
-			return true, fmt.Errorf("无法解析的排名参数: %s", field)
+			return true, usererror.BadParam(field, i18n.M("common.param.rank_invalid"))
 		}
 		ranks = append(ranks, rank)
 	}

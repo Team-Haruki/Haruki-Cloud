@@ -10,6 +10,7 @@ import (
 	pjskschema "haruki-cloud/ent/pjsk/schema"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestUserSettingsValidationNilRowsAndDatabaseErrors(t *testing.T) {
@@ -48,10 +49,10 @@ func TestUserSettingsValidationNilRowsAndDatabaseErrors(t *testing.T) {
 		t.Fatalf("nil service UpsertUserSettings = %v", err)
 	}
 	identityFailure := NewBindingService(client, accountCoverageIdentity{err: errors.New("identity failed")}, accountCoverageValidator{})
-	if _, _, err := identityFailure.GetUserSettings(ctx, "qq", "42"); err == nil || !strings.Contains(err.Error(), "identity failed") {
+	if _, _, err := identityFailure.GetUserSettings(ctx, "qq", "42"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "identity failed") {
 		t.Fatalf("identity GetUserSettings failure = %v", err)
 	}
-	if _, err := identityFailure.UpsertUserSettings(ctx, "qq", "42", settings); err == nil || !strings.Contains(err.Error(), "identity failed") {
+	if _, err := identityFailure.UpsertUserSettings(ctx, "qq", "42", settings); err == nil || !strings.Contains(testutil.ErrorDetail(err), "identity failed") {
 		t.Fatalf("identity UpsertUserSettings failure = %v", err)
 	}
 	service.SetReadOnly(true)
@@ -183,7 +184,7 @@ func TestBindingMutationHookStableErrorBranches(t *testing.T) {
 	}
 	service.bgStorage = accountCoverageBGStorage{saveErr: errors.New("save failed")}
 	binding.Verified = true
-	if _, err := service.setBindingProfileBG(ctx, "qq", "42", binding, "url"); err == nil || !strings.Contains(err.Error(), "save failed") {
+	if _, err := service.setBindingProfileBG(ctx, "qq", "42", binding, "url"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "save failed") {
 		t.Fatalf("profile background save failure = %v", err)
 	}
 

@@ -2,16 +2,18 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+
+	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/stamp"
-	"strconv"
-	"strings"
-
-	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/utils/usererror"
 )
 
 func (sekaiHandlers) StampHandle() HarukiSekaiCommandHandler {
@@ -69,7 +71,7 @@ func parseStampPageWithRemaining(args string) (int, string, bool) {
 
 	for i := 0; i < len(fields)-1; i++ {
 		switch strings.ToLower(fields[i]) {
-		case "page", "p", "页":
+		case "page", "p", "页": //copylint:ignore 解析关键字
 		default:
 			continue
 		}
@@ -91,7 +93,7 @@ func parseStampPageWithRemaining(args string) (int, string, bool) {
 func parseStampAll(args string) bool {
 	value := strings.TrimSpace(strings.ToLower(args))
 	switch value {
-	case "all", "全部", "所有":
+	case "all", "全部", "所有": //copylint:ignore 解析关键字
 		return true
 	default:
 		return false
@@ -100,7 +102,7 @@ func parseStampAll(args string) bool {
 
 func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 	if rc.App.Stamps == nil {
-		return nil, fmt.Errorf("stamp service unavailable: sekai client not configured")
+		return nil, usererror.Misconfigured(errors.New("stamp service unavailable: sekai client not configured"))
 	}
 	stampCtrl := rc.App.Stamps.WithContext(rc.Ctx)
 	region := renderregion.Value(rc.Cmd.Region)

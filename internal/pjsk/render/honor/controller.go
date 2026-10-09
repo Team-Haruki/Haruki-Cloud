@@ -2,13 +2,14 @@ package honor
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
@@ -61,7 +62,7 @@ func (c *Controller) BuildHonorRequest(query Query) (*drawing.HonorRequest, erro
 	query.Region = c.sources.ResolveRegion(query.Region)
 	src, ok := c.sources.SourceForRegion(query.Region)
 	if !ok {
-		return nil, fmt.Errorf("honor data source not configured")
+		return nil, usererror.Misconfigured(errors.New("honor data source not configured"))
 	}
 	return NewBuilder(src, c.assets).WithAssetReader(c.requestCtx, c.assetReader).BuildHonorRequest(query)
 }
@@ -76,7 +77,7 @@ func (c *Controller) RenderHonor(query Query) ([]byte, error) {
 
 func (c *Controller) RenderHonorImage(query Query) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	req, err := c.BuildHonorRequest(query)
 	if err != nil {

@@ -4,26 +4,31 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+
+	"haruki-cloud/internal/i18n"
 )
 
-func TestInputKeepsTheMessageAndSurvivesWrapping(t *testing.T) {
-	err := Inputf("无法解析的指令: %s", "xyz")
-	if err.Error() != "无法解析的指令: xyz" || !IsInput(err) {
-		t.Fatalf("Inputf = %q, IsInput = %v", err, IsInput(err))
-	}
+func TestIsInputJudgesTypedCodesOnly(t *testing.T) {
+	err := Unrecognized()
 	wrapped := fmt.Errorf("failed to search card: %w", err)
-	if wrapped.Error() != "failed to search card: 无法解析的指令: xyz" || !IsInput(wrapped) {
-		t.Fatalf("wrapped = %q, IsInput = %v", wrapped, IsInput(wrapped))
+	if !IsInput(err) || !IsInput(wrapped) || CodeOf(wrapped) != CodeUsage {
+		t.Fatalf("IsInput(Unrecognized) = %v, wrapped %v", IsInput(err), IsInput(wrapped))
 	}
-	base := errors.New("cards are required")
-	marked := Input(base)
-	if marked.Error() != base.Error() || !errors.Is(marked, base) || !IsInput(marked) {
-		t.Fatalf("Input(base) = %q", marked)
+	if IsInput(nil) || IsInput(errors.New("database unavailable")) || IsInput(Unavailable(i18n.FeatureRender, nil)) {
+		t.Fatal("nil, untyped or failure errors classified as input")
 	}
-	if Input(marked) != marked {
-		t.Fatal("Input re-wraps an already marked error")
+}
+
+func TestSetupMisuseAndUnrecognized(t *testing.T) {
+	setup := Setup(i18n.M("binding.required"))
+	if setup.Code != CodeSetup || !IsExpected(setup) || IsInput(setup) {
+		t.Fatalf("Setup = %+v", setup)
 	}
-	if Input(nil) != nil || IsInput(nil) || IsInput(errors.New("database unavailable")) {
-		t.Fatal("nil or unmarked errors classified as input")
+	misuse := Misuse(i18n.M("common.no_args"))
+	if misuse.Code != CodeUsage || misuse.Message.ID != "common.no_args" || !IsInput(misuse) {
+		t.Fatalf("Misuse = %+v", misuse)
+	}
+	if got := Unrecognized(); got.Code != CodeUsage || got.Message.ID != "common.unrecognized_args" {
+		t.Fatalf("Unrecognized = %+v", got)
 	}
 }

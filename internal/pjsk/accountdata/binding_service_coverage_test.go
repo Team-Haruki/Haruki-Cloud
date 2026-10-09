@@ -12,6 +12,9 @@ import (
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+
+	"haruki-cloud/internal/i18n"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -113,7 +116,7 @@ func TestBindingServiceValidationProbeAndLifecycleBranches(t *testing.T) {
 		"en": sekaiapi.ErrUserNotFound,
 	}}
 	failingService, _ := openAccountCoverageService(t, "probe_failures", failing)
-	if _, err := failingService.Bind(ctx, "qq", "42", "2000"); err == nil || !strings.Contains(err.Error(), "用户不存在") || !strings.Contains(err.Error(), "服务器维护中") || !strings.Contains(err.Error(), "transport failed") {
+	if _, err := failingService.Bind(ctx, "qq", "42", "2000"); err == nil || testutil.MessageID(err) != "binding.bind.failed_all" || !strings.Contains(err.Error(), "没有这个玩家") || !strings.Contains(err.Error(), "维护中") || !strings.Contains(testutil.ErrorDetail(err), "transport failed") {
 		t.Fatalf("all-server probe failure = %v", err)
 	}
 	canceled, cancel := context.WithCancel(ctx)
@@ -122,7 +125,7 @@ func TestBindingServiceValidationProbeAndLifecycleBranches(t *testing.T) {
 		t.Fatal("contextual profile probe should honor cancellation")
 	}
 	identityFailure := NewBindingService(client, accountCoverageIdentity{err: errors.New("identity failed")}, validator)
-	if _, err := identityFailure.Bind(ctx, "qq", "42", "1000"); err == nil || !strings.Contains(err.Error(), "identity failed") {
+	if _, err := identityFailure.Bind(ctx, "qq", "42", "1000"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "identity failed") {
 		t.Fatalf("identity failure = %v", err)
 	}
 }
@@ -227,14 +230,14 @@ func testBindingResolutionHelpers(t *testing.T, ctx context.Context, service *Bi
 
 func testBindingDefaultOperations(t *testing.T, ctx context.Context, service *BindingService) {
 	t.Helper()
-	if scope, label, err := normalizeDefaultScope("unsupported"); err != nil || scope != "unsupported" || label != "UNSUPPORTED" {
-		t.Fatalf("custom default scope normalization = %q, %q, %v", scope, label, err)
+	if scope, label, err := normalizeDefaultScope("unsupported"); err != nil || scope != "unsupported" || label.String() != "UNSUPPORTED" {
+		t.Fatalf("custom default scope normalization = %q, %v, %v", scope, label, err)
 	}
-	if scope, label, err := normalizeDefaultScope(""); err != nil || scope != GlobalDefaultBindingScope || label != "全局" || defaultScopeType(scope) != DefaultScopeGlobal {
-		t.Fatalf("global default normalization = %q, %q, %v", scope, label, err)
+	if scope, label, err := normalizeDefaultScope(""); err != nil || scope != GlobalDefaultBindingScope || label.ID != "binding.default.scope_global" || defaultScopeType(scope) != DefaultScopeGlobal {
+		t.Fatalf("global default normalization = %q, %v, %v", scope, label, err)
 	}
-	if scope, label, err := normalizeDefaultScope(" CN "); err != nil || scope != "cn" || label != "CN" || defaultScopeType(scope) != DefaultScopeServer {
-		t.Fatalf("server default normalization = %q, %q, %v", scope, label, err)
+	if scope, label, err := normalizeDefaultScope(" CN "); err != nil || scope != "cn" || label.String() != i18n.RegionLabel("cn").String() || defaultScopeType(scope) != DefaultScopeServer {
+		t.Fatalf("server default normalization = %q, %v, %v", scope, label, err)
 	}
 	if _, err := service.SetDefault(ctx, "qq", "42", "u1", "jp", "cn"); err == nil {
 		t.Fatal("setting CN default to JP binding should fail")

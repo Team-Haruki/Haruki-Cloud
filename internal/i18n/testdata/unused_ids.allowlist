@@ -1,0 +1,3 @@
+# Catalog message IDs that no code references yet, one per line, followed by
+# the reason. TestCatalogIntegrity fails for any other unused ID and for
+# entries here that are used or deleted.

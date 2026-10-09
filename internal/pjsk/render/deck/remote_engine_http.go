@@ -6,14 +6,15 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"io"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/httpcoding"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/observability/upstreamcall"
 
@@ -72,7 +73,7 @@ type deckPostOutcome struct {
 func (r *RemoteDeckRecommender) postEncoded(ctx context.Context, exec *remoteExecution, path string, payload []byte, contentType, logLabel string, responseBody any) error {
 	baseURL := exec.BaseURL()
 	if strings.TrimSpace(baseURL) == "" {
-		return fmt.Errorf("deck-service target base_url is empty")
+		return deckTagged(upstreamerr.KindNotConfigured, fmt.Errorf("deck-service target base_url is empty"))
 	}
 	var lastErr error
 	for attempt := 0; attempt <= r.maxRetries; attempt++ {
@@ -148,17 +149,17 @@ func (r *RemoteDeckRecommender) sendDeckPost(ctx context.Context, baseURL, path 
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return deckPostOutcome{err: ctxErr, done: true}, false
 		}
-		return deckPostOutcome{err: readErr}, false
+		return deckPostOutcome{err: upstreamerr.Transport(upstreamerr.ServiceDeck, "", readErr)}, false
 	}
 	if truncated {
-		return deckPostOutcome{err: fmt.Errorf("deck-service response exceeded %d bytes", maxDeckResponseBodyBytes), done: true}, false
+		return deckPostOutcome{err: deckTagged(upstreamerr.KindBadResponse, fmt.Errorf("deck-service response exceeded %d bytes", maxDeckResponseBodyBytes)), done: true}, false
 	}
 	if httpcoding.RefusedEncoding(resp.StatusCode, coding) {
 		return deckPostOutcome{}, true
 	}
 	body, err = httpcoding.DecodeBody(resp.Header.Get("Content-Encoding"), body, maxDeckResponseBodyBytes)
 	if err != nil {
-		return deckPostOutcome{err: fmt.Errorf("deck-service response: %w", err), done: true}, false
+		return deckPostOutcome{err: deckTagged(upstreamerr.KindBadResponse, fmt.Errorf("deck-service response: %w", err)), done: true}, false
 	}
 	return r.handleDeckPostResponse(ctx, path, logLabel, attempt, time.Since(start), resp.StatusCode, body, responseBody), false
 }
@@ -181,7 +182,7 @@ func (r *RemoteDeckRecommender) deckTransportError(ctx context.Context, path, lo
 	r.logger.WarnContext(ctx, logLabel+" failed",
 		"upstream", deckServiceName, "upstream_path", path, "attempt", attempt,
 		"duration_ms", commandtrace.Milliseconds(elapsed), "error_type", fmt.Sprintf("%T", err))
-	return deckPostOutcome{err: err, done: !isRetryableError(err, 0)}
+	return deckPostOutcome{err: upstreamerr.Transport(upstreamerr.ServiceDeck, "", err), done: !isRetryableError(err, 0)}
 }
 
 func (r *RemoteDeckRecommender) handleDeckPostResponse(ctx context.Context, path, logLabel string, attempt int, elapsed time.Duration, statusCode int, body []byte, responseBody any) deckPostOutcome {
@@ -218,12 +219,9 @@ func parseRemoteHTTPError(statusCode int, payload []byte) error {
 	}
 	var remoteErr remoteErrorResponse
 	if json.Unmarshal(payload, &remoteErr) == nil && strings.TrimSpace(remoteErr.Error) != "" {
-		return fmt.Errorf("%s", remoteErr.Error)
+		return &remoteJSONError{RemoteError{StatusCode: statusCode, Message: remoteErr.Error}}
 	}
-	if trimmed := strings.TrimSpace(string(payload)); trimmed != "" {
-		return fmt.Errorf("deck-service returned HTTP %d: %s", statusCode, trimmed)
-	}
-	return fmt.Errorf("deck-service returned HTTP %d", statusCode)
+	return &RemoteError{StatusCode: statusCode, Message: strings.TrimSpace(string(payload))}
 }
 
 func readDeckResponseBody(body io.Reader) ([]byte, bool, error) {

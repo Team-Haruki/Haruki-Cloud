@@ -1,0 +1,295 @@
+# 歌曲：查曲、谱面、BPM、歌曲列表、歌曲奖励、进度、自制谱面。
+
+[music.not_found]
+description = "查歌曲时找不到匹配的歌曲（不确定区服时）。占位符：UserQuery=用户写的歌曲名、别名或 ID，超过 30 个字截断。"
+other = "未找到歌曲：“{{.UserQuery}}”"
+
+[music.not_found_no_echo]
+description = "music.not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "未找到对应的歌曲"
+
+[music.not_found_unspecified]
+description = "查歌曲时找不到匹配的歌曲，且没有可显示的查询内容（不确定区服时）。"
+other = "未找到对应的歌曲"
+
+[music.not_found_in_region]
+description = "在某个区服查歌曲时找不到匹配的歌曲，提示可以加区服前缀查其他区服。占位符：Region=区服显示名；UserQuery=用户写的歌曲名、别名或 ID，超过 30 个字截断。"
+other = "{{.Region}}未找到歌曲：“{{.UserQuery}}”\n查询其他区服的歌曲请加区服前缀，例如 /cn查曲"
+
+[music.not_found_in_region_no_echo]
+description = "music.not_found_in_region 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Region=区服显示名。"
+other = "{{.Region}}未找到对应的歌曲\n查询其他区服的歌曲请加区服前缀，例如 /cn查曲"
+
+[music.not_found_unspecified_in_region]
+description = "在某个区服查歌曲时找不到匹配的歌曲，且没有可显示的查询内容。占位符：Region=区服显示名。"
+other = "{{.Region}}未找到对应的歌曲\n查询其他区服的歌曲请加区服前缀，例如 /cn查曲"
+
+[music.query_required]
+description = "查歌曲但没有写要查的歌曲。"
+other = "请写要查询的歌曲名、别名或歌曲 ID"
+
+[music.no_match]
+description = "按条件筛选歌曲（歌曲列表、歌曲奖励、歌曲排行）后没有结果。"
+other = "没有符合条件的歌曲"
+
+[music.no_jacket]
+description = "查歌曲封面，但该歌曲没有可用的封面资源。"
+other = "该歌曲没有可用的封面"
+
+[music.no_chart_difficulty]
+description = "该歌曲没有用户指定难度的谱面。占位符：Difficulty=难度显示名，例如 MASTER。"
+other = "该歌曲没有 {{.Difficulty}} 难度的谱面"
+
+[music.meta.missing]
+description = "歌曲计算类指令（控分、歌曲排行、组卡）需要的谱面计算数据暂时没有该歌曲。"
+other = "暂时没有该歌曲的谱面计算数据"
+
+[music.ambiguous]
+description = "查歌曲时有多首歌曲匹配，下面逐行列出候选。占位符：Candidates=候选列表，每行一首（music.ambiguous_candidate）。"
+other = "匹配到多首歌曲，请改用下面的 music<ID> 查询：\n{{.Candidates}}"
+
+[music.ambiguous_candidate]
+description = "music.ambiguous 的候选列表里的一行。占位符：ID=歌曲 ID；Title=歌曲名（游戏数据原文）。"
+other = "music{{.ID}}：{{.Title}}"
+
+[music.bpm.positive]
+description = "BPM 反查写的 BPM 小于等于 0。"
+other = "BPM 必须大于 0"
+
+[music.bpm.no_chart]
+description = "BPM 反查没有结果。占位符：UserBPM=用户写的 BPM 数值。"
+other = "没有找到 BPM 为 {{.UserBPM}} 的谱面"
+
+[music.bpm.no_chart_no_echo]
+description = "music.bpm.no_chart 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "没有找到这个 BPM 的谱面"
+
+[music.bpm.no_data]
+description = "查歌曲 BPM，但该谱面没有可用的 BPM 数据。"
+other = "该谱面没有可用的 BPM 数据"
+
+[music.note_count.positive]
+description = "物量反查写的物量小于等于 0。"
+other = "物量必须大于 0"
+
+[music.note_count.no_chart]
+description = "物量反查没有结果。占位符：UserCount=用户写的物量。"
+other = "没有找到物量为 {{.UserCount}} 的谱面"
+
+[music.note_count.no_chart_no_echo]
+description = "music.note_count.no_chart 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
+other = "没有找到这个物量的谱面"
+
+[music.note_count.no_chart_difficulty]
+description = "按难度的物量反查没有结果。占位符：UserCount=用户写的物量；Difficulty=难度显示名，例如 MASTER。"
+other = "没有找到物量为 {{.UserCount}} 的 {{.Difficulty}} 谱面"
+
+[music.note_count.no_chart_difficulty_no_echo]
+description = "music.note_count.no_chart_difficulty 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。占位符：Difficulty=难度显示名，例如 MASTER。"
+other = "没有找到这个物量的 {{.Difficulty}} 谱面"
+
+[music.custom_chart.jp_only]
+description = "自制谱面只能在日服查询。占位符：Region=日服的区服显示名。"
+other = "自制谱面只支持{{.Region}}，请加 jp 前缀查询"
+
+[music.custom_chart.id_required]
+description = "查自制谱面但没有写 28 位自制谱面 ID。"
+other = "请写 28 位自制谱面 ID"
+
+[music.custom_chart.fetch_failed]
+description = "获取自制谱面数据失败（游戏数据服务出错）。"
+other = "获取自制谱面数据失败，请稍后再试"
+
+[music.custom_chart.invalid]
+description = "获取到的自制谱面数据无法解析。"
+other = "自制谱面数据无效，暂时无法显示"
+
+[music.custom_chart.original_missing]
+description = "自制谱面对应的原曲在游戏数据里不存在。"
+other = "找不到自制谱面对应的原曲"
+
+[music.custom_chart.not_found]
+description = "找不到用户写的自制谱面 ID。"
+other = "未找到对应的自制谱面"
+
+[music.board.spec_invalid]
+description = "歌曲排行里要关注的歌曲找不到，或参数格式不正确，作为 common.bad_param 的原因行。"
+other = "找不到这首歌曲，或参数格式不正确"
+
+[music.board.too_many_specs]
+description = "歌曲排行关注的歌曲太多。占位符：Max=最多可关注的歌曲数。"
+other = "最多只能关注 {{.Max}} 首歌曲"
+
+[music.unreleased]
+description = "查询的歌曲还没有上线。"
+other = "该歌曲还未上线"
+
+[music.note_count.required]
+description = "物量反查没有写物量数值。"
+other = "请写物量数值"
+
+[music.bpm.query_required]
+description = "BPM 查询没有写歌曲。"
+other = "请写要查询 BPM 的歌曲名、别名或歌曲 ID"
+
+[music.bpm.value_required]
+description = "BPM 反查没有写 BPM 数值。"
+other = "请写要反查的 BPM 数值，例如 200"
+
+[music.bpm.value_invalid]
+description = "BPM 反查写的 BPM 不是正数，作为 common.bad_param 的原因行。"
+other = "BPM 应为正数，例如 200"
+
+[music.ambiguous_list.detail]
+description = "查曲匹配到多首歌曲时，候选列表图片的标题。"
+other = "匹配到多首歌曲，请用歌曲 ID 查询，例如 /查曲 123"
+
+[music.ambiguous_list.bpm]
+description = "查 BPM 匹配到多首歌曲时，候选列表图片的标题。"
+other = "匹配到多首歌曲，请用歌曲 ID 查询，例如 /查BPM 123"
+
+[music.caption]
+description = "一首歌曲的文字标题：/查曲绘 图片下方的说明、/查BPM 回复的第一行。占位符：ID=歌曲 ID；Title=歌曲名（游戏数据原文）。"
+other = "【{{.ID}}】{{.Title}}"
+
+[music.bpm.detail.title]
+description = "/查BPM 回复的第一行，不知道是哪首歌曲时使用（兜底）。"
+other = "歌曲 BPM"
+
+[music.bpm.detail.difficulty]
+description = "/查BPM 回复里的难度行。占位符：Difficulty=难度显示名，例如 MASTER。"
+other = "难度：{{.Difficulty}}"
+
+[music.bpm.detail.main]
+description = "/查BPM 回复里的主 BPM 行。占位符：BPM=主 BPM 数值。"
+other = "主 BPM：{{.BPM}}"
+
+[music.bpm.detail.changes]
+description = "/查BPM 回复里的 BPM 变化行。占位符：Sequence=按出现顺序排列的 BPM，用“ / ”分隔，例如“120 / 180 / 120”。"
+other = "BPM 变化：{{.Sequence}}"
+
+[music.bpm.detail.duration]
+description = "/查BPM 回复里的谱面时长行。占位符：Duration=时长（format.duration.*），例如“2分03秒”。"
+other = "时长：{{.Duration}}"
+
+[music.bpm.detail.bars]
+description = "/查BPM 回复里的小节数行。占位符：Count=小节数。"
+other = "小节数：{{.Count}}"
+
+[music.lookup_list.note_count]
+description = "物量反查结果图片的标题。占位符：Count=物量。"
+other = "物量为 {{.Count}} 的谱面"
+
+[music.lookup_list.note_count_difficulty]
+description = "按难度的物量反查结果图片的标题。占位符：Count=物量；Difficulty=难度显示名，例如 MASTER。"
+other = "物量为 {{.Count}} 的 {{.Difficulty}} 谱面"
+
+[music.lookup_list.bpm]
+description = "BPM 反查（/bpm搜索）结果图片的标题。占位符：BPM=用户写的 BPM 数值。"
+other = "BPM 为 {{.BPM}} 的歌曲"
+
+[music.image.placeholder_nickname]
+description = "图片：歌曲图片顶部没有玩家信息时，占位个人信息卡片上显示的昵称。"
+other = "HarukiBot"
+
+# 以下是画进图片的文字（music.image.*）。
+
+[music.image.board.title]
+description = "图片：歌曲排行（/歌曲排行）的标题。占位符：Board=排行名称（music.image.board.name 或 name_live）；Target=排序指标（music.image.board.target_*）；Order=排序方向（music.image.board.order_*）；Page=页码（format.page），例如“第 1/3 页”。"
+other = "{{.Board}} - {{.Target}} {{.Order}} - {{.Page}}"
+
+[music.image.board.name]
+description = "图片：歌曲排行的名称（不区分 Live 类型时）。"
+other = "歌曲排行"
+
+[music.image.board.name_live]
+description = "图片：按 Live 类型的歌曲排行名称。占位符：Live=Live 类型显示名（format.live_type.*），例如“单人 Live”。"
+other = "{{.Live}} 歌曲排行"
+
+[music.image.board.target_score]
+description = "图片：歌曲排行的排序指标：Live 分数。"
+other = "Live 分数"
+
+[music.image.board.target_pt]
+description = "图片：歌曲排行的排序指标：每点演出能量获得的活动 PT。显示在标题行，和 Live 类型、排序方向、页码在同一行。"
+other = "活动 PT/演出能量"
+
+[music.image.board.target_pt_per_time]
+description = "图片：歌曲排行的排序指标：单位时间获得的活动 PT。"
+other = "活动 PT/时间"
+
+[music.image.board.target_tps]
+description = "图片：歌曲排行的排序指标：每秒点击数。"
+other = "每秒点击"
+
+[music.image.board.target_time]
+description = "图片：歌曲排行的排序指标：歌曲时长。"
+other = "歌曲时长"
+
+[music.image.board.order_desc]
+description = "图片：歌曲排行的排序方向：从大到小。"
+other = "降序"
+
+[music.image.board.order_asc]
+description = "图片：歌曲排行的排序方向：从小到大。"
+other = "升序"
+
+[music.image.board.effective_skill]
+description = "图片：歌曲排行的参数行（多人 Live）：卡组实效值。占位符：Percent=百分比，例如“250%”。"
+other = "实效 {{.Percent}}"
+
+[music.image.board.skills]
+description = "图片：歌曲排行的参数行：5 张卡的技能加成。占位符：Skills=5 个技能百分数，用“/”分隔，例如“100/100/100/100/100”。"
+other = "技能 {{.Skills}}"
+
+[music.image.board.strategy]
+description = "图片：歌曲排行的参数行：技能顺序策略。占位符：Strategy=策略代码（大写），用户输入的取值。"
+other = "策略 {{.Strategy}}"
+
+[music.image.board.power]
+description = "图片：歌曲排行的参数行：卡组综合力。占位符：Power=综合力。"
+other = "综合力 {{.Power}}"
+
+[music.image.board.bonus]
+description = "图片：歌曲排行的参数行：活动加成。占位符：Percent=加成百分比，例如“250%”。"
+other = "加成 {{.Percent}}"
+
+[music.image.board.interval]
+description = "图片：歌曲排行的参数行：两局之间的间隔。占位符：Seconds=秒数，保留 1 位小数。"
+other = "间隔 {{.Seconds}} 秒"
+
+[music.image.detail.target_score]
+description = "图片：歌曲详情排行表的指标名：分数。"
+other = "分数"
+
+[music.image.detail.target_pt]
+description = "图片：歌曲详情排行表的指标名：活动 PT。"
+other = "PT"
+
+[music.image.detail.target_pt_per_time]
+description = "图片：歌曲详情排行表的指标名：每小时活动 PT（时速）。"
+other = "时速"
+
+[music.image.rewards.estimate]
+description = "图片：歌曲奖励图片里的说明：没有使用抓包数据，结果是根据公开信息估算的。"
+other = "没有使用抓包数据（Suite），以下是根据公开信息估算的结果"
+
+[music.image.rewards.estimate_note]
+description = "图片：歌曲奖励图片里，接在具体原因后面的一行说明。"
+other = "以下是根据公开信息估算的结果"
+
+[music.image.custom_chart.artist_unknown]
+description = "图片：自制谱面没有作者名和谱面 ID 时，作者一栏显示的文字。"
+other = "自制谱面"
+
+[music.image.custom_chart.bpm_range]
+description = "图片：自制谱面 BPM 变化较多时的显示。占位符：Min=最低 BPM；Max=最高 BPM；Segments=不同 BPM 的段数。"
+other = "{{.Min}}~{{.Max}}（{{.Segments}} 段）"
+
+[music.b30.unavailable]
+description = "/b30 的回复：官方没有公开详细定数，所以不提供 B30。"
+other = "官方没有公开详细定数，暂不提供 B30"
+
+[music.image.detail.pt_per_hour]
+description = "歌曲详情图片里排行矩阵的时速数值。占位符：Value=每小时活动 PT，大于等于 1 万时以万为单位，如“12.35万”。"
+other = "{{.Value}}/h"

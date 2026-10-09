@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"haruki-cloud/internal/i18n"
 	"strings"
 	"testing"
 
@@ -26,7 +27,7 @@ func TestDeckScoreUpHandlerAndExecutionEdges(t *testing.T) {
 		testutil.Require(t, !(err != nil), "score-up request = %#v, %v", request, err)
 		testutil.Require(t, !(request == nil), "score-up request = %#v, %v", request, err)
 		testutil.Require(t, !(request.Mode != "deck-score-up"), "score-up request = %#v, %v", request, err)
-		testutil.Require(t, strings.Contains(string(request.Params), "实效"), "score-up request = %#v, %v", request, err)
+		testutil.Require(t, strings.Contains(string(request.Params), `"score_up":268`), "score-up request = %#v, %v", request, err)
 	}
 
 	message, err := executeDeck(&RequestContext{Ctx: context.Background(), Cmd: request})
@@ -34,6 +35,8 @@ func TestDeckScoreUpHandlerAndExecutionEdges(t *testing.T) {
 		testutil.Require(t, !(err != nil), "score-up execution = %#v, %v", message, err)
 		testutil.Require(t, !(len(message) != 1), "score-up execution = %#v, %v", message, err)
 		testutil.Require(t, !(message[0].Type != onebot11.TypeText), "score-up execution = %#v, %v", message, err)
+		want := i18n.T("deck.score_up.result", i18n.Data{"Leader": "160%", "Internal": "700", "ScoreUp": "268%", "Multiplier": "3.68"})
+		testutil.Require(t, message[0].Data.(onebot11.TextData).Text == want, "score-up text = %q, want %q", message[0].Data.(onebot11.TextData).Text, want)
 	}
 
 	bad := &RequestContext{Ctx: context.Background(), Cmd: &CommandRequest{Mode: "deck-score-up", Params: []byte("{")}}

@@ -2,8 +2,8 @@ package deck
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"slices"
 	"strconv"
 	"strings"
@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -18,6 +19,7 @@ import (
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/utils/logger"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewController(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot rendersnapshot.Snapshot, defaultRegion renderregion.Value) *Controller {
@@ -191,7 +193,7 @@ func (c *Controller) RenderRecommend(req drawing.DeckRequest) ([]byte, error) {
 
 func (c *Controller) RenderRecommendImage(req drawing.DeckRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildRecommendRequest(req)
@@ -204,13 +206,13 @@ func (c *Controller) RenderRecommendImage(req drawing.DeckRequest) (drawing.Imag
 
 func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRequest, error) {
 	if c == nil {
-		return nil, fmt.Errorf("deck controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("deck controller is not initialized"))
 	}
 	if c.cardSources == nil {
-		return nil, fmt.Errorf("deck card source is not configured")
+		return nil, usererror.Misconfigured(errors.New("deck card source is not configured"))
 	}
 	if c.engine == nil {
-		return nil, fmt.Errorf("deck recommend service is not configured")
+		return nil, errDeckNotConfigured
 	}
 	ctx := c.contextOrBackground()
 	if err := ctx.Err(); err != nil {
@@ -240,7 +242,7 @@ func (c *Controller) RenderAutoRecommend(query AutoQuery) ([]byte, error) {
 
 func (c *Controller) RenderAutoRecommendImage(query AutoQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	payload, err := c.BuildAutoRecommendRequest(query)
 	if err != nil {
@@ -281,7 +283,7 @@ func (c *Controller) recommendTimeoutMs() int {
 
 func (c *Controller) resolveAutoRecommendSnapshot(query AutoQuery) (rendersnapshot.Snapshot, error) {
 	if c == nil {
-		return nil, fmt.Errorf("deck controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("deck controller is not initialized"))
 	}
 	if shouldUseSyntheticAutoRecommendSnapshot(query) {
 		return c.buildSyntheticAutoRecommendSnapshot(query)
@@ -292,10 +294,7 @@ func (c *Controller) resolveAutoRecommendSnapshot(query AutoQuery) (rendersnapsh
 		}
 		return c.snapshot, nil
 	}
-	if query.UseCurrentDeck {
-		return nil, fmt.Errorf("user data is required for deck auto recommend")
-	}
-	return nil, fmt.Errorf("user data is required for deck auto recommend")
+	return nil, ErrUserDataRequired
 }
 
 func shouldUseSyntheticAutoRecommendSnapshot(query AutoQuery) bool {

@@ -237,24 +237,58 @@ func commandHelpRegionSection(locale i18n.Locale, markdown, path string) string 
 		return ""
 	}
 	primary, handler := commandHelpPrimaryHandler(markdown, path)
-	if handler == nil || len(handler.Regions) == 0 {
+	if handler == nil {
+		return ""
+	}
+	regions := commandHelpRegions(path, handler.Regions)
+	if len(regions) == 0 {
 		return ""
 	}
 	heading := "## " + i18n.M("usage.help.section_region").In(locale)
-	if len(handler.Regions) == 1 {
-		only := i18n.M("usage.help.region_only", i18n.Data{"Region": i18n.RegionLabel(string(handler.Regions[0]))})
+	if len(regions) == 1 {
+		only := i18n.M("usage.help.region_only", i18n.Data{"Region": i18n.RegionLabel(string(regions[0]))})
 		return heading + "\n- " + only.In(locale)
 	}
-	codes := make([]string, 0, len(handler.Regions))
+	codes := make([]string, 0, len(regions))
 	for _, code := range i18n.RegionCodes {
-		if slices.Contains(handler.Regions, renderregion.Value(code)) {
+		if slices.Contains(regions, renderregion.Value(code)) {
 			codes = append(codes, "`"+code+"`")
 		}
 	}
-	example := "`/" + string(handler.Regions[0]) + strings.TrimPrefix(primary, "/") + "`"
+	example := "`/" + string(regions[0]) + strings.TrimPrefix(primary, "/") + "`"
 	prefix := i18n.M("usage.help.region_prefix", i18n.Data{"Codes": strings.Join(codes, " "), "Example": example})
-	fallback := i18n.M("usage.help.region_default", i18n.Data{"Region": i18n.RegionLabel(string(handler.Regions[0]))})
-	return heading + "\n- " + prefix.In(locale) + "\n- " + fallback.In(locale)
+	fallback := i18n.M("usage.help.region_default", i18n.Data{"Region": i18n.RegionLabel(string(regions[0]))})
+	section := heading + "\n- " + prefix.In(locale) + "\n- " + fallback.In(locale)
+	if isCNMySekaiHelpRoute(path) {
+		section += "\n- " + i18n.M("usage.help.region_no_cn_mysekai").In(locale)
+	}
+	return section
+}
+
+// commandHelpRegions are the regions the help for path lists: the regions
+// its handler accepts, without CN for the MySekai routes that CN rejects
+// (see isMySekaiRegionAllowed; only allowlisted groups may use them).
+func commandHelpRegions(path string, regions []renderregion.Value) []renderregion.Value {
+	if !isCNMySekaiHelpRoute(path) {
+		return regions
+	}
+	return slices.DeleteFunc(slices.Clone(regions), func(region renderregion.Value) bool {
+		return region == renderregion.CN
+	})
+}
+
+// isCNMySekaiHelpRoute reports whether path is a MySekai route that the CN
+// MySekai gate rejects. The MySekai housing ranking and the MySekai deck are
+// open to CN.
+func isCNMySekaiHelpRoute(path string) bool {
+	path = commandHelpRoutePath(strings.Trim(path, "/"))
+	switch path {
+	case "mysekai/housing-sk":
+		return false
+	case "profile/check-data-mysekai":
+		return true
+	}
+	return strings.HasPrefix(path, "mysekai/")
 }
 
 // commandHelpPrimaryHandler returns the route's primary command and its

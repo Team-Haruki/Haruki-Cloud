@@ -17,6 +17,10 @@ other = "在指令前加区服代码可以指定区服：{{.Codes}}，例如 {{.
 description = "“区服”小标题下的第二行，说明不写区服时用哪个区服。占位符：Region=没有默认绑定时使用的区服显示名（如“日服(JP)”）。"
 other = "不写时使用默认绑定的区服，没有默认绑定时使用{{.Region}}"
 
+[usage.help.region_no_cn_mysekai]
+description = "烤森指令帮助的“区服”小标题下的最后一行：国服不开放烤森功能，所以区服代码里没有 cn。"
+other = "国服(CN)不支持烤森功能"
+
 [usage.help.region_only]
 description = "“区服”小标题下唯一的一行：这个指令只支持一个区服。占位符：Region=区服显示名（如“日服(JP)”）。"
 other = "只支持{{.Region}}"

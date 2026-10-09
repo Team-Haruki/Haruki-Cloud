@@ -383,3 +383,32 @@ func newCommandHelpDrawingServer(t *testing.T, wantPath string) (*httptest.Serve
 	}))
 	return server, &calls
 }
+
+// The generated 区服 section of a MySekai route that CN rejects leaves cn
+// out and says so; the routes open to CN keep it.
+func TestMySekaiHelpRegionSectionLeavesOutCN(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+	note := i18n.M("usage.help.region_no_cn_mysekai").String()
+	for path, blocked := range map[string]bool{
+		"mysekai/map":                true,
+		"mysekai/resource":           true,
+		"profile/check-data-mysekai": true,
+		"mysekai/housing-sk":         false,
+		"deck/mysekai":               false,
+	} {
+		markdown, ok, err := i18n.HelpDoc(i18n.DefaultLocale, commandHelpDocKey(path))
+		if err != nil || !ok {
+			t.Fatalf("HelpDoc(%s) = %v, %v", path, ok, err)
+		}
+		section := commandHelpRegionSection(i18n.DefaultLocale, markdown, path)
+		if section == "" {
+			t.Fatalf("%s: no region section", path)
+		}
+		if got := strings.Contains(section, "`cn`"); got == blocked {
+			t.Errorf("%s: region section lists cn = %v:\n%s", path, got, section)
+		}
+		if got := strings.Contains(section, note); got != blocked {
+			t.Errorf("%s: region section has the CN note = %v:\n%s", path, got, section)
+		}
+	}
+}

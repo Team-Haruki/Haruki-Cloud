@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -146,7 +147,7 @@ func TestControllerBuildStampListRequestPaginatesAtFiveByFive(t *testing.T) {
 	if len(req.Stamps) != 25 {
 		t.Fatalf("expected first page size 25, got %d", len(req.Stamps))
 	}
-	if req.PageMessage == nil || *req.PageMessage != "第 1 / 2 页" {
+	if req.PageMessage == nil || *req.PageMessage != i18n.PageLabel(1, 2).String() {
 		t.Fatalf("unexpected first page message: %#v", req.PageMessage)
 	}
 }

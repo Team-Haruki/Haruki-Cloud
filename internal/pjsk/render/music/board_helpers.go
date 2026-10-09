@@ -2,54 +2,66 @@ package music
 
 import (
 	"fmt"
+	"math"
+	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/render/common"
 )
 
+var musicBoardTargetLabels = map[string]i18n.Message{
+	"score":             i18n.M("music.image.board.target_score"),
+	"pt":                i18n.M("music.image.board.target_pt"),
+	pointsPerTimeMetric: i18n.M("music.image.board.target_pt_per_time"),
+	"tps":               i18n.M("music.image.board.target_tps"),
+	"time":              i18n.M("music.image.board.target_time"),
+}
+
+// buildMusicBoardTexts is the title and the parameter line of the song
+// ranking image.
 func buildMusicBoardTexts(query musicBoardResolvedQuery, totalPage int) (string, string) {
-	targetText := map[string]string{
-		"score":             "LIVE分数",
-		"pt":                "活动PT/体力",
-		pointsPerTimeMetric: "活动PT/时间",
-		"tps":               "每秒点击",
-		"time":              "歌曲时长",
-	}[query.Target]
-	orderText := "降序"
+	target := i18n.Verbatim(query.Target)
+	if label, ok := musicBoardTargetLabels[query.Target]; ok {
+		target = label
+	}
+	order := i18n.M("music.image.board.order_desc")
 	if query.Ascend {
-		orderText = "升序"
+		order = i18n.M("music.image.board.order_asc")
 	}
-
-	liveText := map[string]string{
-		"solo":  "单人LIVE",
-		"auto":  "自动LIVE",
-		"multi": "多人LIVE",
-	}[query.LiveType]
-	if query.Target == "tps" || query.Target == "time" {
-		liveText = ""
+	board := i18n.M("music.image.board.name")
+	switch query.LiveType {
+	case "solo", "auto", "multi":
+		if query.Target != "tps" && query.Target != "time" {
+			board = i18n.M("music.image.board.name_live", i18n.Data{"Live": i18n.LiveTypeLabel(query.LiveType)})
+		}
 	}
-
-	title := "歌曲排行"
-	if liveText != "" {
-		title = liveText + "歌曲排行"
-	}
-	title = fmt.Sprintf("%s - %s %s - 第%d页/共%d页", title, targetText, orderText, query.Page, totalPage)
+	title := i18n.T("music.image.board.title", i18n.Data{
+		"Board":  board,
+		"Target": target,
+		"Order":  order,
+		"Page":   i18n.PageLabel(query.Page, totalPage),
+	})
 
 	parts := make([]string, 0, 5)
 	if query.Target == "score" || query.Target == "pt" || query.Target == pointsPerTimeMetric {
 		if query.LiveType == "multi" {
-			parts = append(parts, fmt.Sprintf("实效 %.0f%%", query.Skills[0]*100))
+			parts = append(parts, i18n.T("music.image.board.effective_skill", i18n.Data{"Percent": i18n.PercentN(query.Skills[0]*100, 0)}))
 		} else {
-			parts = append(parts, fmt.Sprintf("技能 %.0f/%.0f/%.0f/%.0f/%.0f", query.Skills[0]*100, query.Skills[1]*100, query.Skills[2]*100, query.Skills[3]*100, query.Skills[4]*100))
-			parts = append(parts, "策略 "+strings.ToUpper(query.SkillStrategy))
+			skills := make([]string, 0, 5)
+			for _, skill := range query.Skills[:5] {
+				skills = append(skills, strconv.FormatFloat(math.Round(skill*100), 'f', 0, 64))
+			}
+			parts = append(parts, i18n.T("music.image.board.skills", i18n.Data{"Skills": strings.Join(skills, "/")}))
+			parts = append(parts, i18n.T("music.image.board.strategy", i18n.Data{"Strategy": strings.ToUpper(query.SkillStrategy)}))
 		}
 	}
 	if query.Target == "pt" || query.Target == pointsPerTimeMetric {
-		parts = append(parts, fmt.Sprintf("综合 %d", query.Power))
-		parts = append(parts, fmt.Sprintf("加成 %.0f%%", query.DeckBonus))
+		parts = append(parts, i18n.T("music.image.board.power", i18n.Data{"Power": query.Power}))
+		parts = append(parts, i18n.T("music.image.board.bonus", i18n.Data{"Percent": i18n.PercentN(query.DeckBonus, 0)}))
 	}
 	if query.Target == pointsPerTimeMetric || query.Target == "time" {
-		parts = append(parts, fmt.Sprintf("间隔 %.1fs", query.PlayInterval))
+		parts = append(parts, i18n.T("music.image.board.interval", i18n.Data{"Seconds": strconv.FormatFloat(query.PlayInterval, 'f', 1, 64)}))
 	}
 
 	return title, strings.Join(parts, "  |  ")

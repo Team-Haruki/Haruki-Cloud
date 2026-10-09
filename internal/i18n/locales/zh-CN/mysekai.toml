@@ -2,7 +2,7 @@
 
 [mysekai.data_invalid]
 description = "烤森数据无法解析（上传的数据损坏）。"
-other = "烤森数据解析失败，请在 Haruki 工具箱重新上传烤森（MySekai）数据"
+other = "烤森（MySekai）数据无法解析，请在 Haruki 工具箱重新上传"
 
 [mysekai.talk.character_required]
 description = "烤森对话列表没有写角色名。"
@@ -183,3 +183,189 @@ other = "当前筛选下没有可购买的商品；在指令后加上“全部�
 [mysekai.photo.taken_at]
 description = "烤森照片下方的拍摄时间。占位符：Time=拍摄时间（format.time.datetime，未知时为 format.time.unknown）。"
 other = "拍摄时间：{{.Time}}"
+
+# 以下是画进图片的文字（mysekai.image.*）。
+
+[mysekai.image.blueprint_term.tab_limited]
+description = "图片：限时蓝图页签名称（/烤森限时蓝图），也用在 /msf 家具详情的限时信息里；区服没有页签类型时也用它。"
+other = "限时蓝图"
+
+[mysekai.image.blueprint_term.tab_birthday]
+description = "图片：生日和周年纪念的限时蓝图页签名称。"
+other = "生日/周年蓝图"
+
+[mysekai.image.blueprint_term.period]
+description = "图片：/msf 家具详情里，蓝图正在进行的限时期间。占位符：Tab=页签名称（mysekai.image.blueprint_term.tab_*）；Start=开始时间（format.time.datetime）；End=结束时间（format.time.datetime）。"
+other = "【{{.Tab}} {{.Start}} ~ {{.End}}】"
+
+[mysekai.image.blueprint_term.period_ended]
+description = "图片：/msf 家具详情里，蓝图最近一次限时期间已经结束。占位符：Tab=页签名称（mysekai.image.blueprint_term.tab_*）；Start=开始时间（format.time.datetime）；End=结束时间（format.time.datetime）。"
+other = "【{{.Tab}} {{.Start}} ~ {{.End}}（已结束）】"
+
+[mysekai.image.blueprint_term.period_upcoming]
+description = "图片：/msf 家具详情里，蓝图的下一次限时期间还没有开始。占位符：Tab=页签名称（mysekai.image.blueprint_term.tab_*）；Start=开始时间（format.time.datetime）；End=结束时间（format.time.datetime）。"
+other = "【{{.Tab}} {{.Start}} ~ {{.End}}（未开始）】"
+
+[mysekai.image.blueprint_term.craft_limit]
+description = "图片：/msf 家具详情里，限时期间的制作次数上限。占位符：Count=最多制作次数。"
+other = "【限时期间最多制作 {{.Count}} 次】"
+
+[mysekai.image.blueprint_term.extra_materials]
+description = "图片：/msf 家具详情里，限时期间额外需要的材料。占位符：Materials=材料列表，每项是 mysekai.image.material_quantity，用“、”分隔。"
+other = "【限时额外材料：{{.Materials}}】"
+
+[mysekai.image.material_quantity]
+description = "图片：一种烤森材料和数量，例如“木材×3”。占位符：Name=材料名（游戏数据原文）或 mysekai.image.material_unknown；Quantity=数量。"
+other = "{{.Name}}×{{.Quantity}}"
+
+[mysekai.image.material_unknown]
+description = "图片：游戏数据里没有名称的烤森材料。占位符：ID=材料 ID。"
+other = "烤森材料 {{.ID}}"
+
+[mysekai.image.fixture.craftable]
+description = "图片：/msf 家具详情的标签：可以制作。这一组标签都不带 emoji。"
+other = "【可制作】"
+
+[mysekai.image.fixture.not_craftable]
+description = "图片：/msf 家具详情的标签：不能制作。"
+other = "【不可制作】"
+
+[mysekai.image.fixture.recyclable]
+description = "图片：/msf 家具详情的标签：可以回收。"
+other = "【可回收】"
+
+[mysekai.image.fixture.not_recyclable]
+description = "图片：/msf 家具详情的标签：不能回收。"
+other = "【不可回收】"
+
+[mysekai.image.fixture.player_action]
+description = "图片：/msf 家具详情的标签：玩家可以和家具交互。"
+other = "【玩家可交互】"
+
+[mysekai.image.fixture.no_player_action]
+description = "图片：/msf 家具详情的标签：玩家不能和家具交互。"
+other = "【玩家不可交互】"
+
+[mysekai.image.fixture.character_action]
+description = "图片：/msf 家具详情的标签：角色会和家具交互。"
+other = "【角色可交互】"
+
+[mysekai.image.fixture.no_character_action]
+description = "图片：/msf 家具详情的标签：角色不会和家具交互。"
+other = "【角色不可交互】"
+
+[mysekai.image.fixture.sketchable]
+description = "图片：/msf 家具详情的标签：蓝图可以抄写。"
+other = "【蓝图可抄写】"
+
+[mysekai.image.fixture.not_sketchable]
+description = "图片：/msf 家具详情的标签：蓝图不能抄写。"
+other = "【蓝图不可抄写】"
+
+[mysekai.image.fixture.convertible]
+description = "图片：/msf 家具详情的标签：蓝图可以合成获得。"
+other = "【蓝图可合成】"
+
+[mysekai.image.fixture.not_convertible]
+description = "图片：/msf 家具详情的标签：蓝图不能合成获得。"
+other = "【蓝图不可合成】"
+
+[mysekai.image.fixture.craft_limit]
+description = "图片：/msf 家具详情的标签：最多能制作几次。占位符：Count=最多制作次数。"
+other = "【最多制作 {{.Count}} 次】"
+
+[mysekai.image.fixture.craft_unlimited]
+description = "图片：/msf 家具详情的标签：制作次数没有上限。"
+other = "【无制作次数限制】"
+
+[mysekai.image.fixture.progress]
+description = "图片：烤森家具列表顶部的收集进度。占位符：Obtained=已获得数量；Total=总数；Percent=百分比，例如“42.5%”。"
+other = "总收集进度（不含生日家具）：{{.Obtained}}/{{.Total}}（{{.Percent}}）"
+
+[mysekai.image.music_record.progress]
+description = "图片：烤森唱片列表顶部的收集进度。占位符：Obtained=已获得数量；Total=总数；Percent=百分比，例如“42.5%”。"
+other = "总收集进度：{{.Obtained}}/{{.Total}}（{{.Percent}}）"
+
+[mysekai.image.talk.title_all]
+description = "图片：烤森对话家具列表（显示全部对话）的标题。占位符：Count=对话总数。"
+other = "对话家具列表（共 {{.Count}} 条对话）"
+
+[mysekai.image.talk.title_unread]
+description = "图片：烤森未读对话家具列表的标题和阅读进度。占位符：Read=已读对话数；Total=对话总数；Percent=百分比，例如“42.5%”。"
+other = "未读对话家具列表（已读 {{.Read}}/{{.Total}}，{{.Percent}}）"
+
+[mysekai.image.talk.footnote]
+description = "图片：烤森未读对话家具列表底部的说明。"
+other = "只显示有未读对话的家具，灰色表示还没有获得蓝图"
+
+[mysekai.image.shop.title]
+description = "图片：烤森商店的标题，商品来自用户上传的烤森数据。"
+other = "烤森商店（按上传的数据）"
+
+[mysekai.image.shop.title_pass_inactive]
+description = "图片：烤森商店的标题，烤森通行证没有生效。"
+other = "烤森商店（按上传的数据，通行证未生效）"
+
+[mysekai.image.shop.type_blueprint_daily]
+description = "图片：烤森商店的分组标题：每日蓝图。"
+other = "每日蓝图"
+
+[mysekai.image.shop.type_blueprint_weekly]
+description = "图片：烤森商店的分组标题：每周蓝图。"
+other = "每周蓝图"
+
+[mysekai.image.shop.type_material]
+description = "图片：烤森商店的分组标题：材料。"
+other = "材料"
+
+[mysekai.image.shop.type_tool]
+description = "图片：烤森商店的分组标题：工具。"
+other = "工具"
+
+[mysekai.image.shop.item_unnamed]
+description = "图片：游戏数据里没有名称的烤森商店商品。占位符：ID=商品 ID。"
+other = "商品 {{.ID}}"
+
+[mysekai.image.shop.tag_owned]
+description = "图片：接在烤森商店商品名后面的标签：已经持有这个蓝图。"
+other = "【已持有】"
+
+[mysekai.image.shop.tag_not_owned]
+description = "图片：接在烤森商店商品名后面的标签：还没有持有这个蓝图。"
+other = "【未持有】"
+
+[mysekai.image.shop.tag_storage_full]
+description = "图片：接在烤森商店商品名后面的标签：材料仓库已满，不能再购买。"
+other = "【材料仓库已满】"
+
+[mysekai.image.shop.tag_pass_required]
+description = "图片：接在烤森商店商品名后面的标签：需要烤森通行证。"
+other = "【需通行证】"
+
+[mysekai.image.shop.tag_bought]
+description = "图片：接在烤森商店商品名后面的标签：本期已经买过。"
+other = "【本期已购买】"
+
+[mysekai.image.shop.tag_remaining]
+description = "图片：接在烤森商店商品名后面的标签：还能买几次。占位符：Count=剩余次数。"
+other = "【剩余 {{.Count}} 次】"
+
+[mysekai.image.housing.title]
+description = "图片：百景榜的标题。占位符：Name=百景活动名（游戏数据原文）或 mysekai.image.housing.issue。"
+other = "烤森百景 {{.Name}}"
+
+[mysekai.image.housing.title_unnamed]
+description = "图片：百景榜的标题，活动没有名称时使用。"
+other = "烤森百景"
+
+[mysekai.image.housing.issue]
+description = "图片：百景活动没有名称时，用期数代替。占位符：ID=期数。"
+other = "第 {{.ID}} 期"
+
+[mysekai.image.housing.notice]
+description = "图片：百景榜下方的说明：名次是统计出来的。"
+other = "结果由统计得出，不一定准确，仅供参考"
+
+[mysekai.image.progress]
+description = "图片：烤森家具列表、唱片列表每个分组的收集进度。占位符：Obtained=已获得数量；Total=总数；Percent=百分比，例如“42.5%”。"
+other = "{{.Obtained}}/{{.Total}}（{{.Percent}}）"

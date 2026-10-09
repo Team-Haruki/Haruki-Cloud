@@ -129,7 +129,7 @@ func TestBuildHousingCompetitionLineSamplesAndRanksByReviewCount(t *testing.T) {
 	}
 	{
 		testutil.Require(t, !(result.Request.Description == nil), "unexpected notice: %v", result.Request.Description)
-		testutil.Require(t, !(*result.Request.Description != HousingCompetitionNotice), "unexpected notice: %v", result.Request.Description)
+		testutil.Require(t, !(*result.Request.Description != HousingCompetitionNotice()), "unexpected notice: %v", result.Request.Description)
 	}
 	{
 		testutil.Require(t, !(result.Request.BannerImagePath == nil), "unexpected banner path: %v", result.Request.BannerImagePath)

@@ -122,7 +122,7 @@ func validateInventoryFilterForRegion(region renderregion.Value, filter renderin
 	}
 	switch filter {
 	case renderinventory.FilterMemory:
-		return usererror.Invalid(i18n.M("inventory.memory_cn_unavailable"))
+		return usererror.Invalid(i18n.M("inventory.memory_cn_unavailable", i18n.Data{"Region": i18n.RegionLabel("cn")}))
 	default:
 		return nil
 	}

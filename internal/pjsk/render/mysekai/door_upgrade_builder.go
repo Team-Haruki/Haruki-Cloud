@@ -251,7 +251,7 @@ func (c *Controller) doorUpgradeProfile(region renderregion.Value, merged map[st
 	}
 	profile := c.mysekaiProfileCard(region, merged, query, false)
 	if profile != nil && len(profile.DataSources) > 0 {
-		profile.DataSources[0].Name = "Suite数据"
+		profile.DataSources[0].Name = i18n.T("profile.data_source.suite")
 	}
 	return profile
 }

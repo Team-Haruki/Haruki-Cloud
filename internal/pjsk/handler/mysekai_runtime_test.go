@@ -166,7 +166,7 @@ func TestResolveMySekaiRenderContextPrefersSnapshotProfileCard(t *testing.T) {
 		card: &drawing.ProfileCardRequest{
 			Profile: &drawing.BasicProfile{ID: "99999999999999", Region: "TW", Nickname: "snapshot-card"},
 			DataSources: []drawing.ProfileDataSource{
-				{Name: "Suite数据"},
+				{Name: i18n.T("profile.data_source.suite")},
 			},
 		},
 	}
@@ -199,7 +199,7 @@ func TestResolveMySekaiRenderContextPrefersSnapshotProfileCard(t *testing.T) {
 	if result.Profile.Profile.Region != "JP" {
 		t.Fatalf("expected normalized profile region JP, got %q", result.Profile.Profile.Region)
 	}
-	if len(result.Profile.DataSources) == 0 || result.Profile.DataSources[0].Name != "Suite数据" {
+	if len(result.Profile.DataSources) == 0 || result.Profile.DataSources[0].Name != i18n.T("profile.data_source.suite") {
 		t.Fatalf("expected suite data source, got %+v", result.Profile.DataSources)
 	}
 }
@@ -249,7 +249,7 @@ func TestResolveMySekaiRenderContextPrefersPublicProfileCardWhenAvailable(t *tes
 				LeaderImagePath: "asset/user/snapshot.png",
 			},
 			DataSources: []drawing.ProfileDataSource{
-				{Name: "Suite数据"},
+				{Name: i18n.T("profile.data_source.suite")},
 			},
 		},
 	}
@@ -293,7 +293,7 @@ func TestResolveMySekaiRenderContextPrefersPublicProfileCardWhenAvailable(t *tes
 	if result.Profile.Profile.Region != "JP" {
 		t.Fatalf("expected normalized profile region JP, got %q", result.Profile.Profile.Region)
 	}
-	if len(result.Profile.DataSources) == 0 || result.Profile.DataSources[0].Name != "Suite数据" {
+	if len(result.Profile.DataSources) == 0 || result.Profile.DataSources[0].Name != i18n.T("profile.data_source.suite") {
 		t.Fatalf("expected suite data source metadata to remain, got %+v", result.Profile.DataSources)
 	}
 }
@@ -855,7 +855,7 @@ func TestExecuteMySekaiResourceUsesPayloadProviderWithoutSnapshot(t *testing.T) 
 		if req.Profile.MysekaiLevel == nil || *req.Profile.MysekaiLevel != 9 {
 			t.Fatalf("expected mysekai rank on profile, got %+v", req.Profile.MysekaiLevel)
 		}
-		if len(req.Profile.DataSources) != 1 || req.Profile.DataSources[0].Name != "Mysekai数据" {
+		if len(req.Profile.DataSources) != 1 || req.Profile.DataSources[0].Name != i18n.T("profile.data_source.mysekai") {
 			t.Fatalf("expected mysekai-only profile data source, got %+v", req.Profile.DataSources)
 		}
 		_, _ = w.Write([]byte("mysekai-resource"))

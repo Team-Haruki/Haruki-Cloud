@@ -965,7 +965,7 @@ func TestBotEndpointRegionPrefixedHideIDSyncsProfileSettingsParams(t *testing.T)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已隐藏 [EN] 394********123 的ID信息")
+	assertSingleTextMessage(t, body, i18n.T("profile.visibility.uid_hidden", i18n.Data{"Account": i18n.AccountLabel("en", "39400000000123", false)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -1017,7 +1017,7 @@ func TestBotEndpointTransportRegionShowSuiteSyncsProfileSettingsParams(t *testin
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已展示 [EN] 394********123 的抓包信息")
+	assertSingleTextMessage(t, body, i18n.T("profile.visibility.suite_shown", i18n.Data{"Account": i18n.AccountLabel("en", "39400000000123", false)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -1063,7 +1063,7 @@ func TestBotEndpointRegionPrefixedHideSuiteSyncsProfileSettingsParams(t *testing
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已隐藏 [EN] 394********123 的抓包信息")
+	assertSingleTextMessage(t, body, i18n.T("profile.visibility.suite_hidden", i18n.Data{"Account": i18n.AccountLabel("en", "39400000000123", false)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -3034,7 +3034,7 @@ func TestBotEndpointProfileTimeZoneCompatReroutesLegacyProfilePath(t *testing.T)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已设置PJSK时区为 Asia/Hong_Kong")
+	assertSingleTextMessage(t, body, i18n.T("profile.timezone.done", i18n.Data{"TimeZone": "Asia/Hong_Kong"}))
 }
 
 func TestBotEndpointWrongCommandRejects400(t *testing.T) {

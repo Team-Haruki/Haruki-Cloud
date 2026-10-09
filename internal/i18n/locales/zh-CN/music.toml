@@ -167,3 +167,113 @@ other = "物量为 {{.Count}} 的 {{.Difficulty}} 谱面"
 [music.lookup_list.bpm]
 description = "BPM 反查（/bpm搜索）结果图片的标题。占位符：BPM=用户写的 BPM 数值。"
 other = "BPM 为 {{.BPM}} 的歌曲"
+
+[music.image.placeholder_nickname]
+description = "图片：歌曲图片顶部没有玩家信息时，占位个人信息卡片上显示的昵称。"
+other = "HarukiBot"
+
+# 以下是画进图片的文字（music.image.*）。
+
+[music.image.board.title]
+description = "图片：歌曲排行（/歌曲排行）的标题。占位符：Board=排行名称（music.image.board.name 或 name_live）；Target=排序指标（music.image.board.target_*）；Order=排序方向（music.image.board.order_*）；Page=页码（format.page），例如“第 1/3 页”。"
+other = "{{.Board}} - {{.Target}} {{.Order}} - {{.Page}}"
+
+[music.image.board.name]
+description = "图片：歌曲排行的名称（不区分 Live 类型时）。"
+other = "歌曲排行"
+
+[music.image.board.name_live]
+description = "图片：按 Live 类型的歌曲排行名称。占位符：Live=Live 类型显示名（format.live_type.*），例如“单人 Live”。"
+other = "{{.Live}} 歌曲排行"
+
+[music.image.board.target_score]
+description = "图片：歌曲排行的排序指标：Live 分数。"
+other = "Live 分数"
+
+[music.image.board.target_pt]
+description = "图片：歌曲排行的排序指标：每次消耗体力获得的活动 PT。"
+other = "活动 PT/体力"
+
+[music.image.board.target_pt_per_time]
+description = "图片：歌曲排行的排序指标：单位时间获得的活动 PT。"
+other = "活动 PT/时间"
+
+[music.image.board.target_tps]
+description = "图片：歌曲排行的排序指标：每秒点击数。"
+other = "每秒点击"
+
+[music.image.board.target_time]
+description = "图片：歌曲排行的排序指标：歌曲时长。"
+other = "歌曲时长"
+
+[music.image.board.order_desc]
+description = "图片：歌曲排行的排序方向：从大到小。"
+other = "降序"
+
+[music.image.board.order_asc]
+description = "图片：歌曲排行的排序方向：从小到大。"
+other = "升序"
+
+[music.image.board.effective_skill]
+description = "图片：歌曲排行的参数行（多人 Live）：卡组实效值。占位符：Percent=百分比，例如“250%”。"
+other = "实效 {{.Percent}}"
+
+[music.image.board.skills]
+description = "图片：歌曲排行的参数行：5 张卡的技能加成。占位符：Skills=5 个技能百分数，用“/”分隔，例如“100/100/100/100/100”。"
+other = "技能 {{.Skills}}"
+
+[music.image.board.strategy]
+description = "图片：歌曲排行的参数行：技能顺序策略。占位符：Strategy=策略代码（大写），用户输入的取值。"
+other = "策略 {{.Strategy}}"
+
+[music.image.board.power]
+description = "图片：歌曲排行的参数行：卡组综合力。占位符：Power=综合力。"
+other = "综合力 {{.Power}}"
+
+[music.image.board.bonus]
+description = "图片：歌曲排行的参数行：活动加成。占位符：Percent=加成百分比，例如“250%”。"
+other = "加成 {{.Percent}}"
+
+[music.image.board.interval]
+description = "图片：歌曲排行的参数行：两局之间的间隔。占位符：Seconds=秒数，保留 1 位小数。"
+other = "间隔 {{.Seconds}} 秒"
+
+[music.image.detail.live_solo]
+description = "图片：歌曲详情排行表的 Live 类型列名：单人 Live。"
+other = "单人"
+
+[music.image.detail.live_multi]
+description = "图片：歌曲详情排行表的 Live 类型列名：多人 Live。"
+other = "多人"
+
+[music.image.detail.live_auto]
+description = "图片：歌曲详情排行表的 Live 类型列名：自动 Live。"
+other = "自动"
+
+[music.image.detail.target_score]
+description = "图片：歌曲详情排行表的指标名：分数。"
+other = "分数"
+
+[music.image.detail.target_pt]
+description = "图片：歌曲详情排行表的指标名：活动 PT。"
+other = "PT"
+
+[music.image.detail.target_pt_per_time]
+description = "图片：歌曲详情排行表的指标名：每小时活动 PT（时速）。"
+other = "时速"
+
+[music.image.rewards.estimate]
+description = "图片：歌曲奖励图片里的说明：没有使用抓包数据，结果是根据公开信息估算的。"
+other = "没有使用抓包数据（Suite），以下是根据公开信息估算的结果"
+
+[music.image.rewards.estimate_note]
+description = "图片：歌曲奖励图片里，接在具体原因后面的一行说明。"
+other = "以下是根据公开信息估算的结果"
+
+[music.image.custom_chart.artist_unknown]
+description = "图片：自制谱面没有作者名和谱面 ID 时，作者一栏显示的文字。"
+other = "自制谱面"
+
+[music.image.custom_chart.bpm_range]
+description = "图片：自制谱面 BPM 变化较多时的显示。占位符：Min=最低 BPM；Max=最高 BPM；Segments=不同 BPM 的段数。"
+other = "{{.Min}}~{{.Max}}（{{.Segments}} 段）"

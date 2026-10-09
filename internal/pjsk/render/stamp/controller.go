@@ -94,7 +94,7 @@ func (c *Controller) BuildStampListRequests(query ListQuery) ([]*drawing.StampLi
 		pageItems := slices.Clone(items[start:end])
 		return &drawing.StampListRequest{
 			PromptMessage: &prompt,
-			PageMessage:   new(fmt.Sprintf("第 %d / %d 页", pageNum, totalPages)),
+			PageMessage:   new(i18n.PageLabel(pageNum, totalPages).String()),
 			Stamps:        pageItems,
 		}
 	}
@@ -235,13 +235,7 @@ func stampPrompt(value string) string {
 	if prompt := strings.TrimSpace(value); prompt != "" {
 		return prompt
 	}
-	return strings.Join([]string{
-		`发送"/stamp 序号"获取单张表情`,
-		`发送"/stamp 序号 序号"获取多张表情`,
-		`发送"/stamp 角色名"按角色筛选表情`,
-		`发送"/stamp page 2"查看指定页`,
-		`发送"/stamp all"返回全部页`,
-	}, "\n")
+	return i18n.T("stamp.image.usage")
 }
 
 func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregion.Value) (string, bool) {

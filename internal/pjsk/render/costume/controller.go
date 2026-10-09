@@ -686,7 +686,7 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 
 func (c *Controller) buildResolvedCostumeDetailRequest(region renderregion.Value, source DataSource, costumeInfo *masterdata.Costume3d, query Query) (*drawing.CostumeDetailRequest, error) {
 	if expectedPart, ok := normalizePartType(query.ExpectedPartType); ok && costumeInfo.PartType != expectedPart {
-		return nil, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, partTypeName(costumeInfo.PartType), partTypeName(expectedPart))
+		return nil, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, costumeInfo.PartType, expectedPart)
 	}
 	variants, err := source.GetCostumeVariants(costumeInfo.GroupID, costumeInfo.PartType, costumeInfo.CharacterID)
 	if err != nil || len(variants) == 0 {
@@ -855,7 +855,7 @@ func (c *Controller) RenderCostumeDetailImage(query Query) (drawing.ImageResult,
 	}
 	if expectedPart, ok := normalizePartType(query.ExpectedPartType); ok && costumeInfo.PartType != expectedPart {
 		finishBuild()
-		return drawing.ImageResult{}, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, partTypeName(costumeInfo.PartType), partTypeName(expectedPart))
+		return drawing.ImageResult{}, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, costumeInfo.PartType, expectedPart)
 	}
 	payload, err := c.buildResolvedCostumeDetailRequest(region, source, costumeInfo, query)
 	if err != nil {
@@ -1910,7 +1910,7 @@ func buildCostumeUnitAliases() map[string]string {
 
 func parseCostumeUnitAlias(token string) (string, bool) {
 	token = strings.TrimSpace(strings.ToLower(token))
-	for _, prefix := range []string{"unit=", "unit:", "team=", "team:", "团队=", "团队:", "组合="} {
+	for _, prefix := range []string{"unit=", "unit:", "team=", "team:", "团队=", "团队:", "组合="} { //copylint:ignore 解析关键字
 		if strings.HasPrefix(token, prefix) {
 			token = strings.TrimSpace(strings.TrimPrefix(token, prefix))
 			break
@@ -1925,7 +1925,7 @@ func parseCharacter3DAliasToken(token string) (int, bool) {
 	if characterID, ok := rendercard.ResolveDefaultCharacterNickname(token); ok {
 		return characterID, true
 	}
-	for _, prefix := range []string{"character3d", "character", "角色模型", "角色id", "角色"} {
+	for _, prefix := range []string{"character3d", "character", "角色模型", "角色id", "角色"} { //copylint:ignore 解析关键字
 		if !strings.HasPrefix(token, prefix) {
 			continue
 		}
@@ -2052,14 +2052,14 @@ func (s *comboQueryParseState) finish() (ComboQuery, error) {
 
 func parseComboLabeledID(token string) (string, int, bool) {
 	labels := []string{
-		"outfit_color", "costume_color", "服装颜色", "衣装颜色",
-		"accessory_color", "饰品颜色", "头饰颜色", "配饰颜色",
-		"character3d", "character", "角色模型", "角色", "角色id",
-		"color", "颜色", "颜色id",
-		"head_optional", "headoptional", "追加饰品", "可选饰品",
-		"accessory", "accessories", "饰品", "头饰", "配饰",
-		"hairstyle", "hair", "发型", "头发",
-		"costume", "body", "衣装", "服装", "衣服",
+		"outfit_color", "costume_color", "服装颜色", "衣装颜色", //copylint:ignore 解析关键字
+		"accessory_color", "饰品颜色", "头饰颜色", "配饰颜色", //copylint:ignore 解析关键字
+		"character3d", "character", "角色模型", "角色", "角色id", //copylint:ignore 解析关键字
+		"color", "颜色", "颜色id", //copylint:ignore 解析关键字
+		"head_optional", "headoptional", "追加饰品", "可选饰品", //copylint:ignore 解析关键字
+		"accessory", "accessories", "饰品", "头饰", "配饰", //copylint:ignore 解析关键字
+		"hairstyle", "hair", "发型", "头发", //copylint:ignore 解析关键字
+		"costume", "body", "衣装", "服装", "衣服", //copylint:ignore 解析关键字
 	}
 	for _, prefix := range labels {
 		if !strings.HasPrefix(token, prefix) {
@@ -2077,21 +2077,21 @@ func parseComboLabeledID(token string) (string, int, bool) {
 
 func normalizeComboLabel(token string) (string, bool) {
 	switch strings.TrimSpace(strings.ToLower(token)) {
-	case "character3d", "character", "角色模型", "角色", "角色id":
+	case "character3d", "character", "角色模型", "角色", "角色id": //copylint:ignore 解析关键字
 		return "role", true
-	case "outfit_color", "costume_color", "服装颜色", "衣装颜色":
+	case "outfit_color", "costume_color", "服装颜色", "衣装颜色": //copylint:ignore 解析关键字
 		return "outfit_color", true
-	case "accessory_color", "饰品颜色", "头饰颜色", "配饰颜色":
+	case "accessory_color", "饰品颜色", "头饰颜色", "配饰颜色": //copylint:ignore 解析关键字
 		return "accessory_color", true
-	case "color", "颜色", "颜色id":
+	case "color", "颜色", "颜色id": //copylint:ignore 解析关键字
 		return "color", true
-	case "body", "costume", "服装", "衣装", "衣服":
+	case "body", "costume", "服装", "衣装", "衣服": //copylint:ignore 解析关键字
 		return "outfit", true
-	case "hair", "hairstyle", "发型", "头发":
+	case "hair", "hairstyle", "发型", "头发": //copylint:ignore 解析关键字
 		return "hair", true
-	case "head", "accessory", "accessories", "饰品", "头饰", "配饰":
+	case "head", "accessory", "accessories", "饰品", "头饰", "配饰": //copylint:ignore 解析关键字
 		return "accessory", true
-	case "head_optional", "headoptional", "追加饰品", "可选饰品":
+	case "head_optional", "headoptional", "追加饰品", "可选饰品": //copylint:ignore 解析关键字
 		return "accessory", true
 	default:
 		return "", false
@@ -2364,8 +2364,8 @@ func (s *listQueryParseState) applyExplicitFilters(query ListQuery) {
 func parsePageToken(token string) (int, bool) {
 	token = strings.TrimPrefix(token, "page")
 	token = strings.TrimPrefix(token, "p")
-	token = strings.TrimPrefix(token, "第")
-	token = strings.TrimSuffix(token, "页")
+	token = strings.TrimPrefix(token, "第") //copylint:ignore 解析关键字
+	token = strings.TrimSuffix(token, "页") //copylint:ignore 解析关键字
 	page, err := strconv.Atoi(token)
 	if err != nil || page <= 0 {
 		return 0, false
@@ -2375,15 +2375,15 @@ func parsePageToken(token string) (int, bool) {
 
 func parsePageSizeToken(token string) (int, bool) {
 	switch token {
-	case "all", "full", "全部", "拉满":
+	case "all", "full", "全部", "拉满": //copylint:ignore 解析关键字
 		return MaxPageSize, true
 	}
-	for _, prefix := range []string{"pagesize", "size", "ps", "limit", "每页", "页大小"} {
+	for _, prefix := range []string{"pagesize", "size", "ps", "limit", "每页", "页大小"} { //copylint:ignore 解析关键字
 		if strings.HasPrefix(token, prefix) {
 			return parsePositiveBoundedInt(strings.TrimPrefix(token, prefix), MaxPageSize)
 		}
 	}
-	for _, suffix := range []string{"条/页", "个/页", "项/页"} {
+	for _, suffix := range []string{"条/页", "个/页", "项/页"} { //copylint:ignore 解析关键字
 		if strings.HasSuffix(token, suffix) {
 			return parsePositiveBoundedInt(strings.TrimSuffix(token, suffix), MaxPageSize)
 		}
@@ -2404,11 +2404,11 @@ func parsePositiveBoundedInt(token string, maxValue int) (int, bool) {
 
 func normalizePartType(token string) (string, bool) {
 	switch token {
-	case "body", "costume", "costumes", "衣装", "服装", "衣服", "服饰":
+	case "body", "costume", "costumes", "衣装", "服装", "衣服", "服饰": //copylint:ignore 解析关键字
 		return "body", true
-	case "head", "accessory", "accessories", "饰品", "头饰", "配饰":
+	case "head", "accessory", "accessories", "饰品", "头饰", "配饰": //copylint:ignore 解析关键字
 		return "head", true
-	case "hair", "hairstyle", "发型", "头发":
+	case "hair", "hairstyle", "发型", "头发": //copylint:ignore 解析关键字
 		return "hair", true
 	default:
 		return "", false
@@ -2417,17 +2417,17 @@ func normalizePartType(token string) (string, bool) {
 
 func normalizeGenderPart(token string) (string, string, bool) {
 	switch token {
-	case "男装", "男服装", "男衣装", "男衣服", "男性服装", "男性衣装":
+	case "男装", "男服装", "男衣装", "男衣服", "男性服装", "男性衣装": //copylint:ignore 解析关键字
 		return "male", "body", true
-	case "女装", "女服装", "女衣装", "女衣服", "女性服装", "女性衣装":
+	case "女装", "女服装", "女衣装", "女衣服", "女性服装", "女性衣装": //copylint:ignore 解析关键字
 		return "female", "body", true
-	case "男饰品", "男头饰", "男配饰", "男性饰品", "男性头饰":
+	case "男饰品", "男头饰", "男配饰", "男性饰品", "男性头饰": //copylint:ignore 解析关键字
 		return "male", "head", true
-	case "女饰品", "女头饰", "女配饰", "女性饰品", "女性头饰":
+	case "女饰品", "女头饰", "女配饰", "女性饰品", "女性头饰": //copylint:ignore 解析关键字
 		return "female", "head", true
-	case "男发型", "男头发", "男性发型":
+	case "男发型", "男头发", "男性发型": //copylint:ignore 解析关键字
 		return "male", "hair", true
-	case "女发型", "女头发", "女性发型":
+	case "女发型", "女头发", "女性发型": //copylint:ignore 解析关键字
 		return "female", "hair", true
 	default:
 		return "", "", false
@@ -2436,11 +2436,11 @@ func normalizeGenderPart(token string) (string, string, bool) {
 
 func normalizeGender(token string) (string, bool) {
 	switch token {
-	case "male", "boy", "boys", "男", "男性":
+	case "male", "boy", "boys", "男", "男性": //copylint:ignore 解析关键字
 		return "male", true
-	case "female", "girl", "girls", "女", "女性":
+	case "female", "girl", "girls", "女", "女性": //copylint:ignore 解析关键字
 		return "female", true
-	case "secret", "其他":
+	case "secret", "其他": //copylint:ignore 解析关键字
 		return "secret", true
 	default:
 		return "", false
@@ -2556,29 +2556,33 @@ func comboDuplicateError(part i18n.Message) error {
 	return usererror.Invalid(i18n.M("costume.combo.duplicate", i18n.Data{"Part": part}))
 }
 
+// partTypeName is the display name of a costume part type (body, head,
+// hair); an unknown type is shown as is.
 func partTypeName(partType string) string {
 	switch strings.TrimSpace(partType) {
 	case "body":
-		return "服装"
+		return i18n.T("costume.part.outfit")
 	case "head":
-		return "饰品"
+		return i18n.T("costume.part.accessory")
 	case "hair":
-		return "发型"
+		return i18n.T("costume.part.hair")
 	default:
 		return partType
 	}
 }
 
+// characterName is the character's name from game data, or "角色 <ID>" when
+// the character is unknown.
 func characterName(character *masterdata.Character, fallbackID int) string {
 	if character == nil {
-		return fmt.Sprintf("角色%d", fallbackID)
+		return i18n.T("costume.image.character_fallback", i18n.Data{"ID": fallbackID})
 	}
 	name := strings.TrimSpace(strings.TrimSpace(character.FirstName) + strings.TrimSpace(character.GivenName))
 	if name == "" {
 		name = strings.TrimSpace(character.GivenName)
 	}
 	if name == "" {
-		return fmt.Sprintf("角色%d", fallbackID)
+		return i18n.T("costume.image.character_fallback", i18n.Data{"ID": fallbackID})
 	}
 	return name
 }
@@ -2645,9 +2649,9 @@ func joinCostumeIDs(ids []int) string {
 func buildListTitle(query ListQuery) *string {
 	label := buildFilterLabel(query)
 	if label == "" {
-		label = "全部服装"
+		label = i18n.T("costume.image.filter_all")
 	}
-	title := fmt.Sprintf("%s 查询结果", label)
+	title := i18n.T("costume.image.list_title", i18n.Data{"Filter": label})
 	return &title
 }
 
@@ -2659,21 +2663,21 @@ func buildFilterLabel(query ListQuery) string {
 	if query.Gender != "" {
 		switch query.Gender {
 		case "male":
-			parts = append(parts, "男装")
+			parts = append(parts, i18n.T("costume.image.gender_male"))
 		case "female":
-			parts = append(parts, "女装")
+			parts = append(parts, i18n.T("costume.image.gender_female"))
 		case "secret":
-			parts = append(parts, "其他")
+			parts = append(parts, i18n.T("costume.image.gender_other"))
 		}
 	}
 	if query.Character != "" {
 		parts = append(parts, query.Character)
 	}
 	if query.Character3DID > 0 {
-		parts = append(parts, fmt.Sprintf("角色%d", query.Character3DID))
+		parts = append(parts, i18n.T("costume.image.character_fallback", i18n.Data{"ID": query.Character3DID}))
 	}
 	if len(query.AccessoryIDs) > 0 {
-		parts = append(parts, "ID"+joinCostumeIDs(query.AccessoryIDs))
+		parts = append(parts, i18n.T("costume.image.filter_ids", i18n.Data{"IDs": joinCostumeIDs(query.AccessoryIDs)}))
 	}
 	if query.Keyword != "" {
 		parts = append(parts, query.Keyword)

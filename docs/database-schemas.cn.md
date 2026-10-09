@@ -341,12 +341,13 @@ Edge：
 可见性分项（`uid_visible`、`sk_visible`、`profile_visible`、`arrest_visible`）：
 
 1. 原来只有一个 `visible`，`false` 时隐藏全部。拆分后每种暴露方式一个开关，`/隐藏全部`、`/显示全部` 一次改四个。
-2. 迁移：启动时 auto-migrate 加四个可空列，随后（只在可写节点）执行
-   `accountdata.BackfillBindingVisibility`：每个分项 `IS NULL` 的行按 `visible` 回填（`visible=false` 的绑定四项都是 false，`visible=true` 的都是 true）。只改 NULL，可重复执行；旧版本二进制在滚动发布期间新建的行在下次启动时补齐。
-3. 读取时 NULL 分项按 `visible` 处理（`bindingVisibility`），所以回填之前和滚动发布期间行为与拆分前一致。
-4. 任何分项变化都同时写全部四项和 `visible = 四项都为 true`。回滚到只认 `visible` 的旧版本时，只隐藏了一部分的绑定按“全部隐藏”处理，不会比用户的设置暴露更多。
-5. 新绑定四项都是 false（与原来新建绑定 `visible=false` 一致）；抓包和烤森开关不变。
-6. `visible` 计划在下一个版本之后删除（先确认不再需要回滚到拆分前的版本）。
+2. 迁移（bootstrap）：启动时 auto-migrate 加四个可空列，随后（只在可写节点）执行
+   `accountdata.BootstrapBindingVisibility`：每个分项仍是 `NULL` 的行按 `visible` 初始化（`visible=false` 的绑定四项都是隐藏，`visible=true` 的都是展示），直到用户自己改某一项为止。
+3. bootstrap 只写 `NULL`：已经初始化的值在以后的启动里不会被覆盖（即使 `visible` 后来被旧版本改过），用户用指令改过的设置总是优先（指令一次写全部四项，不留 `NULL`）。可以每次启动都执行；旧版本二进制在滚动发布期间新建的行在下次启动时按同样规则初始化。
+4. 读取时 `NULL` 分项按 `visible` 处理（`bindingVisibility`），所以 bootstrap 之前和滚动发布期间行为与拆分前一致。
+5. 任何分项变化都同时写全部四项和 `visible = 四项都为 true`。回滚到只认 `visible` 的旧版本时，只隐藏了一部分的绑定按“全部隐藏”处理，不会比用户的设置暴露更多。
+6. 拆分之后新建的绑定在创建时就写入四项（`accountdata.NewBindingVisibility`），不会是 `NULL`。默认是四项都隐藏，与原来一致：`/绑定` 自 2026-04-14（“Hide bound account IDs by default”）起新建绑定时写 `visible=false`，列的默认值 `true` 没有被任何创建路径用到。导入工具按导出数据的 `visible` 写四项。抓包和烤森开关不变。
+7. TODO：`visible` 在下一个版本删除（先确认不再需要回滚到拆分前的版本），同时删掉读取时的 `NULL` 回退和 bootstrap。
 
 ### 6.5 `user_default_bindings` 表（默认绑定指针）
 

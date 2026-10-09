@@ -87,7 +87,7 @@ func (v Visibility) All() bool {
 }
 
 // bindingVisibility reads b's per-exposure flags. A NULL flag (a row written
-// before the split and not yet backfilled, or by an older binary during a
+// before the split and not yet bootstrapped, or by an older binary during a
 // rollout) falls back to the legacy visible column.
 func bindingVisibility(b *pjskdb.UserBinding) Visibility {
 	if b == nil {
@@ -129,17 +129,28 @@ func createBindingVisibility(create *pjskdb.UserBindingCreate, v Visibility) *pj
 		SetVisible(v.All())
 }
 
-// NewBindingVisibility is the visibility of a newly bound account: hidden,
-// as the single visible flag defaulted to for new bindings.
+// NewBindingVisibility is the visibility a newly bound account is created
+// with; every creation path sets it explicitly, so a binding created after
+// the split never has NULL flags. It is "hidden", because Bind has created
+// new bindings with visible=false since "Hide bound account IDs by default"
+// (the column's schema default of true is never used by a creation path).
 var NewBindingVisibility = UniformVisibility(false)
 
-// BackfillBindingVisibility copies the legacy visible column into every
-// per-exposure flag that is still NULL: a binding that was hidden stays
-// hidden for every exposure, and one that was shown stays shown. It only
-// touches NULL flags, so it is idempotent and safe to run at every start,
-// and it fills rows an older binary created during a rollout. It returns the
-// number of row updates.
-func BackfillBindingVisibility(ctx context.Context, client *pjskdb.Client) (int, error) {
+// BootstrapBindingVisibility is the one-time bootstrap of the per-exposure
+// flags from the legacy visible column, run after every auto-migrate:
+//
+//   - a binding that was hidden (visible=false) gets every exposure hidden,
+//     one that was shown gets every exposure shown;
+//   - it only writes flags that are still NULL, so a bootstrapped value is
+//     never overwritten on a later start, and a value the owner set with a
+//     toggle (which writes all four flags) always wins;
+//   - bindings created after the split get explicit flags at creation
+//     (NewBindingVisibility), so the only NULLs left are pre-split rows and
+//     rows an older binary created during a rolling deploy, which the next
+//     start bootstraps the same way.
+//
+// It returns the number of flag values written.
+func BootstrapBindingVisibility(ctx context.Context, client *pjskdb.Client) (int, error) {
 	if client == nil {
 		return 0, nil
 	}
@@ -159,7 +170,7 @@ func BackfillBindingVisibility(ctx context.Context, client *pjskdb.Client) (int,
 		for _, visible := range []bool{false, true} {
 			n, err := col.set(client.UserBinding.Update().Where(col.isNil, userbinding.Visible(visible)), visible).Save(ctx)
 			if err != nil {
-				return total, fmt.Errorf("backfill user_bindings.%s: %w", col.name, err)
+				return total, fmt.Errorf("bootstrap user_bindings.%s: %w", col.name, err)
 			}
 			total += n
 		}

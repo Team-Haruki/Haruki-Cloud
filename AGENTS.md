@@ -218,12 +218,14 @@ Redis client, and runtime config.
 - After editing any `ent/<db>/schema/*.go`, run `go generate ./ent/<db>/...`
   and commit both the schema change **and** the regenerated files under
   `database/<db>/`.
-- A data step that must follow a schema change (copying values into a new
-  column) runs right after `Schema.Create` in `init_database.go`, only on a
-  writable node, and must be idempotent (touch only rows still `NULL`), e.g.
-  `accountdata.BackfillBindingVisibility` for the per-exposure binding
+- A data bootstrap that must follow a schema change (initialising a new
+  column from an old one) runs right after `Schema.Create` in
+  `init_database.go`, only on a writable node, and must be idempotent: it
+  writes only rows still `NULL`, so it never overwrites a bootstrapped or
+  user-set value, and new rows get explicit values at creation. Example:
+  `accountdata.BootstrapBindingVisibility` for the per-exposure binding
   visibility flags. Readers treat a `NULL` new column as the old value, so a
-  rolling deploy works before the backfill has run.
+  rolling deploy works before the bootstrap has run.
 
 ### Common ent gotcha
 

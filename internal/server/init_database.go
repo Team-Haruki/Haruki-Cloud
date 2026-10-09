@@ -167,7 +167,7 @@ func initPJSKIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app
 			if err := c.Schema.Create(ctx); err != nil {
 				return err
 			}
-			return backfillPJSKData(ctx, mainLogger, c)
+			return bootstrapPJSKData(ctx, mainLogger, c)
 		},
 	)
 
@@ -175,18 +175,18 @@ func initPJSKIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app
 	return pjskClient
 }
 
-// backfillPJSKData runs the idempotent data steps that follow an auto-migrate
+// bootstrapPJSKData runs the idempotent data steps that follow an auto-migrate
 // of the PJSK database. A read-only node leaves them to the writable one.
-func backfillPJSKData(ctx context.Context, logger *harukiLogger.Logger, client *pjskDB.Client) error {
+func bootstrapPJSKData(ctx context.Context, logger *harukiLogger.Logger, client *pjskDB.Client) error {
 	if cluster.IsReadOnly() {
 		return nil
 	}
-	updated, err := accountdata.BackfillBindingVisibility(ctx, client)
+	updated, err := accountdata.BootstrapBindingVisibility(ctx, client)
 	if err != nil {
 		return err
 	}
 	if updated > 0 {
-		logger.Info("backfilled per-exposure binding visibility from the legacy visible flag", "column_updates", updated)
+		logger.Info("bootstrapped per-exposure binding visibility from the legacy visible flag", "column_updates", updated)
 	}
 	return nil
 }

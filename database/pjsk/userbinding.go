@@ -25,13 +25,13 @@ type UserBinding struct {
 	DisplayOrder int `json:"display_order,omitempty"`
 	// Deprecated: true only when uid, sk, profile and arrest are all visible. Kept in sync for rollback; read only as the fallback for a NULL per-exposure flag
 	Visible bool `json:"visible,omitempty"`
-	// Show the full game UID in replies and images; NULL until backfilled from visible
+	// Show the full game UID in replies and images; NULL until bootstrapped from visible
 	UIDVisible *bool `json:"uid_visible,omitempty"`
-	// Let other users look up this account's event ranking (sk) via @; NULL until backfilled from visible
+	// Let other users look up this account's event ranking (sk) via @; NULL until bootstrapped from visible
 	SkVisible *bool `json:"sk_visible,omitempty"`
-	// Let other users view this account's profile and account data via @; NULL until backfilled from visible
+	// Let other users view this account's profile and account data via @; NULL until bootstrapped from visible
 	ProfileVisible *bool `json:"profile_visible,omitempty"`
-	// Let other users run the arrest lookup on this account via @; NULL until backfilled from visible
+	// Let other users run the arrest lookup on this account via @; NULL until bootstrapped from visible
 	ArrestVisible *bool `json:"arrest_visible,omitempty"`
 	// Controls visibility of suite/capture data
 	SuiteVisible bool `json:"suite_visible,omitempty"`

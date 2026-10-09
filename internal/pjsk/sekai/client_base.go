@@ -44,6 +44,14 @@ func sanitizeNetworkError(service upstreamerr.Service, prefix string, err error)
 	return upstreamerr.Transport(service, prefix+": "+text, err)
 }
 
+// requestContextError marks the error of a request's own context (deadline
+// or cancellation) as a transport failure of service, so a request deadline
+// is classified as a timeout of that service. The text and the unwrap chain
+// stay those of ctxErr.
+func requestContextError(service upstreamerr.Service, ctxErr error) error {
+	return upstreamerr.Transport(service, "", ctxErr)
+}
+
 // newRestyClient returns a resty.Client with the shared logging and the
 // retry policy. Each client may further configure timeout, headers, etc. on
 // the returned instance.

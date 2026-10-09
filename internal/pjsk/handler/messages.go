@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -150,6 +151,9 @@ func normalizeToolboxDataFetchError(err error, kind string, binding *accountdata
 	}
 	class, ok := upstreamerr.Classify(err)
 	if !ok {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return usererror.Timeout(i18n.FeatureToolbox, err)
+		}
 		return usererror.Unavailable(i18n.FeatureToolbox, err)
 	}
 	switch class.Kind {
@@ -187,6 +191,9 @@ func normalizeSekaiAPIFetchError(err error) error {
 	}
 	if typed := upstreamerr.UserError(err); typed != nil {
 		return typed
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return usererror.Timeout(i18n.FeatureGameData, err)
 	}
 	return err
 }

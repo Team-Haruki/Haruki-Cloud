@@ -17,6 +17,10 @@ other = "服务当前处于只读状态，暂时无法修改数据，请稍后�
 description = "某个功能暂时不可用（未配置、拒绝连接、返回错误）。占位符：Feature=功能名，取自 common.feature.*。"
 other = "{{.Feature}}暂时不可用，请稍后再试"
 
+[common.request_timeout]
+description = "兜底超时回复：指令在时限内没有完成，且无法确定是哪个功能超时。原因只写日志。"
+other = "请求超时，请稍后再试"
+
 [common.timeout]
 description = "某个功能响应超时。占位符：Feature=功能名，取自 common.feature.*。"
 other = "连接{{.Feature}}超时，请稍后再试"

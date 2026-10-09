@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -44,6 +45,7 @@ func TestNormalizeToolboxDataFetchError(t *testing.T) {
 		{"generic upstream detail is hidden", &sekaiapi.ToolboxAPIError{StatusCode: 500, Message: "raw upstream detail"}, "suite", usererror.CodeUnavailable, "upstream.failed"},
 		{"authentication failure needs the bot owner", &sekaiapi.ToolboxAPIError{StatusCode: 401, Message: "unauthorized"}, "suite", usererror.CodeMisconfigured, "common.misconfigured"},
 		{"network timeout", upstreamerr.Transport(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", context.DeadlineExceeded), "suite", usererror.CodeTimeout, "common.timeout"},
+		{"bare request deadline", fmt.Errorf("fetch: %w", context.DeadlineExceeded), "suite", usererror.CodeTimeout, "common.timeout"},
 		{"unclassified failure", errors.New("plain failure"), "suite", usererror.CodeUnavailable, "common.unavailable"},
 	}
 
@@ -232,4 +234,9 @@ func TestCardCatalogSnapshotErrorTitleDistinguishesUpstreamFailure(t *testing.T)
 func firstLine(text string) string {
 	line, _, _ := strings.Cut(text, "\n")
 	return line
+}
+
+func TestNormalizeSekaiAPIFetchErrorMapsRequestDeadlineToTimeout(t *testing.T) {
+	err := normalizeSekaiAPIFetchError(fmt.Errorf("profile: %w", context.DeadlineExceeded))
+	testutil.RequireUserError(t, err, usererror.CodeTimeout, "common.timeout")
 }

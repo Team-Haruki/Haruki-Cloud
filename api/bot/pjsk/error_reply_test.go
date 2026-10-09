@@ -123,3 +123,16 @@ func TestEveryRouteGuidanceHasCatalogText(t *testing.T) {
 		}
 	}
 }
+
+func TestCommandErrorTextRepliesTimeoutForRequestDeadline(t *testing.T) {
+	ctx := context.Background()
+	got := commandErrorText(ctx, fmt.Errorf("x: %w", context.DeadlineExceeded), "card/detail", "/card 1")
+	if want := i18n.M("common.request_timeout").String(); got != want {
+		t.Fatalf("deadline reply = %q, want %q", got, want)
+	}
+	transport := upstreamerr.Transport(upstreamerr.ServiceGameData, "", context.DeadlineExceeded)
+	got = commandErrorText(ctx, transport, "card/detail", "/card 1")
+	if want := i18n.Timeout(i18n.FeatureGameData).String(); got != want {
+		t.Fatalf("game data deadline reply = %q, want %q", got, want)
+	}
+}

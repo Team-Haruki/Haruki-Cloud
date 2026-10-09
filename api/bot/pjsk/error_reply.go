@@ -2,6 +2,7 @@ package pjsk
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"haruki-cloud/internal/core/upstreamerr"
@@ -26,10 +27,14 @@ func commandErrorText(ctx context.Context, err error, commandPath, trigger strin
 }
 
 // userErrorOf returns err's typed user error: its own, the classification of
-// an upstream failure, or the generic internal error.
+// an upstream failure, a generic timeout for a request deadline, or the
+// generic internal error.
 func userErrorOf(err error) *usererror.Error {
 	if typed := upstreamerr.UserError(err); typed != nil {
 		return typed
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return usererror.Wrap(usererror.CodeTimeout, i18n.M("common.request_timeout"), err)
 	}
 	return usererror.Internal(err)
 }

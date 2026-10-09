@@ -332,7 +332,7 @@ func (c *HarukiSekaiAPIClient) get(path string) ([]byte, error) {
 	finishHTTP()
 	if err != nil {
 		if ctxErr := c.requestContext().Err(); ctxErr != nil {
-			return nil, ctxErr
+			return nil, requestContextError(upstreamerr.ServiceGameData, ctxErr)
 		}
 		return nil, sanitizeNetworkError(upstreamerr.ServiceGameData, "sekai api: request failed after retries", err)
 	}
@@ -358,7 +358,7 @@ func (c *HarukiSekaiAPIClient) post(path string, body any) ([]byte, error) {
 	finishHTTP()
 	if err != nil {
 		if ctxErr := c.requestContext().Err(); ctxErr != nil {
-			return nil, ctxErr
+			return nil, requestContextError(upstreamerr.ServiceGameData, ctxErr)
 		}
 		return nil, sanitizeNetworkError(upstreamerr.ServiceGameData, "sekai api: request failed after retries", err)
 	}

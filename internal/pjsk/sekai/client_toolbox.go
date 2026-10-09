@@ -104,7 +104,7 @@ func (c *HarukiToolboxClient) UpsertMysekaiBirthdayMonitor(ctx context.Context, 
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return ctx.Err()
+			return requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
 		return sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: birthday monitor upsert failed", err)
 	}
@@ -125,7 +125,7 @@ func (c *HarukiToolboxClient) DeleteMysekaiBirthdayMonitor(ctx context.Context, 
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return ctx.Err()
+			return requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
 		return sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: birthday monitor delete failed", err)
 	}
@@ -149,7 +149,7 @@ func (c *HarukiToolboxClient) GetMysekaiBirthdayEvent(ctx context.Context, req M
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return nil, ctx.Err()
+			return nil, requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
 		return nil, sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: birthday event fetch failed", err)
 	}
@@ -177,7 +177,7 @@ func (c *HarukiToolboxClient) AckMysekaiBirthdayEvent(ctx context.Context, req M
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return ctx.Err()
+			return requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
 		return sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: birthday event ack failed", err)
 	}
@@ -304,7 +304,7 @@ func (c *HarukiToolboxClient) getPrivateDataWithKey(ctx context.Context, server 
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return nil, false, ctx.Err()
+			return nil, false, requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
 		return nil, false, sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", err)
 	}
@@ -410,7 +410,7 @@ func (c *HarukiToolboxClient) GetPrivateDataValueContext(ctx context.Context, se
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return nil, ctx.Err()
+			return nil, requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
 		return nil, sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", err)
 	}
@@ -528,7 +528,7 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindingsC
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return nil, ctx.Err()
+			return nil, requestContextError(upstreamerr.ServiceToolbox, ctx.Err())
 		}
 		return nil, sanitizeNetworkError(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", err)
 	}

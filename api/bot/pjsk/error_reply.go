@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/core/upstreamerr"
+	commandregistry "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/utils/logger"
 	"haruki-cloud/utils/usererror"
@@ -57,13 +58,19 @@ func withRouteGuidance(err *usererror.Error, commandPath, trigger string) i18n.M
 }
 
 // helpTrigger is the command as typed, without arguments, when it is a slash
-// command.
+// command. A registered command is kept whole, so a multi-word command such
+// as "/pjsk vlive" is not cut down to "/pjsk".
 func helpTrigger(trigger string) string {
-	fields := strings.Fields(trigger)
-	if len(fields) == 0 || !strings.HasPrefix(fields[0], "/") {
+	trigger = strings.Join(strings.Fields(trigger), " ")
+	if !strings.HasPrefix(trigger, "/") {
 		return ""
 	}
-	return fields[0]
+	if matched := commandregistry.MatchCommandHandler(trigger); matched.Handler != nil {
+		if command := strings.TrimSpace(matched.Command); command != "" {
+			return command
+		}
+	}
+	return strings.Fields(trigger)[0]
 }
 
 // sanitizeErrorReply is the last check before error text reaches a user: a

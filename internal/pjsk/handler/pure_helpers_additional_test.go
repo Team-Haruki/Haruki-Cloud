@@ -453,10 +453,4 @@ func testMaskingAndFallbackText(t *testing.T) {
 	if value := stringPtr(" value "); value == nil || *value != "value" {
 		t.Fatalf("string pointer = %v", value)
 	}
-	if fallbackCommandHelpMarkdown("", "", "body") != "# 指令帮助\n\nbody" {
-		t.Fatal("generic fallback help mismatch")
-	}
-	if fallbackCommandHelpMarkdown("/cmd", "path", "body") != "# /cmd\n\nbody" {
-		t.Fatal("trigger fallback help mismatch")
-	}
 }

@@ -7,11 +7,13 @@ import (
 	"image/png"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
 
 	corehandler "haruki-cloud/internal/handler"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -99,7 +101,8 @@ func TestCommandHelpDeckGenericTriggerUsesEventDeckDoc(t *testing.T) {
 	if err != nil {
 		t.Fatalf("commandHelpMarkdown() error = %v", err)
 	}
-	if !strings.Contains(md, "# 活动组卡") {
+	doc, _, _ := i18n.HelpDoc(i18n.DefaultLocale, "deck_event")
+	if !strings.HasPrefix(md, doc) {
 		t.Fatalf("expected event deck markdown, got %q", md)
 	}
 }
@@ -141,6 +144,9 @@ func TestCommandHelpFallsBackToTextWhenDrawingUnavailable(t *testing.T) {
 	text, ok := message[0].Data.(onebot11.TextData)
 	if !ok || !strings.Contains(text.Text, "/解绑") {
 		t.Fatalf("expected unbind help text, got %+v", message[0].Data)
+	}
+	if strings.ContainsAny(text.Text, "#`") {
+		t.Fatalf("text help still has Markdown markup: %q", text.Text)
 	}
 }
 
@@ -228,21 +234,120 @@ func TestCommandHelpExactMarkdownAvailableForRegisteredRoutes(t *testing.T) {
 	})
 }
 
-func TestCommandHelpLookupKeysPreferExactThenFamily(t *testing.T) {
-	keys := commandHelpLookupKeys("music/bpm")
-	want := []string{"music_bpm", "music"}
-	if strings.Join(keys, ",") != strings.Join(want, ",") {
-		t.Fatalf("commandHelpLookupKeys() = %v, want %v", keys, want)
-	}
-}
-
 func TestCommandHelpMarkdownPrefersExactFile(t *testing.T) {
 	md, err := commandHelpMarkdown(&CommandRequest{CommandPath: "music/bpm"})
 	if err != nil {
 		t.Fatalf("commandHelpMarkdown() error = %v", err)
 	}
-	if !strings.Contains(md, "# 查 BPM") {
-		t.Fatalf("expected exact BPM markdown, got %q", md)
+	doc, _, _ := i18n.HelpDoc(i18n.DefaultLocale, "music_bpm")
+	if !strings.HasPrefix(md, doc) {
+		t.Fatalf("expected the music_bpm document first, got %q", md)
+	}
+}
+
+func TestCommandHelpGeneratesRegionSection(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+	md, err := commandHelpMarkdown(&CommandRequest{CommandPath: "music"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	heading := "## " + i18n.T("usage.help.section_region")
+	prefix := i18n.T("usage.help.region_prefix", i18n.Data{"Codes": "`jp` `cn` `tw` `kr` `en`", "Example": "`/jp查曲`"})
+	fallback := i18n.T("usage.help.region_default", i18n.Data{"Region": i18n.RegionLabel("jp")})
+	if !strings.Contains(md, heading+"\n- "+prefix+"\n- "+fallback) {
+		t.Fatalf("music help lacks the generated region section:\n%s", md)
+	}
+
+	md, err = commandHelpMarkdown(&CommandRequest{CommandPath: "sk/winrate"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if only := i18n.T("usage.help.region_only", i18n.Data{"Region": i18n.RegionLabel("jp")}); !strings.Contains(md, heading+"\n- "+only) {
+		t.Fatalf("JP-only help lacks the region-only line:\n%s", md)
+	}
+
+	for _, path := range []string{"admin/kill", "alias/music", "profile/timezone"} {
+		md, err := commandHelpMarkdown(&CommandRequest{CommandPath: path})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(md, heading) {
+			t.Fatalf("%s help should not explain regions:\n%s", path, md)
+		}
+	}
+}
+
+func TestCommandHelpRegionExamplesAreRegistered(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+	for _, route := range corehandler.ListBotRoutes() {
+		md, err := commandHelpMarkdown(&CommandRequest{CommandPath: route.Path})
+		if err != nil {
+			t.Fatal(err)
+		}
+		section := commandHelpRegionSection(i18n.DefaultLocale, md, route.Path)
+		if isRegionAgnosticHelpRoute(route.Path) {
+			continue
+		}
+		if section == "" {
+			t.Errorf("%s: no region section", route.Path)
+			continue
+		}
+		for _, span := range helpDocCodeSpans(section) {
+			if strings.HasPrefix(span, "/") && !helpDocTriggerResolves(span) {
+				t.Errorf("%s: region example %q is not registered", route.Path, span)
+			}
+		}
+	}
+}
+
+func TestCommandHelpAliasSectionSkipsShownAndPrefixedSpellings(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+	md, err := commandHelpMarkdown(&CommandRequest{CommandPath: "sk/line"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, aliases, _ := strings.Cut(md, "## "+i18n.T("usage.help.section_aliases"))
+	if aliases == "" {
+		t.Fatalf("sk/line help lacks the alias section:\n%s", md)
+	}
+	if strings.Contains(aliases, "/wl") {
+		t.Fatalf("alias section lists wl-prefixed spellings:\n%s", aliases)
+	}
+	doc, _, _ := i18n.HelpDoc(i18n.DefaultLocale, "sk_line")
+	for _, span := range helpDocCodeSpans(doc) {
+		if command := helpDocSpanCommand(span); command != "" && strings.Contains(aliases, "`"+command+"`") {
+			t.Fatalf("alias section repeats %q shown in the document", command)
+		}
+	}
+}
+
+func TestCommandHelpBlueprintAliasesStayInTheirDocument(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+	blueprint := commandHelpAliases(mysekaiBlueprintHelpPath)
+	talk := commandHelpAliases("mysekai/talk-list")
+	if len(blueprint) == 0 || len(talk) == 0 {
+		t.Fatalf("aliases: blueprint=%v talk=%v", blueprint, talk)
+	}
+	for _, alias := range blueprint {
+		if !isMysekaiBlueprintHelpTrigger(alias) || slices.Contains(talk, alias) {
+			t.Fatalf("blueprint alias %q leaks: blueprint=%v talk=%v", alias, blueprint, talk)
+		}
+	}
+}
+
+func TestCommandHelpPlainTextDropsMarkdown(t *testing.T) {
+	md := "# 查曲\n\n查询歌曲。\n\n## 用法\n- `/查曲 <歌曲>`\n### 难度\n- **必填**：`master`\n```text\n/添加歌曲别名\ntyw\n```"
+	got := commandHelpPlainText(i18n.DefaultLocale, md)
+	for _, marker := range []string{"#", "`", "**", "- "} {
+		if strings.Contains(got, marker) {
+			t.Fatalf("plain help keeps %q:\n%s", marker, got)
+		}
+	}
+	want := "查曲\n\n查询歌曲。\n\n" +
+		i18n.T("usage.help.plain_heading", i18n.Data{"Heading": "用法"}) + "\n· /查曲 <歌曲>\n" +
+		i18n.T("usage.help.plain_heading", i18n.Data{"Heading": "难度"}) + "\n· 必填：master\n/添加歌曲别名\ntyw"
+	if got != want {
+		t.Fatalf("plain help =\n%s\nwant\n%s", got, want)
 	}
 }
 

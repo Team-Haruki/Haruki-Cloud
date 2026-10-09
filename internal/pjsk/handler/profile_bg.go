@@ -144,7 +144,7 @@ func (sekaiHandlers) ProfileUploadBGHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
 			"/pjsk upload profile bg", "/pjsk upload profile background",
-			"/上传个人信息背景", "/上传个人信息图片", "/上传个人背景", "/上传个人信息",
+			"/上传个人信息背景", "/上传个人信息图片", "/上传个人背景", "/上传个人信息", "/上传背景",
 		},
 		Path:        "profile/bg/upload",
 		ParseUIDArg: common.BoolPtr(true),
@@ -168,7 +168,7 @@ func (sekaiHandlers) ProfileClearBGHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
 			"/pjsk clear profile bg", "/pjsk clear profile background",
-			"/清空个人信息背景", "/清除个人信息背景", "/清空个人信息图片", "/清除个人信息图片",
+			"/清空个人信息背景", "/清除个人信息背景", "/清空个人信息图片", "/清除个人信息图片", "/清除背景",
 		},
 		Path:        "profile/bg/clear",
 		ParseUIDArg: common.BoolPtr(true),
@@ -186,7 +186,7 @@ func (sekaiHandlers) ProfileAdjustBGHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
 			"/pjsk adjust profile", "/pjsk adjust profile bg", "/pjsk adjust profile background",
-			"/调整个人信息背景", "/调整个人信息", "/设置个人信息", "/设置个人信息背景",
+			"/调整个人信息背景", "/调整个人信息", "/设置个人信息", "/设置个人信息背景", "/调整背景",
 		},
 		Path:        "profile/bg/adjust",
 		ParseUIDArg: common.BoolPtr(true),

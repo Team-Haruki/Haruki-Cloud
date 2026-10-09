@@ -1111,15 +1111,18 @@ func TestBotEndpointSuppressesParamEchoByDefault(t *testing.T) {
 	}
 }
 
-func TestBotEndpointStillRedactsParamEchoWhenEnabled(t *testing.T) {
+// TestBotEndpointIgnoresLegacyParamEchoField sends the retired
+// "enableParamEcho" request field as an older client still does: the request
+// is accepted and the reply stays the catalog guidance without the arguments.
+func TestBotEndpointIgnoresLegacyParamEchoField(t *testing.T) {
 	app := testBotApp(t, "")
 	secretParam := "super-secret-param"
 
-	req := newBotPOSTRequest(botPJSKPath("event"), BotCommandRequest{
-		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/查活动",
-		Message:         onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/查活动 " + secretParam}}},
-		EnableParamEcho: true,
-	})
+	body := `{"platform":"qq","platform_user_id":"12345","server":"jp","matched_command":"/查活动",` +
+		`"message":[{"type":"text","data":{"text":"/查活动 ` + secretParam + `"}}],"enableParamEcho":true}`
+	req, _ := http.NewRequest(http.MethodPost, botPJSKPath("event"), strings.NewReader(body))
+	req.Host = "localhost"
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -1127,11 +1130,11 @@ func TestBotEndpointStillRedactsParamEchoWhenEnabled(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	raw, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, raw)
 	}
-	text := singleTextMessageText(t, body)
+	text := singleTextMessageText(t, raw)
 	if strings.Contains(text, secretParam) {
 		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
 	}

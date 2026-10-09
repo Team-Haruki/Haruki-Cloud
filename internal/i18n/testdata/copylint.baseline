@@ -4,8 +4,7 @@ api/bot/pjsk/birthday_monitor.go	han_literal	9
 api/bot/pjsk/handler.go	han_literal	16
 api/trust/keyset.go	han_literal	1
 internal/pjsk/displaytime/timezone.go	han_literal	13
-internal/pjsk/handler/card.go	han_literal	14
-internal/pjsk/handler/command_help.go	han_literal	4
+internal/pjsk/handler/card.go	han_literal	12
 internal/pjsk/handler/deck_builder.go	han_literal	1
 internal/pjsk/handler/deck_config.go	han_literal	1
 internal/pjsk/handler/deck_extract_targets.go	han_literal	6

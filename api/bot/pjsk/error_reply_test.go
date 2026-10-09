@@ -9,6 +9,7 @@ import (
 
 	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/i18n"
+	commandhandler "haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/utils/usererror"
 )
@@ -63,6 +64,22 @@ func TestCommandErrorTextAddsHelpPointerToMisuseAndBadParams(t *testing.T) {
 	notFound := notfound.Music("x")
 	if got := commandErrorText(ctx, notFound, "music", "/查曲 x"); got != notFound.Message.String() {
 		t.Fatalf("not-found reply = %q", got)
+	}
+}
+
+func TestHelpTriggerKeepsMultiWordCommands(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+	for trigger, want := range map[string]string{
+		"/pjsk vlive":     "/pjsk vlive",
+		"/pjsk vlive 12":  "/pjsk vlive",
+		"/jp查曲 tyw":       "/jp查曲",
+		"/查活动  super":     "/查活动",
+		"/not-registered": "/not-registered",
+		"event 1":         "",
+	} {
+		if got := helpTrigger(trigger); got != want {
+			t.Errorf("helpTrigger(%q) = %q, want %q", trigger, got, want)
+		}
 	}
 }
 

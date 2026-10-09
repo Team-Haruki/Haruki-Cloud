@@ -321,7 +321,6 @@ When in doubt about current architecture, consult these in order:
 | `docs/sk-tracker-cloud-contract.cn.md` | SK semantics Cloud expects from the Event Tracker cloud API   |
 | `docs/public-bot-v2-api.cn.md`    | Public (unauthenticated) bot query API                             |
 | `docs/player-frame-overrides.md`  | `pjsk_render.player_frame_overrides` operator config               |
-| `docs/deck_refer_help.md`         | Reference notes for the `deck` command family (the bot's own help is `internal/i18n/locales/zh-CN/help/deck*.md`) |
 | `docs/i18n.md`                    | How to add, review and translate user copy (catalogs, help docs)   |
 
 `docs/` only describes the current shape of the project. Historical progress
@@ -548,8 +547,12 @@ As of this revision the project is **considered functionally complete**:
 | `TestCopylintRatchet` | `internal/i18n` | 非测试 Go 代码里的中文字面量和"中文 + %w/%v"的 `fmt.Errorf`，按文件计数，只许减少（`testdata/copylint.baseline`） |
 | `TestHelpDocStyleRatchet` | `internal/i18n` | 帮助文档的标点、空格和禁用词，按文件计数，只许减少（`testdata/helpdoc_style.baseline`） |
 | `TestHelperGolden` | `internal/i18n` | 共享格式函数的中文输出（`testdata/helpers.zh-CN.golden`） |
+| `TestHelpDocTerms` | `internal/i18n` | 帮助文档正文（反引号和代码块以外）不用术语表的禁用写法 |
 | `TestHelpDocTriggersAreRegistered` | `internal/pjsk/handler` | 帮助文档里反引号中的 `/指令` 都能解析到已注册指令（已知缺口在 `testdata/helpdoc_unregistered_triggers.txt`） |
 | `TestEveryRouteHasHelpDoc` | `internal/pjsk/handler` | 每个已注册路由都有自己的帮助文档（缺口在 `testdata/helpdoc_missing_routes.txt`） |
+| `TestEveryHelpDocIsReachable` | `internal/pjsk/handler` | 没有用户看不到的帮助文档（只允许路由文档、`generic`、`mysekai_blueprint`） |
+| `TestHelpDocsFollowLayout` | `internal/pjsk/handler` | 帮助版式：`# 标题`、用法/参数/示例/说明按顺序，不手写区服前缀说明（版式见 `docs/i18n.md`） |
+| `TestHelpDocExamplesParse` | `internal/pjsk/handler` | `## 示例` 里的每个示例都能被该文档的路由解析 |
 
 基线和允许清单只能缩小：修完问题后用 `HARUKI_UPDATE_GOLDEN=1 go test ./internal/i18n/`
 重新生成基线，并删除允许清单里已修好的行（测试会提示）。不要为了让测试通过而调高基线。

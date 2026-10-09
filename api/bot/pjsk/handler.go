@@ -95,8 +95,7 @@ type BotRouteOptions struct {
 //
 //	{"platform":"qq","platform_user_id":"12345","server":"jp",
 //	 "matched_command":"/cmd","message":[{"type":"text","data":{"text":"/cmd args"}}],
-//	 "session_token":"<jwt>","timestamp":1700000000,"nonce":"<hex>",
-//	 "enableParamEcho":false}
+//	 "session_token":"<jwt>","timestamp":1700000000,"nonce":"<hex>"}
 //
 // When NoiseKeys is set, the Noise NK transport middleware is applied to the
 // pjsk route group: clients send Noise NK Message 1 containing a MsgPack-encoded

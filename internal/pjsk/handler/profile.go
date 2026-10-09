@@ -144,7 +144,7 @@ func profileUIDUsageError() error {
 func (sekaiHandlers) ProfileBindSwapHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
-			"/绑定交换", "/pjsk bind swap", "/pjsk绑定交换",
+			"/绑定交换", "/pjsk bind swap", "/pjsk绑定交换", "/交换绑定",
 		},
 		Path:        "profile/bind/swap",
 		ParseUIDArg: common.BoolPtr(false),

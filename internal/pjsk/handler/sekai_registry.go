@@ -196,7 +196,6 @@ func (skh *HarukiSekaiCommandHandler) attachCommandMetadata(resolved *CommandReq
 	}
 	resolved.CommandPath = strings.TrimSpace(skh.Path)
 	resolved.TriggerCommand = strings.TrimSpace(trigger)
-	resolved.HelpText = strings.TrimSpace(skh.Helper)
 }
 
 func (skh *HarukiSekaiCommandHandler) shouldParseUIDArg() bool {

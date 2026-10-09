@@ -45,7 +45,6 @@ var routeGuidance = map[string]i18n.Message{
 	"music/note-count":            i18n.M("guidance.music_note_count"),
 	"music/progress":              i18n.M("guidance.music_progress"),
 	"music/rewards":               i18n.M("guidance.music_rewards"),
-	"mysekai/blueprint":           i18n.M("guidance.mysekai_blueprint"),
 	"mysekai/blueprint-term":      i18n.M("guidance.mysekai_blueprint_term"),
 	"mysekai/door-upgrade":        i18n.M("guidance.mysekai_door_upgrade"),
 	"mysekai/fixture-detail":      i18n.M("guidance.mysekai_fixture_detail"),

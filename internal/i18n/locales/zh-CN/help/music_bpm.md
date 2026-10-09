@@ -1,16 +1,17 @@
 # 查 BPM
 
+查看歌曲的 BPM。
+
 ## 用法
-- `/查BPM <歌曲名|别名|歌曲 ID> [难度]`
+- `/查bpm <歌曲> [难度]`
 
 ## 参数
-- `歌曲名|别名|歌曲 ID`：必填；歌曲 ID 可写 `music123`。
-- 难度：可选，`expert` `master` 等；用于指定谱面 BPM 信息。
-- 区服前缀：可在指令前加 `jp` `cn` `en` `tw` `kr`，例如 `/jp查曲`；不写时使用默认区服。
-
-## 输出
-- 返回歌曲 BPM；如果匹配到多首歌，会返回候选并提示用 ID 查询。
+- `歌曲`：歌曲名、别名或歌曲 ID（如 `music123`）
+- `难度`：可选，`easy` `normal` `hard` `expert` `master` `append`，也可以写 `ez` `nm` `hd` `ex` `ma` `apd`，或 `绿谱` `蓝谱` `黄谱` `红谱` `紫谱` `粉谱`
 
 ## 示例
-- `/查BPM Help me, ERINNNNNN!!`
-- `/查BPM music123 master`
+- `/查bpm Help me, ERINNNNNN!!`
+- `/查bpm music123 master`
+
+## 说明
+- 匹配到多首歌时会列出候选，请改用歌曲 ID 查询

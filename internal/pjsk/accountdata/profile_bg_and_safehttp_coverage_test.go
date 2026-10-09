@@ -108,7 +108,7 @@ func testLocalProfileBGDownloadErrors(t *testing.T, ctx context.Context) {
 		body := io.NopCloser(io.LimitReader(accountCoverageZeroReader{}, maxProfileBGDownloadBytes+1))
 		return profileBGResponse(req, http.StatusOK, body), nil
 	})}
-	if _, err := NewLocalProfileBGStoreWithClient(t.TempDir(), largeClient).SaveProfileBackground(ctx, "jp", "1", "https://example.test/a.png"); err == nil || !strings.Contains(err.Error(), "过大") {
+	if _, err := NewLocalProfileBGStoreWithClient(t.TempDir(), largeClient).SaveProfileBackground(ctx, "jp", "1", "https://example.test/a.png"); testutil.MessageID(err) != "profile.bg.image_too_large" {
 		t.Fatalf("oversized background error = %v", err)
 	}
 	invalidImageClient := &http.Client{Transport: profileBGRoundTripFunc(func(req *http.Request) (*http.Response, error) {

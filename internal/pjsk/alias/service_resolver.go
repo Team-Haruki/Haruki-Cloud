@@ -171,7 +171,7 @@ func (s *Service) tryResolveMusicByTitle(ctx context.Context, token string) (Ent
 	if len(rows) == 0 {
 		return EntityRef{}, false, nil
 	}
-	ref, err := uniqueMusicFromRows(rows, aliasTypeNameLabel(PjskAliasTypeMusic))
+	ref, err := uniqueMusicFromRows(rows)
 	return ref, true, err
 }
 
@@ -203,7 +203,7 @@ func (s *Service) tryResolveMusicByApprovedAlias(ctx context.Context, token stri
 		if err != nil {
 			return EntityRef{}, true, err
 		}
-		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeMusic, "别名", musicIDs, titles)
+		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeMusic, musicIDs, titles)
 	}
 	titles, err := s.loadMusicTitles(ctx, musicIDs)
 	if err != nil {
@@ -249,7 +249,7 @@ func (s *Service) tryResolveMusicByApprovedAliasContains(ctx context.Context, to
 		return EntityRef{}, true, err
 	}
 	if len(musicIDs) > 1 {
-		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeMusic, "别名", musicIDs, titles)
+		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeMusic, musicIDs, titles)
 	}
 	return EntityRef{
 		AliasType: PjskAliasTypeMusic,
@@ -304,7 +304,7 @@ func (s *Service) tryResolveCharacterByName(ctx context.Context, token string) (
 	}
 	sort.Ints(characterIDs)
 	if len(characterIDs) > 1 {
-		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeCharacter, aliasTypeNameLabel(PjskAliasTypeCharacter), characterIDs, names)
+		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeCharacter, characterIDs, names)
 	}
 	return EntityRef{
 		AliasType: PjskAliasTypeCharacter,
@@ -341,7 +341,7 @@ func (s *Service) tryResolveCharacterByApprovedAlias(ctx context.Context, token 
 		if err != nil {
 			return EntityRef{}, true, err
 		}
-		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeCharacter, "别名", characterIDs, names)
+		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeCharacter, characterIDs, names)
 	}
 	names, err := s.loadCharacterNames(ctx, characterIDs)
 	if err != nil {
@@ -354,7 +354,7 @@ func (s *Service) tryResolveCharacterByApprovedAlias(ctx context.Context, token 
 	}, true, nil
 }
 
-func uniqueMusicFromRows(rows []*sekaiDB.Music, sourceName string) (EntityRef, error) {
+func uniqueMusicFromRows(rows []*sekaiDB.Music) (EntityRef, error) {
 	grouped := make(map[int][]*sekaiDB.Music)
 	for _, row := range rows {
 		grouped[int(row.GameID)] = append(grouped[int(row.GameID)], row)
@@ -370,7 +370,7 @@ func uniqueMusicFromRows(rows []*sekaiDB.Music, sourceName string) (EntityRef, e
 	}
 	sort.Ints(musicIDs)
 	if len(musicIDs) > 1 {
-		return EntityRef{}, ambiguousEntityError(PjskAliasTypeMusic, sourceName, musicIDs, titles)
+		return EntityRef{}, ambiguousEntityError(PjskAliasTypeMusic, musicIDs, titles)
 	}
 	return EntityRef{
 		AliasType: PjskAliasTypeMusic,

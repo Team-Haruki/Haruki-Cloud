@@ -11,28 +11,24 @@ import (
 )
 
 func TestAliasParsingEdgeBranches(t *testing.T) {
-	if aliasTypeLabel("other") != "目标" || aliasQueryTokenPrompt("other") != "ID 或 名称 或 已审核别名" {
-		t.Fatal("unexpected fallback alias labels")
-	}
-
 	bulkCases := []string{"", "\nignored", "target\n \n\t"}
 	for _, input := range bulkCases {
-		if _, _, err := parseEntityAliasBulkArgs(input, "usage"); err == nil {
+		if _, _, err := parseEntityAliasBulkArgs(input); err == nil {
 			t.Fatalf("parseEntityAliasBulkArgs(%q) unexpectedly succeeded", input)
 		}
 	}
-	target, values, err := parseEntityAliasBulkArgs("target\r\n\r\n first \r\n second", "usage")
+	target, values, err := parseEntityAliasBulkArgs("target\r\n\r\n first \r\n second")
 	if err != nil || target != "target" || len(values) != 2 {
 		t.Fatalf("bulk parse = %q, %#v, %v", target, values, err)
 	}
 
 	for _, input := range []string{"", "1 nope", "0"} {
-		if _, err := parseAliasReviewIDsWithUsage(input, "usage"); err == nil {
-			t.Fatalf("parseAliasReviewIDsWithUsage(%q) unexpectedly succeeded", input)
+		if _, err := parseAliasReviewIDs(input); err == nil {
+			t.Fatalf("parseAliasReviewIDs(%q) unexpectedly succeeded", input)
 		}
 	}
 	for _, input := range []string{"", "1 2", "-1"} {
-		if _, err := parseAliasReviewID(input, "usage"); err == nil {
+		if _, err := parseAliasReviewID(input); err == nil {
 			t.Fatalf("parseAliasReviewID(%q) unexpectedly succeeded", input)
 		}
 	}
@@ -46,11 +42,11 @@ func TestAliasParsingEdgeBranches(t *testing.T) {
 		{"123", "", nil},
 	}
 	for _, tc := range targetCases {
-		if _, _, err := parseAliasSubmissionTarget(tc.args, tc.platform, tc.at, "usage"); err == nil {
+		if _, _, err := parseAliasSubmissionTarget(tc.args, tc.platform, tc.at); err == nil {
 			t.Fatalf("parseAliasSubmissionTarget(%q, %q) unexpectedly succeeded", tc.args, tc.platform)
 		}
 	}
-	if platform, userID, err := parseAliasSubmissionTarget("123", " qq ", []string{"  ", "ignored"}, "usage"); err != nil || platform != "qq" || userID != "123" {
+	if platform, userID, err := parseAliasSubmissionTarget("123", " qq ", []string{"  ", "ignored"}); err != nil || platform != "qq" || userID != "123" {
 		t.Fatalf("plain submission target = %q, %q, %v", platform, userID, err)
 	}
 

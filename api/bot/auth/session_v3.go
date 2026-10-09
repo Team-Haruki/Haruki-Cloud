@@ -130,7 +130,7 @@ func (h *UserHandler) reportSecurity(ctx context.Context, ev secevent.Event) {
 // a replay, everything else is a failed login.
 func authFailureEvent(botID, sourceIP string, authErr *authResponseError) secevent.Event {
 	kind := secevent.KindAuthFailed
-	if authErr.message == ErrReplayDetected {
+	if authErr.replay {
 		kind = secevent.KindReplayDetected
 	}
 	return secevent.Event{Kind: kind, BotID: botID, SourceIP: sourceIP, Reason: authErr.message, Enforced: true}
@@ -221,7 +221,7 @@ func (h *UserHandler) decodeAuthPayloadV3(ctx context.Context, c fiber.Ctx, botI
 		return AuthPayloadV3{}, &authResponseError{status: fiber.StatusInternalServerError}
 	}
 	if !isNew {
-		return AuthPayloadV3{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrReplayDetected}
+		return AuthPayloadV3{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrReplayDetected, replay: true}
 	}
 	return payload, nil
 }

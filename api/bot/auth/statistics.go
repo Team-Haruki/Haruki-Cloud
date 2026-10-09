@@ -7,6 +7,7 @@ import (
 	"haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/requestsranking"
 	"haruki-cloud/internal/cluster"
+	"haruki-cloud/internal/i18n"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -14,13 +15,13 @@ import (
 func (h *StatisticsHandler) RecordStatistics(c fiber.Ctx) error {
 	botID := fiber.Params[int](c, "botID", 0)
 	if botID <= 0 {
-		return api.JSONResponse(c, fiber.StatusBadRequest, "缺少 botID")
+		return api.JSONResponse(c, fiber.StatusBadRequest, i18n.T("account.api.statistics_bot_missing"))
 	}
 	if err := RecordRequestStatistics(c.Context(), h.svc.client, botID, telemetryNow()); err != nil {
 		return api.InternalError(c)
 	}
 
-	return api.JSONResponse(c, fiber.StatusOK, "统计已记录")
+	return api.JSONResponse(c, fiber.StatusOK, i18n.T("account.api.statistics_recorded"))
 }
 
 func (h *StatisticsHandler) updateRequestsRanking(ctx context.Context, botID int) error {

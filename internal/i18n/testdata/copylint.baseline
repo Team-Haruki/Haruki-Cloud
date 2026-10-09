@@ -1,21 +1,9 @@
 # Ratchet baseline: <key>\t<count>. Counts may only go down.
 # Regenerate with HARUKI_UPDATE_GOLDEN=1 go test ./internal/i18n/ after fixing findings.
-api/bot/auth/internal.go	han_literal	2
-api/bot/auth/session.go	han_literal	2
-api/bot/auth/statistics.go	han_literal	2
-api/bot/auth/struct.go	han_literal	14
 api/bot/pjsk/birthday_monitor.go	han_literal	9
 api/bot/pjsk/handler.go	han_literal	16
-api/bot_session_middleware.go	han_literal	13
-api/groupguard/route.go	han_literal	2
 api/trust/keyset.go	han_literal	1
-internal/pjsk/accountdata/profile_binding.go	han_literal	24
-internal/pjsk/accountdata/profile_settings.go	han_literal	39
-internal/pjsk/alias/command.go	han_literal	12
-internal/pjsk/alias/service_helpers.go	han_literal	15
-internal/pjsk/alias/service_resolver.go	han_literal	3
 internal/pjsk/displaytime/timezone.go	han_literal	13
-internal/pjsk/handler/alias.go	han_literal	31
 internal/pjsk/handler/arrest.go	han_literal	4
 internal/pjsk/handler/card.go	han_literal	14
 internal/pjsk/handler/chart.go	han_literal	1
@@ -92,4 +80,3 @@ internal/pjsk/render/vlive/controller.go	han_literal	11
 internal/pjsk/render/vlive/solo.go	han_literal	4
 internal/pjsk/requestbuilder/birthday_helpers.go	han_literal	1
 internal/pjsk/requestbuilder/misc_birthday.go	han_literal	42
-internal/pjsk/subscription/mysekai_birthday.go	han_literal	22

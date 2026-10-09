@@ -98,13 +98,13 @@ func ExecuteProfileBindingCommand(ctx context.Context, service *BindingService, 
 		if err != nil {
 			return nil, err
 		}
-		return []byte(formatDefaultBindingResultText("已设置", result)), nil
+		return []byte(formatDefaultBindingSetText(result)), nil
 	case ProfileModeDefaultClear:
 		result, err := service.ClearDefault(ctx, params.Platform, params.PlatformUserID, params.Selector, params.Server, params.Scope)
 		if err != nil {
 			return nil, err
 		}
-		return []byte(formatDefaultBindingResultText("已取消", result)), nil
+		return []byte(formatDefaultBindingClearedText(result)), nil
 	case ProfileModeQueryUID:
 		result, err := service.ResolveOwnBindingForUIDQuery(ctx, params.Platform, params.PlatformUserID, params.Selector, params.Server)
 		if err != nil {
@@ -119,96 +119,123 @@ func ExecuteProfileBindingCommand(ctx context.Context, service *BindingService, 
 func formatBindingListText(items []BindingListItem, server string) string {
 	if len(items) == 0 {
 		if server != "" {
-			return fmt.Sprintf("你还没有绑定任何%s服PJSK账号", strings.ToUpper(server))
+			return i18n.T("binding.none_in_region", i18n.Data{"Region": i18n.RegionLabel(server)})
 		}
-		return "你还没有绑定任何PJSK账号"
+		return i18n.T("binding.none")
 	}
 
-	lines := []string{"已绑定账号列表（u序号全局编号）:"}
+	lines := make([]string, 0, len(items)+1)
 	if server != "" {
-		lines[0] = fmt.Sprintf("已绑定%s服账号列表（u序号按该区服编号）:", strings.ToUpper(server))
+		lines = append(lines, i18n.T("account.list.header_region", i18n.Data{"Region": i18n.RegionLabel(server)}))
+	} else {
+		lines = append(lines, i18n.T("account.list.header"))
 	}
 	for i, item := range items {
 		displayIdx := i + 1
 		if server != "" {
 			displayIdx = item.Index
 		}
-		line := fmt.Sprintf("u%d [%s] %s", displayIdx, strings.ToUpper(item.Server), formatBindingUID(item))
-		marks := make([]string, 0, 2)
-		if item.IsGlobalDefault {
-			marks = append(marks, "全局默认")
+		if marks := bindingDefaultMarks(item); marks != "" {
+			lines = append(lines, i18n.T("account.list.item_marked", i18n.Data{"Index": displayIdx, "Account": bindingAccountLabel(item), "Marks": marks}))
+			continue
 		}
-		if item.IsServerDefault {
-			marks = append(marks, strings.ToUpper(item.Server)+"服默认")
-		}
-		if len(marks) > 0 {
-			line += " (" + strings.Join(marks, " / ") + ")"
-		}
-		lines = append(lines, line)
+		lines = append(lines, i18n.T("account.list.item", i18n.Data{"Index": displayIdx, "Account": bindingAccountLabel(item)}))
 	}
 	return strings.Join(lines, "\n")
 }
 
+// bindingDefaultMarks lists the default scopes an account holds, for the
+// binding and verification lists; empty when it is no default.
+func bindingDefaultMarks(item BindingListItem) string {
+	marks := make([]string, 0, 2)
+	if item.IsGlobalDefault {
+		marks = append(marks, i18n.T("account.mark.global_default"))
+	}
+	if item.IsServerDefault {
+		marks = append(marks, i18n.T("account.mark.region_default", i18n.Data{"Region": i18n.RegionLabel(item.Server)}))
+	}
+	return strings.Join(marks, "、")
+}
+
 func formatBindResultText(result *BindResult) string {
 	if result == nil {
-		return "绑定成功"
+		return i18n.T("account.bind.done_plain")
 	}
 
-	lines := []string{fmt.Sprintf("%s服绑定成功: %s (%s)", strings.ToUpper(result.Server), result.UserName, i18n.MaskUID(result.UserID, false))}
+	lines := []string{i18n.T("account.bind.done", i18n.Data{
+		"Account": i18n.AccountLabel(result.Server, result.UserID, false),
+		"Name":    result.UserName,
+	})}
 	if result.AlreadyBound {
-		lines = append(lines, "该账号此前已绑定，本次跳过重复写入")
+		lines = append(lines, i18n.T("account.bind.note_already_bound"))
 	}
 	if result.SetGlobalDefault {
-		lines = append(lines, "已自动设为你的全局默认绑定")
+		lines = append(lines, i18n.T("account.bind.note_global_default"))
 	}
 	if result.SetServerDefault {
-		lines = append(lines, fmt.Sprintf("已自动设为你的%s服默认绑定", strings.ToUpper(result.Server)))
+		lines = append(lines, i18n.T("account.bind.note_region_default", i18n.Data{"Region": i18n.RegionLabel(result.Server)}))
 	}
 	if result.MultipleServerMatch {
-		lines = append(lines, "该ID在多个服务器都存在，当前默认绑定第一个命中的服务器")
+		lines = append(lines, i18n.T("account.bind.note_multiple_regions"))
 	}
 	return strings.Join(lines, "\n")
 }
 
 func formatUnbindResultText(result *UnbindResult) string {
 	if result == nil {
-		return "解绑成功"
+		return i18n.T("account.unbind.done_plain")
 	}
 
-	lines := []string{fmt.Sprintf("已解绑 [%s] %s", strings.ToUpper(result.Removed.Server), formatBindingUID(result.Removed))}
+	lines := []string{i18n.T("account.unbind.done", i18n.Data{"Account": bindingAccountLabel(result.Removed)})}
 	if result.ReassignedGlobal != nil {
-		lines = append(lines, fmt.Sprintf("已将全局默认绑定切换为 [%s] %s",
-			strings.ToUpper(result.ReassignedGlobal.Server), formatBindingUID(*result.ReassignedGlobal)))
+		lines = append(lines, i18n.T("account.unbind.reassigned_global", i18n.Data{"Account": bindingAccountLabel(*result.ReassignedGlobal)}))
 	}
 	if result.ReassignedServer != nil {
-		lines = append(lines, fmt.Sprintf("已将%s服默认绑定切换为 %s",
-			strings.ToUpper(result.ReassignedServer.Server), formatBindingUID(*result.ReassignedServer)))
+		lines = append(lines, i18n.T("account.unbind.reassigned_region", i18n.Data{
+			"Region":  i18n.RegionLabel(result.ReassignedServer.Server),
+			"Account": bindingAccountLabel(*result.ReassignedServer),
+		}))
 	}
 	return strings.Join(lines, "\n")
 }
 
-func formatDefaultBindingResultText(prefix string, result *DefaultBindingResult) string {
-	if result == nil {
-		return prefix + "默认绑定"
+func formatDefaultBindingSetText(result *DefaultBindingResult) string {
+	switch {
+	case result == nil:
+		return i18n.T("account.default.set_plain")
+	case result.Scope == DefaultScopeServer:
+		return i18n.T("account.default.set_region", i18n.Data{"Region": i18n.RegionLabel(result.Server), "Account": bindingAccountLabel(result.Binding)})
+	default:
+		return i18n.T("account.default.set_global", i18n.Data{"Account": bindingAccountLabel(result.Binding)})
 	}
-	scopeLabel := "全局默认绑定"
-	if result.Scope == DefaultScopeServer {
-		scopeLabel = strings.ToUpper(result.Server) + "服默认绑定"
+}
+
+func formatDefaultBindingClearedText(result *DefaultBindingResult) string {
+	switch {
+	case result == nil:
+		return i18n.T("account.default.cleared_plain")
+	case result.Scope == DefaultScopeServer:
+		return i18n.T("account.default.cleared_region", i18n.Data{"Region": i18n.RegionLabel(result.Server), "Account": bindingAccountLabel(result.Binding)})
+	default:
+		return i18n.T("account.default.cleared_global", i18n.Data{"Account": bindingAccountLabel(result.Binding)})
 	}
-	return fmt.Sprintf("%s%s为 [%s] %s", prefix, strings.TrimSpace(scopeLabel), strings.ToUpper(result.Binding.Server), formatBindingUID(result.Binding))
 }
 
 func formatBindingSwapResultText(left, right, server string, items []BindingListItem) string {
-	header := fmt.Sprintf("已交换 %s 和 %s 的顺序", strings.TrimSpace(left), strings.TrimSpace(right))
+	list := formatBindingListText(items, server)
 	if server != "" {
-		header = fmt.Sprintf("已交换%s服 %s 和 %s 的顺序", strings.ToUpper(server), strings.TrimSpace(left), strings.TrimSpace(right))
+		return i18n.T("account.swap.done_region", i18n.Data{
+			"Region": i18n.RegionLabel(server),
+			"Left":   strings.TrimSpace(left),
+			"Right":  strings.TrimSpace(right),
+			"List":   list,
+		})
 	}
-	return header + "\n" + formatBindingListText(items, server)
+	return i18n.T("account.swap.done", i18n.Data{"Left": strings.TrimSpace(left), "Right": strings.TrimSpace(right), "List": list})
 }
 
-func formatBindingUID(item BindingListItem) string {
-	if item.Visible {
-		return item.UserID
-	}
-	return i18n.MaskUID(item.UserID, false)
+// bindingAccountLabel is the "[日服(JP)] 123***789" label of a bound
+// account, with the UID masked unless the user made it visible.
+func bindingAccountLabel(item BindingListItem) i18n.Message {
+	return i18n.AccountLabel(item.Server, item.UserID, item.Visible)
 }

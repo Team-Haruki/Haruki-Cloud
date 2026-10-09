@@ -2,6 +2,7 @@ package alias
 
 import (
 	"context"
+	"haruki-cloud/internal/i18n"
 	"strings"
 	"testing"
 
@@ -109,13 +110,14 @@ func TestAliasNormalizationHelpers(t *testing.T) {
 }
 
 func TestAliasLabelsAndPresentationHelpers(t *testing.T) {
-	for aliasType, label := range map[string]string{PjskAliasTypeMusic: "歌曲", PjskAliasTypeCharacter: "角色", "x": "未知类型"} {
-		if got := aliasTypeLabel(aliasType); got != label {
-			t.Errorf("aliasTypeLabel(%q) = %q", aliasType, got)
+	for aliasType, id := range map[string]string{PjskAliasTypeMusic: "alias.kind.music", PjskAliasTypeCharacter: "alias.kind.character", "x": "alias.kind.music"} {
+		if got := aliasKind(aliasType); got.ID != id {
+			t.Errorf("aliasKind(%q) = %q, want %q", aliasType, got.ID, id)
 		}
 	}
-	if aliasTypeIDLabel("x") != "目标ID" || aliasTypeNameLabel("x") != "名称" || entityTokenPrompt("x") != "ID、名称或已审核别名" {
-		t.Fatal("unknown alias labels are incorrect")
+	if fallbackEntityName(PjskAliasTypeCharacter, 7) != i18n.T("alias.fallback_name.character", i18n.Data{"ID": 7}) ||
+		fallbackEntityName(PjskAliasTypeMusic, 7) != i18n.T("alias.fallback_name.music", i18n.Data{"ID": 7}) {
+		t.Fatal("fallback entity names are incorrect")
 	}
 	for _, tc := range []struct{ platform, id, want string }{
 		{"", "", "unknown"}, {"", "1", "1"}, {"qq", "", "qq"}, {"qq", "1", "qq:1"},

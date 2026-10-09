@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/config"
 	"haruki-cloud/internal/core/buildpolicy"
 	"haruki-cloud/internal/core/secevent"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 
 	"github.com/gofiber/fiber/v3"
@@ -44,7 +45,7 @@ type SessionPolicy interface {
 
 // ErrSessionRevokedByPolicy is returned when the build policy has revoked the
 // bot, client version or build a live session was issued to.
-const ErrSessionRevokedByPolicy = "会话已被撤销，请更新客户端后重新登录"
+var ErrSessionRevokedByPolicy = i18n.T("account.api.session_revoked")
 
 // VerifyBotSessionWithPolicy is VerifyBotSession plus the policy revocation
 // check; policy and reporter may be nil.
@@ -63,7 +64,7 @@ func VerifyBotSessionWithPolicy(redisClient *redis.Client, policy SessionPolicy,
 
 // ErrBotSessionMissing is the message returned when a request carries no
 // session token at all (header or payload, depending on the route).
-const ErrBotSessionMissing = "缺少会话令牌"
+var ErrBotSessionMissing = i18n.T("account.api.session_token_missing")
 
 // BotSessionFailure describes why a session token was rejected.
 type BotSessionFailure struct {
@@ -86,7 +87,7 @@ func VerifyBotSessionToken(ctx context.Context, redisClient *redis.Client, botID
 // `cv` claims). A revoked session is refused with 403 and reported.
 func VerifyBotSessionTokenWithPolicy(ctx context.Context, redisClient *redis.Client, policy SessionPolicy, reporter secevent.Reporter, botID, sessionToken string) *BotSessionFailure {
 	if redisClient == nil {
-		return &BotSessionFailure{Status: fiber.StatusServiceUnavailable, Message: "会话存储不可用"}
+		return &BotSessionFailure{Status: fiber.StatusServiceUnavailable, Message: i18n.T("account.api.session_store_unavailable")}
 	}
 	if botID == "" || sessionToken == "" {
 		return &BotSessionFailure{Status: fiber.StatusUnauthorized, Message: ErrBotSessionMissing}
@@ -98,7 +99,7 @@ func VerifyBotSessionTokenWithPolicy(ctx context.Context, redisClient *redis.Cli
 		return failure
 	}
 	if claims.botID != botID {
-		return &BotSessionFailure{Status: fiber.StatusForbidden, Message: "会话令牌中的 bot_id 与请求 bot_id 不一致"}
+		return &BotSessionFailure{Status: fiber.StatusForbidden, Message: i18n.T("account.api.token_bot_mismatch")}
 	}
 	if failure := validateStoredBotSession(ctx, redisClient, botID, sessionToken); failure != nil {
 		return failure
@@ -128,7 +129,7 @@ func checkSessionPolicy(ctx context.Context, policy SessionPolicy, reporter sece
 
 func validateBotSession(c fiber.Ctx, redisClient *redis.Client, policy SessionPolicy, reporter secevent.Reporter) *botSessionFailure {
 	if redisClient == nil {
-		return &botSessionFailure{Status: fiber.StatusServiceUnavailable, Message: "会话存储不可用"}
+		return &botSessionFailure{Status: fiber.StatusServiceUnavailable, Message: i18n.T("account.api.session_store_unavailable")}
 	}
 	headerBotID, sessionToken, failure := botSessionHeaders(c)
 	if failure != nil {
@@ -141,10 +142,10 @@ func botSessionHeaders(c fiber.Ctx) (string, string, *botSessionFailure) {
 	headerBotID := c.Get(HeaderBotID)
 	sessionToken := c.Get(HeaderBotSessionToken)
 	if headerBotID == "" || sessionToken == "" {
-		return "", "", &botSessionFailure{Status: fiber.StatusUnauthorized, Message: "缺少 " + HeaderBotID + " 或 " + HeaderBotSessionToken + " 请求头"}
+		return "", "", &botSessionFailure{Status: fiber.StatusUnauthorized, Message: i18n.T("account.api.headers_missing", i18n.Data{"BotIDHeader": HeaderBotID, "TokenHeader": HeaderBotSessionToken})}
 	}
 	if c.Params("botId") != headerBotID {
-		return "", "", &botSessionFailure{Status: fiber.StatusForbidden, Message: "请求头中的 bot_id 与 URL 参数不一致"}
+		return "", "", &botSessionFailure{Status: fiber.StatusForbidden, Message: i18n.T("account.api.header_bot_mismatch")}
 	}
 	return headerBotID, sessionToken, nil
 }
@@ -159,11 +160,11 @@ type botSessionClaims struct {
 func parseBotSessionClaims(sessionToken string) (botSessionClaims, *botSessionFailure) {
 	decoded, err := jwt.Parse(sessionToken, botSessionSigningKey, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil || !decoded.Valid {
-		return botSessionClaims{}, &botSessionFailure{Status: fiber.StatusUnauthorized, Message: "会话令牌无效或已过期"}
+		return botSessionClaims{}, &botSessionFailure{Status: fiber.StatusUnauthorized, Message: i18n.T("account.api.token_invalid")}
 	}
 	claims, ok := decoded.Claims.(jwt.MapClaims)
 	if !ok {
-		return botSessionClaims{}, &botSessionFailure{Status: fiber.StatusUnauthorized, Message: "会话令牌声明无效"}
+		return botSessionClaims{}, &botSessionFailure{Status: fiber.StatusUnauthorized, Message: i18n.T("account.api.claims_invalid")}
 	}
 	botID, _ := claims["bot_id"].(string)
 	buildID, _ := claims["bid"].(string)
@@ -183,13 +184,13 @@ func validateStoredBotSession(ctx context.Context, redisClient *redis.Client, bo
 	defer finish()
 	stored, err := redisClient.Get(ctx, fmt.Sprintf(RedisKeyBotSession, botID)).Result()
 	if errors.Is(err, redis.Nil) {
-		return &botSessionFailure{Status: fiber.StatusUnauthorized, Message: "会话已过期或不存在"}
+		return &botSessionFailure{Status: fiber.StatusUnauthorized, Message: i18n.T("account.api.session_missing")}
 	}
 	if err != nil {
 		return &botSessionFailure{Status: fiber.StatusInternalServerError, Message: ErrInternalServer}
 	}
 	if stored != sessionToken {
-		return &botSessionFailure{Status: fiber.StatusUnauthorized, Message: "会话令牌不匹配"}
+		return &botSessionFailure{Status: fiber.StatusUnauthorized, Message: i18n.T("account.api.token_mismatch")}
 	}
 	return nil
 }

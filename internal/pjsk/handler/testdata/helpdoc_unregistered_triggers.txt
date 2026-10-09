@@ -2,7 +2,6 @@
 # Fix the document, or register the documented spelling as an alias when that is
 # unambiguous, then delete the line. TestHelpDocTriggersAreRegistered fails for new
 # entries and for lines that no longer fail.
-alias.md	/chara
 card.md	/pjsk
 generic.md	/cn
 generic.md	/en

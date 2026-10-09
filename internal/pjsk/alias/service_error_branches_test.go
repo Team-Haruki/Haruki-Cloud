@@ -57,7 +57,7 @@ func TestAliasReviewAndModerationInputValidation(t *testing.T) {
 	if _, err := deps.service.Approve(ctx, "qq", "admin-branches", []int64{999}); err == nil || testutil.MessageID(err) != "alias.review_not_found" {
 		t.Fatalf("expected missing approval ID error, got %v", err)
 	}
-	if _, err := deps.service.RejectMany(ctx, "qq", "admin-branches", []int64{1}, " "); err == nil || !strings.Contains(err.Error(), "拒绝原因") {
+	if _, err := deps.service.RejectMany(ctx, "qq", "admin-branches", []int64{1}, " "); testutil.MessageID(err) != "alias.reject_reason_required" {
 		t.Fatalf("expected empty rejection reason error, got %v", err)
 	}
 	if _, err := deps.service.GetSubmitter(ctx, "qq", "admin-branches", 0); err == nil {
@@ -96,7 +96,7 @@ func TestAliasApproveRejectsDuplicateAliasesInBatch(t *testing.T) {
 		}
 		pendingIDs = append(pendingIDs, row.ID)
 	}
-	if _, err := deps.service.Approve(ctx, "qq", "admin-branches", pendingIDs); err == nil || !strings.Contains(err.Error(), "重复") {
+	if _, err := deps.service.Approve(ctx, "qq", "admin-branches", pendingIDs); testutil.MessageID(err) != "alias.duplicate_in_batch" {
 		t.Fatalf("expected duplicate batch approval error, got %v", err)
 	}
 }

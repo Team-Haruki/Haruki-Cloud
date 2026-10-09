@@ -102,15 +102,16 @@ func testProfileBindingCommandExecution(t *testing.T) {
 	set := base
 	set.Selector = "u2"
 	set.Scope = "default"
-	if text, err := ExecuteProfileBindingCommand(ctx, service, ProfileModeDefaultSet, set); err != nil || !strings.Contains(string(text), "已设置") {
+	second := i18n.AccountLabel("jp", "7002", false)
+	if text, err := ExecuteProfileBindingCommand(ctx, service, ProfileModeDefaultSet, set); err != nil || string(text) != i18n.T("account.default.set_global", i18n.Data{"Account": second}) {
 		t.Fatalf("default set command = %q, %v", text, err)
 	}
-	if text, err := ExecuteProfileBindingCommand(ctx, service, ProfileModeDefaultClear, set); err != nil || !strings.Contains(string(text), "已取消") {
+	if text, err := ExecuteProfileBindingCommand(ctx, service, ProfileModeDefaultClear, set); err != nil || string(text) != i18n.T("account.default.cleared_global", i18n.Data{"Account": second}) {
 		t.Fatalf("default clear command = %q, %v", text, err)
 	}
 	unbind := base
 	unbind.Selector = "u2"
-	if text, err := ExecuteProfileBindingCommand(ctx, service, ProfileModeUnbind, unbind); err != nil || !strings.Contains(string(text), "已解绑") {
+	if text, err := ExecuteProfileBindingCommand(ctx, service, ProfileModeUnbind, unbind); err != nil || !strings.HasPrefix(string(text), i18n.T("account.unbind.done", i18n.Data{"Account": second})) {
 		t.Fatalf("unbind command = %q, %v", text, err)
 	}
 	if _, err := ExecuteProfileBindingCommand(ctx, service, "unsupported", base); err == nil {
@@ -135,48 +136,77 @@ func testProfileBindingFormatting(t *testing.T) {
 
 func testProfileBindingListFormatting(t *testing.T, visible, hidden BindingListItem) {
 	t.Helper()
-	if formatBindingListText(nil, "") != "你还没有绑定任何PJSK账号" || !strings.Contains(formatBindingListText(nil, "jp"), "JP服") {
+	jp := i18n.RegionLabel("jp")
+	if formatBindingListText(nil, "") != i18n.T("binding.none") || formatBindingListText(nil, "jp") != i18n.T("binding.none_in_region", i18n.Data{"Region": jp}) {
 		t.Fatal("empty binding list formatting mismatch")
 	}
-	if text := formatBindingListText([]BindingListItem{visible}, "jp"); !strings.Contains(text, "u2") || !strings.Contains(text, "全局默认") || !strings.Contains(text, "JP服默认") || !strings.Contains(text, visible.UserID) {
-		t.Fatalf("server binding list text = %q", text)
+	marks := i18n.T("account.mark.global_default") + "、" + i18n.T("account.mark.region_default", i18n.Data{"Region": jp})
+	want := i18n.T("account.list.header_region", i18n.Data{"Region": jp}) + "\n" +
+		i18n.T("account.list.item_marked", i18n.Data{"Index": 2, "Account": i18n.AccountLabel("jp", visible.UserID, true), "Marks": marks})
+	if text := formatBindingListText([]BindingListItem{visible}, "jp"); text != want {
+		t.Fatalf("server binding list text = %q, want %q", text, want)
 	}
-	if text := formatBindingListText([]BindingListItem{hidden}, ""); !strings.Contains(text, "u1") || strings.Contains(text, hidden.UserID) {
-		t.Fatalf("global hidden binding list text = %q", text)
+	want = i18n.T("account.list.header") + "\n" + i18n.T("account.list.item", i18n.Data{"Index": 1, "Account": i18n.AccountLabel("jp", hidden.UserID, false)})
+	if text := formatBindingListText([]BindingListItem{hidden}, ""); text != want || strings.Contains(text, hidden.UserID) {
+		t.Fatalf("global hidden binding list text = %q, want %q", text, want)
 	}
 }
 
 func testProfileBindingResultFormatting(t *testing.T, visible, hidden BindingListItem) {
 	t.Helper()
-	if formatBindResultText(nil) != "绑定成功" {
+	jp := i18n.RegionLabel("jp")
+	if formatBindResultText(nil) != i18n.T("account.bind.done_plain") {
 		t.Fatal("nil bind result formatting mismatch")
 	}
 	bindText := formatBindResultText(&BindResult{Server: "jp", UserID: "123456789", UserName: "name", AlreadyBound: true, SetGlobalDefault: true, SetServerDefault: true, MultipleServerMatch: true})
-	for _, phrase := range []string{"此前已绑定", "全局默认", "JP服默认", "多个服务器"} {
-		if !strings.Contains(bindText, phrase) {
-			t.Fatalf("bind result missing %q: %q", phrase, bindText)
-		}
+	wantBind := strings.Join([]string{
+		i18n.T("account.bind.done", i18n.Data{"Account": i18n.AccountLabel("jp", "123456789", false), "Name": "name"}),
+		i18n.T("account.bind.note_already_bound"),
+		i18n.T("account.bind.note_global_default"),
+		i18n.T("account.bind.note_region_default", i18n.Data{"Region": jp}),
+		i18n.T("account.bind.note_multiple_regions"),
+	}, "\n")
+	if bindText != wantBind || strings.Contains(bindText, "123456789") {
+		t.Fatalf("bind result text = %q, want %q", bindText, wantBind)
 	}
-	if formatUnbindResultText(nil) != "解绑成功" {
+	if formatUnbindResultText(nil) != i18n.T("account.unbind.done_plain") {
 		t.Fatal("nil unbind result formatting mismatch")
 	}
 	unbindText := formatUnbindResultText(&UnbindResult{Removed: hidden, ReassignedGlobal: &visible, ReassignedServer: &visible})
-	if !strings.Contains(unbindText, "全局默认") || !strings.Contains(unbindText, "JP服默认") {
-		t.Fatalf("unbind result text = %q", unbindText)
+	visibleLabel := i18n.AccountLabel("jp", visible.UserID, true)
+	wantUnbind := strings.Join([]string{
+		i18n.T("account.unbind.done", i18n.Data{"Account": i18n.AccountLabel("jp", hidden.UserID, false)}),
+		i18n.T("account.unbind.reassigned_global", i18n.Data{"Account": visibleLabel}),
+		i18n.T("account.unbind.reassigned_region", i18n.Data{"Region": jp, "Account": visibleLabel}),
+	}, "\n")
+	if unbindText != wantUnbind {
+		t.Fatalf("unbind result text = %q, want %q", unbindText, wantUnbind)
 	}
-	if formatDefaultBindingResultText("已设置", nil) != "已设置默认绑定" {
+	if formatDefaultBindingSetText(nil) != i18n.T("account.default.set_plain") || formatDefaultBindingClearedText(nil) != i18n.T("account.default.cleared_plain") {
 		t.Fatal("nil default binding formatting mismatch")
 	}
-	if text := formatDefaultBindingResultText("已设置", &DefaultBindingResult{Scope: DefaultScopeServer, Server: "jp", Binding: visible}); !strings.Contains(text, "JP服默认绑定") {
+	serverResult := &DefaultBindingResult{Scope: DefaultScopeServer, Server: "jp", Binding: visible}
+	if text := formatDefaultBindingSetText(serverResult); text != i18n.T("account.default.set_region", i18n.Data{"Region": jp, "Account": visibleLabel}) {
 		t.Fatalf("server default binding text = %q", text)
 	}
-	if text := formatBindingSwapResultText(" u1 ", " u2 ", "jp", []BindingListItem{visible}); !strings.Contains(text, "JP服") {
+	globalResult := &DefaultBindingResult{Scope: DefaultScopeGlobal, Binding: visible}
+	if text := formatDefaultBindingClearedText(globalResult); text != i18n.T("account.default.cleared_global", i18n.Data{"Account": visibleLabel}) {
+		t.Fatalf("global default clear text = %q", text)
+	}
+	if text := formatDefaultBindingClearedText(serverResult); text != i18n.T("account.default.cleared_region", i18n.Data{"Region": jp, "Account": visibleLabel}) {
+		t.Fatalf("server default clear text = %q", text)
+	}
+	if text := formatDefaultBindingSetText(globalResult); text != i18n.T("account.default.set_global", i18n.Data{"Account": visibleLabel}) {
+		t.Fatalf("global default binding text = %q", text)
+	}
+	wantSwap := i18n.T("account.swap.done_region", i18n.Data{"Region": jp, "Left": "u1", "Right": "u2", "List": formatBindingListText([]BindingListItem{visible}, "jp")})
+	if text := formatBindingSwapResultText(" u1 ", " u2 ", "jp", []BindingListItem{visible}); text != wantSwap {
 		t.Fatalf("server swap text = %q", text)
 	}
-	if text := formatBindingSwapResultText("u1", "u2", "", nil); !strings.Contains(text, "已交换") {
+	if text := formatBindingSwapResultText("u1", "u2", "", nil); text != i18n.T("account.swap.done", i18n.Data{"Left": "u1", "Right": "u2", "List": i18n.T("binding.none")}) {
 		t.Fatalf("global swap text = %q", text)
 	}
-	if formatBindingUID(visible) != visible.UserID || formatBindingUID(hidden) == hidden.UserID || i18n.MaskUID("123", false) != "123" || i18n.MaskUID("123456789", false) != "123***789" {
+	if i18n.MaskUID("123", false) != "123" || i18n.MaskUID("123456789", false) != "123***789" {
 		t.Fatal("binding UID formatting mismatch")
 	}
 }
@@ -211,7 +241,7 @@ func testProfileSettingsStableErrors(t *testing.T) {
 	if _, err := ExecuteProfileSettingsCommand(ctx, service, ProfileModeVerify, params); err == nil {
 		t.Fatal("verify without a binding should fail")
 	}
-	if text, err := ExecuteProfileSettingsCommand(ctx, service, ProfileModeVerifyList, params); err != nil || !strings.Contains(string(text), "还没有绑定") {
+	if text, err := ExecuteProfileSettingsCommand(ctx, service, ProfileModeVerifyList, params); err != nil || string(text) != i18n.T("binding.none_in_region", i18n.Data{"Region": i18n.RegionLabel("jp")}) {
 		t.Fatalf("empty verify list = %q, %v", text, err)
 	}
 	if _, err := ExecuteProfileSettingsCommand(ctx, service, ProfileModeSetTimeZone, params); err == nil {
@@ -257,34 +287,47 @@ func testProfileSettingsMutationClassification(t *testing.T) {
 
 func testProfileSettingsFormatting(t *testing.T) {
 	t.Helper()
-	if formatVerifyListText(nil, "") != "你还没有绑定任何PJSK账号" || !strings.Contains(formatVerifyListText(nil, "jp"), "JP服") {
+	jp := i18n.RegionLabel("jp")
+	if formatVerifyListText(nil, "") != i18n.T("binding.none") || formatVerifyListText(nil, "jp") != i18n.T("binding.none_in_region", i18n.Data{"Region": jp}) {
 		t.Fatal("empty verify list formatting mismatch")
 	}
 	visiblePath := "bg.jpg"
 	verified := BindingListItem{Index: 2, Server: "jp", UserID: "123456789", Verified: true, Visible: true, IsGlobalDefault: true, IsServerDefault: true, Bg: &drawing.ProfileBgSettings{ImgPath: &visiblePath, Blur: 5, Alpha: 70, Vertical: true}}
 	unverified := BindingListItem{Index: 1, Server: "tw", UserID: "987654321"}
 	verifyText := formatVerifyListText([]BindingListItem{verified, unverified}, "")
-	if !strings.Contains(verifyText, "✅") || !strings.Contains(verifyText, "❌") || !strings.Contains(verifyText, "全局默认") {
-		t.Fatalf("verify list text = %q", verifyText)
+	marks := i18n.T("account.mark.global_default") + "、" + i18n.T("account.mark.region_default", i18n.Data{"Region": jp})
+	wantVerify := strings.Join([]string{
+		i18n.T("account.verify_list.header"),
+		i18n.T("account.verify_list.item_marked", i18n.Data{"Index": 1, "Account": i18n.AccountLabel("jp", verified.UserID, true), "Status": i18n.M("account.verify_list.verified"), "Marks": marks}),
+		i18n.T("account.verify_list.item", i18n.Data{"Index": 2, "Account": i18n.AccountLabel("tw", unverified.UserID, false), "Status": i18n.M("account.verify_list.unverified")}),
+	}, "\n")
+	if verifyText != wantVerify {
+		t.Fatalf("verify list text = %q, want %q", verifyText, wantVerify)
 	}
-	if text := formatVerifyListText([]BindingListItem{verified}, "jp"); !strings.Contains(text, "u2") {
+	if text := formatVerifyListText([]BindingListItem{verified}, "jp"); !strings.HasPrefix(text, i18n.T("account.verify_list.header_region", i18n.Data{"Region": jp})+"\nu2 ") {
 		t.Fatalf("regional verify list text = %q", text)
 	}
-	if !strings.Contains(formatProfileBGSettingsText(BindingListItem{Server: "jp"}), "还没有") || !strings.Contains(formatProfileBGSettingsText(verified), "竖屏") {
-		t.Fatal("profile background settings formatting mismatch")
+	if text := formatProfileBGSettingsText(BindingListItem{Server: "jp"}); text != i18n.T("account.bg.none", i18n.Data{"Region": jp}) {
+		t.Fatalf("empty profile background text = %q", text)
+	}
+	bgData := i18n.Data{"Region": jp, "Account": i18n.AccountLabel("jp", verified.UserID, true), "Orientation": i18n.M("account.bg.vertical"), "Blur": 5, "Alpha": 70}
+	if text := formatProfileBGSettingsText(verified); text != i18n.T("account.bg.settings", bgData) {
+		t.Fatalf("profile background settings text = %q", text)
 	}
 	verified.Bg.Vertical = false
-	if !strings.Contains(formatProfileBGSettingsText(verified), "横屏") {
-		t.Fatal("horizontal profile background formatting mismatch")
+	bgData["Orientation"] = i18n.M("account.bg.horizontal")
+	if text := formatProfileBGSettingsText(verified); text != i18n.T("account.bg.settings", bgData) {
+		t.Fatalf("horizontal profile background text = %q", text)
 	}
 	candidates := make([]string, 25)
 	for i := range candidates {
 		candidates[i] = strings.Repeat("x", i+1)
 	}
-	if text := formatTimeZoneCandidatesText(" +08 ", candidates); !strings.Contains(text, "另外 5 个候选") || strings.Count(text, "\n") != 21 {
+	text := formatTimeZoneCandidatesText(" +08 ", candidates)
+	if !strings.HasSuffix(text, "\n"+i18n.T("account.settings.timezone_more", i18n.Data{"Count": 5})) || strings.Count(text, "\n") != strings.Count(i18n.T("account.settings.timezone_candidates", i18n.Data{"Offset": "+08", "Candidates": ""}), "\n")+20 {
 		t.Fatalf("timezone candidates text = %q", text)
 	}
-	if text := formatTimeZoneCandidatesText("UTC", []string{"UTC"}); !strings.Contains(text, "UTC") {
+	if text := formatTimeZoneCandidatesText("UTC", []string{"UTC"}); text != i18n.T("account.settings.timezone_candidates", i18n.Data{"Offset": "UTC", "Candidates": "UTC"}) {
 		t.Fatalf("short timezone candidates text = %q", text)
 	}
 }
@@ -306,7 +349,8 @@ func testProfileDifficultyHelpers(t *testing.T) {
 	if _, err := applyProfileDifficultyToggles(nil, []ProfileDifficultyToggle{{Difficulty: "bad", Enabled: true}}); err == nil {
 		t.Fatal("unsupported difficulty toggle should fail")
 	}
-	if summary := formatProfileDifficultySummary([]sekaiapi.MusicDifficultyType{"bad", sekaiapi.MusicDifficultyEasy}); !strings.Contains(summary, "easy开启") || !strings.Contains(summary, "master关闭") {
+	wantSummary := i18n.T("account.settings.arrest_difficulty_set", i18n.Data{"Enabled": "EASY", "Disabled": "NORMAL、HARD、EXPERT、MASTER、APPEND"})
+	if summary := formatProfileDifficultySummary([]sekaiapi.MusicDifficultyType{"bad", sekaiapi.MusicDifficultyEasy}); summary != wantSummary {
 		t.Fatalf("difficulty summary = %q", summary)
 	}
 	defaults := newDefaultUserSettings()
@@ -371,7 +415,7 @@ func testVerifiedProfileBackgroundDefenses(t *testing.T, ctx context.Context, se
 		t.Fatalf("verify property binding in DB: %v", err)
 	}
 	binding.Verified = true
-	if _, err := service.adjustBindingProfileBG(ctx, "qq", "42", binding, nil, nil, nil); err == nil || !strings.Contains(err.Error(), "还没有") {
+	if _, err := service.adjustBindingProfileBG(ctx, "qq", "42", binding, nil, nil, nil); testutil.MessageID(err) != "profile.bg.none" {
 		t.Fatalf("adjust without a background = %v", err)
 	}
 	service.bgStorage = nil

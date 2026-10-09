@@ -181,8 +181,8 @@ description = "活动列表图和活动详情图里的活动类型名：马拉�
 other = "马拉松"
 
 [event.type.cheerful_carnival]
-description = "活动列表图和活动详情图里的活动类型名：5v5（欢乐嘉年华）活动。"
-other = "5v5"
+description = "活动列表图和活动详情图里的活动类型名：欢乐嘉年华活动。显示名固定为“欢乐嘉年华(5v5)”，半角括号；用户输入仍写 5v5。"
+other = "欢乐嘉年华(5v5)"
 
 [event.type.world_bloom]
 description = "活动列表图和活动详情图里的活动类型名：World Link 活动。"

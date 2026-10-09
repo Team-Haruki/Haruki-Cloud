@@ -6,12 +6,19 @@ import (
 	"testing"
 )
 
-// stripRegionLabels removes the region display names (日服(JP) …), whose
-// half-width parentheses are the spec (decision B), before the punctuation
-// lint looks for half-width parentheses in Chinese text.
+// halfwidthParenNames are fixed display names other than the region labels
+// whose half-width parentheses are the spec (AGENTS.md 12.5).
+var halfwidthParenNames = []string{"欢乐嘉年华(5v5)"}
+
+// stripRegionLabels removes the region display names (日服(JP) …, decision B)
+// and halfwidthParenNames, whose half-width parentheses are the spec, before
+// the punctuation lint looks for half-width parentheses in Chinese text.
 func stripRegionLabels(text string) string {
 	for _, code := range RegionCodes {
 		text = strings.ReplaceAll(text, RegionLabel(code).String(), "\u2063")
+	}
+	for _, name := range halfwidthParenNames {
+		text = strings.ReplaceAll(text, name, "\u2063")
 	}
 	return text
 }
@@ -79,5 +86,11 @@ func TestStripRegionLabels(t *testing.T) {
 	}
 	if got := hanParen.FindString(stripRegionLabels("国服(cn)")); got == "" {
 		t.Fatal("only the exact region labels are exempt")
+	}
+	if got := hanParen.FindString(stripRegionLabels("预测当前欢乐嘉年华(5v5)活动")); got != "" {
+		t.Fatalf("欢乐嘉年华(5v5) still flagged: %q", got)
+	}
+	if got := hanParen.FindString(stripRegionLabels("嘉年华(5v5)")); got == "" {
+		t.Fatal("only the exact 欢乐嘉年华(5v5) name is exempt")
 	}
 }

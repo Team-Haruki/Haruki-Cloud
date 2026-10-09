@@ -290,7 +290,7 @@ description = "路由 sk/speed（时速）的参数无法识别时的原因行�
 other = "无法识别参数，请写统计的分钟数（正整数），可以加活动"
 
 [guidance.sk_winrate]
-description = "路由 sk/winrate（5v5 胜率预测）的参数无法识别时的原因行。"
+description = "路由 sk/winrate（欢乐嘉年华(5v5) 胜率预测）的参数无法识别时的原因行。"
 other = "无法识别参数，这个指令不需要参数"
 
 [guidance.stamp]

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
@@ -243,7 +244,7 @@ func TestScheduleAndNameHelpersCoverBoundaries(t *testing.T) {
 	{
 
 		got := fallbackLiveName("   ", 7)
-		testutil.Require(t, !(got != "Virtual Live #7"), "unexpected fallback name: %q", got)
+		testutil.Require(t, got == i18n.T("vlive.fallback_name", i18n.Data{"ID": 7}), "unexpected fallback name: %q", got)
 	}
 	{
 

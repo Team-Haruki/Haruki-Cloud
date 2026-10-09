@@ -2,6 +2,7 @@ package sk
 
 import (
 	"fmt"
+	"haruki-cloud/internal/i18n"
 	"testing"
 	"time"
 
@@ -61,7 +62,7 @@ func TestStaleSelfRecordWarningRequiresHealthyTrackerStatus(t *testing.T) {
 		status: &sekaiapi.EventStatusResponse{Status: 1, StatusDesc: "正常"},
 	}, nil, nil)
 
-	if got := controller.StaleSelfRecordWarning(req, ranks); got != StaleSelfRecordWarning {
+	if got := controller.StaleSelfRecordWarning(req, ranks); got != i18n.T("sk.stale_self_record") {
 		t.Fatalf("expected stale warning, got %q", got)
 	}
 
@@ -69,7 +70,7 @@ func TestStaleSelfRecordWarningRequiresHealthyTrackerStatus(t *testing.T) {
 		status: &sekaiapi.EventStatusResponse{Status: 0},
 	}, nil, nil)
 
-	if got := controller.StaleSelfRecordWarning(req, ranks); got != StaleSelfRecordWarning {
+	if got := controller.StaleSelfRecordWarning(req, ranks); got != i18n.T("sk.stale_self_record") {
 		t.Fatalf("expected stale warning for numeric healthy status, got %q", got)
 	}
 
@@ -148,7 +149,7 @@ func TestStaleSelfRecordWarningInfersCurrentEvent(t *testing.T) {
 	}, nil)
 
 	req := TrackerRankQuery{Region: "jp", UserID: &userID}
-	if got := controller.StaleSelfRecordWarning(req, ranks); got != StaleSelfRecordWarning {
+	if got := controller.StaleSelfRecordWarning(req, ranks); got != i18n.T("sk.stale_self_record") {
 		t.Fatalf("expected stale warning with inferred event id, got %q", got)
 	}
 }

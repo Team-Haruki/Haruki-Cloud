@@ -78,7 +78,7 @@ func (sekaiHandlers) CustomRoomScoreControlHandle() HarukiSekaiCommandHandler {
 		Path: "score/custom-room",
 		Commands: []string{
 			"/pjsk custom room score", "/custom room score",
-			"/自定义房间控分", "/自定义房控分", "/自定义控分",
+			"/自定义房间控分", "/自定义房控分", "/自定义控分", "/自定义房间",
 			"/自定义房间分数", "/自定义分数",
 		},
 		Regions: []renderregion.Value{renderregion.JP},
@@ -126,7 +126,7 @@ func (sekaiHandlers) MusicBoardHandle() HarukiSekaiCommandHandler {
 		Path: "score/music-board",
 		Commands: []string{
 			"/pjsk music board", "/music board",
-			"/歌曲排行", "/歌曲比较", "/歌曲对比", "/歌曲排名", "/曲目榜",
+			"/歌曲排行", "/歌曲比较", "/歌曲对比", "/歌曲排名", "/曲目榜", "/歌曲榜",
 		},
 		Priority: 1,
 		Regions:  []renderregion.Value{renderregion.JP},

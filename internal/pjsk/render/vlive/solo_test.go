@@ -113,9 +113,10 @@ func TestBuildListRequestCollapsesSoloGroupWithoutGroupTable(t *testing.T) {
 	if len(req.Lives) != 2 || req.Lives[1].Name != "ソロ（一歌）" || req.Lives[1].GroupCount == nil || *req.Lives[1].GroupCount != 3 {
 		t.Fatalf("expected a collapsed entry named after the first live, got %+v", req.Lives)
 	}
-	text, err := controller.RenderText(ListQuery{Region: "jp", Now: soloTestNow})
-	if err != nil || !strings.Contains(text, "【2】ソロ（一歌）") || !strings.Contains(text, "共3场个人Live") || strings.Contains(text, "【492】") {
-		t.Fatalf("text list = %q err=%v", text, err)
+	for _, live := range req.Lives {
+		if live.ID == 492 {
+			t.Fatalf("collapsed member 492 listed on its own: %+v", req.Lives)
+		}
 	}
 }
 

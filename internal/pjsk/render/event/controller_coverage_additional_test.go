@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"haruki-cloud/internal/i18n"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -351,7 +352,7 @@ func TestEventCardAndCharacterFilterBranches(t *testing.T) {
 	testutil.RequireArgs(t, !(builder.characterDisplayName(999) != ""), "missing character has a display name")
 
 	for code, want := range map[string]string{
-		"marathon": "马拉松", "cheerful_carnival": "5v5", "world_bloom": "WorldLink", "custom": "custom",
+		"marathon": i18n.T("event.type.marathon"), "cheerful_carnival": i18n.T("event.type.cheerful_carnival"), "world_bloom": i18n.T("event.type.world_bloom"), "custom": "custom",
 	} {
 		{
 			got := builder.displayEventType(code)

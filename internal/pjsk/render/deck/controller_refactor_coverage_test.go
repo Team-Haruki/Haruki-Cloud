@@ -3,6 +3,7 @@ package deck
 import (
 	"context"
 	"errors"
+	"haruki-cloud/internal/i18n"
 	"reflect"
 	"testing"
 
@@ -92,10 +93,10 @@ func TestRecommendMetadataRefactorBranches(t *testing.T) {
 		wantType string
 		wantName string
 	}{
-		{recType: "challenge", wantType: "solo", wantName: "单人"},
-		{recType: "event", liveType: "auto", wantType: "auto", wantName: "自动"},
-		{recType: "mysekai", wantType: "mysekai", wantName: "烤森"},
-		{recType: "event", wantType: "multi", wantName: "协力"},
+		{recType: "challenge", wantType: "solo", wantName: i18n.LiveTypeLabel("solo").String()},
+		{recType: "event", liveType: "auto", wantType: "auto", wantName: i18n.LiveTypeLabel("auto").String()},
+		{recType: "mysekai", wantType: "mysekai", wantName: i18n.T("deck.live.mysekai")},
+		{recType: "event", wantType: "multi", wantName: i18n.LiveTypeLabel("multi").String()},
 	} {
 		request := &drawing.DeckRequest{}
 		applyRecommendLiveMetadata(request, tc.recType, map[string]any{"live_type": tc.liveType})
@@ -197,7 +198,7 @@ func TestRecommendRequestRefactorBranches(t *testing.T) {
 
 	omakase := &drawing.DeckRequest{}
 	applyRecommendMusicRequestFields(omakase, map[string]any{"music_id": 10000}, AutoQuery{})
-	if omakase.MusicTitle == nil || *omakase.MusicTitle != "おまかせ (所有歌曲平均)" {
+	if omakase.MusicTitle == nil || *omakase.MusicTitle != i18n.T("deck.music.omakase") {
 		t.Fatalf("omakase fields = %+v", omakase)
 	}
 }

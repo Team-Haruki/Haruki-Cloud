@@ -2,9 +2,9 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/vlive"
@@ -37,7 +37,7 @@ func executeVLive(rc *RequestContext) (onebot11.Message, error) {
 	data, err := rc.App.VLive.WithContext(rc.Ctx).RenderListImage(query)
 	if err != nil {
 		if errors.Is(err, vlive.ErrNoLives) {
-			return onebot11.Message{onebot11.Text("当前没有虚拟Live")}, nil
+			return onebot11.Message{onebot11.Text(i18n.T("vlive.none"))}, nil
 		}
 		return nil, err
 	}
@@ -53,9 +53,9 @@ func executeVLiveDetail(rc *RequestContext, timeZone string) (onebot11.Message, 
 	data, err := rc.App.VLive.WithContext(rc.Ctx).RenderDetailImage(query)
 	switch {
 	case errors.Is(err, vlive.ErrNoSoloLives):
-		return onebot11.Message{onebot11.Text("该区服暂无个人虚拟Live")}, nil
+		return onebot11.Message{onebot11.Text(i18n.T("vlive.solo.none", i18n.Data{"Region": i18n.RegionLabel(regionWithDefault(rc.Cmd.Region))}))}, nil
 	case errors.Is(err, vlive.ErrSoloLiveNotFound):
-		return onebot11.Message{onebot11.Text(fmt.Sprintf("未找到个人虚拟Live：%s\n不带参数使用 /vlive 查看虚拟Live列表", query.Query))}, nil
+		return onebot11.Message{onebot11.Text(i18n.T("vlive.solo.not_found", i18n.Data{"Query": i18n.EchoQuery(query.Query)}))}, nil
 	case err != nil:
 		return nil, err
 	}

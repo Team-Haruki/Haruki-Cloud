@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"haruki-cloud/internal/i18n"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -629,10 +630,10 @@ func TestEventPlannerUsesWorldBloomFinaleSimulation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolveEventPlannerEventFromQuery() error = %v", err)
 	}
-	if eventInfo == nil || eventInfo.ID != 0 || eventInfo.Name != "WL3终章模拟活动" || eventInfo.EventType != "world_bloom" {
+	if eventInfo == nil || eventInfo.ID != 0 || eventInfo.Name != i18n.T("event.planner.simulated_wl_finale", i18n.Data{"Turn": 3}) || eventInfo.EventType != "world_bloom" {
 		t.Fatalf("unexpected simulated finale event: %+v", eventInfo)
 	}
-	if warning != "已使用模拟活动设置进行规划" {
+	if warning != i18n.T("event.planner.warn_simulated") {
 		t.Fatalf("unexpected warning: %q", warning)
 	}
 }
@@ -714,7 +715,7 @@ func TestEventPlannerCurrentPointFallsBackToZeroWhenTrackerMisses(t *testing.T) 
 		renderdeck.AutoQuery{},
 		eventPlannerCommandParams{},
 	)
-	if point != 0 || !known || !strings.Contains(warning, "前100") {
+	if point != 0 || !known || warning != i18n.T("event.planner.current_zero.not_ranked") {
 		t.Fatalf("unexpected current point fallback: point=%d known=%v warning=%q", point, known, warning)
 	}
 }
@@ -741,7 +742,7 @@ func TestEventPlannerTargetRankUsesWorldBloomRankingByDefault(t *testing.T) {
 	if gotPath != "/api/v2/cloud/events/jp/170/leaderboards/world-bloom/17/sk/line" {
 		t.Fatalf("unexpected tracker path: %s", gotPath)
 	}
-	if point != 456789 || !strings.Contains(source, "WL章节") {
+	if point != 456789 || source != i18n.T("event.planner.source.ranking_wl", i18n.Data{"Rank": 100}) {
 		t.Fatalf("unexpected target result: point=%d source=%q", point, source)
 	}
 }
@@ -768,7 +769,7 @@ func TestEventPlannerTargetRankTotalRankingUsesNormalRanking(t *testing.T) {
 	if gotPath != "/api/v2/cloud/events/jp/170/leaderboards/total/sk/line" {
 		t.Fatalf("unexpected tracker path: %s", gotPath)
 	}
-	if point != 987654 || strings.Contains(source, "WL章节") {
+	if point != 987654 || source != i18n.T("event.planner.source.ranking", i18n.Data{"Rank": 100}) {
 		t.Fatalf("unexpected target result: point=%d source=%q", point, source)
 	}
 }

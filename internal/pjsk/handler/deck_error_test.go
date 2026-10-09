@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"haruki-cloud/internal/i18n"
 	"testing"
 
 	"haruki-cloud/internal/core/upstreamerr"
@@ -71,7 +72,7 @@ func TestExecuteDeckReturnsDisabledMessage(t *testing.T) {
 	if !ok {
 		t.Fatalf("unexpected text data: %+v", msg[0].Data)
 	}
-	want := "组卡功能已被禁用\n原因: maintenance\n如有组卡功能需求，请临时前往Haruki工具箱使用组卡推荐"
+	want := i18n.T("deck.disabled_reason", i18n.Data{"Reason": "maintenance"})
 	if data.Text != want {
 		t.Fatalf("unexpected disabled message:\n%s", data.Text)
 	}

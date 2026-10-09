@@ -282,7 +282,7 @@ func newEventPlannerDrawingRequest(
 ) *drawing.EventPlannerRequest {
 	remaining := max(targetPoint-currentPoint, 0)
 	return &drawing.EventPlannerRequest{
-		Title:           "活动规划",
+		Title:           i18n.T("event.planner.title"),
 		Region:          region.String(),
 		EventID:         eventInfo.ID,
 		EventName:       eventInfo.Name,
@@ -556,7 +556,7 @@ func resolveEventPlannerEvent(ctx context.Context, app *renderapp.App, region re
 	if current == nil {
 		return nil, "", usererror.New(usererror.CodeNotFound, i18n.M("event.planner.no_current", i18n.Data{"Region": i18n.RegionLabel(region.String())}))
 	}
-	return current, fmt.Sprintf("未指定活动，已使用当前活动 %s", current.Name), nil
+	return current, i18n.T("event.planner.warn_current_event", i18n.Data{"Event": current.Name}), nil
 }
 
 func resolveEventPlannerEventFromQuery(ctx context.Context, app *renderapp.App, region renderregion.Value, query renderdeck.AutoQuery) (*masterdata.Event, string, error) {
@@ -572,19 +572,19 @@ func resolveEventPlannerEventFromQuery(ctx context.Context, app *renderapp.App, 
 			EventType:   eventPlannerSimulatedEventType(query),
 			StartAt:     time.Now().UnixMilli(),
 			AggregateAt: time.Now().Add(7 * 24 * time.Hour).UnixMilli(),
-		}, "已使用模拟活动设置进行规划", nil
+		}, i18n.T("event.planner.warn_simulated"), nil
 	}
 	return resolveEventPlannerEvent(ctx, app, region, 0)
 }
 
 func eventPlannerSimulatedEventName(query renderdeck.AutoQuery) string {
 	if query.WorldBloomFinaleTurn != nil && *query.WorldBloomFinaleTurn > 0 {
-		return fmt.Sprintf("WL%d终章模拟活动", *query.WorldBloomFinaleTurn)
+		return i18n.T("event.planner.simulated_wl_finale", i18n.Data{"Turn": *query.WorldBloomFinaleTurn})
 	}
 	if query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0 {
-		return fmt.Sprintf("WL%d模拟活动", *query.WorldBloomEventTurn)
+		return i18n.T("event.planner.simulated_wl", i18n.Data{"Turn": *query.WorldBloomEventTurn})
 	}
-	return "模拟活动"
+	return i18n.T("event.planner.simulated")
 }
 
 func eventPlannerSimulatedEventType(query renderdeck.AutoQuery) string {
@@ -619,7 +619,7 @@ func resolveEventPlannerTargetPoint(
 	params eventPlannerCommandParams,
 ) (int64, string, error) {
 	if params.TargetPoint > 0 {
-		return params.TargetPoint, "直接输入", nil
+		return params.TargetPoint, i18n.T("event.planner.source.input"), nil
 	}
 	if params.TargetRank <= 0 {
 		return 0, "", usererror.Misuse(i18n.M("event.planner.target_required"))
@@ -630,7 +630,7 @@ func resolveEventPlannerTargetPoint(
 	if rc == nil || rc.App == nil || rc.App.Tracker == nil {
 		return 0, "", usererror.Misconfigured(fmt.Errorf("event planner: tracker is not configured (rank %d)", params.TargetRank))
 	}
-	characterID, source, worldBloom, err := eventPlannerTargetRankingScope(eventInfo, query, params)
+	characterID, worldBloom, err := eventPlannerTargetRankingScope(eventInfo, query, params)
 	if err != nil {
 		return 0, "", err
 	}
@@ -646,22 +646,26 @@ func resolveEventPlannerTargetPoint(
 		}
 		return 0, "", usererror.New(usererror.CodeNotFound, i18n.M("event.planner.no_line", i18n.Data{"Rank": params.TargetRank}))
 	}
-	return int64(lines.Ranks[0].Score), fmt.Sprintf(source, params.TargetRank), nil
+	source := i18n.T("event.planner.source.ranking", i18n.Data{"Rank": params.TargetRank})
+	if worldBloom {
+		source = i18n.T("event.planner.source.ranking_wl", i18n.Data{"Rank": params.TargetRank})
+	}
+	return int64(lines.Ranks[0].Score), source, nil
 }
 
 func eventPlannerTargetRankingScope(
 	eventInfo *masterdata.Event,
 	query renderdeck.AutoQuery,
 	params eventPlannerCommandParams,
-) (*int, string, bool, error) {
+) (*int, bool, error) {
 	if !eventPlannerUseWorldBloomRanking(eventInfo, params) {
-		return nil, "Tracker实时榜线:t%d", false, nil
+		return nil, false, nil
 	}
 	characterID, ok := eventPlannerWorldBloomCharacterID(query)
 	if !ok {
-		return nil, "", false, usererror.Misuse(i18n.M("event.planner.wl_character_required"))
+		return nil, false, usererror.Misuse(i18n.M("event.planner.wl_character_required"))
 	}
-	return &characterID, "Tracker实时WL章节榜线:t%d", true, nil
+	return &characterID, true, nil
 }
 
 func eventPlannerUseWorldBloomRanking(eventInfo *masterdata.Event, params eventPlannerCommandParams) bool {
@@ -682,21 +686,21 @@ func resolveEventPlannerCurrentPoint(
 		return params.CurrentPoint, true, ""
 	}
 	if rc == nil || rc.App == nil || rc.App.Tracker == nil {
-		return 0, true, "未指定当前pt且未配置 Tracker，当前按 0 计算"
+		return 0, true, i18n.T("event.planner.current_zero.unavailable")
 	}
 	if eventInfo == nil || eventInfo.ID <= 0 {
-		return 0, true, "未指定当前pt且 Tracker 无法读取模拟活动当前分，当前按 0 计算"
+		return 0, true, i18n.T("event.planner.current_zero.simulated")
 	}
 	uid, ok := eventPlannerBindingUID(binding)
 	if !ok {
-		return 0, true, "未指定当前pt且绑定 UID 无效，当前按 0 计算"
+		return 0, true, i18n.T("event.planner.current_zero.uid_invalid")
 	}
 
 	tracker := rc.App.Tracker.WithContext(rc.Ctx)
 	if eventPlannerUseWorldBloomRanking(eventInfo, params) {
 		charID, ok := eventPlannerWorldBloomCharacterID(query)
 		if !ok {
-			return 0, true, "未指定当前pt且 Tracker 无法确定 WL 章节，当前按 0 计算"
+			return 0, true, i18n.T("event.planner.current_zero.wl_chapter_unknown")
 		}
 		resp, err := tracker.GetCloudSKQuery(region.String(), eventInfo.ID, &charID, nil, &uid, false, false, 3600)
 		if err == nil && resp != nil && len(resp.Ranks) > 0 {
@@ -734,14 +738,17 @@ func eventPlannerWorldBloomCharacterID(query renderdeck.AutoQuery) (int, bool) {
 }
 
 func eventPlannerCurrentPointTrackerWarning(err error, worldBloom bool) string {
-	target := "当前活动"
-	if worldBloom {
-		target = "该 WL 章节"
+	notRanked := errors.Is(err, sekaiapi.ErrRankingNotFound)
+	switch {
+	case notRanked && worldBloom:
+		return i18n.T("event.planner.current_zero.not_ranked_wl")
+	case notRanked:
+		return i18n.T("event.planner.current_zero.not_ranked")
+	case worldBloom:
+		return i18n.T("event.planner.current_zero.read_failed_wl")
+	default:
+		return i18n.T("event.planner.current_zero.read_failed")
 	}
-	if errors.Is(err, sekaiapi.ErrRankingNotFound) {
-		return fmt.Sprintf("未指定当前pt且 Tracker 未找到%s前100记录，当前按 0 计算", target)
-	}
-	return fmt.Sprintf("未指定当前pt且 Tracker 未能读取%s当前分，当前按 0 计算", target)
 }
 
 func parseEventPlannerRank(args string) int {
@@ -1018,26 +1025,26 @@ func eventPlannerDeckCards(cards []drawing.DeckCardData) []drawing.EventPlannerD
 }
 
 func buildEventPlannerDeckSummary(query renderdeck.AutoQuery, totalPower int, eventBonus, skillUp float64) string {
-	label := "最优组卡"
+	label := i18n.M("event.planner.deck.optimal")
 	switch {
 	case len(query.FixedCards) > 0 || len(query.FixedCharacters) > 0:
-		label = "指定卡组"
+		label = i18n.M("event.planner.deck.fixed")
 	case query.UseCurrentDeck:
-		label = "当前主队"
+		label = i18n.M("event.planner.deck.current")
 	case query.MaxProfile:
-		label = "顶配组卡"
+		label = i18n.M("event.planner.deck.max_profile")
 	case query.SubMaxProfile:
-		label = "次顶配组卡"
+		label = i18n.M("event.planner.deck.sub_max_profile")
 	}
-	parts := []string{label}
+	parts := []string{label.String()}
 	if totalPower > 0 {
-		parts = append(parts, fmt.Sprintf("综合力 %s", formatEventPlannerPlainInt(int64(totalPower))))
+		parts = append(parts, i18n.T("event.planner.deck.power", i18n.Data{"Power": i18n.Thousands(int64(totalPower))}))
 	}
 	if eventBonus > 0 {
-		parts = append(parts, fmt.Sprintf("活动加成 %s%%", formatEventPlannerRate(eventBonus)))
+		parts = append(parts, i18n.T("event.planner.deck.bonus", i18n.Data{"Bonus": i18n.Percent(eventBonus)}))
 	}
 	if skillUp > 0 {
-		parts = append(parts, fmt.Sprintf("协力实效 %s%%", formatEventPlannerRate(skillUp)))
+		parts = append(parts, i18n.T("event.planner.deck.skill_up", i18n.Data{"SkillUp": i18n.Percent(skillUp)}))
 	}
 	return strings.Join(parts, " / ")
 }
@@ -1061,26 +1068,4 @@ func eventPlannerStringValue(value *string, fallback string) string {
 		return fallback
 	}
 	return *value
-}
-
-func formatEventPlannerPlainInt(value int64) string {
-	raw := strconv.FormatInt(value, 10)
-	if len(raw) <= 3 {
-		return raw
-	}
-	var parts []string
-	for len(raw) > 3 {
-		parts = append([]string{raw[len(raw)-3:]}, parts...)
-		raw = raw[:len(raw)-3]
-	}
-	parts = append([]string{raw}, parts...)
-	return strings.Join(parts, ",")
-}
-
-func formatEventPlannerRate(value float64) string {
-	rounded := math.Round(value*10) / 10
-	if math.Abs(rounded-math.Round(rounded)) < 1e-9 {
-		return strconv.FormatInt(int64(math.Round(rounded)), 10)
-	}
-	return strconv.FormatFloat(rounded, 'f', 1, 64)
 }

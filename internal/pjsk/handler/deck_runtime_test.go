@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"haruki-cloud/internal/i18n"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -565,7 +566,7 @@ func TestExecuteDeckUsesSelectedBindingRegionBeforeResolvingCurrentEvent(t *test
 	if !ok {
 		t.Fatalf("unexpected text data: %+v", message[0].Data)
 	}
-	if !strings.Contains(textData.Text, "CN / 活动组卡 / event640") {
+	if !strings.Contains(textData.Text, i18n.RegionLabel("cn").String()+" / "+i18n.T("deck.mode.event")+" / "+i18n.T("deck.summary.event", i18n.Data{"ID": 640})) {
 		t.Fatalf("expected selected binding region event summary, got %q", textData.Text)
 	}
 }

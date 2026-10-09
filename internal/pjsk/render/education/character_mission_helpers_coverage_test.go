@@ -2,6 +2,7 @@ package education
 
 import (
 	"errors"
+	"haruki-cloud/internal/i18n"
 	"reflect"
 	"strings"
 	"testing"
@@ -13,7 +14,7 @@ import (
 )
 
 func TestCharacterMissionQueryHelpers(t *testing.T) {
-	if got := CharacterMissionShortName("play_live"); got != "队长次数" {
+	if got := CharacterMissionShortName("play_live"); got != i18n.T("education.mission.play_live") {
 		t.Fatalf("known short name = %q", got)
 	}
 	if got := CharacterMissionShortName("future_type"); got != "future_type" {
@@ -49,6 +50,12 @@ func TestCharacterMissionQueryHelpers(t *testing.T) {
 		{input: "一歌 大树", wantType: "area_item_level_up_all_character"},
 		{input: "一歌 想いの大樹", wantType: "area_item_level_up_all_character"},
 		{input: "一歌 花树", wantType: "area_item_level_up_reality_world"},
+		{input: "一歌 属性道具（树&花）升级次数", wantType: "area_item_level_up_reality_world"},
+		{input: "一歌 技能等级升级次数（★1~★3）", wantType: "skill_level_up_standard"},
+		{input: "一歌 专精等级升级次数(★4&生日卡)", wantType: "master_rank_up_rare"},
+		{input: "一歌 队长次数（EX）", wantType: "play_live"},
+		{input: "一歌 MySekai家具数量", wantType: "collect_mysekai_fixture"},
+		{input: "一歌 waiting_room_ex", wantType: "waiting_room_ex"},
 		{input: "  一歌  ", wantQuery: "一歌"},
 	}
 	for _, tt := range typeTests {
@@ -123,7 +130,7 @@ func assertCharacterMissionMetadataLookups(t *testing.T, mission *CharacterMissi
 	if got := characterMissionDisplayName(1); got != "星乃一歌" {
 		t.Fatalf("known character display name = %q", got)
 	}
-	if got := characterMissionDisplayName(99); got != "角色99" {
+	if got := characterMissionDisplayName(99); got != i18n.T("education.character_fallback", i18n.Data{"ID": 99}) {
 		t.Fatalf("fallback character display name = %q", got)
 	}
 }

@@ -2,9 +2,9 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
 	"haruki-cloud/internal/i18n"
@@ -169,9 +169,11 @@ func defaultEnabledDiffs() []sekaiapi.MusicDifficultyType {
 }
 
 func formatArrestText(resp *sekaiapi.GetAnotherProfileResponse, diffs []sekaiapi.MusicDifficultyType, challengeCharacterName string, uidVisible bool) string {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("逮捕: %s (UID: %s) Lv.%d\n",
-		resp.User.Name, arrestDisplayUID(resp.User.UserID, uidVisible), resp.User.Rank))
+	lines := []i18n.Message{i18n.M("misc.arrest.header", i18n.Data{
+		"Name": resp.User.Name,
+		"UID":  arrestDisplayUID(resp.User.UserID, uidVisible),
+		"Rank": resp.User.Rank,
+	})}
 
 	countByDiff := make(map[sekaiapi.MusicDifficultyType]sekaiapi.AnotherUserMusicDifficultyClearCount)
 	for _, c := range resp.UserMusicDifficultyClearCount {
@@ -183,17 +185,22 @@ func formatArrestText(resp *sekaiapi.GetAnotherProfileResponse, diffs []sekaiapi
 		if !ok {
 			continue
 		}
-		sb.WriteString(fmt.Sprintf("[%s] Clear:%d FC:%d AP:%d\n",
-			diff, c.LiveClear, c.FullCombo, c.AllPerfect))
+		lines = append(lines, i18n.M("misc.arrest.difficulty", i18n.Data{
+			"Difficulty": i18n.DifficultyLabel(string(diff)),
+			"Clear":      c.LiveClear,
+			"FC":         c.FullCombo,
+			"AP":         c.AllPerfect,
+		}))
 	}
 
 	if resp.UserChallengeLiveSoloResult.HighScore > 0 {
-		label := arrestChallengeCharacterLabel(resp.UserChallengeLiveSoloResult.CharacterID, challengeCharacterName)
-		sb.WriteString(fmt.Sprintf("挑战Live(%s): %s分",
-			label, formatInt(resp.UserChallengeLiveSoloResult.HighScore)))
+		lines = append(lines, i18n.M("misc.arrest.challenge", i18n.Data{
+			"Character": arrestChallengeCharacterLabel(resp.UserChallengeLiveSoloResult.CharacterID, challengeCharacterName),
+			"Score":     i18n.Thousands(int64(resp.UserChallengeLiveSoloResult.HighScore)),
+		}))
 	}
 
-	return strings.TrimRight(sb.String(), "\n")
+	return i18n.LinesText(lines)
 }
 
 func resolveArrestChallengeCharacterName(ctx context.Context, app *renderapp.App, characterID int) string {
@@ -232,11 +239,11 @@ func resolveArrestChallengeCharacterName(ctx context.Context, app *renderapp.App
 	return strings.TrimSpace(bestName)
 }
 
-func arrestChallengeCharacterLabel(characterID int, resolvedName string) string {
+func arrestChallengeCharacterLabel(characterID int, resolvedName string) i18n.Message {
 	if name := strings.TrimSpace(resolvedName); name != "" {
-		return name
+		return i18n.Verbatim(name)
 	}
-	return fmt.Sprintf("角色ID:%d", characterID)
+	return i18n.M("misc.arrest.character_id", i18n.Data{"ID": characterID})
 }
 
 func arrestDisplayUID(uid int64, visible bool) string {
@@ -260,28 +267,6 @@ func arrestCharacterRegionRank(region string) int {
 	}
 }
 
-func formatInt(n int) string {
-	if n < 0 {
-		return "-" + formatInt(-n)
-	}
-	s := strconv.Itoa(n)
-	if len(s) <= 3 {
-		return s
-	}
-	var buf strings.Builder
-	remainder := len(s) % 3
-	if remainder > 0 {
-		buf.WriteString(s[:remainder])
-	}
-	for i := remainder; i < len(s); i += 3 {
-		if i > 0 {
-			buf.WriteByte(',')
-		}
-		buf.WriteString(s[i : i+3])
-	}
-	return buf.String()
-}
-
 func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
 	var p userQueryParams
 	mergeParams(rc.Cmd.Params, &p)
@@ -301,12 +286,13 @@ func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
 	}
 
 	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, target.HarukiUserID)
-	regTime := displaytime.TimeFromUnixSeconds(ts, timeZone)
-	relDur := displaytime.FormatRelativeDuration(displaytime.Now(timeZone).Sub(displaytime.TimeFromUnixSeconds(ts, timeZone)))
-	maskedUID := i18n.MaskUID(pjskUserID, target.Visible)
-
-	text := fmt.Sprintf("UID %s 注册时间如下\n%s (%s) (%s)",
-		maskedUID, displaytime.FormatTime(regTime, "2006-01-02 15:04:05"), timeZone, relDur)
+	loc, _ := displaytime.LoadLocation(timeZone)
+	regTime := time.Unix(ts, 0)
+	text := i18n.T("misc.reg_time.result", i18n.Data{
+		"UID":  i18n.MaskUID(pjskUserID, target.Visible),
+		"Time": i18n.FormatUserTime(regTime, loc),
+		"Ago":  displaytime.FormatRelativeDuration(time.Since(regTime)),
+	})
 	return onebot11.Message{onebot11.Text(text)}, nil
 }
 

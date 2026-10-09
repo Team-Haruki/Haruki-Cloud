@@ -118,7 +118,7 @@ func (sekaiHandlers) SKPlayerTraceHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path: "sk/player-trace",
 		Commands: []string{
-			"/sk-player-trace", "/sk玩家轨迹", "/玩家轨迹", "/ptr", "/pjsk玩家追踪", "/pjsk ptr",
+			"/sk-player-trace", "/sk玩家轨迹", "/玩家轨迹", "/玩家追踪", "/ptr", "/pjsk玩家追踪", "/pjsk ptr",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -138,7 +138,7 @@ func (sekaiHandlers) SKRankTraceHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path: "sk/rank-trace",
 		Commands: []string{
-			"/sk-rank-trace", "/sk档线轨迹", "/档线轨迹", "/rtr", "/skt", "/sklt", "/sktl", "/pjsk追踪", "/pjsk sk追踪",
+			"/sk-rank-trace", "/sk档线轨迹", "/档线轨迹", "/排名追踪", "/rtr", "/skt", "/sklt", "/sktl", "/pjsk追踪", "/pjsk sk追踪",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -168,7 +168,7 @@ func (sekaiHandlers) SKDailySpeedHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path: "sk/daily-speed",
 		Commands: []string{
-			"/pjsk sk daily speed", "/pjsk board daily speed", "/日速", "/skds", "/skdv", "/sk日速",
+			"/pjsk sk daily speed", "/pjsk board daily speed", "/日速", "/每日时速", "/skds", "/skdv", "/sk日速",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {

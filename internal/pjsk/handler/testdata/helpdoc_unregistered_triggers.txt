@@ -50,8 +50,3 @@ profile_visibility_hide.md	/隐藏uid
 profile_visibility_show.md	/显示uid
 score.md	/jp分数线
 score.md	/分数线
-score_custom-room.md	/自定义房间
-score_music-board.md	/歌曲榜
-sk_daily-speed.md	/每日时速
-sk_player-trace.md	/玩家追踪
-sk_rank-trace.md	/排名追踪

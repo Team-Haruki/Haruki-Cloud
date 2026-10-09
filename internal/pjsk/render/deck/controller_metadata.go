@@ -1,7 +1,7 @@
 package deck
 
 import (
-	"fmt"
+	"haruki-cloud/internal/i18n"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -37,16 +37,16 @@ func applyRecommendLiveMetadata(request *drawing.DeckRequest, recType string, op
 	switch liveType {
 	case "solo", "challenge":
 		request.LiveType = drawing.StringPtr("solo")
-		request.LiveName = drawing.StringPtr("单人")
+		request.LiveName = drawing.StringPtr(i18n.LiveTypeLabel("solo").String())
 	case "auto", "challenge_auto":
 		request.LiveType = drawing.StringPtr("auto")
-		request.LiveName = drawing.StringPtr("自动")
+		request.LiveName = drawing.StringPtr(i18n.LiveTypeLabel("auto").String())
 	case "mysekai":
 		request.LiveType = drawing.StringPtr("mysekai")
-		request.LiveName = drawing.StringPtr("烤森")
+		request.LiveName = drawing.StringPtr(i18n.T("deck.live.mysekai"))
 	default:
 		request.LiveType = drawing.StringPtr("multi")
-		request.LiveName = drawing.StringPtr("协力")
+		request.LiveName = drawing.StringPtr(i18n.LiveTypeLabel("multi").String())
 	}
 }
 
@@ -149,7 +149,7 @@ func (c *Controller) applyRecommendFilterMetadata(request *drawing.DeckRequest, 
 func (c *Controller) applyRecommendEventMetadata(request *drawing.DeckRequest, region renderregion.Value, finalEventID int) {
 	if finalEventID > 0 {
 		request.EventID = drawing.IntPtr(finalEventID)
-		eventName := fmt.Sprintf("Event #%d", finalEventID)
+		eventName := i18n.T("event.fallback_name", i18n.Data{"ID": finalEventID})
 		request.EventName = &eventName
 		if _, eventSource, ok := c.resolveEventSource(region); ok {
 			if eventInfo, err := eventSource.GetEventByID(finalEventID); err == nil && eventInfo != nil {

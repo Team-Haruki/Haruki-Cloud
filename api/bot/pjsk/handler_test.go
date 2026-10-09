@@ -2174,7 +2174,7 @@ func TestBotEndpointSKQueryWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *test
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertTextAndImageMessage(t, body, rendersk.StaleSelfRecordWarning)
+	assertTextAndImageMessage(t, body, i18n.T("sk.stale_self_record"))
 }
 
 func TestBotEndpointSKQueryDoesNotWarnWhenTrackerStatusIsUnhealthy(t *testing.T) {

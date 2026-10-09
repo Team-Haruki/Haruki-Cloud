@@ -90,10 +90,10 @@ func normalizeTrackerSpeedConfig(req TrackerRankQuery) (periodSeconds int64, uni
 	switch unit {
 	case "d", "day", "daily", "日":
 		unitPeriodSeconds = 24 * 60 * 60
-		unitText = "日"
+		unitText = i18n.T("sk.speed.unit_day")
 	default:
 		unitPeriodSeconds = 60 * 60
-		unitText = "时"
+		unitText = i18n.T("sk.speed.unit_hour")
 	}
 
 	periodSeconds = req.SpeedPeriodSecs

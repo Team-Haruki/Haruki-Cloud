@@ -593,6 +593,7 @@ As of this revision the project is **considered functionally complete**:
 | `TestEveryHelpDocIsReachable` | `internal/pjsk/handler` | 没有用户看不到的帮助文档（只允许路由文档、`generic`、`mysekai_blueprint`） |
 | `TestHelpDocsFollowLayout` | `internal/pjsk/handler` | 帮助版式：`# 标题`、用法/参数/示例/说明按顺序，不手写区服前缀说明（版式见 `docs/i18n.md`） |
 | `TestHelpDocExamplesParse` | `internal/pjsk/handler` | `## 示例` 里的每个示例都能被该文档的路由解析 |
+| `TestHelpDefinitionLabelsFitTheKeyColumn` | `internal/pjsk/handler` | 帮助图片里列表项“：”前的标签（含自动生成的“区服”一节）不超过渲染服务 190 px 宽的标签列（按渲染字体字宽估算，最多 182 px），见 `docs/i18n.md` |
 | `TestUserInputMessagesHaveEchoFreeForm` | `internal/i18n` | 带 `User…` 占位符的消息都有 `<ID>_no_echo` 形式，占位符一致 |
 | `TestEchoFreeFormsHideUserInput` | `internal/i18n` | 用文字哨兵和数字哨兵（`UserNumber` 和普通 int 各一次）渲染这些消息：不回显时哨兵不出现、不留空引号或悬空的“：”，回显时出现 |
 | `TestUserWrittenPlaceholdersAreUserInput` | `internal/i18n` | description 写着“用户写的/用户输入/管理员输入/用户提交”的占位符必须以 `User` 开头（成功回复等例外逐条列出） |

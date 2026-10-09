@@ -559,6 +559,7 @@ As of this revision the project is **considered functionally complete**:
 | `TestHelperGolden` | `internal/i18n` | 共享格式函数的中文输出（`testdata/helpers.zh-CN.golden`） |
 | `TestHelpDocTerms` | `internal/i18n` | 帮助文档正文（反引号和代码块以外）不用术语表的禁用写法 |
 | `TestHelpDocTriggersAreRegistered` | `internal/pjsk/handler` | 帮助文档里反引号中的 `/指令` 都能解析到已注册指令 |
+| `TestCatalogCommandsAreRegistered` | `internal/pjsk/handler` | 目录消息正文里叫用户发送的 `/指令` 都能解析到已注册指令 |
 | `TestEveryRouteHasHelpDoc` | `internal/pjsk/handler` | 每个已注册路由都有自己的帮助文档 |
 | `TestEveryHelpDocIsReachable` | `internal/pjsk/handler` | 没有用户看不到的帮助文档（只允许路由文档、`generic`、`mysekai_blueprint`） |
 | `TestHelpDocsFollowLayout` | `internal/pjsk/handler` | 帮助版式：`# 标题`、用法/参数/示例/说明按顺序，不手写区服前缀说明（版式见 `docs/i18n.md`） |

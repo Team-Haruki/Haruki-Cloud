@@ -325,3 +325,28 @@ func TestHelpDocExamplesExtraction(t *testing.T) {
 		t.Fatalf("helpDocExamples() = %v", got)
 	}
 }
+
+// catalogCommandPattern finds a slash command in catalog text: "/" after
+// the start, whitespace or opening punctuation, up to the next whitespace or
+// punctuation. A command glued to a placeholder ("/{{.Region}}…") is
+// skipped by the caller.
+var catalogCommandPattern = regexp.MustCompile(`(?:^|[\s“「（，、：；])(/[^\s“”「」，。、；：（）{}]+)(\{)?`)
+
+// TestCatalogCommandsAreRegistered checks that every slash command a catalog
+// message tells users to send is registered, like the help documents.
+func TestCatalogCommandsAreRegistered(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+	var findings []string
+	for _, entry := range i18n.Entries(i18n.DefaultLocale) {
+		for _, match := range catalogCommandPattern.FindAllStringSubmatch(entry.Text, -1) {
+			command := match[1]
+			if match[2] != "" || command == "/" {
+				continue
+			}
+			if !helpDocTriggerResolves(command) {
+				findings = append(findings, entry.ID+"\t"+command)
+			}
+		}
+	}
+	requireNoHelpDocFindings(t, findings, "catalog message shows a command that is not registered")
+}

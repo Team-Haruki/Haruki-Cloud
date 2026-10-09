@@ -18,15 +18,15 @@ other = "一次最多比较 {{.Max}} 首歌曲"
 
 [score.board.power_invalid]
 description = "歌曲排行的综合力写法不对，作为 common.bad_param 的原因行。"
-other = "综合力写成“综合”加数字，例如 综合 20w"
+other = "综合力写成“综合”加数字，例如“综合20w”"
 
 [score.board.bonus_invalid]
 description = "歌曲排行的活动加成写法不对，作为 common.bad_param 的原因行。"
-other = "活动加成写成“加成”加数字，例如 加成 250"
+other = "活动加成写成“加成”加数字，例如“加成250”"
 
 [score.board.interval_invalid]
 description = "歌曲排行的游玩间隔写法不对，作为 common.bad_param 的原因行。"
-other = "游玩间隔写成“间隔”加秒数，例如 间隔 30"
+other = "游玩间隔写成“间隔”加秒数，例如“间隔30”"
 
 [score.board.skills_invalid]
 description = "歌曲排行的技能加分个数不对。"

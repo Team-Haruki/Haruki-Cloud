@@ -29,7 +29,7 @@ var (
 // adjacencyTokens are tokens users type verbatim that legitimately put Han
 // next to Latin letters or digits (decision D exceptions). Commands such as
 // /jp查曲 are exempt through commandToken.
-var adjacencyTokens = []string{"u序号", "ms材料", "10火"}
+var adjacencyTokens = []string{"u序号", "ms材料", "10火", "综合20w", "加成250", "间隔30"}
 
 // bannedTerms are words that must not appear in user copy, with the reason
 // shown in the lint failure.

@@ -178,11 +178,11 @@ other = "该饰品不适用于这个角色模型或颜色，请检查饰品 ID�
 
 [costume.preview3d.accessory_legacy]
 description = "写的是旧版饰品短 ID。"
-other = "这是旧版饰品短 ID，请用 /饰品列表 查询完整的饰品 ID"
+other = "这是旧版饰品短 ID，请改用完整的饰品 ID"
 
 [costume.preview3d.accessory_legacy_ids]
 description = "写的是旧版饰品短 ID，它已拆分为几个独立饰品。占位符：IDs=拆分后的饰品 ID，用“、”分隔。"
-other = "旧版饰品短 ID 已拆分为独立饰品（ID：{{.IDs}}），请写完整的饰品 ID，也可以用 /饰品列表 查询"
+other = "旧版饰品短 ID 已拆分为独立饰品（ID：{{.IDs}}），请写完整的饰品 ID"
 
 [costume.preview3d.accessory_raw_ambiguous]
 description = "原始饰品 ID 对应多个独立饰品。"
@@ -190,7 +190,7 @@ other = "这个原始饰品对应多个独立饰品，请改用完整的饰品 I
 
 [costume.preview3d.hair_unusable]
 description = "该角色没有这个发型 ID。"
-other = "该角色没有这个发型 ID，请先用 /发型列表 查询"
+other = "该角色没有这个发型 ID，请检查角色 ID 和发型 ID"
 
 [costume.preview3d.duplicate_role]
 description = "3D 角色数据重复（数据异常）。"

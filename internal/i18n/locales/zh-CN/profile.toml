@@ -66,11 +66,11 @@ other = "谱面样式只能是 white 或 black"
 
 [profile.timezone.required]
 description = "设置时区时没有写时区。"
-other = "请写时区名或 UTC 偏移"
+other = "请写时区，例如“+8”“JST”或“Asia/Shanghai”"
 
 [profile.timezone.not_found]
 description = "写的时区无法识别，作为 common.bad_param 的原因行。"
-other = "请写 UTC 偏移、IANA 时区名或可识别的城市名"
+other = "请写 UTC 偏移（如 +8）、时区缩写（如 JST）或 IANA 时区名（如 Asia/Shanghai）"
 
 [profile.settings.selector_only]
 description = "个人设置类指令只接受 u序号，但写了别的参数。"

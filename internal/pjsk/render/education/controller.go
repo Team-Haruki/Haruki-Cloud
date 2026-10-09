@@ -101,14 +101,14 @@ func (c *Controller) resolveChallengeLiveRequestContext(query ChallengeLiveQuery
 
 	challenge := snap.ChallengeLive()
 	if challenge == nil {
-		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("user snapshot is missing challenge live data")
+		return renderregion.Unknown, nil, nil, nil, errSuiteIncomplete("user snapshot is missing challenge live data")
 	}
 	profile := query.Profile
 	if profile == nil {
 		profile = snap.DetailedProfile(region)
 	}
 	if profile == nil {
-		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("user snapshot is missing profile data")
+		return renderregion.Unknown, nil, nil, nil, errSuiteIncomplete("user snapshot is missing profile data")
 	}
 	return region, source, challenge, profile, nil
 }

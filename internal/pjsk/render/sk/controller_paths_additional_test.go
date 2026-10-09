@@ -2,6 +2,7 @@ package sk
 
 import (
 	"errors"
+	"haruki-cloud/internal/i18n"
 	"reflect"
 	"strings"
 	"testing"
@@ -343,7 +344,7 @@ func TestTrackerIdentityAdditional(t *testing.T) {
 	info, err = controller.buildSingleRankFromTracker("jp", 1, 100, nil)
 	{
 		testutil.Require(t, !(err != nil), "sanitized rank identity = %+v, %v", info, err)
-		testutil.Require(t, !(info.Name != "Rank 100"), "sanitized rank identity = %+v, %v", info, err)
+		testutil.Require(t, !(info.Name != i18n.T("sk.rank_fallback_name", i18n.Data{"Rank": 100})), "sanitized rank identity = %+v, %v", info, err)
 	}
 
 	info, err = controller.buildSingleUserBaseFromTracker("jp", 1, 123, nil)
@@ -627,14 +628,14 @@ func TestTrackerValidationAndSpeedAdditional(t *testing.T) {
 	{
 		testutil.Require(t, !(period != 86_400), "daily speed config = %d, %d, %q", period, unitPeriod, unit)
 		testutil.Require(t, !(unitPeriod != 86_400), "daily speed config = %d, %d, %q", period, unitPeriod, unit)
-		testutil.Require(t, !(unit != "日"), "daily speed config = %d, %d, %q", period, unitPeriod, unit)
+		testutil.Require(t, !(unit != i18n.T("sk.speed.unit_day")), "daily speed config = %d, %d, %q", period, unitPeriod, unit)
 	}
 
 	period, unitPeriod, unit = normalizeTrackerSpeedConfig(TrackerRankQuery{SpeedUnit: "unknown", SpeedPeriodSecs: 123})
 	{
 		testutil.Require(t, !(period != 123), "hourly speed config = %d, %d, %q", period, unitPeriod, unit)
 		testutil.Require(t, !(unitPeriod != 3_600), "hourly speed config = %d, %d, %q", period, unitPeriod, unit)
-		testutil.Require(t, !(unit != "时"), "hourly speed config = %d, %d, %q", period, unitPeriod, unit)
+		testutil.Require(t, !(unit != i18n.T("sk.speed.unit_hour")), "hourly speed config = %d, %d, %q", period, unitPeriod, unit)
 	}
 	{
 		testutil.RequireArgs(t, shouldSkipMissingTrackerRankError(true, sekaiapi.ErrRankingNotFound), "skip-missing tracker error predicate mismatch")
@@ -698,7 +699,7 @@ func TestTrackerValidationAndSpeedAdditional(t *testing.T) {
 		testutil.Require(t, !(err != nil), "tracker speed payload = %+v, %v", payload, err)
 		testutil.Require(t, !(len(payload.Ranks) != 1), "tracker speed payload = %+v, %v", payload, err)
 		testutil.Require(t, !(payload.Ranks[0].Speed == nil), "tracker speed payload = %+v, %v", payload, err)
-		testutil.Require(t, !(payload.RequestType != "日"), "tracker speed payload = %+v, %v", payload, err)
+		testutil.Require(t, !(payload.RequestType != i18n.T("sk.speed.unit_day")), "tracker speed payload = %+v, %v", payload, err)
 	}
 
 }

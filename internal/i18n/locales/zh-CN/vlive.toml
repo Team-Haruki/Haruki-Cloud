@@ -7,3 +7,19 @@ other = "请写要查询的虚拟 Live"
 [vlive.not_found]
 description = "找不到对应的虚拟 Live。"
 other = "未找到对应的虚拟 Live"
+
+[vlive.none]
+description = "查虚拟 Live（/vlive）时当前没有进行中或即将开始的虚拟 Live。"
+other = "当前没有虚拟 Live"
+
+[vlive.solo.none]
+description = "查个人虚拟 Live 时该区服没有个人虚拟 Live。占位符：Region=区服显示名。"
+other = "{{.Region}}当前没有个人虚拟 Live"
+
+[vlive.solo.not_found]
+description = "查个人虚拟 Live 时找不到用户写的 Live。占位符：Query=用户输入的查询词（超过 30 字会截断）。"
+other = "未找到个人虚拟 Live：“{{.Query}}”\n发送 /vlive 查看虚拟 Live 列表"
+
+[vlive.fallback_name]
+description = "虚拟 Live 列表图和详情图里，Live 没有名称时显示的名称。占位符：ID=虚拟 Live ID。"
+other = "虚拟 Live #{{.ID}}"

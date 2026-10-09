@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/drawing"
@@ -19,36 +18,48 @@ import (
 	"haruki-cloud/utils/usererror"
 )
 
+// formatDeckQuerySummary is the " / "-separated summary of a deck query
+// shown above the deck image, e.g. "日服(JP) / 活动组卡 / 活动 123 / EXPERT".
 func formatDeckQuerySummary(q deck.AutoQuery) string {
-	parts := make([]string, 0, 6)
-	if region := strings.ToUpper(strings.TrimSpace(q.Region)); region != "" {
-		parts = append(parts, region)
+	parts := make([]string, 0, 8)
+	if region := strings.TrimSpace(q.Region); region != "" {
+		parts = append(parts, i18n.RegionLabel(region).String())
 	}
-	switch strings.ToLower(strings.TrimSpace(q.RecommendType)) {
-	case "event":
-		parts = append(parts, "活动组卡")
-	case "challenge":
-		parts = append(parts, "挑战组卡")
-	case "no_event":
-		parts = append(parts, "长草组卡")
-	case "bonus":
-		parts = append(parts, "加成组卡")
-	case "mysekai":
-		parts = append(parts, "烤森组卡")
-	default:
-		parts = append(parts, "组卡")
-	}
+	parts = append(parts, deckRecommendTypeLabel(q.RecommendType).String())
 	if q.EventID != nil && *q.EventID > 0 {
-		parts = append(parts, fmt.Sprintf("event%d", *q.EventID))
+		parts = append(parts, i18n.T("deck.summary.event", i18n.Data{"ID": *q.EventID}))
 	}
 	parts = appendNonEmpty(parts, firstNonEmpty(q.MusicTitle, q.MusicQuery))
 	if q.MusicDiff != "" {
-		parts = append(parts, strings.ToUpper(q.MusicDiff))
+		parts = append(parts, i18n.DifficultyLabel(q.MusicDiff).String())
 	}
-	parts = appendNonEmpty(parts, deckCharacterSummary(q.WorldBloomCharacterQuery, q.WorldBloomCharacterID, "wl角色"))
-	parts = appendNonEmpty(parts, deckCharacterSummary(q.ForcedLeaderCharacterQuery, q.ForcedLeaderCharacterID, "队长角色"))
-	parts = appendNonEmpty(parts, deckCharacterSummary(q.ChallengeLiveCharacterQuery, q.ChallengeLiveCharacterID, "挑战角色"))
+	if character, ok := deckCharacterSummary(q.WorldBloomCharacterQuery, q.WorldBloomCharacterID); ok {
+		parts = append(parts, i18n.T("deck.summary.wl_character", i18n.Data{"Character": character}))
+	}
+	if character, ok := deckCharacterSummary(q.ForcedLeaderCharacterQuery, q.ForcedLeaderCharacterID); ok {
+		parts = append(parts, i18n.T("deck.summary.leader", i18n.Data{"Character": character}))
+	}
+	if character, ok := deckCharacterSummary(q.ChallengeLiveCharacterQuery, q.ChallengeLiveCharacterID); ok {
+		parts = append(parts, i18n.T("deck.summary.challenge_character", i18n.Data{"Character": character}))
+	}
 	return strings.Join(parts, " / ")
+}
+
+func deckRecommendTypeLabel(recommendType string) i18n.Message {
+	switch strings.ToLower(strings.TrimSpace(recommendType)) {
+	case "event":
+		return i18n.M("deck.mode.event")
+	case "challenge":
+		return i18n.M("deck.mode.challenge")
+	case "no_event":
+		return i18n.M("deck.mode.no_event")
+	case "bonus":
+		return i18n.M("deck.mode.bonus")
+	case "mysekai":
+		return i18n.M("deck.mode.mysekai")
+	default:
+		return i18n.M("deck.mode.generic")
+	}
 }
 
 func firstNonEmpty(values ...string) string {
@@ -67,14 +78,16 @@ func appendNonEmpty(values []string, value string) []string {
 	return append(values, value)
 }
 
-func deckCharacterSummary(query string, id *int, prefix string) string {
+// deckCharacterSummary is the character a deck query names: the user's own
+// words, or the character ID when only that is known.
+func deckCharacterSummary(query string, id *int) (i18n.Message, bool) {
 	if query != "" {
-		return query
+		return i18n.Verbatim(query), true
 	}
 	if id == nil || *id <= 0 {
-		return ""
+		return i18n.Message{}, false
 	}
-	return fmt.Sprintf("%s%d", prefix, *id)
+	return i18n.M("deck.summary.character_id", i18n.Data{"ID": *id}), true
 }
 
 func applyDefaultChallengeDeckAutoQueryMusic(q *deck.AutoQuery) {

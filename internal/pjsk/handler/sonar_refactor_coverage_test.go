@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"haruki-cloud/internal/i18n"
 	"strings"
 	"testing"
 
@@ -29,7 +30,7 @@ func TestDeckRecommendTypeCoversEveryMode(t *testing.T) {
 	if got, ok := deckRecommendType("unknown"); ok || got != "" {
 		t.Fatalf("unknown mode = %q, %v", got, ok)
 	}
-	if text := buildDeckDoneText(deck.AutoQuery{RecommendType: "event"}); !strings.Contains(text, "Haruki工具箱") {
+	if text := buildDeckDoneText(deck.AutoQuery{RecommendType: "event"}); !strings.HasSuffix(text, i18n.T("deck.done_toolbox_hint")) {
 		t.Fatalf("event completion text = %q", text)
 	}
 }

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"haruki-cloud/internal/i18n"
 	"strings"
 	"testing"
 	"time"
@@ -367,7 +368,7 @@ func TestEventPlannerProviderTargetAndCurrentPointBranches(t *testing.T) {
 		testutil.Require(t, !(warning == ""), "simulated WL planner event = %+v, %q, %v", simulated, warning, err)
 	}
 	{
-		testutil.RequireArgs(t, !(eventPlannerSimulatedEventName(renderdeck.AutoQuery{}) != "模拟活动"), "regular simulated planner labels mismatch")
+		testutil.RequireArgs(t, !(eventPlannerSimulatedEventName(renderdeck.AutoQuery{}) != i18n.T("event.planner.simulated")), "regular simulated planner labels mismatch")
 		testutil.RequireArgs(t, !(eventPlannerSimulatedEventType(renderdeck.AutoQuery{}) != ""), "regular simulated planner labels mismatch")
 	}
 	testutil.RequireArgs(t, !(eventPlannerProvider(nil, renderregion.JP) != nil), "nil event planner provider unexpectedly resolved")

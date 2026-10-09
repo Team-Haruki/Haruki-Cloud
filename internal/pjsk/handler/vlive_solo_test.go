@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
@@ -52,7 +52,7 @@ func TestExecuteVLiveDetailOnRegionWithoutSoloLives(t *testing.T) {
 	}}, &paths)
 
 	message := runVLiveQuery(t, app, "3001")
-	if len(message) != 1 || message[0].Type != "text" || !strings.Contains(message[0].Data.(onebot11.TextData).Text, "该区服暂无个人虚拟Live") {
+	if len(message) != 1 || message[0].Type != "text" || message[0].Data.(onebot11.TextData).Text != i18n.T("vlive.solo.none", i18n.Data{"Region": i18n.RegionLabel("jp")}) {
 		t.Fatalf("unexpected old-region detail reply: %+v", message)
 	}
 	// Any other argument keeps the list, as before.
@@ -76,7 +76,7 @@ func TestExecuteVLiveDetailRendersSoloGroup(t *testing.T) {
 		t.Fatalf("unexpected detail reply: %+v paths=%v", message, paths)
 	}
 	message = runVLiveQuery(t, app, "999")
-	if len(message) != 1 || message[0].Type != "text" || !strings.Contains(message[0].Data.(onebot11.TextData).Text, "未找到个人虚拟Live：999") {
+	if len(message) != 1 || message[0].Type != "text" || message[0].Data.(onebot11.TextData).Text != i18n.T("vlive.solo.not_found", i18n.Data{"Query": "999"}) {
 		t.Fatalf("unexpected not-found reply: %+v", message)
 	}
 }

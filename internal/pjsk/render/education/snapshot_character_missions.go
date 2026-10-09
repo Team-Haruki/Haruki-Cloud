@@ -2,6 +2,7 @@ package education
 
 import (
 	"fmt"
+	"haruki-cloud/internal/i18n"
 	"sort"
 	"strings"
 
@@ -458,7 +459,7 @@ func characterMissionRoundDetails(groups []*CharacterMissionParameterGroup, curr
 		return 0, 0, 0, ""
 	}
 	round, progress, need := characterMissionCurrentRound(groups, current)
-	return round, progress, need, fmt.Sprintf("EX %d 回目", round)
+	return round, progress, need, i18n.T("education.mission.ex_round", i18n.Data{"Round": round})
 }
 
 func isCharacterMissionExType(missionType string) bool {
@@ -473,7 +474,7 @@ func characterMissionDisplayName(cid int) string {
 	if nickname, ok := characterNicknameFallbacks[cid]; ok {
 		return nickname
 	}
-	return fmt.Sprintf("角色%d", cid)
+	return i18n.T("education.character_fallback", i18n.Data{"ID": cid})
 }
 
 var characterIDDisplayNames = map[int]string{

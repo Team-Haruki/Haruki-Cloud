@@ -2,7 +2,6 @@ package education
 
 import (
 	"errors"
-	"fmt"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -79,14 +78,14 @@ func (c *Controller) resolveSnapshotContext(
 
 	raw := snapshot.RawData()
 	if raw == nil {
-		return nil, fmt.Errorf("user snapshot is missing raw suite data")
+		return nil, errSuiteIncomplete("user snapshot is missing raw suite data")
 	}
 
 	if profile == nil {
 		profile = snapshot.DetailedProfile(resolvedRegion)
 	}
 	if profile == nil {
-		return nil, fmt.Errorf("user snapshot is missing profile data")
+		return nil, errSuiteIncomplete("user snapshot is missing profile data")
 	}
 
 	return &resolvedSnapshotContext{

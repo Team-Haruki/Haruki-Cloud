@@ -5,11 +5,10 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
-
-const StaleSelfRecordWarning = "你已不在可记录范围内，仅展示最后被记录到的信息"
 
 const staleSelfRecordThreshold = 5 * time.Minute
 
@@ -21,7 +20,7 @@ func (c *Controller) StaleSelfRecordWarning(req TrackerRankQuery, ranks []drawin
 	if !c.shouldWarnStaleSelfRecord(normalized, ranks, time.Now().UTC()) {
 		return ""
 	}
-	return StaleSelfRecordWarning
+	return i18n.T("sk.stale_self_record")
 }
 
 func (c *Controller) StaleSelfLatestRecordWarning(req TrackerRankQuery) string {

@@ -131,3 +131,47 @@ other = "{{.Event}}没有“{{.Character}}”的 WL 章节"
 [sk.wl.chapter_incomplete]
 description = "WL 章节数据缺少角色信息（数据异常）。占位符：Event=活动（common.event_label）。"
 other = "{{.Event}}的 WL 章节数据不完整，请稍后再试"
+
+[sk.stale_self_record]
+description = "查自己的榜线/排名时，图片前的一行提示：你已掉出查榜服务的记录范围（前 100 名等），图里是最后一次记录到的数据。"
+other = "你已不在记录范围内，只显示最后一次记录到的数据"
+
+[sk.forecast.title]
+description = "榜线预测图片的标题。占位符：Event=活动名称（游戏数据原文，或 event.fallback_name）。"
+other = "{{.Event}} 预测"
+
+[sk.forecast.notice]
+description = "榜线预测图片底部的免责说明。"
+other = "预测数据仅供参考，请以实际榜线为准安排冲榜计划"
+
+[sk.forecast.source.kit33]
+description = "榜线预测图片里一列预测的标题：来自 33Kit 的预测。"
+other = "33Kit 预测"
+
+[sk.forecast.source.moesekai]
+description = "榜线预测图片里一列预测的标题：来自 Moesekai 的预测。"
+other = "Moesekai 预测"
+
+[sk.forecast.source.sekarun]
+description = "榜线预测图片里一列预测的标题：来自 SekaRun 的预测。"
+other = "SekaRun 预测"
+
+[sk.forecast.source.local]
+description = "榜线预测图片里一列预测的标题：Bot 自己计算的预测。"
+other = "本地预测"
+
+[sk.forecast.source.generic]
+description = "榜线预测图片里一列预测的标题：来源不细分的预测。"
+other = "预测"
+
+[sk.speed.unit_hour]
+description = "时速图片的单位字，渲染服务会拼成“时速”“近 1 小时换算时速”。只能是一个字，改动前先确认渲染服务的拼接方式。"
+other = "时"
+
+[sk.speed.unit_day]
+description = "日速图片的单位字，渲染服务会拼成“日速”“近 1 天换算日速”。只能是一个字，改动前先确认渲染服务的拼接方式。"
+other = "日"
+
+[sk.rank_fallback_name]
+description = "查榜图片里某个名次拿不到玩家昵称时代替昵称。占位符：Rank=名次。"
+other = "第 {{.Rank}} 名"

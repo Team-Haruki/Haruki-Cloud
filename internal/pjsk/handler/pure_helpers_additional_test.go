@@ -82,20 +82,24 @@ func testArrestTextFormatting(t *testing.T) {
 		UserChallengeLiveSoloResult: sekaiapi.UserChallengeLiveSoloResult{CharacterID: 21, HighScore: 1_234_567},
 	}
 	formatted := formatArrestText(resp, []sekaiapi.MusicDifficultyType{sekaiapi.MusicDifficultyMaster, sekaiapi.MusicDifficultyExpert}, "Miku", false)
-	for _, want := range []string{"Player", "[master]", "FC:8", "Miku", "1,234,567"} {
+	for _, want := range []string{
+		"Player",
+		i18n.T("misc.arrest.difficulty", i18n.Data{"Difficulty": i18n.DifficultyLabel("master"), "Clear": 10, "FC": 8, "AP": 2}),
+		i18n.T("misc.arrest.challenge", i18n.Data{"Character": i18n.Verbatim("Miku"), "Score": "1,234,567"}),
+	} {
 		if !strings.Contains(formatted, want) {
 			t.Errorf("formatArrestText() = %q, missing %q", formatted, want)
 		}
 	}
 	resp.UserChallengeLiveSoloResult.HighScore = 0
-	if got := formatArrestText(resp, nil, "", true); strings.Contains(got, "挑战Live") || !strings.Contains(got, "1234567890") {
+	if got := formatArrestText(resp, nil, "", true); strings.Contains(got, "\n") || !strings.Contains(got, "1234567890") {
 		t.Fatalf("minimal arrest text = %q", got)
 	}
 }
 
 func testArrestValueFormatting(t *testing.T) {
 	t.Helper()
-	if arrestChallengeCharacterLabel(21, " Miku ") != "Miku" || arrestChallengeCharacterLabel(21, "") != "角色ID:21" {
+	if arrestChallengeCharacterLabel(21, " Miku ").String() != "Miku" || arrestChallengeCharacterLabel(21, "").ID != "misc.arrest.character_id" {
 		t.Fatal("challenge character label mismatch")
 	}
 	regions := []struct {
@@ -105,14 +109,6 @@ func testArrestValueFormatting(t *testing.T) {
 	for _, tt := range regions {
 		if got := arrestCharacterRegionRank(tt.region); got != tt.want {
 			t.Errorf("arrestCharacterRegionRank(%q) = %d", tt.region, got)
-		}
-	}
-	for _, tt := range []struct {
-		value int
-		want  string
-	}{{0, "0"}, {12, "12"}, {1234, "1,234"}, {-1234567, "-1,234,567"}} {
-		if got := formatInt(tt.value); got != tt.want {
-			t.Errorf("formatInt(%d) = %q", tt.value, got)
 		}
 	}
 	if arrestDisplayUID(1234567890, true) != "1234567890" || arrestDisplayUID(1234567890, false) == "1234567890" {

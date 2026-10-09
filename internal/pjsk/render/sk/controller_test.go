@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"haruki-cloud/internal/i18n"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -3131,7 +3132,7 @@ func TestBuildSpeedRequestFromTrackerDerivesSpeedWhenGrowthFieldsMissing(t *test
 	if len(payload.Ranks) != 1 {
 		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
 	}
-	if payload.RequestType != "时" {
+	if payload.RequestType != i18n.T("sk.speed.unit_hour") {
 		t.Fatalf("unexpected request type: %q", payload.RequestType)
 	}
 	if payload.Period != 60*60 {
@@ -3170,7 +3171,7 @@ func TestBuildSpeedRequestFromTrackerConvertsCustomMinuteWindowToHourlySpeed(t *
 	if err != nil {
 		t.Fatalf("build speed request: %v", err)
 	}
-	if payload.RequestType != "时" {
+	if payload.RequestType != i18n.T("sk.speed.unit_hour") {
 		t.Fatalf("unexpected request type: %q", payload.RequestType)
 	}
 	if payload.Period != 30*60 {
@@ -3389,7 +3390,7 @@ func TestBuildDailySpeedRequestFromTrackerUsesDayPeriod(t *testing.T) {
 	if err != nil {
 		t.Fatalf("build daily speed request: %v", err)
 	}
-	if payload.RequestType != "日" {
+	if payload.RequestType != i18n.T("sk.speed.unit_day") {
 		t.Fatalf("unexpected request type: %q", payload.RequestType)
 	}
 	if payload.Period != 24*60*60 {
@@ -3428,7 +3429,7 @@ func TestBuildDailySpeedRequestFromTrackerKeepsDailyNormalizationForCustomWindow
 	if err != nil {
 		t.Fatalf("build daily speed request: %v", err)
 	}
-	if payload.RequestType != "日" {
+	if payload.RequestType != i18n.T("sk.speed.unit_day") {
 		t.Fatalf("unexpected request type: %q", payload.RequestType)
 	}
 	if payload.Period != 2*24*60*60 {
@@ -3807,7 +3808,7 @@ func assertForecastCurrentRanks(t *testing.T, payload *LineRequest, tracker *bat
 	if payload.Name != "Tracker Event 预测" {
 		t.Fatalf("unexpected payload name: %s", payload.Name)
 	}
-	if payload.PredictionNotice != skPredictionNotice {
+	if payload.PredictionNotice != i18n.T("sk.forecast.notice") {
 		t.Fatalf("unexpected prediction notice: %q", payload.PredictionNotice)
 	}
 	if len(payload.Ranks) != 2 {
@@ -3837,7 +3838,7 @@ func assertForecastColumns(t *testing.T, payload *LineRequest) {
 	if len(payload.ForecastColumns) != 3 {
 		t.Fatalf("unexpected forecast column len: %d", len(payload.ForecastColumns))
 	}
-	if payload.ForecastColumns[0].Key != "33kit" || payload.ForecastColumns[0].Name != "33Kit预测" {
+	if payload.ForecastColumns[0].Key != "33kit" || payload.ForecastColumns[0].Name != i18n.T("sk.forecast.source.kit33") {
 		t.Fatalf("unexpected first forecast column: %+v", payload.ForecastColumns[0])
 	}
 	if len(payload.ForecastColumns[0].Ranks) != 2 {
@@ -3916,7 +3917,7 @@ func TestBuildPredictLineRequestFromTrackerUsesWorldBloomChapterMeta(t *testing.
 	if payload.AggregateAt != now+int64(2*time.Hour/time.Millisecond) {
 		t.Fatalf("expected chapter aggregate time, got %d", payload.AggregateAt)
 	}
-	if payload.PredictionNotice != skPredictionNotice {
+	if payload.PredictionNotice != i18n.T("sk.forecast.notice") {
 		t.Fatalf("unexpected prediction notice: %q", payload.PredictionNotice)
 	}
 	if payload.WlCid == nil || *payload.WlCid != 21 {

@@ -1,7 +1,10 @@
 package education
 
 import (
+	"errors"
 	"fmt"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -100,10 +103,6 @@ func (c *Controller) areaItemTargetIcon(levels []*AreaItemLevel) string {
 	return ""
 }
 
-// areaItemTargetLabelAllCharacters is shown instead of a target icon for an
-// item whose unconditional rows boost every character.
-const areaItemTargetLabelAllCharacters = "全角色"
-
 // areaItemTargetLabel names the target of an item that has no target icon:
 // an every-character item (JP 7.0.0 想いの大樹). Empty otherwise.
 func areaItemTargetLabel(levels []*AreaItemLevel, targetIconPath string) string {
@@ -112,7 +111,7 @@ func areaItemTargetLabel(levels []*AreaItemLevel, targetIconPath string) string 
 	}
 	for _, level := range levels {
 		if isAllTargetAreaItemLevel(level) && !isMultiUnitAreaItemLevel(level) {
-			return areaItemTargetLabelAllCharacters
+			return i18n.T("education.area.all_characters")
 		}
 	}
 	return ""
@@ -295,4 +294,10 @@ func collectUserAreaItemLevels(areas []snapshot.RawUserArea) map[int]int {
 		}
 	}
 	return levels
+}
+
+// errSuiteIncomplete is returned when the requester's suite data lacks a part
+// a command needs; the user is asked to upload it again.
+func errSuiteIncomplete(detail string) error {
+	return usererror.Wrap(usererror.CodeSetup, i18n.M("education.suite_incomplete"), errors.New(detail))
 }

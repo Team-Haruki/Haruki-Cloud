@@ -1,7 +1,7 @@
 package sk
 
 import (
-	"fmt"
+	"haruki-cloud/internal/i18n"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
@@ -13,7 +13,7 @@ func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int
 		return drawing.RankInfo{}, err
 	}
 	if c.isTrackerEventTitleName(server, eventID, info.Name) {
-		info.Name = fmt.Sprintf("Rank %d", info.Rank)
+		info.Name = i18n.T("sk.rank_fallback_name", i18n.Data{"Rank": info.Rank})
 	}
 	return info, nil
 }

@@ -2486,14 +2486,14 @@ func TestFormatArrestTextUsesResolvedChallengeCharacterName(t *testing.T) {
 	}
 
 	text := formatArrestText(resp, defaultEnabledDiffs(), resolveArrestChallengeCharacterName(ctx, app, 21), true)
-	if !strings.Contains(text, "逮捕: ArrestUser (UID: 123456789) Lv.88") {
+	if !strings.Contains(text, i18n.T("misc.arrest.header", i18n.Data{"Name": "ArrestUser", "UID": "123456789", "Rank": 88})) {
 		t.Fatalf("unexpected arrest text: %s", text)
 	}
-	if !strings.Contains(text, "挑战Live(") || !strings.Contains(text, "123,456") {
+	if !strings.HasSuffix(text, i18n.T("misc.arrest.challenge", i18n.Data{"Character": i18n.Verbatim(resolveArrestChallengeCharacterName(ctx, app, 21)), "Score": "123,456"})) {
 		t.Fatalf("unexpected arrest text: %s", text)
 	}
 	masked := formatArrestText(resp, defaultEnabledDiffs(), resolveArrestChallengeCharacterName(ctx, app, 21), false)
-	if !strings.Contains(masked, "UID: 123***789") {
+	if !strings.Contains(masked, "123***789") || strings.Contains(masked, "123456789") {
 		t.Fatalf("expected masked uid, got: %s", masked)
 	}
 }

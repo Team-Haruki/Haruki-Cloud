@@ -110,7 +110,7 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 		}
 	}
 	if len(userAreaLevels) == 0 {
-		return nil, fmt.Errorf("user snapshot is missing area item data")
+		return nil, errSuiteIncomplete("user snapshot is missing area item data")
 	}
 
 	userMaterials := map[int]int{

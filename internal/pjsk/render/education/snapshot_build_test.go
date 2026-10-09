@@ -3,6 +3,7 @@ package education
 import (
 	"context"
 	"errors"
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"math"
 	"os"
@@ -2068,7 +2069,7 @@ func TestBuildCharacterMissionOverviewIncludesAllCharacterAreaItemMission(t *tes
 		t.Fatalf("unexpected achievement order: %q, %q", req.AchievementRows[0].MissionType, req.AchievementRows[1].MissionType)
 	}
 	row := req.AchievementRows[1]
-	if row.Title != "想いの大樹升级次数" || row.Current != 3 {
+	if row.Title != i18n.T("education.mission.area_item_level_up_all_character") || row.Current != 3 {
 		t.Fatalf("unexpected all-character row: %+v", row)
 	}
 }
@@ -2123,8 +2124,8 @@ func TestBuildAreaItemUpgradeMaterialsRequestFullAllCharacterItem(t *testing.T) 
 	if item.TargetIconPath != nil {
 		t.Fatalf("every-character item must not have a target icon: %q", *item.TargetIconPath)
 	}
-	if item.TargetLabel == nil || *item.TargetLabel != "全角色" {
-		t.Fatalf("target label = %v, want 全角色", item.TargetLabel)
+	if item.TargetLabel == nil || *item.TargetLabel != i18n.T("education.area.all_characters") {
+		t.Fatalf("target label = %v, want the all-characters label", item.TargetLabel)
 	}
 	if !strings.Contains(item.ItemIconPath, "areaitem2701") {
 		t.Fatalf("item icon path = %q", item.ItemIconPath)

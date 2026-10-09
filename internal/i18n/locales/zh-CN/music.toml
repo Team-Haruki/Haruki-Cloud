@@ -191,8 +191,8 @@ description = "图片：歌曲排行的排序指标：Live 分数。"
 other = "Live 分数"
 
 [music.image.board.target_pt]
-description = "图片：歌曲排行的排序指标：每次消耗体力获得的活动 PT。"
-other = "活动 PT/体力"
+description = "图片：歌曲排行的排序指标：每点演出能量获得的活动 PT。显示在标题行，和 Live 类型、排序方向、页码在同一行。"
+other = "活动 PT/演出能量"
 
 [music.image.board.target_pt_per_time]
 description = "图片：歌曲排行的排序指标：单位时间获得的活动 PT。"

@@ -65,8 +65,8 @@ description = "活动规划在 WL 活动按章节单榜规划，但没有写章�
 other = "WL 章节单榜需要写章节角色，要按活动总榜规划请加“总榜”"
 
 [event.planner.boost_range]
-description = "活动规划的火数不在 1~10。"
-other = "火数只能是 1~10"
+description = "活动规划每次 Live 消耗的演出能量（用户写作“5火”）不在 1~10。"
+other = "消耗的演出能量（火）只能是 1~10"
 
 [event.planner.title]
 description = "活动规划图片的标题。"

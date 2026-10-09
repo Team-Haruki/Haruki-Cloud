@@ -27,7 +27,7 @@ other = "无法识别参数，请使用卡牌 ID 和可选的颜色序号（从 
 
 [guidance.deck_event]
 description = "路由 deck/event（活动组卡）的参数无法识别时的原因行。"
-other = "无法识别参数，请检查活动、歌曲、火数、目标、算法、固定卡牌或固定角色等参数"
+other = "无法识别参数，请检查活动、歌曲、演出能量（火）、目标、算法、固定卡牌或固定角色等参数"
 
 [guidance.deck_challenge]
 description = "路由 deck/challenge（挑战组卡）的参数无法识别时的原因行。"
@@ -43,7 +43,7 @@ other = "无法识别参数，可先写 event123，再写一个或多个正整�
 
 [guidance.deck_mysekai]
 description = "路由 deck/mysekai（烤森组卡）的参数无法识别时的原因行。"
-other = "无法识别参数，请检查活动、WL 角色、固定卡牌或固定角色和培养条件，不要写普通歌曲、火数或队友参数"
+other = "无法识别参数，请检查活动、WL 角色、固定卡牌或固定角色和培养条件，不要写普通歌曲、演出能量（火）或队友参数"
 
 [guidance.deck_score_up]
 description = "路由 deck/score-up（实效计算）的参数无法识别时的原因行。"
@@ -83,7 +83,7 @@ other = "无法识别参数，请使用活动类型、团体、属性、角色�
 
 [guidance.event_planner]
 description = "路由 event/planner（活动规划）的参数无法识别时的原因行。"
-other = "无法识别参数，请先写目标 PT 或目标名次，再按帮助写当前 PT、活动、歌曲、火数和组卡条件"
+other = "无法识别参数，请先写目标 PT 或目标名次，再按帮助写当前 PT、活动、歌曲、演出能量（火）和组卡条件"
 
 [guidance.event_record]
 description = "路由 event/record（活动记录）的参数无法识别时的原因行。"

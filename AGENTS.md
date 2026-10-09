@@ -523,6 +523,7 @@ As of this revision the project is **considered functionally complete**:
 | Live | 虚拟 Live、多人 Live、单人 Live | 虚拟Live、虚拟演唱会、多人LIVE、协力 |
 | World Link | WL（WL 活动、WL 章节） | WorldLink、wl活动 |
 | 活动点数 | PT（名词）、pt（数字后单位） | 目标PT、1234PT |
+| 演出能量（火） | 演出能量（游戏里的正式名称，图片、目录和帮助正文都用它）；帮助里首次提到或需要用户输入时写“演出能量（火）”。火是用户输入的简写，输入写法 `5火`、`10火`、`5体力` 原样保留在反引号里 | 显示文本里的体力、火数 |
 | 个人信息 | 个人信息、个人信息背景、自定义个人信息、模块化个人信息 | 个人资料、资料卡、模块化资料、profile、自定义档案 |
 | 难度 | EASY、NORMAL、HARD、EXPERT、MASTER、APPEND | 显示文本里的小写 expert |
 | 封禁到期 | 解封时间 | 封禁至 |
@@ -554,7 +555,7 @@ As of this revision the project is **considered functionally complete**:
 
 | 测试 | 位置 | 规则 |
 |---|---|---|
-| `TestCatalogStyle` | `internal/i18n` | 目录零容忍：汉字后半角冒号、中文半角括号、中英之间缺空格、单句结尾"。"、禁用词（您、请稍后重试、未就绪、命令、Toolbox、SekaiAPI、Tracker、masterdata、Cloud、suite、Mysekai、套装、档线、分数线、（状态、`"` 等）、`%s` 占位符、缺 description、占位符未说明、ID 格式 |
+| `TestCatalogStyle` | `internal/i18n` | 目录零容忍：汉字后半角冒号、中文半角括号、中英之间缺空格、单句结尾"。"、禁用词（您、请稍后重试、未就绪、命令、Toolbox、SekaiAPI、Tracker、masterdata、Cloud、suite、Mysekai、套装、档线、分数线、体力、（状态、`"` 等）、`%s` 占位符、缺 description、占位符未说明、ID 格式 |
 | `TestCatalogIntegrity` | `internal/i18n` | 代码引用的 ID 都存在、占位符一一对应、没有未使用的 ID、其他语言不多出 ID |
 | `TestCatalogDescriptionReferencesExist` | `internal/i18n` | description 里提到的消息 ID 都存在（可用 `*` 表示一组） |
 | `TestEveryMessageRendersWithSampleData` | `internal/i18n` | 每条消息都能用示例数据渲染，占位符都出现在结果里，没有残留模板语法 |

@@ -191,11 +191,7 @@ func (b *Builder) buildCardListRequestFromCards(resolved []*masterdata.Card, reg
 		if card == nil {
 			continue
 		}
-		cardInfo := b.BuildCardBasic(card, region)
-		if cardInfo.SupplyType != nil && *cardInfo.SupplyType == "甯搁┗" {
-			cardInfo.SupplyType = new("normal")
-		}
-		cards = append(cards, cardInfo)
+		cards = append(cards, b.BuildCardBasic(card, region))
 	}
 	if len(cards) == 0 {
 		return nil, notfound.Card("")

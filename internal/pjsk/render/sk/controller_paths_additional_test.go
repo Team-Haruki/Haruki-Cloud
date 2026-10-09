@@ -2,11 +2,11 @@ package sk
 
 import (
 	"errors"
-	"haruki-cloud/internal/i18n"
 	"reflect"
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"

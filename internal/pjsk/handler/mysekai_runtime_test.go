@@ -1173,7 +1173,7 @@ func TestExecuteMySekaiFixtureDetailSkipsBindingAndSnapshot(t *testing.T) {
 		if len(reqs) != 1 {
 			t.Fatalf("expected 1 fixture detail request, got %+v", reqs)
 		}
-		if reqs[0].Title != "【JP-2001】Wood Chair" {
+		if reqs[0].Title != i18n.T("render_mysekai.fixture.title", i18n.Data{"Region": i18n.RegionLabel("jp"), "ID": 2001, "Name": "Wood Chair"}) {
 			t.Fatalf("unexpected title: %+v", reqs[0])
 		}
 		_, _ = w.Write([]byte("fixture-detail"))

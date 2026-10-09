@@ -2,10 +2,10 @@ package education
 
 import (
 	"fmt"
-	"haruki-cloud/internal/i18n"
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"

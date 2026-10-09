@@ -3,10 +3,10 @@ package deck
 import (
 	"context"
 	"errors"
-	"haruki-cloud/internal/i18n"
 	"reflect"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 

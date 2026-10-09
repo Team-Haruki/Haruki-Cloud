@@ -391,7 +391,7 @@ func (c *Controller) searchStrictFilterCards(source DataSource, rawQuery string,
 
 func markUnreleasedCardList(cards []drawing.CardBasic) {
 	now := currentCardVisibilityTime()
-	label := "未上线"
+	label := i18n.T("render_card.unreleased")
 	for i := range cards {
 		releaseAt := cards[i].ReleaseAt
 		if releaseAt == nil || *releaseAt <= now {

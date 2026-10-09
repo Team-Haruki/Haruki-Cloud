@@ -18,10 +18,10 @@ import (
 // The render-cache key pipeline (cache_helpers.go, cache_hash.go,
 // cache_clone_sanitized.go, sonar_constants.go, cache_types.go:79-94,
 // request_dt.go:14 and the rule table in cache_rules.go) decides the keys
-// already persisted in the image cache index. These golden values were
-// computed from the tree before the storage abstraction work started and
-// must never change: a diff here means every stored render-cache key would
-// be invalidated.
+// already persisted in the image cache index. A diff here means every stored
+// render-cache key is invalidated, so these values change only together with
+// an intentional renderCacheKeyVersion bump (version 4: image labels moved to
+// the i18n catalog).
 
 func renderCacheKeyGoldenFixtures() []struct {
 	name, endpoint string

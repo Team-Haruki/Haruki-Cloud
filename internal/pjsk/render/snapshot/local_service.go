@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	sekaiDB "haruki-cloud/database/sekai"
-	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/meta"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -130,7 +129,8 @@ func (s *Service) ProfileCard(region renderregion.Value) *drawing.ProfileCardReq
 		},
 		DataSources: []drawing.ProfileDataSource{
 			{
-				Name:       i18n.T("profile.data_source.suite"),
+				Name:       common.DataSourceLabel(drawing.DataSourceSuite),
+				Kind:       drawing.DataSourceSuite,
 				Source:     new(detail.Source),
 				UpdateTime: new(detail.UpdateTime),
 				Mode:       common.CloneStringPtr(detail.Mode),

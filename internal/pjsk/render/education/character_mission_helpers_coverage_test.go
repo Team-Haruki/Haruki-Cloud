@@ -2,11 +2,11 @@ package education
 
 import (
 	"errors"
-	"haruki-cloud/internal/i18n"
 	"reflect"
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"

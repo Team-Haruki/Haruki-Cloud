@@ -110,7 +110,8 @@ func convertDetailedProfileToCard(detail drawing.DetailedProfileCardRequest) dra
 		},
 		DataSources: []drawing.ProfileDataSource{
 			{
-				Name:       i18n.T("profile.data_source.suite"),
+				Name:       common.DataSourceLabel(drawing.DataSourceSuite),
+				Kind:       drawing.DataSourceSuite,
 				Source:     &source,
 				UpdateTime: &update,
 				Mode:       common.CloneStringPtr(detail.Mode),

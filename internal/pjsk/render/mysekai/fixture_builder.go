@@ -365,7 +365,7 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 		subGenre := subGenreMap[subGenreID]
 
 		request := drawing.MysekaiFixtureDetailRequest{
-			Title:              fmt.Sprintf("【%s-%d】%s", strings.ToUpper(region.String()), fixtureID, stringValue(fixture["name"])),
+			Title:              i18n.T("render_mysekai.fixture.title", i18n.Data{"Region": i18n.RegionLabel(region.String()), "ID": fixtureID, "Name": stringValue(fixture["name"])}),
 			Images:             fixtureColorImages(func(p string) string { return c.regionPath(region, p) }, fixture),
 			MainGenreName:      stringValue(mainGenre["name"]),
 			MainGenreImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(mainGenre["assetbundleName"]))),

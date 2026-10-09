@@ -19,11 +19,6 @@ internal/pjsk/handler/profile.go	han_literal	6
 internal/pjsk/handler/rating.go	han_literal	1
 internal/pjsk/handler/score_board_params.go	han_literal	39
 internal/pjsk/handler/score_board_params_extract.go	han_literal	8
-internal/pjsk/render/card/builder.go	han_literal	1
-internal/pjsk/render/card/builder_distribution.go	han_literal	6
-internal/pjsk/render/card/controller.go	han_literal	1
-internal/pjsk/render/card/query_summary.go	han_literal	44
-internal/pjsk/render/card/supply.go	han_literal	7
 internal/pjsk/render/deck/helpers.go	han_literal	1
 internal/pjsk/render/education/character_missions.go	han_literal	84
 internal/pjsk/render/education/snapshot_character_missions.go	han_literal	24

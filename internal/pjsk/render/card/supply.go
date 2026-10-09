@@ -1,6 +1,10 @@
 package card
 
-import "strings"
+import (
+	"strings"
+
+	"haruki-cloud/internal/i18n"
+)
 
 func normalizeSupplyType(raw string) string {
 	switch strings.TrimSpace(raw) {
@@ -23,22 +27,27 @@ func normalizeSupplyType(raw string) string {
 	}
 }
 
+// formatSupplyTypeForList returns the supply label of a limited card. Drawing
+// matches these exact values to choose the limited-card icon (its
+// TERM_LIMITED_SUPPLY_TYPES and FES_LIMITED_SUPPLY_TYPES sets), so they are a
+// cross-repo contract rather than catalog copy until Drawing accepts the raw
+// supply key.
 func formatSupplyTypeForList(raw string) string {
 	switch normalizeSupplyType(raw) {
 	case "normal", "":
 		return ""
 	case "term_limited":
-		return "期间限定"
+		return "期间限定" //copylint:ignore Drawing matches this value
 	case "colorful_festival_limited":
-		return "CFes限定"
+		return "CFes限定" //copylint:ignore Drawing matches this value
 	case "bloom_festival_limited":
-		return "BFes限定"
+		return "BFes限定" //copylint:ignore Drawing matches this value
 	case "unit_event_limited":
-		return "WL限定"
+		return "WL限定" //copylint:ignore Drawing matches this value
 	case "collaboration_limited":
-		return "联动限定"
+		return "联动限定" //copylint:ignore Drawing matches this value
 	case "birthday":
-		return "生日"
+		return "生日" //copylint:ignore Drawing matches this value
 	default:
 		return strings.TrimSpace(raw)
 	}
@@ -47,7 +56,7 @@ func formatSupplyTypeForList(raw string) string {
 func formatSupplyTypeForDetail(raw string) string {
 	switch normalizeSupplyType(raw) {
 	case "normal", "":
-		return "常驻"
+		return i18n.T("render_card.supply.permanent")
 	default:
 		return formatSupplyTypeForList(raw)
 	}

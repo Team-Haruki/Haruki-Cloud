@@ -1,7 +1,6 @@
 package music
 
 import (
-	"fmt"
 	"math"
 	"slices"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -17,11 +17,6 @@ var (
 	musicDetailLeaderboardLiveTypeOrder = []string{"solo", "multi", "auto"}
 	musicDetailLeaderboardTargetOrder   = []string{"score", "pt", pointsPerTimeMetric}
 
-	musicDetailLeaderboardLiveTypes = map[string]i18n.Message{
-		"solo":  i18n.M("music.image.detail.live_solo"),
-		"multi": i18n.M("music.image.detail.live_multi"),
-		"auto":  i18n.M("music.image.detail.live_auto"),
-	}
 	musicDetailLeaderboardTargets = map[string]i18n.Message{
 		"score":             i18n.M("music.image.detail.target_score"),
 		"pt":                i18n.M("music.image.detail.target_pt"),
@@ -57,7 +52,7 @@ func (c *Controller) enrichMusicDetailRequest(req *drawing.MusicDetailRequest, r
 	}
 
 	req.LeaderboardMatrix = matrix
-	req.LeaderboardLiveTypes = cloneMusicDetailLabels(musicDetailLeaderboardLiveTypes, musicDetailLeaderboardLiveTypeOrder)
+	req.LeaderboardLiveTypes = musicDetailLiveTypeLabels(musicDetailLeaderboardLiveTypeOrder)
 	req.LeaderboardTargets = cloneMusicDetailLabels(musicDetailLeaderboardTargets, musicDetailLeaderboardTargetOrder)
 	req.LeaderboardMusicNum = intPtr(total)
 }
@@ -177,7 +172,7 @@ func formatMusicDetailLeaderboardValue(row musicBoardRow, liveType, target strin
 		return strconv.Itoa(int(math.Round(pt)))
 	case pointsPerTimeMetric:
 		ptPerHour := derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, pointsPerTimeMetric))
-		return fmt.Sprintf("%.2fw/h", ptPerHour/10000.0)
+		return i18n.T("render_music.leaderboard.pt_per_hour", i18n.Data{"Value": i18n.Wan(ptPerHour)})
 	default:
 		return "-"
 	}
@@ -192,6 +187,16 @@ func cloneMusicDetailLabels(input map[string]i18n.Message, order []string) map[s
 		if value, ok := input[key]; ok {
 			result[key] = value.String()
 		}
+	}
+	return result
+}
+
+// musicDetailLiveTypeLabels names the leaderboard rows with the short live
+// type labels; the row header is too narrow for "单人 Live".
+func musicDetailLiveTypeLabels(order []string) map[string]string {
+	result := make(map[string]string, len(order))
+	for _, key := range order {
+		result[key] = common.LiveShortLabel(key)
 	}
 	return result
 }

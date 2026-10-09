@@ -238,18 +238,6 @@ other = "加成 {{.Percent}}"
 description = "图片：歌曲排行的参数行：两局之间的间隔。占位符：Seconds=秒数，保留 1 位小数。"
 other = "间隔 {{.Seconds}} 秒"
 
-[music.image.detail.live_solo]
-description = "图片：歌曲详情排行表的 Live 类型列名：单人 Live。"
-other = "单人"
-
-[music.image.detail.live_multi]
-description = "图片：歌曲详情排行表的 Live 类型列名：多人 Live。"
-other = "多人"
-
-[music.image.detail.live_auto]
-description = "图片：歌曲详情排行表的 Live 类型列名：自动 Live。"
-other = "自动"
-
 [music.image.detail.target_score]
 description = "图片：歌曲详情排行表的指标名：分数。"
 other = "分数"

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
 	"haruki-cloud/internal/testutil"
@@ -348,7 +349,7 @@ func TestSelectUniqueMusicMatchBranches(t *testing.T) {
 		testutil.Require(t, errors.As(err, &ambiguous), "ambiguous selection = %+v, %v", ambiguous, err)
 		testutil.Require(t, !(len(ambiguous.candidates) != 2), "ambiguous selection = %+v, %v", ambiguous, err)
 		testutil.Require(t, !(ambiguous.candidates[0].ID != 3), "ambiguous selection = %+v, %v", ambiguous, err)
-		testutil.Require(t, !(ambiguous.candidates[1].Title != "music9"), "ambiguous selection = %+v, %v", ambiguous, err)
+		testutil.Require(t, !(ambiguous.candidates[1].Title != i18n.T("render_music.fallback_title", i18n.Data{"ID": 9})), "ambiguous selection = %+v, %v", ambiguous, err)
 	}
 
 }

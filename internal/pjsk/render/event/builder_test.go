@@ -2,10 +2,10 @@ package event
 
 import (
 	"fmt"
-	"haruki-cloud/internal/i18n"
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"

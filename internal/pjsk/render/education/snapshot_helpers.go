@@ -3,14 +3,14 @@ package education
 import (
 	"errors"
 	"fmt"
-	"haruki-cloud/internal/i18n"
-	"haruki-cloud/utils/usererror"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
 func hasAreaItemFilter(query AreaItemQuery) bool {

@@ -2,13 +2,13 @@ package handler
 
 import (
 	"context"
-	"haruki-cloud/internal/i18n"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 
 	"haruki-cloud/config"
@@ -504,7 +504,7 @@ func TestEventPlannerOmakaseSongDoesNotRequireMusicController(t *testing.T) {
 	if req.MusicID == nil || *req.MusicID != eventPlannerOmakaseMusicID {
 		t.Fatalf("unexpected music id: %+v", req.MusicID)
 	}
-	if req.MusicTitle == nil || !strings.Contains(*req.MusicTitle, "おまかせ") {
+	if req.MusicTitle == nil || *req.MusicTitle != i18n.T("deck.music.omakase") {
 		t.Fatalf("unexpected music title: %+v", req.MusicTitle)
 	}
 	if req.MusicCoverPath == nil || *req.MusicCoverPath != "static_images/omakase.png" {

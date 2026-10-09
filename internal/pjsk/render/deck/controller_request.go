@@ -2,13 +2,13 @@ package deck
 
 import (
 	"fmt"
-	"haruki-cloud/internal/i18n"
 	"math"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"

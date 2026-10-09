@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"haruki-cloud/internal/i18n"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -14,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
@@ -3805,7 +3805,7 @@ func assertForecastScorePayload(t *testing.T, payload *LineRequest, tracker *bat
 
 func assertForecastCurrentRanks(t *testing.T, payload *LineRequest, tracker *batchLineMetricsTrackerSource) {
 	t.Helper()
-	if payload.Name != "Tracker Event 预测" {
+	if payload.Name != i18n.T("sk.forecast.title", i18n.Data{"Event": "Tracker Event"}) {
 		t.Fatalf("unexpected payload name: %s", payload.Name)
 	}
 	if payload.PredictionNotice != i18n.T("sk.forecast.notice") {
@@ -3847,7 +3847,7 @@ func assertForecastColumns(t *testing.T, payload *LineRequest) {
 	if payload.ForecastColumns[0].Ranks[0].Rank != 50 || payload.ForecastColumns[0].Ranks[0].Score == nil || *payload.ForecastColumns[0].Ranks[0].Score != 12_345_678 {
 		t.Fatalf("unexpected 33kit p50 payload: %+v", payload.ForecastColumns[0].Ranks[0])
 	}
-	if payload.ForecastColumns[1].Key != "local" || payload.ForecastColumns[1].Name != "本地预测" {
+	if payload.ForecastColumns[1].Key != "local" || payload.ForecastColumns[1].Name != i18n.T("sk.forecast.source.local") {
 		t.Fatalf("unexpected second forecast column: %+v", payload.ForecastColumns[1])
 	}
 	if payload.ForecastColumns[2].Key != "sekarun" {
@@ -3911,7 +3911,7 @@ func TestBuildPredictLineRequestFromTrackerUsesWorldBloomChapterMeta(t *testing.
 	if err != nil {
 		t.Fatalf("build wl chapter predict line request: %v", err)
 	}
-	if payload.Name != "WL Event 预测" {
+	if payload.Name != i18n.T("sk.forecast.title", i18n.Data{"Event": "WL Event"}) {
 		t.Fatalf("unexpected payload name: %s", payload.Name)
 	}
 	if payload.AggregateAt != now+int64(2*time.Hour/time.Millisecond) {
@@ -4036,7 +4036,7 @@ func assertWorldBloomTotalForecastPayload(t *testing.T, totalPayload *LineReques
 
 func assertWorldBloomChapterForecastPayload(t *testing.T, chapterPayload *LineRequest, charaID int) {
 	t.Helper()
-	if chapterPayload.Name != "WL Event 预测" {
+	if chapterPayload.Name != i18n.T("sk.forecast.title", i18n.Data{"Event": "WL Event"}) {
 		t.Fatalf("unexpected wl chapter predict payload name: %s", chapterPayload.Name)
 	}
 	if chapterPayload.WlCid == nil || *chapterPayload.WlCid != charaID {

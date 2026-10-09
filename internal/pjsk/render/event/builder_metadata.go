@@ -2,10 +2,10 @@ package event
 
 import (
 	"fmt"
-	"haruki-cloud/internal/i18n"
 	"path/filepath"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"

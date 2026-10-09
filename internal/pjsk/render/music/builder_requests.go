@@ -6,11 +6,14 @@ import (
 	"slices"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/chartstyle"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/notfound"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 func (b *Builder) BuildMusicDetailRequest(music *masterdata.Music, region renderregion.Value) (*drawing.MusicDetailRequest, error) {
@@ -63,7 +66,7 @@ func (b *Builder) BuildMusicDetailRequest(music *masterdata.Music, region render
 
 func (b *Builder) BuildMusicBriefListRequest(musicIDs []int, difficulty string, region renderregion.Value) (*drawing.MusicBriefListRequest, error) {
 	if len(musicIDs) == 0 {
-		return nil, fmt.Errorf("music ids are required")
+		return nil, usererror.Misuse(i18n.M("music.query_required"))
 	}
 	region = renderregion.WithDefault(region)
 	diff := normalizeDifficulty(difficulty)
@@ -102,7 +105,7 @@ func (b *Builder) BuildMusicBriefListRequest(musicIDs []int, difficulty string, 
 		items = append(items, item)
 	}
 	if len(items) == 0 {
-		return nil, fmt.Errorf("no valid music data")
+		return nil, notfound.Music("")
 	}
 
 	return &drawing.MusicBriefListRequest{
@@ -139,7 +142,7 @@ func (b *Builder) BuildMusicBriefListRequestFromItems(items []BriefListItemQuery
 		}
 	}
 	if len(list) == 0 {
-		return nil, fmt.Errorf("no valid music data")
+		return nil, notfound.Music("")
 	}
 
 	req := &drawing.MusicBriefListRequest{
@@ -225,7 +228,7 @@ func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Mus
 
 	playLevel := b.GetDifficultyLevel(music.ID, diff)
 	if playLevel == 0 {
-		return nil, fmt.Errorf("music %s does not have %s chart", music.Title, diff)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_chart_difficulty", i18n.Data{"Difficulty": i18n.DifficultyLabel(diff)}))
 	}
 
 	jacketPath := b.BuildMusicJacketPath(music.AssetBundleName, region)

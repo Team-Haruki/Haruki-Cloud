@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -190,10 +189,8 @@ func testMusicFormattingHelperEdges(t *testing.T) {
 	if dedupeBPMMatchesByMusic(nil) != nil {
 		t.Fatal("nil BPM matches should stay nil")
 	}
-	for _, err := range []error{errors.New(""), errors.New("匹配到多个歌曲 1,2"), errors.New("custom title")} {
-		if buildAmbiguousMusicDetailListTitle(err) == "" || buildAmbiguousMusicBPMListTitle(err) == "" {
-			t.Fatal("ambiguous title should never be empty")
-		}
+	if buildAmbiguousMusicDetailListTitle() == "" || buildAmbiguousMusicBPMListTitle() == "" {
+		t.Fatal("ambiguous title should never be empty")
 	}
 	if eventPlannerBoostMultiplier(99) != 1 {
 		t.Fatal("unknown event-planner boost multiplier should be one")

@@ -2,19 +2,19 @@ package alias
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/pendingalias"
-	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 func (s *Service) ListPending(ctx context.Context, platform, platformUserID string) ([]PjskAliasRecord, error) {
 	if !s.IsReady() {
-		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
+		return nil, errAliasUnavailable()
 	}
 	if _, _, err := s.requireAdmin(ctx, platform, platformUserID); err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (s *Service) ListPending(ctx context.Context, platform, platformUserID stri
 
 func (s *Service) Approve(ctx context.Context, platform, platformUserID string, reviewIDs []int64) ([]PjskAliasRecord, error) {
 	if !s.IsReady() {
-		return nil, onebot11.NewReplayError("别名服务未就绪，请稍后再试")
+		return nil, errAliasUnavailable()
 	}
 	if err := s.requireWritable(); err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func loadPendingAliasesForReview(ctx context.Context, tx *pjskdb.Tx, reviewIDs [
 	}
 	missing := missingReviewIDs(reviewIDs, byID)
 	if len(missing) != 0 {
-		return nil, onebot11.NewReplayError("未找到待审核别名ID: %s", strings.Join(missing, " "))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"IDs": strings.Join(missing, "、")}))
 	}
 	return byID, nil
 }
@@ -121,11 +121,11 @@ func (s *Service) validatePendingAliasesForApproval(ctx context.Context, tx *pjs
 			return err
 		}
 		if exists {
-			return onebot11.NewReplayError("%s别名 %q 已经存在于已审核列表中", aliasTypeLabel(row.AliasType), row.Alias)
+			return usererror.Invalid(i18n.M("alias.already_approved", i18n.Data{"Kind": aliasKind(row.AliasType), "Alias": row.Alias}))
 		}
 		key := row.AliasType + "\x00" + normalizeCompareText(row.Alias)
 		if prevID, ok := reserved[key]; ok {
-			return onebot11.NewReplayError("待通过的审核ID %d 与 %d 使用了重复%s别名 %q", prevID, reviewID, aliasTypeLabel(row.AliasType), row.Alias)
+			return usererror.Invalid(i18n.M("alias.duplicate_in_batch", i18n.Data{"First": prevID, "Second": reviewID, "Kind": aliasKind(row.AliasType), "Alias": row.Alias}))
 		}
 		reserved[key] = reviewID
 	}
@@ -141,7 +141,7 @@ func approvePendingAliases(ctx context.Context, tx *pjskdb.Tx, reviewIDs []int64
 			SetAlias(row.Alias).
 			Save(ctx)
 		if pjskdb.IsConstraintError(err) {
-			return onebot11.NewReplayError("%s别名 %q 已经存在于已审核列表中", aliasTypeLabel(row.AliasType), row.Alias)
+			return usererror.Invalid(i18n.M("alias.already_approved", i18n.Data{"Kind": aliasKind(row.AliasType), "Alias": row.Alias}))
 		}
 		if err != nil {
 			return err
@@ -159,7 +159,7 @@ func (s *Service) Reject(ctx context.Context, platform, platformUserID string, r
 		return nil, err
 	}
 	if len(records) == 0 {
-		return nil, fmt.Errorf("未找到待审核别名ID: %d", reviewID)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"IDs": strconv.FormatInt(reviewID, 10)}))
 	}
 	return &records[0], nil
 }
@@ -167,7 +167,7 @@ func (s *Service) Reject(ctx context.Context, platform, platformUserID string, r
 // RejectMany rejects all requested pending aliases in one transaction.
 func (s *Service) RejectMany(ctx context.Context, platform, platformUserID string, reviewIDs []int64, reason string) ([]PjskAliasRecord, error) {
 	if !s.IsReady() {
-		return nil, onebot11.NewReplayError("别名服务未就绪，请稍后再试")
+		return nil, errAliasUnavailable()
 	}
 	if err := s.requireWritable(); err != nil {
 		return nil, err
@@ -182,7 +182,7 @@ func (s *Service) RejectMany(ctx context.Context, platform, platformUserID strin
 	}
 	reason = strings.TrimSpace(reason)
 	if reason == "" {
-		return nil, onebot11.NewReplayError("请输入拒绝原因")
+		return nil, usererror.Misuse(i18n.M("alias.reject_reason_required"))
 	}
 	if strings.TrimSpace(admin.Name) != "" {
 		reviewer = strings.TrimSpace(admin.Name)

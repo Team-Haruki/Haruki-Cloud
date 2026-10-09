@@ -2,6 +2,7 @@ package alias
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -11,7 +12,8 @@ import (
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/sekai/gamecharacter"
 	sekaimusic "haruki-cloud/database/sekai/music"
-	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 func (s *Service) ensureAliasAvailable(ctx context.Context, aliasType string, approved *pjskdb.AliasClient, pending *pjskdb.PendingAliasClient, aliasText string) error {
@@ -23,14 +25,14 @@ func (s *Service) ensureAliasAvailable(ctx context.Context, aliasType string, ap
 		return err
 	}
 	if exists {
-		return fmt.Errorf("%s别名 %q 已经存在于已审核列表中", aliasTypeLabel(aliasType), aliasText)
+		return usererror.Invalid(i18n.M("alias.already_approved", i18n.Data{"Kind": aliasKind(aliasType), "Alias": aliasText}))
 	}
 	pendingExists, err := pendingAliasExists(ctx, pending, aliasType, aliasText)
 	if err != nil {
 		return err
 	}
 	if pendingExists {
-		return fmt.Errorf("%s别名 %q 已经在待审核列表中", aliasTypeLabel(aliasType), aliasText)
+		return usererror.Invalid(i18n.M("alias.already_pending", i18n.Data{"Kind": aliasKind(aliasType), "Alias": aliasText}))
 	}
 	return nil
 }
@@ -45,7 +47,7 @@ func (s *Service) ensureEntityNameAvailable(ctx context.Context, aliasType, alia
 			return err
 		}
 		if conflicts > 0 {
-			return fmt.Errorf("%s别名 %q 与已有%s重复", aliasTypeLabel(aliasType), aliasText, aliasTypeNameLabel(aliasType))
+			return usererror.Invalid(i18n.M("alias.conflicts_name", i18n.Data{"Kind": aliasKind(aliasType), "Alias": aliasText, "NameKind": aliasNameKind(aliasType)}))
 		}
 		return nil
 	case PjskAliasTypeCharacter:
@@ -58,12 +60,12 @@ func (s *Service) ensureEntityNameAvailable(ctx context.Context, aliasType, alia
 		target := normalizeCompareText(aliasText)
 		for _, row := range rows {
 			if characterMatchesName(row, target) {
-				return fmt.Errorf("%s别名 %q 与已有%s重复", aliasTypeLabel(aliasType), aliasText, aliasTypeNameLabel(aliasType))
+				return usererror.Invalid(i18n.M("alias.conflicts_name", i18n.Data{"Kind": aliasKind(aliasType), "Alias": aliasText, "NameKind": aliasNameKind(aliasType)}))
 			}
 		}
 		return nil
 	default:
-		return fmt.Errorf("不支持的别名类型: %s", aliasType)
+		return usererror.Wrap(usererror.CodeInternal, i18n.M("alias.type_unsupported"), fmt.Errorf("unsupported alias type %q", aliasType))
 	}
 }
 
@@ -87,12 +89,12 @@ func pendingAliasExists(ctx context.Context, client *pjskdb.PendingAliasClient, 
 
 func (s *Service) requireAdmin(ctx context.Context, platform, platformUserID string) (*pjskdb.AliasAdmin, string, error) {
 	if s == nil || s.identity == nil {
-		return nil, "", onebot11.NewReplayError("别名审核服务未就绪，请稍后再试")
+		return nil, "", errAliasUnavailable()
 	}
 	platform = strings.TrimSpace(platform)
 	platformUserID = strings.TrimSpace(platformUserID)
 	if platform == "" || platformUserID == "" {
-		return nil, "", fmt.Errorf("缺少审核身份信息")
+		return nil, "", errors.New("alias review identity is missing")
 	}
 	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)
 	if err != nil {
@@ -103,7 +105,7 @@ func (s *Service) requireAdmin(ctx context.Context, platform, platformUserID str
 		Only(ctx)
 	if err != nil {
 		if pjskdb.IsNotFound(err) {
-			return nil, "", onebot11.NewReplayError("你不是别名审核管理员")
+			return nil, "", usererror.Forbidden(i18n.M("alias.not_admin"))
 		}
 		return nil, "", err
 	}

@@ -1,6 +1,7 @@
 package pjsk
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -17,7 +18,7 @@ func TestCommandErrorEnvelopeShowsTypedUserErrorWithoutCause(t *testing.T) {
 		usererror.Unavailable(i18n.FeatureToolbox, cause),
 		fmt.Errorf("bind: %w", usererror.Unavailable(i18n.FeatureToolbox, cause)),
 	} {
-		envelope := commandErrorEnvelope(err, "profile/bind", "/绑定", false)
+		envelope := commandErrorEnvelope(context.Background(), err, "profile/bind", "/绑定")
 		segments, ok := envelope.Data.([]onebot11.Segment)
 		if !ok || len(segments) != 1 {
 			t.Fatalf("envelope data = %#v", envelope.Data)
@@ -51,12 +52,12 @@ func TestTypedUserErrorsClassifyByCode(t *testing.T) {
 	}
 }
 
-func TestTypedUserErrorTextFallsBackOnSensitiveURL(t *testing.T) {
+func TestCommandErrorTextFallsBackOnSensitiveURL(t *testing.T) {
 	err := usererror.Invalid(i18n.Verbatim("see http://127.0.0.1:6666/x"))
-	if got := typedUserErrorText(err); got != genericClientErrorText {
-		t.Fatalf("typedUserErrorText() = %q", got)
+	if got := commandErrorText(context.Background(), err, "", ""); got != i18n.RequestFailed().String() {
+		t.Fatalf("commandErrorText() = %q", got)
 	}
-	if got := typedUserErrorText(usererror.Invalid(i18n.Verbatim(" "))); got != genericClientErrorText {
+	if got := commandErrorText(context.Background(), usererror.Invalid(i18n.Verbatim(" ")), "", ""); got != i18n.RequestFailed().String() {
 		t.Fatalf("empty typed text = %q", got)
 	}
 }

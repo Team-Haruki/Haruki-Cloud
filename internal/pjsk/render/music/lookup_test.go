@@ -14,6 +14,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
+	"haruki-cloud/internal/testutil"
 )
 
 type lookupTestSource struct {
@@ -508,7 +509,7 @@ func TestResolveMusicTitleQueryNormalizesAmbiguousAliasToVisibleRegionMatch(t *t
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
 	controller.SetAliasResolver(&lookupTestAliasResolver{
-		err: fmt.Errorf("failed to search music: 别名匹配到多个歌曲，请改用 music<id> 查询：\nmusic2/Song B\nmusic1/Song A"),
+		err: fmt.Errorf("failed to search music: %w", testAmbiguousIDs{2, 1}),
 	})
 
 	musicInfo, err := controller.resolveMusicTitleQuery(source, "song a", false)
@@ -533,10 +534,10 @@ func TestResolveMusicCoverRejectsAmbiguousTitleQuery(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected ambiguous title query to fail")
 	}
-	if !strings.Contains(err.Error(), "匹配到多个歌曲") {
+	if testutil.MessageID(err) != "music.ambiguous" {
 		t.Fatalf("expected ambiguous error, got %v", err)
 	}
-	if !strings.Contains(err.Error(), "music1/Song A") || !strings.Contains(err.Error(), "music2/Song Alpha") {
+	if !strings.Contains(err.Error(), "music1：Song A") || !strings.Contains(err.Error(), "music2：Song Alpha") {
 		t.Fatalf("expected music id hints in error, got %v", err)
 	}
 }
@@ -614,10 +615,20 @@ func TestResolveFuzzyMusicQueryReturnsUnreleasedErrorWhenOnlyFutureMatchExists(t
 	}
 }
 
-func TestExtractAmbiguousMusicIDsParsesAliasStyleErrors(t *testing.T) {
-	err := fmt.Errorf("failed to search music: 别名匹配到多个歌曲，请改用 music<id> 查询：\nmusic2/Beta\nmusic1/Alpha")
+// testAmbiguousIDs stands in for the alias service's ambiguous error: the
+// IDs come from its type, never from its text.
+type testAmbiguousIDs []int
+
+func (e testAmbiguousIDs) Error() string       { return "ambiguous alias" }
+func (e testAmbiguousIDs) AmbiguousIDs() []int { return e }
+
+func TestExtractAmbiguousMusicIDsReadsTheErrorType(t *testing.T) {
+	if ids := ExtractAmbiguousMusicIDs(fmt.Errorf("text only: music2/Beta\nmusic1/Alpha")); ids != nil {
+		t.Fatalf("IDs must not be parsed from error text: %+v", ids)
+	}
+	err := fmt.Errorf("failed to search music: %w", testAmbiguousIDs{2, 1})
 	ids := ExtractAmbiguousMusicIDs(err)
-	if len(ids) != 2 || ids[0] != 1 || ids[1] != 2 {
+	if len(ids) != 2 || ids[0] != 2 || ids[1] != 1 {
 		t.Fatalf("unexpected ambiguous ids: %+v", ids)
 	}
 }

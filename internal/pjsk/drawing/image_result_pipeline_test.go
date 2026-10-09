@@ -18,6 +18,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/internal/storage/storagetest"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
 )
 
@@ -202,7 +203,7 @@ func TestUncachedImageMethodsPreserveNoStoreContract(t *testing.T) {
 				server.setShape(shape)
 				image, err := tc.call()
 				if shape == shapeRef {
-					if err == nil || !strings.Contains(err.Error(), "uncached endpoint") {
+					if err == nil || !strings.Contains(testutil.ErrorDetail(err), "uncached endpoint") {
 						t.Fatalf("ref must remain invalid with Cache-Store:0: %v", err)
 					}
 				} else if err != nil || len(image.data) == 0 || image.Ref() != nil {

@@ -6,6 +6,7 @@ import (
 	"sort"
 	"time"
 
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
@@ -204,19 +205,19 @@ func (p *localCardProvider) GetByCharacterAndSeq(_ context.Context, characterID,
 		}
 	}
 	if len(cards) == 0 {
-		return nil, fmt.Errorf("no cards found for character %d", characterID)
+		return nil, notfound.Card("")
 	}
 
 	var card *masterdata.Card
 	if seq < 0 {
 		index := len(cards) + seq
 		if index < 0 || index >= len(cards) {
-			return nil, fmt.Errorf("card sequence out of range: %d (total: %d)", seq, len(cards))
+			return nil, notfound.Card("")
 		}
 		card = cards[index]
 	} else {
 		if seq < 1 || seq > len(cards) {
-			return nil, fmt.Errorf("card sequence out of range: %d (total: %d)", seq, len(cards))
+			return nil, notfound.Card("")
 		}
 		card = cards[seq-1]
 	}

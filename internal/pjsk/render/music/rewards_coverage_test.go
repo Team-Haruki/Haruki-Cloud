@@ -174,7 +174,7 @@ func TestRewardsDetailAchievementAndSnapshotErrors(t *testing.T) {
 		_, err := controller.BuildMusicRewardsDetailRequestFromAchievements(RewardsDetailQuery{Region: "jp"}, []byte(`{`))
 		{
 			testutil.Require(t, !(err == nil), "invalid achievements error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "decode"), "invalid achievements error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "decode"), "invalid achievements error = %v", err)
 		}
 	}
 

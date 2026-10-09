@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
@@ -10,21 +10,8 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
 	"haruki-cloud/internal/pjsk/render/event"
+	"haruki-cloud/utils/usererror"
 )
-
-const querySingleEventHelp = `【查单个活动格式】
-1. 活动ID：123
-2. 倒数第几次活动：-1 -2
-3. ban主昵称+序号：mnr1`
-
-const queryMultiEventHelp = `【查多个活动格式】
-1. 活动类型：5v5 普活 wl wl1 wl2 wl3
-2. 颜色和团：紫 25h 仅25h
-3. 年份：25年 去年
-4. 活动角色：mnr hrk 可以加多个
-5. 活动ban主：mnr箱`
-
-const eventSearchHelp = querySingleEventHelp + "\n\n" + queryMultiEventHelp
 
 func (sekaiHandlers) EventHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
@@ -32,7 +19,6 @@ func (sekaiHandlers) EventHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/pjsk events", "/pjsk_events", "/events", "/活动列表", "/活动一览", "/event-list",
 		},
-		Helper: eventSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveEventDetailOrList(ctx, true)
 		},
@@ -45,7 +31,6 @@ func (sekaiHandlers) EventDetailHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/pjsk event", "/pjsk_event", "/活动", "/查活动", "/event",
 		},
-		Helper: eventSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveEventDetailOrList(ctx, false)
 		},
@@ -148,7 +133,7 @@ func eventDetailParams(info *parser.EventQueryInfo) (map[string]any, bool) {
 }
 
 func eventSearchUsageError(trigger string) error {
-	return onebot11.NewReplayError("活动查询参数格式不正确。查看完整用法请发送：%s -help", trigger)
+	return usererror.Unrecognized()
 }
 
 func resolveAmbiguousEventListFilter(args string) (map[string]any, bool) {
@@ -192,14 +177,12 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 
 	region := renderregion.Value(rc.Cmd.Region)
 	switch rc.Cmd.Mode {
-	case "event-planner-help":
-		return onebot11.Message{onebot11.Text(eventPlannerHelp)}, nil
 	case "event-planner":
 		return executeEventPlanner(rc)
 	}
 
 	if rc.App.Events == nil {
-		return nil, fmt.Errorf("event service unavailable: sekai client not configured")
+		return nil, usererror.Misconfigured(errors.New("event service unavailable: sekai client not configured"))
 	}
 	eventCtrl := rc.App.Events.WithContext(rc.Ctx)
 	var data drawing.ImageResult

@@ -1,21 +1,24 @@
 package music
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) ResolveMusicCoverByTitleOrAlias(query Query) (*CoverResult, error) {
 	if c == nil {
-		return nil, fmt.Errorf("music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music controller is not configured"))
 	}
 	region, source, builder, err := c.resolveBuilder(query.Region)
 	if err != nil {
@@ -29,7 +32,7 @@ func (c *Controller) ResolveMusicCoverByTitleOrAlias(query Query) (*CoverResult,
 
 	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
 	if strings.TrimSpace(jacketPath) == "" {
-		return nil, fmt.Errorf("music %d does not have jacket asset", musicInfo.ID)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_jacket"))
 	}
 
 	return &CoverResult{
@@ -99,7 +102,7 @@ func (c *Controller) RenderMusicDetail(query Query) ([]byte, error) {
 
 func (c *Controller) RenderMusicDetailImage(query Query) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicDetailRequest(query)
@@ -122,7 +125,7 @@ func (c *Controller) BuildMusicBriefListRequest(query BriefListQuery) (*drawing.
 	case len(query.MusicIDs) > 0:
 		payload, err = builder.BuildMusicBriefListRequest(query.MusicIDs, query.Difficulty, region)
 	default:
-		return nil, fmt.Errorf("music ids are required")
+		return nil, usererror.Misuse(i18n.M("music.query_required"))
 	}
 	if err != nil {
 		return nil, err
@@ -143,7 +146,7 @@ func (c *Controller) RenderMusicBriefList(query BriefListQuery) ([]byte, error) 
 
 func (c *Controller) RenderMusicBriefListImage(query BriefListQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicBriefListRequest(query)
@@ -176,7 +179,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		return nil, err
 	}
 	if len(list) == 0 {
-		return nil, fmt.Errorf("no music matched the current filters")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_match"))
 	}
 
 	sortMusicListEntries(list)
@@ -431,7 +434,7 @@ func (c *Controller) RenderMusicList(query ListQuery) ([]byte, error) {
 
 func (c *Controller) RenderMusicListImage(query ListQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicListRequest(query)

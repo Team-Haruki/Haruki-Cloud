@@ -31,4 +31,6 @@ type mySekaiRenderContext struct {
 	Profile      *drawing.ProfileCardRequest
 	Region       string
 	HarukiUserID int
+	// Binding is the resolved account, when the command targets one.
+	Binding *accountdata.ResolvedBinding
 }

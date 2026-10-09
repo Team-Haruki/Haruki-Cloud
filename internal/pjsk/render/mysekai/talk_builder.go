@@ -6,9 +6,11 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 type talkRead struct {
@@ -46,7 +48,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		return nil, err
 	}
 	if strings.TrimSpace(query.Query) == "" {
-		return nil, fmt.Errorf("mysekai talk list requires character query")
+		return nil, usererror.Misuse(i18n.M("mysekai.talk.character_required"))
 	}
 	showAllTalks := query.ShowAllTalks != nil && *query.ShowAllTalks
 
@@ -55,7 +57,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		return nil, err
 	}
 	if characterUnitID == 0 {
-		return nil, fmt.Errorf("mysekai talk list invalid character query: %s", query.Query)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("character.not_found", i18n.Data{"Query": i18n.EchoQuery(query.Query)}))
 	}
 
 	masterdata := c.loadTalkListMasterdata()
@@ -448,7 +450,7 @@ func (c *Controller) RenderTalkList(query TalkListQuery) ([]byte, error) {
 
 func (c *Controller) RenderTalkListImage(query TalkListQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildTalkListRequest(query)

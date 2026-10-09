@@ -1,13 +1,14 @@
 package handler
 
 import (
-	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 	"unicode"
 
+	"haruki-cloud/internal/i18n"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/utils/usererror"
 )
 
 func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
@@ -279,7 +280,7 @@ func extractMusicBoardPower(args string) (int, string, error) {
 		}
 		value, err := parseMusicBoardLargeNumber(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "综合", ""))
 		if err != nil || value <= 0 {
-			return 0, "", fmt.Errorf("解析综合力失败: %q", token)
+			return 0, "", usererror.BadParam(token, i18n.M("score.board.power_invalid"))
 		}
 		return value, removeMusicBoardToken(args, token), nil
 	}
@@ -294,7 +295,7 @@ func extractMusicBoardDeckBonus(args string) (float64, string, error) {
 		raw := strings.TrimRight(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "加成", ""), "%")
 		value, err := strconv.ParseFloat(raw, 64)
 		if err != nil || value <= 0 {
-			return 0, "", fmt.Errorf("解析活动加成失败: %q", token)
+			return 0, "", usererror.BadParam(token, i18n.M("score.board.bonus_invalid"))
 		}
 		return value, removeMusicBoardToken(args, token), nil
 	}
@@ -309,7 +310,7 @@ func extractMusicBoardInterval(args string) (float64, string, error) {
 		raw := strings.TrimRight(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "间隔", ""), "秒s")
 		value, err := strconv.ParseFloat(raw, 64)
 		if err != nil || value <= 0 {
-			return 0, "", fmt.Errorf("解析游玩间隔失败: %q", token)
+			return 0, "", usererror.BadParam(token, i18n.M("score.board.interval_invalid"))
 		}
 		return value, removeMusicBoardToken(args, token), nil
 	}

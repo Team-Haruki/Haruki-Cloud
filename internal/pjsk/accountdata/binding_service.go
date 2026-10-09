@@ -93,10 +93,10 @@ func (s *BindingService) Bind(ctx context.Context, platform, platformUserID, raw
 	}
 	uid := normalizeUID(rawUID)
 	if uid == "" {
-		return nil, fmt.Errorf("请提供要绑定的游戏ID")
+		return nil, usererror.Misuse(i18n.M("binding.bind.uid_required"))
 	}
 	if !isNumericUID(uid) {
-		return nil, fmt.Errorf("游戏ID必须为纯数字")
+		return nil, usererror.BadParam(uid, i18n.M("binding.bind.uid_digits"))
 	}
 
 	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)
@@ -358,7 +358,9 @@ func (s *BindingService) recordBannedGameAccountBindAttempt(ctx context.Context,
 
 func (s *BindingService) probeUID(ctx context.Context, uid string) ([]profileProbe, error) {
 	results := make([]profileProbe, 0, len(AllBindingServers))
-	failures := make([]string, 0, len(AllBindingServers))
+	failures := make([]i18n.Message, 0, len(AllBindingServers))
+	var causes []error
+	serviceFailed := false
 
 	for _, server := range AllBindingServers {
 		var resp *sekaiapi.GetAnotherProfileResponse
@@ -381,18 +383,26 @@ func (s *BindingService) probeUID(ctx context.Context, uid string) ([]profilePro
 			continue
 		}
 
+		region := i18n.RegionLabel(server.String())
 		switch {
 		case errors.Is(err, sekaiapi.ErrUserNotFound):
-			failures = append(failures, fmt.Sprintf("%s: 用户不存在", strings.ToUpper(server.String())))
+			failures = append(failures, i18n.M("binding.bind.failure.not_found", i18n.Data{"Region": region}))
 		case errors.Is(err, sekaiapi.ErrServerMaintenance):
-			failures = append(failures, fmt.Sprintf("%s: 服务器维护中", strings.ToUpper(server.String())))
+			failures = append(failures, i18n.M("binding.bind.failure.maintenance", i18n.Data{"Region": region}))
+			serviceFailed = true
 		default:
-			failures = append(failures, fmt.Sprintf("%s: %v", strings.ToUpper(server.String()), err))
+			failures = append(failures, i18n.M("binding.bind.failure.error", i18n.Data{"Region": region}))
+			serviceFailed = true
+			causes = append(causes, fmt.Errorf("%s: %w", server.String(), err))
 		}
 	}
 
 	if len(results) == 0 {
-		return nil, fmt.Errorf("所有支持的服务器尝试绑定失败，请检查ID是否正确\n%s", strings.Join(failures, "\n"))
+		code := usererror.CodeNotFound
+		if serviceFailed {
+			code = usererror.CodeUnavailable
+		}
+		return nil, usererror.Wrap(code, i18n.M("binding.bind.failed_all", i18n.Data{"Lines": failures}), errors.Join(causes...))
 	}
 	return results, nil
 }

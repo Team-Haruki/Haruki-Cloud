@@ -14,6 +14,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/testutil"
 )
 
 type round4ProfileSnapshot struct {
@@ -40,7 +41,7 @@ func TestMusicCoverByTitleLocalAndMissingJacketBranches(t *testing.T) {
 	source := newRound4SearchSource()
 	source.musics[1] = &masterdata.Music{ID: 1, Title: "No Jacket", PublishedAt: now - 1}
 	controller := NewController(source, nil, nil, nil, nil)
-	if _, err := controller.ResolveMusicCoverByTitleOrAlias(Query{Query: "No Jacket", Region: "jp"}); err == nil || !strings.Contains(err.Error(), "jacket") {
+	if _, err := controller.ResolveMusicCoverByTitleOrAlias(Query{Query: "No Jacket", Region: "jp"}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "jacket") {
 		t.Fatalf("missing title cover jacket error = %v", err)
 	}
 

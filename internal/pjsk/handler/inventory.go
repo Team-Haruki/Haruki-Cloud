@@ -3,10 +3,12 @@ package handler
 import (
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderinventory "haruki-cloud/internal/pjsk/render/inventory"
+	"haruki-cloud/utils/usererror"
 )
 
 const inventoryListHelp = `使用方式:
@@ -68,7 +70,7 @@ func executeInventory(rc *RequestContext) (onebot11.Message, error) {
 		return nil, suiteErr
 	}
 	if suiteSnapshot == nil {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 
 	publicDetailedProfile, _ := resolveCommandDisplayProfiles(rc, suiteSnapshot)
@@ -120,11 +122,7 @@ func parseInventoryFilter(args string, trigger string) (renderinventory.Filter, 
 	case "记忆", "回忆", "memoria", "memory":
 		return renderinventory.FilterMemory, nil
 	default:
-		return renderinventory.FilterDefault, onebot11.NewReplayError(
-			"未知的背包筛选参数：%s\n可用参数：水晶、火罐、ms材料、记忆\n使用方式：%s [水晶|火罐|ms材料|记忆]",
-			strings.TrimSpace(args),
-			trigger,
-		)
+		return renderinventory.FilterDefault, usererror.BadParam(strings.TrimSpace(args), i18n.M("inventory.filter_unknown"))
 	}
 }
 
@@ -134,7 +132,7 @@ func validateInventoryFilterForRegion(region renderregion.Value, filter renderin
 	}
 	switch filter {
 	case renderinventory.FilterMemory:
-		return onebot11.NewReplayError("国服暂不支持查询记忆")
+		return usererror.Invalid(i18n.M("inventory.memory_cn_unavailable"))
 	default:
 		return nil
 	}

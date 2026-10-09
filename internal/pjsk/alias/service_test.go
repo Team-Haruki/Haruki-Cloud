@@ -17,6 +17,7 @@ import (
 	"haruki-cloud/internal/identity"
 
 	_ "github.com/mattn/go-sqlite3"
+	"haruki-cloud/internal/testutil"
 )
 
 type aliasTestDeps struct {
@@ -454,7 +455,7 @@ func TestServiceRejectManyIsAtomic(t *testing.T) {
 	}
 
 	_, err = deps.service.RejectMany(ctx, "qq", "9011", []int64{records[0].ReviewID, records[1].ReviewID + 1000}, "批量拒绝")
-	if err == nil || !strings.Contains(err.Error(), "未找到待审核别名ID") {
+	if err == nil || testutil.MessageID(err) != "alias.review_not_found" {
 		t.Fatalf("expected missing ID error, got %v", err)
 	}
 	pendingCount, err := deps.pjsk.PendingAlias.Query().Count(ctx)

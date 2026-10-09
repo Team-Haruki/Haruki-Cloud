@@ -43,7 +43,9 @@ const (
 
 // Data holds the named placeholders of a message. Keys are the placeholder
 // names used in the catalog ({{.Name}}). A value that is itself a Message is
-// rendered in the same locale before it is substituted.
+// rendered in the same locale before it is substituted; a []Message value is
+// rendered line by line (one message per line), which keeps every line of a
+// list a catalog line.
 type Data map[string]any
 
 // Message is a catalog message ID plus its placeholder values. It is
@@ -268,8 +270,15 @@ func (c *catalog) localize(locale Locale, id string, data Data) (string, error) 
 	if len(data) > 0 {
 		templateData = make(map[string]any, len(data))
 		for k, v := range data {
-			if nested, ok := v.(Message); ok {
+			switch nested := v.(type) {
+			case Message:
 				v = nested.In(locale)
+			case []Message:
+				lines := make([]string, len(nested))
+				for i, line := range nested {
+					lines[i] = line.In(locale)
+				}
+				v = strings.Join(lines, "\n")
 			}
 			templateData[k] = v
 		}

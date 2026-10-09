@@ -1,6 +1,7 @@
 package profile
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,11 +13,12 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) BuildModularProfileRequestFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snap snapshot.Snapshot) (*drawing.ModularProfileRenderRequest, error) {
 	if c == nil || c.sources == nil {
-		return nil, fmt.Errorf("profile controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("profile controller is not initialized"))
 	}
 	if resp == nil {
 		return nil, fmt.Errorf("nil API response")
@@ -25,7 +27,7 @@ func (c *Controller) BuildModularProfileRequestFromAPIWithSnapshot(query Query, 
 	region := c.sources.ResolveRegion(renderregion.Normalize(query.Region))
 	source, ok := c.sources.SourceForRegion(region)
 	if !ok {
-		return nil, fmt.Errorf("profile data source is not configured")
+		return nil, usererror.Misconfigured(errors.New("profile data source is not configured"))
 	}
 
 	state := resolveProfileRenderState(resp, snap)
@@ -98,7 +100,7 @@ func (c *Controller) RenderModularProfileFromAPIWithSnapshot(query Query, resp *
 
 func (c *Controller) RenderModularProfileFromAPIWithSnapshotImage(query Query, resp *sekai.GetAnotherProfileResponse, snap snapshot.Snapshot) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildModularProfileRequestFromAPIWithSnapshot(query, resp, snap)

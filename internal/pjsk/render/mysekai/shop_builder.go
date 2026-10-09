@@ -1,14 +1,17 @@
 package mysekai
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 // ShopResource is one entry of a mysekai_shop resource box.
@@ -46,12 +49,12 @@ func (c *Controller) BuildShopRequest(query ShopQuery) (*drawing.MysekaiShopRequ
 		return nil, err
 	}
 	if query.ShopType != "" && query.ShopType != "blueprint" && query.ShopType != "tool" && query.ShopType != "material" {
-		return nil, fmt.Errorf("mysekai shop invalid type: %s", query.ShopType)
+		return nil, usererror.Invalid(i18n.M("mysekai.shop.type_invalid"))
 	}
 	shops := c.masterdata.loadList("mysekaiShops.json")
 	blueprintShops := c.masterdata.loadList("mysekaiBlueprintShops.json")
 	if len(shops) == 0 && len(blueprintShops) == 0 {
-		return nil, fmt.Errorf("mysekai shop is not available in region %s", c.resolveRegion(query.Region))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.shop.region_unavailable"))
 	}
 	merged, region, err := c.prepareSnapshotOnly(query.Region)
 	if err != nil {
@@ -124,15 +127,15 @@ func (c *Controller) buildResourceShopGroups(query ShopQuery, merged map[string]
 			continue
 		}
 		if query.ResourceBox == nil {
-			return nil, fmt.Errorf("mysekai shop masterdata missing resource boxes")
+			return nil, shopMasterdataMissing(errors.New("mysekai shop masterdata missing resource boxes"))
 		}
 		contents := query.ResourceBox(intNumber(shop["resourceBoxId"], 0))
 		if len(contents) == 0 {
-			return nil, fmt.Errorf("mysekai shop masterdata missing resource box %d", intNumber(shop["resourceBoxId"], 0))
+			return nil, shopMasterdataMissing(fmt.Errorf("mysekai shop masterdata missing resource box %d", intNumber(shop["resourceBoxId"], 0)))
 		}
 		for _, resource := range contents {
 			if resource.ResourceType == "mysekai_tool" && resolver.tools[resource.ResourceID] == nil {
-				return nil, fmt.Errorf("mysekai shop masterdata missing tool %d", resource.ResourceID)
+				return nil, shopMasterdataMissing(fmt.Errorf("mysekai shop masterdata missing tool %d", resource.ResourceID))
 			}
 		}
 		item := shopItemMetadata(shop)
@@ -181,7 +184,7 @@ func (c *Controller) buildResourceShopGroups(query ShopQuery, merged map[string]
 func shopSnapshotList(merged map[string]any, key string) ([]any, error) {
 	rows, ok := merged[key].([]any)
 	if !ok {
-		return nil, fmt.Errorf("mysekai shop snapshot missing %s", key)
+		return nil, shopSnapshotMissing(key)
 	}
 	return rows, nil
 }
@@ -245,7 +248,7 @@ func (c *Controller) RenderShop(query ShopQuery) ([]byte, error) {
 
 func (c *Controller) RenderShopImage(query ShopQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	request, err := c.BuildShopRequest(query)
@@ -327,7 +330,7 @@ func (c *Controller) RenderShopRequest(request *drawing.MysekaiShopRequest) ([]b
 
 func (c *Controller) RenderShopRequestImage(request *drawing.MysekaiShopRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	if request == nil {
 		return drawing.ImageResult{}, fmt.Errorf("mysekai shop request is nil")

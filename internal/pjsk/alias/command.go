@@ -3,8 +3,11 @@ package alias
 import (
 	"context"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"strings"
+
+	"haruki-cloud/internal/i18n"
+	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json.RawMessage) ([]byte, error) {
@@ -199,7 +202,7 @@ func decodeDeleteParams(raw json.RawMessage) (DeleteCommandParams, error) {
 		return params, fmt.Errorf("bridge: missing alias delete identity context")
 	}
 	if params.Target == "" {
-		return params, fmt.Errorf("请输入%s", entityTokenPrompt(params.AliasType))
+		return params, aliasTargetRequired(params.AliasType)
 	}
 	return params, nil
 }
@@ -219,7 +222,7 @@ func decodeAddParams(raw json.RawMessage) (AddCommandParams, error) {
 		return params, err
 	}
 	if params.Target == "" {
-		return params, fmt.Errorf("请输入%s", entityTokenPrompt(params.AliasType))
+		return params, aliasTargetRequired(params.AliasType)
 	}
 	return params, nil
 }
@@ -237,7 +240,7 @@ func decodeQueryParams(raw json.RawMessage) (QueryCommandParams, error) {
 		return params, err
 	}
 	if params.Target == "" {
-		return params, fmt.Errorf("请输入%s", entityTokenPrompt(params.AliasType))
+		return params, aliasTargetRequired(params.AliasType)
 	}
 	return params, nil
 }
@@ -272,7 +275,7 @@ func decodeSubmitterParams(raw json.RawMessage) (SubmitterCommandParams, error) 
 		return params, fmt.Errorf("bridge: missing alias submitter identity context")
 	}
 	if params.ReviewID <= 0 {
-		return params, fmt.Errorf("请输入正确的待审核ID")
+		return params, usererror.Invalid(i18n.M("alias.review_id_positive"))
 	}
 	return params, nil
 }
@@ -293,7 +296,7 @@ func decodeBanSubmitterParams(raw json.RawMessage) (BanSubmitterCommandParams, e
 		return params, fmt.Errorf("bridge: missing alias ban submitter identity context")
 	}
 	if params.TargetPlatform == "" || params.TargetPlatformUserID == "" {
-		return params, fmt.Errorf("请输入要禁用的用户ID")
+		return params, usererror.Misuse(i18n.M("alias.ban_target_required"))
 	}
 	return params, nil
 }
@@ -345,7 +348,16 @@ func decodeBatchRejectParams(raw json.RawMessage) (BatchRejectCommandParams, err
 		return params, fmt.Errorf("bridge: missing alias batch reject identity context")
 	}
 	if len(params.ReviewIDs) == 0 {
-		return params, fmt.Errorf("请至少输入一个待审核ID")
+		return params, usererror.Misuse(i18n.M("alias.review_ids_required"))
 	}
 	return params, nil
+}
+
+// aliasTargetRequired is the reply when an alias command names no song or
+// character.
+func aliasTargetRequired(aliasType string) error {
+	if aliasType == PjskAliasTypeCharacter {
+		return usererror.Misuse(i18n.M("alias.target_required.character"))
+	}
+	return usererror.Misuse(i18n.M("alias.target_required.music"))
 }

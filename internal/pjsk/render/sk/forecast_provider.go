@@ -2,12 +2,14 @@ package sk
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	"haruki-cloud/config"
+	"haruki-cloud/utils/usererror"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -73,7 +75,7 @@ func (p *RemoteForecastProvider) FetchBySource(ctx context.Context, region strin
 
 func (p *RemoteForecastProvider) FetchBySourceQuery(ctx context.Context, query ForecastQuery) (map[string]ForecastSourceData, error) {
 	if p == nil || p.http == nil {
-		return nil, fmt.Errorf("remote forecast provider is not configured")
+		return nil, usererror.Misconfigured(errors.New("remote forecast provider is not configured"))
 	}
 	normalizedQuery := normalizeForecastQuery(query)
 	if normalizedQuery.Region == "" || normalizedQuery.EventID <= 0 {

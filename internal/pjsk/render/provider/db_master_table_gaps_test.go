@@ -405,7 +405,7 @@ func TestDBHonorProviderBondsWordQueryErrorIsNotCached(t *testing.T) {
 
 	fixture.dropTable(t, "bondshonorwords")
 	_, err := provider.honors.GetBondsHonorWordByID(ctx, 30)
-	testutil.Require(t, err != nil && strings.Contains(err.Error(), "load bonds honor words"), "query error without local masterdata = %v", err)
+	testutil.Require(t, err != nil && strings.Contains(testutil.ErrorDetail(err), "load bonds honor words"), "query error without local masterdata = %v", err)
 
 	provider.honors.store = newLocalStore(root)
 	word, err := provider.honors.GetBondsHonorWordByID(ctx, 30)

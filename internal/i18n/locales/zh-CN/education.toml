@@ -1,0 +1,25 @@
+# 养成：区域道具、羁绊等级、挑战等级、角色任务、队长次数、综合力加成。
+
+[education.character_mission.usage]
+description = "角色任务指令参数不对。"
+other = "请写角色名，可加 all 和任务分类"
+
+[education.area.big_tree_unavailable]
+description = "该区服还没有「想いの大樹」（大树）区域道具。"
+other = "该区服还没有开放「想いの大樹」（大树）区域道具"
+
+[education.area.not_on_sale]
+description = "查询的区域道具还没有开放升级（不知道开放时间）。"
+other = "查询的区域道具还没有开放升级\n可以在指令后加 full 查看全部等级所需材料"
+
+[education.area.opens_at]
+description = "查询的区域道具将来才开放升级。占位符：OpensAt=开放时间（format.time.*）。"
+other = "查询的区域道具将于 {{.OpensAt}} 开放升级\n可以在指令后加 full 查看全部等级所需材料"
+
+[education.area.usage]
+description = "区域道具没有写分类或写了无法识别的参数。"
+other = "请写要查询的区域道具分类，例如 mmj、miku 或 花树"
+
+[education.area.full_usage]
+description = "区域道具只写了 full。"
+other = "full 需要和区域道具分类一起使用，例如 mmj full"

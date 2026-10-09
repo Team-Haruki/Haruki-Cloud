@@ -28,6 +28,10 @@ const (
 	CodeForbidden Code = "forbidden"
 	// CodeReadOnly is a write refused because the service is read-only.
 	CodeReadOnly Code = "read_only"
+	// CodeSetup is a request the user can make only after a setup step of
+	// their own: binding a game account, uploading data in the Toolbox,
+	// verifying an account. It is an expected outcome, not an input mistake.
+	CodeSetup Code = "setup"
 	// CodeUnavailable is a feature that cannot serve right now (i18n.Unavailable).
 	CodeUnavailable Code = "unavailable"
 	// CodeTimeout is a feature that did not answer in time (i18n.Timeout).
@@ -50,7 +54,7 @@ func (c Code) IsInput() bool {
 // Expected reports whether an error with this code is a normal outcome of a
 // request (logged at a low level) rather than a service failure.
 func (c Code) Expected() bool {
-	return c.IsInput() || c == CodeForbidden || c == CodeReadOnly
+	return c.IsInput() || c == CodeForbidden || c == CodeReadOnly || c == CodeSetup
 }
 
 // Error is a typed user error: a Code for control flow and tests, a catalog
@@ -104,14 +108,13 @@ func CodeOf(err error) Code {
 	return ""
 }
 
-// IsExpected reports whether err is a normal outcome of a request: a
-// user-input error (typed or marked with Input/Inputf) or a typed error whose
-// code is Expected.
+// IsExpected reports whether err is a normal outcome of a request: a typed
+// error whose code is Expected (user input, setup, forbidden, read-only).
 func IsExpected(err error) bool {
 	if e, ok := As(err); ok {
 		return e.Code.Expected()
 	}
-	return IsInput(err)
+	return false
 }
 
 // LogText describes err for a log record. For a typed user error it names
@@ -128,6 +131,11 @@ func LogText(err error) string {
 	if e.Cause != nil {
 		text += ": " + e.Cause.Error()
 	}
+	// A domain error that unwraps to the typed error (or a wrap around it)
+	// carries its own detail in its text.
+	if outer := err.Error(); error(e) != err && outer != e.Error() {
+		text += " (" + outer + ")"
+	}
 	return text
 }
 
@@ -136,6 +144,20 @@ func Invalid(message i18n.Message) *Error { return New(CodeInput, message) }
 
 // Forbidden is a refused request with a domain message.
 func Forbidden(message i18n.Message) *Error { return New(CodeForbidden, message) }
+
+// Setup is a request that needs a setup step of the user's own first (bind,
+// upload, verify); see CodeSetup.
+func Setup(message i18n.Message) *Error { return New(CodeSetup, message) }
+
+// Misuse is a command used with the wrong shape, given as one reason line.
+// The reply layer adds the help pointer for the command the user actually
+// typed, so the producer does not need to know the trigger.
+func Misuse(reason i18n.Message) *Error { return New(CodeUsage, reason) }
+
+// Unrecognized is a command whose arguments could not be understood at all.
+// The reply layer replaces the generic reason with the route's own guidance
+// (what the command expects) and adds the help pointer.
+func Unrecognized() *Error { return New(CodeUsage, i18n.Unrecognized()) }
 
 // BadParam is a malformed parameter; see i18n.BadParam.
 func BadParam(param string, reason i18n.Message) *Error {

@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/utils/usererror"
 )
 
 const maxAreaItemShopTimestampMs int64 = 1<<63 - 1
@@ -65,7 +66,7 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFull(query AreaItemQuer
 	finishBuild := commandtrace.MeasureOperation(c.traceContext(), "payload.build")
 	defer finishBuild()
 	if c == nil || c.sources == nil {
-		return nil, fmt.Errorf("education controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("education controller is not initialized"))
 	}
 	if !hasAreaItemFilter(query) {
 		return nil, fmt.Errorf("area item full query requires a filter")
@@ -74,7 +75,7 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFull(query AreaItemQuer
 	region := c.sources.ResolveRegion(query.Region)
 	source, ok := c.sources.SourceForRegion(region)
 	if !ok {
-		return nil, fmt.Errorf("education data source is not configured")
+		return nil, usererror.Misconfigured(errors.New("education data source is not configured"))
 	}
 
 	query.ShowFull = true

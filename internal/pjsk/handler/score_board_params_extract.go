@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/utils/usererror"
 )
 
 func extractMusicBoardPageArg(args string) (int, string, bool) {
@@ -50,7 +52,7 @@ func extractMusicBoardSkills(args, liveType string) ([]float64, string, error) {
 		return nil, cleaned, nil
 	}
 	if len(numbers) != required {
-		return nil, "", fmt.Errorf("解析技能加分失败")
+		return nil, "", usererror.Invalid(i18n.M("score.board.skills_invalid"))
 	}
 
 	remaining := cleaned

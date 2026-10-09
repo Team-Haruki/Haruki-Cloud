@@ -10,12 +10,15 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func mysekaiEdgeContext(args string) HarrukiSekaiHandlerContext {
@@ -131,9 +134,10 @@ func TestMysekaiRuntimePureBranches(t *testing.T) {
 	}
 
 	rc := &RequestContext{Ctx: context.Background(), App: &renderapp.App{}, Platform: "qq", PlatformUserID: "actor"}
-	err = buildMysekaiExpiredReplayError(rc, 0, rendermysekai.SnapshotStatus{LastUpdatedAt: time.Unix(1_700_000_000, 0)})
-	if err == nil || !strings.Contains(err.Error(), "上次更新时间") {
-		t.Fatalf("expired replay error = %v", err)
+	err = mysekaiExpiredError(rc, mySekaiRenderContext{}, rendermysekai.SnapshotStatus{LastUpdatedAt: time.Unix(1_700_000_000, 0)})
+	expired := testutil.RequireUserError(t, err, usererror.CodeSetup, "mysekai.data_expired")
+	if expired.Message.Data["Account"].(i18n.Message).ID != "binding.current_account" {
+		t.Fatalf("expired reply without a binding must name the current account: %+v", expired.Message.Data)
 	}
 }
 

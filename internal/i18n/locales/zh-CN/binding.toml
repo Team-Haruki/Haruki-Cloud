@@ -1,0 +1,194 @@
+# 账号绑定与私有数据：未绑定、找不到抓包数据或烤森数据、工具箱拒绝访问等提示。
+# 这些提示出现在所有需要绑定账号或私有数据的指令里。
+
+[binding.required]
+description = "需要绑定游戏账号的指令，但请求者没有可用的绑定（没有绑定，或没有默认绑定、账号在当前区服不可见）。"
+other = "未找到绑定的游戏账号，请先发送 /绑定 <游戏 UID> 绑定游戏账号\n如果已经绑定，请确认已设置默认绑定，且该账号在当前区服可见"
+
+[binding.temp_environment]
+description = "当前 Bot 运行在临时环境（没有绑定信息）时，所有需要绑定的指令都回复这一句。"
+other = "当前运行的 HarukiBot 是临时环境，没有绑定信息，如需使用请重新绑定"
+
+[binding.target_not_bound]
+description = "查询 @用户的数据，但该用户没有绑定游戏账号。"
+other = "该用户没有绑定游戏账号"
+
+[binding.target_not_bound_region]
+description = "查询 @用户在指定区服的数据，但该用户在该区服没有绑定游戏账号。占位符：Region=区服显示名，例如“日服(JP)”。"
+other = "该用户在{{.Region}}没有绑定游戏账号"
+
+[binding.target_hidden]
+description = "查询 @用户的数据，但该用户隐藏了个人信息。"
+other = "该用户已隐藏个人信息"
+
+[binding.target_uid_invalid]
+description = "@用户绑定的游戏 UID 不是有效数字（数据异常）。"
+other = "该用户绑定的游戏 UID 无效"
+
+[binding.current_account]
+description = "不知道具体账号时代替账号显示名，用在 binding.data.hidden_* 里。"
+other = "当前绑定账号"
+
+[binding.data_kind.suite]
+description = "数据名称：抓包数据。用在 binding.data.* 和 binding.toolbox.* 的 Data 占位符里，按规范首次出现时带“（Suite）”。"
+other = "抓包数据（Suite）"
+
+[binding.data_kind.mysekai]
+description = "数据名称：烤森数据。用在 binding.data.* 和 binding.toolbox.* 的 Data 占位符里，按规范首次出现时带“（MySekai）”。"
+other = "烤森（MySekai）数据"
+
+[binding.toolbox_link]
+description = "工具箱地址，作为单独一行接在需要用户去工具箱操作的提示后面。"
+other = "工具箱地址：https://haruki.seiunx.com/"
+
+[binding.data.not_found]
+description = "需要私有数据的指令，但找不到有效数据，且不知道是哪个账号。占位符：Data=数据名称（binding.data_kind.*）；ToolboxLink=工具箱地址（binding.toolbox_link）。"
+other = "没有找到有效的{{.Data}}，请先在 Haruki 工具箱注册账号、绑定 QQ 号和游戏账号，再上传自己的数据\n{{.ToolboxLink}}"
+
+[binding.data.not_found_account]
+description = "需要私有数据的指令，但该账号没有有效数据。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；Data=数据名称（binding.data_kind.*）；ToolboxLink=工具箱地址（binding.toolbox_link）。"
+other = "{{.Account}} 没有找到有效的{{.Data}}，请先在 Haruki 工具箱注册账号、绑定 QQ 号和游戏账号，再上传自己的数据\n{{.ToolboxLink}}"
+
+[binding.data.hidden_suite]
+description = "用户自己隐藏了该账号的抓包数据，相关指令无法使用。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”，或 binding.current_account。"
+other = "你已隐藏 {{.Account}} 的抓包数据，请先发送 /展示抓包 恢复展示"
+
+[binding.data.hidden_mysekai]
+description = "用户自己隐藏了该账号的烤森数据，相关指令无法使用。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”，或 binding.current_account。"
+other = "你已隐藏 {{.Account}} 的烤森数据，请先发送 /展示烤森抓包 恢复展示"
+
+[binding.toolbox.not_bound]
+description = "工具箱里没有这个 QQ 号绑定的游戏账号，无法获取私有数据。占位符：Data=数据名称（binding.data_kind.*）；ToolboxLink=工具箱地址（binding.toolbox_link）。"
+other = "你还没有在工具箱绑定游戏账号，无法获取{{.Data}}，请先在 Haruki 工具箱绑定游戏账号并上传数据\n{{.ToolboxLink}}"
+
+[binding.toolbox.access_denied]
+description = "工具箱拒绝了这个 QQ 号的访问（QQ 号没有在工具箱绑定，或无权访问），且不知道是哪个账号。占位符：Data=数据名称（binding.data_kind.*）；ToolboxLink=工具箱地址（binding.toolbox_link）。"
+other = "当前 QQ 号没有在工具箱完成绑定，或无权访问该{{.Data}}，请先在 Haruki 工具箱绑定当前 QQ 号\n{{.ToolboxLink}}"
+
+[binding.toolbox.access_denied_account]
+description = "工具箱拒绝了这个 QQ 号对某个账号数据的访问。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；Data=数据名称（binding.data_kind.*）；ToolboxLink=工具箱地址（binding.toolbox_link）。"
+other = "当前 QQ 号没有在工具箱完成绑定，或无权访问 {{.Account}} 的{{.Data}}，请先在 Haruki 工具箱绑定当前 QQ 号\n如果这不是你要查询的账号，可以修改默认绑定或解绑该账号\n{{.ToolboxLink}}"
+
+[binding.toolbox.owner_banned]
+description = "工具箱报告该游戏账号的工具箱账号已被封禁。占位符：Data=数据名称（binding.data_kind.*）。"
+other = "该账号的工具箱账号已被封禁，无法获取{{.Data}}"
+
+[binding.data_status.suite]
+description = "/sud（抓包状态）：抓包数据的上次上传时间（与烤森数据过期提示的格式一致）。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；UpdatedAt=上次上传时间（format.time.*）；Ago=距今多久，例如“约3小时前”。"
+other = "{{.Account}} 的抓包数据（Suite）\n上次上传：{{.UpdatedAt}}（{{.Ago}}）"
+
+[binding.data_status.mysekai]
+description = "/msd：烤森数据的上次上传时间（与烤森数据过期提示的格式一致）。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；UpdatedAt=上次上传时间（format.time.*）；Ago=距今多久，例如“约3小时前”。"
+other = "{{.Account}} 的烤森（MySekai）数据\n上次上传：{{.UpdatedAt}}（{{.Ago}}）"
+
+[binding.data_status.self_only]
+description = "/sud、/msd 只能查询自己的数据。"
+other = "只能查询自己的上传状态"
+
+[binding.data_status.invalid_time]
+description = "工具箱返回的上传时间无法识别。"
+other = "获取上传时间失败，请稍后再试"
+
+[binding.none]
+description = "用户还没有绑定任何游戏账号。"
+other = "你还没有绑定任何游戏账号"
+
+[binding.none_in_region]
+description = "用户在指定区服没有绑定游戏账号。占位符：Region=区服显示名。"
+other = "你还没有绑定任何{{.Region}}账号"
+
+[binding.selector_required]
+description = "需要账号选择器（游戏 UID 或 u序号）但没有写。"
+other = "请写游戏 UID 或 u序号"
+
+[binding.selector_index_invalid]
+description = "u序号写法不对，作为 common.bad_param 的原因行。"
+other = "u序号写成 u 加数字，例如 u1"
+
+[binding.selector_index_out_of_range]
+description = "u序号超出已绑定账号数量。占位符：Count=已绑定的账号数。"
+other = "账号序号超出范围，目前只绑定了 {{.Count}} 个账号"
+
+[binding.selector_index_out_of_range_region]
+description = "u序号超出该区服已绑定账号数量。占位符：Region=区服显示名；Count=该区服已绑定的账号数。"
+other = "{{.Region}}账号序号超出范围，目前只绑定了 {{.Count}} 个账号"
+
+[binding.selector_uid_not_bound]
+description = "写的游戏 UID 没有被绑定。占位符：UID=用户写的游戏 UID。"
+other = "没有绑定游戏 UID {{.UID}}"
+
+[binding.selector_uid_ambiguous]
+description = "写的游戏 UID 在多个区服都绑定了。占位符：UID=用户写的游戏 UID。"
+other = "游戏 UID {{.UID}} 在多个区服都已绑定，请改用 u序号"
+
+[binding.record_missing]
+description = "找不到绑定记录（绑定刚被删除等）。"
+other = "找不到这个绑定账号，请重新查看绑定列表"
+
+[binding.default.scope_global]
+description = "默认绑定的范围名称：全局（不分区服）。用在 binding.default.* 的 Scope 占位符里。"
+other = "全局"
+
+[binding.default.none]
+description = "用户没有设置该范围的默认绑定。占位符：Scope=范围，“全局”或区服显示名。"
+other = "你还没有设置{{.Scope}}默认绑定"
+
+[binding.default.target_missing]
+description = "默认绑定指向的账号已经不存在。"
+other = "默认绑定对应的账号不存在"
+
+[binding.default.wrong_region]
+description = "选择的账号不属于要设置默认绑定的区服。占位符：Region=区服显示名。"
+other = "所选账号不属于{{.Region}}"
+
+[binding.default.not_current]
+description = "要清除的账号不是当前的默认绑定。占位符：Scope=范围，“全局”或区服显示名。"
+other = "所选账号不是你当前的{{.Scope}}默认绑定"
+
+[binding.region_invalid]
+description = "写的区服代码不支持。作为 common.bad_param 的原因行。"
+other = "区服只能是 jp、cn、tw、kr、en"
+
+[binding.region_required]
+description = "需要区服但没有写。"
+other = "请写区服"
+
+[binding.swap.selectors_required]
+description = "/绑定交换 没有写两个账号序号。"
+other = "请写两个要交换的账号序号，例如 u1 u2"
+
+[binding.swap.same]
+description = "/绑定交换 写的两个序号相同。"
+other = "请写两个不同的账号序号"
+
+[binding.bind.uid_required]
+description = "/绑定 没有写游戏 UID。"
+other = "请写要绑定的游戏 UID"
+
+[binding.bind.uid_digits]
+description = "/绑定 的游戏 UID 不是纯数字，作为 common.bad_param 的原因行。"
+other = "游戏 UID 应为纯数字"
+
+[binding.bind.failed_all]
+description = "/绑定 在所有区服都没能确认这个游戏 UID，下面逐行列出各区服的结果。占位符：Lines=各区服结果，每行一个（binding.bind.failure.*）。"
+other = "所有区服都没能确认这个游戏 UID，请检查 UID 是否正确\n{{.Lines}}"
+
+[binding.bind.failure.not_found]
+description = "binding.bind.failed_all 里的一行：该区服没有这个玩家。占位符：Region=区服显示名。"
+other = "{{.Region}}没有这个玩家"
+
+[binding.bind.failure.maintenance]
+description = "binding.bind.failed_all 里的一行：该区服游戏服务器维护中。占位符：Region=区服显示名。"
+other = "{{.Region}}游戏服务器维护中"
+
+[binding.bind.failure.error]
+description = "binding.bind.failed_all 里的一行：该区服查询失败（游戏数据服务出错）。占位符：Region=区服显示名。"
+other = "{{.Region}}查询失败，请稍后再试"
+
+[binding.verify.not_listed]
+description = "快速验证时，该区服的绑定账号不在工具箱的验证列表里。占位符：Region=区服显示名。"
+other = "{{.Region}}的绑定账号不在快速验证列表中，请先在 Haruki 工具箱完成验证"
+
+[binding.uid.self_only]
+description = "/查uid 只能查询自己的绑定账号。"
+other = "只能查询自己绑定账号的 UID"

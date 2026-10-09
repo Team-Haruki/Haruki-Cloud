@@ -13,6 +13,7 @@ import (
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/accountdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -96,7 +97,7 @@ func TestExecuteProfileSettingsVisibilityAndModularModes(t *testing.T) {
 	if _, err := accountdata.ExecuteProfileSettingsCommand(ctx, nil, accountdata.ProfileModeHideID, params); !errors.Is(err, accountdata.ErrBindingServiceUnavailable) {
 		t.Fatalf("nil service error = %v", err)
 	}
-	if _, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, "unknown-mode", params); err == nil || !strings.Contains(err.Error(), "unsupported") {
+	if _, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, "unknown-mode", params); err == nil || !strings.Contains(testutil.ErrorDetail(err), "unsupported") {
 		t.Fatalf("unsupported mode error = %v", err)
 	}
 }

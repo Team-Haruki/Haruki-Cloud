@@ -1,12 +1,13 @@
 package handler
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
+	"haruki-cloud/utils/usererror"
 )
 
 // The standalone info panel: the profile card that tops other renders, on its
@@ -63,7 +64,7 @@ func parseInfoPanelSource(args, trigger string) (string, parser.TargetModule, er
 	case "all":
 		return mySekaiInfoPanelAllCommand, parser.ModuleMysekai, nil
 	default:
-		return "", parser.ModuleProfile, onebot11.NewReplayError("使用方式:\n%s su\n%s ms\n%s all\nsu / suite：Suite 数据；ms / mysekai：MySekai 数据；all：两者都显示", trigger, trigger, trigger)
+		return "", parser.ModuleProfile, usererror.Unrecognized()
 	}
 }
 
@@ -85,7 +86,7 @@ func executeInfoPanel(rc *RequestContext) (onebot11.Message, error) {
 // profile (censored name, current leader) with the Suite source and frame.
 func executeSuiteInfoPanel(rc *RequestContext) (onebot11.Message, error) {
 	if rc.App == nil || rc.App.Drawing == nil {
-		return nil, fmt.Errorf("drawing service unavailable")
+		return nil, usererror.Misconfigured(errors.New("drawing service unavailable"))
 	}
 	rc.warmSuiteAndPublicProfile(false)
 	binding, snap, err := rc.requireVisibleSuiteSnapshot()
@@ -93,11 +94,11 @@ func executeSuiteInfoPanel(rc *RequestContext) (onebot11.Message, error) {
 		return nil, err
 	}
 	if snap == nil {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 	_, card := resolveCommandDisplayProfiles(rc, snap)
 	if card == nil {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 	data, err := rc.App.Drawing.WithContext(rc.Ctx).GenerateInfoPanelImage(card)
 	if err != nil {
@@ -121,7 +122,7 @@ func executeMysekaiInfoPanel(rc *RequestContext, renderCtx mySekaiRenderContext)
 // reply /信息面板 su gives.
 func executeMysekaiInfoPanelAll(rc *RequestContext, renderCtx mySekaiRenderContext) (onebot11.Message, error) {
 	if binding, _ := rc.GetBinding(); binding != nil && !hasUsableSuiteData(binding) {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 	data, err := renderCtx.Controller.RenderInfoPanelImage(rendermysekai.InfoPanelQuery{
 		Region:       renderCtx.Region,

@@ -2,14 +2,17 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 // ===========================================================================
@@ -202,7 +205,7 @@ func (p *localMusicProvider) ensureLimitedTimeMusics() error {
 func (p *localMusicProvider) Search(ctx context.Context, query string) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return nil, fmt.Errorf("music not found: empty query")
+		return nil, notfound.Music("")
 	}
 	if id, err := strconv.Atoi(query); err == nil {
 		return p.GetByID(ctx, id)
@@ -217,7 +220,7 @@ func (p *localMusicProvider) Search(ctx context.Context, query string) (*masterd
 			return common.CloneMusic(m), nil
 		}
 	}
-	return nil, fmt.Errorf("music not found: %s", query)
+	return nil, notfound.Music(query)
 }
 
 func (p *localMusicProvider) GetByID(_ context.Context, id int) (*masterdata.Music, error) {
@@ -229,7 +232,7 @@ func (p *localMusicProvider) GetByID(_ context.Context, id int) (*masterdata.Mus
 	}
 	m, ok := p.musics.v().byID[id]
 	if !ok {
-		return nil, fmt.Errorf("music %d not found", id)
+		return nil, notfound.MusicID(id)
 	}
 	return common.CloneMusic(m), nil
 }
@@ -261,7 +264,7 @@ func (p *localMusicProvider) GetLocalizedTitles(_ context.Context, musicID int) 
 	}
 	m, ok := p.musics.v().byID[musicID]
 	if !ok {
-		return nil, fmt.Errorf("music %d not found", musicID)
+		return nil, notfound.MusicID(musicID)
 	}
 	unique := make(map[string]struct{}, 2)
 	titles := make([]string, 0, 2)
@@ -347,7 +350,7 @@ func (p *localMusicProvider) GetPrimaryEventByMusicID(ctx context.Context, music
 		return nil, fmt.Errorf("no events found for music %d", musicID)
 	}
 	if p.events == nil {
-		return nil, fmt.Errorf("event provider not configured")
+		return nil, usererror.Misconfigured(errors.New("event provider not configured"))
 	}
 	var earliest *masterdata.Event
 	for _, eid := range eventIDs {

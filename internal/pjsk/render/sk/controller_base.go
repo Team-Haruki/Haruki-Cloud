@@ -2,13 +2,14 @@ package sk
 
 import (
 	"context"
-	"fmt"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewController(drawingClient *drawing.HarukiDrawingClient) *Controller {
@@ -117,7 +118,7 @@ func (c *Controller) SetForecastProvider(provider ForecastProvider) {
 
 func (c *Controller) BuildLineRequest(req LineRequest) (*LineRequest, error) {
 	if len(req.Ranks) == 0 && len(req.ForecastColumns) == 0 {
-		return nil, fmt.Errorf("sk line request has no ranks")
+		return nil, usererror.Misuse(i18n.M("sk.target_required"))
 	}
 	return &req, nil
 }
@@ -132,7 +133,7 @@ func (c *Controller) RenderLine(req LineRequest) ([]byte, error) {
 
 func (c *Controller) RenderLineImage(req LineRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildLineRequest(req)

@@ -59,7 +59,7 @@ func (c *Controller) RenderCharacterMissionOverview(req drawing.CharacterMission
 
 func (c *Controller) RenderCharacterMissionOverviewImage(req drawing.CharacterMissionOverviewRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	return c.drawing.GenerateCharacterMissionOverviewImage(&req)
 }
@@ -74,7 +74,7 @@ func (c *Controller) RenderCharacterMissionAll(req drawing.CharacterMissionAllRe
 
 func (c *Controller) RenderCharacterMissionAllImage(req drawing.CharacterMissionAllRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	return c.drawing.GenerateCharacterMissionAllImage(&req)
 }

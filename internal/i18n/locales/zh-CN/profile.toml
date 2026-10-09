@@ -1,0 +1,133 @@
+# 个人信息与个人设置：个人信息、个人信息背景、时区、谱面样式、查水表难度、模块化个人信息、自定义个人信息。
+
+[profile.bg.binding_missing]
+description = "设置、清除或调整个人信息背景时找不到对应的绑定账号。"
+other = "未找到要设置背景的绑定账号"
+
+[profile.bg.unverified]
+description = "绑定账号还没有验证，不能修改个人信息背景。占位符：Region=区服显示名；Command=验证指令，例如 /jppjsk verify；ToolboxLink=工具箱地址（binding.toolbox_link）。"
+other = "{{.Region}}绑定账号还没有验证，不能修改个人信息背景，请先在 Haruki 工具箱完成游戏账号验证，再发送 {{.Command}}\n{{.ToolboxLink}}"
+
+[profile.bg.upload_disabled]
+description = "背景图片违规次数已达上限，背景上传功能已关闭。占位符：Count=违规次数；Max=上限。"
+other = "背景图片违规次数已达上限（{{.Count}}/{{.Max}}），背景上传功能已关闭"
+
+[profile.bg.rejected]
+description = "背景图片没有通过内容审核。占位符：Count=违规次数；Max=上限。"
+other = "背景图片没有通过内容审核，请更换图片（违规次数：{{.Count}}/{{.Max}}）"
+
+[profile.bg.rejected_disabled]
+description = "背景图片没有通过内容审核，且违规次数已达上限。占位符：Max=上限。"
+other = "背景图片没有通过内容审核，违规次数已达 {{.Max}}/{{.Max}}，背景上传功能已关闭"
+
+[profile.bg.none]
+description = "调整个人信息背景时，该账号还没有自定义背景。占位符：Region=区服显示名。"
+other = "{{.Region}}还没有自定义个人信息背景"
+
+[profile.bg.changed]
+description = "个人信息背景刚被另一个请求修改。"
+other = "个人信息背景刚被另一个请求修改，请稍后再试"
+
+[profile.bg.image_required]
+description = "设置个人信息背景时没有附带图片。"
+other = "请附带个人信息背景图片"
+
+[profile.bg.image_invalid]
+description = "背景图片无法下载或无法识别（地址无效、不是图片、下载失败）。"
+other = "无法读取这张背景图片，请换一张图片"
+
+[profile.bg.image_too_large]
+description = "背景图片文件太大。占位符：MaxMB=允许的最大 MB 数。"
+other = "背景图片过大，最大 {{.MaxMB}} MB"
+
+[profile.bg.image_too_many_pixels]
+description = "背景图片尺寸太大。占位符：MaxPixels=允许的最大像素数（已按万显示）。"
+other = "背景图片尺寸过大，最多 {{.MaxPixels}} 像素"
+
+[profile.bg.save_failed]
+description = "保存或删除个人信息背景失败（存储出错）。"
+other = "保存个人信息背景失败，请稍后再试"
+
+[profile.settings.save_failed]
+description = "保存个人设置失败（时区、谱面样式、查水表难度等）。"
+other = "保存设置失败，请稍后再试"
+
+[profile.arrest_difficulty.required]
+description = "设置查水表难度时没有写任何难度开关。"
+other = "请至少写一个难度开关"
+
+[profile.arrest_difficulty.unknown]
+description = "查水表难度写了不支持的难度，作为 common.bad_param 的原因行。"
+other = "难度只能是 EASY、NORMAL、HARD、EXPERT、MASTER、APPEND"
+
+[profile.chart_style.invalid]
+description = "谱面样式不是 white 或 black。"
+other = "谱面样式只能是 white 或 black"
+
+[profile.timezone.required]
+description = "设置时区时没有写时区。"
+other = "请写时区名或 UTC 偏移"
+
+[profile.timezone.not_found]
+description = "写的时区无法识别，作为 common.bad_param 的原因行。"
+other = "请写 UTC 偏移、IANA 时区名或可识别的城市名"
+
+[profile.settings.selector_only]
+description = "个人设置类指令只接受 u序号，但写了别的参数。"
+other = "这个指令只接受 u序号"
+
+[profile.settings.self_only]
+description = "个人设置类指令试图修改别人的账号。"
+other = "这个设置只能修改自己的账号"
+
+[profile.arrest_difficulty.invalid]
+description = "查水表难度开关的写法不对。"
+other = "请写难度和开关，例如 master 开启 append 关闭"
+
+[profile.fetch_failed]
+description = "获取玩家公开信息失败（游戏数据服务以外的原因）。"
+other = "获取玩家信息失败，请稍后再试"
+
+[profile.bg.preview_failed]
+description = "个人信息背景设置已保存，但预览图生成失败。"
+other = "个人信息预览生成失败，设置已保存"
+
+[profile.bg.adjust_usage]
+description = "调整个人信息背景时“模糊”或“透明”后面没有数值。"
+other = "请写横屏或竖屏、模糊 0~10、透明 0~100"
+
+[profile.bg.param_unknown]
+description = "调整个人信息背景写了无法识别的参数，作为 common.bad_param 的原因行。"
+other = "可以写横屏、竖屏、模糊 0~10、透明 0~100"
+
+[profile.target_invalid]
+description = "个人信息类指令的目标参数无法识别，作为 common.bad_param 的原因行。"
+other = "请写 @用户、游戏 UID 或 u序号"
+
+[profile.custom_card.index_required]
+description = "自定义个人信息没有写或写了多个页码。"
+other = "请写一个自定义个人信息页码，例如 1"
+
+[profile.custom_card.index_positive]
+description = "自定义个人信息页码不是正整数。"
+other = "自定义个人信息页码必须是正整数"
+
+[profile.custom_card.none]
+description = "玩家的公开信息里没有自定义个人信息。"
+other = "该玩家没有公开的自定义个人信息"
+
+[profile.custom_card.not_found_pair]
+description = "找不到指定组和张的自定义个人信息。占位符：Group=组号；Card=张号。"
+other = "未找到第 {{.Group}} 组第 {{.Card}} 张自定义个人信息"
+
+[profile.custom_card.not_found_page]
+description = "自定义个人信息页码超出页数。占位符：Page=页码；Total=总页数。"
+other = "未找到第 {{.Page}} 页自定义个人信息，当前共有 {{.Total}} 页"
+
+[profile.custom_card.failed]
+description = "生成自定义个人信息失败（资源解析或渲染失败）。"
+other = "自定义个人信息生成失败，请稍后再试"
+
+[profile.registration.unsupported_region]
+description = "查注册时间不支持该区服。"
+other = "这个区服无法计算注册时间"

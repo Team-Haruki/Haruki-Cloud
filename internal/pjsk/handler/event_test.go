@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	json "haruki-cloud/internal/jsonutil"
 
 	"haruki-cloud/config"
-	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
@@ -22,6 +20,8 @@ import (
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestEventDetailHandleUsesCurrentEventWhenArgsEmpty(t *testing.T) {
@@ -370,9 +370,7 @@ func TestEventHandleReturnsHelpHintOnInvalidQuery(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if got, want := err.Error(), "活动查询参数格式不正确。查看完整用法请发送：/活动 -help"; got != want {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeUsage, "common.unrecognized_args")
 }
 
 func TestEventRecordHandleEmbedsSelfSelector(t *testing.T) {
@@ -590,9 +588,7 @@ func TestEventPlannerDailyPointUsesFullEventTimeWhenCurrentPointUnknown(t *testi
 
 func TestEventPlannerFixedCardIDsDoNotBecomeTargetPoint(t *testing.T) {
 	_, err := parseEventPlannerParams("#12345 23456 34567 45678 56789 歌 虾 5火", "/cn活动规划")
-	if err == nil || !strings.Contains(err.Error(), "需要提供目标 pt") {
-		t.Fatalf("expected missing target error, got %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "event.planner.target_required")
 	if strings.Contains(err.Error(), "活动规划用法") {
 		t.Fatalf("expected concise missing target error, got %v", err)
 	}
@@ -827,13 +823,7 @@ func TestExecuteEventRecordReturnsBindingErrorBeforeSuiteMessage(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	var replyErr onebot11.ReplayError
-	if !errors.As(WrapDomainError(err), &replyErr) {
-		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
-	}
-	if string(replyErr) != ErrMsgBindingNotFound {
-		t.Fatalf("unexpected replay error: %q", replyErr)
-	}
+	testutil.RequireUserError(t, WrapDomainError(err), usererror.CodeSetup, "binding.required")
 }
 
 func TestExecuteEventRecordReturnsContextualSuiteMessageWhenSnapshotMissing(t *testing.T) {
@@ -853,11 +843,11 @@ func TestExecuteEventRecordReturnsContextualSuiteMessageWhenSnapshotMissing(t *t
 		Events:   renderevent.NewController(nil, nil, nil),
 		Bindings: service,
 	}))
-	if err == nil || err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+	if err == nil || err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
 		Visible:    false,
-	}) {
+	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

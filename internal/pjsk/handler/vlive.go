@@ -8,6 +8,7 @@ import (
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/vlive"
+	"haruki-cloud/utils/usererror"
 )
 
 func (sekaiHandlers) LiveHandle() HarukiSekaiCommandHandler {
@@ -22,7 +23,7 @@ func (sekaiHandlers) LiveHandle() HarukiSekaiCommandHandler {
 
 func executeVLive(rc *RequestContext) (onebot11.Message, error) {
 	if rc.App == nil || rc.App.VLive == nil {
-		return nil, fmt.Errorf("vlive service unavailable: sekai client not configured")
+		return nil, usererror.Misconfigured(errors.New("vlive service unavailable: sekai client not configured"))
 	}
 	timeZone := resolveRequesterHarukiUserTimeZone(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID)
 	if vlive.IsDetailQuery(rc.Cmd.Query) {

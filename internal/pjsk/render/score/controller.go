@@ -6,8 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/utils/usererror"
 )
 
 type Controller struct {
@@ -31,7 +33,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 
 func (c *Controller) BuildScoreControlRequest(req drawing.ScoreControlRequest) (*drawing.ScoreControlRequest, error) {
 	if req.MusicID <= 0 || req.TargetPoint <= 0 {
-		return nil, fmt.Errorf("invalid score control request")
+		return nil, usererror.Misuse(i18n.M("score.control.invalid"))
 	}
 	req.MusicCoverPath = normalizeScoreCoverPath(req.MusicCoverPath)
 	return &req, nil
@@ -47,7 +49,7 @@ func (c *Controller) RenderScoreControl(req drawing.ScoreControlRequest) ([]byte
 
 func (c *Controller) RenderScoreControlImage(req drawing.ScoreControlRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildScoreControlRequest(req)
@@ -60,7 +62,7 @@ func (c *Controller) RenderScoreControlImage(req drawing.ScoreControlRequest) (d
 
 func (c *Controller) BuildCustomRoomScoreRequest(req drawing.CustomRoomScoreRequest) (*drawing.CustomRoomScoreRequest, error) {
 	if req.TargetPoint <= 0 || len(req.CandidatePairs) == 0 {
-		return nil, fmt.Errorf("invalid custom-room score request")
+		return nil, usererror.Misuse(i18n.M("score.custom_room.usage"))
 	}
 	for key, list := range req.MusicListMap {
 		for idx := range list {
@@ -83,7 +85,7 @@ func (c *Controller) RenderCustomRoomScore(req drawing.CustomRoomScoreRequest) (
 
 func (c *Controller) RenderCustomRoomScoreImage(req drawing.CustomRoomScoreRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildCustomRoomScoreRequest(req)
@@ -114,7 +116,7 @@ func (c *Controller) RenderMusicMeta(req []drawing.MusicMetaRequest) ([]byte, er
 
 func (c *Controller) RenderMusicMetaImage(req []drawing.MusicMetaRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildMusicMetaRequest(req)
@@ -145,7 +147,7 @@ func (c *Controller) RenderMusicBoard(req drawing.MusicBoardRequest) ([]byte, er
 
 func (c *Controller) RenderMusicBoardImage(req drawing.MusicBoardRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildMusicBoardRequest(req)

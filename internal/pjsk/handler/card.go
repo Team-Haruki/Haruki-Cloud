@@ -6,11 +6,13 @@ import (
 	"strings"
 	"unicode"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/card"
+	"haruki-cloud/utils/usererror"
 )
 
 const searchSingleCardHelp = `查单张卡的方式:
@@ -148,7 +150,7 @@ func newCardListParams(ctx HarrukiSekaiHandlerContext, args string, strictFilter
 
 func newCardBoxParams(ctx HarrukiSekaiHandlerContext, args string, strictFilterOnly bool) (map[string]any, error) {
 	if hasCardBoxControlToken(args, "时间") && (hasCardBoxUnownedToken(args) || cardBoxGroupBy(strings.ReplaceAll(args, "时间", "")) != "") {
-		return nil, onebot11.NewReplayError("时间模式只展示已拥有卡牌，不能与属性分组或未持有同时使用")
+		return nil, usererror.Invalid(i18n.M("card.time_mode_conflict"))
 	}
 	params, err := newSelfQueryParamsMap(ctx)
 	if err != nil {
@@ -224,7 +226,7 @@ func (sekaiHandlers) CardImgHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, errors.New("请输入要查询的卡牌")
+				return nil, usererror.Misuse(i18n.M("card.query_required"))
 			}
 			return makeCommandRequest(ctx, parser.ModuleCard, "card-image"), nil
 		},
@@ -245,7 +247,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 	}()
 
 	if rc.App.Cards == nil {
-		return nil, fmt.Errorf("card service unavailable: sekai client not configured")
+		return nil, usererror.Misconfigured(errors.New("card service unavailable: sekai client not configured"))
 	}
 	cardCtrl := rc.App.Cards.WithContext(rc.Ctx)
 	switch rc.Cmd.Mode {
@@ -361,7 +363,7 @@ func hasCardCatalogOwnedData(detail *drawing.DetailedProfileCardRequest) bool {
 
 func requireCardCatalogDetailedProfile(rc *RequestContext) (*drawing.DetailedProfileCardRequest, error) {
 	if rc == nil {
-		return nil, onebot11.NewReplayError(ErrMsgCardCatalogRequiresSuite)
+		return nil, suiteDataNotFoundError(nil)
 	}
 	binding, _ := rc.GetBinding()
 	if binding == nil {
@@ -371,18 +373,18 @@ func requireCardCatalogDetailedProfile(rc *RequestContext) (*drawing.DetailedPro
 		return nil, accountdata.ErrNoBinding
 	}
 	if !binding.SuiteVisible {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 	snap := rc.ResolveSnapshot(false)
 	if snap == nil {
 		if snapshotErr := rc.SnapshotError(false); snapshotErr != nil {
 			return nil, normalizeToolboxDataFetchError(snapshotErr, "suite", binding)
 		}
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 	detail := snap.DetailedProfile(rc.Region)
 	if detail == nil || len(detail.UserCards) == 0 {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 	return cloneDetailedProfileForCurrentTarget(rc, detail), nil
 }

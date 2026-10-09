@@ -2,8 +2,10 @@ package handler
 
 import (
 	"fmt"
-	"haruki-cloud/internal/onebot11"
 	"strings"
+
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -47,18 +49,18 @@ func validateDeckQueryParams(params *deckAutoQueryParams) error {
 		return nil
 	}
 	if len(params.MusicCompareQueries) > deckMusicCompareMaxQueries {
-		return onebot11.NewReplayError("最多只能指定 %d 首歌曲进行比较", deckMusicCompareMaxQueries)
+		return usererror.Invalid(i18n.M("deck.compare.too_many", i18n.Data{"Max": deckMusicCompareMaxQueries}))
 	}
 	if params.SkillOrderChooseStrategy != "specific" && len(params.SpecificSkillOrder) == 0 {
 		return nil
 	}
 	if params.SkillOrderChooseStrategy == "specific" && len(params.SpecificSkillOrder) == 0 {
-		return onebot11.NewReplayError("%s", strings.TrimSpace(deckSpecificSkillOrderUsage))
+		return deckSkillOrderUsageError()
 	}
 	if deckHasCompleteFixedCards(params) {
 		return nil
 	}
-	return onebot11.NewReplayError("仅在使用固定队伍（例如添加\"当前\"参数）时可指定特定技能顺序")
+	return usererror.Misuse(i18n.M("deck.skill_order.needs_fixed"))
 }
 
 func deckHasCompleteFixedCards(params *deckAutoQueryParams) bool {
@@ -170,13 +172,13 @@ func buildBonusDeckParams(args string, params *deckAutoQueryParams, trigger stri
 
 	fields := strings.Fields(args)
 	if len(fields) == 0 {
-		return "", onebot11.NewReplayError("使用方式:\n%s event123 120 160", trigger)
+		return "", usererror.Misuse(i18n.M("deck.bonus.usage"))
 	}
 	bonuses := make([]int, 0, len(fields))
 	for _, field := range fields {
 		value, err := parseDeckBonusInt(strings.TrimSpace(field))
 		if err != nil || value <= 0 {
-			return "", onebot11.NewReplayError("使用方式:\n%s event123 120 160", trigger)
+			return "", usererror.Misuse(i18n.M("deck.bonus.usage"))
 		}
 		bonuses = append(bonuses, value)
 	}

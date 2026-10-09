@@ -2,16 +2,19 @@ package inventory
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewController(
@@ -51,7 +54,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 
 func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.InventoryListRequest, error) {
 	if c == nil {
-		return nil, fmt.Errorf("inventory controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("inventory controller is not initialized"))
 	}
 
 	snap, err := c.inventorySnapshot(query.Snapshot)
@@ -110,7 +113,7 @@ func (c *Controller) inventorySnapshot(querySnapshot snapshot.Snapshot) (snapsho
 		querySnapshot = c.snapshot
 	}
 	if querySnapshot == nil {
-		return nil, fmt.Errorf("local user snapshot is not configured")
+		return nil, snapshot.ErrNotConfigured
 	}
 	if err := querySnapshot.Require(); err != nil {
 		return nil, err
@@ -403,7 +406,7 @@ func (c *Controller) RenderList(query Query) ([]byte, error) {
 
 func (c *Controller) RenderListImage(query Query) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildListRequestFromSnapshot(query)
@@ -572,9 +575,9 @@ func validateFilterForRegion(region renderregion.Value, filter Filter) error {
 	}
 	switch normalizeFilter(filter) {
 	case FilterMysekai:
-		return fmt.Errorf("国服 MySekai 功能永不开启，无法查询 MySekai 材料")
+		return usererror.Invalid(i18n.M("inventory.mysekai_cn_unavailable"))
 	case FilterMemory:
-		return fmt.Errorf("国服暂不支持查询记忆")
+		return usererror.Invalid(i18n.M("inventory.memory_cn_unavailable"))
 	default:
 		return nil
 	}

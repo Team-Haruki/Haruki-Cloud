@@ -12,6 +12,7 @@ import (
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/usererror"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -105,7 +106,7 @@ func TestBanServiceFeatureHierarchyBranches(t *testing.T) {
 		Save(ctx); err != nil {
 		t.Fatalf("create feature-banned user: %v", err)
 	}
-	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleMusic); err == nil || !strings.Contains(err.Error(), "main reason") {
+	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleMusic); err == nil || !strings.Contains(testutil.ErrorDetail(err), "main reason") {
 		t.Fatalf("main feature ban = %v", err)
 	}
 	if _, err := client.User.UpdateOneID(100).
@@ -115,7 +116,7 @@ func TestBanServiceFeatureHierarchyBranches(t *testing.T) {
 		Save(ctx); err != nil {
 		t.Fatalf("update ranking ban: %v", err)
 	}
-	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleSK); err == nil || !strings.Contains(err.Error(), "ranking reason") {
+	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleSK); err == nil || !strings.Contains(testutil.ErrorDetail(err), "ranking reason") {
 		t.Fatalf("ranking feature ban = %v", err)
 	}
 	if _, err := client.User.UpdateOneID(100).
@@ -125,7 +126,7 @@ func TestBanServiceFeatureHierarchyBranches(t *testing.T) {
 		Save(ctx); err != nil {
 		t.Fatalf("update alias ban: %v", err)
 	}
-	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleAlias); err == nil || !strings.Contains(err.Error(), "alias reason") {
+	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleAlias); err == nil || !strings.Contains(testutil.ErrorDetail(err), "alias reason") {
 		t.Fatalf("alias feature ban = %v", err)
 	}
 }
@@ -142,7 +143,7 @@ func TestBanServiceModuleAndGlobalHierarchyBranches(t *testing.T) {
 		Save(ctx); err != nil {
 		t.Fatalf("create MySekai-banned user: %v", err)
 	}
-	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleMysekai); err == nil || !strings.Contains(err.Error(), "mysekai reason") {
+	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleMysekai); err == nil || !strings.Contains(testutil.ErrorDetail(err), "mysekai reason") {
 		t.Fatalf("MySekai feature ban = %v", err)
 	}
 	if _, err := client.User.UpdateOneID(100).
@@ -152,7 +153,7 @@ func TestBanServiceModuleAndGlobalHierarchyBranches(t *testing.T) {
 		Save(ctx); err != nil {
 		t.Fatalf("update PJSK module ban: %v", err)
 	}
-	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleMusic); err == nil || !strings.Contains(err.Error(), "module reason") {
+	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleMusic); err == nil || !strings.Contains(testutil.ErrorDetail(err), "module reason") {
 		t.Fatalf("PJSK module ban = %v", err)
 	}
 	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleAdmin); err != nil {
@@ -165,7 +166,7 @@ func TestBanServiceModuleAndGlobalHierarchyBranches(t *testing.T) {
 		Save(ctx); err != nil {
 		t.Fatalf("update global ban: %v", err)
 	}
-	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleAdmin); err == nil || !strings.Contains(err.Error(), "global reason") {
+	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleAdmin); err == nil || !strings.Contains(testutil.ErrorDetail(err), "global reason") {
 		t.Fatalf("global ban = %v", err)
 	}
 	status, err := service.GlobalBanStatus(ctx, "qq", "100")

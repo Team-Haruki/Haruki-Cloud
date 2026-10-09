@@ -2,15 +2,16 @@ package handler
 
 import (
 	"context"
-	json "haruki-cloud/internal/jsonutil"
 	"slices"
-	"strings"
 	"testing"
 
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestProfileUploadBGHandleExtractsImageURL(t *testing.T) {
@@ -391,8 +392,9 @@ func TestResolveCustomProfileCardReturnsErrorForMissingPage(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing page error")
 	}
-	if !strings.Contains(err.Error(), "未找到第99页自定义档案，当前共有1页") {
-		t.Fatalf("unexpected error: %v", err)
+	typed := testutil.RequireUserError(t, err, "", "profile.custom_card.not_found_page")
+	if typed.Message.Data["Page"] != 99 || typed.Message.Data["Total"] != 1 {
+		t.Fatalf("unexpected page data: %+v", typed.Message.Data)
 	}
 }
 
@@ -528,9 +530,7 @@ func TestProfileUIDHandleRejectsAtUser(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected at-user query to be rejected")
 	}
-	if !strings.Contains(err.Error(), "仅支持查询自己的绑定账号 UID") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "binding.uid.self_only")
 }
 
 func TestProfileUIDHandleRejectsRawUID(t *testing.T) {
@@ -547,9 +547,7 @@ func TestProfileUIDHandleRejectsRawUID(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected raw uid to be rejected")
 	}
-	if !strings.Contains(err.Error(), "参数格式不正确") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeUsage, "common.unrecognized_args")
 }
 
 func TestProfileBindSwapHandleParsesArgs(t *testing.T) {
@@ -702,9 +700,7 @@ func TestProfileTimeZoneHandleRequiresArgs(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing args error, got nil")
 	}
-	if !strings.Contains(err.Error(), "<时区名|偏移量>") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "profile.timezone.required")
 }
 
 func TestProfileChartStyleHandleParsesArgs(t *testing.T) {
@@ -752,9 +748,7 @@ func TestProfileChartStyleHandleRequiresArgs(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing args error, got nil")
 	}
-	if !strings.Contains(err.Error(), "<white|black>") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "profile.chart_style.invalid")
 }
 
 func TestProfileArrestDifficultyHandleParsesArgs(t *testing.T) {
@@ -852,7 +846,5 @@ func TestProfileArrestDifficultyHandleRequiresArgs(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing args error, got nil")
 	}
-	if !strings.Contains(err.Error(), "easy关闭") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "profile.arrest_difficulty.required")
 }

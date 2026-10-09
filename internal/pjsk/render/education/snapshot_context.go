@@ -1,11 +1,13 @@
 package education
 
 import (
+	"errors"
 	"fmt"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/snapshot"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
 var areaFilterUnitAreaIDs = map[string]int{
@@ -53,17 +55,17 @@ var gateUnitByID = map[int]string{
 func (c *Controller) resolveSnapshotContext(
 	region renderregion.Value,
 	profile *drawing.DetailedProfileCardRequest,
-	snapshot snapshot.Snapshot,
+	snapshot rendersnapshot.Snapshot,
 ) (*resolvedSnapshotContext, error) {
 	if c == nil || c.sources == nil {
-		return nil, fmt.Errorf("education controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("education controller is not initialized"))
 	}
 
 	if snapshot == nil {
 		snapshot = c.snapshot
 	}
 	if snapshot == nil {
-		return nil, fmt.Errorf("local user snapshot is not configured")
+		return nil, rendersnapshot.ErrNotConfigured
 	}
 	if err := snapshot.Require(); err != nil {
 		return nil, err
@@ -72,7 +74,7 @@ func (c *Controller) resolveSnapshotContext(
 	resolvedRegion := c.sources.ResolveRegion(region)
 	source, ok := c.sources.SourceForRegion(resolvedRegion)
 	if !ok {
-		return nil, fmt.Errorf("education data source is not configured")
+		return nil, usererror.Misconfigured(errors.New("education data source is not configured"))
 	}
 
 	raw := snapshot.RawData()

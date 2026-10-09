@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) validateTrackerQuery(req TrackerRankQuery) (TrackerRankQuery, error) {
@@ -21,7 +23,7 @@ func (c *Controller) validateTrackerQuery(req TrackerRankQuery) (TrackerRankQuer
 		normalized.EventID = c.pickCurrentOrNextEventID(normalized.Region)
 	}
 	if normalized.EventID <= 0 {
-		return TrackerRankQuery{}, fmt.Errorf("event_id is required when no current event can be inferred")
+		return TrackerRankQuery{}, usererror.Misuse(i18n.M("sk.event_required"))
 	}
 	if err := c.validateTrackerWorldBloomScope(normalized); err != nil {
 		return TrackerRankQuery{}, err
@@ -29,12 +31,15 @@ func (c *Controller) validateTrackerQuery(req TrackerRankQuery) (TrackerRankQuer
 	return normalized, nil
 }
 
+// errTrackerSourceNotConfigured is returned when no ranking source is wired.
+var errTrackerSourceNotConfigured = usererror.Misconfigured(errors.New("tracker cloud v2 source is not configured"))
+
 func validateTrackerController(c *Controller) error {
 	if c == nil {
-		return fmt.Errorf("sk controller is not initialized")
+		return usererror.Misconfigured(errors.New("sk controller is not initialized"))
 	}
 	if c.tracker == nil {
-		return fmt.Errorf("tracker client is not configured")
+		return usererror.Misconfigured(errors.New("tracker client is not configured"))
 	}
 	return nil
 }
@@ -43,7 +48,7 @@ func normalizeTrackerQueryInputs(req TrackerRankQuery) (TrackerRankQuery, error)
 	normalized := req
 	normalized.Region = normalizeTrackerServer(req.Region)
 	if normalized.Region == "" {
-		return TrackerRankQuery{}, fmt.Errorf("region must be one of: jp/cn/tw/kr/en")
+		return TrackerRankQuery{}, usererror.Invalid(i18n.M("sk.region_invalid"))
 	}
 	normalized.Ranks = normalizeRanks(req.Ranks)
 	if normalized.UserID != nil && *normalized.UserID <= 0 {
@@ -53,7 +58,7 @@ func normalizeTrackerQueryInputs(req TrackerRankQuery) (TrackerRankQuery, error)
 		normalized.CompareRank = 0
 	}
 	if len(normalized.Ranks) == 0 && normalized.UserID == nil {
-		return TrackerRankQuery{}, fmt.Errorf("tracker ranks/user_id are empty")
+		return TrackerRankQuery{}, usererror.Misuse(i18n.M("sk.target_required"))
 	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID <= 0 {
 		normalized.WlCharacterID = nil
@@ -71,7 +76,7 @@ func (c *Controller) validateTrackerWorldBloomScope(req TrackerRankQuery) error 
 		return nil
 	}
 	if !strings.EqualFold(eventInfo.EventType, "world_bloom") && req.WlCharacterID != nil {
-		return fmt.Errorf("wl_character_id is only valid for world bloom event")
+		return usererror.Invalid(i18n.M("sk.wl_only"))
 	}
 	return nil
 }
@@ -110,7 +115,7 @@ func (c *Controller) buildRanksFromTracker(server string, eventID int, ranks []i
 	if out, _, _, ok, err := c.buildRanksFromTrackerV2(server, eventID, ranks, wlCharacterID, false, skipMissing); ok {
 		return out, err
 	}
-	return nil, fmt.Errorf("tracker cloud v2 source is not configured")
+	return nil, errTrackerSourceNotConfigured
 }
 
 func (c *Controller) buildRanksOrUserFromTracker(server string, eventID int, ranks []int, userID *int64, wlCharacterID *int, skipMissing bool) ([]drawing.RankInfo, error) {

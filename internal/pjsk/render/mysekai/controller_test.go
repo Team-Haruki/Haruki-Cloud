@@ -21,6 +21,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 )
 
 func newPhotoTestController(t *testing.T, mysekaiJSON string) *Controller {
@@ -92,13 +93,13 @@ func TestResolvePhotoValidatesInputAndImagePath(t *testing.T) {
   }
 }`)
 
-	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 0}); err == nil || err.Error() != "请输入正确的照片编号（从1或-1开始）" {
+	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 0}); testutil.MessageID(err) != "mysekai.photo.index_invalid" {
 		t.Fatalf("unexpected seq=0 error: %v", err)
 	}
-	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 2}); err == nil || err.Error() != "照片编号大于照片数量(1)" {
+	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 2}); testutil.MessageID(err) != "mysekai.photo.out_of_range" {
 		t.Fatalf("unexpected seq=2 error: %v", err)
 	}
-	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 1}); err == nil || err.Error() != "该照片缺少 imagePath，无法下载" {
+	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 1}); !strings.Contains(testutil.ErrorDetail(err), "photo has no imagePath") {
 		t.Fatalf("unexpected missing imagePath error: %v", err)
 	}
 }
@@ -987,7 +988,7 @@ func TestResolveTalkCharacterHandlesVirtualSingerUnits(t *testing.T) {
 
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
 
-	if _, _, err := controller.resolveTalkCharacter("miku"); err == nil || !strings.Contains(err.Error(), "需要同时指定组合") {
+	if _, _, err := controller.resolveTalkCharacter("miku"); err == nil || testutil.MessageID(err) != "mysekai.talk.virtual_singer_unit" {
 		t.Fatalf("resolveTalkCharacter(miku) error = %v", err)
 	}
 

@@ -15,16 +15,18 @@ import (
 	"strings"
 	"sync"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/storage"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {
 	if c == nil {
-		return nil, fmt.Errorf("music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music controller is not configured"))
 	}
 	region, source, builder, err := c.resolveBuilder(query.Region)
 	if err != nil {
@@ -40,7 +42,7 @@ func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {
 	// local "music/jacket" probe that swapped in an absolute path is gone.
 	jacketPath := builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
 	if strings.TrimSpace(jacketPath) == "" {
-		return nil, fmt.Errorf("music %d does not have jacket asset", musicInfo.ID)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_jacket"))
 	}
 
 	return &CoverResult{
@@ -51,7 +53,7 @@ func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {
 
 func (c *Controller) FindMusicChartsByBPM(query BPMQuery) ([]BPMMatch, error) {
 	if c == nil {
-		return nil, fmt.Errorf("music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music controller is not configured"))
 	}
 	ctx := c.contextOrBackground()
 	finishLookup := commandtrace.MeasureOperation(ctx, "music.bpm_lookup")
@@ -60,7 +62,7 @@ func (c *Controller) FindMusicChartsByBPM(query BPMQuery) ([]BPMMatch, error) {
 		return nil, err
 	}
 	if query.BPM <= 0 {
-		return nil, fmt.Errorf("BPM 必须大于 0")
+		return nil, usererror.Invalid(i18n.M("music.bpm.positive"))
 	}
 
 	region, source, builder, err := c.resolveBuilder(query.Region)
@@ -76,7 +78,7 @@ func (c *Controller) FindMusicChartsByBPM(query BPMQuery) ([]BPMMatch, error) {
 	}
 
 	if len(matches) == 0 {
-		return nil, fmt.Errorf("没有找到 BPM 为 %s 的谱面", formatLookupBPMValue(query.BPM))
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.bpm.no_chart", i18n.Data{"BPM": formatLookupBPMValue(query.BPM)}))
 	}
 
 	sort.Slice(matches, func(i, j int) bool {
@@ -149,7 +151,7 @@ submit:
 
 func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 	if c == nil {
-		return nil, fmt.Errorf("music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music controller is not configured"))
 	}
 	ctx := c.contextOrBackground()
 	finishLookup := commandtrace.MeasureOperation(ctx, "music.bpm_lookup")
@@ -198,7 +200,7 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 	}
 	finishScan()
 	if parsed == nil {
-		return nil, fmt.Errorf("当前环境没有可读取的本地谱面文件，无法查询 BPM")
+		return nil, usererror.Misconfigured(errors.New("no readable chart files for the BPM lookup"))
 	}
 
 	// C1 (T15): the Drawing-relative jacket path is emitted as is; the bare
@@ -375,7 +377,7 @@ func parseChartBPM(ctx context.Context, r io.Reader) (*parsedChartBPM, error) {
 		return nil, err
 	}
 	if len(rawEvents) == 0 {
-		return nil, fmt.Errorf("谱面中没有可用的 BPM 数据")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.bpm.no_data"))
 	}
 	events := normalizeChartBPMEvents(rawEvents)
 	totalDuration, mainBPM := applyChartBPMDurations(events, barCount)

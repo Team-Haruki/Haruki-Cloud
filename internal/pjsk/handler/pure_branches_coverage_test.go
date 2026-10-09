@@ -2,13 +2,16 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderdeck "haruki-cloud/internal/pjsk/render/deck"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestSKParsingBranchCoverage(t *testing.T) {
@@ -429,7 +432,7 @@ func testDeckUniqueIDsAndStrategies(t *testing.T) {
 		limit   int
 		wantErr bool
 	}{{nil, 5, true}, {[]int{1, 2}, 1, true}, {[]int{1, 1}, 5, true}, {[]int{1, 2}, 5, false}} {
-		if err := validateDeckUniqueIDs(tt.values, tt.limit, "目标"); (err != nil) != tt.wantErr {
+		if err := validateDeckUniqueIDs(tt.values, tt.limit, i18n.M("deck.fixed.empty"), i18n.M("deck.fixed.too_many"), i18n.M("deck.fixed.duplicate_cards")); (err != nil) != tt.wantErr {
 			t.Errorf("validateDeckUniqueIDs(%v) = %v", tt.values, err)
 		}
 	}
@@ -595,7 +598,7 @@ func TestDeckRuntimePureBranchCoverage(t *testing.T) {
 			t.Errorf("validateDeckCharacterIDs(%v) = %v", tt.values, err)
 		}
 	}
-	if isCharacterNotFoundError(nil) || !isCharacterNotFoundError(fmt.Errorf("未找到角色 Miku")) {
+	if isCharacterNotFoundError(nil) || isCharacterNotFoundError(errors.New("character not found")) || !isCharacterNotFoundError(usererror.New(usererror.CodeNotFound, i18n.M("character.not_found", i18n.Data{"Query": "Miku"}))) {
 		t.Fatal("character error classification mismatch")
 	}
 	for _, unit := range []string{" light_sound ", "IDOL", "street", "theme_park", "school_refusal", "piapro", "bad"} {

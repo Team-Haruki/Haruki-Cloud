@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewBuilder(source DataSource, assetHelper *assets.AssetHelper) *Builder {
@@ -37,7 +39,7 @@ func (b *Builder) BuildHonorRequest(query Query) (*drawing.HonorRequest, error) 
 	isNormal := errNormal == nil
 	isBonds := errBonds == nil
 	if !isNormal && !isBonds {
-		return nil, fmt.Errorf("honor %d not found in any masterdata table", query.HonorID)
+		return nil, usererror.Wrap(usererror.CodeNotFound, i18n.M("honor.not_found"), fmt.Errorf("honor %d not found in any masterdata table", query.HonorID))
 	}
 
 	if isNormal {

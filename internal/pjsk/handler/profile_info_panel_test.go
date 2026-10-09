@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +19,9 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
+	"haruki-cloud/utils/usererror"
 )
 
 func newInfoPanelDrawingServer(t *testing.T, gotPath *string, body *map[string]any) *httptest.Server {
@@ -84,10 +85,7 @@ func TestProfileInfoPanelHandleRequiresASource(t *testing.T) {
 			Context: context.Background(), Platform: "qq", UserId: "12345",
 			TriggerCmd: "/信息面板", ArgText: args,
 		})
-		var replay onebot11.ReplayError
-		if !errors.As(err, &replay) || !strings.Contains(string(replay), "/信息面板 su") || !strings.Contains(string(replay), "/信息面板 all") {
-			t.Fatalf("Handle(%q) error = %v, want usage", args, err)
-		}
+		testutil.RequireUserError(t, err, usererror.CodeUsage, "common.unrecognized_args")
 	}
 }
 
@@ -320,11 +318,11 @@ func TestInfoPanelAllRequiresVisibleSuite(t *testing.T) {
 	message, err := executeResolvedMysekaiMode(rc, mySekaiRenderContext{
 		Controller: newAllInfoPanelController(t, server.URL), Region: "jp", Profile: allInfoPanelProfile(),
 	})
-	var replay onebot11.ReplayError
-	if message != nil || !errors.As(err, &replay) {
+	if message != nil {
 		t.Fatalf("hidden suite = %+v, %v; want the suite reply", message, err)
 	}
-	if want := newSuiteDataNotFoundReplayErrorForBinding(rc.binding); err.Error() != want.Error() {
+	testutil.RequireUserError(t, err, usererror.CodeSetup, "")
+	if want := suiteDataNotFoundError(rc.binding); err.Error() != want.Error() {
 		t.Fatalf("reply = %q, want the /信息面板 su reply %q", err, want)
 	}
 	if gotPath != "" {

@@ -77,7 +77,7 @@ func (b *eventRecordBuilder) loadSnapshot() error {
 			return err
 		}
 		if snapshot == nil {
-			return newSuiteDataNotFoundReplayErrorForBinding(binding)
+			return suiteDataNotFoundError(binding)
 		}
 		b.snapshot = snapshot
 	} else {

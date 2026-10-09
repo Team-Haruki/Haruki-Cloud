@@ -1,16 +1,20 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
-	"haruki-cloud/internal/onebot11"
-	"haruki-cloud/internal/pjsk/parser"
-	rendermusic "haruki-cloud/internal/pjsk/render/music"
-	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"math"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/parser"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
 func (sekaiHandlers) MusicListHandle() HarukiSekaiCommandHandler {
@@ -97,7 +101,7 @@ func (sekaiHandlers) SongHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
-				return nil, onebot11.NewReplayError("请输入要查询的歌曲名或ID")
+				return nil, usererror.Misuse(i18n.M("music.query_required"))
 			}
 			if diff, cleaned := extractMusicDifficulty(query); diff != "" {
 				ctx.SetArgs(cleaned)
@@ -127,7 +131,7 @@ func (sekaiHandlers) NoteNumHandle() HarukiSekaiCommandHandler {
 			args = strings.TrimSpace(args)
 			noteCount, err := strconv.Atoi(args)
 			if err != nil {
-				return nil, onebot11.NewReplayError("请输入物量数值")
+				return nil, usererror.Misuse(i18n.M("music.note_count.required"))
 			}
 			ctx.SetArgs(args)
 			params["note_count"] = noteCount
@@ -146,7 +150,7 @@ func (sekaiHandlers) BPMHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
-				return nil, onebot11.NewReplayError("%s", bpmDetailHelp)
+				return nil, usererror.Misuse(i18n.M("music.bpm.query_required"))
 			}
 			params := map[string]any{}
 			if diff, cleaned := extractMusicDifficulty(query); diff != "" {
@@ -155,7 +159,7 @@ func (sekaiHandlers) BPMHandle() HarukiSekaiCommandHandler {
 			}
 			query = strings.TrimSpace(query)
 			if query == "" {
-				return nil, onebot11.NewReplayError("%s", bpmDetailHelp)
+				return nil, usererror.Misuse(i18n.M("music.bpm.query_required"))
 			}
 			ctx.SetArgs(query)
 			return makeCommandRequestWithParams(ctx, parser.ModuleMusic, "music-bpm-detail", params), nil
@@ -173,7 +177,7 @@ func (sekaiHandlers) BPMSearchHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
-				return nil, onebot11.NewReplayError("%s", bpmSearchHelp)
+				return nil, usererror.Misuse(i18n.M("music.bpm.value_required"))
 			}
 			params := map[string]any{}
 			if diff, cleaned := extractMusicDifficulty(query); diff != "" {
@@ -183,7 +187,7 @@ func (sekaiHandlers) BPMSearchHandle() HarukiSekaiCommandHandler {
 			query = strings.TrimSpace(query)
 			bpmValue, err := strconv.ParseFloat(query, 64)
 			if err != nil || bpmValue <= 0 {
-				return nil, onebot11.NewReplayError("请输入正确的 BPM 数值，例如：/bpms 200")
+				return nil, usererror.BadParam(query, i18n.M("music.bpm.value_invalid"))
 			}
 			ctx.SetArgs(query)
 			params["bpm"] = bpmValue
@@ -214,7 +218,7 @@ func (sekaiHandlers) MusicCoverHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
-				return nil, fmt.Errorf("请输入要查询的歌曲名或ID")
+				return nil, usererror.Misuse(i18n.M("music.query_required"))
 			}
 			return makeCommandRequest(ctx, parser.ModuleMusic, "music-cover"), nil
 		},
@@ -435,7 +439,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 	defer normalizeExecuteMusicError(rc, &err)
 
 	if rc.App == nil || rc.App.Music == nil {
-		return nil, fmt.Errorf("music service unavailable: music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music service unavailable: music controller is not configured"))
 	}
 	musicCtrl := rc.App.Music.WithContext(rc.Ctx)
 	if rc.App.Aliases != nil {
@@ -689,7 +693,7 @@ func renderBPMLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Cont
 
 func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, prefix string, value string, requestDifficulty string, titleDifficulty string, items []rendermusic.ListItemQuery) (onebot11.Message, error) {
 	if len(items) == 0 {
-		return nil, fmt.Errorf("no music matched the current filters")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_match"))
 	}
 	data, err := musicCtrl.RenderMusicListImage(rendermusic.ListQuery{
 		Items:       items,
@@ -710,7 +714,7 @@ func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Co
 
 func renderMusicBriefLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, prefix string, value string, items []rendermusic.BriefListItemQuery) (onebot11.Message, error) {
 	if len(items) == 0 {
-		return nil, fmt.Errorf("no music matched the current filters")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_match"))
 	}
 	data, err := musicCtrl.RenderMusicBriefListImage(rendermusic.BriefListQuery{
 		Items:       items,
@@ -726,9 +730,9 @@ func renderMusicBriefLookupListMessages(rc *RequestContext, musicCtrl *rendermus
 
 func renderAmbiguousMusicDetailListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, sourceErr error, items []rendermusic.BriefListItemQuery) (onebot11.Message, error) {
 	if len(items) == 0 {
-		return nil, fmt.Errorf("no music matched the current filters")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_match"))
 	}
-	title := buildAmbiguousMusicDetailListTitle(sourceErr)
+	title := buildAmbiguousMusicDetailListTitle()
 	data, err := musicCtrl.RenderMusicBriefListImage(rendermusic.BriefListQuery{
 		Items:       items,
 		Region:      region,
@@ -755,12 +759,12 @@ func renderAmbiguousMusicBPMIDsMessages(rc *RequestContext, musicCtrl *rendermus
 		items = append(items, rendermusic.BriefListItemQuery{MusicID: musicID})
 	}
 	if len(items) == 0 {
-		return nil, fmt.Errorf("no music matched the current filters")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_match"))
 	}
 	data, err := musicCtrl.RenderMusicBriefListImage(rendermusic.BriefListQuery{
 		Items:       items,
 		Region:      region,
-		Title:       stringPtr(buildAmbiguousMusicBPMListTitle(sourceErr)),
+		Title:       stringPtr(buildAmbiguousMusicBPMListTitle()),
 		TitleShadow: true,
 	})
 	if err != nil {
@@ -769,43 +773,16 @@ func renderAmbiguousMusicBPMIDsMessages(rc *RequestContext, musicCtrl *rendermus
 	return rc.RenderedImageMessage(data)
 }
 
-func buildAmbiguousMusicDetailListTitle(sourceErr error) string {
-	const fallbackTitle = "匹配到多个歌曲，请使用 /查歌 <id> 查询："
-	if sourceErr == nil {
-		return fallbackTitle
-	}
-	line := strings.TrimSpace(strings.Split(sourceErr.Error(), "\n")[0])
-	line = strings.TrimPrefix(line, "failed to search music: ")
-	line = strings.ReplaceAll(line, "music<id>", "/查歌 <id>")
-	line = strings.ReplaceAll(line, "请改用", "请使用")
-	line = strings.ReplaceAll(line, "请使用 查歌", "请使用 /查歌")
-	line = strings.ReplaceAll(line, "请使用查歌", "请使用 /查歌")
-	line = strings.TrimSpace(line)
-	if line == "" {
-		return fallbackTitle
-	}
-	if strings.Contains(line, "匹配到多个歌曲") {
-		return fallbackTitle
-	}
-	return line
+// buildAmbiguousMusicDetailListTitle is the title of the candidate list
+// image for an ambiguous song query.
+func buildAmbiguousMusicDetailListTitle() string {
+	return i18n.T("music.ambiguous_list.detail")
 }
 
-func buildAmbiguousMusicBPMListTitle(sourceErr error) string {
-	const fallbackTitle = "匹配到多个歌曲，请使用 /查BPM <id> 查询："
-	if sourceErr == nil {
-		return fallbackTitle
-	}
-	line := strings.TrimSpace(strings.Split(sourceErr.Error(), "\n")[0])
-	line = strings.TrimPrefix(line, "failed to search music: ")
-	line = strings.ReplaceAll(line, "music<id>", "/查BPM <id>")
-	line = strings.ReplaceAll(line, "请改用", "请使用")
-	line = strings.ReplaceAll(line, "请使用 查BPM", "请使用 /查BPM")
-	line = strings.ReplaceAll(line, "请使用查BPM", "请使用 /查BPM")
-	line = strings.TrimSpace(line)
-	if line == "" || strings.Contains(line, "匹配到多个歌曲") {
-		return fallbackTitle
-	}
-	return line
+// buildAmbiguousMusicBPMListTitle is the title of the candidate list image
+// for an ambiguous BPM query.
+func buildAmbiguousMusicBPMListTitle() string {
+	return i18n.T("music.ambiguous_list.bpm")
 }
 
 func dedupeBPMMatchesByMusic(matches []rendermusic.BPMMatch) []rendermusic.BPMMatch {
@@ -872,7 +849,7 @@ func renderMusicRewards(rc *RequestContext) (onebot11.Message, error) {
 		return nil, err
 	}
 	if snapshot == nil {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 
 	detailQuery := rendermusic.RewardsDetailQuery{Region: rc.Cmd.Region}
@@ -882,7 +859,7 @@ func renderMusicRewards(rc *RequestContext) (onebot11.Message, error) {
 	payload, buildErr := musicCtrl.BuildMusicRewardsDetailRequestFromSnapshot(detailQuery, snapshot)
 	finishBuild()
 	if buildErr != nil {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 	image, err := musicCtrl.RenderMusicRewardsDetailRequestImage(payload)
 	if err != nil {

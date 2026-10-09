@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/deck"
@@ -14,6 +13,10 @@ import (
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	"golang.org/x/sync/errgroup"
+	"haruki-cloud/internal/core/upstreamerr"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
+	"haruki-cloud/utils/usererror"
 )
 
 func formatDeckQuerySummary(q deck.AutoQuery) string {
@@ -128,7 +131,7 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 		if binding != nil {
 			region = resolvedTargetRegion(region, ResolvedGameTarget{Binding: binding})
 			if snapshot == nil {
-				return nil, nil, region, nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+				return nil, nil, region, nil, suiteDataNotFoundError(binding)
 			}
 		}
 		detail := rc.GetDetailedProfile()
@@ -171,7 +174,7 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 	}
 
 	if target.Binding != nil && snapshot == nil {
-		return nil, nil, region, nil, newSuiteDataNotFoundReplayErrorForBinding(target.Binding)
+		return nil, nil, region, nil, suiteDataNotFoundError(target.Binding)
 	}
 	detail := buildDeckDetailedProfileForTargetWithResponse(rc, target, region, snapshot, resp)
 	if detail == nil && snapshot != nil {
@@ -238,66 +241,19 @@ func normalizeDeckUserFacingErrorForCommand(err error, region string, mode strin
 	if err == nil {
 		return nil
 	}
-
+	if errors.Is(err, deck.ErrUserDataRequired) || errors.Is(err, rendersnapshot.ErrNotConfigured) {
+		return withCause(suiteDataNotFoundError(nil), err)
+	}
 	if isUserFacingError(err) {
-		return err
+		return notfound.InRegion(err, regionWithDefault(region), "")
 	}
-
-	var deckLocked *deckEventLockedError
-	if errors.As(err, &deckLocked) {
-		return onebot11.NewReplayError("该活动组卡将于卡池开放后解禁")
+	if mode == deckEventCommand && upstreamerr.Is(err, upstreamerr.KindDataNotSynced) {
+		return usererror.Wrap(usererror.CodeUnavailable, i18n.M("deck.event.data_not_synced"), err)
 	}
-
-	message := strings.TrimSpace(err.Error())
-	if _, ok := extractMusicNotFoundQuery(err, ""); ok {
-		if mode == deckEventCommand {
-			return onebot11.NewReplayError("当前区服没有该歌曲")
-		}
-		musicQuery, _ := extractMusicNotFoundQuery(err, "")
-		return newMusicNotFoundReplayError(region, musicQuery)
-	}
-
-	switch {
-	case isDeckEventMasterdataMissingMessage(message):
-		if mode == deckEventCommand {
-			return onebot11.NewReplayError("组卡服务找不到该活动的数据，请使用/组卡模拟对应颜色和团的组卡")
-		}
-		return onebot11.NewReplayError("组卡服务找不到该活动的 masterdata，请更新 masterdata 后重试")
-	case strings.Contains(message, "local user snapshot is not configured"),
-		strings.Contains(message, "user data is required for deck auto recommend"):
-		return newSuiteDataNotFoundReplayError()
-	case strings.Contains(message, "解析绑定账号失败"):
-		return newBindingRequiredReplayError()
-	case strings.Contains(message, "未找到该用户的绑定账号"):
-		return newBindingRequiredReplayError()
-	case strings.Contains(message, "toolbox: request failed after retries"),
-		strings.Contains(message, "sekai api: request failed after retries"),
-		strings.Contains(message, "context deadline exceeded"):
-		return onebot11.NewReplayError("获取组卡所需数据超时，请稍后重试")
-	}
-
 	if wrapped := WrapDomainError(err); wrapped != err {
 		return wrapped
 	}
-
-	if normalized := normalizeDeckServiceUserFacingError(err); normalized != err {
-		return normalized
-	}
-
-	if normalized := normalizeDrawingUserFacingError(err); normalized != err {
-		return normalized
-	}
-
-	return err
-}
-
-func isDeckEventMasterdataMissingMessage(message string) bool {
-	lower := strings.ToLower(strings.TrimSpace(message))
-	detailLower := strings.ToLower(strings.TrimSpace(parseEmbeddedErrorText(message)))
-	return strings.Contains(lower, "event not found for eventid:") ||
-		strings.Contains(lower, "master data not found") ||
-		strings.Contains(detailLower, "event not found for eventid:") ||
-		strings.Contains(detailLower, "master data not found")
+	return normalizeDeckServiceUserFacingError(err)
 }
 
 func validateDeckCharacterIDs(values []int) error {
@@ -305,23 +261,26 @@ func validateDeckCharacterIDs(values []int) error {
 		return nil
 	}
 	if len(values) > 5 {
-		return fmt.Errorf("固定角色最多只能指定5个")
+		return usererror.Invalid(i18n.M("deck.fixed.too_many_characters"))
 	}
 	seen := make(map[int]struct{}, len(values))
 	for _, value := range values {
 		if value <= 0 {
-			return fmt.Errorf("固定角色ID必须为正整数")
+			return usererror.Invalid(i18n.M("deck.fixed.character_id_positive"))
 		}
 		if _, ok := seen[value]; ok {
-			return fmt.Errorf("固定角色ID不能重复")
+			return usererror.Invalid(i18n.M("deck.fixed.duplicate_characters"))
 		}
 		seen[value] = struct{}{}
 	}
 	return nil
 }
 
+// isCharacterNotFoundError reports the typed "no character matches" error of
+// resolveGameCharacterIDByQuery (by message ID).
 func isCharacterNotFoundError(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "未找到角色")
+	typed, ok := usererror.As(err)
+	return ok && typed.Message.ID == "character.not_found"
 }
 
 func resolveDeckCharacterUnit(charID int) string {

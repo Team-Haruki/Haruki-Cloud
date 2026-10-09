@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,6 +22,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 func buildCustomProfileResources(ctx context.Context, app *renderapp.App, region string, card sekaiapi.UserCustomProfileCard, resp *sekaiapi.GetAnotherProfileResponse) (drawing.CustomProfileResources, error) {
@@ -313,7 +315,7 @@ func collectCustomProfileStampResources(ctx context.Context, app *renderapp.App,
 		return err
 	}
 	if src.Stamps() == nil {
-		return fmt.Errorf("stamp masterdata provider is not configured")
+		return usererror.Misconfigured(errors.New("stamp masterdata provider is not configured"))
 	}
 	stamps, err := src.Stamps().GetAll(ctx)
 	if err != nil {
@@ -350,7 +352,7 @@ func collectCustomProfileCardResources(ctx context.Context, app *renderapp.App, 
 		return err
 	}
 	if src.Cards() == nil {
-		return fmt.Errorf("card masterdata provider is not configured")
+		return usererror.Misconfigured(errors.New("card masterdata provider is not configured"))
 	}
 	cards := make(map[int]map[string]any, len(c.cardIDs))
 	cardAssets := make(map[int]map[string]any, len(c.cardIDs))
@@ -495,7 +497,7 @@ func applyCustomProfileUnitStoryResource(item map[string]any, app *renderapp.App
 func collectCustomProfileHonorResources(ctx context.Context, app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, resources drawing.CustomProfileResources) error {
 	if app == nil || app.Honors == nil {
 		if len(c.honorQueries) > 0 || len(c.profileHonors) > 0 || len(c.bondsHonorQueries) > 0 {
-			return fmt.Errorf("honor controller is not configured")
+			return usererror.Misconfigured(errors.New("honor controller is not configured"))
 		}
 		return nil
 	}
@@ -733,7 +735,7 @@ func customProfileMasterdataRepoDir(region renderregion.Value) string {
 // error: the rows of another region must never be served in its place.
 func customProfileProviderForRegion(app *renderapp.App, region renderregion.Value) (provider.MasterDataProvider, error) {
 	if app == nil {
-		return nil, fmt.Errorf("masterdata provider is not configured")
+		return nil, usererror.Misconfigured(errors.New("masterdata provider is not configured"))
 	}
 	resolved := renderregion.WithDefault(region)
 	if src := app.Providers[resolved]; src != nil {

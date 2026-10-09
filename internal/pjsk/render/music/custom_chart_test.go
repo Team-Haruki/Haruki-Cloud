@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 type customChartClientStub struct {
@@ -141,7 +142,7 @@ func TestBuildCustomMusicChartRequestRejectsNonJPRegion(t *testing.T) {
 		Query:  "_g5yakrvqobnfq6hafdob7ed8jwm",
 		Region: "cn",
 	})
-	if err == nil || err.Error() != "当前服务器暂未支持自定义谱面请使用jp前缀查询" {
+	if testutil.MessageID(err) != "music.custom_chart.jp_only" {
 		t.Fatalf("BuildMusicChartRequest() error = %v", err)
 	}
 }
@@ -166,7 +167,7 @@ func TestBuildCustomMusicChartRequestMapsCustomScoreNotFound(t *testing.T) {
 		Query:  "_g5yakrvqobnfq6hafdob7ed8jwm",
 		Region: "jp",
 	})
-	if err == nil || err.Error() != "未找到对应自定义谱面" {
+	if testutil.MessageID(err) != "music.custom_chart.not_found" {
 		t.Fatalf("BuildMusicChartRequest() error = %v", err)
 	}
 }
@@ -185,7 +186,7 @@ func TestCustomChartPrefixesAreIgnoredByNormalLookups(t *testing.T) {
 		Query:  "自定义谱面 _g5yakrvqobnfq6hafdob7ed8jwm",
 		Region: "jp",
 	})
-	if err == nil || !strings.Contains(err.Error(), "failed to search music") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "failed to search music") {
 		t.Fatalf("BuildMusicDetailRequest() error = %v", err)
 	}
 
@@ -193,7 +194,7 @@ func TestCustomChartPrefixesAreIgnoredByNormalLookups(t *testing.T) {
 		Query:  "customchart _g5yakrvqobnfq6hafdob7ed8jwm",
 		Region: "jp",
 	})
-	if err == nil || !strings.Contains(err.Error(), "failed to search music chart") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "failed to search music chart") {
 		t.Fatalf("BuildMusicChartRequest() error = %v", err)
 	}
 }
@@ -288,7 +289,7 @@ func TestParseCustomMusicScoreStatsDoesNotFallbackToNoteListLength(t *testing.T)
 
 func TestDecodeCustomMusicScoreRejectsOversizedDecompressedPayload(t *testing.T) {
 	compressed := gzipBytes(t, bytes.Repeat([]byte("x"), customChartMaxDecodedBytes+1))
-	if _, err := decodeCustomMusicScoreJSONBytes(compressed); err == nil || !strings.Contains(err.Error(), "解压后") {
+	if _, err := decodeCustomMusicScoreJSONBytes(compressed); err == nil || !strings.Contains(testutil.ErrorDetail(err), "decompressed custom chart exceeds") {
 		t.Fatalf("oversized gzip error = %v", err)
 	}
 }

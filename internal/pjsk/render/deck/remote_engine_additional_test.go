@@ -13,6 +13,7 @@ import (
 
 	"haruki-cloud/internal/core/upstream"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/logger"
 )
 
@@ -228,7 +229,7 @@ func testRemotePostBranches(t *testing.T, r *RemoteDeckRecommender, exec *remote
 	if err := r.postJSON(context.Background(), exec, "/bad-json", nil, &response); err == nil {
 		t.Fatal("expected decode error")
 	}
-	if err := r.postJSON(context.Background(), exec, "/client-error", nil, nil); err == nil || !strings.Contains(err.Error(), "client bad") {
+	if err := r.postJSON(context.Background(), exec, "/client-error", nil, nil); err == nil || !strings.Contains(testutil.ErrorDetail(err), "client bad") {
 		t.Fatalf("postJSON client error = %v", err)
 	}
 	if err := r.postJSON(context.Background(), exec, "/missing", nil, nil); err == nil || *retryCalls != 0 {

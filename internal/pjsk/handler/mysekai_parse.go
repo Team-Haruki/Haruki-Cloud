@@ -1,11 +1,12 @@
 package handler
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/filteralias"
+	"haruki-cloud/utils/usererror"
 )
 
 var mysekaiMapIndexToID = map[int]int{
@@ -59,7 +60,7 @@ func parseMysekaiMapToken(field string) ([]int, error) {
 	index, _ := strconv.Atoi(token)
 	mapID, ok := mysekaiMapIndexToID[index]
 	if !ok {
-		return nil, fmt.Errorf("地图编号仅支持 1-4（对应地图ID 5-8）")
+		return nil, usererror.Invalid(i18n.M("mysekai.map.id_invalid"))
 	}
 	return []int{mapID}, nil
 }

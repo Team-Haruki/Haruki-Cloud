@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	json "haruki-cloud/internal/jsonutil"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -11,6 +10,7 @@ import (
 	"testing"
 
 	"haruki-cloud/config"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -23,7 +23,9 @@ import (
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
+	"haruki-cloud/utils/usererror"
 )
 
 type handlerEducationRegionValidator struct{}
@@ -313,11 +315,11 @@ func TestExecuteEducationAreaRequiresSuiteSnapshotWhenBindingVisible(t *testing.
 	if err == nil {
 		t.Fatal("expected missing suite snapshot to fail")
 	}
-	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "cn",
 		PJSKUserID: "12345678901234",
 		Visible:    false,
-	}) {
+	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -701,10 +703,7 @@ func TestExecuteEducationMissionsFailWhenMasterdataIsUnavailable(t *testing.T) {
 		if message != nil || !errors.Is(err, cachefill.ErrUnavailable) {
 			t.Fatalf("%s %+v = %+v, %v; want ErrUnavailable", test.mode, test.params, message, err)
 		}
-		replay, ok := errors.AsType[onebot11.ReplayError](WrapDomainError(err))
-		if !ok || string(replay) != ErrMsgMasterdataUnavailable {
-			t.Fatalf("%s user-facing error = %v; want %q", test.mode, WrapDomainError(err), ErrMsgMasterdataUnavailable)
-		}
+		testutil.RequireUserError(t, WrapDomainError(err), usererror.CodeUnavailable, "common.unavailable")
 	}
 }
 
@@ -713,7 +712,7 @@ func TestExecuteEducationCharacterMissionWithoutMissionsIsNotAnOutage(t *testing
 	rc := newMissionTestRequestContext(t, "education-character-mission", education.CharacterMissionQuery{Cid: 5}, source)
 
 	_, err := executeEducation(rc)
-	if err == nil || errors.Is(err, cachefill.ErrUnavailable) || !strings.Contains(err.Error(), "character mission data not found") {
+	if err == nil || errors.Is(err, cachefill.ErrUnavailable) || !strings.Contains(testutil.ErrorDetail(err), "character mission data not found") {
 		t.Fatalf("empty mission table error = %v; want the no-missions error", err)
 	}
 }

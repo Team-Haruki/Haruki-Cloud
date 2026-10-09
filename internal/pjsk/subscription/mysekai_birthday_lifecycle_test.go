@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/config"
 	pjskdb "haruki-cloud/database/pjsk"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
+	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -101,7 +102,7 @@ func TestBirthdayEventStoreValidation(t *testing.T) {
 		SubscriptionID: fmt.Sprint(subscription.ID),
 		Region:         "en",
 		UID:            subscription.UID,
-	}); err == nil || !strings.Contains(err.Error(), "target does not match") {
+	}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "target does not match") {
 		t.Fatalf("mismatched event error = %v", err)
 	}
 }
@@ -146,10 +147,10 @@ func TestBirthdayEventLocalFailureBranches(t *testing.T) {
 	ctx, service, subscription := newBirthdayLocalLifecycle(t)
 	stored := storeBirthdayLifecycleEvent(t, ctx, service, subscription, []byte(`{"materials":[12]}`))
 
-	if _, err := service.EventForClient(ctx, stored.EventID, fmt.Sprint(subscription.ID), "", "version-1.secret", "other", "group-1", "user-1", "self-1"); err == nil || !strings.Contains(err.Error(), "context mismatch") {
+	if _, err := service.EventForClient(ctx, stored.EventID, fmt.Sprint(subscription.ID), "", "version-1.secret", "other", "group-1", "user-1", "self-1"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "context mismatch") {
 		t.Fatalf("subscription mismatch error = %v", err)
 	}
-	if _, err := service.EventForClient(ctx, "bad", fmt.Sprint(subscription.ID), "", "version-1.secret", "cloud-1", "group-1", "user-1", "self-1"); err == nil || !strings.Contains(err.Error(), "invalid event_id") {
+	if _, err := service.EventForClient(ctx, "bad", fmt.Sprint(subscription.ID), "", "version-1.secret", "cloud-1", "group-1", "user-1", "self-1"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "invalid event_id") {
 		t.Fatalf("invalid event id error = %v", err)
 	}
 
@@ -211,7 +212,7 @@ func TestBirthdayTokenValidationFailures(t *testing.T) {
 			t.Fatalf("ValidateToken(%q, %q, %q) = %#v, %v", input.id, input.version, input.token, result, err)
 		}
 	}
-	if _, err := service.EventForClient(ctx, "1", fmt.Sprint(subscription.ID), "", "wrong", "", "", "", ""); err == nil || !strings.Contains(err.Error(), "invalid subscription token") {
+	if _, err := service.EventForClient(ctx, "1", fmt.Sprint(subscription.ID), "", "wrong", "", "", "", ""); err == nil || !strings.Contains(testutil.ErrorDetail(err), "invalid subscription token") {
 		t.Fatalf("invalid token client event error = %v", err)
 	}
 	if err := service.syncBirthdayMonitor(ctx, subscription.ID, "v", "jp", subscription.UID, []string{"diamond"}, time.Now(), false); err == nil {
@@ -303,7 +304,7 @@ func TestCloseBirthdayMonitorConnection(t *testing.T) {
 	config.Cfg.HMES.InternalToken = ""
 	config.Cfg.HMES.UserAgent = ""
 	hmesCloseHTTPClient = failingServer.Client()
-	if err := service.closeBirthdayMonitorConnection(context.Background(), 7, "version-7"); err == nil || !strings.Contains(err.Error(), "status 502") {
+	if err := service.closeBirthdayMonitorConnection(context.Background(), 7, "version-7"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "status 502") {
 		t.Fatalf("non-success close error = %v", err)
 	}
 }

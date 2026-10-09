@@ -6,9 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 var (
@@ -37,7 +39,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 
 	siteOrder := resolveMysekaiMapSiteIDs(query.MapIDs)
 	if len(siteOrder) == 0 {
-		return nil, fmt.Errorf("mysekai map query contains no valid map ids")
+		return nil, usererror.Invalid(i18n.M("mysekai.map.id_invalid"))
 	}
 	harvestMapsBySite := indexMysekaiHarvestMaps(merged)
 	assets := c.loadMysekaiMapAssets()
@@ -50,7 +52,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 	}
 
 	if len(maps) == 0 {
-		return nil, fmt.Errorf("mysekai map contains no harvest map data")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.map.no_data"))
 	}
 
 	return &drawing.MysekaiMsrMapRequest{
@@ -332,7 +334,7 @@ func (c *Controller) RenderMapRequest(payload *drawing.MysekaiMsrMapRequest) ([]
 
 func (c *Controller) RenderMapRequestImage(payload *drawing.MysekaiMsrMapRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	if payload == nil {
 		return drawing.ImageResult{}, fmt.Errorf("mysekai map request is nil")
@@ -351,7 +353,7 @@ func (c *Controller) RenderMap(query MapQuery) ([]byte, error) {
 
 func (c *Controller) RenderMapImage(query MapQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildMapRequest(query)

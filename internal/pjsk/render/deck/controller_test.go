@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -21,12 +20,14 @@ import (
 	"testing"
 	"time"
 
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 
 	"github.com/klauspost/compress/zstd"
 )
@@ -612,7 +613,7 @@ func TestBuildAutoRecommendRequestRequiresRemoteServiceWhenEngineEnabled(t *test
 	if err == nil {
 		t.Fatalf("expected remote service configuration error")
 	}
-	if !strings.Contains(err.Error(), "deck recommend service is not configured") {
+	if !strings.Contains(testutil.ErrorDetail(err), "deck recommend service is not configured") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -1511,7 +1512,7 @@ func TestBuildAutoRecommendRequestChallengeCurrentRequiresCharacter(t *testing.T
 	if err == nil {
 		t.Fatalf("expected challenge current to require a character")
 	}
-	if !strings.Contains(err.Error(), "需要指定挑战组卡角色") {
+	if testutil.MessageID(err) != "deck.challenge.current_needs_character" {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -1867,7 +1868,7 @@ func TestBuildAutoRecommendRequestEventMusicCompareRequiresFixedDeckWhenQueriesO
 	if err == nil {
 		t.Fatalf("expected compare without fixed deck to fail")
 	}
-	if !strings.Contains(err.Error(), "必须固定一个卡组") {
+	if testutil.MessageID(err) != "deck.compare.needs_fixed_deck" {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

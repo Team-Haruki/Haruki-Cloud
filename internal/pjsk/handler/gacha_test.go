@@ -2,10 +2,12 @@ package handler
 
 import (
 	"context"
-	json "haruki-cloud/internal/jsonutil"
 	"testing"
 
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestGachaHandleUsesPastInclusiveListWhenArgsEmpty(t *testing.T) {
@@ -180,7 +182,5 @@ func TestGachaHandleReturnsHelpHintOnInvalidQuery(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if got, want := err.Error(), "卡池查询参数格式不正确。查看完整用法请发送：/卡池 -help"; got != want {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeUsage, "common.unrecognized_args")
 }

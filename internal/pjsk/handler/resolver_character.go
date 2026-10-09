@@ -8,6 +8,7 @@ import (
 
 	sekaidb "haruki-cloud/database/sekai"
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/card"
@@ -30,16 +31,16 @@ func resolveGameCharacterIDByQuery(
 	serviceLabel string,
 ) (int, error) {
 	if app == nil || app.Sekai == nil {
-		return 0, fmt.Errorf("%s service unavailable: sekai client not configured", serviceLabel)
+		return 0, usererror.Misconfigured(fmt.Errorf("%s service unavailable: sekai client not configured", serviceLabel))
 	}
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return 0, usererror.Inputf("请输入角色名")
+		return 0, usererror.Misuse(i18n.M("character.query_required"))
 	}
 
 	target := normalizeGameCharacterText(query)
 	if target == "" {
-		return 0, usererror.Inputf("请输入角色名")
+		return 0, usererror.Misuse(i18n.M("character.query_required"))
 	}
 	if charID, resolved, err := resolveKnownGameCharacterID(ctx, app, query); resolved || err != nil {
 		return charID, err
@@ -51,11 +52,11 @@ func resolveGameCharacterIDByQuery(
 	}
 	switch len(ids) {
 	case 0:
-		return 0, usererror.Inputf("未找到角色：%s", query)
+		return 0, usererror.New(usererror.CodeNotFound, i18n.M("character.not_found", i18n.Data{"Query": i18n.EchoQuery(query)}))
 	case 1:
 		return ids[0], nil
 	default:
-		return 0, fmt.Errorf("匹配到多个角色：%s", query)
+		return 0, usererror.New(usererror.CodeAmbiguous, i18n.M("character.ambiguous", i18n.Data{"Query": i18n.EchoQuery(query)}))
 	}
 }
 

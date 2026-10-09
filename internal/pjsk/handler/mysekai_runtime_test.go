@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,6 +13,8 @@ import (
 	"time"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/i18n"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -26,7 +27,9 @@ import (
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
+	"haruki-cloud/utils/usererror"
 )
 
 type unavailableSnapshotProvider struct{}
@@ -370,9 +373,7 @@ func TestExecuteMySekaiRequiresController(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if !strings.Contains(err.Error(), "烤森服务未就绪") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeMisconfigured, "common.misconfigured")
 }
 
 func TestExecuteMySekaiMissingSnapshotUsesStandardReplayError(t *testing.T) {
@@ -399,16 +400,13 @@ func TestExecuteMySekaiMissingSnapshotUsesStandardReplayError(t *testing.T) {
 		MySekai:  rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true}),
 	}))
 
-	var replyErr onebot11.ReplayError
-	if !errors.As(WrapDomainError(err), &replyErr) {
-		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
-	}
-	if string(replyErr) != buildPrivateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{
+	replyErr := testutil.RequireUserError(t, WrapDomainError(err), usererror.CodeSetup, "binding.data.not_found_account")
+	if replyErr.Message.String() != privateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
 		Visible:    false,
-	}) {
-		t.Fatalf("unexpected replay error: %q", replyErr)
+	}).String() {
+		t.Fatalf("unexpected reply: %q", replyErr.Message)
 	}
 }
 
@@ -445,7 +443,7 @@ func TestExecuteMySekaiPayloadProfileFetchFailureReturnsSekaiAPIError(t *testing
 		SekaiAPI:        sekaiapi.NewSekaiAPIClient(&harukiConfig.SekaiAPIConfig{BaseURL: sekaiServer.URL}),
 	}))
 
-	assertReplayErrorText(t, err, "SekaiAPI 拉取失败：找不到该玩家公开信息")
+	testutil.RequireUserError(t, err, usererror.CodeNotFound, "upstream.game_data.player_not_found")
 }
 
 func TestExecuteMySekaiReturnsBindingErrorBeforeDataMessage(t *testing.T) {
@@ -462,13 +460,7 @@ func TestExecuteMySekaiReturnsBindingErrorBeforeDataMessage(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	var replyErr onebot11.ReplayError
-	if !errors.As(WrapDomainError(err), &replyErr) {
-		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
-	}
-	if string(replyErr) != ErrMsgBindingNotFound {
-		t.Fatalf("unexpected replay error: %q", replyErr)
-	}
+	testutil.RequireUserError(t, WrapDomainError(err), usererror.CodeSetup, "binding.required")
 }
 
 func TestExecuteMySekaiWarnsOnBlockedCNRegion(t *testing.T) {
@@ -594,18 +586,12 @@ func assertExpiredMysekaiMapRejected(t *testing.T, app *renderapp.App, staleUplo
 	if len(message) != 0 {
 		t.Fatalf("expected no image message when expired, got %+v", message)
 	}
-	lines := strings.Split(err.Error(), "\n")
-	if len(lines) != 4 {
-		t.Fatalf("unexpected expired error lines: %+v", lines)
+	expired := testutil.RequireUserError(t, err, usererror.CodeSetup, "mysekai.data_expired")
+	if expired.Message.Data["Account"].(i18n.Message).ID != "format.account.label" {
+		t.Fatalf("expired reply must name the bound account: %+v", expired.Message.Data)
 	}
-	if lines[0] != "您的mysekai数据已过期" || lines[2] != "如果需要查看新的，请重新上传" || lines[3] != "如果确定需要看目前数据，请在指令上加force参数" {
-		t.Fatalf("unexpected expired error: %+v", lines)
-	}
-	if !strings.HasPrefix(lines[1], "上次更新时间: ") || strings.TrimSpace(strings.TrimPrefix(lines[1], "上次更新时间: ")) == "" {
-		t.Fatalf("unexpected last update line: %q", lines[1])
-	}
-	if !strings.Contains(lines[1], time.UnixMilli(staleUploadTime).Format("2006")) {
-		t.Fatalf("expected last update line to contain upload year, got %q", lines[1])
+	if updatedAt := expired.Message.Data["UpdatedAt"].(i18n.Message).String(); !strings.Contains(updatedAt, time.UnixMilli(staleUploadTime).Format("2006")) {
+		t.Fatalf("expected the upload time to contain the upload year, got %q", updatedAt)
 	}
 }
 

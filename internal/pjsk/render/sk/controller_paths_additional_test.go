@@ -397,7 +397,7 @@ func TestTrackerLineFastPathsAdditional(t *testing.T) {
 		_, err := controller.buildLineRanksOrUserFromTracker("jp", 1, nil, additionalInt64Ptr(123), nil, false)
 		{
 			testutil.Require(t, !(err == nil), "wrapped user-line error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "tracker user query failed"), "wrapped user-line error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "tracker user query failed"), "wrapped user-line error = %v", err)
 		}
 	}
 

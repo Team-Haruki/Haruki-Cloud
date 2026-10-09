@@ -8,6 +8,7 @@ import (
 	"io"
 	"sync"
 
+	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/observability/commandtrace"
 
 	"github.com/go-resty/resty/v2"
@@ -110,7 +111,7 @@ func (c *HarukiToolboxClient) decompressContextLimit(ctx context.Context, resp *
 		return nil, err
 	}
 	if resp == nil {
-		return nil, fmt.Errorf("toolbox: response is nil")
+		return nil, upstreamerr.Tag(upstreamerr.ServiceToolbox, upstreamerr.KindBadResponse, "", fmt.Errorf("toolbox: response is nil"))
 	}
 	if limit <= 0 || limit > toolboxMaxDecompressedResponseBytes {
 		limit = toolboxMaxDecompressedResponseBytes
@@ -118,7 +119,7 @@ func (c *HarukiToolboxClient) decompressContextLimit(ctx context.Context, resp *
 	body := resp.Body()
 	if resp.Header().Get("Content-Encoding") != "zstd" {
 		if int64(len(body)) > limit {
-			return nil, fmt.Errorf("toolbox: response exceeds %d-byte limit", limit)
+			return nil, upstreamerr.Tag(upstreamerr.ServiceToolbox, upstreamerr.KindBadResponse, "", fmt.Errorf("toolbox: response exceeds %d-byte limit", limit))
 		}
 		return body, nil
 	}
@@ -127,7 +128,7 @@ func (c *HarukiToolboxClient) decompressContextLimit(ctx context.Context, resp *
 
 	decoder, err := c.decoders.acquire()
 	if err != nil {
-		return nil, fmt.Errorf("toolbox: zstd reader init failed: %w", err)
+		return nil, upstreamerr.Tag(upstreamerr.ServiceToolbox, upstreamerr.KindBadResponse, "", fmt.Errorf("toolbox: zstd reader init failed: %w", err))
 	}
 	out, ok := decodeToolboxZstdFrame(decoder, body, limit)
 	if !ok {
@@ -142,7 +143,7 @@ func (c *HarukiToolboxClient) decompressContextLimit(ctx context.Context, resp *
 		// their potentially large buffers for the client's entire lifetime.
 		decoder, err = newToolboxDecoder(toolboxMaxDecoderWindow)
 		if err != nil {
-			return nil, fmt.Errorf("toolbox: zstd reader init failed: %w", err)
+			return nil, upstreamerr.Tag(upstreamerr.ServiceToolbox, upstreamerr.KindBadResponse, "", fmt.Errorf("toolbox: zstd reader init failed: %w", err))
 		}
 		out, err = readToolboxZstd(ctx, decoder, body, limit)
 		decoder.Close()
@@ -151,7 +152,7 @@ func (c *HarukiToolboxClient) decompressContextLimit(ctx context.Context, resp *
 		return nil, ctx.Err()
 	}
 	if err != nil {
-		return nil, fmt.Errorf("toolbox: zstd decompression failed: %w", err)
+		return nil, upstreamerr.Tag(upstreamerr.ServiceToolbox, upstreamerr.KindBadResponse, "", fmt.Errorf("toolbox: zstd decompression failed: %w", err))
 	}
 	return out, nil
 }
@@ -200,7 +201,7 @@ func readToolboxZstd(ctx context.Context, decoder *zstd.Decoder, body []byte, li
 		return nil, err
 	}
 	if int64(len(out)) > limit {
-		return nil, fmt.Errorf("toolbox: decompressed response exceeds %d-byte limit", limit)
+		return nil, upstreamerr.Tag(upstreamerr.ServiceToolbox, upstreamerr.KindBadResponse, "", fmt.Errorf("toolbox: decompressed response exceeds %d-byte limit", limit))
 	}
 	return out, nil
 }

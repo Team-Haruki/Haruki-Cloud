@@ -49,7 +49,7 @@ func testSharedCommandEncodingAndValidation(t *testing.T) {
 	}
 
 	validationErr := &botValidationError{msg: "wrong route", actualPath: "profile/other"}
-	envelope := commandErrorEnvelope(validationErr, "profile/want", "/want", false)
+	envelope := commandErrorEnvelope(context.Background(), validationErr, "profile/want", "/want")
 	if envelope.HTTPStatus != fiber.StatusBadRequest || envelope.Message != "指令与当前接口不匹配" {
 		t.Fatalf("validation envelope = %+v", envelope)
 	}

@@ -1,11 +1,15 @@
 package music
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewSearchService(source DataSource, parser *Parser) *SearchService {
@@ -50,7 +54,7 @@ func (s *SearchService) SearchChart(query string) (*QueryInfo, *masterdata.Music
 
 func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 	if s == nil || s.source == nil {
-		return nil, fmt.Errorf("music data source is not configured")
+		return nil, usererror.Misconfigured(errors.New("music data source is not configured"))
 	}
 	if info == nil {
 		return nil, fmt.Errorf("music query info is required")
@@ -95,7 +99,7 @@ func (s *SearchService) searchByID(info *QueryInfo, now int64) (*masterdata.Musi
 	if err != nil {
 		return nil, err
 	}
-	return nil, fmt.Errorf("music not found: %d", info.Value)
+	return nil, notfound.MusicID(info.Value)
 }
 
 func (s *SearchService) resolveTitleFallback(keyword string) *masterdata.Music {
@@ -114,14 +118,14 @@ func (s *SearchService) searchBySequence(sequence int, now int64) (*masterdata.M
 	// Sequence lookup stays anchored to songs released in the target region.
 	musics := accessibleMusicsSortedByPublishedAt(s.source, now, false)
 	if len(musics) == 0 {
-		return nil, fmt.Errorf("no music data available")
+		return nil, usererror.Unavailable(i18n.FeatureGameData, errors.New("no music data available"))
 	}
 	index := sequence - 1
 	if sequence < 0 {
 		index = len(musics) + sequence
 	}
 	if index < 0 || index >= len(musics) {
-		return nil, fmt.Errorf("music index out of range: %d", sequence)
+		return nil, notfound.Music("")
 	}
 	return musics[index], nil
 }
@@ -146,10 +150,10 @@ func (s *SearchService) searchByBan(info *QueryInfo, now int64) (*masterdata.Mus
 	}
 	events := s.source.GetBanEvents(info.BanCharID)
 	if len(events) == 0 {
-		return nil, fmt.Errorf("no ban events found for character %d", info.BanCharID)
+		return nil, notfound.Music("")
 	}
 	if info.BanSeq < 1 || info.BanSeq > len(events) {
-		return nil, fmt.Errorf("ban event index out of range: %d", info.BanSeq)
+		return nil, notfound.Music("")
 	}
 	return s.searchByEvent(events[info.BanSeq-1].ID, now)
 }
@@ -165,15 +169,15 @@ func (s *SearchService) searchByTitleOrChart(info *QueryInfo, now int64) (*maste
 		return s.resolveTitle(keyword)
 	}
 	if info.MusicID != 0 {
-		return nil, fmt.Errorf("music not found: %d", info.MusicID)
+		return nil, notfound.MusicID(info.MusicID)
 	}
-	return nil, fmt.Errorf("music title query is empty")
+	return nil, usererror.Misuse(i18n.M("music.query_required"))
 }
 
 func (s *SearchService) resolveTitle(query string) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return nil, fmt.Errorf("music title query is empty")
+		return nil, usererror.Misuse(i18n.M("music.query_required"))
 	}
 	if s.titleResolver != nil {
 		return s.titleResolver(query)

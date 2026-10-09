@@ -3,14 +3,18 @@ package handler
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	harukiConfig "haruki-cloud/config"
-	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/core/upstreamerr"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestNormalizeToolboxDataFetchError(t *testing.T) {
@@ -23,83 +27,33 @@ func TestNormalizeToolboxDataFetchError(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name      string
-		input     error
-		dataLabel string
-		wantErr   string
+		name  string
+		input error
+		kind  string
+		code  usererror.Code
+		id    string
 	}{
-		{
-			name:      "account binding not found",
-			input:     sekaiapi.ErrAccountBindingNotFound,
-			dataLabel: "suite",
-			wantErr:   "你还没有在工具箱绑定游戏账号，无法获取suite数据，请前往工具箱绑定游戏账号并上传数据后重试\n" + ErrMsgToolboxURL,
-		},
-		{
-			name:      "game data not found suite",
-			input:     sekaiapi.ErrGameDataNotFound,
-			dataLabel: "suite",
-			wantErr:   buildPrivateDataNotFoundMessage("suite", binding),
-		},
-		{
-			name:      "game data not found mysekai",
-			input:     sekaiapi.ErrGameDataNotFound,
-			dataLabel: "mysekai",
-			wantErr:   buildPrivateDataNotFoundMessage("mysekai", binding),
-		},
-		{
-			name:      "invalid platform user",
-			input:     sekaiapi.ErrInvalidPlatformUser,
-			dataLabel: "mysekai",
-			wantErr:   buildToolboxAccessDeniedMessage("mysekai", binding),
-		},
-		{
-			name:      "account owner banned",
-			input:     sekaiapi.ErrAccountOwnerBanned,
-			dataLabel: "suite",
-			wantErr:   "工具箱账号已被封禁，无法获取suite数据",
-		},
-		{
-			name:      "service unavailable",
-			input:     &sekaiapi.ToolboxAPIError{StatusCode: 503, Message: "toolbox service unavailable"},
-			dataLabel: "suite",
-			wantErr:   "工具箱服务暂时不可用，请稍后再试",
-		},
-		{
-			name:      "generic forbidden detail is hidden",
-			input:     &sekaiapi.ToolboxAPIError{StatusCode: 403, Message: "forbidden: some internal detail"},
-			dataLabel: "suite",
-			wantErr:   "工具箱拒绝了当前suite数据请求",
-		},
-		{
-			name:      "generic not found detail is hidden",
-			input:     &sekaiapi.ToolboxAPIError{StatusCode: 404, Message: "unexpected missing payload detail"},
-			dataLabel: "suite",
-			wantErr:   "工具箱未找到当前suite数据",
-		},
-		{
-			name:      "generic upstream detail is hidden",
-			input:     &sekaiapi.ToolboxAPIError{StatusCode: 500, Message: "raw upstream detail"},
-			dataLabel: "suite",
-			wantErr:   "工具箱请求失败（状态 500）",
-		},
-		{
-			name:      "authentication failure",
-			input:     &sekaiapi.ToolboxAPIError{StatusCode: 401, Message: "unauthorized"},
-			dataLabel: "suite",
-			wantErr:   "工具箱请求失败（状态 401）",
-		},
-		{
-			name:      "network timeout",
-			input:     errString("toolbox: request failed after retries: context deadline exceeded"),
-			dataLabel: "suite",
-			wantErr:   "连接工具箱超时或网络异常，请稍后再试",
-		},
+		{"account binding not found", sekaiapi.ErrAccountBindingNotFound, "suite", usererror.CodeSetup, "binding.toolbox.not_bound"},
+		{"game data not found suite", sekaiapi.ErrGameDataNotFound, "suite", usererror.CodeSetup, "binding.data.not_found_account"},
+		{"game data not found mysekai", sekaiapi.ErrGameDataNotFound, "mysekai", usererror.CodeSetup, "binding.data.not_found_account"},
+		{"invalid platform user", sekaiapi.ErrInvalidPlatformUser, "mysekai", usererror.CodeSetup, "binding.toolbox.access_denied_account"},
+		{"account owner banned", sekaiapi.ErrAccountOwnerBanned, "suite", usererror.CodeForbidden, "binding.toolbox.owner_banned"},
+		{"service unavailable", &sekaiapi.ToolboxAPIError{StatusCode: 503, Message: "toolbox service unavailable"}, "suite", usererror.CodeUnavailable, "common.unavailable"},
+		{"generic forbidden detail is hidden", &sekaiapi.ToolboxAPIError{StatusCode: 403, Message: "forbidden: some internal detail"}, "suite", usererror.CodeSetup, "binding.toolbox.access_denied_account"},
+		{"generic not found detail is hidden", &sekaiapi.ToolboxAPIError{StatusCode: 404, Message: "unexpected missing payload detail"}, "suite", usererror.CodeSetup, "binding.data.not_found_account"},
+		{"generic upstream detail is hidden", &sekaiapi.ToolboxAPIError{StatusCode: 500, Message: "raw upstream detail"}, "suite", usererror.CodeUnavailable, "upstream.failed"},
+		{"authentication failure needs the bot owner", &sekaiapi.ToolboxAPIError{StatusCode: 401, Message: "unauthorized"}, "suite", usererror.CodeMisconfigured, "common.misconfigured"},
+		{"network timeout", upstreamerr.Transport(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", context.DeadlineExceeded), "suite", usererror.CodeTimeout, "common.timeout"},
+		{"unclassified failure", errors.New("plain failure"), "suite", usererror.CodeUnavailable, "common.unavailable"},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := normalizeToolboxDataFetchError(tc.input, tc.dataLabel, binding)
-			assertReplayErrorText(t, err, tc.wantErr)
+			err := normalizeToolboxDataFetchError(tc.input, tc.kind, binding)
+			typed := testutil.RequireUserError(t, err, tc.code, tc.id)
+			if typed.Cause == nil && tc.id != "binding.data.not_found_account" {
+				t.Fatalf("the upstream error must stay the logged cause: %+v", typed)
+			}
 		})
 	}
 }
@@ -113,16 +67,16 @@ func TestPrivateDataNotFoundErrorsExplainHiddenBindings(t *testing.T) {
 		MySekaiVisible: false,
 	}
 
-	assertReplayErrorText(
-		t,
-		newSuiteDataNotFoundReplayErrorForBinding(binding),
-		"你已自行隐藏 CN服7558747506658564903 的 suite 抓包信息，请先发送“/展示抓包”恢复展示后再重试",
-	)
-	assertReplayErrorText(
-		t,
-		newMySekaiDataNotFoundReplayErrorForBinding(binding),
-		"你已自行隐藏 CN服7558747506658564903 的 mysekai 抓包信息，请先发送“/展示烤森抓包”恢复展示后再重试",
-	)
+	suite := testutil.RequireUserError(t, suiteDataNotFoundError(binding), usererror.CodeSetup, "binding.data.hidden_suite")
+	if suite.Message.Data["Account"].(i18n.Message).String() != i18n.AccountLabel("cn", "7558747506658564903", true).String() {
+		t.Fatalf("hidden suite account = %+v", suite.Message.Data)
+	}
+	testutil.RequireUserError(t, mysekaiDataNotFoundError(binding), usererror.CodeSetup, "binding.data.hidden_mysekai")
+	testutil.RequireUserError(t, suiteDataNotFoundError(nil), usererror.CodeSetup, "binding.data.not_found")
+	hidden := testutil.RequireUserError(t, mysekaiDataNotFoundError(&accountdata.ResolvedBinding{MySekaiVisible: false}), usererror.CodeSetup, "binding.data.hidden_mysekai")
+	if hidden.Message.Data["Account"].(i18n.Message).ID != "binding.current_account" {
+		t.Fatalf("a binding without UID must name the current account: %+v", hidden.Message.Data)
+	}
 }
 
 func TestTempProfileUsesTemporaryBindingNotice(t *testing.T) {
@@ -130,36 +84,49 @@ func TestTempProfileUsesTemporaryBindingNotice(t *testing.T) {
 	harukiConfig.Cfg = harukiConfig.Config{Profile: harukiConfig.ProfileTemp}
 	t.Cleanup(func() { harukiConfig.Cfg = prev })
 
-	testCases := []struct {
-		name string
-		err  error
-	}{
-		{name: "local binding missing", err: WrapDomainError(accountdata.ErrNoBinding)},
-		{name: "binding service unavailable", err: WrapDomainError(accountdata.ErrBindingServiceUnavailable)},
-		{name: "toolbox account binding missing", err: normalizeToolboxDataFetchError(sekaiapi.ErrAccountBindingNotFound, "suite", nil)},
-		{
-			name: "toolbox invalid platform detail",
-			err: normalizeToolboxDataFetchError(
-				&sekaiapi.ToolboxAPIError{StatusCode: 403, Message: "forbidden: invalid platform or platform_user_id for this user"},
-				"mysekai",
-				nil,
-			),
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			assertReplayErrorText(t, tc.err, ErrMsgTempBindingUnavailable)
+	for name, err := range map[string]error{
+		"local binding missing":           WrapDomainError(accountdata.ErrNoBinding),
+		"binding service unavailable":     WrapDomainError(accountdata.ErrBindingServiceUnavailable),
+		"toolbox account binding missing": normalizeToolboxDataFetchError(sekaiapi.ErrAccountBindingNotFound, "suite", nil),
+		"toolbox invalid platform detail": normalizeToolboxDataFetchError(&sekaiapi.ToolboxAPIError{StatusCode: 403, Message: "forbidden: invalid platform or platform_user_id for this user"}, "mysekai", nil),
+	} {
+		t.Run(name, func(t *testing.T) {
+			testutil.RequireUserError(t, err, usererror.CodeSetup, "binding.temp_environment")
 		})
 	}
 }
 
-func TestWrapDomainErrorMapsToolboxServiceErrors(t *testing.T) {
-	err := WrapDomainError(&sekaiapi.ToolboxAPIError{StatusCode: 503, Message: "toolbox service unavailable"})
-	assertReplayErrorText(t, err, "工具箱服务暂时不可用，请稍后再试")
-
-	err = WrapDomainError(errString("toolbox: request failed after retries: context deadline exceeded"))
-	assertReplayErrorText(t, err, "连接工具箱超时或网络异常，请稍后再试")
+func TestWrapDomainErrorClassifiesByType(t *testing.T) {
+	testCases := []struct {
+		name string
+		err  error
+		code usererror.Code
+		id   string
+	}{
+		{"no binding", accountdata.ErrNoBinding, usererror.CodeSetup, "binding.required"},
+		{"binding storage down", accountdata.ErrBindingServiceUnavailable, usererror.CodeUnavailable, "common.unavailable"},
+		{"no suite snapshot", rendersnapshot.ErrNotConfigured, usererror.CodeSetup, "binding.data.not_found"},
+		{"no mysekai snapshot", rendersnapshot.ErrMySekaiUnavailable, usererror.CodeSetup, "binding.data.not_found"},
+		{"toolbox 503", &sekaiapi.ToolboxAPIError{StatusCode: 503, Message: "toolbox service unavailable"}, usererror.CodeUnavailable, "common.unavailable"},
+		{"toolbox timeout", upstreamerr.Transport(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", context.DeadlineExceeded), usererror.CodeTimeout, "common.timeout"},
+		{"game server maintenance", sekaiapi.ErrServerMaintenance, usererror.CodeUnavailable, "upstream.maintenance"},
+		{"player not found", sekaiapi.ErrUserNotFound, usererror.CodeNotFound, "upstream.game_data.player_not_found"},
+		{"client not configured", sekaiapi.ErrClientNotConfigured, usererror.CodeMisconfigured, "common.misconfigured"},
+		{"ranking rate limit", &sekaiapi.TrackerAPIError{StatusCode: 429, Message: "rate limited by tracker"}, usererror.CodeUnavailable, "upstream.rate_limited"},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			testutil.RequireUserError(t, WrapDomainError(tc.err), tc.code, tc.id)
+		})
+	}
+	plain := errors.New("connection refused by something")
+	if WrapDomainError(plain) != plain {
+		t.Fatal("an unclassified error must pass through (the reply layer gives the generic reply)")
+	}
+	typed := usererror.ReadOnly()
+	if WrapDomainError(typed) != typed {
+		t.Fatal("a typed error must pass through unchanged")
+	}
 }
 
 func TestRequireVisibleSuiteSnapshotPropagatesToolboxTypedError(t *testing.T) {
@@ -184,20 +151,7 @@ func TestRequireVisibleSuiteSnapshotPropagatesToolboxTypedError(t *testing.T) {
 	})
 
 	_, _, err := rc.requireVisibleSuiteSnapshot()
-	if err == nil {
-		t.Fatal("expected error")
-	}
-	var replyErr onebot11.ReplayError
-	if !errors.As(err, &replyErr) {
-		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
-	}
-	if string(replyErr) != buildToolboxAccessDeniedMessage("suite", &accountdata.ResolvedBinding{
-		Server:     "jp",
-		PJSKUserID: "12345678901234",
-		Visible:    false,
-	}) {
-		t.Fatalf("unexpected replay error: %q", replyErr)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeSetup, "binding.toolbox.access_denied_account")
 }
 
 func TestResolveTargetSnapshotWithErrorPreservesToolboxFailure(t *testing.T) {
@@ -245,12 +199,12 @@ func TestRequireCardCatalogDetailedProfilePropagatesToolboxFailure(t *testing.T)
 		},
 		Bindings: service,
 		Snapshots: &runtimeSnapshotProviderStub{
-			err: errString("toolbox: request failed after retries: context deadline exceeded"),
+			err: upstreamerr.Transport(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", context.DeadlineExceeded),
 		},
 	})
 
 	_, err := requireCardCatalogDetailedProfile(rc)
-	assertReplayErrorText(t, err, "连接工具箱超时或网络异常，请稍后再试")
+	testutil.RequireUserError(t, err, usererror.CodeTimeout, "common.timeout")
 }
 
 func TestCardCatalogSnapshotErrorTitleDistinguishesUpstreamFailure(t *testing.T) {
@@ -259,26 +213,11 @@ func TestCardCatalogSnapshotErrorTitleDistinguishesUpstreamFailure(t *testing.T)
 		err  error
 		want string
 	}{
-		{
-			name: "missing suite",
-			err:  sekaiapi.ErrGameDataNotFound,
-			want: CardCatalogTitleNoSuite,
-		},
-		{
-			name: "authentication failure",
-			err:  &sekaiapi.ToolboxAPIError{StatusCode: 401, Message: "unauthorized"},
-			want: "工具箱请求失败（状态 401）；当前显示全服卡牌",
-		},
-		{
-			name: "network timeout",
-			err:  errString("toolbox: request failed after retries: context deadline exceeded"),
-			want: "连接工具箱超时或网络异常，请稍后再试；当前显示全服卡牌",
-		},
-		{
-			name: "unknown internal failure",
-			err:  errString("internal detail must not be exposed"),
-			want: CardCatalogTitleSuiteUnavailable,
-		},
+		{"missing suite", sekaiapi.ErrGameDataNotFound, i18n.T("card.catalog_notice.no_suite")},
+		{"access denied names the reason", sekaiapi.ErrInvalidPlatformUser, i18n.T("card.catalog_notice.with_reason", i18n.Data{"Reason": firstLine(i18n.T("binding.toolbox.access_denied", i18n.Data{"Data": i18n.M("binding.data_kind.suite"), "ToolboxLink": i18n.M("binding.toolbox_link")}))})},
+		{"authentication failure", &sekaiapi.ToolboxAPIError{StatusCode: 401, Message: "unauthorized"}, i18n.T("card.catalog_notice.suite_unavailable")},
+		{"network timeout", upstreamerr.Transport(upstreamerr.ServiceToolbox, "toolbox", context.DeadlineExceeded), i18n.T("card.catalog_notice.suite_unavailable")},
+		{"unknown internal failure", errString("internal detail must not be exposed"), i18n.T("card.catalog_notice.suite_unavailable")},
 	}
 
 	for _, tt := range tests {
@@ -288,4 +227,9 @@ func TestCardCatalogSnapshotErrorTitleDistinguishesUpstreamFailure(t *testing.T)
 			}
 		})
 	}
+}
+
+func firstLine(text string) string {
+	line, _, _ := strings.Cut(text, "\n")
+	return line
 }

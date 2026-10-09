@@ -186,7 +186,7 @@ func TestCopylintRules(t *testing.T) {
 	}
 	for rel, skipped := range map[string]bool{
 		"internal/pjsk/handler/music.go":       false,
-		"api/bot/pjsk/param_echo.go":           false,
+		"api/bot/pjsk/error_reply.go":          false,
 		"main.go":                              false,
 		"cmd/importer/main.go":                 true,
 		"internal/pjsk/parser/extractor.go":    true,

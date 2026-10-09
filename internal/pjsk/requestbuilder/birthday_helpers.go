@@ -11,10 +11,12 @@ import (
 	sekaidb "haruki-cloud/database/sekai"
 	sekaicard "haruki-cloud/database/sekai/card"
 	"haruki-cloud/database/sekai/gamecharacterunit"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/utils/usererror"
 )
 
 func matchBirthdayCharacterIDs(rows []*sekaidb.Gamecharacter, query string) []int {
@@ -100,7 +102,7 @@ func loadBirthdayCards(ctx context.Context, app *renderapp.App, region renderreg
 		return nil, "", fmt.Errorf("query birthday cards failed: %w", err)
 	}
 	if len(entities) == 0 {
-		return nil, "", fmt.Errorf("birthday cards are required")
+		return nil, "", usererror.New(usererror.CodeNotFound, i18n.M("misc.birthday.cards_missing"))
 	}
 
 	cards := make([]drawing.CharaBirthdayCard, 0, len(entities))

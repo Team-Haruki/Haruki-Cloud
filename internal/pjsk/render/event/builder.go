@@ -1,12 +1,14 @@
 package event
 
 import (
-	"fmt"
-	"strings"
+	"errors"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
+	"haruki-cloud/internal/pjsk/render/provider"
+	"haruki-cloud/utils/usererror"
 )
 
 func NewBuilder(source DataSource, assetHelper *assets.AssetHelper) *Builder {
@@ -18,7 +20,7 @@ func NewBuilder(source DataSource, assetHelper *assets.AssetHelper) *Builder {
 
 func (b *Builder) BuildEventDetailRequest(query DetailQuery) (*drawing.EventDetailRequest, error) {
 	if query.EventID == 0 {
-		return nil, fmt.Errorf("event id is required")
+		return nil, usererror.Misuse(i18n.M("event.query_required"))
 	}
 
 	eventInfo, err := b.source.GetEventByID(query.EventID)
@@ -56,13 +58,13 @@ func (b *Builder) BuildEventDetailRequest(query DetailQuery) (*drawing.EventDeta
 }
 
 func isMissingEventCardsError(err error) bool {
-	return err != nil && strings.Contains(strings.ToLower(err.Error()), "no cards found for event")
+	return errors.Is(err, provider.ErrEventCardsNotFound)
 }
 
 func (b *Builder) BuildEventListRequest(query ListQuery) (*drawing.EventListRequest, error) {
 	events := b.filterEvents(query)
 	if len(events) == 0 {
-		return nil, fmt.Errorf("no events matched filters")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("event.no_match"))
 	}
 
 	region := query.Region

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"haruki-cloud/internal/testutil"
 )
 
 type forecastBaseStub struct {
@@ -76,7 +78,7 @@ func TestForecastDataCacheNotReadyAndResetEdges(t *testing.T) {
 	cache := newForecastDataCache(forecastBaseStub{})
 	key := forecastDataCacheKey{Region: "jp", EventID: 1, Scope: ForecastScopeTotal}
 	cache.entries[key] = &forecastDataCacheEntry{lastAttemptAt: time.Now().UTC(), lastError: "upstream unavailable"}
-	if _, err := cache.CachedBySource("jp", 1, nil); err == nil || !strings.Contains(err.Error(), "upstream unavailable") {
+	if _, err := cache.CachedBySource("jp", 1, nil); err == nil || !strings.Contains(testutil.ErrorDetail(err), "upstream unavailable") {
 		t.Fatalf("cached failure error = %v", err)
 	}
 	cache.entries[key] = &forecastDataCacheEntry{data: forecastSourceFixture(100), refreshedAt: time.Now().UTC()}

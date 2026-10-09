@@ -6,8 +6,11 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 // ===========================================================================
@@ -148,14 +151,14 @@ func (p *localEventProvider) ensureWorldBloomChapterRankingRewardRanges() error 
 
 func (p *localEventProvider) GetByID(_ context.Context, id int) (*masterdata.Event, error) {
 	if id == 0 {
-		return nil, fmt.Errorf("event id is required")
+		return nil, usererror.Misuse(i18n.M("event.query_required"))
 	}
 	if err := p.ensureEvents(); err != nil {
 		return nil, err
 	}
 	ev, ok := p.events.v().byID[id]
 	if !ok {
-		return nil, fmt.Errorf("event %d not found", id)
+		return nil, notfound.Event()
 	}
 	return common.CloneEvent(ev), nil
 }
@@ -188,7 +191,7 @@ func (p *localEventProvider) GetCards(ctx context.Context, eventID int) ([]*mast
 	}
 	cardIDs, ok := p.eventCards.v().cardsByEvent[eventID]
 	if !ok || len(cardIDs) == 0 {
-		return nil, fmt.Errorf("no cards found for event %d", eventID)
+		return nil, eventCardsNotFound(eventID)
 	}
 	result := make([]*masterdata.Card, 0, len(cardIDs))
 	for _, id := range cardIDs {

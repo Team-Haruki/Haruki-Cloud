@@ -1,0 +1,13 @@
+# 库存：查库存、背包筛选。
+
+[inventory.filter_unknown]
+description = "库存筛选参数无法识别，作为 common.bad_param 的原因行。"
+other = "可以写水晶、火罐、ms材料或记忆"
+
+[inventory.memory_cn_unavailable]
+description = "国服查库存不支持记忆。"
+other = "国服暂不支持查询记忆"
+
+[inventory.mysekai_cn_unavailable]
+description = "国服查库存不支持烤森材料。"
+other = "国服不支持查询烤森材料"

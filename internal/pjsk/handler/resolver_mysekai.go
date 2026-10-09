@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"slices"
 	"strings"
 
@@ -10,6 +10,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
 type mySekaiRenderContextOptions struct {
@@ -59,7 +60,7 @@ func resolveMySekaiRenderContextWithOptions(
 	opts mySekaiRenderContextOptions,
 ) (mySekaiRenderContext, error) {
 	if app == nil || app.MySekai == nil {
-		return mySekaiRenderContext{}, fmt.Errorf("mysekai service unavailable: mysekai controller is not configured")
+		return mySekaiRenderContext{}, usererror.Misconfigured(errors.New("mysekai service unavailable: mysekai controller is not configured"))
 	}
 
 	result := mySekaiRenderContext{Controller: app.MySekai.WithContext(ctx), Region: regionWithDefault(regionStr)}
@@ -74,6 +75,7 @@ func resolveMySekaiRenderContextWithOptions(
 	regionStr = resolvedTargetRegion(regionStr, target)
 	result.Region = regionStr
 	result.HarukiUserID = target.HarukiUserID
+	result.Binding = target.Binding
 	if opts.NeedProfile && app.Profiles != nil {
 		// The profile does not depend on the snapshot or payload, only its
 		// card build does, so fetch it alongside them. Errors still surface in
@@ -124,7 +126,7 @@ func resolveMySekaiContextWithoutSnapshot(
 		}
 	}
 	if target.Binding != nil {
-		return mySekaiRenderContext{}, newMySekaiDataNotFoundReplayErrorForBinding(target.Binding)
+		return mySekaiRenderContext{}, mysekaiDataNotFoundError(target.Binding)
 	}
 	return result, nil
 }
@@ -157,7 +159,7 @@ func tryPreferredMySekaiPayload(
 		return false, result, nil
 	}
 	if target.Binding != nil {
-		return true, mySekaiRenderContext{}, newMySekaiDataNotFoundReplayErrorForBinding(target.Binding)
+		return true, mySekaiRenderContext{}, mysekaiDataNotFoundError(target.Binding)
 	}
 	return true, result, nil
 }

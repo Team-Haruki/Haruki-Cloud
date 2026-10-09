@@ -1,25 +1,29 @@
 package handler
 
 import (
-	"fmt"
-	rendercard "haruki-cloud/internal/pjsk/render/card"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+
+	"haruki-cloud/internal/i18n"
+	rendercard "haruki-cloud/internal/pjsk/render/card"
+	"haruki-cloud/utils/usererror"
 )
 
-func validateDeckUniqueIDs(values []int, limit int, label string) error {
+// validateDeckUniqueIDs checks a list of fixed IDs: not empty, at most
+// limit, no duplicates. The errors are the given typed messages.
+func validateDeckUniqueIDs(values []int, limit int, empty, tooMany, duplicate i18n.Message) error {
 	if len(values) == 0 {
-		return fmt.Errorf("%s不能为空", label)
+		return usererror.Misuse(empty)
 	}
 	if len(values) > limit {
-		return fmt.Errorf("%s数量不能超过%d个", label, limit)
+		return usererror.Invalid(tooMany)
 	}
 	seen := make(map[int]struct{}, len(values))
 	for _, value := range values {
 		if _, ok := seen[value]; ok {
-			return fmt.Errorf("%s不能重复", label)
+			return usererror.Invalid(duplicate)
 		}
 		seen[value] = struct{}{}
 	}
@@ -86,7 +90,7 @@ func resolveFollowingDeckSkillOrder(raw string) (string, []int, bool) {
 }
 
 func deckSkillOrderUsageError() error {
-	return fmt.Errorf("%s", strings.TrimSpace(deckSpecificSkillOrderUsage))
+	return usererror.Misuse(i18n.M("deck.skill_order.usage"))
 }
 
 func parseDeckSpecificSkillOrder(raw string) ([]int, bool) {

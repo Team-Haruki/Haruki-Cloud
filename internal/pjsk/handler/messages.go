@@ -6,57 +6,42 @@ import (
 	"strings"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/i18n"
-	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/render/cachefill"
-	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
-// Common error messages for user-facing errors (Chinese).
+// Private data kinds, as passed to the binding-aware error builders.
 const (
-	ErrMsgBindingNotFound = "未找到绑定的游戏账号，请先使用 \"/绑定<id>\" 绑定后再使用此命令\n" +
-		"如果已经绑定，请确保已设置默认账号或绑定的账号在当前服务器可见"
-	ErrMsgTempBindingUnavailable = "目前运行的HarukiBot服务为临时环境，数据库没有绑定信息，如需使用请重新绑定"
-	ErrMsgToolboxURL             = "工具箱地址：https://haruki.seiunx.com/"
-	ErrMsgPrivateDataSetupGuide  = "请前往工具箱先注册账号、绑定自己QQ账号、再绑定游戏账号后上传自己的数据，才能使用此功能"
-
-	// Data availability errors
-	ErrMsgSuiteDataUnavailable     = "没有找到有效的 suite 数据，" + ErrMsgPrivateDataSetupGuide + "\n" + ErrMsgToolboxURL
-	ErrMsgSuiteDataNotFound        = ErrMsgSuiteDataUnavailable
-	ErrMsgMySekaiDataUnavailable   = "没有找到有效的 mysekai 数据，" + ErrMsgPrivateDataSetupGuide + "\n" + ErrMsgToolboxURL
-	ErrMsgMySekaiDataNotFound      = ErrMsgMySekaiDataUnavailable
-	ErrMsgCardCatalogRequiresSuite = ErrMsgSuiteDataNotFound
-
-	// Permission errors
-	ErrMsgSelfQueryOnly = "%s仅支持查询自己的数据"
-
-	// Service errors
-	ErrMsgBindingServiceUnavailable = "绑定服务未就绪"
-	ErrMsgMasterdataUnavailable     = "游戏基础数据暂时不可用，请稍后再试"
-
-	// Card catalog notice titles
-	CardCatalogTitleNoBinding        = "未绑定账号，当前显示全服卡牌"
-	CardCatalogTitleNoSuite          = "未获取到 Suite 卡牌数据，当前显示全服卡牌"
-	CardCatalogTitleSuiteUnavailable = "Suite 数据暂时不可用，当前显示全服卡牌"
+	privateDataSuite   = "suite"
+	privateDataMySekai = "mysekai"
 )
 
-// unsupportedModeError returns a standardized error for unhandled command modes.
+// unsupportedModeError reports a mode with no executor: a registration bug,
+// shown to users as the generic reply.
 func unsupportedModeError(module, mode string) error {
 	return fmt.Errorf("bridge: unsupported %s mode %q", module, mode)
 }
 
-func normalizeBindingLookupError(err error, fallback string) error {
-	if err == nil {
-		return nil
-	}
+// normalizeBindingLookupError turns a binding lookup failure into a typed
+// user error. notBound is the reply when the looked-up user has no binding
+// (zero: the requester's own "please bind first" reply).
+func normalizeBindingLookupError(err error, notBound i18n.Message) error {
 	switch {
-	case errors.Is(err, accountdata.ErrNoBinding), errors.Is(err, accountdata.ErrBindingServiceUnavailable):
+	case err == nil:
+		return nil
+	case isUserFacingError(err):
 		return err
-	case strings.TrimSpace(fallback) == "":
-		return err
+	case errors.Is(err, accountdata.ErrNoBinding):
+		if notBound.IsZero() || useTempBindingNotice() {
+			return bindingRequiredError(err)
+		}
+		return usererror.Wrap(usererror.CodeNotFound, notBound, err)
 	default:
-		return fmt.Errorf("%s：%w", fallback, err)
+		return bindingServiceUnavailableError(err)
 	}
 }
 
@@ -64,296 +49,175 @@ func useTempBindingNotice() bool {
 	return harukiConfig.Cfg.Profile.IsTemp()
 }
 
-func bindingNotFoundMessage() string {
+// bindingRequiredError is the reply when the requester has no usable binding.
+func bindingRequiredError(cause error) error {
 	if useTempBindingNotice() {
-		return ErrMsgTempBindingUnavailable
+		return usererror.Wrap(usererror.CodeSetup, i18n.M("binding.temp_environment"), cause)
 	}
-	return ErrMsgBindingNotFound
+	return usererror.Wrap(usererror.CodeSetup, i18n.M("binding.required"), cause)
 }
 
-func bindingServiceUnavailableMessage() string {
+func bindingServiceUnavailableError(cause error) error {
 	if useTempBindingNotice() {
-		return ErrMsgTempBindingUnavailable
+		return usererror.Wrap(usererror.CodeSetup, i18n.M("binding.temp_environment"), cause)
 	}
-	return "绑定服务未就绪，请稍后再试"
+	return usererror.Unavailable(i18n.FeatureAccount, cause)
 }
 
-func newBindingRequiredReplayError() error {
-	return onebot11.NewReplayError("%s", bindingNotFoundMessage())
+func normalizePrivateDataKind(kind string) string {
+	if strings.EqualFold(strings.TrimSpace(kind), privateDataMySekai) {
+		return privateDataMySekai
+	}
+	return privateDataSuite
 }
 
-func newSuiteDataNotFoundReplayError() error {
-	return onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
+func privateDataLabel(kind string) i18n.Message {
+	if normalizePrivateDataKind(kind) == privateDataMySekai {
+		return i18n.M("binding.data_kind.mysekai")
+	}
+	return i18n.M("binding.data_kind.suite")
 }
 
-func newSuiteDataNotFoundReplayErrorForBinding(binding *accountdata.ResolvedBinding) error {
-	if binding != nil && !binding.SuiteVisible {
-		return onebot11.NewReplayError("%s", buildPrivateDataHiddenMessage("suite", binding))
+func toolboxLink() i18n.Message { return i18n.M("binding.toolbox_link") }
+
+// bindingAccountLabel is the display name of binding's account, e.g.
+// "[日服(JP)] 123***789"; ok is false when the binding names no account.
+func bindingAccountLabel(binding *accountdata.ResolvedBinding) (i18n.Message, bool) {
+	if binding == nil || strings.TrimSpace(binding.PJSKUserID) == "" {
+		return i18n.Message{}, false
 	}
-	return onebot11.NewReplayError("%s", buildPrivateDataNotFoundMessage("suite", binding))
+	return i18n.AccountLabel(binding.Server, binding.PJSKUserID, binding.Visible), true
 }
 
-func newMySekaiDataNotFoundReplayError() error {
-	return onebot11.NewReplayError(ErrMsgMySekaiDataNotFound)
+// privateDataError is the reply when binding has no usable data of kind:
+// hidden by the user, or not uploaded.
+func privateDataError(kind string, binding *accountdata.ResolvedBinding) error {
+	kind = normalizePrivateDataKind(kind)
+	if binding != nil {
+		hidden := !binding.SuiteVisible
+		if kind == privateDataMySekai {
+			hidden = !binding.MySekaiVisible
+		}
+		if hidden {
+			return usererror.Setup(privateDataHiddenMessage(kind, binding))
+		}
+	}
+	return usererror.Setup(privateDataNotFoundMessage(kind, binding))
 }
 
-func newMySekaiDataNotFoundReplayErrorForBinding(binding *accountdata.ResolvedBinding) error {
-	if binding != nil && !binding.MySekaiVisible {
-		return onebot11.NewReplayError("%s", buildPrivateDataHiddenMessage("mysekai", binding))
-	}
-	return onebot11.NewReplayError("%s", buildPrivateDataNotFoundMessage("mysekai", binding))
+func suiteDataNotFoundError(binding *accountdata.ResolvedBinding) error {
+	return privateDataError(privateDataSuite, binding)
 }
 
-func buildPrivateDataHiddenMessage(dataLabel string, binding *accountdata.ResolvedBinding) string {
-	dataLabel = strings.TrimSpace(strings.ToLower(dataLabel))
-	account := formatUserFacingBindingAccount(binding)
-	if account == "" {
-		account = "当前绑定账号"
-	}
-
-	showCommand := "/展示抓包"
-	if dataLabel == "mysekai" {
-		showCommand = "/展示烤森抓包"
-	} else {
-		dataLabel = "suite"
-	}
-	return fmt.Sprintf("你已自行隐藏 %s 的 %s 抓包信息，请先发送“%s”恢复展示后再重试", account, dataLabel, showCommand)
+func mysekaiDataNotFoundError(binding *accountdata.ResolvedBinding) error {
+	return privateDataError(privateDataMySekai, binding)
 }
 
-func buildPrivateDataNotFoundMessage(dataLabel string, binding *accountdata.ResolvedBinding) string {
-	dataLabel = strings.TrimSpace(strings.ToLower(dataLabel))
-	if dataLabel == "" {
-		dataLabel = "suite"
+func privateDataHiddenMessage(kind string, binding *accountdata.ResolvedBinding) i18n.Message {
+	account, ok := bindingAccountLabel(binding)
+	if !ok {
+		account = i18n.M("binding.current_account")
 	}
-
-	if binding == nil {
-		return fmt.Sprintf("没有找到有效的 %s 数据，%s\n%s", dataLabel, ErrMsgPrivateDataSetupGuide, ErrMsgToolboxURL)
+	if normalizePrivateDataKind(kind) == privateDataMySekai {
+		return i18n.M("binding.data.hidden_mysekai", i18n.Data{"Account": account})
 	}
-
-	server := strings.ToUpper(strings.TrimSpace(binding.Server))
-	uid := i18n.MaskUID(binding.PJSKUserID, binding.Visible)
-	if server == "" || uid == "" {
-		return fmt.Sprintf("没有找到有效的 %s 数据，%s\n%s", dataLabel, ErrMsgPrivateDataSetupGuide, ErrMsgToolboxURL)
-	}
-	return fmt.Sprintf("当前%s服%s没有找到有效的 %s 数据，%s\n%s", server, uid, dataLabel, ErrMsgPrivateDataSetupGuide, ErrMsgToolboxURL)
+	return i18n.M("binding.data.hidden_suite", i18n.Data{"Account": account})
 }
 
-func buildToolboxAccessDeniedMessage(dataLabel string, binding *accountdata.ResolvedBinding) string {
-	account := formatUserFacingBindingAccount(binding)
-	if account == "" {
-		return fmt.Sprintf("当前QQ号未在工具箱完成绑定，或无权访问该%s数据，请前往工具箱绑定当前QQ号后重试\n%s", dataLabel, ErrMsgToolboxURL)
+func privateDataNotFoundMessage(kind string, binding *accountdata.ResolvedBinding) i18n.Message {
+	if account, ok := bindingAccountLabel(binding); ok && strings.TrimSpace(binding.Server) != "" {
+		return i18n.M("binding.data.not_found_account", i18n.Data{"Account": account, "Data": privateDataLabel(kind), "ToolboxLink": toolboxLink()})
 	}
-	return fmt.Sprintf(
-		"当前QQ号未在工具箱完成绑定，或无权访问本次查询的%s数据（查询账号：%s），请前往工具箱绑定当前QQ号后重试\n"+
-			"如果该账号不是你想要查询的账号，请根据HarukiBot使用帮助更改主账号或者解绑该账号\n%s",
-		dataLabel,
-		account,
-		ErrMsgToolboxURL,
-	)
+	return i18n.M("binding.data.not_found", i18n.Data{"Data": privateDataLabel(kind), "ToolboxLink": toolboxLink()})
 }
 
-func formatUserFacingBindingAccount(binding *accountdata.ResolvedBinding) string {
-	if binding == nil {
-		return ""
+func toolboxAccessDeniedMessage(kind string, binding *accountdata.ResolvedBinding) i18n.Message {
+	if account, ok := bindingAccountLabel(binding); ok {
+		return i18n.M("binding.toolbox.access_denied_account", i18n.Data{"Account": account, "Data": privateDataLabel(kind), "ToolboxLink": toolboxLink()})
 	}
-	server := strings.ToUpper(strings.TrimSpace(binding.Server))
-	uid := i18n.MaskUID(binding.PJSKUserID, binding.Visible)
-	switch {
-	case server != "" && uid != "":
-		return fmt.Sprintf("%s服%s", server, uid)
-	case uid != "":
-		return uid
-	case server != "":
-		return fmt.Sprintf("%s服", server)
-	default:
-		return ""
-	}
+	return i18n.M("binding.toolbox.access_denied", i18n.Data{"Data": privateDataLabel(kind), "ToolboxLink": toolboxLink()})
 }
 
-func normalizeToolboxDataLabel(dataLabel string) string {
-	dataLabel = strings.TrimSpace(strings.ToLower(dataLabel))
-	switch dataLabel {
-	case "mysekai":
-		return "mysekai"
-	default:
-		return "suite"
-	}
-}
-
-func normalizeToolboxDataFetchError(err error, dataLabel string, binding *accountdata.ResolvedBinding) error {
+// normalizeToolboxDataFetchError turns a failure to fetch kind data
+// ("suite" or "mysekai") of binding from the Toolbox into a typed user
+// error naming the data and, when known, the account.
+func normalizeToolboxDataFetchError(err error, kind string, binding *accountdata.ResolvedBinding) error {
 	if err == nil {
 		return nil
 	}
 	if isUserFacingError(err) {
 		return err
 	}
-
-	dataLabel = normalizeToolboxDataLabel(dataLabel)
-	switch {
-	case errors.Is(err, sekaiapi.ErrAccountBindingNotFound):
-		if useTempBindingNotice() {
-			return newBindingRequiredReplayError()
-		}
-		return onebot11.NewReplayError(
-			"你还没有在工具箱绑定游戏账号，无法获取%s数据，请前往工具箱绑定游戏账号并上传数据后重试\n%s",
-			dataLabel,
-			ErrMsgToolboxURL,
-		)
-	case errors.Is(err, sekaiapi.ErrGameDataNotFound):
-		if dataLabel == "mysekai" {
-			return newMySekaiDataNotFoundReplayErrorForBinding(binding)
-		}
-		return newSuiteDataNotFoundReplayErrorForBinding(binding)
-	case errors.Is(err, sekaiapi.ErrInvalidPlatformUser):
-		if useTempBindingNotice() {
-			return newBindingRequiredReplayError()
-		}
-		return onebot11.NewReplayError("%s", buildToolboxAccessDeniedMessage(dataLabel, binding))
-	case errors.Is(err, sekaiapi.ErrAccountOwnerBanned):
-		return onebot11.NewReplayError("工具箱账号已被封禁，无法获取%s数据", dataLabel)
+	class, ok := upstreamerr.Classify(err)
+	if !ok {
+		return usererror.Unavailable(i18n.FeatureToolbox, err)
 	}
-
-	message := strings.TrimSpace(err.Error())
-	switch {
-	case strings.Contains(message, "toolbox: request failed after retries"),
-		strings.Contains(message, "context deadline exceeded"),
-		strings.Contains(message, "Client.Timeout exceeded"):
-		return onebot11.NewReplayError("连接工具箱超时或网络异常，请稍后再试")
-	case strings.Contains(message, "toolbox: zstd reader init failed"),
-		strings.Contains(message, "toolbox: zstd decompression failed"),
-		strings.Contains(message, "toolbox: failed to parse game bindings response"):
-		return onebot11.NewReplayError("工具箱返回数据解析失败，请稍后再试")
+	switch class.Kind {
+	case upstreamerr.KindAccountNotBound:
+		if useTempBindingNotice() {
+			return bindingRequiredError(err)
+		}
+		return usererror.Wrap(usererror.CodeSetup, i18n.M("binding.toolbox.not_bound", i18n.Data{"Data": privateDataLabel(kind), "ToolboxLink": toolboxLink()}), err)
+	case upstreamerr.KindDataNotUploaded:
+		return withCause(privateDataError(kind, binding), err)
+	case upstreamerr.KindAccessDenied:
+		if useTempBindingNotice() {
+			return bindingRequiredError(err)
+		}
+		return usererror.Wrap(usererror.CodeSetup, toolboxAccessDeniedMessage(kind, binding), err)
+	case upstreamerr.KindOwnerBanned:
+		return usererror.Wrap(usererror.CodeForbidden, i18n.M("binding.toolbox.owner_banned", i18n.Data{"Data": privateDataLabel(kind)}), err)
 	}
+	return upstreamerr.UserError(err)
+}
 
-	var apiErr *sekaiapi.ToolboxAPIError
-	if errors.As(err, &apiErr) {
-		if translated, ok := translateToolboxAPIDetail(dataLabel, apiErr.Message, binding); ok {
-			return onebot11.NewReplayError("%s", translated)
-		}
-		switch apiErr.StatusCode {
-		case 503:
-			return onebot11.NewReplayError("工具箱服务暂时不可用，请稍后再试")
-		case 403:
-			return onebot11.NewReplayError("工具箱拒绝了当前%s数据请求", dataLabel)
-		case 404:
-			return onebot11.NewReplayError("工具箱未找到当前%s数据", dataLabel)
-		default:
-			return onebot11.NewReplayError("工具箱请求失败（状态 %d）", apiErr.StatusCode)
-		}
+// withCause attaches cause to a typed user error for the logs.
+func withCause(err error, cause error) error {
+	if typed, ok := usererror.As(err); ok && typed.Cause == nil {
+		return typed.WithCause(cause)
 	}
 	return err
 }
 
+// normalizeSekaiAPIFetchError turns a game data service failure into a
+// typed user error; other errors pass through.
 func normalizeSekaiAPIFetchError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if isUserFacingError(err) {
+	if err == nil || isUserFacingError(err) {
 		return err
 	}
-
-	switch {
-	case errors.Is(err, sekaiapi.ErrClientNotConfigured):
-		return onebot11.NewReplayError("SekaiAPI 服务未就绪，请稍后再试")
-	case errors.Is(err, sekaiapi.ErrServerMaintenance):
-		return onebot11.NewReplayError("SekaiAPI 拉取失败：当前游戏服务器维护中，请稍后再试")
-	case errors.Is(err, sekaiapi.ErrUserNotFound):
-		return onebot11.NewReplayError("SekaiAPI 拉取失败：找不到该玩家公开信息")
-	}
-
-	message := strings.TrimSpace(err.Error())
-	switch {
-	case strings.Contains(message, "sekai api: request failed after retries"),
-		strings.Contains(message, "context deadline exceeded"),
-		strings.Contains(message, "Client.Timeout exceeded"):
-		return onebot11.NewReplayError("SekaiAPI 拉取失败：连接超时或网络异常，请稍后再试")
-	}
-
-	var apiErr *sekaiapi.APIError
-	if errors.As(err, &apiErr) {
-		if translated, ok := translateSekaiAPIDetail(apiErr.Message); ok {
-			return onebot11.NewReplayError("SekaiAPI 拉取失败：%s", translated)
-		}
-		if strings.TrimSpace(apiErr.Message) == "" {
-			return onebot11.NewReplayError("SekaiAPI 拉取失败（状态 %d）", apiErr.StatusCode)
-		}
-		return onebot11.NewReplayError("SekaiAPI 拉取失败（状态 %d）", apiErr.StatusCode)
-	}
-
-	if translated, ok := translateSekaiAPIDetail(message); ok && (strings.Contains(message, "sekai api") || strings.Contains(strings.ToLower(message), "sekaiapi")) {
-		return onebot11.NewReplayError("SekaiAPI 拉取失败：%s", translated)
-	}
-
-	if strings.Contains(message, "sekai api:") || strings.Contains(strings.ToLower(message), "sekaiapi") {
-		return onebot11.NewReplayError("SekaiAPI 拉取失败，请稍后再试")
+	if typed := upstreamerr.UserError(err); typed != nil {
+		return typed
 	}
 	return err
 }
 
-// WrapDomainError converts well-known domain errors into ReplayError so that
-// transport layers (e.g. api/bot/pjsk) only need to distinguish ReplayError
-// from unexpected errors, without duplicating Chinese user-facing messages.
+// WrapDomainError turns the well-known domain failures (no binding, account
+// storage down, master data cache down, upstream failures) into typed user
+// errors, so the transport layer only distinguishes typed errors from
+// unexpected ones. Classification is by type (errors.Is / errors.As), never
+// by message text.
 func WrapDomainError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if isUserFacingError(err) {
-		return err
-	}
-	message := strings.TrimSpace(err.Error())
 	switch {
+	case err == nil:
+		return nil
+	case isUserFacingError(err):
+		return err
 	case errors.Is(err, accountdata.ErrNoBinding):
-		return newBindingRequiredReplayError()
+		return bindingRequiredError(err)
 	case errors.Is(err, accountdata.ErrBindingServiceUnavailable):
-		return onebot11.NewReplayError("%s", bindingServiceUnavailableMessage())
+		return bindingServiceUnavailableError(err)
 	case errors.Is(err, cachefill.ErrUnavailable):
-		return onebot11.NewReplayError("%s", ErrMsgMasterdataUnavailable)
-	case errors.Is(err, sekaiapi.ErrAccountBindingNotFound),
-		errors.Is(err, sekaiapi.ErrInvalidPlatformUser):
-		if useTempBindingNotice() {
-			return newBindingRequiredReplayError()
-		}
-		return normalizeToolboxDataFetchError(err, "suite", nil)
-	case errors.Is(err, sekaiapi.ErrGameDataNotFound),
-		errors.Is(err, sekaiapi.ErrAccountOwnerBanned):
-		return normalizeToolboxDataFetchError(err, "suite", nil)
-	case strings.Contains(message, "当前账号没有可用的 Suite 抓包数据"),
-		strings.Contains(message, "找不到用户的 Suite 数据"),
-		strings.Contains(message, "local user snapshot is not configured"):
-		return newSuiteDataNotFoundReplayError()
-	case strings.Contains(message, "当前账号没有可用的 MySekai 抓包数据"),
-		strings.Contains(message, "找不到用户的 MySekai 数据"),
-		strings.Contains(message, "user snapshot is not available (bind Toolbox or provide snapshot)"):
-		return newMySekaiDataNotFoundReplayError()
-	case strings.Contains(message, "toolbox:"),
-		strings.Contains(message, "toolbox api error:"):
-		return normalizeToolboxDataFetchError(err, "suite", nil)
-	case strings.Contains(message, "sekai api:"),
-		strings.Contains(strings.ToLower(message), "sekaiapi"):
-		if normalized := normalizeSekaiAPIFetchError(err); normalized != err {
-			return normalized
-		}
-	case strings.Contains(message, "tracker:"),
-		strings.Contains(message, "tracker api error:"):
-		if normalized := normalizeTrackerUserFacingError(err); normalized != err {
-			return normalized
-		}
-	case strings.Contains(strings.ToLower(message), "deck-service"):
-		if normalized := normalizeDeckServiceUserFacingError(err); normalized != err {
-			return normalized
-		}
-	case message == "drawing client is not configured",
-		message == "image storage is not configured",
-		strings.Contains(strings.ToLower(message), "drawing "),
-		strings.HasPrefix(strings.ToLower(message), "api request failed with status:"),
-		strings.Contains(strings.ToLower(message), "asset path is empty"),
-		strings.Contains(strings.ToLower(message), "haruki-drawing"),
-		strings.Contains(strings.ToLower(message), "connection refused"),
-		strings.Contains(strings.ToLower(message), "no such host"),
-		strings.Contains(strings.ToLower(message), "client.timeout exceeded"):
-		if normalized := normalizeDrawingUserFacingError(err); normalized != err {
-			return normalized
-		}
+		return usererror.Unavailable(i18n.FeatureGameData, err)
+	case errors.Is(err, rendersnapshot.ErrNotConfigured):
+		return withCause(suiteDataNotFoundError(nil), err)
+	case errors.Is(err, rendersnapshot.ErrMySekaiUnavailable):
+		return withCause(mysekaiDataNotFoundError(nil), err)
+	}
+	if class, ok := upstreamerr.Classify(err); ok && class.Service == upstreamerr.ServiceToolbox {
+		return normalizeToolboxDataFetchError(err, privateDataSuite, nil)
+	}
+	if typed := upstreamerr.UserError(err); typed != nil {
+		return typed
 	}
 	return err
 }

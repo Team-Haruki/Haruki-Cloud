@@ -6,16 +6,18 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 func (b *Builder) BuildGachaDetailRequest(query DetailQuery) (*drawing.GachaDetailRequest, error) {
 	if query.GachaID == 0 {
-		return nil, fmt.Errorf("gacha id is required")
+		return nil, usererror.Misuse(i18n.M("gacha.query_required"))
 	}
 	gachaInfo, err := b.source.GetGachaByID(query.GachaID)
 	if err != nil {

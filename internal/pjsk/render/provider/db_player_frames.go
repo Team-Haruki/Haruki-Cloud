@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -10,6 +11,7 @@ import (
 	"haruki-cloud/database/sekai/playerframegroup"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 type dbPlayerFrameProvider struct {
@@ -104,7 +106,7 @@ func (p *dbPlayerFrameProvider) GetGroupByID(ctx context.Context, id int) (*mast
 
 func (p *dbPlayerFrameProvider) GetPartsByGroupID(ctx context.Context, groupID int) (map[int]int, error) {
 	if p.rows == nil {
-		return nil, fmt.Errorf("player frame parts are not configured")
+		return nil, usererror.Misconfigured(errors.New("player frame parts are not configured"))
 	}
 	rows, ok := p.rows.LoadMasterRows(ctx, "playerFrameParts.json")
 	if !ok {

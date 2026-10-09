@@ -1,5 +1,10 @@
 package event
 
-import "errors"
+import (
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
+)
 
-var ErrNoOngoingEvent = errors.New("no ongoing event found")
+// ErrNoOngoingEvent reports that no event is running now. It is a typed user
+// error; compare with errors.Is.
+var ErrNoOngoingEvent = usererror.New(usererror.CodeNotFound, i18n.M("event.no_ongoing"))

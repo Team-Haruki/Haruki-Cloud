@@ -54,6 +54,10 @@ func BadParam(param string, reason Message) Message {
 	return M("common.bad_param", Data{"Param": EchoQuery(param), "Reason": reason})
 }
 
+// Unrecognized is the generic reason for arguments that could not be
+// understood at all. The bot reply layer swaps it for the route's guidance.
+func Unrecognized() Message { return M("common.unrecognized_args") }
+
 // Usage is the pointer to a command's help, e.g. "发送 /查曲 -help 查看用法".
 // trigger is the command as users type it, with or without the leading "/".
 func Usage(trigger string) Message {

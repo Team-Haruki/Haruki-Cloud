@@ -7,6 +7,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 // BuildResourceRequest builds the request for rendering MySekai resource view.
@@ -19,7 +20,7 @@ func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.Mysekai
 
 	profile := c.mysekaiProfileCard(region, merged, query.Profile, false)
 	if profile == nil {
-		return nil, fmt.Errorf("mysekai resource requires profile data")
+		return nil, fmt.Errorf("mysekai resource requires profile data: %w", snapshot.ErrMySekaiUnavailable)
 	}
 
 	gateID, gateLevel, gateSkinID := extractMysekaiGateInfo(merged)
@@ -97,7 +98,7 @@ func (c *Controller) RenderResource(query ResourceQuery) ([]byte, error) {
 
 func (c *Controller) RenderResourceImage(query ResourceQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildResourceRequest(query)

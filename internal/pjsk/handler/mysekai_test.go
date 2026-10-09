@@ -2,15 +2,16 @@ package handler
 
 import (
 	"context"
-	json "haruki-cloud/internal/jsonutil"
 	"reflect"
 	"slices"
 	"strings"
 	"testing"
 
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestMysekaiAliasRemap(t *testing.T) {
@@ -332,9 +333,7 @@ func TestMysekaiMapHandleRejectsInvalidMapIndex(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error for invalid map index")
 	}
-	if !strings.Contains(err.Error(), "地图编号仅支持 1-4") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "mysekai.map.id_invalid")
 }
 
 func TestMysekaiPhotoHandleBuildsCommandRequest(t *testing.T) {
@@ -466,9 +465,7 @@ func testMysekaiBlueprintInvalidCharacter(t *testing.T, handler HarukiSekaiComma
 	if err == nil {
 		t.Fatal("expected invalid character query to fail")
 	}
-	if !strings.Contains(err.Error(), "/msb 角色名") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "mysekai.character_or_none")
 }
 
 func TestMysekaiBlueprintHandleSupportsCompactCharacterAliases(t *testing.T) {
@@ -634,9 +631,7 @@ func TestMysekaiBlueprintHandleRejectsFixtureIDs(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected fixture id query to fail")
 	}
-	if !strings.Contains(err.Error(), "/msf 家具ID") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "mysekai.character_or_none")
 }
 
 func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 type customChartErrorClient struct {
@@ -510,7 +511,7 @@ func TestCustomChartRequestFailureAndFallbackBranches(t *testing.T) {
 	}
 
 	controller.SetCustomMusicScoreClient(customChartErrorClient{infoErr: errors.New("upstream")})
-	if _, err := controller.BuildMusicChartRequest(query); err == nil || !strings.Contains(err.Error(), "获取自定义谱面信息失败") {
+	if _, err := controller.BuildMusicChartRequest(query); err == nil || testutil.MessageID(err) != "music.custom_chart.fetch_failed" {
 		t.Fatalf("published error = %v", err)
 	}
 	controller.SetCustomMusicScoreClient(customChartErrorClient{published: &sekaiapi.UserCustomMusicScorePublishedResponse{UserCustomMusicScoreID: scoreID}})
@@ -527,18 +528,18 @@ func TestCustomChartRequestFailureAndFallbackBranches(t *testing.T) {
 		},
 	}
 	controller.SetCustomMusicScoreClient(customChartErrorClient{published: published, scoreErr: errors.New("score")})
-	if _, err := controller.BuildMusicChartRequest(query); err == nil || !strings.Contains(err.Error(), "JSON") {
+	if _, err := controller.BuildMusicChartRequest(query); err == nil || testutil.MessageID(err) != "music.custom_chart.fetch_failed" {
 		t.Fatalf("score fetch error = %v", err)
 	}
 	controller.SetCustomMusicScoreClient(customChartErrorClient{published: published, score: []byte("bad")})
-	if _, err := controller.BuildMusicChartRequest(query); err == nil || !strings.Contains(err.Error(), "格式无效") {
+	if _, err := controller.BuildMusicChartRequest(query); err == nil || !strings.Contains(testutil.ErrorDetail(err), "not valid JSON") {
 		t.Fatalf("score decode error = %v", err)
 	}
 
 	missingSource := &customChartDirectSource{vocalBuilderTestSource: &vocalBuilderTestSource{}}
 	missingController := NewController(missingSource, nil, assets.NewAssetHelper("", nil), nil, nil)
 	missingController.SetCustomMusicScoreClient(customChartErrorClient{published: published, score: []byte(`{}`)})
-	if _, err := missingController.BuildMusicChartRequest(query); err == nil || !strings.Contains(err.Error(), "原曲数据不存在") {
+	if _, err := missingController.BuildMusicChartRequest(query); err == nil || testutil.MessageID(err) != "music.custom_chart.original_missing" {
 		t.Fatalf("missing original music error = %v", err)
 	}
 

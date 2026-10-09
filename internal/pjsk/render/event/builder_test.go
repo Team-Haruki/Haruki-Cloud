@@ -8,6 +8,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/provider"
 )
 
 type testEventSource struct {
@@ -613,7 +614,7 @@ func TestBuildEventDetailRequestAllowsEventWithoutCards(t *testing.T) {
 		AggregateAt:     2000,
 	}
 	source.eventsByID[eventInfo.ID] = eventInfo
-	source.cardErrByEvent[eventInfo.ID] = fmt.Errorf("no cards found for event %d", eventInfo.ID)
+	source.cardErrByEvent[eventInfo.ID] = fmt.Errorf("%w %d", provider.ErrEventCardsNotFound, eventInfo.ID)
 
 	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
 	req, err := builder.BuildEventDetailRequest(DetailQuery{Region: renderregion.JP, EventID: eventInfo.ID})

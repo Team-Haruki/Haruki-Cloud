@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/storage/storagetest"
+	"haruki-cloud/internal/testutil"
 )
 
 const shopTestNow int64 = 1800000000000
@@ -202,7 +203,7 @@ func TestPlayerShopMissingDataAndBlueprintOnlyRegion(t *testing.T) {
 	c, q, data := playerShopFixture(t)
 	delete(data, "userMysekaiShops")
 	q.ShopType = "tool"
-	if _, err := shopWithData(t, c, data).BuildShopRequest(q); err == nil || !strings.Contains(err.Error(), "snapshot missing") {
+	if _, err := shopWithData(t, c, data).BuildShopRequest(q); err == nil || !strings.Contains(testutil.ErrorDetail(err), "snapshot missing") {
 		t.Fatal(err)
 	}
 	q.ShopType = "blueprint"
@@ -302,7 +303,7 @@ func TestShopMissingMasterDataFailsExplicitly(t *testing.T) {
 		source := c.masterdata.(*sonarMasterdataSource)
 		delete(source.maps, file)
 		delete(source.lists, file)
-		if _, err := shopWithData(t, c, data).BuildShopRequest(q); err == nil || !strings.Contains(err.Error(), "masterdata missing") {
+		if _, err := shopWithData(t, c, data).BuildShopRequest(q); err == nil || !strings.Contains(testutil.ErrorDetail(err), "masterdata missing") {
 			t.Fatalf("%s: %v", file, err)
 		}
 	}

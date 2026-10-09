@@ -2,13 +2,14 @@ package accountdata
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 // SetDefault sets the default binding for the given scope (global or server-specific).
@@ -58,7 +59,7 @@ func (s *BindingService) clearDefaultByScope(ctx context.Context, platform, plat
 		Only(ctx)
 	if err != nil {
 		if pjskdb.IsNotFound(err) {
-			return nil, fmt.Errorf("你当前没有设置%s默认绑定", scopeLabel)
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("binding.default.none", i18n.Data{"Scope": scopeLabel}))
 		}
 		return nil, err
 	}
@@ -76,7 +77,7 @@ func (s *BindingService) clearDefaultByScope(ctx context.Context, platform, plat
 		}
 	}
 	if target == nil {
-		return nil, fmt.Errorf("默认绑定对应的账号不存在")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("binding.default.target_missing"))
 	}
 	if err := s.pjskDB.UserDefaultBinding.DeleteOneID(existing.ID).Exec(ctx); err != nil {
 		return nil, err
@@ -130,7 +131,7 @@ func (s *BindingService) updateDefault(ctx context.Context, platform, platformUs
 		return nil, err
 	}
 	if scope != GlobalDefaultBindingScope && target.Server != scope {
-		return nil, fmt.Errorf("所选账号不属于%s服", strings.ToUpper(scope))
+		return nil, usererror.Invalid(i18n.M("binding.default.wrong_region", i18n.Data{"Region": i18n.RegionLabel(scope)}))
 	}
 
 	existing, err := s.pjskDB.UserDefaultBinding.Query().
@@ -154,14 +155,14 @@ func (s *BindingService) clearSelectedDefault(
 	existing *pjskdb.UserDefaultBinding,
 	lookupErr error,
 	scope string,
-	scopeLabel string,
+	scopeLabel i18n.Message,
 	target BindingListItem,
 ) (*DefaultBindingResult, error) {
 	if pjskdb.IsNotFound(lookupErr) {
-		return nil, fmt.Errorf("你当前没有设置%s默认绑定", scopeLabel)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("binding.default.none", i18n.Data{"Scope": scopeLabel}))
 	}
 	if existing.BindingID != target.BindingID {
-		return nil, fmt.Errorf("所选账号不是你当前的%s默认绑定", scopeLabel)
+		return nil, usererror.Invalid(i18n.M("binding.default.not_current", i18n.Data{"Scope": scopeLabel}))
 	}
 	if err := s.pjskDB.UserDefaultBinding.DeleteOneID(existing.ID).Exec(ctx); err != nil {
 		return nil, err
@@ -269,16 +270,16 @@ func hasDefaultScope(items []*pjskdb.UserDefaultBinding, scope string) bool {
 
 // normalizeDefaultScope normalizes a scope string into a canonical form.
 // Returns the normalized scope, a human-readable label, and any error.
-func normalizeDefaultScope(scope string) (string, string, error) {
+func normalizeDefaultScope(scope string) (string, i18n.Message, error) {
 	scope = strings.TrimSpace(strings.ToLower(scope))
 	if scope == "" || scope == GlobalDefaultBindingScope {
-		return GlobalDefaultBindingScope, "全局", nil
+		return GlobalDefaultBindingScope, i18n.M("binding.default.scope_global"), nil
 	}
 	normalized := renderregion.Normalize(scope)
 	if normalized.IsZero() {
-		return "", "", fmt.Errorf("不支持的区服: %s", scope)
+		return "", i18n.Message{}, usererror.BadParam(scope, i18n.M("binding.region_invalid"))
 	}
-	return normalized.String(), strings.ToUpper(normalized.String()), nil
+	return normalized.String(), i18n.RegionLabel(normalized.String()), nil
 }
 
 // defaultScopeType returns the DefaultScope type for a given scope string.

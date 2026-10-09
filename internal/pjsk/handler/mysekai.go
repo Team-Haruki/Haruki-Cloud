@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -15,30 +16,23 @@ import (
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 
 	"golang.org/x/sync/errgroup"
+	"haruki-cloud/internal/core/upstreamerr"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
-func mysekaiBlueprintUsageError(trigger string) error {
-	return onebot11.NewReplayError(
-		"使用方式:\n%s\n%s 角色名\n查看家具详情请使用：/msf 家具ID",
-		trigger,
-		trigger,
-	)
+// mysekaiCharacterUsageError is the reply when the blueprint or talk list
+// arguments are neither a character name nor empty.
+// mysekaiPhotoFetchError is the reply for a failed photo download.
+func mysekaiPhotoFetchError(err error) error {
+	if typed := upstreamerr.UserError(err); typed != nil {
+		return typed
+	}
+	return usererror.Wrap(usererror.CodeUnavailable, i18n.M("mysekai.photo.fetch_failed"), err)
 }
 
-func mysekaiTalkListUsageError(trigger string) error {
-	return onebot11.NewReplayError(
-		"使用方式:\n%s\n%s 角色名\n查看家具详情请使用：/msf 家具ID",
-		trigger,
-		trigger,
-	)
-}
-
-func mysekaiHousingSKUsageError(trigger string) error {
-	return onebot11.NewReplayError(
-		"使用方式:\n%s\n%s 1-5\n一次最多查询5个排名",
-		trigger,
-		trigger,
-	)
+func mysekaiCharacterUsageError() error {
+	return usererror.Misuse(i18n.M("mysekai.character_or_none"))
 }
 
 func applyMysekaiStaticFixtureListParams(params map[string]any, onlyCraftable bool) {
@@ -140,7 +134,7 @@ func (sekaiHandlers) MysekaiTalkListHandle() HarukiSekaiCommandHandler {
 
 			args := strings.TrimSpace(ctx.GetArgs())
 			if ids := parseMysekaiFixtureIDs(args); len(ids) > 0 {
-				return nil, mysekaiTalkListUsageError(ctx.originalTriggerCmd)
+				return nil, mysekaiCharacterUsageError()
 			}
 			query, unit, showAllTalks := parseMysekaiBlueprintArgs(args)
 			if query == "" {
@@ -150,7 +144,7 @@ func (sekaiHandlers) MysekaiTalkListHandle() HarukiSekaiCommandHandler {
 				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiFixtureListCommand, selfParams), nil
 			}
 			if _, ok := rendermysekai.ResolveNicknameCharacterID(query); !ok {
-				return nil, mysekaiTalkListUsageError(ctx.originalTriggerCmd)
+				return nil, mysekaiCharacterUsageError()
 			}
 			selfParams["show_id"] = true
 			selfParams["show_all_talks"] = showAllTalks
@@ -312,7 +306,7 @@ func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
 
 			args := strings.TrimSpace(ctx.GetArgs())
 			if ids := parseMysekaiFixtureIDs(args); len(ids) > 0 {
-				return nil, mysekaiBlueprintUsageError(ctx.originalTriggerCmd)
+				return nil, mysekaiCharacterUsageError()
 			}
 			query, unit, showAllTalks := parseMysekaiBlueprintArgs(args)
 			if query == "" {
@@ -322,7 +316,7 @@ func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
 				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiFixtureListCommand, selfParams), nil
 			}
 			if _, ok := rendermysekai.ResolveNicknameCharacterID(query); !ok {
-				return nil, mysekaiBlueprintUsageError(ctx.originalTriggerCmd)
+				return nil, mysekaiCharacterUsageError()
 			}
 			selfParams["show_id"] = true
 			selfParams["show_all_talks"] = showAllTalks
@@ -378,7 +372,7 @@ func (sekaiHandlers) MysekaiHousingSKHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			query, err := parseMysekaiHousingSKArgs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
-				return nil, onebot11.NewReplayError("%v\n\n%s", err, mysekaiHousingSKUsageError(ctx.originalTriggerCmd))
+				return nil, unrecognizedUnlessTyped(err)
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-housing-sk", query), nil
 		},
@@ -396,7 +390,7 @@ func (sekaiHandlers) MysekaiPhotoHandle() HarukiSekaiCommandHandler {
 			args := strings.TrimSpace(ctx.GetArgs())
 			seq, err := strconv.Atoi(args)
 			if err != nil || seq == 0 {
-				return nil, fmt.Errorf("请输入正确的照片编号（从1或-1开始）")
+				return nil, usererror.Misuse(i18n.M("mysekai.photo.index_invalid"))
 			}
 			params := map[string]any{
 				"seq": seq,
@@ -494,17 +488,17 @@ func applyMysekaiHousingOption(query *rendermysekai.HousingCompetitionLineQuery,
 	switch strings.ToLower(strings.TrimSpace(key)) {
 	case "id", "housing_id":
 		if err != nil || parsed <= 0 {
-			return true, fmt.Errorf("请输入正确的百景 housing_id")
+			return true, usererror.BadParam(value, i18n.M("mysekai.housing.id_invalid"))
 		}
 		query.HousingID = parsed
 	case "sample", "samples", "count":
 		if err != nil || parsed <= 0 {
-			return true, fmt.Errorf("请输入正确的刷新次数")
+			return true, usererror.BadParam(value, i18n.M("mysekai.housing.sample_invalid"))
 		}
 		query.SampleCount = parsed
 	case "interval", "interval_ms":
 		if err != nil {
-			return true, fmt.Errorf("请输入正确的刷新间隔")
+			return true, usererror.BadParam(value, i18n.M("mysekai.housing.interval_invalid"))
 		}
 		query.SampleIntervalMillis = parsed
 	default:
@@ -534,7 +528,7 @@ func parseMysekaiHousingRankTokens(tokens []string) ([]int, error) {
 			}
 			ranks = append(ranks, parsed...)
 			if len(ranks) > rendermysekai.MaxHousingCompetitionRankCount {
-				return nil, fmt.Errorf("一次最多查询%d个百景排名", rendermysekai.MaxHousingCompetitionRankCount)
+				return nil, usererror.Invalid(i18n.M("mysekai.housing.too_many", i18n.Data{"Max": rendermysekai.MaxHousingCompetitionRankCount}))
 			}
 		}
 	}
@@ -593,7 +587,7 @@ func parseMysekaiHousingRankInterval(interval string) ([]int, error) {
 		start, end = end, start
 	}
 	if end-start+1 > rendermysekai.MaxHousingCompetitionRankCount {
-		return nil, fmt.Errorf("一次最多查询%d个百景排名", rendermysekai.MaxHousingCompetitionRankCount)
+		return nil, usererror.Invalid(i18n.M("mysekai.housing.too_many", i18n.Data{"Max": rendermysekai.MaxHousingCompetitionRankCount}))
 	}
 	out := make([]int, 0, end-start+1)
 	for rank := start; rank <= end; rank++ {
@@ -605,7 +599,7 @@ func parseMysekaiHousingRankInterval(interval string) ([]int, error) {
 func parsePositiveMysekaiHousingRank(value string) (int, error) {
 	rank, err := strconv.Atoi(strings.TrimSpace(value))
 	if err != nil || rank <= 0 {
-		return 0, fmt.Errorf("请输入正确的百景排名")
+		return 0, usererror.BadParam(value, i18n.M("mysekai.housing.rank_invalid"))
 	}
 	return rank, nil
 }
@@ -663,20 +657,30 @@ func mysekaiRenderContextOptionsForMode(mode string) mySekaiRenderContextOptions
 	}
 }
 
-func buildMysekaiExpiredReplayError(rc *RequestContext, harukiUserID int, status rendermysekai.SnapshotStatus) error {
-	lastUpdated := "未知"
-	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, harukiUserID)
-	if harukiUserID <= 0 {
+// mysekaiExpiredError is the reply for outdated MySekai data. It has the
+// same structure, terms and time format as the /sud and /msd replies
+// (privateDataStatusMessage).
+func mysekaiExpiredError(rc *RequestContext, renderCtx mySekaiRenderContext, status rendermysekai.SnapshotStatus) error {
+	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, renderCtx.HarukiUserID)
+	if renderCtx.HarukiUserID <= 0 {
 		timeZone = resolveRequesterHarukiUserTimeZone(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID)
 	}
-	if !status.LastUpdatedAt.IsZero() {
-		loc, _ := displaytime.LoadLocation(timeZone)
-		lastUpdated = displaytime.FormatTime(status.LastUpdatedAt.In(loc), "2006-01-02 15:04:05")
+	account, ok := bindingAccountLabel(renderCtx.Binding)
+	if !ok {
+		account = i18n.M("binding.current_account")
 	}
-	return onebot11.NewReplayError(
-		"您的mysekai数据已过期\n上次更新时间: %s\n如果需要查看新的，请重新上传\n如果确定需要看目前数据，请在指令上加force参数",
-		lastUpdated,
-	)
+	updatedAt, ago := uploadTimeLabels(status.LastUpdatedAt, timeZone)
+	return usererror.Setup(i18n.M("mysekai.data_expired", i18n.Data{"Account": account, "UpdatedAt": updatedAt, "Ago": ago}))
+}
+
+// uploadTimeLabels formats an upload time for the data status replies: the
+// time in the user's zone, and how long ago it was.
+func uploadTimeLabels(uploadedAt time.Time, timeZone string) (i18n.Message, string) {
+	loc, _ := displaytime.LoadLocation(timeZone)
+	if uploadedAt.IsZero() {
+		return i18n.FormatUserTime(uploadedAt, loc), ""
+	}
+	return i18n.FormatUserTime(uploadedAt, loc), displaytime.FormatRelativeDuration(displaytime.Now(timeZone).Sub(uploadedAt))
 }
 
 func mysekaiNoRemainingMaterialMessage(region string) onebot11.Message {
@@ -736,7 +740,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	}()
 
 	if rc.App == nil || rc.App.MySekai == nil {
-		return nil, fmt.Errorf("mysekai service unavailable: mysekai controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("mysekai service unavailable: mysekai controller is not configured"))
 	}
 
 	if !isMySekaiRegionAllowedForMode(rc.Cmd, regionWithDefault(rc.Cmd.Region)) {
@@ -835,7 +839,7 @@ func validateMysekaiSnapshotExpiry(rc *RequestContext, renderCtx mySekaiRenderCo
 		return err
 	}
 	if status.Expired {
-		return buildMysekaiExpiredReplayError(rc, renderCtx.HarukiUserID, status)
+		return mysekaiExpiredError(rc, renderCtx, status)
 	}
 	return nil
 }
@@ -994,7 +998,7 @@ func executeMysekaiPhoto(rc *RequestContext, renderCtx mySekaiRenderContext) (on
 	}
 	data, err := rc.App.SekaiAPI.WithContext(rc.Ctx).GetMySekaiImage(result.Region, result.ImagePath)
 	if err != nil {
-		return nil, fmt.Errorf("获取 MySekai 照片失败：%w", err)
+		return nil, mysekaiPhotoFetchError(err)
 	}
 	image, err := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 	if err != nil {

@@ -3,7 +3,6 @@ package displaytime
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"os"
 	"sort"
 	"strconv"
@@ -11,6 +10,9 @@ import (
 	"sync"
 	"time"
 	_ "time/tzdata"
+
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 var (
@@ -88,7 +90,7 @@ func KnownTimeZoneAliases() []string {
 func ResolveUserTimeZoneInput(raw string) (string, []string, error) {
 	input := strings.TrimSpace(raw)
 	if input == "" {
-		return "", nil, fmt.Errorf("请提供时区名或偏移量")
+		return "", nil, usererror.Misuse(i18n.M("profile.timezone.required"))
 	}
 
 	if resolved, ok := resolveDirectTimeZoneName(input); ok {
@@ -97,13 +99,13 @@ func ResolveUserTimeZoneInput(raw string) (string, []string, error) {
 
 	offsetSeconds, ok := parseTimeZoneOffsetSeconds(input)
 	if !ok {
-		return "", nil, fmt.Errorf("找不到符合的时区: %q", input)
+		return "", nil, usererror.BadParam(input, i18n.M("profile.timezone.not_found"))
 	}
 
 	candidates := findTimeZonesByOffset(offsetSeconds, time.Now().UTC())
 	switch len(candidates) {
 	case 0:
-		return "", nil, fmt.Errorf("找不到符合的时区: %q", input)
+		return "", nil, usererror.BadParam(input, i18n.M("profile.timezone.not_found"))
 	case 1:
 		return candidates[0], nil, nil
 	default:

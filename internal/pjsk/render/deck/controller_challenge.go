@@ -2,11 +2,14 @@ package deck
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) prepareChallengeRecommend(query AutoQuery, option map[string]any) error {
@@ -16,14 +19,14 @@ func (c *Controller) prepareChallengeRecommend(query AutoQuery, option map[strin
 
 	charID := optionInt(option, "challenge_live_character_id")
 	if query.MusicCompare && charID <= 0 {
-		return fmt.Errorf("挑战组卡必须指定一个角色才能进行歌曲比较")
+		return usererror.Misuse(i18n.M("deck.challenge.compare_needs_character"))
 	}
 
 	if !query.UseCurrentDeck {
 		return nil
 	}
 	if charID <= 0 {
-		return fmt.Errorf("需要指定挑战组卡角色才能使用\"当前\"参数")
+		return usererror.Misuse(i18n.M("deck.challenge.current_needs_character"))
 	}
 
 	raw := c.snapshot.RawData()
@@ -33,12 +36,12 @@ func (c *Controller) prepareChallengeRecommend(query AutoQuery, option map[strin
 
 	deckInfo := snapshot.FindChallengeLiveDeck(raw.UserChallengeLiveSoloDecks, charID)
 	if deckInfo == nil {
-		return fmt.Errorf("找不到你的该角色的当前挑战卡组（更新当前挑战卡组需要抓包）")
+		return usererror.New(usererror.CodeNotFound, i18n.M("deck.challenge.current_not_found"))
 	}
 
 	cards, ok := snapshot.ChallengeLiveDeckCardIDs(deckInfo)
 	if !ok {
-		return fmt.Errorf("你的该角色的当前挑战卡组不足5张，无法使用\"当前\"参数（更新当前挑战卡组需要抓包）")
+		return usererror.Invalid(i18n.M("deck.challenge.current_incomplete"))
 	}
 
 	option["fixed_cards"] = slices.Clone(cards)
@@ -62,7 +65,7 @@ type characterBatch struct {
 
 func (c *Controller) recommendChallengeAll(ctx context.Context, recommender PjskDeckRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
 	if recommender == nil {
-		return nil, fmt.Errorf("deck recommender is not configured")
+		return nil, usererror.Misconfigured(errors.New("deck recommender is not configured"))
 	}
 
 	if batchRecommender, ok := recommender.(rawBatchChallengeRecommender); ok {

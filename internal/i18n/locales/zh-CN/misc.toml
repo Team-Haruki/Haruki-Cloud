@@ -1,0 +1,9 @@
+# 其他：角色生日、生日卡池等。
+
+[misc.birthday.index_range]
+description = "查生日写的序号不在允许范围。占位符：Max=最大序号。"
+other = "生日序号只能是 1~{{.Max}}"
+
+[misc.birthday.cards_missing]
+description = "生日卡池查询没有找到生日卡牌。"
+other = "没有找到对应的生日卡牌"

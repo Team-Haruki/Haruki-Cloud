@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/internal/storage/storagetest"
+	"haruki-cloud/internal/testutil"
 )
 
 const storeChartKey = "jp-assets/startapp/music/music_score/0001_01/expert.txt"
@@ -73,7 +74,7 @@ func TestChartBPMReadsThroughStoreWithLRU(t *testing.T) {
 func TestChartBPMStoreMissAndFailure(t *testing.T) {
 	controller := newStoreChartController(storagetest.NewMemory())
 	_, err := controller.ResolveMusicBPM(Query{Query: "Song A", Region: "jp", Difficulty: "expert"})
-	if err == nil || err.Error() != "当前环境没有可读取的本地谱面文件，无法查询 BPM" {
+	if testutil.MessageID(err) != "common.misconfigured" {
 		t.Fatalf("store miss error = %v", err)
 	}
 	if detail := controller.resolveMusicDetailBPM("jp", 1, "expert"); detail != nil {
@@ -83,7 +84,7 @@ func TestChartBPMStoreMissAndFailure(t *testing.T) {
 	failing := storagetest.NewMemory()
 	failing.FailGet = func(storage.Key) error { return errors.New("backend down") }
 	failed := newStoreChartController(failing)
-	if _, err := failed.ResolveMusicBPM(Query{Query: "Song A", Region: "jp", Difficulty: "expert"}); err == nil || !strings.Contains(err.Error(), "failed to open chart file") {
+	if _, err := failed.ResolveMusicBPM(Query{Query: "Song A", Region: "jp", Difficulty: "expert"}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "failed to open chart file") {
 		t.Fatalf("store failure error = %v", err)
 	}
 	if matches, err := failed.FindMusicChartsByBPM(BPMQuery{Region: "jp", BPM: 128}); err == nil || matches != nil {

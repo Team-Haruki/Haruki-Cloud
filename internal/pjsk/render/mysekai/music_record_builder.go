@@ -8,6 +8,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 // BuildMusicRecordRequest builds the request for rendering MySekai music record view.
@@ -29,7 +30,7 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 
 	profile := c.mysekaiProfileCard(region, merged, query.Profile, false)
 	if profile == nil {
-		return nil, fmt.Errorf("mysekai music record requires profile data")
+		return nil, fmt.Errorf("mysekai music record requires profile data: %w", snapshot.ErrMySekaiUnavailable)
 	}
 	request := &drawing.MysekaiMusicrecordRequest{
 		Profile:              *profile,
@@ -203,7 +204,7 @@ func (c *Controller) RenderMusicRecord(query MusicRecordQuery) ([]byte, error) {
 
 func (c *Controller) RenderMusicRecordImage(query MusicRecordQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildMusicRecordRequest(query)

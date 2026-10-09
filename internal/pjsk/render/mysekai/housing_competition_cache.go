@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"log/slog"
 	"path/filepath"
 	"sort"
@@ -16,10 +16,12 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"haruki-cloud/internal/cachepersist"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -210,7 +212,7 @@ func (c *housingCompetitionStatsCache) Refresh(ctx context.Context, api HousingC
 		return nil, time.Time{}, 0, err
 	}
 	if api == nil {
-		return nil, time.Time{}, 0, fmt.Errorf("sekai api client is not configured")
+		return nil, time.Time{}, 0, usererror.Misconfigured(errors.New("sekai api client is not configured"))
 	}
 	sampleCount = normalizeHousingCompetitionSampleCount(sampleCount)
 	flightKey := fmt.Sprintf("%s:%d:%d", key.Region, key.HousingID, sampleCount)
@@ -302,7 +304,7 @@ func (c *housingCompetitionStatsCache) Refresh(ctx context.Context, api HousingC
 
 func fetchHousingCompetitionSamples(ctx context.Context, api HousingCompetitionListClient, region string, housingID, sampleCount, sampleIntervalMillis int) ([]HousingCompetitionEntry, time.Time, int, error) {
 	if api == nil {
-		return nil, time.Time{}, 0, fmt.Errorf("sekai api client is not configured")
+		return nil, time.Time{}, 0, usererror.Misconfigured(errors.New("sekai api client is not configured"))
 	}
 	if ctx == nil {
 		ctx = context.TODO()

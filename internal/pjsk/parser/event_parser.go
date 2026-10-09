@@ -1,13 +1,14 @@
 package parser
 
 import (
-	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/filteralias"
+	"haruki-cloud/utils/usererror"
 )
 
 // CharacterIDByNickname resolves a character nickname to character id.
@@ -46,7 +47,7 @@ func NewEventParser(nicknames map[string]int) *EventParser {
 func (p *EventParser) Parse(args string) (*EventQueryInfo, error) {
 	args = strings.TrimSpace(args)
 	if args == "" {
-		return nil, fmt.Errorf("活动查询参数不能为空")
+		return nil, usererror.Misuse(i18n.M("event.query_required"))
 	}
 
 	if info := p.tryParseEventID(args); info != nil {
@@ -65,7 +66,7 @@ func (p *EventParser) Parse(args string) (*EventQueryInfo, error) {
 		return info, nil
 	}
 
-	return nil, fmt.Errorf("无法解析的活动指令: %s", args)
+	return nil, usererror.Unrecognized()
 }
 
 func (p *EventParser) tryParseEventID(args string) *EventQueryInfo {

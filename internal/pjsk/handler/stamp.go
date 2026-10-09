@@ -2,16 +2,18 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+
+	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/stamp"
-	"strconv"
-	"strings"
-
-	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/utils/usererror"
 )
 
 func (sekaiHandlers) StampHandle() HarukiSekaiCommandHandler {
@@ -100,7 +102,7 @@ func parseStampAll(args string) bool {
 
 func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 	if rc.App.Stamps == nil {
-		return nil, fmt.Errorf("stamp service unavailable: sekai client not configured")
+		return nil, usererror.Misconfigured(errors.New("stamp service unavailable: sekai client not configured"))
 	}
 	stampCtrl := rc.App.Stamps.WithContext(rc.Ctx)
 	region := renderregion.Value(rc.Cmd.Region)

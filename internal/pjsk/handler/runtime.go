@@ -347,7 +347,7 @@ func (rc *RequestContext) warmSuiteAndPublicProfile(needMySekai bool) {
 // hide-suite behavior unchanged.
 func (rc *RequestContext) requireVisibleSuiteSnapshot() (*accountdata.ResolvedBinding, snapshot.Snapshot, error) {
 	if rc == nil {
-		return nil, nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
+		return nil, nil, suiteDataNotFoundError(nil)
 	}
 	if rc.Platform == "" || rc.PlatformUserID == "" || rc.App == nil || rc.App.Bindings == nil {
 		return nil, nil, nil
@@ -369,7 +369,7 @@ func (rc *RequestContext) requireVisibleSuiteSnapshot() (*accountdata.ResolvedBi
 		if snapshotErr := rc.SnapshotError(false); snapshotErr != nil {
 			return binding, nil, normalizeToolboxDataFetchError(snapshotErr, "suite", binding)
 		}
-		return binding, nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return binding, nil, suiteDataNotFoundError(binding)
 	}
 	return binding, snap, nil
 }

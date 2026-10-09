@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/testutil"
 )
 
 func jp700Controller(lists map[string][]map[string]any) *Controller {
@@ -78,7 +79,7 @@ func TestBuildShopRequestGroupsJPShopRows(t *testing.T) {
 
 func TestBuildShopRequestOldRegionReportsUnavailable(t *testing.T) {
 	controller := jp700Controller(map[string][]map[string]any{"mysekaiMaterials.json": {{"id": 1}}})
-	if _, err := controller.BuildShopRequest(ShopQuery{Region: "tw"}); err == nil || !strings.Contains(err.Error(), "mysekai shop is not available in region") {
+	if _, err := controller.BuildShopRequest(ShopQuery{Region: "tw"}); err == nil || testutil.MessageID(err) != "mysekai.shop.region_unavailable" {
 		t.Fatalf("expected shop unavailable, got %v", err)
 	}
 }
@@ -144,14 +145,14 @@ func TestBuildBlueprintTermRequestENTermsWithoutNewColumns(t *testing.T) {
 	if entry.CraftLimit != nil || entry.CostMaterials != nil {
 		t.Fatalf("EN entry must not invent limits or costs: %+v", entry)
 	}
-	if _, err := controller.BuildBlueprintTermRequest(BlueprintTermQuery{Region: "en", NowMillis: 10000}); err == nil || !strings.Contains(err.Error(), "no current term") {
+	if _, err := controller.BuildBlueprintTermRequest(BlueprintTermQuery{Region: "en", NowMillis: 10000}); err == nil || testutil.MessageID(err) != "mysekai.blueprint_term.none_current" {
 		t.Fatalf("expected no current term, got %v", err)
 	}
 }
 
 func TestBuildBlueprintTermRequestRegionWithoutTerms(t *testing.T) {
 	controller := jp700Controller(map[string][]map[string]any{"mysekaiBlueprints.json": {{"id": 1}}})
-	if _, err := controller.BuildBlueprintTermRequest(BlueprintTermQuery{Region: "tw"}); err == nil || !strings.Contains(err.Error(), "mysekai blueprint terms are not available in region") {
+	if _, err := controller.BuildBlueprintTermRequest(BlueprintTermQuery{Region: "tw"}); err == nil || testutil.MessageID(err) != "mysekai.blueprint_term.region_unavailable" {
 		t.Fatalf("expected terms unavailable, got %v", err)
 	}
 }

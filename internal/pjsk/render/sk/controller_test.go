@@ -18,6 +18,8 @@ import (
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 type testForecastProvider struct {
@@ -3738,9 +3740,7 @@ func TestBuildCSBRequestFromTrackerRejectsMultipleRanks(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected single-target error, got nil")
 	}
-	if got := err.Error(); got != "查水表目前仅支持单人查询" {
-		t.Fatalf("unexpected error: %v", got)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeUsage, "sk.arrest.single_only")
 }
 
 func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
@@ -4088,9 +4088,7 @@ func TestBuildPredictLineRequestFromTrackerStopsInLastEventHour(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected last-hour prediction stop error, got nil")
 	}
-	if got := err.Error(); got != skPredictionStopMessage {
-		t.Fatalf("unexpected error: %v", got)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeForbidden, "sk.predict.stopped")
 }
 
 func TestBuildPredictLineRequestFromTrackerReportsNoActiveAfterEventEnded(t *testing.T) {
@@ -4120,9 +4118,7 @@ func TestBuildPredictLineRequestFromTrackerReportsNoActiveAfterEventEnded(t *tes
 	if err == nil {
 		t.Fatal("expected no-active prediction error, got nil")
 	}
-	if got := err.Error(); got != skPredictionNoActiveMsg {
-		t.Fatalf("unexpected error: %v", got)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeNotFound, "sk.no_ongoing_event")
 }
 
 func TestBuildPredictLineRequestFromTrackerStopsInLastWorldBloomChapterHour(t *testing.T) {
@@ -4164,9 +4160,7 @@ func TestBuildPredictLineRequestFromTrackerStopsInLastWorldBloomChapterHour(t *t
 	if err == nil {
 		t.Fatal("expected last-hour prediction stop error, got nil")
 	}
-	if got := err.Error(); got != skPredictionStopMessage {
-		t.Fatalf("unexpected error: %v", got)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeForbidden, "sk.predict.stopped")
 }
 
 func TestBuildPredictLineRequestFromTrackerDoesNotFallbackWhenForecastCacheMissing(t *testing.T) {
@@ -4195,9 +4189,7 @@ func TestBuildPredictLineRequestFromTrackerDoesNotFallbackWhenForecastCacheMissi
 	if err == nil {
 		t.Fatal("expected missing forecast cache error, got nil")
 	}
-	if got := err.Error(); !strings.Contains(got, "预测数据尚未就绪") {
-		t.Fatalf("unexpected error: %v", got)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeUnavailable, "sk.predict.not_ready")
 }
 
 func TestBuildPredictLineRequestFromTrackerUsesCachedGenericForecast(t *testing.T) {

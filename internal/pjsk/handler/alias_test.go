@@ -2,14 +2,14 @@ package handler
 
 import (
 	"context"
-	json "haruki-cloud/internal/jsonutil"
-	"strings"
 	"testing"
 
+	json "haruki-cloud/internal/jsonutil"
 	aliases "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/internal/testutil"
 )
 
 type stubAliasMusicCoverResolver struct {
@@ -319,9 +319,7 @@ func TestAliasBatchRejectHandleRejectsNonNumericField(t *testing.T) {
 		TriggerCmd: "/批量拒绝别名",
 		ArgText:    "21 原因",
 	})
-	if err == nil || !strings.Contains(err.Error(), "待审核ID必须为正整数") {
-		t.Fatalf("expected numeric review ID error, got %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "alias.review_id_positive")
 }
 
 func TestShouldRenderAliasQueryAsImageForMusicThreshold(t *testing.T) {

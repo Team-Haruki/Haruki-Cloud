@@ -16,6 +16,7 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/common"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 // UserQueryParams holds the resolved identity context for commands that query
@@ -65,7 +66,7 @@ func resolveUserQueryParams(ctx HarrukiSekaiHandlerContext) (UserQueryParams, er
 		p.Mode = "uid"
 		p.PJSKUserID = uidArg
 	default:
-		return p, onebot11.NewReplayError("无效的参数：%q\n使用方式：%s [@用户 | 游戏ID | u序号]", uidArg, ctx.originalTriggerCmd)
+		return p, usererror.BadParam(uidArg, i18n.M("profile.target_invalid"))
 	}
 	return p, nil
 }
@@ -87,7 +88,7 @@ func resolveSelfOnlyQueryParams(ctx HarrukiSekaiHandlerContext) (UserQueryParams
 		p.Selector = uidArg
 		return p, nil
 	}
-	return p, onebot11.NewReplayError("此命令仅支持查询自己的数据\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
+	return p, usererror.Forbidden(i18n.M("common.self_only"))
 }
 
 func (sekaiHandlers) ArrestHandle() HarukiSekaiCommandHandler {
@@ -140,7 +141,7 @@ func executeArrest(rc *RequestContext) (onebot11.Message, error) {
 
 	resp, err := fetchCachedSekaiUserProfile(rc.Ctx, rc.App, region, pjskUserID)
 	if err != nil {
-		return nil, fmt.Errorf("获取玩家信息失败：%w", err)
+		return nil, playerProfileFetchError(err)
 	}
 
 	if rc.App.Censor != nil {
@@ -313,20 +314,20 @@ func calcRegistrationTime(userID string, server string) (int64, error) {
 	switch renderregion.Normalize(server) {
 	case renderregion.JP, renderregion.EN:
 		if len(userID) <= 3 {
-			return 0, fmt.Errorf("账号ID格式不正确")
+			return 0, usererror.BadParam(userID, i18n.M("common.param.uid_digits"))
 		}
 		n, err := strconv.ParseInt(userID[:len(userID)-3], 10, 64)
 		if err != nil {
-			return 0, fmt.Errorf("无效的账号ID：%w", err)
+			return 0, usererror.BadParam(userID, i18n.M("common.param.uid_digits")).WithCause(err)
 		}
 		return 1600218000 + int64(float64(n)/(1024*4096)), nil
 	case renderregion.TW, renderregion.KR, renderregion.CN:
 		n, err := strconv.ParseInt(userID, 10, 64)
 		if err != nil {
-			return 0, fmt.Errorf("无效的账号ID：%w", err)
+			return 0, usererror.BadParam(userID, i18n.M("common.param.uid_digits")).WithCause(err)
 		}
 		return int64(float64(n) / (1024 * 1024 * 4096)), nil
 	default:
-		return 0, fmt.Errorf("不支持的服务器：%s", server)
+		return 0, usererror.Invalid(i18n.M("profile.registration.unsupported_region"))
 	}
 }

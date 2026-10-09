@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestResolveMusicMetaRequestsBuildsRequestsFromQuery(t *testing.T) {
@@ -227,10 +228,10 @@ func TestResolveMusicMetaRequestsRejectsAmbiguousKeywordQuery(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected ambiguous keyword query to fail")
 	}
-	if !strings.Contains(err.Error(), "匹配到多个歌曲") {
+	if testutil.MessageID(err) != "music.ambiguous" {
 		t.Fatalf("expected ambiguous error, got %v", err)
 	}
-	if !strings.Contains(err.Error(), "music1/Alpha") || !strings.Contains(err.Error(), "music2/Beta") {
+	if !strings.Contains(err.Error(), "music1：Alpha") || !strings.Contains(err.Error(), "music2：Beta") {
 		t.Fatalf("expected music id hints in error, got %v", err)
 	}
 }

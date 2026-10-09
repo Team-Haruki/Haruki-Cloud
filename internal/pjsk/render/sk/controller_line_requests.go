@@ -2,20 +2,19 @@ package sk
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
-	skPredictionNotice      = "预测数据仅供参考，请以实际为准规划好冲榜计划"
-	skPredictionStopMessage = "结活前最后一个小时停止提供预测"
-	skPredictionNoActiveMsg = "当前无进行中的活动"
+	skPredictionNotice = "预测数据仅供参考，请以实际为准规划好冲榜计划"
 )
 
 func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineRequest, error) {
@@ -66,10 +65,10 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 		return nil, err
 	}
 	if normalized.UserID != nil {
-		return nil, fmt.Errorf("榜线预测暂不支持按用户查询，请使用排名")
+		return nil, usererror.Misuse(i18n.M("sk.predict.user_unsupported"))
 	}
 	if c.forecastCache == nil {
-		return nil, fmt.Errorf("forecast cache is not configured")
+		return nil, usererror.Misconfigured(errors.New("forecast cache is not configured"))
 	}
 
 	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
@@ -82,19 +81,19 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 	bySource, forecastErr := c.forecastCache.CachedBySourceQuery(forecastQuery)
 	if forecastErr != nil {
 		c.forecastCache.StartRefreshQuery(forecastQuery)
-		return nil, fmt.Errorf("预测数据尚未就绪，请稍后再试: %w", forecastErr)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("sk.predict.not_ready"), forecastErr)
 	}
 
 	sourceOrder := forecastSourceDisplayOrder(normalized.Region, bySource)
 	forecastRanks := forecastProvidedRanks(bySource)
 	if len(forecastRanks) == 0 {
 		c.forecastCache.StartRefreshQuery(forecastQuery)
-		return nil, fmt.Errorf("预测缓存暂无这些档位的数据")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("sk.predict.no_tiers"))
 	}
 	columns := buildForecastColumns(sourceOrder, bySource, forecastRanks)
 	if len(columns) == 0 {
 		c.forecastCache.StartRefreshQuery(forecastQuery)
-		return nil, fmt.Errorf("预测缓存暂无这些档位的数据")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("sk.predict.no_tiers"))
 	}
 
 	currentRanks := c.buildCurrentForecastRanks(normalized, forecastRanks)
@@ -203,7 +202,7 @@ func (c *Controller) RenderPredictLineFromTracker(req TrackerRankQuery) ([]byte,
 
 func (c *Controller) RenderPredictLineFromTrackerImage(req TrackerRankQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	return c.renderPredictLineFromTrackerImage(req)
 }
@@ -257,11 +256,11 @@ func ensureSKPredictionAllowed(meta eventMeta) error {
 	}
 	now := time.Now().UnixMilli()
 	if now >= meta.aggregateAt {
-		return errors.New(skPredictionNoActiveMsg)
+		return usererror.New(usererror.CodeNotFound, i18n.M("sk.no_ongoing_event"))
 	}
 	stopAt := meta.aggregateAt - int64(time.Hour/time.Millisecond)
 	if now >= stopAt {
-		return errors.New(skPredictionStopMessage)
+		return usererror.Forbidden(i18n.M("sk.predict.stopped"))
 	}
 	return nil
 }

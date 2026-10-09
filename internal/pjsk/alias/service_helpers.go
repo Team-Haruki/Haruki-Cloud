@@ -2,6 +2,7 @@ package alias
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -11,7 +12,9 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/gamecharacter"
 	sekaimusic "haruki-cloud/database/sekai/music"
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 func (s *Service) loadMusicTitles(ctx context.Context, musicIDs []int) (map[int]string, error) {
@@ -195,19 +198,40 @@ func serverRegionRank(region string) int {
 	}
 }
 
-func ambiguousEntityError(aliasType, sourceName string, ids []int, names map[int]string) error {
-	parts := make([]string, 0, len(ids))
-	for _, id := range ids {
-		parts = append(parts, fmt.Sprintf("%d/%s", id, names[id]))
-	}
-	if aliasType == PjskAliasTypeMusic {
-		lines := make([]string, 0, len(ids))
-		for _, id := range ids {
-			lines = append(lines, fmt.Sprintf("music%d/%s", id, names[id]))
+// AmbiguousError reports that an alias or name matches several songs or
+// characters. It carries the candidate IDs (AmbiguousIDs) and unwraps to the
+// typed user reply listing them.
+type AmbiguousError struct {
+	AliasType string
+	IDs       []int
+	names     map[int]string
+}
+
+func (e *AmbiguousError) Error() string { return e.userError().Error() }
+
+// Unwrap exposes the typed user reply.
+func (e *AmbiguousError) Unwrap() error { return e.userError() }
+
+// AmbiguousIDs lists the candidate IDs.
+func (e *AmbiguousError) AmbiguousIDs() []int { return e.IDs }
+
+func (e *AmbiguousError) userError() *usererror.Error {
+	if e.AliasType == PjskAliasTypeMusic {
+		lines := make([]i18n.Message, 0, len(e.IDs))
+		for _, id := range e.IDs {
+			lines = append(lines, i18n.M("music.ambiguous_candidate", i18n.Data{"ID": id, "Title": e.names[id]}))
 		}
-		return fmt.Errorf("%s匹配到多个%s，请改用 music<id> 查询：\n%s", sourceName, aliasTypeLabel(aliasType), strings.Join(lines, "\n"))
+		return usererror.New(usererror.CodeAmbiguous, i18n.M("music.ambiguous", i18n.Data{"Candidates": lines}))
 	}
-	return fmt.Errorf("%s匹配到多个%s，请改用%s：\n%s", sourceName, aliasTypeLabel(aliasType), aliasTypeIDLabel(aliasType), strings.Join(parts, "\n"))
+	lines := make([]i18n.Message, 0, len(e.IDs))
+	for _, id := range e.IDs {
+		lines = append(lines, i18n.M("alias.ambiguous_candidate", i18n.Data{"ID": id, "Name": e.names[id]}))
+	}
+	return usererror.New(usererror.CodeAmbiguous, i18n.M("alias.ambiguous", i18n.Data{"Kind": aliasKind(e.AliasType), "Candidates": lines}))
+}
+
+func ambiguousEntityError(aliasType, sourceName string, ids []int, names map[int]string) error {
+	return &AmbiguousError{AliasType: aliasType, IDs: ids, names: names}
 }
 
 func normalizeSubmittedAliases(raw []string) ([]string, error) {
@@ -220,26 +244,26 @@ func normalizeSubmittedAliases(raw []string) ([]string, error) {
 		}
 		key := normalizeCompareText(aliasText)
 		if previous, ok := seen[key]; ok {
-			return nil, fmt.Errorf("别名 %q 与 %q 重复", previous, aliasText)
+			return nil, usererror.Invalid(i18n.M("alias.duplicate_in_request", i18n.Data{"First": previous, "Second": aliasText}))
 		}
 		seen[key] = aliasText
 		cleaned = append(cleaned, aliasText)
 	}
 	if len(cleaned) == 0 {
-		return nil, fmt.Errorf("请至少提供一个非空别名")
+		return nil, usererror.Misuse(i18n.M("alias.aliases_required"))
 	}
 	return cleaned, nil
 }
 
 func normalizeReviewIDs(reviewIDs []int64) ([]int64, error) {
 	if len(reviewIDs) == 0 {
-		return nil, fmt.Errorf("请至少提供一个待审核ID")
+		return nil, usererror.Misuse(i18n.M("alias.review_ids_required"))
 	}
 	result := make([]int64, 0, len(reviewIDs))
 	seen := make(map[int64]struct{}, len(reviewIDs))
 	for _, reviewID := range reviewIDs {
 		if reviewID <= 0 {
-			return nil, fmt.Errorf("待审核ID必须为正整数")
+			return nil, usererror.Invalid(i18n.M("alias.review_id_positive"))
 		}
 		if _, ok := seen[reviewID]; ok {
 			continue
@@ -256,8 +280,29 @@ func normalizeAliasType(aliasType string) (string, error) {
 	case PjskAliasTypeMusic, PjskAliasTypeCharacter:
 		return aliasType, nil
 	default:
-		return "", fmt.Errorf("不支持的别名类型: %s", aliasType)
+		return "", usererror.Wrap(usererror.CodeInternal, i18n.M("alias.type_unsupported"), fmt.Errorf("unsupported alias type %q", aliasType))
 	}
+}
+
+// aliasKind is the catalog name of an alias type, for error replies.
+func aliasKind(aliasType string) i18n.Message {
+	if aliasType == PjskAliasTypeCharacter {
+		return i18n.M("alias.kind.character")
+	}
+	return i18n.M("alias.kind.music")
+}
+
+// aliasNameKind is the catalog name of the entity name an alias may not
+// repeat, for error replies.
+func aliasNameKind(aliasType string) i18n.Message {
+	if aliasType == PjskAliasTypeCharacter {
+		return i18n.M("alias.name_kind.character")
+	}
+	return i18n.M("alias.name_kind.music")
+}
+
+func errAliasUnavailable() error {
+	return usererror.Unavailable(i18n.M("alias.feature"), errors.New("alias service is not ready"))
 }
 
 func aliasTypeLabel(aliasType string) string {

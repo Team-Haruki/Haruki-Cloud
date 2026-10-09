@@ -163,7 +163,7 @@ func TestBirthdaySelectionValidationBranches(t *testing.T) {
 		_, err := resolveBirthdayCharacterID(context.Background(), nil, renderregion.JP, "unknown-character")
 		{
 			testutil.Require(t, !(err == nil), "unconfigured character lookup error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "service unavailable"), "unconfigured character lookup error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "service unavailable"), "unconfigured character lookup error = %v", err)
 		}
 	}
 	{

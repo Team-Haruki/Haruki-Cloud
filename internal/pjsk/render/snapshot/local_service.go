@@ -82,7 +82,7 @@ func (s *Service) Configured() bool {
 
 func (s *Service) Require() error {
 	if s == nil || !s.configured {
-		return fmt.Errorf("local user snapshot is not configured")
+		return ErrNotConfigured
 	}
 	if s.initErr != nil {
 		return s.initErr

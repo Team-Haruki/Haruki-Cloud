@@ -1,18 +1,23 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
-	"haruki-cloud/internal/pjsk/drawing"
 	"strings"
 	"sync"
 
+	"haruki-cloud/internal/core/upstreamerr"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/logger"
+	"haruki-cloud/utils/usererror"
 )
 
 func (sekaiHandlers) ProfileBindHandle() HarukiSekaiCommandHandler {
@@ -26,7 +31,7 @@ func (sekaiHandlers) ProfileBindHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID", ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("binding.bind.uid_required"))
 			}
 			if rerouted, handled, err := tryRerouteProfileBindCommand(ctx, args); handled {
 				return rerouted, err
@@ -45,7 +50,7 @@ func tryRerouteProfileBindCommand(ctx HarrukiSekaiHandlerContext, args string) (
 	switch strings.ToLower(strings.TrimSpace(tokens[0])) {
 	case "列表", "list":
 		if len(tokens) != 1 {
-			return nil, true, onebot11.NewReplayError("使用方式:\n%s", buildProfileBindDerivedTrigger(ctx, "list"))
+			return nil, true, usererror.Misuse(i18n.M("common.no_args"))
 		}
 		params := newProfileBindingParams(ctx, "", "")
 		if !ctx.HasExplicitRegion() {
@@ -54,7 +59,7 @@ func tryRerouteProfileBindCommand(ctx HarrukiSekaiHandlerContext, args string) (
 		return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindList, params), true, nil
 	case "交换", "swap":
 		if len(tokens) != 3 {
-			return nil, true, onebot11.NewReplayError("使用方式:\n%s u1 u2", buildProfileBindDerivedTrigger(ctx, "swap"))
+			return nil, true, usererror.Misuse(i18n.M("binding.swap.selectors_required"))
 		}
 		params := newProfileBindingParams(ctx, tokens[1], "")
 		params.SelectorOther = tokens[2]
@@ -93,7 +98,7 @@ func (sekaiHandlers) ProfileBindListHandle() HarukiSekaiCommandHandler {
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("common.no_args"))
 			}
 			params := newProfileBindingParams(ctx, "", "")
 			if !ctx.HasExplicitRegion() {
@@ -113,14 +118,14 @@ func (sekaiHandlers) ProfileUIDHandle() HarukiSekaiCommandHandler {
 		ParseUIDArg: common.BoolPtr(true),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, profileUIDUsageError(ctx.originalTriggerCmd)
+				return nil, profileUIDUsageError()
 			}
 			selector := strings.TrimSpace(ctx.UIDArg())
 			if strings.HasPrefix(selector, "@") {
-				return nil, onebot11.NewReplayError("此命令仅支持查询自己的绑定账号 UID\n查看完整用法请发送：%s -help", ctx.originalTriggerCmd)
+				return nil, usererror.Forbidden(i18n.M("binding.uid.self_only"))
 			}
 			if selector != "" && !isBindingSelector(selector) {
-				return nil, profileUIDUsageError(ctx.originalTriggerCmd)
+				return nil, profileUIDUsageError()
 			}
 
 			params := newProfileBindingParams(ctx, selector, "")
@@ -132,8 +137,8 @@ func (sekaiHandlers) ProfileUIDHandle() HarukiSekaiCommandHandler {
 	}, executeProfile)
 }
 
-func profileUIDUsageError(trigger string) error {
-	return onebot11.NewReplayError("参数格式不正确\n查看完整用法请发送：%s -help", trigger)
+func profileUIDUsageError() error {
+	return usererror.Unrecognized()
 }
 
 func (sekaiHandlers) ProfileBindSwapHandle() HarukiSekaiCommandHandler {
@@ -146,7 +151,7 @@ func (sekaiHandlers) ProfileBindSwapHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.Fields(strings.TrimSpace(ctx.GetArgs()))
 			if len(args) != 2 {
-				return nil, onebot11.NewReplayError("使用方式:\n%s u1 u2", ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("binding.swap.selectors_required"))
 			}
 
 			params := newProfileBindingParams(ctx, args[0], "")
@@ -169,7 +174,7 @@ func (sekaiHandlers) ProfileUnbindHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID\n或 %s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("binding.selector_required"))
 			}
 			params := newProfileBindingParams(ctx, args, "")
 			scope := ""
@@ -193,7 +198,7 @@ func (sekaiHandlers) ProfileSetMainHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID\n%s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("binding.selector_required"))
 			}
 
 			scope := ""
@@ -300,7 +305,9 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 			if text == "" {
 				text = "已更新个人信息背景设置"
 			}
-			return onebot11.Message{onebot11.Text(text + "\n个人信息预览渲染失败: " + renderErr.Error())}, nil
+			profileLogger.WarnContext(rc.Ctx, "profile preview render failed after a background change",
+				"error", usererror.RedactForLog(usererror.LogText(renderErr), usererror.DefaultLogMessageLimit))
+			return onebot11.Message{onebot11.Text(text + "\n" + i18n.T("profile.bg.preview_failed"))}, nil
 		}
 		text := strings.TrimSpace(string(data))
 		if text == "" {
@@ -312,10 +319,24 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 	}
 }
 
+var profileLogger = logger.NewLoggerFromGlobal("PJSKProfile")
+
+// playerProfileFetchError is the reply for a failed player profile fetch:
+// typed errors pass, upstream failures are classified.
+func playerProfileFetchError(err error) error {
+	if isUserFacingError(err) {
+		return err
+	}
+	if typed := upstreamerr.UserError(err); typed != nil {
+		return typed
+	}
+	return usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.fetch_failed"), err)
+}
+
 func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region string, regionExplicit bool) (ResolvedGameTarget, onebot11.Message, error) {
 	var zeroTarget ResolvedGameTarget
 	if rc == nil || rc.App == nil || rc.App.Profiles == nil || rc.App.SekaiAPI == nil {
-		return zeroTarget, nil, fmt.Errorf("profile service unavailable")
+		return zeroTarget, nil, usererror.Misconfigured(errors.New("profile service unavailable"))
 	}
 
 	profileCtrl := rc.App.Profiles.WithContext(rc.Ctx)
@@ -329,7 +350,7 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 
 	resp, profileSnapshot, err := fetchProfileAndTargetSnapshot(rc, p, target, region)
 	if err != nil {
-		return zeroTarget, nil, fmt.Errorf("获取玩家信息失败：%w", err)
+		return zeroTarget, nil, playerProfileFetchError(err)
 	}
 
 	if rc.App.Censor != nil {

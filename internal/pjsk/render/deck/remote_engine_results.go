@@ -5,9 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"sort"
 	"strings"
+
+	"haruki-cloud/internal/core/upstreamerr"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 type remoteRewarmKind int
@@ -64,7 +66,7 @@ func convertRemoteDecks(src []remoteRecommendDeck) []RecommendDeck {
 func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]any) ([]remoteBatchRecommendResult, error) {
 	trimmed := bytes.TrimSpace(raw)
 	if len(trimmed) == 0 {
-		return nil, fmt.Errorf("deck-service returned empty response")
+		return nil, deckTagged(upstreamerr.KindEmptyResult, fmt.Errorf("deck-service returned empty response"))
 	}
 
 	if trimmed[0] == '[' {
@@ -142,7 +144,7 @@ func aggregateRemoteRecommendResults(recType string, options []map[string]any, r
 func (a *remoteResultAccumulator) add(item remoteBatchRecommendResult, recType string, options []map[string]any) {
 	if message := strings.TrimSpace(item.Error); message != "" {
 		if a.firstErr == nil {
-			a.firstErr = fmt.Errorf("%s", message)
+			a.firstErr = &RemoteError{Message: message}
 		}
 		return
 	}

@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/testutil"
+
 	"github.com/go-resty/resty/v2"
 )
 
@@ -358,7 +360,7 @@ func testMoesekaiSourceFailures(t *testing.T) {
 	bothFail := additionalForecastProvider(t, func(*http.Request) (int, string, error) {
 		return http.StatusBadGateway, "", nil
 	})
-	if _, err := bothFail.fetchMoesekaiByQuery(ctx, ForecastQuery{Region: "cn", EventID: 10}, nil); err == nil || !strings.Contains(err.Error(), "rk=") || !strings.Contains(err.Error(), "legacy=") {
+	if _, err := bothFail.fetchMoesekaiByQuery(ctx, ForecastQuery{Region: "cn", EventID: 10}, nil); err == nil || !strings.Contains(testutil.ErrorDetail(err), "rk=") || !strings.Contains(err.Error(), "legacy=") {
 		t.Fatalf("combined moesekai error = %v", err)
 	}
 	rkFail := additionalForecastProvider(t, func(req *http.Request) (int, string, error) {
@@ -367,7 +369,7 @@ func testMoesekaiSourceFailures(t *testing.T) {
 		}
 		return http.StatusOK, `{"data":{"charts":[]}}`, nil
 	})
-	if _, err := rkFail.fetchMoesekaiByQuery(ctx, ForecastQuery{Region: "cn", EventID: 10}, nil); err == nil || strings.Contains(err.Error(), "legacy=") {
+	if _, err := rkFail.fetchMoesekaiByQuery(ctx, ForecastQuery{Region: "cn", EventID: 10}, nil); err == nil || strings.Contains(testutil.ErrorDetail(err), "legacy=") {
 		t.Fatalf("rk-only moesekai error = %v", err)
 	}
 	legacyFail := additionalForecastProvider(t, func(req *http.Request) (int, string, error) {
@@ -376,7 +378,7 @@ func testMoesekaiSourceFailures(t *testing.T) {
 		}
 		return http.StatusBadGateway, "", nil
 	})
-	if _, err := legacyFail.fetchMoesekaiByQuery(ctx, ForecastQuery{Region: "cn", EventID: 10}, nil); err == nil || strings.Contains(err.Error(), "rk=") {
+	if _, err := legacyFail.fetchMoesekaiByQuery(ctx, ForecastQuery{Region: "cn", EventID: 10}, nil); err == nil || strings.Contains(testutil.ErrorDetail(err), "rk=") {
 		t.Fatalf("legacy-only moesekai error = %v", err)
 	}
 }
@@ -529,7 +531,7 @@ func testRemoteForecastProviderLocalFetches(t *testing.T) (*RemoteForecastProvid
 		return http.StatusBadGateway, "", nil
 	})
 	failing.localForecastURL = "http://local.test"
-	if _, err := failing.FetchBySourceQuery(ctx, ForecastQuery{Region: "tw", EventID: 20}); err == nil || !strings.Contains(err.Error(), "all forecast sources failed") {
+	if _, err := failing.FetchBySourceQuery(ctx, ForecastQuery{Region: "tw", EventID: 20}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "all forecast sources failed") {
 		t.Fatalf("all-source failure = %v", err)
 	}
 

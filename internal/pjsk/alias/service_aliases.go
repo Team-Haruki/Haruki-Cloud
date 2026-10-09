@@ -2,19 +2,20 @@ package alias
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strings"
 	"time"
 
 	pjskdb "haruki-cloud/database/pjsk"
 	aliasdb "haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/aliassubmissionban"
-	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 func (s *Service) Submit(ctx context.Context, aliasType, platform, platformUserID, target string, aliasesToSubmit []string) ([]PjskAliasRecord, error) {
 	if !s.IsReady() {
-		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
+		return nil, errAliasUnavailable()
 	}
 	if err := s.requireWritable(); err != nil {
 		return nil, err
@@ -65,7 +66,7 @@ func (s *Service) validateSubmitter(ctx context.Context, platform, platformUserI
 	platform = strings.TrimSpace(platform)
 	platformUserID = strings.TrimSpace(platformUserID)
 	if platform == "" || platformUserID == "" {
-		return "", fmt.Errorf("缺少别名提交身份信息")
+		return "", errors.New("alias submitter identity is missing")
 	}
 	banned, err := s.pjsk.AliasSubmissionBan.Query().
 		Where(
@@ -77,7 +78,7 @@ func (s *Service) validateSubmitter(ctx context.Context, platform, platformUserI
 		return "", err
 	}
 	if banned {
-		return "", onebot11.NewReplayError("你已被禁止提交别名")
+		return "", usererror.Forbidden(i18n.M("alias.submitter_banned"))
 	}
 	return buildActorLabel(platform, platformUserID), nil
 }
@@ -103,7 +104,7 @@ func createPendingAliases(ctx context.Context, tx *pjskdb.Tx, aliasType string, 
 			SetSubmittedAt(now).
 			Save(ctx)
 		if pjskdb.IsConstraintError(err) {
-			return nil, fmt.Errorf("%s别名 %q 已经在待审核列表中", aliasTypeLabel(aliasType), aliasText)
+			return nil, usererror.Invalid(i18n.M("alias.already_pending", i18n.Data{"Kind": aliasKind(aliasType), "Alias": aliasText}))
 		}
 		if err != nil {
 			return nil, err
@@ -119,7 +120,7 @@ func createPendingAliases(ctx context.Context, tx *pjskdb.Tx, aliasType string, 
 
 func (s *Service) Query(ctx context.Context, aliasType, target string) (*QueryResult, error) {
 	if !s.IsReady() {
-		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
+		return nil, errAliasUnavailable()
 	}
 	aliasType, err := normalizeAliasType(aliasType)
 	if err != nil {
@@ -226,7 +227,7 @@ func (s *Service) ListApprovedCharacterAliasMap(ctx context.Context) (map[string
 
 func (s *Service) Delete(ctx context.Context, aliasType, platform, platformUserID, target string, aliasesToDelete []string) ([]ApprovedAliasRecord, error) {
 	if !s.IsReady() {
-		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
+		return nil, errAliasUnavailable()
 	}
 	if err := s.requireWritable(); err != nil {
 		return nil, err
@@ -280,7 +281,7 @@ func (s *Service) Delete(ctx context.Context, aliasType, platform, platformUserI
 	for _, aliasText := range cleanedAliases {
 		row, ok := byAlias[normalizeCompareText(aliasText)]
 		if !ok {
-			return nil, fmt.Errorf("未找到%s %d %s 下的已审核别名 %q", aliasTypeLabel(aliasType), entityRef.ID, entityRef.Name, aliasText)
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.approved_not_found", i18n.Data{"Kind": aliasKind(aliasType), "Target": entityRef.Name, "Alias": aliasText}))
 		}
 		if err := tx.Alias.DeleteOneID(row.ID).Exec(ctx); err != nil {
 			return nil, err

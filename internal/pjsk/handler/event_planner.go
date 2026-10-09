@@ -11,10 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/eventutil"
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -24,20 +26,8 @@ import (
 	renderprovider "haruki-cloud/internal/pjsk/render/provider"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
-
-const eventPlannerHelp = `活动规划用法:
-/活动规划 pt1000w
-/活动规划 pt1000w 当前pt120w 歌 虾ex 龙hd
-/jp活动规划 t100 event202 knd 歌 野车 10火
-/cn活动规划 pt1200w wl3 mzk #123 456 789 101 112 队友综合25w 队友实效200
-/jp活动规划 t100 event202 wl3 mzk 总榜
-
-不写区服时使用默认绑定区服，也可以加 jp/cn/en/tw/kr 前缀指定。
-支持 u1、u2 等选择自己的绑定账号，例如 /活动规划 u2 pt1000w。
-参数: pt/目标, t排名, 当前pt, 总榜, 1-10火, 歌曲/难度, 野车, event活动ID, wl章节角色, #固定卡/角色, 当前/顶配/画布/已读/队友综合/队友实效等活动组卡参数。
-WL活动默认按章节单榜规划；加 总榜 时按活动总榜规划。
-不写歌曲时默认算虾 EXPERT、龙 HARD 和 野车；不写火数时默认算 5火 和 10火；不写卡组时默认使用最优卡组。`
 
 const eventPlannerLostAndFoundMusicID = 226
 const eventPlannerOmakaseMusicID = deckOmakaseMusicID
@@ -89,12 +79,8 @@ func (sekaiHandlers) EventPlannerHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/活动规划", "/pjsk event planner", "/event-planner",
 		},
-		Helper:  eventPlannerHelp,
 		Regions: AllRegions,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			if ctx.Flags()["is_help"] {
-				return makeCommandRequestWithParams(ctx, parser.ModuleEvent, "event-planner-help", nil), nil
-			}
 			params, err := parseEventPlannerParams(ctx.GetArgs(), ctx.originalTriggerCmd)
 			if err != nil {
 				return nil, err
@@ -112,7 +98,7 @@ func (sekaiHandlers) EventPlannerHandle() HarukiSekaiCommandHandler {
 func parseEventPlannerParams(args string, trigger string) (eventPlannerCommandParams, error) {
 	args = strings.TrimSpace(args)
 	if args == "" {
-		return eventPlannerCommandParams{}, onebot11.NewReplayError("需要提供目标 pt 或目标排名，例如：%s pt1000w\n查看完整用法：%s -help", trigger, trigger)
+		return eventPlannerCommandParams{}, usererror.Misuse(i18n.M("event.planner.target_required"))
 	}
 
 	params := eventPlannerCommandParams{
@@ -156,7 +142,7 @@ func parseEventPlannerParams(args string, trigger string) (eventPlannerCommandPa
 	}
 
 	if params.TargetPoint == 0 && params.TargetRank == 0 {
-		return eventPlannerCommandParams{}, onebot11.NewReplayError("需要提供目标 pt 或目标排名，例如：%s pt1000w", trigger)
+		return eventPlannerCommandParams{}, usererror.Misuse(i18n.M("event.planner.target_required"))
 	}
 	return params, nil
 }
@@ -185,24 +171,24 @@ func executeEventPlanner(rc *RequestContext) (onebot11.Message, error) {
 	mergeParams(rc.Cmd.Params, &params)
 
 	if rc.App == nil || rc.App.Decks == nil {
-		return nil, fmt.Errorf("deck service unavailable: deck controller not configured")
+		return nil, usererror.Misconfigured(errors.New("deck service unavailable: deck controller not configured"))
 	}
 	if rc.App.Music == nil {
-		return nil, fmt.Errorf("music service unavailable: music controller not configured")
+		return nil, usererror.Misconfigured(errors.New("music service unavailable: music controller not configured"))
 	}
 	if rc.App.Drawing == nil {
-		return nil, fmt.Errorf("drawing service unavailable: drawing client not configured")
+		return nil, drawing.ErrNotConfigured
 	}
 
 	binding, snap, err := rc.requireVisibleSuiteSnapshot()
 	if err != nil {
 		if errors.Is(err, accountdata.ErrNoBinding) {
-			return nil, newBindingRequiredReplayError()
+			return nil, bindingRequiredError(err)
 		}
 		return nil, err
 	}
 	if snap == nil {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		return nil, suiteDataNotFoundError(binding)
 	}
 
 	finishBuild := measureCommandOperation(rc.Ctx, "event_planner.build")
@@ -261,7 +247,7 @@ func buildEventPlannerDrawingRequest(
 	currentPointKnown bool,
 ) (*drawing.EventPlannerRequest, error) {
 	if eventInfo == nil {
-		return nil, fmt.Errorf("活动数据为空")
+		return nil, errors.New("event planner: event info is nil")
 	}
 
 	req := newEventPlannerDrawingRequest(rc, region, eventInfo, targetPoint, targetSource, currentPoint, currentPointKnown)
@@ -280,7 +266,7 @@ func buildEventPlannerDrawingRequest(
 		}
 	}
 	if len(req.Songs) == 0 {
-		return nil, fmt.Errorf("没有可计算的歌曲")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("event.planner.no_songs"))
 	}
 	return req, nil
 }
@@ -324,12 +310,12 @@ func buildEventPlannerDrawingSong(
 		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, err
 	}
 	if len(deckReq.DeckData) == 0 {
-		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, fmt.Errorf("组卡服务没有返回 %s 的卡组数据", selection.Query)
+		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, usererror.New(usererror.CodeUnavailable, i18n.M("event.planner.no_deck", i18n.Data{"Song": selection.Query}))
 	}
 	deckData := deckReq.DeckData[0]
 	basePoint := eventPlannerIntValue(deckData.Score)
 	if basePoint <= 0 {
-		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, fmt.Errorf("组卡服务返回的 %s PT 为 0", selection.Query)
+		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, usererror.New(usererror.CodeUnavailable, i18n.M("event.planner.no_deck", i18n.Data{"Song": selection.Query}))
 	}
 	planSong := drawing.EventPlannerSong{
 		Query:          selection.Query,
@@ -544,7 +530,7 @@ func eventPlannerDailyPoint(targetPoint, currentPoint, startAt, aggregateAt, now
 func resolveEventPlannerEvent(ctx context.Context, app *renderapp.App, region renderregion.Value, eventID int) (*masterdata.Event, string, error) {
 	provider := eventPlannerProvider(app, region)
 	if provider == nil {
-		return nil, "", fmt.Errorf("当前%s服未找到活动数据", strings.ToUpper(region.String()))
+		return nil, "", usererror.Unavailable(i18n.FeatureGameData, fmt.Errorf("event planner: no event provider for region %s", region))
 	}
 	if eventID > 0 {
 		eventInfo, err := provider.Events().GetByID(ctx, eventID)
@@ -552,7 +538,7 @@ func resolveEventPlannerEvent(ctx context.Context, app *renderapp.App, region re
 			return nil, "", err
 		}
 		if eventInfo == nil {
-			return nil, "", fmt.Errorf("当前%s服未找到该活动数据", strings.ToUpper(region.String()))
+			return nil, "", notfound.Event()
 		}
 		return eventInfo, "", nil
 	}
@@ -568,7 +554,7 @@ func resolveEventPlannerEvent(ctx context.Context, app *renderapp.App, region re
 		}
 	}
 	if current == nil {
-		return nil, "", fmt.Errorf("当前%s服没有进行中的活动，请在指令里加 eventID", strings.ToUpper(region.String()))
+		return nil, "", usererror.New(usererror.CodeNotFound, i18n.M("event.planner.no_current", i18n.Data{"Region": i18n.RegionLabel(region.String())}))
 	}
 	return current, fmt.Sprintf("未指定活动，已使用当前活动 %s", current.Name), nil
 }
@@ -636,15 +622,15 @@ func resolveEventPlannerTargetPoint(
 		return params.TargetPoint, "直接输入", nil
 	}
 	if params.TargetRank <= 0 {
-		return 0, "", fmt.Errorf("缺少目标 pt")
+		return 0, "", usererror.Misuse(i18n.M("event.planner.target_required"))
 	}
 	if eventInfo == nil || eventInfo.ID <= 0 {
-		return 0, "", fmt.Errorf("模拟活动不能按 t%d 读取榜线，请直接指定目标 pt", params.TargetRank)
+		return 0, "", usererror.Invalid(i18n.M("event.planner.simulated_rank", i18n.Data{"Rank": params.TargetRank}))
 	}
 	if rc == nil || rc.App == nil || rc.App.Tracker == nil {
-		return 0, "", fmt.Errorf("未配置 Tracker，不能按 t%d 读取榜线", params.TargetRank)
+		return 0, "", usererror.Misconfigured(fmt.Errorf("event planner: tracker is not configured (rank %d)", params.TargetRank))
 	}
-	characterID, source, missingLineError, err := eventPlannerTargetRankingScope(eventInfo, query, params)
+	characterID, source, worldBloom, err := eventPlannerTargetRankingScope(eventInfo, query, params)
 	if err != nil {
 		return 0, "", err
 	}
@@ -655,7 +641,10 @@ func resolveEventPlannerTargetPoint(
 		return 0, "", err
 	}
 	if lines == nil || len(lines.Ranks) == 0 || lines.Ranks[0].Score <= 0 {
-		return 0, "", fmt.Errorf(missingLineError, params.TargetRank)
+		if worldBloom {
+			return 0, "", usererror.New(usererror.CodeNotFound, i18n.M("event.planner.no_line_wl", i18n.Data{"Rank": params.TargetRank}))
+		}
+		return 0, "", usererror.New(usererror.CodeNotFound, i18n.M("event.planner.no_line", i18n.Data{"Rank": params.TargetRank}))
 	}
 	return int64(lines.Ranks[0].Score), fmt.Sprintf(source, params.TargetRank), nil
 }
@@ -664,15 +653,15 @@ func eventPlannerTargetRankingScope(
 	eventInfo *masterdata.Event,
 	query renderdeck.AutoQuery,
 	params eventPlannerCommandParams,
-) (*int, string, string, error) {
+) (*int, string, bool, error) {
 	if !eventPlannerUseWorldBloomRanking(eventInfo, params) {
-		return nil, "Tracker实时榜线:t%d", "tracker 未返回 t%d 的有效榜线", nil
+		return nil, "Tracker实时榜线:t%d", false, nil
 	}
 	characterID, ok := eventPlannerWorldBloomCharacterID(query)
 	if !ok {
-		return nil, "", "", fmt.Errorf("WL章节单榜需要指定章节角色；如需活动总榜请加 总榜")
+		return nil, "", false, usererror.Misuse(i18n.M("event.planner.wl_character_required"))
 	}
-	return &characterID, "Tracker实时WL章节榜线:t%d", "tracker 未返回 WL 章节 t%d 的有效榜线", nil
+	return &characterID, "Tracker实时WL章节榜线:t%d", true, nil
 }
 
 func eventPlannerUseWorldBloomRanking(eventInfo *masterdata.Event, params eventPlannerCommandParams) bool {
@@ -858,7 +847,7 @@ func parseEventPlannerBoosts(args string, fallback []int) ([]int, string, error)
 		boosts = append(boosts, value)
 	}
 	if len(boosts) == 0 {
-		return nil, "", onebot11.NewReplayError("火数只能指定 1-10 火")
+		return nil, "", usererror.Invalid(i18n.M("event.planner.boost_range"))
 	}
 	return boosts, eventPlannerBoostRE.ReplaceAllString(args, " "), nil
 }

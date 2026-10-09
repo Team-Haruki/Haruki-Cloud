@@ -2,11 +2,13 @@ package gacha
 
 import (
 	"context"
-	"fmt"
 	"sort"
 
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
+	"haruki-cloud/utils/usererror"
 )
 
 // ProviderAdapter bridges provider.MasterDataProvider to gacha.DataSource.
@@ -31,7 +33,7 @@ func (a *ProviderAdapter) GetGachaByID(id int) (*masterdata.Gacha, error) {
 
 func (a *ProviderAdapter) GetGachaByEventID(eventID int) (*masterdata.Gacha, error) {
 	if eventID == 0 {
-		return nil, fmt.Errorf("event id is required")
+		return nil, usererror.Misuse(i18n.M("gacha.query_required"))
 	}
 
 	cards, err := a.P.Cards().Filter(a.Context(), &provider.CardFilter{EventID: eventID})
@@ -39,7 +41,7 @@ func (a *ProviderAdapter) GetGachaByEventID(eventID int) (*masterdata.Gacha, err
 		return nil, err
 	}
 	if len(cards) == 0 {
-		return nil, fmt.Errorf("gacha not found for event: %d", eventID)
+		return nil, notfound.Gacha()
 	}
 
 	// Keep lunabot semantics: prefer the third event card to skip fes cards when present.

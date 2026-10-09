@@ -1,14 +1,16 @@
 package music
 
 import (
-	"fmt"
+	"errors"
 	"math"
 	"slices"
 	"sort"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -92,7 +94,7 @@ type musicBoardSpec struct {
 
 func (c *Controller) ResolveMusicBoardRequest(region string, query BoardQuery) (*drawing.MusicBoardRequest, error) {
 	if c == nil {
-		return nil, fmt.Errorf("music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music controller is not configured"))
 	}
 
 	resolvedRegion, source, builder, err := c.resolveBuilder(region)
@@ -106,7 +108,7 @@ func (c *Controller) ResolveMusicBoardRequest(region string, query BoardQuery) (
 		return nil, err
 	}
 	if len(rows) == 0 {
-		return nil, fmt.Errorf("music board request has no items")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.no_match"))
 	}
 
 	specs, err := c.resolveMusicBoardSpecs(source, rows, normalized.SpecQueries)
@@ -114,7 +116,7 @@ func (c *Controller) ResolveMusicBoardRequest(region string, query BoardQuery) (
 		return nil, err
 	}
 	if len(specs) >= musicBoardPageSize {
-		return nil, fmt.Errorf("最多只能关注%d首歌曲", musicBoardPageSize-1)
+		return nil, usererror.Invalid(i18n.M("music.board.too_many_specs", i18n.Data{"Max": musicBoardPageSize - 1}))
 	}
 
 	specRows, specRankMap := selectMusicBoardSpecRows(rows, specs)
@@ -177,13 +179,13 @@ func paginateMusicBoardRows(specRows, filtered []musicBoardRow, page int) ([]mus
 	if len(filtered) > 0 && remainingSize > 0 {
 		totalPage = int(math.Ceil(float64(len(filtered)) / float64(remainingSize)))
 		if page < 1 || page > totalPage {
-			return nil, totalPage, fmt.Errorf("页数错误，当前筛选结果仅有%d页", totalPage)
+			return nil, totalPage, usererror.OutOfRange(i18n.M("common.param_name.page"), 1, totalPage)
 		}
 		start := (page - 1) * remainingSize
 		end := min(start+remainingSize, len(filtered))
 		showRows = append(showRows, filtered[start:end]...)
 	} else if len(showRows) == 0 {
-		return nil, totalPage, fmt.Errorf("筛选后的歌曲数为零")
+		return nil, totalPage, usererror.New(usererror.CodeNotFound, i18n.M("music.no_match"))
 	}
 	sort.Slice(showRows, func(i, j int) bool { return showRows[i].Rank < showRows[j].Rank })
 	return showRows, totalPage, nil

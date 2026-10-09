@@ -16,10 +16,13 @@ import (
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	"haruki-cloud/database/sekai/worldbloom"
 	"haruki-cloud/database/sekai/worldbloomchapterrankingrewardrange"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/cachefill"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 type dbEventProvider struct {
@@ -64,7 +67,7 @@ func (p *dbEventProvider) init() {
 
 func (p *dbEventProvider) GetByID(ctx context.Context, id int) (*masterdata.Event, error) {
 	if id == 0 {
-		return nil, fmt.Errorf("event id is required")
+		return nil, usererror.Misuse(i18n.M("event.query_required"))
 	}
 	p.init()
 
@@ -83,6 +86,9 @@ func (p *dbEventProvider) GetByID(ctx context.Context, id int) (*masterdata.Even
 			if fallback, fallbackErr := p.local.GetByID(ctx, id); fallbackErr == nil && fallback != nil {
 				return fallback, nil
 			}
+		}
+		if sekaiDB.IsNotFound(err) {
+			return nil, notfound.Event().WithCause(err)
 		}
 		return nil, fmt.Errorf("query event %d: %w", id, err)
 	}
@@ -206,7 +212,7 @@ func (p *dbEventProvider) GetCards(ctx context.Context, eventID int) ([]*masterd
 				return fallback, nil
 			}
 		}
-		return nil, fmt.Errorf("no cards found for event %d", eventID)
+		return nil, eventCardsNotFound(eventID)
 	}
 
 	return p.getCardsByIDs(ctx, cardIDs)

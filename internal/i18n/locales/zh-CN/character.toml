@@ -1,0 +1,13 @@
+# 角色：按角色名查找角色（教育、查榜 WL、组卡、生日等指令共用）。
+
+[character.query_required]
+description = "需要角色名但没有写。"
+other = "请写角色名"
+
+[character.not_found]
+description = "写的角色名无法识别。占位符：Query=用户写的角色名，超过 30 个字截断。"
+other = "未找到角色：“{{.Query}}”"
+
+[character.ambiguous]
+description = "写的角色名匹配到多个角色。占位符：Query=用户写的角色名，超过 30 个字截断。"
+other = "“{{.Query}}”匹配到多个角色，请写完整的角色名"

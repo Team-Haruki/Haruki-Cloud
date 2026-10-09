@@ -14,6 +14,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"haruki-cloud/internal/testutil"
 )
 
 type preview3DCoverageErrorReader struct{}
@@ -146,7 +148,7 @@ func TestPreview3DPublicMethodsPropagateEndpointAndRegistryErrors(t *testing.T) 
 	})
 	for _, call := range preview3DPublicCalls() {
 		t.Run("endpoint/"+call.name, func(t *testing.T) {
-			if err := call.call(endpointMissing); err == nil || !strings.Contains(err.Error(), "region en") {
+			if err := call.call(endpointMissing); err == nil || !strings.Contains(testutil.ErrorDetail(err), "region en") {
 				t.Fatalf("endpoint error = %v", err)
 			}
 		})
@@ -158,7 +160,7 @@ func TestPreview3DPublicMethodsPropagateEndpointAndRegistryErrors(t *testing.T) 
 	})
 	for _, call := range preview3DPublicCalls() {
 		t.Run("registry/"+call.name, func(t *testing.T) {
-			if err := call.call(registryFailure); err == nil || !strings.Contains(err.Error(), "registry offline") {
+			if err := call.call(registryFailure); err == nil || !strings.Contains(testutil.ErrorDetail(err), "registry offline") {
 				t.Fatalf("registry error = %v", err)
 			}
 		})
@@ -205,10 +207,10 @@ func TestPreview3DPublicCapturePathsPropagateEngineFailures(t *testing.T) {
 
 	service, _ := cachedPreview3DServiceForCoverage(t, preview3DCoverageRegistry(), engine.URL)
 	captureStatus = http.StatusServiceUnavailable
-	if err := service.EnsureQueryPreviewCapture(context.Background(), "jp", 101, Query{}); err == nil || !strings.Contains(err.Error(), "capture failed") {
+	if err := service.EnsureQueryPreviewCapture(context.Background(), "jp", 101, Query{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "capture failed") {
 		t.Fatalf("EnsureQueryPreviewCapture error = %v", err)
 	}
-	if _, err := service.CaptureTemporaryCombo(context.Background(), "jp", ComboQuery{Character3DID: 1}); err == nil || !strings.Contains(err.Error(), "capture failed") {
+	if _, err := service.CaptureTemporaryCombo(context.Background(), "jp", ComboQuery{Character3DID: 1}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "capture failed") {
 		t.Fatalf("CaptureTemporaryCombo capture error = %v", err)
 	}
 
@@ -229,7 +231,7 @@ func TestPreview3DPublicCapturePathsPropagateEngineFailures(t *testing.T) {
 			Request:    req,
 		}, nil
 	})
-	if _, err := service.CaptureTemporaryCombo(context.Background(), "jp", ComboQuery{Character3DID: 1}); err == nil || !strings.Contains(err.Error(), "fetch failed") {
+	if _, err := service.CaptureTemporaryCombo(context.Background(), "jp", ComboQuery{Character3DID: 1}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "fetch failed") {
 		t.Fatalf("CaptureTemporaryCombo fetch error = %v", err)
 	}
 }
@@ -263,7 +265,7 @@ func TestEnsureStaticCaptureFileFastPathsAndFetchFailure(t *testing.T) {
 			Request:    req,
 		}, nil
 	})
-	if err := service.ensureStaticCaptureObject(context.Background(), endpoint, "missing"); err == nil || !strings.Contains(err.Error(), "fetch failed") {
+	if err := service.ensureStaticCaptureObject(context.Background(), endpoint, "missing"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "fetch failed") {
 		t.Fatalf("static fetch error = %v", err)
 	}
 }
@@ -307,10 +309,10 @@ func TestPreview3DRegistryProtocolValidationBranches(t *testing.T) {
 	defer invalidSchema.Close()
 	schemaService := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: invalidSchema.URL})
 	schemaEndpoint, _ := schemaService.endpointForRegion("jp")
-	if _, err := schemaService.getPartRegistry(context.Background(), schemaEndpoint); err == nil || !strings.Contains(err.Error(), "schema 99") {
+	if _, err := schemaService.getPartRegistry(context.Background(), schemaEndpoint); err == nil || !strings.Contains(testutil.ErrorDetail(err), "schema 99") {
 		t.Fatalf("part schema error = %v", err)
 	}
-	if _, err := schemaService.getCompatibilityRegistry(context.Background(), schemaEndpoint); err == nil || !strings.Contains(err.Error(), "schema 99") {
+	if _, err := schemaService.getCompatibilityRegistry(context.Background(), schemaEndpoint); err == nil || !strings.Contains(testutil.ErrorDetail(err), "schema 99") {
 		t.Fatalf("compatibility schema error = %v", err)
 	}
 
@@ -320,7 +322,7 @@ func TestPreview3DRegistryProtocolValidationBranches(t *testing.T) {
 	service.client.Transport = preview3DRoundTripFunc(func(req *http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusTeapot, Body: io.NopCloser(strings.NewReader("no")), Header: make(http.Header), Request: req}, nil
 	})
-	if _, err := service.getRegistryResponse(context.Background(), endpoint, "/registry"); err == nil || !strings.Contains(err.Error(), "HTTP 418") {
+	if _, err := service.getRegistryResponse(context.Background(), endpoint, "/registry"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "HTTP 418") {
 		t.Fatalf("registry status error = %v", err)
 	}
 
@@ -329,7 +331,7 @@ func TestPreview3DRegistryProtocolValidationBranches(t *testing.T) {
 		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(invalidMessagePack)), ContentLength: int64(len(invalidMessagePack)), Header: make(http.Header), Request: req}, nil
 	})
 	var decoded preview3DRoleCatalog
-	if err := service.getMessagePackRegistry(context.Background(), endpoint, "/registry", &decoded, false); err == nil || !strings.Contains(err.Error(), "decode failed") {
+	if err := service.getMessagePackRegistry(context.Background(), endpoint, "/registry", &decoded, false); err == nil || !strings.Contains(testutil.ErrorDetail(err), "decode failed") {
 		t.Fatalf("messagepack decode error = %v", err)
 	}
 }
@@ -420,7 +422,7 @@ func TestPreview3DCapturePermitAndFlightErrorBranches(t *testing.T) {
 	busyService.client.Transport = preview3DRoundTripFunc(func(req *http.Request) (*http.Response, error) {
 		return response(req, http.StatusNotFound), nil
 	})
-	if err := busyService.ensureCapture(context.Background(), endpoint, selection, "persistent"); err == nil || !strings.Contains(err.Error(), "busy") {
+	if err := busyService.ensureCapture(context.Background(), endpoint, selection, "persistent"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "busy") {
 		t.Fatalf("busy ensureCapture error = %v", err)
 	}
 
@@ -452,7 +454,7 @@ func TestPreview3DCapturePermitAndFlightErrorBranches(t *testing.T) {
 			return nil, errors.New("capture offline")
 		})},
 	}
-	if err := fallbackTimeout.ensureCapture(context.Background(), endpoint, selection, "persistent"); err == nil || !strings.Contains(err.Error(), "capture offline") {
+	if err := fallbackTimeout.ensureCapture(context.Background(), endpoint, selection, "persistent"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "capture offline") {
 		t.Fatalf("fallback-timeout capture error = %v", err)
 	}
 }
@@ -526,13 +528,13 @@ func TestPreview3DCaptureProtocolBranches(t *testing.T) {
 	service.client.Transport = preview3DRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return nil, errors.New("post offline")
 	})
-	if err := service.captureSelection(context.Background(), endpoint, selection, "persistent"); err == nil || !strings.Contains(err.Error(), "post offline") {
+	if err := service.captureSelection(context.Background(), endpoint, selection, "persistent"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "post offline") {
 		t.Fatalf("capture transport error = %v", err)
 	}
 	if _, err := service.getCapture(context.Background(), preview3DEndpoint{baseURL: ":"}, "image"); err == nil {
 		t.Fatal("invalid fetch URL was accepted")
 	}
-	if _, err := service.getCapture(context.Background(), endpoint, "image"); err == nil || !strings.Contains(err.Error(), "post offline") {
+	if _, err := service.getCapture(context.Background(), endpoint, "image"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "post offline") {
 		t.Fatalf("fetch transport error = %v", err)
 	}
 }
@@ -542,7 +544,7 @@ func TestReadPreview3DResponseAndSharedContextBranches(t *testing.T) {
 		t.Fatal("nil response was accepted")
 	}
 	response := &http.Response{Body: io.NopCloser(preview3DCoverageErrorReader{}), ContentLength: -1}
-	if _, err := readPreview3DResponse(response, 1, "broken"); err == nil || !strings.Contains(err.Error(), "read failed") {
+	if _, err := readPreview3DResponse(response, 1, "broken"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "read failed") {
 		t.Fatalf("response read error = %v", err)
 	}
 
@@ -715,18 +717,18 @@ func TestPreview3DResolveAdditionalValidationBranches(t *testing.T) {
 		{Costume3DID: 800, PartType: "head", AccessoryID: 1, Status: "available"},
 		{Costume3DID: 800, PartType: "head_optional", AccessoryID: 2, Status: "available"},
 	}}
-	if _, err := ambiguous.resolve("jp", 800); err == nil || !strings.Contains(err.Error(), "ambiguous") {
+	if _, err := ambiguous.resolve("jp", 800); err == nil || !strings.Contains(testutil.ErrorDetail(err), "ambiguous") {
 		t.Fatalf("ambiguous raw accessory error = %v", err)
 	}
 	missingRole := &preview3DRegistry{parts: []preview3DPartEntry{{Costume3DID: 801, PartType: "body", CharacterID: 99, Status: "available"}}}
-	if _, err := missingRole.resolve("jp", 801); err == nil || !strings.Contains(err.Error(), "default role") {
+	if _, err := missingRole.resolve("jp", 801); err == nil || !strings.Contains(testutil.ErrorDetail(err), "default role") {
 		t.Fatalf("missing role error = %v", err)
 	}
 	incomplete := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{{Character3DID: 1, CharacterID: 1, Unit: "a", HairCostume3DID: 3}},
 		parts:      []preview3DPartEntry{{Costume3DID: 802, PartType: "body", CharacterID: 1, Unit: "a", Status: "available"}},
 	}
-	if _, err := incomplete.resolve("jp", 802); err == nil || !strings.Contains(err.Error(), "incomplete") {
+	if _, err := incomplete.resolve("jp", 802); err == nil || !strings.Contains(testutil.ErrorDetail(err), "incomplete") {
 		t.Fatalf("incomplete tuple error = %v", err)
 	}
 }

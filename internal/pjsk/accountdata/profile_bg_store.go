@@ -21,9 +21,11 @@ import (
 	"strings"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/storage"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -89,7 +91,7 @@ func encodeJPEGCompressedContext(ctx context.Context, img image.Image) ([]byte, 
 			return data, nil
 		}
 	}
-	return nil, fmt.Errorf("无法压缩图片至 1MB 以下")
+	return nil, usererror.Invalid(i18n.M("profile.bg.image_too_large", i18n.Data{"MaxMB": 1}))
 }
 
 // decodeBoundedImage decodes raw image bytes, rejecting "pixel bombs": it first
@@ -105,24 +107,24 @@ func decodeBoundedImageContext(ctx context.Context, raw []byte, maxPixels int64)
 		return nil, err
 	}
 	if len(raw) == 0 {
-		return nil, fmt.Errorf("背景图片数据为空")
+		return nil, usererror.Invalid(i18n.M("profile.bg.image_invalid"))
 	}
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(raw))
 	if err != nil {
-		return nil, fmt.Errorf("解析背景图片失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("profile.bg.image_invalid"), fmt.Errorf("decode background image: %w", err))
 	}
 	if cfg.Width <= 0 || cfg.Height <= 0 {
-		return nil, fmt.Errorf("解析背景图片失败: 无效的图片尺寸")
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("profile.bg.image_invalid"), errors.New("background image has no size"))
 	}
 	if maxPixels > 0 && int64(cfg.Width)*int64(cfg.Height) > maxPixels {
-		return nil, fmt.Errorf("背景图片尺寸过大（上限 %d 像素）", maxPixels)
+		return nil, usererror.Invalid(i18n.M("profile.bg.image_too_many_pixels", i18n.Data{"MaxPixels": i18n.Wan(float64(maxPixels))}))
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 	img, _, err := image.Decode(bytes.NewReader(raw))
 	if err != nil {
-		return nil, fmt.Errorf("解析背景图片失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("profile.bg.image_invalid"), fmt.Errorf("decode background image: %w", err))
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -209,14 +211,14 @@ func (s *ProfileBGStore) SaveProfileBackgroundTracked(ctx context.Context, serve
 	}
 	imageURL = strings.TrimSpace(imageURL)
 	if imageURL == "" {
-		return nil, fmt.Errorf("请提供个人信息背景图片")
+		return nil, usererror.Misuse(i18n.M("profile.bg.image_required"))
 	}
 	parsedURL, err := url.ParseRequestURI(imageURL)
 	if err != nil {
-		return nil, fmt.Errorf("无效的背景图片地址: %w", err)
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("profile.bg.image_invalid"), fmt.Errorf("parse background image URL: %w", err))
 	}
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
-		return nil, fmt.Errorf("背景图片地址协议不被允许: %s", parsedURL.Scheme)
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("profile.bg.image_invalid"), fmt.Errorf("background image URL scheme %q is not allowed", parsedURL.Scheme))
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, imageURL, nil)
@@ -227,11 +229,11 @@ func (s *ProfileBGStore) SaveProfileBackgroundTracked(ctx context.Context, serve
 	resp, err := s.client.Do(req)
 	finishDownload()
 	if err != nil {
-		return nil, fmt.Errorf("下载背景图片失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("profile.bg.image_invalid"), fmt.Errorf("download background image: %w", err))
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("下载背景图片失败: HTTP %d", resp.StatusCode)
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("profile.bg.image_invalid"), fmt.Errorf("download background image: HTTP %d", resp.StatusCode))
 	}
 
 	// Cap the raw download, then reject pixel bombs via a header-only dimension
@@ -240,10 +242,10 @@ func (s *ProfileBGStore) SaveProfileBackgroundTracked(ctx context.Context, serve
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxProfileBGDownloadBytes+1))
 	finishRead()
 	if err != nil {
-		return nil, fmt.Errorf("下载背景图片失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("profile.bg.image_invalid"), fmt.Errorf("download background image: %w", err))
 	}
 	if len(raw) > maxProfileBGDownloadBytes {
-		return nil, fmt.Errorf("背景图片过大（上限 %d MB）", maxProfileBGDownloadBytes/(1024*1024))
+		return nil, usererror.Invalid(i18n.M("profile.bg.image_too_large", i18n.Data{"MaxMB": maxProfileBGDownloadBytes / (1024 * 1024)}))
 	}
 	finishDecode := commandtrace.MeasureOperation(ctx, "profile_bg.decode")
 	img, err := decodeBoundedImageContext(ctx, raw, maxProfileBGPixels)
@@ -256,7 +258,7 @@ func (s *ProfileBGStore) SaveProfileBackgroundTracked(ctx context.Context, serve
 	data, err := encodeJPEGCompressedContext(ctx, img)
 	finishEncode()
 	if err != nil {
-		return nil, fmt.Errorf("编码背景图片失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("profile.bg.image_invalid"), fmt.Errorf("encode background image: %w", err))
 	}
 
 	server = strings.TrimSpace(strings.ToLower(server))
@@ -301,7 +303,7 @@ func (s *ProfileBGStore) put(ctx context.Context, relativePath string, data []by
 	case errors.Is(err, storage.ErrNotConfigured):
 		return errProfileBGNotConfigured(err)
 	default:
-		return fmt.Errorf("写入背景图片失败: %w", err)
+		return usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.bg.save_failed"), fmt.Errorf("store background image: %w", err))
 	}
 }
 
@@ -324,7 +326,7 @@ func (s *ProfileBGStore) DeleteProfileBackground(ctx context.Context, settings *
 	err = s.store.Delete(ctx, key)
 	finishStore()
 	if err != nil && !errors.Is(err, storage.ErrNotExist) {
-		return fmt.Errorf("删除背景图片失败: %w", err)
+		return usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.bg.save_failed"), fmt.Errorf("delete background image: %w", err))
 	}
 	return nil
 }
@@ -334,15 +336,15 @@ func (s *ProfileBGStore) DeleteProfileBackground(ctx context.Context, settings *
 func profileBGKey(relativePath string) (storage.Key, error) {
 	trimmed := strings.ReplaceAll(strings.TrimSpace(relativePath), "\\", "/")
 	if strings.HasPrefix(trimmed, "/") || filepath.IsAbs(trimmed) {
-		return "", fmt.Errorf("不允许的背景图片路径: %s", relativePath)
+		return "", fmt.Errorf("background image path %q is not allowed", relativePath)
 	}
 	key, err := storage.CleanKey(path.Clean(trimmed))
 	if err != nil {
-		return "", fmt.Errorf("不允许的背景图片路径: %s", relativePath)
+		return "", fmt.Errorf("background image path %q is not allowed", relativePath)
 	}
 	return key, nil
 }
 
 func errProfileBGNotConfigured(err error) error {
-	return fmt.Errorf("pjsk: profile background storage is not configured: %w", err)
+	return usererror.Misconfigured(fmt.Errorf("pjsk: profile background storage is not configured: %w", err))
 }

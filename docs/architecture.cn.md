@@ -93,6 +93,7 @@ Haruki-Cloud/
 │   ├── core/urlhost/             #   按节点选择公开主机（image_cache.hosts / assets_base_urls）
 │   ├── core/trustsign/           #   Ed25519 分离载荷签名契约（keyset / manifest）
 │   ├── core/upstream/            #   上游连接池 / Transport
+│   ├── core/upstreamerr/         #   上游错误分类（跨仓库错误约定 + 契约测试）
 │   ├── handler/                  #   统一命令注册表（handler.go + bot_route.go）
 │   ├── i18n/                     #   全部用户文案：locales/<语言>/*.toml 目录 + help/*.md 帮助文档（见 docs/i18n.md）
 │   ├── identity/                 #   平台用户身份解析
@@ -656,8 +657,7 @@ internal/handler/                 # 统一命令注册表
 
 internal/onebot11/                # OneBot11 协议工具（已从 pjsk 上移）
 ├── segment.go                    # 消息段类型与构造器
-├── parse.go                      # CQ 码解析
-└── error.go                      # ReplayError
+└── parse.go                      # CQ 码解析
 
 internal/pjsk/handler/            # PJSK 功能命令（已扁平化，无子包）
 ├── handler.go                    # Trie 注册、命令匹配、参数截取
@@ -830,7 +830,7 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | `response_election*.go` | 多 bot 响应选举（窗口、key、roster、生成） | — |
 | `bot_response_envelope.go` | 响应封装 | — |
 | `command_trace.go` | 命令执行追踪接入 | — |
-| `param_echo.go` / `param_guidance.go` | 参数回显与参数引导 | — |
+| `error_reply.go` / `param_guidance.go` | 错误回复（带类型错误、上游分类、按路由的参数引导、最终脱敏） | — |
 | `birthday_monitor.go` | MySekai 生日订阅推送 | — |
 | `seed.go` | 从 handler registry 同步 command manifest 到 bot DB | — |
 | `struct.go` | `BotCommandRequest`、`ManifestEntry`、`ManifestResponse` | — |

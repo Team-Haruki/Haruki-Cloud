@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestExecuteCheckDataSuccessfulSuiteAndMySekai(t *testing.T) {
@@ -50,7 +51,7 @@ func TestExecuteCheckDataSuccessfulSuiteAndMySekai(t *testing.T) {
 			t.Fatalf("executeCheckData(%s) message = %#v", mode, message)
 		}
 		text := message[0].Data.(onebot11.TextData).Text
-		if !strings.Contains(text, "数据更新时间") || !strings.Contains(text, "2023") {
+		if !strings.Contains(text, "2023") {
 			t.Fatalf("executeCheckData(%s) text = %q", mode, text)
 		}
 	}
@@ -59,7 +60,7 @@ func TestExecuteCheckDataSuccessfulSuiteAndMySekai(t *testing.T) {
 	cmd := &CommandRequest{Mode: "suite", Region: "jp", Params: executionCoverageParams(t, userQueryParams{
 		Mode: "self", Platform: "qq", PlatformUserID: "check-data-user",
 	})}
-	if _, err := executeCheckData(NewRequestContext(ctx, cmd, app)); err == nil || !strings.Contains(err.Error(), "解析更新时间失败") {
+	if _, err := executeCheckData(NewRequestContext(ctx, cmd, app)); testutil.MessageID(err) != "binding.data_status.invalid_time" {
 		t.Fatalf("invalid upload timestamp error = %v", err)
 	}
 

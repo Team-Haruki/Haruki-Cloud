@@ -2,6 +2,7 @@ package pjsk
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http/httptest"
@@ -13,7 +14,6 @@ import (
 	"haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/middleware/secure"
 	"haruki-cloud/internal/observability/commandtrace"
-	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/logger"
 	"haruki-cloud/utils/usererror"
@@ -21,6 +21,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/gofiber/fiber/v3/middleware/requestid"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
 )
 
 func TestCommandTraceMiddlewareEmitsOneStructuredSummary(t *testing.T) {
@@ -249,26 +251,21 @@ func TestCommandTraceLabelsRejectUntrustedCommands(t *testing.T) {
 
 }
 
-func TestReplayErrorIsExpectedCommandRejection(t *testing.T) {
-	testutil.RequireArgs(t, isExpectedCommandError(onebot11.NewReplayError("invalid query")), "ReplayError should be classified as a rejection")
+func TestTypedErrorsAreExpectedCommandRejections(t *testing.T) {
 	testutil.RequireArgs(t, !(isExpectedCommandError(fmt.Errorf("database unavailable"))), "unexpected internal error should remain an error")
 	for _, err := range []error{
-		usererror.Inputf("指定的CN服账号序号超出范围，目前仅绑定了1个账号"),
-		usererror.Inputf("未找到角色：虾"),
-		fmt.Errorf("failed to search card: %w", usererror.Inputf("无法解析的指令: x")),
-		fmt.Errorf("failed to search card list: %w", usererror.Inputf("无法解析的列表查询指令: x")),
-		fmt.Errorf("failed to search card box: %w", usererror.Inputf("无法解析的指令: x")),
-		usererror.Inputf("cards are required"),
+		usererror.OutOfRange(i18n.M("common.param_name.page"), 1, 1),
+		usererror.New(usererror.CodeNotFound, i18n.M("character.not_found", i18n.Data{"Query": "虾"})),
+		fmt.Errorf("failed to search card: %w", usererror.Unrecognized()),
+		fmt.Errorf("failed to search card box: %w", usererror.Misuse(i18n.M("deck.fixed.empty"))),
+		usererror.Setup(i18n.M("binding.required")),
+		notfound.CardID(1378),
 	} {
 		testutil.Require(t, isExpectedCommandError(err), "user-input error %q should be classified as a rejection", err)
 	}
 	testutil.RequireArgs(t, !isExpectedCommandError(fmt.Errorf("failed to search card: %w", fmt.Errorf("database unavailable"))), "an unmarked wrapped error should remain an error")
-
-	const unknownFixedCard = "当前CN服未找到卡牌 1378（可能尚未在该服实装），请检查固定卡牌ID"
-	testutil.RequireArgs(t, isExpectedCommandError(usererror.Inputf("%s", unknownFixedCard)), "an unknown typed fixed card should be classified as a rejection")
-	if got := clientErrorTextForCommand(unknownFixedCard, false, "/活动组卡", "deck/event"); got != unknownFixedCard {
-		t.Fatalf("unknown fixed card reply = %q, want %q", got, unknownFixedCard)
-	}
+	testutil.RequireArgs(t, !isExpectedCommandError(usererror.Misconfigured(errors.New("no base url"))), "a misconfiguration must be logged as a failure")
+	testutil.RequireArgs(t, !isExpectedCommandError(usererror.Unavailable(i18n.FeatureToolbox, errors.New("503"))), "an outage must be logged as a failure")
 }
 
 func TestSafeCommandTraceRegionRejectsUntrustedValues(t *testing.T) {

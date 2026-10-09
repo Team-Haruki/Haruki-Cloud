@@ -359,7 +359,7 @@ func TestDBHonorProviderErrorAndUnconfiguredBranches(t *testing.T) {
 			_, err := provider.honors.GetByID(ctx, 1)
 			{
 				testutil.Require(t, !(err == nil), "transient honor error = %v", err)
-				testutil.Require(t, strings.Contains(err.Error(), "synthetic honor failure"), "transient honor error = %v", err)
+				testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "synthetic honor failure"), "transient honor error = %v", err)
 			}
 		}
 		{
@@ -367,7 +367,7 @@ func TestDBHonorProviderErrorAndUnconfiguredBranches(t *testing.T) {
 			_, err := provider.honors.GetBondsHonorByID(ctx, 1)
 			{
 				testutil.Require(t, !(err == nil), "transient bonds error = %v", err)
-				testutil.Require(t, strings.Contains(err.Error(), "synthetic bonds failure"), "transient bonds error = %v", err)
+				testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "synthetic bonds failure"), "transient bonds error = %v", err)
 			}
 		}
 
@@ -386,7 +386,7 @@ func TestDBHonorProviderErrorAndUnconfiguredBranches(t *testing.T) {
 		_, err := unconfigured.GetBondsHonorWordByID(ctx, 1)
 		{
 			testutil.Require(t, !(err == nil), "unconfigured bonds words error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "not configured"), "unconfigured bonds words error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "not configured"), "unconfigured bonds words error = %v", err)
 		}
 	}
 
@@ -397,7 +397,7 @@ func TestDBHonorProviderErrorAndUnconfiguredBranches(t *testing.T) {
 		_, err := badStore.GetBondsHonorWordByID(ctx, 1)
 		{
 			testutil.Require(t, !(err == nil), "invalid bonds words error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "not configured"), "invalid bonds words error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "not configured"), "invalid bonds words error = %v", err)
 		}
 	}
 	{

@@ -72,8 +72,8 @@ func TestTypedErrorBuildersAndCodes(t *testing.T) {
 			t.Errorf("%s: empty user text", tc.id)
 		}
 	}
-	if !IsExpected(Inputf("legacy")) || IsExpected(errors.New("plain")) {
-		t.Fatal("IsExpected must keep legacy input errors")
+	if IsExpected(errors.New("plain")) {
+		t.Fatal("an untyped error is never expected")
 	}
 	if _, ok := As(errors.New("plain")); ok {
 		t.Fatal("As matched an untyped error")

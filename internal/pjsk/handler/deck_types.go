@@ -1,9 +1,10 @@
 package handler
 
 import (
+	"regexp"
+
 	"haruki-cloud/internal/pjsk/filteralias"
 	renderdeck "haruki-cloud/internal/pjsk/render/deck"
-	"regexp"
 )
 
 // mysekaiDeckCombinedParams wraps deck params with user query params for mysekai deck.
@@ -154,14 +155,6 @@ var deckRarityPrefixes = []struct {
 }
 
 var deckUnitAliasRules = newDeckUnitAliasRules()
-
-const deckSpecificSkillOrderUsage = `
-指定技能顺序方式:
-最优顺序: /指令 ... 技能顺序最优
-最差顺序: /指令 ... 技能顺序最差
-平均顺序: /指令 ... 技能顺序平均
-特定顺序: /指令 ... 技能顺序12345
-`
 
 const (
 	deckMusicCompareMaxQueries = 5

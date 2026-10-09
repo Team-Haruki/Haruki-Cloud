@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"haruki-cloud/internal/core/secevent"
 	"slices"
 	"strconv"
 	"strings"
@@ -21,6 +20,7 @@ import (
 	botuser "haruki-cloud/database/bot/user"
 	"haruki-cloud/internal/cluster"
 	"haruki-cloud/internal/core/crypto"
+	"haruki-cloud/internal/core/secevent"
 	"haruki-cloud/internal/core/trustsign"
 	commandregistry "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/middleware/secure"
@@ -436,7 +436,7 @@ func executeSharedBotCommand(
 	resolved, err := resolveBotCommandWithCompat(ctx, expectedPath, traceCommand, allowCompatReroute, req, executorBotID)
 	finishResolve()
 	if err != nil {
-		return failedSharedBotCommand(ctx, err, expectedPath, traceCommand, req.MatchedCommand, req.EnableParamEcho, metadata, false, "resolve")
+		return failedSharedBotCommand(ctx, err, expectedPath, traceCommand, req.MatchedCommand, metadata, false, "resolve")
 	}
 
 	metadata.Command = resolved.TriggerCommand
@@ -450,7 +450,7 @@ func executeSharedBotCommand(
 	metadata.Region = resolved.Region
 	forceExecutor := commandResponseDependsOnExecutor(resolved)
 	if err != nil {
-		return failedSharedBotCommand(ctx, err, resolved.CommandPath, resolved.TriggerCommand, resolved.TriggerCommand, req.EnableParamEcho, metadata, forceExecutor, "execution")
+		return failedSharedBotCommand(ctx, err, resolved.CommandPath, resolved.TriggerCommand, resolved.TriggerCommand, metadata, forceExecutor, "execution")
 	}
 	metadata.Outcome = "ok"
 	return encodeSharedCommandResult(ctx, newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK, responseData), metadata, forceExecutor)
@@ -504,7 +504,6 @@ func failedSharedBotCommand(
 	ctx context.Context,
 	err error,
 	commandPath, command, matchedCommand string,
-	enableParamEcho bool,
 	metadata sharedCommandMetadata,
 	forceExecutor bool,
 	stage string,
@@ -523,7 +522,7 @@ func failedSharedBotCommand(
 		)
 	}
 	metadata.ErrorType = fmt.Sprintf("%T", err)
-	envelope := commandErrorEnvelope(err, commandPath, matchedCommand, enableParamEcho)
+	envelope := commandErrorEnvelope(ctx, err, commandPath, matchedCommand)
 	return encodeSharedCommandResult(ctx, envelope, metadata, forceExecutor)
 }
 
@@ -544,7 +543,7 @@ func encodeSharedCommandResult(ctx context.Context, envelope botResponseEnvelope
 	return sharedCommandResult{Response: fallback, Metadata: metadata, ForceExecutor: forceExecutor}
 }
 
-func commandErrorEnvelope(err error, expectedPath, matchedCommand string, enableParamEcho bool) botResponseEnvelope {
+func commandErrorEnvelope(ctx context.Context, err error, expectedPath, matchedCommand string) botResponseEnvelope {
 	if _, ok := errors.AsType[*botValidationError](err); ok {
 		return newBotResponseEnvelope(fiber.StatusBadRequest, "指令与当前接口不匹配",
 			BotCommandErrorResponse{
@@ -553,17 +552,8 @@ func commandErrorEnvelope(err error, expectedPath, matchedCommand string, enable
 				MatchedCommand: matchedCommand,
 			})
 	}
-	if typed, ok := usererror.As(err); ok {
-		// Typed user errors carry finished catalog text: no rewriting.
-		return newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK,
-			[]onebot11.Segment{onebot11.Text(typedUserErrorText(typed))})
-	}
-	if replyErr, ok := errors.AsType[onebot11.ReplayError](err); ok {
-		return newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK,
-			[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(string(replyErr), enableParamEcho, matchedCommand, expectedPath))})
-	}
 	return newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK,
-		[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(err.Error(), enableParamEcho, matchedCommand, expectedPath))})
+		[]onebot11.Segment{onebot11.Text(commandErrorText(ctx, err, expectedPath, matchedCommand))})
 }
 
 func commandResponseDependsOnExecutor(resolved *commandhandler.CommandRequest) bool {
@@ -595,11 +585,7 @@ func isExpectedCommandError(err error) bool {
 	// Unparsable queries, unknown names and out-of-range indexes are the
 	// user's input, not a failure of Cloud or its upstreams; typed errors
 	// decide by their code.
-	if usererror.IsExpected(err) {
-		return true
-	}
-	_, ok := errors.AsType[onebot11.ReplayError](err)
-	return ok
+	return usererror.IsExpected(err)
 }
 
 func syncExplicitRegionToProfileParams(resolved *commandhandler.CommandRequest, region string) {
@@ -838,7 +824,7 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	ctx, err := commandhandler.BuildContext(requestCtx, event)
 	finishContext()
 	if err != nil {
-		return nil, fmt.Errorf("构建指令上下文失败: %w", err)
+		return nil, fmt.Errorf("build command context: %w", err)
 	}
 	finishMatch := commandtrace.MeasureOperation(requestCtx, "command.match")
 	defer finishMatch()
@@ -863,7 +849,7 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	ctx.MessageType = messageType
 	executable, ok := matched.Handler.(commandhandler.CommandHandler)
 	if !ok {
-		return nil, fmt.Errorf("注册的指令处理器未实现 PJSK 指令接口: %T", matched.Handler)
+		return nil, fmt.Errorf("registered handler %T does not implement the PJSK command interface", matched.Handler)
 	}
 	finishParse := commandtrace.MeasureOperation(requestCtx, "command.parse")
 	resolved, err := executable.Handle(ctx)
@@ -872,7 +858,7 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 		return nil, err
 	}
 	if resolved == nil {
-		return nil, fmt.Errorf("指令处理器返回空结果")
+		return nil, fmt.Errorf("command handler returned no command")
 	}
 	resolved.RequesterPlatform = req.Platform
 	resolved.RequesterUserID = req.PlatformUserID

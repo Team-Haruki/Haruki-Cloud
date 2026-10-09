@@ -1,6 +1,7 @@
 package pjsk
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -16,7 +17,9 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/shamaton/msgpack/v3"
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/utils/usererror"
 )
 
 type birthdayMonitorClientAction struct {
@@ -164,7 +167,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 					"command", traceCommand,
 					"error_type", fmt.Sprintf("%T", err),
 				)
-				return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+				return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(requestCtx, err, birthdayMonitorCommandPath, ""))})
 			}
 			setCommandTraceOutcome(c, "ok", nil)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("烤森生日材料监听已取消。")})
@@ -179,7 +182,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 				"command", traceCommand,
 				"error_type", fmt.Sprintf("%T", err),
 			)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(requestCtx, err, birthdayMonitorCommandPath, ""))})
 		}
 
 		visible := onebot11.Message{onebot11.Text(fmt.Sprintf("烤森生日材料监听已更新，有效期 %d 分钟。", int(result.Duration.Minutes())))}
@@ -188,6 +191,10 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 		return botResponseWithActions(c, fiber.StatusOK, api.ResponseOK, visible, actions)
 	}
 }
+
+// errBirthdayRenderNotConfigured is the logged cause when the birthday
+// monitor cannot render: no MySekai renderer or no image host.
+var errBirthdayRenderNotConfigured = errors.New("birthday monitor: mysekai renderer or image hosting is not configured")
 
 func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 	return func(c fiber.Ctx) error {
@@ -209,7 +216,7 @@ func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 		if err != nil {
 			finishExecute()
 			setCommandTraceOutcome(c, "error", err)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), err, birthdayMonitorCommandPath, ""))})
 		}
 		setResolvedCommandTraceMetadata(c, "pjsk", "birthday_monitor_render", event.Region)
 		if event.EmptyResult {
@@ -223,12 +230,12 @@ func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 		if len(event.FilteredPayload) == 0 {
 			finishExecute()
 			setCommandTraceOutcome(c, "rejected", nil)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("订阅事件缺少可绘制数据")})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), usererror.New(usererror.CodeNotFound, i18n.M("subscription.birthday.event_no_data")), birthdayMonitorCommandPath, ""))})
 		}
 		if renderApp.MySekai == nil || (renderApp.ImageCache == nil && renderApp.ImageHosts.Len() == 0) {
 			finishExecute()
 			setCommandTraceOutcome(c, "error", nil)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("烤森服务未就绪，请稍后再试")})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), usererror.Misconfigured(errBirthdayRenderNotConfigured), birthdayMonitorCommandPath, ""))})
 		}
 		data, err := renderApp.MySekai.WithContext(c.Context()).WithMySekaiData(event.FilteredPayload).RenderMapImage(rendermysekai.MapQuery{
 			Region: event.Region,
@@ -239,14 +246,14 @@ func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 		if err != nil {
 			finishExecute()
 			setCommandTraceOutcome(c, "error", err)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), err, birthdayMonitorCommandPath, ""))})
 		}
 		renderContext := &pjskhandler.RequestContext{Ctx: c.Context(), App: renderApp}
 		images, err := renderContext.RenderedImageMessage(data)
 		finishExecute()
 		if err != nil {
 			setCommandTraceOutcome(c, "error", err)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), err, birthdayMonitorCommandPath, ""))})
 		}
 		setCommandTraceOutcome(c, "ok", nil)
 		return botResponse(c, fiber.StatusOK, api.ResponseOK, append(onebot11.Message{onebot11.At(event.PlatformUserID)}, images...))
@@ -272,7 +279,7 @@ func makeBirthdayMonitorAckHandler(renderApp *renderapp.App) fiber.Handler {
 		if err := service.AckEvent(c.Context(), req.EventID, req.SubscriptionID, req.SubscriptionVersion, req.Token, botID, req.PlatformGroupID, req.PlatformUserID, req.SelfID); err != nil {
 			finishExecute()
 			setCommandTraceOutcome(c, "error", err)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(c.Context(), err, birthdayMonitorCommandPath, ""))})
 		}
 		finishExecute()
 		setCommandTraceOutcome(c, "ok", nil)

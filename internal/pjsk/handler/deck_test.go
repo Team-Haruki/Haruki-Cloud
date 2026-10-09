@@ -2,13 +2,13 @@ package handler
 
 import (
 	"context"
-	json "haruki-cloud/internal/jsonutil"
-	"haruki-cloud/internal/testutil"
 	"reflect"
 	"strings"
 	"testing"
 
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
@@ -837,7 +837,7 @@ func TestEventDeckHandleRejectsTooManyMusicCompareQueries(t *testing.T) {
 		ArgText:    "歌曲比较 a b c d e f",
 	})
 	testutil.Require(t, !(err == nil), "expected too many compare songs to fail")
-	testutil.Require(t, strings.Contains(err.Error(), "最多只能指定 5 首歌曲"), "unexpected error: %v", err)
+	testutil.RequireUserError(t, err, "", "deck.compare.too_many")
 
 }
 
@@ -1029,7 +1029,7 @@ func TestEventDeckHandleRejectsSpecificSkillOrderWithoutCompleteFixedDeck(t *tes
 		ArgText:    "event123 技能顺序12345 sage neo",
 	})
 	testutil.Require(t, !(err == nil), "expected specific skill order without fixed deck to fail")
-	testutil.Require(t, strings.Contains(err.Error(), "仅在使用固定队伍"), "unexpected error: %v", err)
+	testutil.RequireUserError(t, err, "", "deck.skill_order.needs_fixed")
 
 }
 
@@ -1041,7 +1041,7 @@ func TestEventDeckHandleRejectsSpecificSkillOrderWithFixedCharacters(t *testing.
 		ArgText:    "event123 sage neo 技能顺序12345 #miku rin",
 	})
 	testutil.Require(t, !(err == nil), "expected fixed characters with specific skill order to fail")
-	testutil.Require(t, strings.Contains(err.Error(), "仅在使用固定队伍"), "unexpected error: %v", err)
+	testutil.RequireUserError(t, err, "", "deck.skill_order.needs_fixed")
 
 }
 

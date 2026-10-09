@@ -1,19 +1,22 @@
 package music
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) ResolveMusicMetaRequests(region string, queries []string) ([]drawing.MusicMetaRequest, error) {
 	if c == nil {
-		return nil, fmt.Errorf("music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music controller is not configured"))
 	}
 	if len(queries) == 0 {
-		return nil, fmt.Errorf("music meta request is empty")
+		return nil, usererror.Misuse(i18n.M("music.query_required"))
 	}
 
 	resolvedRegion, source, builder, err := c.resolveBuilder(region)
@@ -35,7 +38,7 @@ func (c *Controller) ResolveMusicMetaRequests(region string, queries []string) (
 
 		metas := c.resolveAllMusicMetas(resolvedRegion.String(), musicInfo.ID)
 		if len(metas) == 0 {
-			return nil, fmt.Errorf("music %d has no meta data", musicInfo.ID)
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.meta.missing"))
 		}
 
 		result = append(result, drawing.MusicMetaRequest{
@@ -47,7 +50,7 @@ func (c *Controller) ResolveMusicMetaRequests(region string, queries []string) (
 	}
 
 	if len(result) == 0 {
-		return nil, fmt.Errorf("music meta request is empty")
+		return nil, usererror.Misuse(i18n.M("music.query_required"))
 	}
 	return result, nil
 }
@@ -69,7 +72,7 @@ func (c *Controller) resolveMusicMetaQuery(source DataSource, query string) (*ma
 
 	lower := strings.ToLower(strings.TrimSpace(query))
 	if lower == "" {
-		return nil, fmt.Errorf("music query is empty")
+		return nil, usererror.Misuse(i18n.M("music.query_required"))
 	}
 
 	musicInfo, keywordErr := resolveUniqueMusicKeyword(source, lower, false)

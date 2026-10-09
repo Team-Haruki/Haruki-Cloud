@@ -1,11 +1,12 @@
 package mysekai
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/filteralias"
+	"haruki-cloud/utils/usererror"
 )
 
 var mysekaiTalkUnitAliases = filteralias.UnitMap()
@@ -39,7 +40,7 @@ func (c *Controller) resolveTalkCharacter(query string) (int, int, error) {
 
 	characterID := c.lookupTalkCharacterID(cleanedQuery)
 	if characterID == 0 {
-		return 0, 0, fmt.Errorf("找不到要查询的角色")
+		return 0, 0, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.talk.character_not_found"))
 	}
 	return c.resolveTalkCharacterUnit(cleanedQuery, unit, characterID, gameCharacterUnits)
 }
@@ -95,13 +96,13 @@ func (c *Controller) lookupTalkCharacterID(query string) int {
 func (c *Controller) resolveTalkCharacterUnit(query, unit string, characterID int, gameCharacterUnits []map[string]any) (int, int, error) {
 	candidates := talkCharacterUnitCandidates(characterID, gameCharacterUnits)
 	if len(candidates) == 0 {
-		return 0, 0, fmt.Errorf("找不到要查询的角色")
+		return 0, 0, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.talk.character_not_found"))
 	}
 
 	candidates = c.filterMysekaiVirtualSingerCandidates(characterID, candidates)
 	if fixedUnit, ok := mysekaiFixedVirtualSingerUnits[characterID]; ok {
 		if unit != "" && normalizeMysekaiTalkUnit(unit) != fixedUnit {
-			return 0, 0, fmt.Errorf("找不到要查询的角色")
+			return 0, 0, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.talk.character_not_found"))
 		}
 		unit = fixedUnit
 	}
@@ -110,14 +111,14 @@ func (c *Controller) resolveTalkCharacterUnit(query, unit string, characterID in
 		if unitID := matchingTalkCharacterUnitID(candidates, unit); unitID > 0 {
 			return characterID, unitID, nil
 		}
-		return 0, 0, fmt.Errorf("找不到要查询的角色")
+		return 0, 0, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.talk.character_not_found"))
 	}
 
 	if len(candidates) == 1 {
 		return characterID, intNumberFrom(candidates[0], 0, "id", "game_id"), nil
 	}
 	if characterID == 21 {
-		return 0, 0, fmt.Errorf("查询存在多个组合的V家角色时需要同时指定组合，例如\"%s ln\"", strings.TrimSpace(query))
+		return 0, 0, usererror.Misuse(i18n.M("mysekai.talk.virtual_singer_unit", i18n.Data{"Example": strings.TrimSpace(query) + " ln"}))
 	}
 	return characterID, intNumberFrom(candidates[0], 0, "id", "game_id"), nil
 }

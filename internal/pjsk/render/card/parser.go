@@ -25,7 +25,7 @@ func (p *Parser) ParseStrictFilter(args string) (*PjskCardQueryInfo, error) {
 	if info := p.tryParseFilter(args); info != nil {
 		return info, nil
 	}
-	return nil, usererror.Inputf("无法解析的指令: %s", args)
+	return nil, usererror.Unrecognized()
 }
 
 func (p *Parser) parse(args string, preferFilter bool) (*PjskCardQueryInfo, error) {
@@ -42,7 +42,7 @@ func (p *Parser) parse(args string, preferFilter bool) (*PjskCardQueryInfo, erro
 	if info := p.tryParseFilter(args); info != nil {
 		return info, nil
 	}
-	return nil, usererror.Inputf("无法解析的指令: %s", args)
+	return nil, usererror.Unrecognized()
 }
 
 func LooksLikeSingleCardQuery(args string) bool {

@@ -19,6 +19,7 @@ import (
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/accountdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 type birthdayToolboxRecorder struct {
@@ -160,9 +161,9 @@ func TestBirthdayCreateValidationBranches(t *testing.T) {
 	service, _ := newBirthdayBoundService(t, recorder)
 	ctx := context.Background()
 
-	assertBirthdayCreateError(t, service, "", "self-1", "/烤森生日监听", "只支持群聊")
-	assertBirthdayCreateError(t, service, "group-1", "", "/烤森生日监听", "缺少 OneBot self_id")
-	assertBirthdayCreateError(t, service, "group-1", "self-1", "/烤森生日取消监听", "请使用取消监听接口")
+	assertBirthdayCreateError(t, service, "", "self-1", "/烤森生日监听", "subscription.birthday.group_only")
+	assertBirthdayCreateError(t, service, "group-1", "", "/烤森生日监听", "common.misconfigured")
+	assertBirthdayCreateError(t, service, "group-1", "self-1", "/烤森生日取消监听", "cancel command sent to the subscribe endpoint")
 	service.SetReadOnly(true)
 	_, err := service.CreateOrUpdate(ctx, "qq", "42", "group-1", "cloud-1", "self-1", "jp", true, "/烤森生日监听", false)
 	if err == nil {
@@ -173,7 +174,7 @@ func TestBirthdayCreateValidationBranches(t *testing.T) {
 func assertBirthdayCreateError(t *testing.T, service *Service, groupID string, selfID string, message string, want string) {
 	t.Helper()
 	_, err := service.CreateOrUpdate(context.Background(), "qq", "42", groupID, "cloud-1", selfID, "jp", true, message, false)
-	if err == nil || !strings.Contains(err.Error(), want) {
+	if !birthdayErrorMatches(err, want) {
 		t.Fatalf("create error = %v, want %q", err, want)
 	}
 }
@@ -183,11 +184,11 @@ func TestBirthdayCancelValidationBranches(t *testing.T) {
 	service, _ := newBirthdayBoundService(t, recorder)
 	ctx := context.Background()
 
-	assertBirthdayCancelError(t, service, "group-1", "/烤森生日监听", "请使用监听接口")
-	assertBirthdayCancelError(t, service, "", "/烤森生日取消监听", "只支持群聊")
-	assertBirthdayCancelError(t, service, "group-1", "/烤森生日取消监听", "没有活跃")
+	assertBirthdayCancelError(t, service, "group-1", "/烤森生日监听", "subscribe command sent to the cancel endpoint")
+	assertBirthdayCancelError(t, service, "", "/烤森生日取消监听", "subscription.birthday.group_only")
+	assertBirthdayCancelError(t, service, "group-1", "/烤森生日取消监听", "subscription.birthday.none_active")
 	createBirthdayMonitor(t, service)
-	assertBirthdayCancelError(t, service, "other-group", "/烤森生日取消监听", "没有由你创建")
+	assertBirthdayCancelError(t, service, "other-group", "/烤森生日取消监听", "subscription.birthday.not_owner")
 
 	service.SetReadOnly(true)
 	_, err := service.Cancel(ctx, "qq", "42", "group-1", "cloud-1", "self-1", "jp", true, "/烤森生日取消监听")
@@ -199,9 +200,15 @@ func TestBirthdayCancelValidationBranches(t *testing.T) {
 func assertBirthdayCancelError(t *testing.T, service *Service, groupID string, message string, want string) {
 	t.Helper()
 	_, err := service.Cancel(context.Background(), "qq", "42", groupID, "cloud-1", "self-1", "jp", true, message)
-	if err == nil || !strings.Contains(err.Error(), want) {
+	if !birthdayErrorMatches(err, want) {
 		t.Fatalf("cancel error = %v, want %q", err, want)
 	}
+}
+
+// birthdayErrorMatches compares a typed error by message ID and an internal
+// one by its logged text.
+func birthdayErrorMatches(err error, want string) bool {
+	return err != nil && (testutil.MessageID(err) == want || strings.Contains(testutil.ErrorDetail(err), want))
 }
 
 func TestBirthdayCreateRollsBackWhenToolboxSyncFails(t *testing.T) {
@@ -210,7 +217,7 @@ func TestBirthdayCreateRollsBackWhenToolboxSyncFails(t *testing.T) {
 	})
 	service, client := newBirthdayBoundService(t, handler)
 	_, err := service.CreateOrUpdate(context.Background(), "qq", "42", "group-1", "cloud-1", "self-1", "jp", true, "/烤森生日监听", false)
-	if err == nil || !strings.Contains(err.Error(), "同步 Toolbox") {
+	if err == nil || testutil.MessageID(err) != "subscription.birthday.sync_failed" {
 		t.Fatalf("sync error = %v", err)
 	}
 	subscription, queryErr := client.MysekaiBirthdaySubscription.Query().Only(context.Background())
@@ -230,7 +237,7 @@ func TestBirthdayCancelKeepsActiveWhenToolboxDeleteFails(t *testing.T) {
 	service, client := newBirthdayBoundService(t, handler)
 	created := createBirthdayMonitor(t, service)
 	_, err := service.Cancel(context.Background(), "qq", "42", "group-1", "cloud-1", "self-1", "jp", true, "/烤森生日取消监听")
-	if err == nil || !strings.Contains(err.Error(), "清理 Toolbox") {
+	if err == nil || testutil.MessageID(err) != "subscription.birthday.cleanup_failed" {
 		t.Fatalf("delete error = %v", err)
 	}
 	subscription, queryErr := client.MysekaiBirthdaySubscription.Get(context.Background(), created.Subscription.ID)

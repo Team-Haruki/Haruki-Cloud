@@ -108,7 +108,7 @@ func TestSKHandlerFactoriesAndTrackerExecutionBranches(t *testing.T) {
 		err := normalizeSKSelfRankingNotFoundError(true, "jp", sekaiapi.ErrRankingNotFound)
 		{
 			testutil.Require(t, !(err == nil), "self ranking error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "JP"), "self ranking error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "JP"), "self ranking error = %v", err)
 		}
 	}
 	{
@@ -195,7 +195,7 @@ func TestEventPlannerExecutionAndRequestBranches(t *testing.T) {
 		{
 			testutil.Require(t, !(err != nil), "event planner help handler = %+v, %v", request, err)
 			testutil.Require(t, !(request == nil), "event planner help handler = %+v, %v", request, err)
-			testutil.Require(t, !(request.Mode != "event-planner-help"), "event planner help handler = %+v, %v", request, err)
+			testutil.Require(t, !(request.Mode != "event-planner" || !request.IsHelp), "event planner help handler = %+v, %v", request, err)
 		}
 	}
 

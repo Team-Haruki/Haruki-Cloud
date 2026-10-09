@@ -3,18 +3,18 @@ package requestbuilder
 import (
 	"context"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
-	"haruki-cloud/internal/testutil"
 	"strings"
 	"testing"
 	"time"
 
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	sekaienttest "haruki-cloud/database/sekai/enttest"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/alias"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -347,7 +347,7 @@ func TestLookupBirthdayCharactersRegionFallbackAndAmbiguity(t *testing.T) {
 		_, err := resolveBirthdayCharacterID(ctx, app, renderregion.JP, "SharedName")
 		{
 			testutil.Require(t, !(err == nil), "ambiguous lookup error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "歧义"), "ambiguous lookup error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "character.ambiguous", "ambiguous lookup error = %v", err)
 		}
 	}
 	{

@@ -181,7 +181,7 @@ func TestSearchServiceValidationAndIDBranches(t *testing.T) {
 		_, err := service.SearchInfo(&QueryInfo{Type: QueryTypeID, Value: 8})
 		{
 			testutil.Require(t, !(err == nil), "ID not-found error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "not found"), "ID not-found error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.not_found", "ID not-found error = %v", err)
 		}
 	}
 
@@ -197,7 +197,7 @@ func TestSearchServiceSequenceEventBanAndTitleBranches(t *testing.T) {
 		_, err := service.SearchInfo(&QueryInfo{Type: QueryTypeSeq, Value: 1})
 		{
 			testutil.Require(t, !(err == nil), "empty sequence error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "no music"), "empty sequence error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "no music"), "empty sequence error = %v", err)
 		}
 	}
 
@@ -217,7 +217,7 @@ func TestSearchServiceSequenceEventBanAndTitleBranches(t *testing.T) {
 		_, err := service.SearchInfo(&QueryInfo{Type: QueryTypeSeq, Value: 3})
 		{
 			testutil.Require(t, !(err == nil), "sequence range error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "out of range"), "sequence range error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.not_found_unspecified", "sequence range error = %v", err)
 		}
 	}
 
@@ -258,7 +258,7 @@ func TestSearchServiceSequenceEventBanAndTitleBranches(t *testing.T) {
 		_, err := service.SearchInfo(&QueryInfo{Type: QueryTypeBan, BanCharID: 1, BanSeq: 1})
 		{
 			testutil.Require(t, !(err == nil), "missing ban events error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "no ban events"), "missing ban events error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.not_found_unspecified", "missing ban events error = %v", err)
 		}
 	}
 
@@ -267,7 +267,7 @@ func TestSearchServiceSequenceEventBanAndTitleBranches(t *testing.T) {
 		_, err := service.SearchInfo(&QueryInfo{Type: QueryTypeBan, BanCharID: 1, BanSeq: 2})
 		{
 			testutil.Require(t, !(err == nil), "ban range error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "out of range"), "ban range error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.not_found_unspecified", "ban range error = %v", err)
 		}
 	}
 
@@ -293,7 +293,7 @@ func TestSearchServiceSequenceEventBanAndTitleBranches(t *testing.T) {
 		_, err := service.SearchInfo(&QueryInfo{Type: QueryTypeTitle, MusicID: 3})
 		{
 			testutil.Require(t, !(err == nil), "empty title with ID error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "not found"), "empty title with ID error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "not found"), "empty title with ID error = %v", err)
 		}
 	}
 	{
@@ -301,7 +301,7 @@ func TestSearchServiceSequenceEventBanAndTitleBranches(t *testing.T) {
 		_, err := service.SearchInfo(&QueryInfo{Type: QueryTypeTitle})
 		{
 			testutil.Require(t, !(err == nil), "empty title error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "empty"), "empty title error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.query_required", "empty title error = %v", err)
 		}
 	}
 	{
@@ -309,7 +309,7 @@ func TestSearchServiceSequenceEventBanAndTitleBranches(t *testing.T) {
 		_, err := service.SearchInfo(&QueryInfo{Type: QueryTypeUnknown})
 		{
 			testutil.Require(t, !(err == nil), "unsupported type error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "unsupported"), "unsupported type error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "unsupported"), "unsupported type error = %v", err)
 		}
 	}
 	{
@@ -512,7 +512,7 @@ func TestMusicMetaRequestValidationBranches(t *testing.T) {
 		_, err := controller.ResolveMusicMetaRequests("jp", []string{" ", "\t"})
 		{
 			testutil.Require(t, !(err == nil), "blank meta requests error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "empty"), "blank meta requests error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.query_required", "blank meta requests error = %v", err)
 		}
 	}
 	{
@@ -520,7 +520,7 @@ func TestMusicMetaRequestValidationBranches(t *testing.T) {
 		_, err := controller.ResolveMusicMetaRequests("jp", []string{"missing"})
 		{
 			testutil.Require(t, !(err == nil), "meta resolution error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "failed to resolve"), "meta resolution error = %v", err)
+			testutil.Require(t, strings.Contains(testutil.ErrorDetail(err), "failed to resolve"), "meta resolution error = %v", err)
 		}
 	}
 
@@ -529,7 +529,7 @@ func TestMusicMetaRequestValidationBranches(t *testing.T) {
 		_, err := controller.ResolveMusicMetaRequests("jp", []string{"Song"})
 		{
 			testutil.Require(t, !(err == nil), "missing meta data error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "no meta data"), "missing meta data error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.meta.missing", "missing meta data error = %v", err)
 		}
 	}
 	{
@@ -537,7 +537,7 @@ func TestMusicMetaRequestValidationBranches(t *testing.T) {
 		_, err := controller.resolveMusicMetaQuery(source, " ")
 		{
 			testutil.Require(t, !(err == nil), "empty meta query error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "empty"), "empty meta query error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.query_required", "empty meta query error = %v", err)
 		}
 	}
 	{

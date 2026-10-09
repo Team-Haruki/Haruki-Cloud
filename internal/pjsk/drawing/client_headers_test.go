@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/storage/storagetest"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/logger"
 )
 
@@ -207,7 +208,7 @@ func TestArtifactHeadersOnUncachedCallSites(t *testing.T) {
 	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/misc/alias-list")), "0", "0", "3", "api/pjsk/misc/alias-list")
 
 	server.setShape(shapeRef)
-	if data, err := client.GenerateAliasList(&AliasListRequest{}); err == nil || data != nil || !strings.Contains(err.Error(), "uncached endpoint /api/pjsk/misc/alias-list") {
+	if data, err := client.GenerateAliasList(&AliasListRequest{}); err == nil || data != nil || !strings.Contains(testutil.ErrorDetail(err), "uncached endpoint /api/pjsk/misc/alias-list") {
 		t.Fatalf("Store: 0 answered with a ref = %q, %v", data, err)
 	}
 	server.setShape(shapeBadJSON)
@@ -326,7 +327,7 @@ func TestDirectiveRejectionLogsErrorAndCounts(t *testing.T) {
 	client.logger = logger.NewLogger("drawing-test", "DEBUG", &logs)
 	server.setShape(shapeRejected)
 	_, err := client.WithContext(context.Background()).GenerateEventDetail(&EventDetailRequest{})
-	if err == nil || !strings.Contains(err.Error(), "status 400") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "status 400") {
 		t.Fatalf("rejected directive err = %v", err)
 	}
 	if client.DirectiveRejectedCount() != 1 {

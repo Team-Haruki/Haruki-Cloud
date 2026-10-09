@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestInventoryRefactorFallbackItemsAndInvalidEntries(t *testing.T) {
@@ -44,14 +45,14 @@ func TestInventoryRefactorFallbackItemsAndInvalidEntries(t *testing.T) {
 func TestInventoryRefactorRequestErrors(t *testing.T) {
 	controller := NewController(nil, nil, nil, renderregion.JP, MasterdataOptions{})
 	raw := &snapshot.RawUserData{}
-	if _, err := controller.BuildListRequestFromSnapshot(Query{Snapshot: &inventorySnapshotStub{raw: raw}}); err == nil || !strings.Contains(err.Error(), "profile") {
+	if _, err := controller.BuildListRequestFromSnapshot(Query{Snapshot: &inventorySnapshotStub{raw: raw}}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "profile") {
 		t.Fatalf("missing profile error = %v", err)
 	}
 	profile := &drawing.DetailedProfileCardRequest{}
-	if _, err := controller.BuildListRequestFromSnapshot(Query{Filter: FilterJewel, Snapshot: &inventorySnapshotStub{raw: raw, profile: profile}}); err == nil || !strings.Contains(err.Error(), "no inventory") {
+	if _, err := controller.BuildListRequestFromSnapshot(Query{Filter: FilterJewel, Snapshot: &inventorySnapshotStub{raw: raw, profile: profile}}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "no inventory") {
 		t.Fatalf("empty filtered inventory error = %v", err)
 	}
-	if _, err := controller.inventorySnapshot(&inventorySnapshotStub{}); err == nil || !strings.Contains(err.Error(), "raw data") {
+	if _, err := controller.inventorySnapshot(&inventorySnapshotStub{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "raw data") {
 		t.Fatalf("missing raw data error = %v", err)
 	}
 }

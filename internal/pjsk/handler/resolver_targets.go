@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/utils/usererror"
 
 	"haruki-cloud/internal/pjsk/accountdata"
 )
@@ -34,7 +36,7 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 		}
 		if err != nil {
-			return ResolvedGameTarget{}, normalizeBindingLookupError(err, "解析绑定账号失败")
+			return ResolvedGameTarget{}, normalizeBindingLookupError(err, i18n.Message{})
 		}
 		return ResolvedGameTarget{
 			HarukiUserID: hid,
@@ -46,10 +48,10 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 	case "at_user":
 		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.AtUserID, region)
 		if err != nil {
-			return ResolvedGameTarget{}, normalizeBindingLookupError(err, "未找到该用户的绑定账号")
+			return ResolvedGameTarget{}, normalizeBindingLookupError(err, i18n.M("binding.target_not_bound"))
 		}
 		if !binding.Visible {
-			return ResolvedGameTarget{}, fmt.Errorf("该用户已隐藏个人信息")
+			return ResolvedGameTarget{}, usererror.Forbidden(i18n.M("binding.target_hidden"))
 		}
 		return ResolvedGameTarget{
 			PJSKUserID: binding.PJSKUserID,
@@ -63,7 +65,7 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 			Visible:    true,
 		}, nil
 	default:
-		return ResolvedGameTarget{}, fmt.Errorf("未知的查询模式：%q", p.Mode)
+		return ResolvedGameTarget{}, fmt.Errorf("unknown query mode %q", p.Mode)
 	}
 }
 

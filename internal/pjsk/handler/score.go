@@ -1,7 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -10,8 +15,7 @@ import (
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	renderscore "haruki-cloud/internal/pjsk/render/score"
 	"haruki-cloud/internal/pjsk/requestbuilder"
-	"strconv"
-	"strings"
+	"haruki-cloud/utils/usererror"
 )
 
 type scoreControlParams struct {
@@ -51,12 +55,12 @@ func buildScoreControlParams(ctx HarrukiSekaiHandlerContext) (scoreControlParams
 	args := strings.TrimSpace(ctx.GetArgs())
 	parts := strings.SplitN(args, " ", 2)
 	if len(parts) == 0 {
-		return scoreControlParams{}, onebot11.NewReplayError("使用方式:\n%s 活动pt 歌曲名(可选)", ctx.originalTriggerCmd)
+		return scoreControlParams{}, usererror.Misuse(i18n.M("score.control.usage"))
 	}
 
 	targetPT, err := strconv.Atoi(strings.TrimSpace(parts[0]))
 	if err != nil || targetPT <= 0 {
-		return scoreControlParams{}, onebot11.NewReplayError("使用方式:\n%s 活动pt 歌曲名(可选)", ctx.originalTriggerCmd)
+		return scoreControlParams{}, usererror.Misuse(i18n.M("score.control.usage"))
 	}
 
 	params := scoreControlParams{
@@ -82,7 +86,7 @@ func (sekaiHandlers) CustomRoomScoreControlHandle() HarukiSekaiCommandHandler {
 			args := strings.TrimSpace(ctx.GetArgs())
 			targetPT, err := strconv.Atoi(args)
 			if err != nil || targetPT <= 0 {
-				return nil, onebot11.NewReplayError("使用方式: %s 目标PT", ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("score.custom_room.usage"))
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleScore, "score-custom-room", customRoomScoreParams{
 				TargetPoint: targetPT,
@@ -103,10 +107,10 @@ func (sekaiHandlers) MusicMetaHandle() HarukiSekaiCommandHandler {
 			args := strings.TrimSpace(ctx.GetArgs())
 			clean := splitMusicMetaQueries(args)
 			if len(clean) == 0 {
-				return nil, fmt.Errorf("请至少提供一个歌曲ID或名称")
+				return nil, usererror.Misuse(i18n.M("score.music_meta.required"))
 			}
 			if len(clean) > 3 {
-				return nil, fmt.Errorf("一次最多进行3首歌曲的比较")
+				return nil, usererror.Invalid(i18n.M("score.music_meta.too_many", i18n.Data{"Max": 3}))
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleScore, "score-music-meta", musicMetaQueriesParams{Queries: clean}), nil
 		},
@@ -247,7 +251,7 @@ func executeScoreMusicBoard(rc *RequestContext, scoreCtrl *renderscore.Controlle
 
 func resolveScoreMusicBoardRequest(rc *RequestContext, musicCtrl *rendermusic.Controller) (*drawing.MusicBoardRequest, error) {
 	if rc.App == nil || rc.App.Music == nil {
-		return nil, fmt.Errorf("music board service unavailable: music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music board service unavailable: music controller is not configured"))
 	}
 	boardQuery := rendermusic.BoardQuery{}
 	mergeParams(rc.Cmd.Params, &boardQuery)

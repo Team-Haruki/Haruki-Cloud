@@ -1,0 +1,57 @@
+# 控分：控分、自定义房间控分、歌曲计算、歌曲排行。
+
+[score.control.usage]
+description = "控分指令没有写或写错了目标 PT。"
+other = "请写目标 PT（正整数），歌曲名可选"
+
+[score.custom_room.usage]
+description = "自定义房间控分没有写或写错了目标 PT。"
+other = "请写目标 PT（正整数）"
+
+[score.music_meta.required]
+description = "歌曲计算没有写歌曲。"
+other = "请至少写一首歌曲的 ID 或名称"
+
+[score.music_meta.too_many]
+description = "歌曲计算一次写了 3 首以上歌曲。占位符：Max=最多歌曲数。"
+other = "一次最多比较 {{.Max}} 首歌曲"
+
+[score.board.power_invalid]
+description = "歌曲排行的综合力写法不对，作为 common.bad_param 的原因行。"
+other = "综合力写成“综合”加数字，例如 综合 20w"
+
+[score.board.bonus_invalid]
+description = "歌曲排行的活动加成写法不对，作为 common.bad_param 的原因行。"
+other = "活动加成写成“加成”加数字，例如 加成 250"
+
+[score.board.interval_invalid]
+description = "歌曲排行的游玩间隔写法不对，作为 common.bad_param 的原因行。"
+other = "游玩间隔写成“间隔”加秒数，例如 间隔 30"
+
+[score.board.skills_invalid]
+description = "歌曲排行的技能加分个数不对。"
+other = "技能加分需要写完整的 5 个数值"
+
+[score.control.no_range]
+description = "控分找不到符合条件的分数范围。"
+other = "找不到符合条件的分数范围"
+
+[score.control.invalid]
+description = "控分请求参数无效（目标 PT 等）。"
+other = "控分参数无效，请检查目标 PT 和歌曲"
+
+[score.custom_room.no_music]
+description = "自定义房间控分找不到可用的歌曲。"
+other = "找不到可用于自定义房间控分的歌曲"
+
+[score.custom_room.pt_large]
+description = "目标 PT 太大，不能用自定义房间控分（可以用 /控分）。"
+other = "这个 PT 无法用自定义房间控分，100 以上的 PT 可以使用 /控分"
+
+[score.custom_room.pt_small]
+description = "目标 PT 太小，不能用自定义房间控分。"
+other = "这个 PT 无法用自定义房间控分，可能是 PT 过小"
+
+[score.music_basic_point_missing]
+description = "控分需要的歌曲基础分数据缺失。"
+other = "暂时没有该歌曲的控分数据"

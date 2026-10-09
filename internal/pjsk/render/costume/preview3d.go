@@ -25,6 +25,8 @@ import (
 	"github.com/andybalholm/brotli"
 	"github.com/shamaton/msgpack/v3"
 	"golang.org/x/sync/singleflight"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -206,6 +208,21 @@ type preview3DAccessoryCatalogEntry struct {
 	Character3DIDs            []int
 }
 
+// errPreview3DDisabled is returned when the 3D preview is not configured.
+var errPreview3DDisabled = usererror.Wrap(usererror.CodeMisconfigured, i18n.M("costume.preview3d.disabled"), errors.New("3d preview service is not configured"))
+
+// preview3DFailure gives an untyped failure of a 3D preview stage the
+// stage's reply; typed errors (a query mistake, a busy queue) pass through.
+func preview3DFailure(stage i18n.Message, err error) error {
+	if err == nil {
+		return nil
+	}
+	if _, ok := usererror.As(err); ok {
+		return err
+	}
+	return usererror.Wrap(usererror.CodeUnavailable, stage, err)
+}
+
 func NewPreview3DService(cfg Preview3DConfig) *Preview3DService {
 	cfg.EngineBaseURLs = normalizePreview3DEngineBaseURLs(cfg.EngineBaseURLs)
 	if !cfg.Enabled || (strings.TrimSpace(cfg.EngineBaseURL) == "" && len(cfg.EngineBaseURLs) == 0) {
@@ -262,7 +279,7 @@ func (s *Preview3DService) ResolveQueryPreviewPath(ctx context.Context, region s
 	}
 	registry, err := s.registry(ctx, endpoint)
 	if err != nil {
-		return "", err
+		return "", preview3DFailure(i18n.M("costume.preview3d.registry_failed"), err)
 	}
 	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	selection, err := registry.resolveQuery(region, costume3DID, query, s.captureCacheSignature())
@@ -287,7 +304,7 @@ func (s *Preview3DService) EnsureQueryPreviewCapture(ctx context.Context, region
 	}
 	registry, err := s.registry(ctx, endpoint)
 	if err != nil {
-		return err
+		return preview3DFailure(i18n.M("costume.preview3d.registry_failed"), err)
 	}
 	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	selection, err := registry.resolveQuery(region, costume3DID, query, s.captureCacheSignature())
@@ -296,14 +313,14 @@ func (s *Preview3DService) EnsureQueryPreviewCapture(ctx context.Context, region
 		return err
 	}
 	if err := s.ensureCapture(ctx, endpoint, selection, "persistent"); err != nil {
-		return err
+		return preview3DFailure(i18n.M("costume.preview3d.capture_failed"), err)
 	}
-	return s.ensureStaticCaptureObject(ctx, endpoint, selection.ImageID)
+	return preview3DFailure(i18n.M("costume.preview3d.capture_failed"), s.ensureStaticCaptureObject(ctx, endpoint, selection.ImageID))
 }
 
 func (s *Preview3DService) CaptureTemporaryCombo(ctx context.Context, region string, query ComboQuery) ([]byte, error) {
 	if s == nil {
-		return nil, fmt.Errorf("3d preview service is not configured")
+		return nil, errPreview3DDisabled
 	}
 	endpoint, err := s.endpointForRegion(region)
 	if err != nil {
@@ -311,7 +328,7 @@ func (s *Preview3DService) CaptureTemporaryCombo(ctx context.Context, region str
 	}
 	registry, err := s.registry(ctx, endpoint)
 	if err != nil {
-		return nil, err
+		return nil, preview3DFailure(i18n.M("costume.preview3d.registry_failed"), err)
 	}
 	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	selection, err := registry.resolveCombo(region, query, s.captureCacheSignature())
@@ -320,14 +337,15 @@ func (s *Preview3DService) CaptureTemporaryCombo(ctx context.Context, region str
 		return nil, err
 	}
 	if err := s.ensureCapture(ctx, endpoint, selection, "temporary"); err != nil {
-		return nil, err
+		return nil, preview3DFailure(i18n.M("costume.preview3d.capture_failed"), err)
 	}
-	return s.getCapture(ctx, endpoint, selection.ImageID)
+	data, err := s.getCapture(ctx, endpoint, selection.ImageID)
+	return data, preview3DFailure(i18n.M("costume.preview3d.fetch_failed"), err)
 }
 
 func (s *Preview3DService) HairIDsForRole(ctx context.Context, region string, character3DID int) (map[int]int, error) {
 	if s == nil {
-		return nil, fmt.Errorf("3d preview service is not configured")
+		return nil, errPreview3DDisabled
 	}
 	endpoint, err := s.endpointForRegion(region)
 	if err != nil {
@@ -335,13 +353,13 @@ func (s *Preview3DService) HairIDsForRole(ctx context.Context, region string, ch
 	}
 	registry, err := s.registry(ctx, endpoint)
 	if err != nil {
-		return nil, err
+		return nil, preview3DFailure(i18n.M("costume.preview3d.registry_failed"), err)
 	}
 	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
-		return nil, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.role_mismatch"), fmt.Errorf("3d combo role not found: character3d=%d", character3DID))
 	}
 	parts := registry.hairPartsForRole(roles[0])
 	ids := make(map[int]int, len(parts))
@@ -353,7 +371,7 @@ func (s *Preview3DService) HairIDsForRole(ctx context.Context, region string, ch
 
 func (s *Preview3DService) AccessoryIDsForRole(ctx context.Context, region string, character3DID int) (map[int][]int, error) {
 	if s == nil {
-		return nil, fmt.Errorf("3d preview service is not configured")
+		return nil, errPreview3DDisabled
 	}
 	endpoint, err := s.endpointForRegion(region)
 	if err != nil {
@@ -361,20 +379,20 @@ func (s *Preview3DService) AccessoryIDsForRole(ctx context.Context, region strin
 	}
 	registry, err := s.registry(ctx, endpoint)
 	if err != nil {
-		return nil, err
+		return nil, preview3DFailure(i18n.M("costume.preview3d.registry_failed"), err)
 	}
 	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
-		return nil, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.role_mismatch"), fmt.Errorf("3d combo role not found: character3d=%d", character3DID))
 	}
 	return registry.accessoryIDsForRole(roles[0]), nil
 }
 
 func (s *Preview3DService) AccessoryCostume3DIDForRole(ctx context.Context, region string, accessoryID int, colorID int, character3DID int) (int, error) {
 	if s == nil {
-		return 0, fmt.Errorf("3d preview service is not configured")
+		return 0, errPreview3DDisabled
 	}
 	endpoint, err := s.endpointForRegion(region)
 	if err != nil {
@@ -382,13 +400,13 @@ func (s *Preview3DService) AccessoryCostume3DIDForRole(ctx context.Context, regi
 	}
 	registry, err := s.registry(ctx, endpoint)
 	if err != nil {
-		return 0, err
+		return 0, preview3DFailure(i18n.M("costume.preview3d.registry_failed"), err)
 	}
 	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
-		return 0, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
+		return 0, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.role_mismatch"), fmt.Errorf("3d combo role not found: character3d=%d", character3DID))
 	}
 	part, ok := registry.accessoryPartForRole(accessoryID, colorID, roles[0])
 	if !ok {
@@ -399,7 +417,7 @@ func (s *Preview3DService) AccessoryCostume3DIDForRole(ctx context.Context, regi
 
 func (s *Preview3DService) OutfitIDsForRole(ctx context.Context, region string, character3DID int) (map[int]int, error) {
 	if s == nil {
-		return nil, fmt.Errorf("3d preview service is not configured")
+		return nil, errPreview3DDisabled
 	}
 	endpoint, err := s.endpointForRegion(region)
 	if err != nil {
@@ -407,20 +425,20 @@ func (s *Preview3DService) OutfitIDsForRole(ctx context.Context, region string, 
 	}
 	registry, err := s.registry(ctx, endpoint)
 	if err != nil {
-		return nil, err
+		return nil, preview3DFailure(i18n.M("costume.preview3d.registry_failed"), err)
 	}
 	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
-		return nil, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
+		return nil, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.role_mismatch"), fmt.Errorf("3d combo role not found: character3d=%d", character3DID))
 	}
 	return registry.outfitIDsForRole(roles[0]), nil
 }
 
 func (s *Preview3DService) OutfitCostume3DIDForRole(ctx context.Context, region string, outfitID int, colorID int, character3DID int) (int, error) {
 	if s == nil {
-		return 0, fmt.Errorf("3d preview service is not configured")
+		return 0, errPreview3DDisabled
 	}
 	endpoint, err := s.endpointForRegion(region)
 	if err != nil {
@@ -428,24 +446,24 @@ func (s *Preview3DService) OutfitCostume3DIDForRole(ctx context.Context, region 
 	}
 	registry, err := s.registry(ctx, endpoint)
 	if err != nil {
-		return 0, err
+		return 0, preview3DFailure(i18n.M("costume.preview3d.registry_failed"), err)
 	}
 	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
-		return 0, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
+		return 0, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.role_mismatch"), fmt.Errorf("3d combo role not found: character3d=%d", character3DID))
 	}
 	part, ok := registry.outfitPartForRole(outfitID, colorID, roles[0])
 	if !ok {
-		return 0, fmt.Errorf("3d combo outfit not usable: outfit=%d character3d=%d color=%d", outfitID, character3DID, colorID)
+		return 0, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.outfit_unusable"), fmt.Errorf("3d combo outfit not usable: outfit=%d character3d=%d color=%d", outfitID, character3DID, colorID))
 	}
 	return part.Costume3DID, nil
 }
 
 func (s *Preview3DService) HairCostume3DIDForRole(ctx context.Context, region string, hairID int, character3DID int) (int, error) {
 	if s == nil {
-		return 0, fmt.Errorf("3d preview service is not configured")
+		return 0, errPreview3DDisabled
 	}
 	endpoint, err := s.endpointForRegion(region)
 	if err != nil {
@@ -453,24 +471,24 @@ func (s *Preview3DService) HairCostume3DIDForRole(ctx context.Context, region st
 	}
 	registry, err := s.registry(ctx, endpoint)
 	if err != nil {
-		return 0, err
+		return 0, preview3DFailure(i18n.M("costume.preview3d.registry_failed"), err)
 	}
 	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
-		return 0, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
+		return 0, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.role_mismatch"), fmt.Errorf("3d combo role not found: character3d=%d", character3DID))
 	}
 	part, ok := registry.hairPartForRole(hairID, roles[0])
 	if !ok {
-		return 0, fmt.Errorf("3d combo hair not usable: hair=%d character3d=%d", hairID, character3DID)
+		return 0, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.hair_unusable"), fmt.Errorf("3d combo hair not usable: hair=%d character3d=%d", hairID, character3DID))
 	}
 	return part.Costume3DID, nil
 }
 
 func (s *Preview3DService) AccessoryCatalog(ctx context.Context, region string, character3DID int) ([]preview3DAccessoryCatalogEntry, error) {
 	if s == nil {
-		return nil, fmt.Errorf("3d preview service is not configured")
+		return nil, errPreview3DDisabled
 	}
 	endpoint, err := s.endpointForRegion(region)
 	if err != nil {
@@ -478,7 +496,7 @@ func (s *Preview3DService) AccessoryCatalog(ctx context.Context, region string, 
 	}
 	registry, err := s.registry(ctx, endpoint)
 	if err != nil {
-		return nil, err
+		return nil, preview3DFailure(i18n.M("costume.preview3d.registry_failed"), err)
 	}
 	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
@@ -486,7 +504,7 @@ func (s *Preview3DService) AccessoryCatalog(ctx context.Context, region string, 
 	if character3DID > 0 {
 		roles = registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 		if len(roles) != 1 {
-			return nil, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
+			return nil, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.role_mismatch"), fmt.Errorf("3d combo role not found: character3d=%d", character3DID))
 		}
 	} else {
 		for id := 1; id <= 31; id++ {
@@ -904,7 +922,7 @@ func (s *Preview3DService) acquireCapturePermit(ctx context.Context) (func(), er
 	case <-waitCtx.Done():
 		finishQueue()
 		cancel()
-		return nil, fmt.Errorf("3d preview capture is busy")
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("costume.preview3d.busy"), fmt.Errorf("3d preview capture is busy"))
 	}
 }
 
@@ -1165,7 +1183,7 @@ func (s *Preview3DService) endpointForRegion(region string) (preview3DEndpoint, 
 		baseURL = strings.TrimSpace(s.cfg.EngineBaseURL)
 	}
 	if baseURL == "" {
-		return preview3DEndpoint{}, fmt.Errorf("3d preview engine is not configured for region %s", normalized)
+		return preview3DEndpoint{}, usererror.Wrap(usererror.CodeMisconfigured, i18n.M("costume.preview3d.region_disabled", i18n.Data{"Region": i18n.RegionLabel(normalized)}), fmt.Errorf("3d preview engine is not configured for region %s", normalized))
 	}
 	return preview3DEndpoint{region: normalized, baseURL: baseURL}, nil
 }
@@ -1289,7 +1307,7 @@ func (s *preview3DResolveState) selectPart() error {
 	costume3DID := s.costume3DID
 	accessoryIDs := r.accessoryIDsForRaw(costume3DID)
 	if len(accessoryIDs) > 1 {
-		return fmt.Errorf("3d preview accessory raw id is ambiguous: raw=%d ids=%v", costume3DID, accessoryIDs)
+		return usererror.Wrap(usererror.CodeAmbiguous, i18n.M("costume.preview3d.accessory_raw_ambiguous"), fmt.Errorf("3d preview accessory raw id is ambiguous: raw=%d ids=%v", costume3DID, accessoryIDs))
 	}
 	if len(accessoryIDs) == 1 {
 		s.accessoryID = accessoryIDs[0]
@@ -1304,15 +1322,15 @@ func (s *preview3DResolveState) selectPart() error {
 		return nil
 	}
 	if missing, found := r.anyPartByID(costume3DID); found {
-		return fmt.Errorf("3d preview part is missing runtime package: %s", preview3DPartDiagnostic(missing))
+		return usererror.Wrap(usererror.CodeUnavailable, i18n.M("costume.preview3d.part_not_exported"), fmt.Errorf("3d preview part is missing runtime package: %s", preview3DPartDiagnostic(missing)))
 	}
-	return fmt.Errorf("3d preview part not found: %d", costume3DID)
+	return usererror.Wrap(usererror.CodeNotFound, i18n.M("costume.preview3d.part_not_found"), fmt.Errorf("3d preview part not found: %d", costume3DID))
 }
 
 func (s *preview3DResolveState) initializeTuple() error {
 	s.role = s.registry.defaultRoleForPart(s.selected)
 	if s.role.CharacterID == 0 {
-		return fmt.Errorf("3d preview default role not found for character %d", s.selected.CharacterID)
+		return usererror.Wrap(usererror.CodeNotFound, i18n.M("costume.preview3d.default_role_missing"), fmt.Errorf("3d preview default role not found for character %d", s.selected.CharacterID))
 	}
 	s.bodyID = s.role.BodyCostume3DID
 	s.headID = s.role.HeadCostume3DID
@@ -1333,7 +1351,7 @@ func (s *preview3DResolveState) applySelection() error {
 	}
 	s.applySelectedPart()
 	if s.bodyID <= 0 || s.headID <= 0 || s.hairID <= 0 {
-		return fmt.Errorf("3d preview tuple incomplete for costume %d", s.costume3DID)
+		return usererror.Wrap(usererror.CodeUnavailable, i18n.M("costume.preview3d.tuple_incomplete"), fmt.Errorf("3d preview tuple incomplete for costume %d", s.costume3DID))
 	}
 	if err := s.applyFallback(); err != nil {
 		return err
@@ -1548,10 +1566,10 @@ func (r *preview3DRegistry) newComboState(query ComboQuery) (*preview3DComboStat
 func (r *preview3DRegistry) comboRole(query ComboQuery) (preview3DCharacterEntry, error) {
 	roles := r.comboRoleCandidates(query)
 	if len(roles) == 0 {
-		return preview3DCharacterEntry{}, fmt.Errorf("3d combo role not found: character3d=%d", query.Character3DID)
+		return preview3DCharacterEntry{}, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.role_mismatch"), fmt.Errorf("3d combo role not found: character3d=%d", query.Character3DID))
 	}
 	if len(roles) > 1 {
-		return preview3DCharacterEntry{}, fmt.Errorf("3d combo character3d id is duplicated: %d", query.Character3DID)
+		return preview3DCharacterEntry{}, usererror.Wrap(usererror.CodeUnavailable, i18n.M("costume.preview3d.duplicate_role"), fmt.Errorf("3d combo character3d id is duplicated: %d", query.Character3DID))
 	}
 	return roles[0], nil
 }
@@ -1562,7 +1580,7 @@ func (r *preview3DRegistry) comboAccessoryID(query ComboQuery, role preview3DCha
 	}
 	accessoryIDs := r.accessoryIDsForRole(role)[query.AccessoryCostume3DID]
 	if len(accessoryIDs) > 1 {
-		return 0, fmt.Errorf("3d combo accessory raw id is ambiguous: raw=%d ids=%v", query.AccessoryCostume3DID, accessoryIDs)
+		return 0, usererror.Wrap(usererror.CodeAmbiguous, i18n.M("costume.preview3d.accessory_raw_ambiguous"), fmt.Errorf("3d combo accessory raw id is ambiguous: raw=%d ids=%v", query.AccessoryCostume3DID, accessoryIDs))
 	}
 	if len(accessoryIDs) == 1 {
 		return accessoryIDs[0], nil
@@ -1579,12 +1597,12 @@ func (r *preview3DRegistry) comboAnchor(query ComboQuery, role preview3DCharacte
 		return anchor, nil
 	}
 	if query.OutfitID > 0 {
-		return preview3DPartEntry{}, fmt.Errorf("3d combo outfit not usable: outfit=%d character3d=%d color=%d", query.OutfitID, query.Character3DID, query.OutfitColorID)
+		return preview3DPartEntry{}, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.outfit_unusable"), fmt.Errorf("3d combo outfit not usable: outfit=%d character3d=%d color=%d", query.OutfitID, query.Character3DID, query.OutfitColorID))
 	}
 	if query.AccessoryID > 0 {
 		return preview3DPartEntry{}, r.accessoryNotUsableError(query.AccessoryID, query.AccessoryColorID, query.Character3DID, role)
 	}
-	return preview3DPartEntry{}, fmt.Errorf("3d combo anchor part not found")
+	return preview3DPartEntry{}, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.anchor_missing"), fmt.Errorf("3d combo anchor part not found"))
 }
 
 func (r *preview3DRegistry) comboDefaultHeadPackagePath(role preview3DCharacterEntry) (string, error) {
@@ -1602,14 +1620,14 @@ func (s *preview3DComboState) applyBody() error {
 	if s.query.OutfitID > 0 {
 		part, ok := s.registry.outfitPartForRole(s.query.OutfitID, s.query.OutfitColorID, s.role)
 		if !ok {
-			return fmt.Errorf("3d combo outfit not usable: outfit=%d character3d=%d color=%d", s.query.OutfitID, s.query.Character3DID, s.query.OutfitColorID)
+			return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.outfit_unusable"), fmt.Errorf("3d combo outfit not usable: outfit=%d character3d=%d color=%d", s.query.OutfitID, s.query.Character3DID, s.query.OutfitColorID))
 		}
 		s.bodyID = part.Costume3DID
 	}
 	if s.query.BodyCostume3DID > 0 {
 		part, ok := s.registry.partForRole(s.query.BodyCostume3DID, s.role, "body")
 		if !ok {
-			return fmt.Errorf("3d combo body part not usable for unit=%s: %d", s.role.Unit, s.query.BodyCostume3DID)
+			return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.part_unusable", i18n.Data{"Part": i18n.M("costume.part.outfit"), "ID": s.query.BodyCostume3DID}), fmt.Errorf("3d combo body part not usable for unit=%s: %d", s.role.Unit, s.query.BodyCostume3DID))
 		}
 		s.bodyID = part.Costume3DID
 	}
@@ -1640,7 +1658,7 @@ func (s *preview3DComboState) applyHair() error {
 	if s.query.HairID > 0 {
 		part, ok := s.registry.hairPartForRole(s.query.HairID, s.role)
 		if !ok {
-			return fmt.Errorf("3d combo hair not usable: hair=%d character3d=%d", s.query.HairID, s.query.Character3DID)
+			return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.hair_unusable"), fmt.Errorf("3d combo hair not usable: hair=%d character3d=%d", s.query.HairID, s.query.Character3DID))
 		}
 		s.hairID = part.Costume3DID
 		return nil
@@ -1648,7 +1666,7 @@ func (s *preview3DComboState) applyHair() error {
 	if s.query.HairCostume3DID > 0 {
 		part, ok := s.registry.partForRole(s.query.HairCostume3DID, s.role, "hair")
 		if !ok {
-			return fmt.Errorf("3d combo hair part not usable for unit=%s: %d", s.role.Unit, s.query.HairCostume3DID)
+			return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.part_unusable", i18n.Data{"Part": i18n.M("costume.part.hair"), "ID": s.query.HairCostume3DID}), fmt.Errorf("3d combo hair part not usable for unit=%s: %d", s.role.Unit, s.query.HairCostume3DID))
 		}
 		s.hairID = part.Costume3DID
 	}
@@ -1683,7 +1701,7 @@ func (s *preview3DComboState) applyRawAccessoryHead() error {
 		return err
 	}
 	if !ok {
-		return fmt.Errorf("3d combo head/accessory part not usable for unit=%s: %d", s.role.Unit, s.query.AccessoryCostume3DID)
+		return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.part_unusable", i18n.Data{"Part": i18n.M("costume.part.accessory"), "ID": s.query.AccessoryCostume3DID}), fmt.Errorf("3d combo head/accessory part not usable for unit=%s: %d", s.role.Unit, s.query.AccessoryCostume3DID))
 	}
 	if s.resolvedAccessoryID > 0 && strings.TrimSpace(part.PackagePath) == "" {
 		return fmt.Errorf("3d combo accessory source has no packagePath: accessory=%d raw=%d", s.resolvedAccessoryID, part.Costume3DID)
@@ -2013,7 +2031,7 @@ func (r *preview3DRegistry) accessoryNotUsableError(accessoryID int, colorID int
 	if candidates := r.legacyAccessoryIDsForRole(accessoryID, role); len(candidates) > 0 {
 		return &LegacyAccessoryIDError{LegacyID: accessoryID, Character3DID: character3DID, AccessoryIDs: candidates}
 	}
-	return fmt.Errorf("3d combo accessory not usable: accessory=%d character3d=%d color=%d", accessoryID, character3DID, colorID)
+	return usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.accessory_unusable"), fmt.Errorf("3d combo accessory not usable: accessory=%d character3d=%d color=%d", accessoryID, character3DID, colorID))
 }
 
 func (r *preview3DRegistry) accessoryIDsForRole(role preview3DCharacterEntry) map[int][]int {
@@ -2788,7 +2806,7 @@ func (r *preview3DRegistry) applyHeadHairFallback(
 	if emptyHeadID, ok := r.hairSideFallback(role, fallbackMode, hairID); ok {
 		return emptyHeadID, hairID, nil
 	}
-	return headID, hairID, fmt.Errorf("%s head/hair combination is blocked: unit=%s head=%d hair=%d", label, role.Unit, headID, hairID)
+	return headID, hairID, usererror.Wrap(usererror.CodeInput, i18n.M("costume.preview3d.head_hair_blocked"), fmt.Errorf("%s head/hair combination is blocked: unit=%s head=%d hair=%d", label, role.Unit, headID, hairID))
 }
 
 func (r *preview3DRegistry) headSideFallback(role preview3DCharacterEntry, fallbackMode string, headID int) (int, bool) {

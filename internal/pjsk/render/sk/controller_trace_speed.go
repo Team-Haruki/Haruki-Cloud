@@ -1,8 +1,6 @@
 package sk
 
 import (
-	"fmt"
-
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
@@ -11,7 +9,7 @@ func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, rank
 	if out, ok, err := c.buildSpeedInfosFromTrackerV2(server, eventID, ranks, wlCharacterID, interval, unitPeriodSeconds, skipMissing); ok {
 		return out, err
 	}
-	return nil, fmt.Errorf("tracker cloud v2 source is not configured")
+	return nil, errTrackerSourceNotConfigured
 }
 
 func speedInfoFromGrowthPoint(point sekaiapi.ScoreGrowthPoint, unitPeriodSeconds int64) drawing.SpeedInfo {

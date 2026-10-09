@@ -13,6 +13,8 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestArrestPureHelpers(t *testing.T) {
@@ -202,22 +204,11 @@ func testMusicDifficultyFormatting(t *testing.T) {
 
 func testMusicAmbiguousTitles(t *testing.T) {
 	t.Helper()
-	fallback := "匹配到多个歌曲，请使用 /查歌 <id> 查询："
-	if got := buildAmbiguousMusicDetailListTitle(nil); got != fallback {
-		t.Fatalf("detail fallback = %q", got)
+	if got := buildAmbiguousMusicDetailListTitle(); got != i18n.T("music.ambiguous_list.detail") {
+		t.Fatalf("detail title = %q", got)
 	}
-	if got := buildAmbiguousMusicDetailListTitle(errors.New("failed to search music: 请改用 music<id>")); got != "请使用 /查歌 <id>" {
-		t.Fatalf("detail rewrite = %q", got)
-	}
-	if got := buildAmbiguousMusicDetailListTitle(errors.New("匹配到多个歌曲：1,2")); got != fallback {
-		t.Fatalf("detail ambiguous fallback = %q", got)
-	}
-	bpmFallback := "匹配到多个歌曲，请使用 /查BPM <id> 查询："
-	if got := buildAmbiguousMusicBPMListTitle(nil); got != bpmFallback {
-		t.Fatalf("BPM fallback = %q", got)
-	}
-	if got := buildAmbiguousMusicBPMListTitle(errors.New("failed to search music: 请使用查BPM music<id>")); !strings.Contains(got, "/查BPM") {
-		t.Fatalf("BPM rewrite = %q", got)
+	if got := buildAmbiguousMusicBPMListTitle(); got != i18n.T("music.ambiguous_list.bpm") {
+		t.Fatalf("BPM title = %q", got)
 	}
 }
 
@@ -394,63 +385,63 @@ func testMessageErrorHelpers(t *testing.T) {
 	if got := unsupportedModeError("music", "bad").Error(); !strings.Contains(got, "unsupported music mode") {
 		t.Fatalf("unsupported error = %q", got)
 	}
-	original := errors.New("original")
-	if normalizeBindingLookupError(nil, "fallback") != nil {
+	notBound := i18n.M("binding.target_not_bound")
+	if normalizeBindingLookupError(nil, notBound) != nil {
 		t.Fatal("nil binding error changed")
 	}
-	if got := normalizeBindingLookupError(accountdata.ErrNoBinding, "fallback"); got != accountdata.ErrNoBinding {
-		t.Fatalf("no binding error changed: %v", got)
+	testutil.RequireUserError(t, normalizeBindingLookupError(accountdata.ErrNoBinding, i18n.Message{}), usererror.CodeSetup, "binding.required")
+	testutil.RequireUserError(t, normalizeBindingLookupError(accountdata.ErrNoBinding, notBound), usererror.CodeNotFound, "binding.target_not_bound")
+	original := errors.New("original")
+	wrapped := testutil.RequireUserError(t, normalizeBindingLookupError(original, notBound), usererror.CodeUnavailable, "common.unavailable")
+	if !errors.Is(wrapped, original) {
+		t.Fatalf("binding storage failure must keep its cause: %v", wrapped)
 	}
-	if got := normalizeBindingLookupError(original, ""); got != original {
-		t.Fatalf("empty fallback changed error: %v", got)
-	}
-	if got := normalizeBindingLookupError(original, "lookup failed"); !strings.Contains(got.Error(), "lookup failed") || !errors.Is(got, original) {
-		t.Fatalf("wrapped lookup error = %v", got)
+	typed := usererror.ReadOnly()
+	if normalizeBindingLookupError(typed, notBound) != typed {
+		t.Fatal("a typed error must pass through")
 	}
 }
 
 func testBindingDisplayHelpers(t *testing.T) {
 	t.Helper()
-	bindings := []*accountdata.ResolvedBinding{
-		nil,
-		{Server: "jp"},
-		{PJSKUserID: "12345678901234", Visible: true},
-		{Server: "jp", PJSKUserID: "12345678901234", Visible: false},
+	if _, ok := bindingAccountLabel(nil); ok {
+		t.Fatal("nil binding must have no account label")
 	}
-	wants := []string{"", "JP服", "12345678901234", "JP服123********234"}
-	for i, binding := range bindings {
-		if got := formatUserFacingBindingAccount(binding); got != wants[i] {
-			t.Errorf("binding account %d = %q, want %q", i, got, wants[i])
-		}
+	if _, ok := bindingAccountLabel(&accountdata.ResolvedBinding{Server: "jp"}); ok {
+		t.Fatal("a binding without UID must have no account label")
+	}
+	binding := &accountdata.ResolvedBinding{Server: "jp", PJSKUserID: "12345678901234", Visible: false}
+	label, ok := bindingAccountLabel(binding)
+	if !ok || label.String() != i18n.AccountLabel("jp", "12345678901234", false).String() {
+		t.Fatalf("binding account label = %q, %v", label, ok)
 	}
 }
 
 func testPrivateDataMessages(t *testing.T) {
 	t.Helper()
 	binding := &accountdata.ResolvedBinding{Server: "jp", PJSKUserID: "12345678901234", Visible: false}
-	if got := buildPrivateDataHiddenMessage("mysekai", binding); !strings.Contains(got, "/展示烤森抓包") || !strings.Contains(got, "mysekai") {
-		t.Fatalf("hidden MySekai message = %q", got)
+	for _, tc := range []struct {
+		got  i18n.Message
+		id   string
+		data string
+	}{
+		{privateDataHiddenMessage("mysekai", binding), "binding.data.hidden_mysekai", ""},
+		{privateDataHiddenMessage("unknown", nil), "binding.data.hidden_suite", ""},
+		{privateDataNotFoundMessage("", nil), "binding.data.not_found", "binding.data_kind.suite"},
+		{privateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{}), "binding.data.not_found", "binding.data_kind.mysekai"},
+		{privateDataNotFoundMessage("mysekai", binding), "binding.data.not_found_account", "binding.data_kind.mysekai"},
+		{toolboxAccessDeniedMessage("suite", nil), "binding.toolbox.access_denied", "binding.data_kind.suite"},
+		{toolboxAccessDeniedMessage("suite", binding), "binding.toolbox.access_denied_account", "binding.data_kind.suite"},
+	} {
+		if tc.got.ID != tc.id {
+			t.Errorf("message = %s, want %s", tc.got.ID, tc.id)
+		}
+		if tc.data != "" && tc.got.Data["Data"].(i18n.Message).ID != tc.data {
+			t.Errorf("%s data kind = %+v, want %s", tc.id, tc.got.Data["Data"], tc.data)
+		}
 	}
-	if got := buildPrivateDataHiddenMessage("unknown", nil); !strings.Contains(got, "/展示抓包") || !strings.Contains(got, "suite") {
-		t.Fatalf("hidden suite message = %q", got)
-	}
-	if got := buildPrivateDataNotFoundMessage("", nil); !strings.Contains(got, "suite") {
-		t.Fatalf("nil binding not found message = %q", got)
-	}
-	if got := buildPrivateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{}); !strings.Contains(got, "mysekai") {
-		t.Fatalf("incomplete binding not found message = %q", got)
-	}
-	if got := buildPrivateDataNotFoundMessage("mysekai", binding); !strings.Contains(got, "JP服") {
-		t.Fatalf("bound not found message = %q", got)
-	}
-	if got := buildToolboxAccessDeniedMessage("suite", nil); !strings.Contains(got, "当前QQ号") {
-		t.Fatalf("anonymous toolbox denial = %q", got)
-	}
-	if got := buildToolboxAccessDeniedMessage("suite", binding); !strings.Contains(got, "查询账号") {
-		t.Fatalf("bound toolbox denial = %q", got)
-	}
-	if normalizeToolboxDataLabel(" MySekai ") != "mysekai" || normalizeToolboxDataLabel("other") != "suite" {
-		t.Fatal("toolbox data label mismatch")
+	if normalizePrivateDataKind(" MySekai ") != "mysekai" || normalizePrivateDataKind("other") != "suite" {
+		t.Fatal("private data kind mismatch")
 	}
 }
 
@@ -464,12 +455,6 @@ func testMaskingAndFallbackText(t *testing.T) {
 	}
 	if value := stringPtr(" value "); value == nil || *value != "value" {
 		t.Fatalf("string pointer = %v", value)
-	}
-	if got := sanitizeUserFacingText(" safe message "); got != "safe message" {
-		t.Fatalf("sanitized safe text = %q", got)
-	}
-	if sanitizeUserFacingText("") != genericUserFacingErrorText || sanitizeUserFacingText("failed at http://localhost/private/token") != genericUserFacingErrorText {
-		t.Fatal("sensitive text was not replaced")
 	}
 	if fallbackCommandHelpMarkdown("", "", "body") != "# 指令帮助\n\nbody" {
 		t.Fatal("generic fallback help mismatch")

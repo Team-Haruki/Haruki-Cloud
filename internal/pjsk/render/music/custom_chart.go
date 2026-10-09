@@ -13,11 +13,13 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/chartstyle"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 type customChartEntry struct {
@@ -170,19 +172,19 @@ func IsCustomChartIDQuery(query string) bool {
 
 func (c *Controller) buildCustomMusicChartRequest(query ChartQuery, source DataSource, builder *Builder, region renderregion.Value) (*drawing.GenerateMusicChartRequest, error) {
 	if c == nil {
-		return nil, fmt.Errorf("music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music controller is not configured"))
 	}
 	if c.customScores == nil {
-		return nil, fmt.Errorf("自制谱面数据源未配置")
+		return nil, usererror.Misconfigured(errors.New("custom chart source is not configured"))
 	}
 	if region != renderregion.JP {
-		return nil, fmt.Errorf("当前服务器暂未支持自定义谱面请使用jp前缀查询")
+		return nil, usererror.Invalid(i18n.M("music.custom_chart.jp_only", i18n.Data{"Region": i18n.RegionLabel("jp")}))
 	}
 
 	keyword := strings.TrimSpace(query.Query)
 	scoreID, ok := customChartIDFromCleanKeyword(keyword)
 	if !ok {
-		return nil, fmt.Errorf("请提供28位自定义谱面ID")
+		return nil, usererror.Misuse(i18n.M("music.custom_chart.id_required"))
 	}
 
 	entry, err := c.fetchCustomChartEntryByID(region.String(), scoreID)
@@ -192,7 +194,7 @@ func (c *Controller) buildCustomMusicChartRequest(query ChartQuery, source DataS
 
 	rawScore, err := c.customScores.GetCustomMusicScore(region.String(), entry.Path)
 	if err != nil {
-		return nil, fmt.Errorf("获取自制谱面 JSON 失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("music.custom_chart.fetch_failed"), err)
 	}
 	chartJSON, err := decodeCustomMusicScoreJSON(rawScore)
 	if err != nil {
@@ -201,7 +203,7 @@ func (c *Controller) buildCustomMusicChartRequest(query ChartQuery, source DataS
 
 	musicInfo, err := source.GetMusicByID(entry.MusicID)
 	if err != nil || musicInfo == nil {
-		return nil, fmt.Errorf("自制谱面对应的原曲数据不存在")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.custom_chart.original_missing"))
 	}
 
 	diff := strings.ToLower(strings.TrimSpace(entry.Difficulty))
@@ -244,18 +246,18 @@ func (c *Controller) buildCustomMusicChartRequest(query ChartQuery, source DataS
 
 func (c *Controller) buildCustomMusicDetailRequest(query Query, source DataSource, builder *Builder, region renderregion.Value) (*drawing.MusicDetailRequest, error) {
 	if c == nil {
-		return nil, fmt.Errorf("music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music controller is not configured"))
 	}
 	if c.customScores == nil {
-		return nil, fmt.Errorf("自制谱面数据源未配置")
+		return nil, usererror.Misconfigured(errors.New("custom chart source is not configured"))
 	}
 	if region != renderregion.JP {
-		return nil, fmt.Errorf("当前服务器暂未支持自定义谱面请使用jp前缀查询")
+		return nil, usererror.Invalid(i18n.M("music.custom_chart.jp_only", i18n.Data{"Region": i18n.RegionLabel("jp")}))
 	}
 
 	scoreID, ok := customChartIDFromQuery(query.Query)
 	if !ok {
-		return nil, fmt.Errorf("请提供28位自定义谱面ID")
+		return nil, usererror.Misuse(i18n.M("music.custom_chart.id_required"))
 	}
 	entry, err := c.fetchCustomChartEntryByID(region.String(), scoreID)
 	if err != nil {
@@ -264,7 +266,7 @@ func (c *Controller) buildCustomMusicDetailRequest(query Query, source DataSourc
 
 	rawScore, err := c.customScores.GetCustomMusicScore(region.String(), entry.Path)
 	if err != nil {
-		return nil, fmt.Errorf("获取自制谱面 JSON 失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("music.custom_chart.fetch_failed"), err)
 	}
 	chartJSON, err := decodeCustomMusicScoreJSON(rawScore)
 	if err != nil {
@@ -274,7 +276,7 @@ func (c *Controller) buildCustomMusicDetailRequest(query Query, source DataSourc
 
 	musicInfo, err := source.GetMusicByID(entry.MusicID)
 	if err != nil || musicInfo == nil {
-		return nil, fmt.Errorf("自制谱面对应的原曲数据不存在")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.custom_chart.original_missing"))
 	}
 
 	req, err := builder.BuildMusicDetailRequest(musicInfo, region)
@@ -349,15 +351,21 @@ func (c *Controller) fetchCustomChartEntryByID(region string, scoreID string) (c
 	published, err := c.customScores.GetCustomMusicScorePublished(region, scoreID)
 	if err != nil {
 		if isCustomChartNotFoundError(err) {
-			return customChartEntry{}, fmt.Errorf("未找到对应自定义谱面")
+			return customChartEntry{}, usererror.New(usererror.CodeNotFound, i18n.M("music.custom_chart.not_found"))
 		}
-		return customChartEntry{}, fmt.Errorf("获取自定义谱面信息失败: %w", err)
+		return customChartEntry{}, usererror.Wrap(usererror.CodeUnavailable, i18n.M("music.custom_chart.fetch_failed"), err)
 	}
 	entry := customChartEntryFromPublishedResponse(published)
 	if strings.TrimSpace(entry.ID) == "" || strings.TrimSpace(entry.Path) == "" {
-		return customChartEntry{}, fmt.Errorf("未找到对应自定义谱面")
+		return customChartEntry{}, usererror.New(usererror.CodeNotFound, i18n.M("music.custom_chart.not_found"))
 	}
 	return entry, nil
+}
+
+// invalidCustomChart is the reply for custom chart data that cannot be
+// decoded; cause says why, for the logs.
+func invalidCustomChart(cause error) error {
+	return usererror.Wrap(usererror.CodeUnavailable, i18n.M("music.custom_chart.invalid"), cause)
 }
 
 func isCustomChartNotFoundError(err error) bool {
@@ -1100,10 +1108,10 @@ func decodeCustomMusicScoreJSON(raw []byte) (string, error) {
 
 func decodeCustomMusicScoreJSONBytes(raw []byte) ([]byte, error) {
 	if len(raw) == 0 {
-		return nil, fmt.Errorf("自制谱面 JSON 为空")
+		return nil, invalidCustomChart(errors.New("custom chart JSON is empty"))
 	}
 	if len(raw) > customChartMaxEncodedBytes {
-		return nil, fmt.Errorf("自制谱面数据超过 %d 字节限制", customChartMaxEncodedBytes)
+		return nil, invalidCustomChart(fmt.Errorf("custom chart data exceeds %d bytes", customChartMaxEncodedBytes))
 	}
 
 	if jsonFromEnvelope, ok, err := decodeCustomMusicScoreEnvelope(raw); ok || err != nil {
@@ -1134,7 +1142,7 @@ func decodeCustomMusicScoreEnvelope(raw []byte) ([]byte, bool, error) {
 	}
 	var obj map[string]stdjson.RawMessage
 	if err := stdjson.Unmarshal(raw, &obj); err != nil {
-		return nil, true, fmt.Errorf("解析自制谱面 JSON 失败: %w", err)
+		return nil, true, invalidCustomChart(fmt.Errorf("parse custom chart JSON: %w", err))
 	}
 	for _, key := range []string{"userCustomMusicScoreJsonGzipBase64", "userCustomMusicScorePreviewJsonGzipBase64"} {
 		value, ok := obj[key]
@@ -1169,15 +1177,15 @@ func gunzipMaybe(raw []byte) ([]byte, bool, error) {
 	}
 	reader, err := gzip.NewReader(bytes.NewReader(raw))
 	if err != nil {
-		return nil, true, fmt.Errorf("解压自制谱面 JSON 失败: %w", err)
+		return nil, true, invalidCustomChart(fmt.Errorf("gunzip custom chart JSON: %w", err))
 	}
 	defer reader.Close()
 	decoded, err := io.ReadAll(io.LimitReader(reader, customChartMaxDecodedBytes+1))
 	if err != nil {
-		return nil, true, fmt.Errorf("读取自制谱面 JSON 失败: %w", err)
+		return nil, true, invalidCustomChart(fmt.Errorf("read custom chart JSON: %w", err))
 	}
 	if len(decoded) > customChartMaxDecodedBytes {
-		return nil, true, fmt.Errorf("自制谱面解压后超过 %d 字节限制", customChartMaxDecodedBytes)
+		return nil, true, invalidCustomChart(fmt.Errorf("decompressed custom chart exceeds %d bytes", customChartMaxDecodedBytes))
 	}
 	return decoded, true, nil
 }
@@ -1205,12 +1213,12 @@ func base64DecodeMaybe(value string) ([]byte, bool, error) {
 func ensureJSONBytes(raw []byte) ([]byte, error) {
 	raw = bytes.TrimSpace(raw)
 	if len(raw) > customChartMaxDecodedBytes {
-		return nil, fmt.Errorf("自制谱面 JSON 超过 %d 字节限制", customChartMaxDecodedBytes)
+		return nil, invalidCustomChart(fmt.Errorf("custom chart JSON exceeds %d bytes", customChartMaxDecodedBytes))
 	}
 	if looksLikeJSON(raw) && stdjson.Valid(raw) {
 		return raw, nil
 	}
-	return nil, fmt.Errorf("自制谱面 JSON 格式无效")
+	return nil, invalidCustomChart(errors.New("custom chart JSON is not valid JSON"))
 }
 
 func looksLikeJSON(raw []byte) bool {

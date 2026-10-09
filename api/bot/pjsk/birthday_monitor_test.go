@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/subscription"
 
 	"github.com/gofiber/fiber/v3"
+	"haruki-cloud/internal/i18n"
 )
 
 func TestBirthdayMonitorCommandTextPrependsMatchedCommandForArgumentOnlyMessage(t *testing.T) {
@@ -102,7 +103,7 @@ func TestBirthdayMonitorHandlerMarksGuardCompleteAfterVisibleResponse(t *testing
 	if resp.StatusCode != fiber.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "生日材料监听服务未就绪")
+	assertSingleTextMessageContains(t, body, i18n.Unavailable(i18n.M("subscription.birthday.feature")).String())
 	if guard.acquired != 1 {
 		t.Fatalf("guard acquired = %d, want 1", guard.acquired)
 	}

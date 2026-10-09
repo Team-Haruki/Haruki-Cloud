@@ -1,10 +1,12 @@
 package handler
 
 import (
-	"fmt"
 	"slices"
 	"strconv"
 	"strings"
+
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 func buildSKTrackerParams(ctx HarrukiSekaiHandlerContext, defaultFull bool, allowUID bool, selfWhenEmpty bool) (map[string]any, error) {
@@ -29,7 +31,7 @@ func buildSKTrackerParamsWithDefaultRanks(ctx HarrukiSekaiHandlerContext, defaul
 		return nil, err
 	}
 	if len(ranks) == 0 && userID == nil && target.userID == "" {
-		return nil, fmt.Errorf("请至少提供一个排名或UID")
+		return nil, usererror.Misuse(i18n.M("sk.target_required"))
 	}
 	defaultRanks := defaultSKRanksByMode(wlMode)
 	if len(defaultRanksOverride) > 0 {
@@ -241,7 +243,7 @@ func applySKTraceRanks(params map[string]any, rankArgs string) error {
 		return err
 	}
 	if len(ranks) > 2 {
-		return fmt.Errorf("ptr 最多支持两个排名，例如: /ptr 1 2")
+		return usererror.Misuse(i18n.M("sk.player_trace.max_two"))
 	}
 	if len(ranks) > 0 {
 		params["ranks"] = ranks
@@ -278,14 +280,14 @@ func extractSKCompareRankArg(args string) (string, int, error) {
 		}
 		value := strings.TrimSpace(strings.TrimPrefix(token, "#"))
 		if value == "" || !isDigits(value) {
-			return "", 0, fmt.Errorf("分数线参数格式应为 #排名，例如: /ptr #100")
+			return "", 0, usererror.BadParam(token, i18n.M("sk.compare_rank_format"))
 		}
 		rank, err := strconv.Atoi(value)
 		if err != nil || rank <= 0 {
-			return "", 0, fmt.Errorf("分数线排名必须大于 0")
+			return "", 0, usererror.BadParam(token, i18n.M("sk.rank_positive"))
 		}
 		if compareRank > 0 {
-			return "", 0, fmt.Errorf("ptr 只能指定一个分数线参数")
+			return "", 0, usererror.Misuse(i18n.M("sk.compare_rank_once"))
 		}
 		compareRank = rank
 	}

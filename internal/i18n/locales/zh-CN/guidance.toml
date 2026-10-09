@@ -1,0 +1,306 @@
+# 指令参数说明：参数完全无法识别时（common.unrecognized_args），回复用这里的一句话代替通用原因，
+# 后面接“发送 /<指令> -help 查看用法”。按路由路径查找，见 api/bot/pjsk/param_guidance.go。
+
+[guidance.arrest]
+description = "路由 arrest（查水表）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用 @用户、游戏 UID 或 u序号"
+
+[guidance.card_box]
+description = "路由 card/box（查卡箱）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用角色、属性、稀有度、技能或帮助中列出的筛选条件"
+
+[guidance.card_detail]
+description = "路由 card/detail（卡牌详情）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用卡牌 ID、角色名或可识别的卡牌条件"
+
+[guidance.card_image]
+description = "路由 card/image（卡面）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用卡牌 ID 或可识别的卡牌条件"
+
+[guidance.card_list]
+description = "路由 card/list（卡牌列表）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用角色、属性、稀有度、技能或帮助中列出的筛选条件"
+
+[guidance.costume_detail]
+description = "路由 costume/detail（服装详情）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用卡牌 ID 和可选的颜色序号（从 1 开始）"
+
+[guidance.deck_event]
+description = "路由 deck/event（活动组卡）的参数无法识别时的原因行。"
+other = "无法识别参数，请检查活动、歌曲、火数、目标、算法、固定卡牌或固定角色等参数"
+
+[guidance.deck_challenge]
+description = "路由 deck/challenge（挑战组卡）的参数无法识别时的原因行。"
+other = "无法识别参数，请先写挑战角色，歌曲、难度和组卡条件按帮助填写"
+
+[guidance.deck_no_event]
+description = "路由 deck/no-event（长草组卡）的参数无法识别时的原因行。"
+other = "无法识别参数，请检查歌曲、难度、目标、算法、固定卡牌或固定角色等参数"
+
+[guidance.deck_bonus]
+description = "路由 deck/bonus（加成组卡）的参数无法识别时的原因行。"
+other = "无法识别参数，可先写 event123，再写一个或多个正整数目标加成"
+
+[guidance.deck_mysekai]
+description = "路由 deck/mysekai（烤森组卡）的参数无法识别时的原因行。"
+other = "无法识别参数，请检查活动、WL 角色、固定卡牌或固定角色和培养条件，不要写普通歌曲、火数或队友参数"
+
+[guidance.deck_score_up]
+description = "路由 deck/score-up（实效计算）的参数无法识别时的原因行。"
+other = "无法识别参数，请依次写 5 个非负技能数值：队长、技能 2、技能 3、技能 4、技能 5"
+
+[guidance.education_area]
+description = "路由 education/area（区域道具）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用团名、角色名或道具分类，full 要和分类一起写"
+
+[guidance.education_bonds]
+description = "路由 education/bonds（羁绊等级）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用两个角色名或帮助中列出的筛选条件"
+
+[guidance.education_challenge]
+description = "路由 education/challenge（挑战等级）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用角色名或角色 ID"
+
+[guidance.education_character_mission]
+description = "路由 education/character-mission（角色任务）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用角色名或角色 ID，可按帮助追加任务分类"
+
+[guidance.education_leader]
+description = "路由 education/leader（队长次数）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用角色名或角色 ID"
+
+[guidance.education_power]
+description = "路由 education/power（综合力加成）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用团名、角色名、属性或帮助中列出的分类"
+
+[guidance.event]
+description = "路由 event（活动查询）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用活动 ID、event123、活动名称或帮助中列出的筛选条件"
+
+[guidance.event_list]
+description = "路由 event/list（活动列表）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用活动类型、团体、属性、角色或时间范围等筛选条件"
+
+[guidance.event_planner]
+description = "路由 event/planner（活动规划）的参数无法识别时的原因行。"
+other = "无法识别参数，请先写目标 PT 或目标名次，再按帮助写当前 PT、活动、歌曲、火数和组卡条件"
+
+[guidance.event_record]
+description = "路由 event/record（活动记录）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用活动 ID、event123 或可识别的活动条件"
+
+[guidance.gacha]
+description = "路由 gacha（卡池查询）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用卡池 ID、卡池名称或帮助中列出的筛选条件"
+
+[guidance.inventory_list]
+description = "路由 inventory/list（库存查询）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用资源分类、名称或帮助中列出的筛选条件"
+
+[guidance.misc_birthday]
+description = "路由 misc/birthday（生日查询）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用角色名、月份、日期或帮助中列出的筛选条件"
+
+[guidance.music]
+description = "路由 music（歌曲查询）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用歌曲 ID、歌曲名或别名，可追加难度"
+
+[guidance.music_b30]
+description = "路由 music/b30（B30）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用支持的难度、FC/AP 等筛选条件"
+
+[guidance.music_bpm]
+description = "路由 music/bpm（BPM 查询）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用歌曲 ID、歌曲名或别名"
+
+[guidance.music_bpm_search]
+description = "路由 music/bpm-search（BPM 搜索）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用 BPM 数值或范围"
+
+[guidance.music_chart]
+description = "路由 music/chart（谱面）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用歌曲 ID、歌曲名或别名，并写支持的难度"
+
+[guidance.music_cover]
+description = "路由 music/cover（翻唱版本）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用歌曲 ID、歌曲名或别名"
+
+[guidance.music_list]
+description = "路由 music/list（歌曲列表）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用难度、等级、团体、标签或帮助中列出的筛选条件"
+
+[guidance.music_note_count]
+description = "路由 music/note-count（物量查询）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用歌曲 ID、歌曲名或别名，可追加难度"
+
+[guidance.music_progress]
+description = "路由 music/progress（歌曲进度）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用支持的难度和 FC/AP 等筛选条件"
+
+[guidance.music_rewards]
+description = "路由 music/rewards（歌曲奖励）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用歌曲 ID、歌曲名或别名，可追加难度"
+
+[guidance.mysekai_blueprint]
+description = "路由 mysekai/blueprint（烤森蓝图）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用蓝图分类、名称、角色或帮助中列出的筛选条件"
+
+[guidance.mysekai_blueprint_term]
+description = "路由 mysekai/blueprint-term（烤森限时蓝图）的参数无法识别时的原因行。"
+other = "无法识别参数，不需要参数，加 all 可显示已结束的限时蓝图"
+
+[guidance.mysekai_door_upgrade]
+description = "路由 mysekai/door-upgrade（烤森大门升级）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用支持的大门等级或目标等级"
+
+[guidance.mysekai_fixture_detail]
+description = "路由 mysekai/fixture-detail（烤森家具）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用一个或多个家具 ID，或 full 加分类、关键词"
+
+[guidance.mysekai_fixture_list]
+description = "路由 mysekai/fixture-list（烤森家具列表）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用家具分类、来源或名称关键词"
+
+[guidance.mysekai_housing_sk]
+description = "路由 mysekai/housing-sk（百景查询）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用榜单页码、投稿编号或帮助中列出的筛选条件"
+
+[guidance.mysekai_map]
+description = "路由 mysekai/map（烤森地图）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用地图编号 1~4"
+
+[guidance.mysekai_music_record]
+description = "路由 mysekai/music-record（烤森唱片）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用唱片名称、歌曲名或帮助中列出的筛选条件"
+
+[guidance.mysekai_overview]
+description = "路由 mysekai/overview（烤森总览）的参数无法识别时的原因行。"
+other = "无法识别参数，请只使用帮助中支持的账号选择参数"
+
+[guidance.mysekai_photo]
+description = "路由 mysekai/photo（烤森照片）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用有效的照片序号"
+
+[guidance.mysekai_resource]
+description = "路由 mysekai/resource（烤森资源）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用资源分类、地图编号或帮助中列出的筛选条件"
+
+[guidance.mysekai_shop]
+description = "路由 mysekai/shop（烤森商店）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用商品类型（蓝图、工具、材料）和可选的“全部”"
+
+[guidance.mysekai_talk_list]
+description = "路由 mysekai/talk-list（烤森对话）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用角色名或帮助中列出的筛选条件"
+
+[guidance.profile]
+description = "路由 profile（个人信息）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用自己的绑定账号、游戏 UID 或 u序号"
+
+[guidance.profile_arrest_difficulty]
+description = "路由 profile/arrest-difficulty（查水表难度）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用支持的难度名，并写开启或关闭"
+
+[guidance.profile_bg_adjust]
+description = "路由 profile/bg/adjust（个人信息背景）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用横屏或竖屏、模糊 0~10、透明 0~100"
+
+[guidance.profile_bind]
+description = "路由 profile/bind（绑定）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用纯数字游戏 UID，可按帮助指定区服"
+
+[guidance.profile_bind_swap]
+description = "路由 profile/bind/swap（绑定顺序）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用两个账号序号，例如 u1 u2"
+
+[guidance.profile_chart_style]
+description = "路由 profile/chart-style（谱面样式）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用帮助中列出的样式名称"
+
+[guidance.profile_custom_profile_card]
+description = "路由 profile/custom-profile-card（自定义个人信息）的参数无法识别时的原因行。"
+other = "无法识别参数，请按帮助写卡片布局、字段或开关"
+
+[guidance.profile_default]
+description = "路由 profile/default（默认绑定）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用游戏 UID 或 u序号"
+
+[guidance.profile_info_panel]
+description = "路由 profile/info-panel（信息面板）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用 su（抓包数据）或 ms（烤森），可加 u序号"
+
+[guidance.profile_timezone]
+description = "路由 profile/timezone（时区）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用 UTC 偏移、IANA 时区名或可识别的城市名"
+
+[guidance.profile_uid]
+description = "路由 profile/uid（UID 查询）的参数无法识别时的原因行。"
+other = "无法识别参数，只能查询自己的绑定账号，可使用 u序号"
+
+[guidance.profile_unbind]
+description = "路由 profile/unbind（解绑）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用游戏 UID 或 u序号"
+
+[guidance.score]
+description = "路由 score（控分）的参数无法识别时的原因行。"
+other = "无法识别参数，请按帮助写目标分数、技能值和房间条件"
+
+[guidance.score_custom_room]
+description = "路由 score/custom-room（自定义房间控分）的参数无法识别时的原因行。"
+other = "无法识别参数，请按帮助写目标分数、卡组技能和房间条件"
+
+[guidance.score_music_board]
+description = "路由 score/music-board（歌曲排行）的参数无法识别时的原因行。"
+other = "无法识别参数，请先写歌曲名或歌曲 ID，再写难度、模式和排行计算参数"
+
+[guidance.score_music_meta]
+description = "路由 score/music-meta（歌曲计算）的参数无法识别时的原因行。"
+other = "无法识别参数，请先写歌曲名或歌曲 ID，再写难度和计算条件"
+
+[guidance.sk_check_room]
+description = "路由 sk/check-room（查房）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用有效的房间号"
+
+[guidance.sk_csb]
+description = "路由 sk/csb（CSB）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用活动、名次或帮助中列出的查询条件"
+
+[guidance.sk_daily_speed]
+description = "路由 sk/daily-speed（日速）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用名次、游戏 UID 或帮助中列出的时间范围"
+
+[guidance.sk_line]
+description = "路由 sk/line（榜线）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用正整数名次，多个名次用空格分隔，范围写成“起始-结束”"
+
+[guidance.sk_player_trace]
+description = "路由 sk/player-trace（玩家追踪）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用纯数字游戏 UID"
+
+[guidance.sk_predict]
+description = "路由 sk/predict（预测）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用正整数名次和帮助中列出的预测条件"
+
+[guidance.sk_query]
+description = "路由 sk/query（查榜）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用正整数名次、名次范围或纯数字游戏 UID"
+
+[guidance.sk_rank_trace]
+description = "路由 sk/rank-trace（名次追踪）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用正整数名次"
+
+[guidance.sk_speed]
+description = "路由 sk/speed（时速）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用正整数名次、名次范围或纯数字游戏 UID"
+
+[guidance.sk_winrate]
+description = "路由 sk/winrate（胜率）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用帮助中列出的活动和对比条件"
+
+[guidance.stamp]
+description = "路由 stamp（表情查询）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用表情 ID、角色名或关键词"
+
+[guidance.vlive]
+description = "路由 vlive（虚拟 Live）的参数无法识别时的原因行。"
+other = "无法识别参数，请使用 Live ID、名称或帮助中列出的筛选条件"

@@ -6,8 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/notfound"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/event"
@@ -109,7 +111,7 @@ func (c *Controller) RenderCardDetail(query Query) ([]byte, error) {
 
 func (c *Controller) RenderCardDetailImage(query Query) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	req, err := c.BuildCardDetailRequest(query)
@@ -143,7 +145,7 @@ func buildResolvedCardListRequest(query ListRequest, region renderregion.Value, 
 		resolved = append(resolved, item)
 	}
 	if len(resolved) == 0 {
-		return nil, fmt.Errorf("card ids are required")
+		return nil, usererror.Misuse(i18n.M("card.query_required"))
 	}
 	req, err := builder.buildCardListRequestFromCards(resolved, region)
 	if err != nil {
@@ -169,7 +171,7 @@ func (c *Controller) RenderCardList(query ListRequest) ([]byte, error) {
 
 func (c *Controller) RenderCardListImage(query ListRequest) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	req, autoBox, err := c.buildCardListRenderRequest(query)
@@ -207,10 +209,10 @@ func (c *Controller) buildCardListRenderRequest(query ListRequest) (any, bool, e
 
 func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxRequest, error) {
 	if len(queries) == 0 {
-		return nil, fmt.Errorf("no card query provided")
+		return nil, usererror.Misuse(i18n.M("card.query_required"))
 	}
 	if (queries[0].ShowBox || queries[0].UnownedOnly || queries[0].GroupBy == CardBoxGroupByTime) && !hasOwnedCardData(queries[0].DetailedProfile) {
-		return nil, fmt.Errorf("box 模式需要用户卡牌持有数据，请先提供 Suite 抓包或本地快照")
+		return nil, usererror.Setup(i18n.M("card.box_needs_suite"))
 	}
 
 	region, source, builder, err := c.resolveBuilder(queries[0].Region)
@@ -253,7 +255,7 @@ func (c *Controller) resolveCardBoxCards(source DataSource, region renderregion.
 		}
 		cards = filterVisibleCards(cards, time.Now().UnixMilli())
 		if len(cards) == 0 {
-			return nil, fmt.Errorf("no released cards found for region %s", region)
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("card.none_released"))
 		}
 		return cards, nil
 	}
@@ -282,7 +284,7 @@ func (c *Controller) RenderCardBox(queries []Query) ([]byte, error) {
 
 func (c *Controller) RenderCardBoxImage(queries []Query) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	req, err := c.BuildCardBoxRequest(queries)
@@ -297,7 +299,7 @@ func (c *Controller) resolveBuilder(region string) (renderregion.Value, DataSour
 	resolved := c.sources.ResolveRegion(renderregion.Normalize(region))
 	source, ok := c.sources.SourceForRegion(resolved)
 	if !ok {
-		return resolved, nil, nil, fmt.Errorf("no card data source for region %s", resolved)
+		return resolved, nil, nil, usererror.Misconfigured(fmt.Errorf("no card data source for region %s", resolved))
 	}
 	var eventSource event.DataSource
 	if resolvedEventSource, ok := c.events.SourceForRegion(resolved); ok {
@@ -315,14 +317,14 @@ func (c *Controller) resolveCardsForListRequest(query ListRequest) (renderregion
 	if len(query.CardIDs) > 0 {
 		cards := resolveCardsByID(source, query.CardIDs, query.AllowUnreleased)
 		if len(cards) == 0 {
-			return region, nil, nil, nil, fmt.Errorf("card ids are required")
+			return region, nil, nil, nil, usererror.Misuse(i18n.M("card.query_required"))
 		}
 		return region, source, builder, cards, nil
 	}
 
 	rawQuery := strings.TrimSpace(query.Query)
 	if rawQuery == "" {
-		return region, nil, nil, nil, fmt.Errorf("card ids are required")
+		return region, nil, nil, nil, usererror.Misuse(i18n.M("card.query_required"))
 	}
 
 	cards, err := c.searchCardsForListRequest(source, rawQuery, query)
@@ -330,7 +332,7 @@ func (c *Controller) resolveCardsForListRequest(query ListRequest) (renderregion
 		return region, nil, nil, nil, fmt.Errorf("failed to search card list: %w", err)
 	}
 	if len(cards) == 0 {
-		return region, nil, nil, nil, fmt.Errorf("card ids are required")
+		return region, nil, nil, nil, notfound.Card(rawQuery)
 	}
 	return region, source, builder, cards, nil
 }
@@ -371,7 +373,7 @@ func (c *Controller) searchStrictFilterCards(source DataSource, rawQuery string,
 		return nil, parseErr
 	}
 	if info == nil || info.Type != QueryTypeFilter {
-		return nil, usererror.Inputf("无法解析的列表查询指令: %s", rawQuery)
+		return nil, usererror.Unrecognized()
 	}
 	items, err := source.FilterCards(info)
 	if err != nil {
@@ -381,7 +383,7 @@ func (c *Controller) searchStrictFilterCards(source DataSource, rawQuery string,
 		items = filterVisibleCards(items, currentCardVisibilityTime())
 	}
 	if len(items) == 0 {
-		return nil, fmt.Errorf("no cards found for filter: %s", rawQuery)
+		return nil, notfound.Card(rawQuery)
 	}
 	sortCardsByReleaseAndID(items)
 	return items, nil

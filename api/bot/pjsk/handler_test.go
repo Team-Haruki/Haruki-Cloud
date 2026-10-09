@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -25,6 +24,7 @@ import (
 	noiseCrypto "haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/core/trustsign"
 	"haruki-cloud/internal/identity"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -38,6 +38,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	_ "github.com/mattn/go-sqlite3"
 	noiseMP "github.com/shamaton/msgpack/v3"
+	"haruki-cloud/internal/i18n"
 )
 
 const testBotID = "11451419"
@@ -1105,7 +1106,7 @@ func TestBotEndpointSuppressesParamEchoByDefault(t *testing.T) {
 	if strings.Contains(text, secretParam) {
 		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
 	}
-	if text != "活动查询参数格式不正确。查看完整用法请发送：/查活动 -help" {
+	if text != i18n.WithUsage(i18n.M("guidance.event"), "/查活动").String() {
 		t.Fatalf("expected redacted parse error with help text, got %q", text)
 	}
 }
@@ -1134,7 +1135,7 @@ func TestBotEndpointStillRedactsParamEchoWhenEnabled(t *testing.T) {
 	if strings.Contains(text, secretParam) {
 		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
 	}
-	if text != "活动查询参数格式不正确。查看完整用法请发送：/查活动 -help" {
+	if text != i18n.WithUsage(i18n.M("guidance.event"), "/查活动").String() {
 		t.Fatalf("expected redacted parse error with help text, got %q", text)
 	}
 }
@@ -1606,7 +1607,7 @@ func TestBotEndpointMysekaiOverviewAcceptsLegacyResourceEndpoint(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "没有找到有效的 mysekai 数据")
+	assertSingleTextMessageContains(t, body, i18n.T("binding.data.not_found", i18n.Data{"Data": i18n.M("binding.data_kind.mysekai"), "ToolboxLink": i18n.M("binding.toolbox_link")}))
 }
 
 func TestBotEndpointMysekaiTalkListAcceptsMSBCommand(t *testing.T) {
@@ -1629,7 +1630,7 @@ func TestBotEndpointMysekaiTalkListAcceptsMSBCommand(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "烤森服务未就绪")
+	assertSingleTextMessageContains(t, body, i18n.Misconfigured().String())
 }
 
 func TestBotEndpointMysekaiTalkListAcceptsLegacyBlueprintEndpoint(t *testing.T) {
@@ -1652,7 +1653,7 @@ func TestBotEndpointMysekaiTalkListAcceptsLegacyBlueprintEndpoint(t *testing.T) 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "烤森服务未就绪")
+	assertSingleTextMessageContains(t, body, i18n.Misconfigured().String())
 }
 
 func TestBotEndpointSKQueryTreatsRequestServerAsExplicitRegion(t *testing.T) {
@@ -2079,7 +2080,7 @@ func TestBotEndpointSKQueryReturnsTextWhenTrackerQueryFails(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "当前没有可推断的活动，请指定活动ID")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.event_required"))
 }
 
 func TestBotEndpointSKQueryDefaultsToSelfBinding(t *testing.T) {
@@ -2247,7 +2248,7 @@ func TestBotEndpointSKQueryReturnsFriendlyMessageWhenSelfRankingIsMissing(t *tes
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("jp")}))
 }
 
 func TestBotEndpointSKCheckRoomReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testing.T) {
@@ -2282,7 +2283,7 @@ func TestBotEndpointSKCheckRoomReturnsFriendlyMessageWhenSelfRankingIsMissing(t 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("jp")}))
 }
 
 func TestBotEndpointSKCSBReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testing.T) {
@@ -2317,7 +2318,7 @@ func TestBotEndpointSKCSBReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testi
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("jp")}))
 }
 
 func TestBotEndpointSKCSBDoesNotWarnWhenCurrentSelfRecordStillInRange(t *testing.T) {
@@ -2398,7 +2399,7 @@ func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenSelfRankingIsMissing(
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("jp")}))
 }
 
 func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenDrawingDataIsInsufficient(t *testing.T) {
@@ -2431,7 +2432,7 @@ func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenDrawingDataIsInsuffic
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "玩家轨迹数据不足，暂时无法渲染")
+	assertSingleTextMessageContains(t, body, i18n.T("sk.player_trace.data_insufficient"))
 }
 
 func TestBotEndpointSKQueryRegionPrefixedCommandDoesNotFallbackToTransportServer(t *testing.T) {
@@ -2466,8 +2467,8 @@ func TestBotEndpointSKQueryRegionPrefixedCommandDoesNotFallbackToTransportServer
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "未找到绑定的游戏账号")
-	if strings.Contains(string(body), "当前CN服活动没有找到你的排行榜数据") {
+	assertSingleTextMessageContains(t, body, i18n.T("binding.required"))
+	if strings.Contains(string(body), i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("cn")})) {
 		t.Fatalf("unexpected fallback to cn binding: %s", body)
 	}
 }
@@ -2504,8 +2505,8 @@ func TestBotEndpointSKCSBRegionPrefixedCommandDoesNotFallbackToTransportServer(t
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "未找到绑定的游戏账号")
-	if strings.Contains(string(body), "当前CN服活动没有找到你的排行榜数据") {
+	assertSingleTextMessageContains(t, body, i18n.T("binding.required"))
+	if strings.Contains(string(body), i18n.T("sk.self_not_ranked", i18n.Data{"Region": i18n.RegionLabel("cn")})) {
 		t.Fatalf("unexpected fallback to cn binding: %s", body)
 	}
 }

@@ -1,12 +1,13 @@
 package handler
 
 import (
-	"fmt"
 	"slices"
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/utils/usererror"
 )
 
 func extractDeckCommonParams(args string, params *deckAutoQueryParams, cfg deckCommonConfig) (string, error) {
@@ -164,7 +165,7 @@ func (e deckMultiliveOptionExtractor) applyTeammatePower(index int) (int, bool, 
 		return 0, false, nil
 	}
 	if err != nil {
-		return 0, true, fmt.Errorf("无法解析指定的队友综合力")
+		return 0, true, usererror.Invalid(i18n.M("deck.multilive.teammate_power"))
 	}
 	e.params.MultiLiveTeammatePower = intPtr(value)
 	return consumed, true, nil
@@ -176,7 +177,7 @@ func (e deckMultiliveOptionExtractor) applyTeammateScoreUp(index int) (int, bool
 		return 0, false, nil
 	}
 	if err != nil {
-		return 0, true, fmt.Errorf("无法解析指定的队友实效")
+		return 0, true, usererror.Invalid(i18n.M("deck.multilive.teammate_score_up"))
 	}
 	e.params.MultiLiveTeammateScoreUp = intPtr(value)
 	return consumed, true, nil
@@ -188,7 +189,7 @@ func (e deckMultiliveOptionExtractor) applySkillLowerBound(index int) (int, bool
 		return 0, false, nil
 	}
 	if err != nil {
-		return 0, true, fmt.Errorf("无法解析指定的实效下限")
+		return 0, true, usererror.Invalid(i18n.M("deck.multilive.score_up_lower_bound"))
 	}
 	e.params.MultiLiveScoreUpLowerBound = floart64Ptr(float64(value))
 	e.params.MultiLiveTeammateScoreUp = intPtr(value)

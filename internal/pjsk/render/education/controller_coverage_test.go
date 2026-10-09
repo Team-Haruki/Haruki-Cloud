@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 )
 
 type educationSnapshotStub struct {
@@ -89,7 +90,7 @@ func assertEducationChallengeValidation(t *testing.T) {
 	plainSource := &testSource{region: renderregion.JP}
 	controller := NewController(nil, nil, nil, renderregion.JP)
 	controller.RegisterSource(plainSource)
-	if _, err := controller.BuildChallengeLiveDetailsRequest(ChallengeLiveQuery{}); err == nil || !strings.Contains(err.Error(), "snapshot") {
+	if _, err := controller.BuildChallengeLiveDetailsRequest(ChallengeLiveQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "snapshot") {
 		t.Fatalf("missing snapshot error = %v", err)
 	}
 	wantErr := errors.New("snapshot rejected")
@@ -101,19 +102,19 @@ func assertEducationChallengeValidation(t *testing.T) {
 	profile := &drawing.DetailedProfileCardRequest{ID: "1001", Region: "JP", Nickname: "tester"}
 	validSnapshot := &educationSnapshotStub{profile: profile, challenge: &rendersnapshot.ChallengeLiveData{}}
 	if _, err := NewController(nil, nil, validSnapshot, renderregion.JP).
-		BuildChallengeLiveDetailsRequest(ChallengeLiveQuery{}); err == nil || !strings.Contains(err.Error(), "data source") {
+		BuildChallengeLiveDetailsRequest(ChallengeLiveQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "data source") {
 		t.Fatalf("missing source error = %v", err)
 	}
 
 	controller = NewController(nil, nil, &educationSnapshotStub{profile: profile}, renderregion.JP)
 	controller.RegisterSource(plainSource)
-	if _, err := controller.BuildChallengeLiveDetailsRequest(ChallengeLiveQuery{}); err == nil || !strings.Contains(err.Error(), "challenge live") {
+	if _, err := controller.BuildChallengeLiveDetailsRequest(ChallengeLiveQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "challenge live") {
 		t.Fatalf("missing challenge error = %v", err)
 	}
 
 	controller = NewController(nil, nil, &educationSnapshotStub{challenge: &rendersnapshot.ChallengeLiveData{}}, renderregion.JP)
 	controller.RegisterSource(plainSource)
-	if _, err := controller.BuildChallengeLiveDetailsRequest(ChallengeLiveQuery{}); err == nil || !strings.Contains(err.Error(), "profile") {
+	if _, err := controller.BuildChallengeLiveDetailsRequest(ChallengeLiveQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "profile") {
 		t.Fatalf("missing profile error = %v", err)
 	}
 }

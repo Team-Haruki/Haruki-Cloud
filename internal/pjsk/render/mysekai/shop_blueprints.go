@@ -1,6 +1,7 @@
 package mysekai
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
@@ -12,7 +13,7 @@ import (
 func (c *Controller) buildBlueprintShopGroups(query ShopQuery, merged map[string]any, rules []map[string]any, passActive bool, resolver mysekaiResourceResolver) ([]drawing.MysekaiShopGroup, error) {
 	if len(rules) == 0 {
 		if len(nestedList(merged, "userMysekaiBlueprintShopItems")) > 0 || query.ShopType == "blueprint" {
-			return nil, fmt.Errorf("mysekai shop masterdata missing blueprint rules")
+			return nil, shopMasterdataMissing(errors.New("mysekai shop masterdata missing blueprint rules"))
 		}
 		return nil, nil
 	}
@@ -47,13 +48,13 @@ func (c *Controller) buildBlueprintShopGroups(query ShopQuery, merged map[string
 		period := stringValue(row["mysekaiBlueprintShopItemLotteryType"])
 		rule := ruleByType[period]
 		if (period != "daily" && period != "weekly") || rule == nil {
-			return nil, fmt.Errorf("mysekai shop masterdata missing blueprint rule %s", period)
+			return nil, shopMasterdataMissing(fmt.Errorf("mysekai shop masterdata missing blueprint rule %s", period))
 		}
 		id := intNumber(row["mysekaiBlueprintId"], 0)
 		blueprint := blueprints[id]
 		fixture := fixtures[intNumber(blueprint["craftTargetId"], 0)]
 		if blueprint == nil || fixture == nil {
-			return nil, fmt.Errorf("mysekai shop masterdata missing blueprint %d", id)
+			return nil, shopMasterdataMissing(fmt.Errorf("mysekai shop masterdata missing blueprint %d", id))
 		}
 		bought := boolValue(row["isBought"])
 		available := passActive && !bought

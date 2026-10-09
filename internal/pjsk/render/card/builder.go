@@ -5,7 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/notfound"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
@@ -155,7 +157,7 @@ func (b *Builder) applyEventBannerCharacter(details *cardEventDetails, eventID i
 
 func (b *Builder) BuildCardListRequest(cardIDs []int, region renderregion.Value) (*drawing.CardListRequest, error) {
 	if len(cardIDs) == 0 {
-		return nil, fmt.Errorf("card ids are required")
+		return nil, usererror.Misuse(i18n.M("card.query_required"))
 	}
 
 	resolved := make([]*masterdata.Card, 0, len(cardIDs))
@@ -196,7 +198,7 @@ func (b *Builder) buildCardListRequestFromCards(resolved []*masterdata.Card, reg
 		cards = append(cards, cardInfo)
 	}
 	if len(cards) == 0 {
-		return nil, fmt.Errorf("no valid cards found from provided ids")
+		return nil, notfound.Card("")
 	}
 
 	return &drawing.CardListRequest{
@@ -209,7 +211,7 @@ func (b *Builder) buildCardListRequestFromCards(resolved []*masterdata.Card, reg
 
 func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderregion.Value, detailedProfile *drawing.DetailedProfileCardRequest, showID, showBox, unownedOnly, useAfterTraining bool, groupBy string) (*drawing.CardBoxRequest, error) {
 	if len(cards) == 0 {
-		return nil, usererror.Inputf("cards are required")
+		return nil, notfound.Card("")
 	}
 
 	ownedCards := extractOwnedCards(detailedProfile)
@@ -266,7 +268,7 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		}
 	}
 	if len(items) == 0 {
-		return nil, usererror.Inputf("cards are required")
+		return nil, notfound.Card("")
 	}
 	return &drawing.CardBoxRequest{
 		Cards:               items,

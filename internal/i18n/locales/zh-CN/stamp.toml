@@ -1,0 +1,5 @@
+# 表情：查表情、表情列表。
+
+[stamp.no_match]
+description = "查表情没有匹配结果。"
+other = "没有找到符合条件的表情"

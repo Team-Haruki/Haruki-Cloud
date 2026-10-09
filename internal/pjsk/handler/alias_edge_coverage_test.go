@@ -2,11 +2,12 @@ package handler
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	aliases "haruki-cloud/internal/pjsk/alias"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestAliasParsingEdgeBranches(t *testing.T) {
@@ -94,9 +95,8 @@ func TestAliasHandlersRejectInvalidArguments(t *testing.T) {
 }
 
 func TestAliasExecutionAndImageGuardBranches(t *testing.T) {
-	if _, err := executeAlias(&RequestContext{}); err == nil || !strings.Contains(err.Error(), "别名服务未就绪") {
-		t.Fatalf("executeAlias unavailable error = %v", err)
-	}
+	_, err := executeAlias(&RequestContext{})
+	testutil.RequireUserError(t, err, usererror.CodeUnavailable, "common.unavailable")
 	if message, ok, err := tryRenderAliasQueryAsImage(nil); message != nil || ok || err != nil {
 		t.Fatalf("nil image attempt = %#v, %v, %v", message, ok, err)
 	}

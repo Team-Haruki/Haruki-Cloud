@@ -1,22 +1,24 @@
 package music
 
 import (
-	"fmt"
+	"errors"
 	"regexp"
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/utils/usererror"
 )
 
 var susLinePattern = regexp.MustCompile(`^#([A-Za-z0-9]{3})([A-Za-z0-9]{2})\s*:\s*(\S+)`)
 
 func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCountMatch, error) {
 	if c == nil {
-		return nil, fmt.Errorf("music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("music controller is not configured"))
 	}
 	if query.NoteCount <= 0 {
-		return nil, fmt.Errorf("物量必须大于 0")
+		return nil, usererror.Invalid(i18n.M("music.note_count.positive"))
 	}
 	targetDifficulty := strings.TrimSpace(query.Difficulty)
 	if targetDifficulty != "" {
@@ -35,9 +37,9 @@ func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCou
 
 	if len(matches) == 0 {
 		if targetDifficulty != "" {
-			return nil, fmt.Errorf("没有找到物量为 %d 的 %s 谱面", query.NoteCount, targetDifficulty)
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.note_count.no_chart_difficulty", i18n.Data{"Count": query.NoteCount, "Difficulty": i18n.DifficultyLabel(targetDifficulty)}))
 		}
-		return nil, fmt.Errorf("没有找到物量为 %d 的谱面", query.NoteCount)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("music.note_count.no_chart", i18n.Data{"Count": query.NoteCount}))
 	}
 
 	sort.Slice(matches, func(i, j int) bool {

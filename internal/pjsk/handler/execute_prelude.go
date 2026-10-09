@@ -3,18 +3,16 @@ package handler
 import (
 	"context"
 	"fmt"
-	"haruki-cloud/internal/observability/commandtrace"
 	"strings"
 
 	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/displaytime"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/utils/usererror"
 )
-
-var genericUserFacingErrorText = i18n.RequestFailed().String()
 
 // ExecutionRuntime captures the request-scoped runtime prepared before a PJSK
 // command enters its domain-specific executor.
@@ -53,7 +51,7 @@ func PrepareExecutionRuntime(ctx context.Context, resolved *CommandRequest, app 
 			err := app.BanChecker.CheckBan(ctx, platform, userID, resolved.Module)
 			finishBan()
 			if err != nil {
-				return nil, onebot11.Message{onebot11.Text(sanitizeUserFacingText(err.Error()))}, nil
+				return nil, onebot11.Message{onebot11.Text(banReplyText(ctx, err))}, nil
 			}
 		}
 	}
@@ -72,10 +70,17 @@ func PrepareExecutionRuntime(ctx context.Context, resolved *CommandRequest, app 
 	}, nil, nil
 }
 
-func sanitizeUserFacingText(message string) string {
-	message = strings.TrimSpace(message)
-	if message == "" || usererror.MessageContainsSensitiveURL(message) {
-		return genericUserFacingErrorText
+// banReplyText is the reply for a refused (banned) requester: the typed ban
+// message, or the generic reply for any other error.
+func banReplyText(ctx context.Context, err error) string {
+	locale := i18n.LocaleFromContext(ctx)
+	typed, ok := usererror.As(err)
+	if !ok {
+		return i18n.RequestFailed().In(locale)
 	}
-	return message
+	text := strings.TrimSpace(typed.Text(locale))
+	if text == "" || usererror.MessageContainsSensitiveURL(text) {
+		return i18n.RequestFailed().In(locale)
+	}
+	return text
 }

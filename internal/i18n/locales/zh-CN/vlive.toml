@@ -1,0 +1,9 @@
+# 虚拟 Live：查虚拟 Live。
+
+[vlive.query_required]
+description = "查虚拟 Live 没有写要查的 Live。"
+other = "请写要查询的虚拟 Live"
+
+[vlive.not_found]
+description = "找不到对应的虚拟 Live。"
+other = "未找到对应的虚拟 Live"

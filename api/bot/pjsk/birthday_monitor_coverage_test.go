@@ -34,6 +34,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/shamaton/msgpack/v3"
+	"haruki-cloud/internal/i18n"
 )
 
 func newAPIBirthdayDB(t *testing.T) *pjskdb.Client {
@@ -224,10 +225,10 @@ func TestBirthdayMonitorRenderAndAckHandlerBranches(t *testing.T) {
 	}
 
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(missingPayload.EventID), fiber.MIMEApplicationJSON)
-	testutil.Require(t, strings.Contains(string(body), "缺少可绘制数据"), "missing-payload render body=%s", body)
+	testutil.Require(t, strings.Contains(string(body), i18n.T("subscription.birthday.event_no_data")), "missing-payload render body=%s", body)
 
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(nonEmpty.EventID), fiber.MIMEApplicationJSON)
-	testutil.Require(t, strings.Contains(string(body), "服务未就绪"), "unready render body=%s", body)
+	testutil.Require(t, strings.Contains(string(body), i18n.Misconfigured().String()), "unready render body=%s", body)
 
 	badToken := requestFor(nonEmpty.EventID)
 	badToken.Token = "wrong"
@@ -237,11 +238,11 @@ func TestBirthdayMonitorRenderAndAckHandlerBranches(t *testing.T) {
 	mysekaiController := rendermysekai.NewController(nil, nil, renderregion.JP, assets.NewAssetHelper("", nil), rendermysekai.MasterdataOptions{})
 	renderApp.MySekai = mysekaiController
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(nonEmpty.EventID), fiber.MIMEApplicationJSON)
-	testutil.Require(t, strings.Contains(string(body), "服务未就绪"), "nil-cache render body=%s", body)
+	testutil.Require(t, strings.Contains(string(body), i18n.Misconfigured().String()), "nil-cache render body=%s", body)
 
 	renderApp.ImageCache = imagecache.New("https://cache.invalid", t.TempDir())
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(nonEmpty.EventID), fiber.MIMEApplicationJSON)
-	testutil.Require(t, strings.Contains(string(body), "渲染服务未就绪"), "render failure body=%s", body)
+	testutil.Require(t, strings.Contains(string(body), i18n.Misconfigured().String()), "render failure body=%s", body)
 
 	invalidReq := httptest.NewRequest(http.MethodPost, "/bots/bot-1/render", strings.NewReader("{"))
 	invalidReq.Header.Set("Content-Type", fiber.MIMEApplicationJSON)

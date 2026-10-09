@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestFinalCustomProfileCardEdges(t *testing.T) {
@@ -75,11 +76,11 @@ func testFinalCustomProfileExecutionGuards(t *testing.T) {
 		t.Fatal("nil custom profile request accepted")
 	}
 	rc := &RequestContext{Ctx: context.Background(), Cmd: &CommandRequest{}, App: &renderapp.App{}}
-	if _, err := executeProfileCustomProfileCard(rc); err == nil || !strings.Contains(err.Error(), "sekai api") {
+	if _, err := executeProfileCustomProfileCard(rc); err == nil || !strings.Contains(testutil.ErrorDetail(err), "sekai api") {
 		t.Fatalf("missing Sekai API error = %v", err)
 	}
 	rc.App.SekaiAPI = sekaiapi.NewSekaiAPIClient(nil)
-	if _, err := executeProfileCustomProfileCard(rc); err == nil || !strings.Contains(err.Error(), "drawing") {
+	if _, err := executeProfileCustomProfileCard(rc); err == nil || !strings.Contains(testutil.ErrorDetail(err), "drawing") {
 		t.Fatalf("missing drawing error = %v", err)
 	}
 	rc.App.Drawing = drawing.NewHarukiDrawingClient("")

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/logger"
 
@@ -24,9 +24,9 @@ func TestFailedSharedBotCommandLogsRedactedErrorMessage(t *testing.T) {
 	logger.SetGlobalFileWriter(&output)
 	defer logger.SetGlobalFileWriter(os.Stdout)
 
-	cause := errors.New(`Get "http://100.80.207.86:16666/api/private/game-data/cn/suite/7487590788965145370": connection reset by peer`)
+	cause := errors.New(`Get "http://192.0.2.10:8080/api/private/game-data/cn/suite/7487590788965145370": connection reset by peer`)
 	err := fmt.Errorf("query deck event 181 failed: %w", cause)
-	result := failedSharedBotCommand(context.Background(), err, "deck/event", "/组卡", "/组卡", false,
+	result := failedSharedBotCommand(context.Background(), err, "deck/event", "/组卡", "/组卡",
 		sharedCommandMetadata{Outcome: "error", Region: "cn"}, false, "execution")
 
 	wantMessage := `query deck event 181 failed: Get "<url>": connection reset by peer`
@@ -44,7 +44,7 @@ func TestFailedSharedBotCommandLogsRedactedErrorMessage(t *testing.T) {
 	} {
 		testutil.Check(t, strings.Contains(line, field), "log missing %q: %s", field, line)
 	}
-	for _, leaked := range []string{"100.80.207.86", "7487590788965145370", "16666"} {
+	for _, leaked := range []string{"192.0.2.10", "7487590788965145370", "8080"} {
 		testutil.Check(t, !strings.Contains(line, leaked), "log leaks %q: %s", leaked, line)
 	}
 }
@@ -54,7 +54,7 @@ func TestFailedSharedBotCommandKeepsRejectionsOutOfErrorLog(t *testing.T) {
 	logger.SetGlobalFileWriter(&output)
 	defer logger.SetGlobalFileWriter(os.Stdout)
 
-	result := failedSharedBotCommand(context.Background(), onebot11.NewReplayError("找不到特定的卡牌: 12345678"), "card/detail", "/card", "/card", false,
+	result := failedSharedBotCommand(context.Background(), notfound.Card("12345678"), "card/detail", "/card", "/card",
 		sharedCommandMetadata{Outcome: "error"}, false, "execution")
 
 	testutil.Require(t, result.Metadata.Outcome == "rejected", "outcome = %q", result.Metadata.Outcome)

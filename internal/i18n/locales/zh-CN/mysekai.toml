@@ -1,0 +1,157 @@
+# 烤森（MySekai）：总览、地图、资源、家具、蓝图、商店、对话、照片、百景、大门升级。
+
+[mysekai.data_expired]
+description = "烤森相关指令发现烤森数据已过期（与 /sud、/msd 的格式一致）。占位符：Account=账号显示名，例如“[日服(JP)] 123***789”；UpdatedAt=上次上传时间（format.time.*）；Ago=距今多久，例如“约3小时前”。"
+other = "{{.Account}} 的烤森数据已过期\n上次上传：{{.UpdatedAt}}（{{.Ago}}）\n要查看最新数据，请在 Haruki 工具箱重新上传烤森（MySekai）数据\n确定要查看当前数据时，请在指令后加上 force"
+
+[mysekai.data_invalid]
+description = "烤森数据无法解析（上传的数据损坏）。"
+other = "烤森数据解析失败，请在 Haruki 工具箱重新上传烤森（MySekai）数据"
+
+[mysekai.talk.character_required]
+description = "烤森对话列表没有写角色名。"
+other = "请写要查询的角色名"
+
+[mysekai.talk.character_not_found]
+description = "烤森对话列表找不到要查询的角色。"
+other = "找不到要查询的角色"
+
+[mysekai.talk.virtual_singer_unit]
+description = "查询属于多个团的虚拟歌手时没有写团名。占位符：Example=示例写法，例如“miku ln”。"
+other = "这个虚拟歌手属于多个团，请同时写团名，例如“{{.Example}}”"
+
+[mysekai.blueprint_term.region_unavailable]
+description = "该区服没有限时蓝图数据。"
+other = "该区服暂无限时蓝图数据"
+
+[mysekai.blueprint_term.none_current]
+description = "当前没有进行中或即将开始的限时蓝图。"
+other = "当前没有进行中或即将开始的限时蓝图，发送 /烤森限时蓝图 all 可查看全部"
+
+[mysekai.map.id_invalid]
+description = "烤森地图编号不在 1~4 之间。"
+other = "地图编号只能是 1~4"
+
+[mysekai.map.no_data]
+description = "当前没有可用的烤森地图数据。"
+other = "当前没有可用的烤森地图数据"
+
+[mysekai.fixture.id_invalid]
+description = "家具 ID 不是正整数，作为 common.bad_param 的原因行。"
+other = "家具 ID 应为正整数，可以一次写多个"
+
+[mysekai.fixture.not_found]
+description = "找不到对应的家具。"
+other = "未找到对应的家具"
+
+[mysekai.fixture.one_only]
+description = "家具详情一次写了多个家具 ID。"
+other = "家具详情一次只能查询一个家具 ID"
+
+[mysekai.fixture.category_not_found]
+description = "找不到用户写的家具分类。占位符：Query=用户写的分类，超过 30 个字截断。"
+other = "未找到家具分类：“{{.Query}}”"
+
+[mysekai.fixture.category_not_found_any]
+description = "找不到对应的家具分类（没有可显示的查询内容）。"
+other = "未找到对应的家具分类"
+
+[mysekai.gate.max_level]
+description = "烤森大门升级：指定的大门已经满级。"
+other = "指定的大门已经满级"
+
+[mysekai.gate.no_materials]
+description = "烤森大门升级：指定的大门没有升级材料。"
+other = "指定的大门没有升级材料"
+
+[mysekai.shop.masterdata_missing]
+description = "烤森商店需要的游戏数据还没有同步完整。"
+other = "烤森商店的游戏数据还没有同步完整，请稍后再试"
+
+[mysekai.shop.snapshot_missing]
+description = "上传的烤森数据缺少商店信息。"
+other = "上传的数据缺少烤森商店信息，请在 Haruki 工具箱重新上传完整的烤森（MySekai）数据"
+
+[mysekai.shop.type_invalid]
+description = "烤森商店的商品类型无效。"
+other = "商品类型只能是蓝图、工具或材料"
+
+[mysekai.shop.region_unavailable]
+description = "该区服还没有开放烤森商店。"
+other = "该区服还没有开放烤森商店"
+
+[mysekai.shop.param_unknown]
+description = "烤森商店写了无法识别的参数，作为 common.bad_param 的原因行。"
+other = "可以写蓝图、工具、材料或“全部”"
+
+[mysekai.shop.type_once]
+description = "烤森商店一次写了多种商品类型。"
+other = "一次只能选择一种商品类型，可以和“全部”一起使用"
+
+[mysekai.photo.index_invalid]
+description = "烤森照片序号不是非零整数。"
+other = "照片序号应为非零整数，从 1 或 -1 开始"
+
+[mysekai.photo.none]
+description = "当前账号没有烤森照片。"
+other = "当前账号没有可用的烤森照片"
+
+[mysekai.photo.out_of_range]
+description = "烤森照片序号超出照片数量。占位符：Count=照片数量。"
+other = "照片序号超出范围，当前共有 {{.Count}} 张照片"
+
+[mysekai.photo.invalid]
+description = "烤森照片数据无效（缺少图片地址等）。"
+other = "照片数据无效，暂时无法获取"
+
+[mysekai.photo.fetch_failed]
+description = "下载烤森照片失败。"
+other = "获取烤森照片失败，请稍后再试"
+
+[mysekai.housing.no_entries]
+description = "百景榜没有获取到投稿。"
+other = "没有获取到可用的百景投稿"
+
+[mysekai.housing.rank_beyond]
+description = "百景榜投稿不够，无法查询指定名次。占位符：Count=获取到的投稿数；Rank=要查询的名次。"
+other = "只获取到 {{.Count}} 个百景投稿，无法查询第 {{.Rank}} 名"
+
+[mysekai.housing.not_found]
+description = "找不到指定投稿编号的百景。占位符：ID=投稿编号。"
+other = "没有找到投稿编号为 {{.ID}} 的百景"
+
+[mysekai.housing.no_event]
+description = "当前没有进行中的烤森百景活动。"
+other = "当前没有正在进行的烤森百景活动"
+
+[mysekai.housing.rank_positive]
+description = "百景名次小于等于 0。"
+other = "百景名次必须大于 0"
+
+[mysekai.housing.too_many]
+description = "一次查询的百景名次太多。占位符：Max=最多名次数。"
+other = "一次最多查询 {{.Max}} 个百景名次"
+
+[mysekai.housing.fetch_failed]
+description = "获取百景投稿列表失败。"
+other = "获取百景投稿列表失败，请稍后再试"
+
+[mysekai.housing.id_invalid]
+description = "百景投稿编号不是正整数，作为 common.bad_param 的原因行。"
+other = "投稿编号应为正整数"
+
+[mysekai.housing.sample_invalid]
+description = "百景刷新次数不是正整数，作为 common.bad_param 的原因行。"
+other = "刷新次数应为正整数"
+
+[mysekai.housing.interval_invalid]
+description = "百景刷新间隔不是整数，作为 common.bad_param 的原因行。"
+other = "刷新间隔应为整数（毫秒）"
+
+[mysekai.housing.rank_invalid]
+description = "百景名次不是正整数，作为 common.bad_param 的原因行。"
+other = "百景名次应为正整数"
+
+[mysekai.character_or_none]
+description = "烤森蓝图、对话列表的参数既不是角色名也不是空（例如写了家具 ID）。"
+other = "请写角色名，或者不写参数；查看家具详情请使用 /msf"

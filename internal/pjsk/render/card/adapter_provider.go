@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
 	"haruki-cloud/internal/pjsk/render/snapshot"
@@ -45,10 +46,10 @@ func (a *ProviderAdapter) FilterCards(info *PjskCardQueryInfo) ([]*masterdata.Ca
 	if eventID == 0 && info.BanCharID != 0 {
 		events := a.P.Events().GetBanEvents(a.Context(), info.BanCharID)
 		if len(events) == 0 {
-			return nil, fmt.Errorf("no ban events found for character %d", info.BanCharID)
+			return nil, notfound.Card("")
 		}
 		if info.BanSeq < 1 || info.BanSeq > len(events) {
-			return nil, fmt.Errorf("ban event index out of range: %d", info.BanSeq)
+			return nil, notfound.Card("")
 		}
 		eventID = events[info.BanSeq-1].ID
 	}

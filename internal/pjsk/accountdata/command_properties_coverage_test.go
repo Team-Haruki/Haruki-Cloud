@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 type accountCoverageFastVerifier struct {
@@ -347,19 +348,19 @@ func testUnverifiedProfileBackgroundDefenses(t *testing.T, ctx context.Context, 
 	if _, err := service.setBindingProfileBG(ctx, "qq", "42", nil, "url"); err == nil {
 		t.Fatal("nil binding profile background set should fail")
 	}
-	if _, err := service.setBindingProfileBG(ctx, "qq", "42", binding, "url"); err == nil || !strings.Contains(err.Error(), "尚未验证") {
+	if _, err := service.setBindingProfileBG(ctx, "qq", "42", binding, "url"); err == nil || testutil.MessageID(err) != "profile.bg.unverified" {
 		t.Fatalf("unverified profile background set = %v", err)
 	}
 	if _, err := service.clearBindingProfileBG(ctx, "qq", "42", nil); err == nil {
 		t.Fatal("nil binding profile background clear should fail")
 	}
-	if _, err := service.clearBindingProfileBG(ctx, "qq", "42", binding); err == nil || !strings.Contains(err.Error(), "尚未验证") {
+	if _, err := service.clearBindingProfileBG(ctx, "qq", "42", binding); err == nil || testutil.MessageID(err) != "profile.bg.unverified" {
 		t.Fatalf("unverified profile background clear = %v", err)
 	}
 	if _, err := service.adjustBindingProfileBG(ctx, "qq", "42", nil, nil, nil, nil); err == nil {
 		t.Fatal("nil binding profile background adjust should fail")
 	}
-	if _, err := service.adjustBindingProfileBG(ctx, "qq", "42", binding, nil, nil, nil); err == nil || !strings.Contains(err.Error(), "尚未验证") {
+	if _, err := service.adjustBindingProfileBG(ctx, "qq", "42", binding, nil, nil, nil); err == nil || testutil.MessageID(err) != "profile.bg.unverified" {
 		t.Fatalf("unverified profile background adjust = %v", err)
 	}
 }
@@ -390,11 +391,11 @@ func testBindingVerificationBranches(t *testing.T, ctx context.Context, service 
 	}
 	service.fastVerifier = accountCoverageFastVerifier{err: errors.New("verification failed")}
 	binding.Verified = false
-	if _, _, err := service.verifyBindingEntity(ctx, "qq", "42", binding); err == nil || !strings.Contains(err.Error(), "verification failed") {
+	if _, _, err := service.verifyBindingEntity(ctx, "qq", "42", binding); err == nil || !strings.Contains(testutil.ErrorDetail(err), "verification failed") {
 		t.Fatalf("verification provider failure = %v", err)
 	}
 	service.fastVerifier = accountCoverageFastVerifier{records: []sekaiapi.UserGameBinding{{Server: "jp", GameUserID: "other"}}}
-	if _, _, err := service.verifyBindingEntity(ctx, "qq", "42", binding); err == nil || !strings.Contains(err.Error(), "未出现在") {
+	if _, _, err := service.verifyBindingEntity(ctx, "qq", "42", binding); err == nil || testutil.MessageID(err) != "binding.verify.not_listed" {
 		t.Fatalf("unmatched verification = %v", err)
 	}
 	contextual := &accountCoverageContextFastVerifier{accountCoverageFastVerifier: accountCoverageFastVerifier{records: []sekaiapi.UserGameBinding{{Server: " JP ", GameUserID: "8001"}}}}

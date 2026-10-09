@@ -3,15 +3,16 @@ package accountdata
 import (
 	"context"
 	"fmt"
-	"haruki-cloud/internal/observability/commandtrace"
-	"haruki-cloud/utils/usererror"
 	"slices"
 	"strconv"
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/userbinding"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 func buildBindingList(bindings []*pjskdb.UserBinding, defaults []*pjskdb.UserDefaultBinding) []BindingListItem {
@@ -75,11 +76,11 @@ func buildBindingListWithBackgrounds(bindings []*pjskdb.UserBinding, defaults []
 
 func selectBinding(items []BindingListItem, selector, server string) (BindingListItem, error) {
 	if len(items) == 0 {
-		return BindingListItem{}, fmt.Errorf("你还没有绑定任何PJSK账号")
+		return BindingListItem{}, usererror.Setup(i18n.M("binding.none"))
 	}
 	selector = normalizeUID(selector)
 	if selector == "" {
-		return BindingListItem{}, fmt.Errorf("请提供账号ID或u序号")
+		return BindingListItem{}, usererror.Misuse(i18n.M("binding.selector_required"))
 	}
 
 	lower := strings.ToLower(selector)
@@ -92,7 +93,7 @@ func selectBinding(items []BindingListItem, selector, server string) (BindingLis
 func selectBindingByIndex(items []BindingListItem, selector, server string) (BindingListItem, error) {
 	index, err := strconv.Atoi(strings.TrimSpace(selector[1:]))
 	if err != nil || index <= 0 {
-		return BindingListItem{}, fmt.Errorf("请提供正确的u序号，例如 u1")
+		return BindingListItem{}, usererror.BadParam(selector, i18n.M("binding.selector_index_invalid"))
 	}
 	normalizedServer := normalizeSelectorServer(server)
 	if normalizedServer == "" {
@@ -100,7 +101,7 @@ func selectBindingByIndex(items []BindingListItem, selector, server string) (Bin
 	}
 	scopedItems := filterBindingsByServer(items, normalizedServer)
 	if len(scopedItems) == 0 {
-		return BindingListItem{}, usererror.Inputf("你还没有绑定任何%s服账号", strings.ToUpper(normalizedServer))
+		return BindingListItem{}, usererror.New(usererror.CodeNotFound, i18n.M("binding.none_in_region", i18n.Data{"Region": i18n.RegionLabel(normalizedServer)}))
 	}
 	return bindingAtIndex(scopedItems, index, normalizedServer)
 }
@@ -110,9 +111,9 @@ func bindingAtIndex(items []BindingListItem, index int, server string) (BindingL
 		return items[index-1], nil
 	}
 	if server != "" {
-		return BindingListItem{}, usererror.Inputf("指定的%s服账号序号超出范围，目前仅绑定了%d个账号", strings.ToUpper(server), len(items))
+		return BindingListItem{}, usererror.New(usererror.CodeOutOfRange, i18n.M("binding.selector_index_out_of_range_region", i18n.Data{"Region": i18n.RegionLabel(server), "Count": len(items)}))
 	}
-	return BindingListItem{}, usererror.Inputf("指定的账号序号超出范围，目前仅绑定了%d个账号", len(items))
+	return BindingListItem{}, usererror.New(usererror.CodeOutOfRange, i18n.M("binding.selector_index_out_of_range", i18n.Data{"Count": len(items)}))
 }
 
 func selectBindingByUID(items []BindingListItem, selector string) (BindingListItem, error) {
@@ -124,11 +125,11 @@ func selectBindingByUID(items []BindingListItem, selector string) (BindingListIt
 	}
 	switch len(matched) {
 	case 0:
-		return BindingListItem{}, fmt.Errorf("未找到绑定的账号ID %s", selector)
+		return BindingListItem{}, usererror.New(usererror.CodeNotFound, i18n.M("binding.selector_uid_not_bound", i18n.Data{"UID": i18n.EchoQuery(selector)}))
 	case 1:
 		return matched[0], nil
 	default:
-		return BindingListItem{}, fmt.Errorf("账号ID %s 在多个区服都已绑定，请改用 u序号 操作", selector)
+		return BindingListItem{}, usererror.New(usererror.CodeAmbiguous, i18n.M("binding.selector_uid_ambiguous", i18n.Data{"UID": i18n.EchoQuery(selector)}))
 	}
 }
 
@@ -166,7 +167,7 @@ func (s *BindingService) ResolveOwnBindingForUIDQuery(ctx context.Context, platf
 	if server != "" {
 		scoped := filterBindingsByServer(items, server)
 		if len(scoped) == 0 {
-			return BindingListItem{}, usererror.Inputf("你还没有绑定任何%s服账号", strings.ToUpper(server))
+			return BindingListItem{}, usererror.New(usererror.CodeNotFound, i18n.M("binding.none_in_region", i18n.Data{"Region": i18n.RegionLabel(server)}))
 		}
 		for _, item := range scoped {
 			if item.IsServerDefault {
@@ -177,7 +178,7 @@ func (s *BindingService) ResolveOwnBindingForUIDQuery(ctx context.Context, platf
 	}
 
 	if len(items) == 0 {
-		return BindingListItem{}, fmt.Errorf("你还没有绑定任何PJSK账号")
+		return BindingListItem{}, usererror.Setup(i18n.M("binding.none"))
 	}
 	for _, item := range items {
 		if item.IsGlobalDefault {
@@ -239,7 +240,7 @@ func (s *BindingService) bindingListItemByID(ctx context.Context, platform, plat
 			return new(item), nil
 		}
 	}
-	return nil, fmt.Errorf("未找到绑定记录 %d", bindingID)
+	return nil, usererror.Wrap(usererror.CodeNotFound, i18n.M("binding.record_missing"), fmt.Errorf("binding record %d not found", bindingID))
 }
 
 // ResolveUserBinding resolves a platform user's active PJSK binding for the given

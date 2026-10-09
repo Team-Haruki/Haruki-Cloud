@@ -411,20 +411,39 @@ As of this revision the project is **considered functionally complete**:
   `Misconfigured`、`ReadOnly`。
 - **错误一律用 `utils/usererror` 的带类型错误**：`usererror.Error{Code,
   Message, Cause}`。`Error()` 只返回用户文案；`Cause` 只进日志
-  （`usererror.LogText`）。构造函数：`Invalid`、`Forbidden`、`BadParam`、
-  `Usage`、`NotFound`、`Ambiguous`、`OutOfRange`、`Unavailable`、`Timeout`、
-  `Misconfigured`、`Internal`、`ReadOnly`，或 `New`/`Wrap`。
+  （`usererror.LogText`）。构造函数：`Invalid`、`Forbidden`、`Setup`、
+  `BadParam`、`Misuse`、`Unrecognized`、`Usage`、`NotFound`、`Ambiguous`、
+  `OutOfRange`、`Unavailable`、`Timeout`、`Misconfigured`、`Internal`、
+  `ReadOnly`，或 `New`/`Wrap`。
   - 用户输入错误必须用输入类 Code（`input`、`bad_param`、`usage`、
-    `not_found`、`ambiguous`、`out_of_range`），不能显示成服务故障。
+    `not_found`、`ambiguous`、`out_of_range`），不能显示成服务故障。需要用户
+    自己先做一步（绑定、上传数据、验证）的用 `Setup`（Code `setup`）。这些和
+    `forbidden`、`read_only` 都算正常结果（`usererror.IsExpected`），不记错误日志。
+  - 指令写法不对时只写一行原因：`Misuse(reason)`；完全无法识别参数时用
+    `Unrecognized()`。回复层（`api/bot/pjsk/error_reply.go`）按路由把
+    `Unrecognized` 换成该路由的引导（`param_guidance.go`，目录 `guidance.*`），
+    并给 `usage`/`bad_param` 加上用户实际输入的指令的“发送 /<指令> -help 查看
+    用法”。生产代码不需要知道触发词。
+  - 只有 Bot 管理员能处理的问题（未配置、鉴权失败、协议不兼容）一律
+    `Misconfigured(cause)`，回复“服务配置异常，请联系 Bot 管理员”。
   - 任何路径都不能把原始错误文本给用户：英文、内部原因、上游响应体、状态码、
     字段名、内部 ID 都不行。禁止 `fmt.Errorf("<中文>: %w", err)` 这类写法；
     改成 `usererror.Wrap(code, i18n.M(...), err)`。
-  - 带类型错误会原样发给用户，不经过 `param_echo` 改写。处理器里判断"已是用户
-    文案"用 `isUserFacingError`，不要只判断 `onebot11.ReplayError`。
-  - 测试断言 `Code` 和消息 ID，不断言中文原文；中文由目录本身和
+  - 只有带类型错误的文案会发给用户。回复层（`commandErrorText`）对其他错误先
+    用上游分类器分类，分不出来就回复通用的“请求处理失败”。处理器里判断"已是
+    用户文案"用 `isUserFacingError`（只认带类型错误）。错误分流一律按类型
+    （`errors.Is`/`errors.As`、`usererror.As`、消息 ID），不要匹配错误文本。
+  - 最后一道防线：`i18n.SanitizeLines` 丢掉不是由任何目录消息渲染出来的行
+    （丢掉的行写日志），结果为空或含敏感 URL 时回复通用错误。
+  - 测试断言 `Code` 和消息 ID，不断言中文原文（`testutil.RequireUserError`、
+    `testutil.MessageID`）；中文由目录本身和
     `internal/i18n/testdata/helpers.zh-CN.golden` 锁定。
-- 上游返回的英文错误（工具箱、游戏数据服务、查榜服务、组卡服务）属于跨仓库约定。
-  集中在一个分类器里匹配，配契约测试；上游有状态码或错误码时优先用它们。
+- 上游返回的英文错误（工具箱、游戏数据服务、查榜服务、组卡服务、渲染服务）属于
+  跨仓库约定，全部集中在 `internal/core/upstreamerr`：`contract.go` 列出各服务
+  的消息片段和状态码规则，`Classify` 给出 `Service` + `Kind`，`UserError` 给出
+  通用回复；客户端返回实现 `upstreamerr.Described`/`Kinded` 的错误（网络错误用
+  `upstreamerr.Transport`）。新增上游错误时改 `contract.go` 并补
+  `contract_test.go` 和各客户端的契约测试；上游有状态码或错误码时优先用它们。
 
 ### 12.2 目录约定
 

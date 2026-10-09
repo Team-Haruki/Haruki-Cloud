@@ -9,6 +9,8 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 type fakeFastVerifier struct {
@@ -202,8 +204,8 @@ func TestProfileBackgroundRequiresVerifiedBinding(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected unverified binding to reject bg upload")
 	}
-	want := "当前JP服绑定账号尚未验证，无法设置个人信息背景，请前往工具箱https://haruki.seiunx.com/通过游戏账号验证后再发送/jppjsk verify来进行验证"
-	if err.Error() != want {
+	typed := testutil.RequireUserError(t, err, usererror.CodeSetup, "profile.bg.unverified")
+	if !strings.Contains(typed.Error(), "/jppjsk verify") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

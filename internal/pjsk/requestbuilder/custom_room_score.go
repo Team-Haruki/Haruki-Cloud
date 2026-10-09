@@ -2,15 +2,18 @@ package requestbuilder
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"sort"
 	"strconv"
 	"strings"
 
 	datafiles "haruki-cloud/data"
+	"haruki-cloud/internal/i18n"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -24,7 +27,7 @@ type customRoomScoreSelection struct {
 
 func BuildCustomRoomScoreRequest(r *CommandInput, app *renderapp.App) (*drawing.CustomRoomScoreRequest, error) {
 	if app == nil || app.Music == nil {
-		return nil, fmt.Errorf("score music service unavailable: music controller is not configured")
+		return nil, usererror.Misconfigured(errors.New("score music service unavailable: music controller is not configured"))
 	}
 
 	params, err := resolveCustomRoomScoreSelection(r)
@@ -32,7 +35,7 @@ func BuildCustomRoomScoreRequest(r *CommandInput, app *renderapp.App) (*drawing.
 		return nil, err
 	}
 	if params.TargetPoint <= 0 {
-		return nil, fmt.Errorf("invalid custom-room score request")
+		return nil, usererror.Misuse(i18n.M("score.custom_room.usage"))
 	}
 
 	candidatePairs, err := findCustomRoomCandidatePairs(params.TargetPoint)
@@ -50,7 +53,7 @@ func BuildCustomRoomScoreRequest(r *CommandInput, app *renderapp.App) (*drawing.
 
 	filteredPairs := filterCustomRoomCandidatePairs(candidatePairs, musicListMap)
 	if len(filteredPairs) == 0 {
-		return nil, fmt.Errorf("找不到可用于自定义房间控分的歌曲")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("score.custom_room.no_music"))
 	}
 	return &drawing.CustomRoomScoreRequest{
 		TargetPoint:    params.TargetPoint,
@@ -64,9 +67,9 @@ func validateCustomRoomCandidatePairs(targetPoint int, pairs [][]int) error {
 		return nil
 	}
 	if targetPoint > 100 {
-		return fmt.Errorf("该PT无法用自定义房间控分，控大于100的PT可使用\"/控分\"指令")
+		return usererror.Invalid(i18n.M("score.custom_room.pt_large"))
 	}
-	return fmt.Errorf("该PT无法用自定义房间控分，可能是PT过小")
+	return usererror.Invalid(i18n.M("score.custom_room.pt_small"))
 }
 
 func sortCustomRoomCandidatePairs(pairs [][]int) {
@@ -113,12 +116,12 @@ func resolveCustomRoomScoreSelection(r *CommandInput) (customRoomScoreSelection,
 		return params, nil
 	}
 	if r == nil {
-		return customRoomScoreSelection{}, fmt.Errorf("invalid custom-room score request")
+		return customRoomScoreSelection{}, usererror.Misuse(i18n.M("score.custom_room.usage"))
 	}
 
 	target, err := strconv.Atoi(strings.TrimSpace(r.Query))
 	if err != nil || target <= 0 {
-		return customRoomScoreSelection{}, fmt.Errorf("invalid custom-room score request")
+		return customRoomScoreSelection{}, usererror.Misuse(i18n.M("score.custom_room.usage"))
 	}
 	params.TargetPoint = target
 	return params, nil

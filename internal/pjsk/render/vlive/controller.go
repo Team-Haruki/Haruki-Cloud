@@ -16,6 +16,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/provider"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/utils/usererror"
 )
 
 var ErrNoLives = errors.New("no virtual lives")
@@ -75,7 +76,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 
 func (c *Controller) ResolveLives(query ListQuery) ([]ResolvedLive, renderregion.Value, error) {
 	if c == nil || c.sources == nil {
-		return nil, renderregion.Unknown, fmt.Errorf("vlive controller is not configured")
+		return nil, renderregion.Unknown, usererror.Misconfigured(errors.New("vlive controller is not configured"))
 	}
 
 	region := c.resolveRegion(query.Region)
@@ -243,7 +244,7 @@ func (c *Controller) RenderList(query ListQuery) ([]byte, error) {
 
 func (c *Controller) RenderListImage(query ListQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildListRequest(query)

@@ -26,7 +26,7 @@ func (c *Controller) buildSingleRankLatestFromTracker(server string, eventID, ra
 func (c *Controller) buildSingleRankBaseFromTracker(server string, eventID, rank int, wlCharacterID *int) (drawing.RankInfo, int64, bool, error) {
 	infos, _, _, ok, err := c.buildRanksFromTrackerV2(server, eventID, []int{rank}, wlCharacterID, false, false)
 	if !ok {
-		return drawing.RankInfo{}, 0, false, fmt.Errorf("tracker cloud v2 source is not configured")
+		return drawing.RankInfo{}, 0, false, errTrackerSourceNotConfigured
 	}
 	if err != nil {
 		return drawing.RankInfo{}, 0, false, err
@@ -53,5 +53,5 @@ func (c *Controller) buildSingleUserBaseFromTracker(server string, eventID int, 
 		}
 		return info, nil
 	}
-	return drawing.RankInfo{}, fmt.Errorf("tracker cloud v2 source is not configured")
+	return drawing.RankInfo{}, errTrackerSourceNotConfigured
 }

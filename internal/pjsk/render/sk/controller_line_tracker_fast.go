@@ -77,7 +77,7 @@ func (c *Controller) buildLineRanksFromTracker(server string, eventID int, ranks
 func (c *Controller) buildSingleRankLineFromTracker(server string, eventID, rank int, wlCharacterID *int) (drawing.RankInfo, error) {
 	infos, ok, err := c.buildLineRanksFromTrackerV2(server, eventID, []int{rank}, wlCharacterID, false)
 	if !ok {
-		return drawing.RankInfo{}, fmt.Errorf("tracker cloud v2 source is not configured")
+		return drawing.RankInfo{}, errTrackerSourceNotConfigured
 	}
 	if err != nil {
 		return drawing.RankInfo{}, err
@@ -92,7 +92,7 @@ func (c *Controller) buildSingleRankLineFromTracker(server string, eventID, rank
 func (c *Controller) buildSingleUserLineFromTracker(server string, eventID int, userID int64, wlCharacterID *int) (drawing.RankInfo, error) {
 	source, ok := c.trackerCloudV2()
 	if !ok {
-		return drawing.RankInfo{}, fmt.Errorf("tracker cloud v2 source is not configured")
+		return drawing.RankInfo{}, errTrackerSourceNotConfigured
 	}
 	resp, err := source.GetCloudSKLine(server, eventID, wlCharacterID, nil, &userID, false, 3600)
 	if err != nil {

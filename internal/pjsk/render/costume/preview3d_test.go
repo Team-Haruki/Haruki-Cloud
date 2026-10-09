@@ -22,6 +22,7 @@ import (
 
 	"github.com/andybalholm/brotli"
 	"github.com/shamaton/msgpack/v3"
+	"haruki-cloud/internal/testutil"
 )
 
 type preview3DRoundTripFunc func(*http.Request) (*http.Response, error)
@@ -155,7 +156,7 @@ func TestValidatePreview3DRoleCatalogRejectsDuplicatePublicRole(t *testing.T) {
 	roles := completeRoleCatalogFixture(nil)
 	roles[30] = roles[0]
 	err := validatePreview3DRoleCatalog(preview3DRoleCatalog{Version: 2, MasterVersion: "test-master", Roles: roles})
-	if err == nil || !strings.Contains(err.Error(), "duplicates role") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "duplicates role") {
 		t.Fatalf("expected duplicate role rejection, got %v", err)
 	}
 }
@@ -186,14 +187,14 @@ func TestValidatePreview3DRoleCatalogRejectsWrongIdentityAndRuntimePath(t *testi
 	roles := completeRoleCatalogFixture(nil)
 	roles[22].CharacterID = 1
 	err := validatePreview3DRoleCatalog(preview3DRoleCatalog{Version: 2, MasterVersion: "test-master", Roles: roles})
-	if err == nil || !strings.Contains(err.Error(), "invalid role") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "invalid role") {
 		t.Fatalf("expected role identity rejection, got %v", err)
 	}
 
 	roles = completeRoleCatalogFixture(nil)
 	roles[22].RoleRuntimePath = "roles/1/light_sound/role-runtime.msgpack.br"
 	err = validatePreview3DRoleCatalog(preview3DRoleCatalog{Version: 2, MasterVersion: "test-master", Roles: roles})
-	if err == nil || !strings.Contains(err.Error(), "invalid role") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "invalid role") {
 		t.Fatalf("expected role runtime path rejection, got %v", err)
 	}
 }
@@ -313,7 +314,7 @@ func TestPreview3DRegistryResolveRejectsIndependentGroupHeadSources(t *testing.T
 	}
 
 	_, err := registry.resolve("jp", 33002)
-	if err == nil || !strings.Contains(err.Error(), "group head source is ambiguous") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "group head source is ambiguous") {
 		t.Fatalf("group head resolution must reject independent head slots, got %v", err)
 	}
 }
@@ -342,7 +343,7 @@ func TestPreview3DRegistryResolveReportsMissingRuntimePackageDetails(t *testing.
 		"bundlePath=live_pv/model/characterv2/body/0033/0002.bundle",
 		"warning=body bundle not found",
 	} {
-		if !strings.Contains(err.Error(), want) {
+		if !strings.Contains(testutil.ErrorDetail(err), want) {
 			t.Fatalf("missing %q in error: %v", want, err)
 		}
 	}
@@ -479,7 +480,7 @@ func TestPreview3DRegistryResolveRejectsBlockedHeadHairPair(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected blocked head/hair pair to be rejected")
 	}
-	if !strings.Contains(err.Error(), "blocked") {
+	if !strings.Contains(testutil.ErrorDetail(err), "blocked") {
 		t.Fatalf("expected blocked error, got %v", err)
 	}
 }
@@ -827,7 +828,7 @@ func TestPreview3DRegistryResolveComboUsesOutfitCharacterAndColor(t *testing.T) 
 	if selection.HeadCostume3DID != 11001 {
 		t.Fatalf("expected accessory 11001, got %+v", selection)
 	}
-	if _, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryID: 11001, AccessoryColorID: 1}, "sig"); err == nil || !strings.Contains(err.Error(), "accessory not usable") {
+	if _, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryID: 11001, AccessoryColorID: 1}, "sig"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "accessory not usable") {
 		t.Fatalf("expected character-exclusive accessory to be rejected, got %v", err)
 	}
 }
@@ -1177,7 +1178,7 @@ func TestPreview3DServiceRejectsMissingRegionEngineWhenMapConfigured(t *testing.
 	if err == nil {
 		t.Fatal("expected missing en engine to be rejected")
 	}
-	if !strings.Contains(err.Error(), "region en") {
+	if !strings.Contains(testutil.ErrorDetail(err), "region en") {
 		t.Fatalf("expected region in error, got %v", err)
 	}
 }
@@ -1416,7 +1417,7 @@ func TestPreview3DRegistryKeepsIndependentSourcesSeparate(t *testing.T) {
 	if sharedSelection.ImageID == exclusiveSelection.ImageID {
 		t.Fatalf("independent source images collapsed into one cache key: %q", sharedSelection.ImageID)
 	}
-	if _, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryCostume3DID: 797009}, ""); err == nil || !strings.Contains(err.Error(), "raw id is ambiguous") {
+	if _, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryCostume3DID: 797009}, ""); err == nil || !strings.Contains(testutil.ErrorDetail(err), "raw id is ambiguous") {
 		t.Fatalf("raw combo must not choose one independent source, got %v", err)
 	}
 	if candidates := registry.legacyAccessoryIDsForRole(797, role); !slices.Equal(candidates, []int{797001, 797002}) {
@@ -1427,7 +1428,7 @@ func TestPreview3DRegistryKeepsIndependentSourcesSeparate(t *testing.T) {
 	}
 	_, err = registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryID: 797, AccessoryColorID: 1}, "")
 	var legacyErr *LegacyAccessoryIDError
-	if !errors.As(err, &legacyErr) || !slices.Equal(legacyErr.AccessoryIDs, []int{797001, 797002}) || !strings.Contains(err.Error(), "ids=[797001 797002]") {
+	if !errors.As(err, &legacyErr) || !slices.Equal(legacyErr.AccessoryIDs, []int{797001, 797002}) || !strings.Contains(testutil.ErrorDetail(err), "ids=[797001 797002]") {
 		t.Fatalf("legacy combo id must list every independent candidate without choosing one, got %v", err)
 	}
 }
@@ -1474,7 +1475,7 @@ func TestPreview3DRegistryRejectsSamePackagePathAcrossRawHeadSlots(t *testing.T)
 	}
 
 	_, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryCostume3DID: 700}, "")
-	if err == nil || !strings.Contains(err.Error(), "head raw id is ambiguous") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "head raw id is ambiguous") {
 		t.Fatalf("raw head selection must keep head slots distinct even when package paths match, got %v", err)
 	}
 }
@@ -1486,7 +1487,7 @@ func TestPreview3DRegistryRejectsConflictingCanonicalAndRawAccessorySelectors(t 
 		AccessoryID:          797001,
 		AccessoryCostume3DID: 797009,
 	}, "same")
-	if err == nil || !strings.Contains(err.Error(), "cannot be used together") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "cannot be used together") {
 		t.Fatalf("conflicting accessory identities must be rejected, got %v", err)
 	}
 }
@@ -1568,7 +1569,7 @@ func TestPreview3DRegistryVersion2RejectsConflictingDirectAndFamilySources(t *te
 			{Costume3DID: 1003, Costume3DGroupID: 1002, PartType: "head_optional", CharacterID: 1, Unit: "idol", ColorID: 2, BaseSourceKey: "shared", AccessoryID: 1002, Status: "available"},
 		},
 	}
-	if err := registry.validateAccessoryIdentity(); err == nil || !strings.Contains(err.Error(), "multiple original-color sources") {
+	if err := registry.validateAccessoryIdentity(); err == nil || !strings.Contains(testutil.ErrorDetail(err), "multiple original-color sources") {
 		t.Fatalf("expected conflicting direct/family lineage to be rejected, got %v", err)
 	}
 }
@@ -1620,7 +1621,7 @@ func TestPreview3DRegistryVersion2RejectsAccessoryIDCollision(t *testing.T) {
 			{Costume3DID: 1002, Costume3DGroupID: 1001, PartType: "head", CharacterID: 2, Unit: "idol", ColorID: 1, BaseSourceKey: "source-b", AccessoryID: 1001, Status: "available"},
 		},
 	}
-	if err := registry.validateAccessoryIdentity(); err == nil || !strings.Contains(err.Error(), "maps to sources") {
+	if err := registry.validateAccessoryIdentity(); err == nil || !strings.Contains(testutil.ErrorDetail(err), "maps to sources") {
 		t.Fatalf("expected cross-source accessory id collision to be rejected, got %v", err)
 	}
 }
@@ -2028,14 +2029,14 @@ func TestPreview3DResponsesHaveExplicitSizeLimits(t *testing.T) {
 	}
 
 	var registry preview3DRoleCatalog
-	if err := service.getMessagePackRegistry(context.Background(), endpoint, "/runtime/test.msgpack.br", &registry, false); err == nil || !strings.Contains(err.Error(), "registry response exceeds") {
+	if err := service.getMessagePackRegistry(context.Background(), endpoint, "/runtime/test.msgpack.br", &registry, false); err == nil || !strings.Contains(testutil.ErrorDetail(err), "registry response exceeds") {
 		t.Fatalf("getMessagePackRegistry oversized response error = %v", err)
 	}
-	if _, err := service.getCapture(context.Background(), endpoint, "oversized"); err == nil || !strings.Contains(err.Error(), "capture fetch response exceeds") {
+	if _, err := service.getCapture(context.Background(), endpoint, "oversized"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "capture fetch response exceeds") {
 		t.Fatalf("getCapture oversized response error = %v", err)
 	}
 	selection := preview3DSelection{ImageID: "oversized", RoleID: "1:unit"}
-	if err := service.captureSelection(context.Background(), endpoint, selection, "persistent"); err == nil || !strings.Contains(err.Error(), "capture response exceeds") {
+	if err := service.captureSelection(context.Background(), endpoint, selection, "persistent"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "capture response exceeds") {
 		t.Fatalf("captureSelection oversized response error = %v", err)
 	}
 }
@@ -2046,7 +2047,7 @@ func TestReadPreview3DResponseLimitsUnknownLengthBody(t *testing.T) {
 		ContentLength: -1,
 	}
 	_, err := readPreview3DResponse(resp, 4, "3d preview test")
-	if err == nil || !strings.Contains(err.Error(), "response exceeds 4 bytes") {
+	if err == nil || !strings.Contains(testutil.ErrorDetail(err), "response exceeds 4 bytes") {
 		t.Fatalf("readPreview3DResponse() error = %v", err)
 	}
 }

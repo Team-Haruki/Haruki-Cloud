@@ -6,9 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/utils/usererror"
 )
 
 // BlueprintTermQuery requests the limited-time blueprint view built from
@@ -50,7 +52,7 @@ func (c *Controller) BuildBlueprintTermRequest(query BlueprintTermQuery) (*drawi
 	region := c.resolveRegion(query.Region)
 	terms := c.masterdata.loadList("mysekaiBlueprintTerms.json")
 	if len(terms) == 0 {
-		return nil, fmt.Errorf("mysekai blueprint terms are not available in region %s", region)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.blueprint_term.region_unavailable"))
 	}
 	now := query.NowMillis
 	if now == 0 {
@@ -99,7 +101,7 @@ func (c *Controller) BuildBlueprintTermRequest(query BlueprintTermQuery) (*drawi
 		tab.Blueprints = append(tab.Blueprints, entry)
 	}
 	if len(tabs) == 0 {
-		return nil, fmt.Errorf("mysekai blueprint terms have no current term in region %s", region)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.blueprint_term.none_current"))
 	}
 	request := &drawing.MysekaiBlueprintTermRequest{Tabs: make([]drawing.MysekaiBlueprintTermTab, 0, len(tabs))}
 	for _, tab := range tabs {
@@ -219,7 +221,7 @@ func (c *Controller) RenderBlueprintTerm(query BlueprintTermQuery) ([]byte, erro
 
 func (c *Controller) RenderBlueprintTermImage(query BlueprintTermQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	request, err := c.BuildBlueprintTermRequest(query)

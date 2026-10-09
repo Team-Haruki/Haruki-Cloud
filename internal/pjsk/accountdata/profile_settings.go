@@ -4,15 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
 	pjskschema "haruki-cloud/ent/pjsk/schema"
+	"haruki-cloud/internal/i18n"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/chartstyle"
 	"haruki-cloud/internal/pjsk/displaytime"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -176,7 +178,7 @@ func executeProfileVisibilityMode(ctx context.Context, service *BindingService, 
 
 func executeProfileVerifyMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams, resolve profileBindingResolver) ([]byte, error) {
 	if service.fastVerifier == nil {
-		return nil, fmt.Errorf("pjsk: fast verification provider is not configured")
+		return nil, usererror.Misconfigured(errors.New("pjsk: fast verification provider is not configured"))
 	}
 	entity, err := resolve()
 	if err != nil {
@@ -212,7 +214,7 @@ func loadProfileUserSettings(ctx context.Context, service *BindingService, param
 	}
 	settings, err := GetUserSettings(ctx, service.pjskDB, harukiUserID)
 	if err != nil && !errors.Is(err, ErrUserSettingsNotFound) {
-		return 0, nil, fmt.Errorf("读取用户设置失败: %w", err)
+		return 0, nil, usererror.Unavailable(i18n.FeatureAccount, fmt.Errorf("read user settings: %w", err))
 	}
 	if settings == nil || errors.Is(err, ErrUserSettingsNotFound) {
 		settings = newDefaultUserSettings()
@@ -234,14 +236,14 @@ func executeProfileTimeZoneMode(ctx context.Context, service *BindingService, pa
 	}
 	settings.TimeZone = resolved
 	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
-		return nil, fmt.Errorf("保存用户时区失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.settings.save_failed"), fmt.Errorf("save time zone: %w", err))
 	}
 	return []byte(fmt.Sprintf("已设置PJSK时区为 %s", resolved)), nil
 }
 
 func executeProfileArrestDifficultyMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams) ([]byte, error) {
 	if len(params.DifficultyToggles) == 0 {
-		return nil, fmt.Errorf("请至少指定一个逮捕难度开关")
+		return nil, usererror.Misuse(i18n.M("profile.arrest_difficulty.required"))
 	}
 	userID, settings, err := loadProfileUserSettings(ctx, service, params)
 	if err != nil {
@@ -252,7 +254,7 @@ func executeProfileArrestDifficultyMode(ctx context.Context, service *BindingSer
 		return nil, err
 	}
 	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
-		return nil, fmt.Errorf("保存逮捕难度设置失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.settings.save_failed"), fmt.Errorf("save arrest difficulties: %w", err))
 	}
 	return []byte(fmt.Sprintf("已设置逮捕难度为 %s", formatProfileDifficultySummary(settings.PJSKEnabledDifficulties))), nil
 }
@@ -260,7 +262,7 @@ func executeProfileArrestDifficultyMode(ctx context.Context, service *BindingSer
 func executeProfileChartStyleMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams) ([]byte, error) {
 	style := chartstyle.Normalize(params.ChartStyle)
 	if style == "" {
-		return nil, fmt.Errorf("谱面样式只支持 white 或 black")
+		return nil, usererror.Invalid(i18n.M("profile.chart_style.invalid"))
 	}
 	userID, settings, err := loadProfileUserSettings(ctx, service, params)
 	if err != nil {
@@ -268,7 +270,7 @@ func executeProfileChartStyleMode(ctx context.Context, service *BindingService, 
 	}
 	settings.ChartStyle = style
 	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
-		return nil, fmt.Errorf("保存谱面样式失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.settings.save_failed"), fmt.Errorf("save chart style: %w", err))
 	}
 	return []byte(fmt.Sprintf("已设置谱面样式为 %s", style)), nil
 }
@@ -280,7 +282,7 @@ func executeProfileModularMode(ctx context.Context, service *BindingService, par
 	}
 	settings.ModularProfileEnabled = enabled
 	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
-		return nil, fmt.Errorf("保存模块个人信息设置失败: %w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.settings.save_failed"), fmt.Errorf("save modular profile setting: %w", err))
 	}
 	if enabled {
 		return []byte("已开启模块个人信息，之后 /个人信息 将使用模块布局"), nil
@@ -463,7 +465,7 @@ func applyProfileDifficultyToggles(current []sekai.MusicDifficultyType, toggles 
 	for _, toggle := range toggles {
 		diff := normalizeProfileDifficulty(toggle.Difficulty)
 		if diff == "" {
-			return nil, fmt.Errorf("不支持的难度: %q", toggle.Difficulty)
+			return nil, usererror.BadParam(string(toggle.Difficulty), i18n.M("profile.arrest_difficulty.unknown"))
 		}
 		enabled[diff] = toggle.Enabled
 	}

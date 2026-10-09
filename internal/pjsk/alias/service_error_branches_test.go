@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"haruki-cloud/internal/testutil"
 )
 
 func TestAliasServiceUnavailableBranches(t *testing.T) {
@@ -46,13 +48,13 @@ func TestAliasReviewAndModerationInputValidation(t *testing.T) {
 	deps.addMusic(t, ctx, 7301, "审核分支曲目一")
 	deps.addAdmin(t, ctx, "qq", "admin-branches", "Branch Admin")
 
-	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, " ", "user", "7301", []string{"待审核"}); err == nil || !strings.Contains(err.Error(), "身份") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, " ", "user", "7301", []string{"待审核"}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "identity") {
 		t.Fatalf("expected submitter identity error, got %v", err)
 	}
 	if _, err := deps.service.Approve(ctx, "qq", "admin-branches", nil); err == nil {
 		t.Fatal("empty approval IDs were accepted")
 	}
-	if _, err := deps.service.Approve(ctx, "qq", "admin-branches", []int64{999}); err == nil || !strings.Contains(err.Error(), "999") {
+	if _, err := deps.service.Approve(ctx, "qq", "admin-branches", []int64{999}); err == nil || testutil.MessageID(err) != "alias.review_not_found" {
 		t.Fatalf("expected missing approval ID error, got %v", err)
 	}
 	if _, err := deps.service.RejectMany(ctx, "qq", "admin-branches", []int64{1}, " "); err == nil || !strings.Contains(err.Error(), "拒绝原因") {
@@ -61,7 +63,7 @@ func TestAliasReviewAndModerationInputValidation(t *testing.T) {
 	if _, err := deps.service.GetSubmitter(ctx, "qq", "admin-branches", 0); err == nil {
 		t.Fatal("nonpositive review ID was accepted")
 	}
-	if _, err := deps.service.GetSubmitter(ctx, "qq", "admin-branches", 999); err == nil || !strings.Contains(err.Error(), "999") {
+	if _, err := deps.service.GetSubmitter(ctx, "qq", "admin-branches", 999); err == nil || testutil.MessageID(err) != "alias.review_not_found" {
 		t.Fatalf("expected missing submitter ID error, got %v", err)
 	}
 	if _, err := deps.service.BanSubmitter(ctx, "qq", "admin-branches", " ", "target"); err == nil {

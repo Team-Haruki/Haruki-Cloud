@@ -2,15 +2,17 @@ package card
 
 import (
 	"errors"
-	json "haruki-cloud/internal/jsonutil"
 	"strings"
 	"testing"
 	"time"
 
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestBuildCardListRequestResolvesIDsFromQuery(t *testing.T) {
@@ -304,9 +306,7 @@ func TestBuildCardBoxRequestRejectsShowBoxWithoutOwnedCardData(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected show_box without owned-card data to fail")
 	}
-	if !strings.Contains(err.Error(), "box") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeSetup, "card.box_needs_suite")
 }
 
 func TestBuildCardBoxRequestPassesUnownedOnlyWithOwnedCardData(t *testing.T) {
@@ -335,8 +335,8 @@ func TestBuildCardBoxRequestRejectsExplicitRegionWithoutSource(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected explicit cn lookup without a cn source to fail")
 	}
-	if !strings.Contains(err.Error(), "region cn") {
-		t.Fatalf("unexpected error: %v", err)
+	if typed := testutil.RequireUserError(t, err, usererror.CodeMisconfigured, "common.misconfigured"); !strings.Contains(typed.Cause.Error(), "region cn") {
+		t.Fatalf("unexpected cause: %v", typed.Cause)
 	}
 }
 

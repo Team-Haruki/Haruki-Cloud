@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/httpcoding"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/imagecache"
@@ -27,7 +28,44 @@ const drawingErrorClassificationBytes = 8 << 10
 
 const drawingErrorDetailMaxBytes = 512
 
-var ErrDrawingDataInsufficient = errors.New("drawing response data is insufficient")
+// ErrDrawingDataInsufficient is wrapped by a StatusError whose body says the
+// data was too thin to draw (see upstreamerr: KindDataInsufficient).
+var ErrDrawingDataInsufficient error = upstreamerr.NewSentinel(upstreamerr.ServiceRender, upstreamerr.KindDataInsufficient, 0, "drawing response data is insufficient")
+
+// ErrNotConfigured is returned when a render is requested without a Drawing
+// client (a deployment without the renderer).
+var ErrNotConfigured error = upstreamerr.NewSentinel(upstreamerr.ServiceRender, upstreamerr.KindNotConfigured, 0, "drawing client is not configured")
+
+// StatusError is a non-2xx answer of Drawing. Detail is the response's
+// "detail" for a 4xx answer (sanitized, bounded); upstreamerr classifies it.
+type StatusError struct {
+	StatusCode   int
+	Detail       string
+	insufficient bool
+}
+
+func (e *StatusError) Error() string {
+	switch {
+	case e.insufficient:
+		return fmt.Sprintf("drawing request failed with status %d: %s", e.StatusCode, ErrDrawingDataInsufficient)
+	case e.Detail != "":
+		return fmt.Sprintf("drawing request failed with status %d: %s", e.StatusCode, e.Detail)
+	default:
+		return fmt.Sprintf("drawing request failed with status %d", e.StatusCode)
+	}
+}
+
+// Unwrap exposes ErrDrawingDataInsufficient for an insufficient-data answer.
+func (e *StatusError) Unwrap() error {
+	if e.insufficient {
+		return ErrDrawingDataInsufficient
+	}
+	return nil
+}
+
+func (e *StatusError) UpstreamService() upstreamerr.Service { return upstreamerr.ServiceRender }
+func (e *StatusError) UpstreamStatus() int                  { return e.StatusCode }
+func (e *StatusError) UpstreamMessage() string              { return e.Detail }
 
 func WithTimeout(timeout time.Duration) ClientOption {
 	return func(client *resty.Client, _ *HarukiDrawingClient) {
@@ -280,7 +318,7 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 
 func (c *HarukiDrawingClient) postPreparedOnce(endpoint string, requestBody any) ([]byte, error) {
 	if c == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return nil, ErrNotConfigured
 	}
 
 	requestCtx := c.requestCtx
@@ -293,14 +331,14 @@ func (c *HarukiDrawingClient) postPreparedOnce(endpoint string, requestBody any)
 		lease, err = c.pool.Acquire(requestCtx)
 		finishUpstreamQueue()
 		if err != nil {
-			return nil, fmt.Errorf("drawing upstream is unavailable: %w", err)
+			return nil, upstreamerr.Tag(upstreamerr.ServiceRender, upstreamerr.KindUnavailable, "", fmt.Errorf("drawing upstream is unavailable: %w", err))
 		}
 		defer lease.Release()
 		targetBaseURL = lease.Target.BaseURL
 		targetName = lease.Target.Name
 	}
 	if strings.TrimSpace(targetBaseURL) == "" {
-		return nil, fmt.Errorf("drawing client base_url is empty")
+		return nil, upstreamerr.Tag(upstreamerr.ServiceRender, upstreamerr.KindNotConfigured, "drawing client base_url is empty", nil)
 	}
 
 	finishEncode := commandtrace.MeasureOperation(requestCtx, "drawing.encode")
@@ -325,7 +363,7 @@ func (c *HarukiDrawingClient) postPreparedOnce(endpoint string, requestBody any)
 			"duration_ms", commandtrace.Milliseconds(elapsed),
 			"error_type", fmt.Sprintf("%T", err),
 		)
-		return nil, err
+		return nil, upstreamerr.Transport(upstreamerr.ServiceRender, "drawing request failed: "+err.Error(), err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
@@ -343,13 +381,7 @@ func (c *HarukiDrawingClient) postPreparedOnce(endpoint string, requestBody any)
 			"upstream_detail", detail,
 		)
 		c.noteDirectiveRejection(endpoint, directive, resp)
-		if insufficientData {
-			return nil, fmt.Errorf("drawing request failed with status %d: %w", resp.StatusCode(), ErrDrawingDataInsufficient)
-		}
-		if resp.StatusCode() >= http.StatusBadRequest && resp.StatusCode() < http.StatusInternalServerError && detail != "" {
-			return nil, fmt.Errorf("drawing request failed with status %d: %s", resp.StatusCode(), detail)
-		}
-		return nil, fmt.Errorf("drawing request failed with status %d", resp.StatusCode())
+		return nil, &StatusError{StatusCode: resp.StatusCode(), Detail: detail, insufficient: insufficientData}
 	}
 	c.logger.DebugContext(requestCtx, "drawing request completed",
 		"upstream", "drawing",
@@ -627,22 +659,7 @@ func drawingResponseIndicatesInsufficientData(body []byte) bool {
 	if len(body) > drawingErrorClassificationBytes {
 		body = body[:drawingErrorClassificationBytes]
 	}
-	lower := strings.ToLower(string(body))
-	for _, marker := range []string{
-		"data insufficient",
-		"insufficient data",
-		"not enough data",
-		"数据不足",
-		"single positional indexer is out-of-bounds",
-		"out-of-bounds",
-		"out of bounds",
-		"index out of range",
-	} {
-		if strings.Contains(lower, marker) {
-			return true
-		}
-	}
-	return false
+	return upstreamerr.MatchMessage(upstreamerr.ServiceRender, string(body)) == upstreamerr.KindDataInsufficient
 }
 
 func (c *HarukiDrawingClient) cachedPost(endpoint string, body any) ([]byte, error) {

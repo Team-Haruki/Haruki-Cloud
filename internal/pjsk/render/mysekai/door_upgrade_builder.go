@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"sort"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/usererror"
 )
 
 // BuildDoorUpgradeRequest builds the request for rendering MySekai door upgrade view.
@@ -129,7 +131,7 @@ func selectDoorUpgradeGates(gates map[int][][]doorUpgradeMaterial, levels map[in
 		return gates, nil
 	}
 	if !showFull && doorUpgradeGateIsMax(gates, requestedID, levels[requestedID]) {
-		return nil, fmt.Errorf("queried gate already max level")
+		return nil, usererror.Invalid(i18n.M("mysekai.gate.max_level"))
 	}
 	if materials, ok := gates[requestedID]; ok {
 		return map[int][][]doorUpgradeMaterial{requestedID: materials}, nil
@@ -137,7 +139,7 @@ func selectDoorUpgradeGates(gates map[int][][]doorUpgradeMaterial, levels map[in
 	if _, ok := knownGates[requestedID]; ok {
 		// A gate the region has but that is never upgraded with materials
 		// (JP 7.0.0 shuffle gate 6).
-		return nil, fmt.Errorf("queried gate has no upgrade materials: %d", requestedID)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.gate.no_materials"))
 	}
 	return gates, nil
 }
@@ -265,7 +267,7 @@ func (c *Controller) RenderDoorUpgrade(query DoorUpgradeQuery) ([]byte, error) {
 
 func (c *Controller) RenderDoorUpgradeImage(query DoorUpgradeQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildDoorUpgradeRequest(query)

@@ -78,11 +78,11 @@ func (skh *HarukiSekaiCommandHandler) Handle(ctx Context) (*CommandRequest, erro
 }
 
 func (skh *HarukiSekaiCommandHandler) missingHandleFuncError() error {
-	commandName := "未定义"
+	commandName := "<unnamed>"
 	if len(skh.Commands) > 0 {
 		commandName = skh.Commands[0]
 	}
-	return fmt.Errorf("sekai 命令处理器 %s 没有处理方法", commandName)
+	return fmt.Errorf("sekai command handler %s has no handle func", commandName)
 }
 
 type sekaiHandlerInput struct {

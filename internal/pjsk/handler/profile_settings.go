@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
@@ -12,6 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/common"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 func newProfileBindingParams(ctx HarrukiSekaiHandlerContext, selector, scope string) accountdata.ProfileBindingCommandParams {
@@ -43,7 +45,7 @@ func newProfileSettingsParams(ctx HarrukiSekaiHandlerContext, selector ...string
 func resolveSettingsSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 	args := strings.TrimSpace(ctx.GetArgs())
 	if args != "" {
-		return "", onebot11.NewReplayError("使用方式:\n%s [u序号]", ctx.originalTriggerCmd)
+		return "", usererror.Misuse(i18n.M("profile.settings.selector_only"))
 	}
 	uidArg := ctx.UIDArg()
 	if uidArg == "" {
@@ -52,7 +54,7 @@ func resolveSettingsSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 	if isBindingSelector(uidArg) {
 		return uidArg, nil
 	}
-	return "", onebot11.NewReplayError("此设置仅支持操作自己的账号\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
+	return "", usererror.Forbidden(i18n.M("profile.settings.self_only"))
 }
 
 var profileTimeZoneBaseCommands = []string{
@@ -286,14 +288,7 @@ func (sekaiHandlers) ProfileTimeZoneHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := extractProfileTimeZoneArg(ctx)
 			if args == "" {
-				return nil, onebot11.NewReplayError(
-					"使用方式:\n%s <时区名|偏移量>\n示例:\n%s Asia/Shanghai\n%s +8\n%s +09:00\n%s +28800",
-					ctx.originalTriggerCmd,
-					ctx.originalTriggerCmd,
-					ctx.originalTriggerCmd,
-					ctx.originalTriggerCmd,
-					ctx.originalTriggerCmd,
-				)
+				return nil, usererror.Misuse(i18n.M("profile.timezone.required"))
 			}
 			params := newProfileSettingsParams(ctx)
 			params.TimeZone = args
@@ -313,10 +308,7 @@ func (sekaiHandlers) ProfileChartStyleHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, onebot11.NewReplayError(
-					"使用方式:\n%s <white|black>",
-					ctx.originalTriggerCmd,
-				)
+				return nil, usererror.Misuse(i18n.M("profile.chart_style.invalid"))
 			}
 			params := newProfileSettingsParams(ctx)
 			params.ChartStyle = args
@@ -334,7 +326,7 @@ func (sekaiHandlers) ProfileEnableModularHandle() HarukiSekaiCommandHandler {
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError(formattedUsage, ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("common.no_args"))
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeEnableModular, newProfileSettingsParams(ctx)), nil
 		},
@@ -350,7 +342,7 @@ func (sekaiHandlers) ProfileDisableModularHandle() HarukiSekaiCommandHandler {
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError(formattedUsage, ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("common.no_args"))
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeDisableModular, newProfileSettingsParams(ctx)), nil
 		},
@@ -367,18 +359,12 @@ func (sekaiHandlers) ProfileArrestDifficultyHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, onebot11.NewReplayError(
-					"使用方式:\n%s easy关闭 normal关闭 hard关闭 expert关闭 master开启 append开启",
-					ctx.originalTriggerCmd,
-				)
+				return nil, usererror.Misuse(i18n.M("profile.arrest_difficulty.required"))
 			}
 
 			toggles, err := parseProfileDifficultyToggles(args)
 			if err != nil {
-				return nil, onebot11.NewReplayError(
-					"无效的逮捕难度参数\n使用方式:\n%s easy关闭 normal关闭 hard关闭 expert关闭 master开启 append开启",
-					ctx.originalTriggerCmd,
-				)
+				return nil, usererror.Misuse(i18n.M("profile.arrest_difficulty.invalid")).WithCause(err)
 			}
 
 			params := newProfileSettingsParams(ctx)
@@ -448,7 +434,7 @@ func (sekaiHandlers) ProfileVerifyListHandle() HarukiSekaiCommandHandler {
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError(formattedUsage, ctx.originalTriggerCmd)
+				return nil, usererror.Misuse(i18n.M("common.no_args"))
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeVerifyList, newProfileSettingsParams(ctx)), nil
 		},
@@ -483,7 +469,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			},
 		)
 		if err != nil {
-			return nil, 0, normalizeBindingLookupError(err, "解析绑定账号失败")
+			return nil, 0, normalizeBindingLookupError(err, i18n.Message{})
 		}
 		return binding, hid, nil
 	}
@@ -494,7 +480,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			return rejectCNMySekai(rc)
 		}
 		if p.Mode != "self" {
-			return nil, fmt.Errorf("MySekai抓包相关内容仅支持查询自己的数据")
+			return nil, usererror.Forbidden(i18n.M("binding.data_status.self_only"))
 		}
 
 		binding, hid, err := resolveBinding(false, true)
@@ -502,41 +488,41 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			return nil, err
 		}
 		if !hasUsableMySekaiData(binding) {
-			return nil, newMySekaiDataNotFoundReplayErrorForBinding(binding)
+			return nil, mysekaiDataNotFoundError(binding)
 		}
 		currentBinding = binding
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("无效的账号ID：%w", err)
+			return nil, usererror.Internal(fmt.Errorf("invalid bound game UID: %w", err))
 		}
 		platform = p.Platform
 		platformUserID = p.PlatformUserID
 		dataType = sekaiapi.ToolboxDataTypeMySekai
-		label = "MySekai"
+		label = privateDataMySekai
 		pjskUID = binding.PJSKUserID
 		bindingVisible = binding.Visible
 		resolvedHarukiID = hid
 		bindingServer = binding.Server
 	default:
 		if p.Mode != "self" {
-			return nil, fmt.Errorf("suite抓包相关内容仅支持查询自己的数据")
+			return nil, usererror.Forbidden(i18n.M("binding.data_status.self_only"))
 		}
 		binding, hid, err := resolveBinding(true, false)
 		if err != nil {
 			return nil, err
 		}
 		if !hasUsableSuiteData(binding) {
-			return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+			return nil, suiteDataNotFoundError(binding)
 		}
 		currentBinding = binding
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("无效的账号ID：%w", err)
+			return nil, usererror.Internal(fmt.Errorf("invalid bound game UID: %w", err))
 		}
 		platform = p.Platform
 		platformUserID = p.PlatformUserID
 		dataType = sekaiapi.ToolboxDataTypeSuite
-		label = "Suite"
+		label = privateDataSuite
 		pjskUID = binding.PJSKUserID
 		bindingVisible = binding.Visible
 		resolvedHarukiID = hid
@@ -549,23 +535,19 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 
 	raw, err := rc.App.Toolbox.GetUploadTimeContext(rc.Ctx, bindingServer, dataType, uid, platform, platformUserID)
 	if err != nil {
-		if normalized := normalizeToolboxDataFetchError(err, label, currentBinding); normalized != nil {
-			return nil, normalized
-		}
-		return nil, fmt.Errorf("获取%s更新时间失败：%w", label, err)
+		return nil, normalizeToolboxDataFetchError(err, label, currentBinding)
 	}
 
 	ts, err := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("解析更新时间失败：%w", err)
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("binding.data_status.invalid_time"), fmt.Errorf("parse upload time: %w", err))
 	}
 
 	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, resolvedHarukiID)
-	uploadTime := displaytime.TimeFromUnixSeconds(ts, timeZone)
-	relDur := displaytime.FormatRelativeDuration(displaytime.Now(timeZone).Sub(displaytime.TimeFromUnixSeconds(ts, timeZone)))
-	maskedUID := i18n.MaskUID(pjskUID, bindingVisible)
-
-	text := fmt.Sprintf("UID %s 的%s数据更新时间:\n%s (%s) (%s)",
-		maskedUID, label, displaytime.FormatTime(uploadTime, "2006-01-02 15:04:05"), timeZone, relDur)
-	return onebot11.Message{onebot11.Text(text)}, nil
+	updatedAt, ago := uploadTimeLabels(time.Unix(ts, 0), timeZone)
+	account := i18n.AccountLabel(bindingServer, pjskUID, bindingVisible)
+	if label == privateDataMySekai {
+		return onebot11.Message{onebot11.Text(i18n.T("binding.data_status.mysekai", i18n.Data{"Account": account, "UpdatedAt": updatedAt, "Ago": ago}))}, nil
+	}
+	return onebot11.Message{onebot11.Text(i18n.T("binding.data_status.suite", i18n.Data{"Account": account, "UpdatedAt": updatedAt, "Ago": ago}))}, nil
 }

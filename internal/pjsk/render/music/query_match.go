@@ -3,12 +3,15 @@ package music
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
-	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
+	"haruki-cloud/utils/usererror"
 )
 
 type musicAmbiguousQueryError struct {
@@ -21,33 +24,50 @@ type musicQueryCandidate struct {
 	Title string
 }
 
-func (e *musicAmbiguousQueryError) Error() string {
-	parts := make([]string, 0, len(e.candidates))
-	for _, item := range e.candidates {
-		parts = append(parts, fmt.Sprintf("music%d/%s", item.ID, item.Title))
+// Error is the user reply (typed, see Unwrap): the candidates, one per line.
+func (e *musicAmbiguousQueryError) Error() string { return e.userError().Error() }
+
+// Unwrap exposes the typed user error, so the reply layer shows the
+// candidate list from the catalog.
+func (e *musicAmbiguousQueryError) Unwrap() error { return e.userError() }
+
+// AmbiguousIDs lists the candidate song IDs.
+func (e *musicAmbiguousQueryError) AmbiguousIDs() []int {
+	return ambiguousMusicCandidateIDs(e.candidates)
+}
+
+func (e *musicAmbiguousQueryError) userError() *usererror.Error {
+	return AmbiguousMusicError(e.candidates)
+}
+
+// AmbiguousMusicError is the reply listing several matching songs.
+func AmbiguousMusicError(candidates []musicQueryCandidate) *usererror.Error {
+	lines := make([]i18n.Message, 0, len(candidates))
+	for _, item := range candidates {
+		lines = append(lines, i18n.M("music.ambiguous_candidate", i18n.Data{"ID": item.ID, "Title": item.Title}))
 	}
-	return fmt.Sprintf("%s匹配到多个歌曲，请改用 music<id> 查询：\n%s", e.sourceName, strings.Join(parts, "\n"))
+	return usererror.New(usererror.CodeAmbiguous, i18n.M("music.ambiguous", i18n.Data{"Candidates": lines}))
+}
+
+// ambiguousIDsError is any error that lists the IDs of several matches: the
+// song search of this package and the alias service.
+type ambiguousIDsError interface {
+	error
+	AmbiguousIDs() []int
 }
 
 func isMusicAmbiguousError(err error) bool {
-	if err == nil {
-		return false
-	}
-	if _, ok := errors.AsType[*musicAmbiguousQueryError](err); ok {
-		return true
-	}
-	return strings.Contains(err.Error(), "匹配到多个歌曲")
+	_, ok := errors.AsType[ambiguousIDsError](err)
+	return ok
 }
 
+// ExtractAmbiguousMusicIDs returns the candidate song IDs of an ambiguous
+// song query, judged by the error's type.
 func ExtractAmbiguousMusicIDs(err error) []int {
-	if err == nil {
-		return nil
+	if ambiguous, ok := errors.AsType[ambiguousIDsError](err); ok {
+		return slices.Clone(ambiguous.AmbiguousIDs())
 	}
-	var ambiguous *musicAmbiguousQueryError
-	if errors.As(err, &ambiguous) {
-		return ambiguousMusicCandidateIDs(ambiguous.candidates)
-	}
-	return parseAmbiguousMusicIDs(err.Error())
+	return nil
 }
 
 func ambiguousMusicCandidateIDs(candidates []musicQueryCandidate) []int {
@@ -58,42 +78,6 @@ func ambiguousMusicCandidateIDs(candidates []musicQueryCandidate) []int {
 		}
 	}
 	return ids
-}
-
-func parseAmbiguousMusicIDs(message string) []int {
-	lines := strings.Split(message, "\n")
-	ids := make([]int, 0, len(lines))
-	seen := make(map[int]struct{}, len(lines))
-	for _, line := range lines {
-		id, ok := parseAmbiguousMusicIDLine(line)
-		if !ok {
-			continue
-		}
-		if _, exists := seen[id]; exists {
-			continue
-		}
-		seen[id] = struct{}{}
-		ids = append(ids, id)
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	sort.Ints(ids)
-	return ids
-}
-
-func parseAmbiguousMusicIDLine(line string) (int, bool) {
-	line = strings.TrimSpace(line)
-	if !strings.HasPrefix(strings.ToLower(line), "music") {
-		return 0, false
-	}
-	raw := strings.TrimSpace(line[5:])
-	slashIdx := strings.Index(raw, "/")
-	if slashIdx <= 0 {
-		return 0, false
-	}
-	id, err := strconv.Atoi(strings.TrimSpace(raw[:slashIdx]))
-	return id, err == nil && id > 0
 }
 
 func collectVisibleMusicMatchesByID(source DataSource, ids []int, now int64, allowUnreleased bool) []*masterdata.Music {
@@ -122,7 +106,7 @@ func collectVisibleMusicMatchesByID(source DataSource, ids []int, now int64, all
 func resolveUniqueMusicQuery(source DataSource, query string, allowUnreleased bool) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return nil, fmt.Errorf("music not found: empty query")
+		return nil, notfound.Music("")
 	}
 
 	queryLower := strings.ToLower(query)
@@ -151,7 +135,7 @@ func resolveUniqueMusicQuery(source DataSource, query string, allowUnreleased bo
 		return selectUniqueMusicMatch("曲名/别名", matches)
 	}
 	if allowUnreleased {
-		return nil, fmt.Errorf("music not found: %s", query)
+		return nil, notfound.Music(query)
 	}
 	if matches := collectUnreleasedMusicMatches(source, func(musicInfo *masterdata.Music) bool {
 		return strings.EqualFold(strings.TrimSpace(musicInfo.Title), query)
@@ -174,13 +158,13 @@ func resolveUniqueMusicQuery(source DataSource, query string, allowUnreleased bo
 		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
 	}
 
-	return nil, fmt.Errorf("music not found: %s", query)
+	return nil, notfound.Music(query)
 }
 
 func resolveUniqueMusicKeyword(source DataSource, keyword string, allowUnreleased bool) (*masterdata.Music, error) {
 	keyword = strings.ToLower(strings.TrimSpace(keyword))
 	if keyword == "" {
-		return nil, fmt.Errorf("music query is empty")
+		return nil, usererror.Misuse(i18n.M("music.query_required"))
 	}
 
 	now := currentMusicVisibilityTime()

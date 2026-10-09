@@ -1,0 +1,87 @@
+# 上游服务（工具箱、游戏数据服务、查榜服务、组卡服务、渲染服务）出错时的通用回复。
+# 由 internal/core/upstreamerr 按错误类型选择；上游返回的原文只写日志。
+# 能确定是哪个账号、哪类数据时，绑定相关的回复见 binding.toml。
+
+[upstream.rate_limited]
+description = "上游服务返回“请求过于频繁”（HTTP 429 或查榜服务的限流消息）。占位符：Feature=功能名，取自 common.feature.*。"
+other = "{{.Feature}}请求过于频繁，请稍后再试"
+
+[upstream.maintenance]
+description = "游戏数据服务或查榜服务报告游戏服务器维护中。"
+other = "游戏服务器维护中，请稍后再试"
+
+[upstream.failed]
+description = "上游服务返回了无法使用的结果（5xx、无法解析的数据、拒绝了 Cloud 的请求）。占位符：Feature=功能名，取自 common.feature.*。"
+other = "{{.Feature}}处理请求失败，请稍后再试"
+
+[upstream.toolbox.account_not_bound]
+description = "工具箱里没有这个 QQ 号绑定的游戏账号（不知道是哪个账号、哪类数据时的通用回复）。"
+other = "你还没有在工具箱绑定游戏账号，请先在 Haruki 工具箱绑定游戏账号并上传数据"
+
+[upstream.toolbox.data_not_uploaded]
+description = "工具箱里没有这个账号上传的数据（通用回复）。"
+other = "工具箱里还没有这个账号的数据，请先在 Haruki 工具箱上传抓包数据（Suite）或烤森（MySekai）数据"
+
+[upstream.toolbox.access_denied]
+description = "工具箱拒绝了这个 QQ 号对数据的访问：QQ 号没有在工具箱绑定，或无权访问该账号（通用回复）。"
+other = "当前 QQ 号没有在工具箱完成绑定，或无权访问该账号的数据，请先在 Haruki 工具箱绑定当前 QQ 号"
+
+[upstream.toolbox.owner_banned]
+description = "工具箱报告该游戏账号的所有者已被封禁（通用回复）。"
+other = "该账号的工具箱账号已被封禁，无法获取数据"
+
+[upstream.game_data.player_not_found]
+description = "游戏数据服务找不到该玩家（游戏 UID 不存在或该区服没有这个玩家）。"
+other = "未找到该玩家的公开信息，请检查游戏 UID 和区服"
+
+[upstream.ranking.not_found]
+description = "查榜服务没有该名次或玩家的排行榜记录。"
+other = "当前榜单没有找到对应的排行榜数据"
+
+[upstream.ranking.no_match]
+description = "查榜服务报告找不到请求的数据（活动、名次等），且没有更具体的原因。"
+other = "查榜服务没有找到对应数据"
+
+[upstream.ranking.no_data]
+description = "查榜服务还没有收到该活动的榜线数据（活动刚开始或追踪尚未开始）。"
+other = "查榜服务还没有该活动的榜线数据，请稍后再试"
+
+[upstream.ranking.region_unsupported]
+description = "查榜服务不支持请求的区服。"
+other = "查榜服务暂不支持该区服"
+
+[upstream.render.data_insufficient]
+description = "渲染服务报告数据不足，无法生成图片（例如轨迹点太少）。"
+other = "数据不足，暂时无法生成图片"
+
+[upstream.render.too_large]
+description = "渲染服务报告图片内容或画布过大。"
+other = "查询内容过多，图片过大，请减少查询内容后再试"
+
+[upstream.render.asset_missing]
+description = "渲染服务缺少需要的图片资源。"
+other = "图片资源缺失，暂时无法生成图片"
+
+[upstream.render.asset_broken]
+description = "渲染服务读取到损坏的图片资源。"
+other = "图片资源损坏，暂时无法生成图片"
+
+[upstream.render.asset_download]
+description = "渲染服务下载图片资源失败。"
+other = "图片资源下载失败，请稍后再试"
+
+[upstream.deck.data_not_synced]
+description = "组卡服务还没有该活动或歌曲的游戏数据（新活动、新歌刚上线）。"
+other = "组卡服务还没有同步该活动或歌曲的数据，请稍后再试"
+
+[upstream.deck.cache_expired]
+description = "组卡服务的用户数据缓存已失效。"
+other = "组卡缓存已失效，请稍后再试"
+
+[upstream.deck.user_data_invalid]
+description = "组卡需要的抓包数据无效或为空。"
+other = "抓包数据无效，请在 Haruki 工具箱重新上传抓包数据（Suite）后再试"
+
+[upstream.deck.empty_result]
+description = "组卡服务没有返回任何结果。"
+other = "组卡服务没有返回结果，请稍后再试"

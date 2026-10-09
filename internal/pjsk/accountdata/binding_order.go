@@ -2,11 +2,12 @@ package accountdata
 
 import (
 	"context"
-	"fmt"
 	"sort"
 
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/userbinding"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 func effectiveBindingDisplayOrder(binding *pjskdb.UserBinding) int {
@@ -112,10 +113,10 @@ func (s *BindingService) Swap(ctx context.Context, platform, platformUserID, lef
 	leftSelector = normalizeUID(leftSelector)
 	rightSelector = normalizeUID(rightSelector)
 	if leftSelector == "" || rightSelector == "" {
-		return nil, fmt.Errorf("请提供两个要交换的账号序号，例如 /绑定交换 u1 u2")
+		return nil, usererror.Misuse(i18n.M("binding.swap.selectors_required"))
 	}
 	if leftSelector == rightSelector {
-		return nil, fmt.Errorf("请提供两个不同的账号序号")
+		return nil, usererror.Invalid(i18n.M("binding.swap.same"))
 	}
 
 	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)
@@ -153,7 +154,7 @@ func (s *BindingService) Swap(ctx context.Context, platform, platformUserID, lef
 		return nil, err
 	}
 	if leftItem.BindingID == rightItem.BindingID {
-		return nil, fmt.Errorf("请提供两个不同的账号序号")
+		return nil, usererror.Invalid(i18n.M("binding.swap.same"))
 	}
 
 	if _, err := tx.UserBinding.UpdateOneID(leftItem.BindingID).

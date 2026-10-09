@@ -1,13 +1,14 @@
 package handler
 
 import (
-	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/common"
+	"haruki-cloud/utils/usererror"
 )
 
 var (
@@ -82,7 +83,7 @@ func parseProfileBGToken(tokens []string, index int) (string, string, int, error
 	switch strings.ToLower(token) {
 	case "模糊", "blur", "透明", "alpha":
 		if index+1 >= len(tokens) {
-			return "", "", 0, onebot11.NewReplayError("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")
+			return "", "", 0, usererror.Misuse(i18n.M("profile.bg.adjust_usage"))
 		}
 		return profileBGTokenKind(token), tokens[index+1], 1, nil
 	default:
@@ -92,7 +93,7 @@ func parseProfileBGToken(tokens []string, index int) (string, string, int, error
 		if strings.HasPrefix(token, "透明") {
 			return "alpha", strings.TrimPrefix(token, "透明"), 0, nil
 		}
-		return "", "", 0, fmt.Errorf("无法识别的个人信息背景参数: %s", token)
+		return "", "", 0, usererror.BadParam(token, i18n.M("profile.bg.param_unknown"))
 	}
 }
 
@@ -113,17 +114,17 @@ func profileBGValueLimit(kind string) int {
 func parseProfileBGInt(raw string, minValue, maxValue int) (int, error) {
 	value := strings.TrimSpace(raw)
 	if value == "" {
-		return 0, fmt.Errorf("请提供正确的数值")
+		return 0, usererror.BadParam(value, i18n.M("common.param.integer"))
 	}
 	n := 0
 	for _, ch := range value {
 		if ch < '0' || ch > '9' {
-			return 0, fmt.Errorf("请提供正确的数值")
+			return 0, usererror.BadParam(value, i18n.M("common.param.integer"))
 		}
 		n = n*10 + int(ch-'0')
 	}
 	if n < minValue || n > maxValue {
-		return 0, fmt.Errorf("数值超出范围，需要在 %d~%d 之间", minValue, maxValue)
+		return 0, usererror.OutOfRange(i18n.M("common.param_name.value"), minValue, maxValue)
 	}
 	return n, nil
 }
@@ -136,7 +137,7 @@ func resolveProfileBGSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 	if isBindingSelector(uidArg) {
 		return uidArg, nil
 	}
-	return "", onebot11.NewReplayError("此设置仅支持操作自己的账号\n使用方式：%s [u序号] ...", ctx.originalTriggerCmd)
+	return "", usererror.Forbidden(i18n.M("profile.settings.self_only"))
 }
 
 func (sekaiHandlers) ProfileUploadBGHandle() HarukiSekaiCommandHandler {
@@ -150,7 +151,7 @@ func (sekaiHandlers) ProfileUploadBGHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			imageURL := extractFirstImageURL(ctx)
 			if imageURL == "" {
-				return nil, onebot11.NewReplayError("请在命令中附带一张个人信息背景图片")
+				return nil, usererror.Misuse(i18n.M("profile.bg.image_required"))
 			}
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {

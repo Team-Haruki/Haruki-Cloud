@@ -1,13 +1,13 @@
 package music
 
 import (
-	"fmt"
 	"slices"
 	"strings"
 	"unicode"
 
 	"golang.org/x/text/width"
 
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
@@ -22,11 +22,11 @@ type musicFuzzyScore struct {
 func resolveFuzzyMusicQuery(source DataSource, query string, allowUnreleased bool) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return nil, fmt.Errorf("music not found: empty query")
+		return nil, notfound.Music("")
 	}
 	normalizedQuery := normalizeMusicFuzzyText(query)
 	if normalizedQuery == "" {
-		return nil, fmt.Errorf("music not found: %s", query)
+		return nil, notfound.Music(query)
 	}
 
 	now := currentMusicVisibilityTime()
@@ -37,7 +37,7 @@ func resolveFuzzyMusicQuery(source DataSource, query string, allowUnreleased boo
 	if !allowUnreleased && hasUnreleasedFuzzyMusicMatch(source, normalizedQuery, now) {
 		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
 	}
-	return nil, fmt.Errorf("music not found: %s", query)
+	return nil, notfound.Music(query)
 }
 
 func collectFuzzyMusicMatches(source DataSource, normalizedQuery string, now int64, allowUnreleased bool) ([]*masterdata.Music, map[int]musicFuzzyScore) {

@@ -3,21 +3,25 @@ package mysekai
 import (
 	"bytes"
 	"encoding/json/jsontext"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/common"
+	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) ResolvePhoto(query PhotoQuery) (*PhotoResult, error) {
 	c = c.withRegion(query.Region)
 	if query.Seq == 0 {
-		return nil, fmt.Errorf("请输入正确的照片编号（从1或-1开始）")
+		return nil, usererror.Misuse(i18n.M("mysekai.photo.index_invalid"))
 	}
 
 	merged, region, err := c.prepareSnapshotOnly(query.Region)
@@ -27,7 +31,7 @@ func (c *Controller) ResolvePhoto(query PhotoQuery) (*PhotoResult, error) {
 
 	photos := nestedList(merged, "userMysekaiPhotos")
 	if len(photos) == 0 {
-		return nil, fmt.Errorf("当前账号没有可用的 MySekai 照片数据")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.photo.none"))
 	}
 
 	seq := query.Seq
@@ -35,20 +39,20 @@ func (c *Controller) ResolvePhoto(query PhotoQuery) (*PhotoResult, error) {
 		seq = len(photos) + seq + 1
 	}
 	if seq < 1 {
-		return nil, fmt.Errorf("照片编号超出范围（当前共有%d张）", len(photos))
+		return nil, usererror.New(usererror.CodeOutOfRange, i18n.M("mysekai.photo.out_of_range", i18n.Data{"Count": len(photos)}))
 	}
 	if seq > len(photos) {
-		return nil, fmt.Errorf("照片编号大于照片数量(%d)", len(photos))
+		return nil, usererror.New(usererror.CodeOutOfRange, i18n.M("mysekai.photo.out_of_range", i18n.Data{"Count": len(photos)}))
 	}
 
 	photo, ok := photos[seq-1].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("照片数据格式错误")
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("mysekai.photo.invalid"), errors.New("photo entry is not an object"))
 	}
 
 	imagePath := stringValue(photo["imagePath"])
 	if imagePath == "" {
-		return nil, fmt.Errorf("该照片缺少 imagePath，无法下载")
+		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("mysekai.photo.invalid"), errors.New("photo has no imagePath"))
 	}
 
 	result := &PhotoResult{
@@ -72,24 +76,24 @@ func (c *Controller) ensure() error {
 
 func (c *Controller) ensureMasterdata() error {
 	if c == nil {
-		return fmt.Errorf("mysekai controller is not initialized")
+		return usererror.Misconfigured(errors.New("mysekai controller is not initialized"))
 	}
 	if c.masterdata == nil || !c.masterdata.Configured() {
-		return fmt.Errorf("mysekai masterdata is not configured")
+		return usererror.Misconfigured(errors.New("mysekai masterdata is not configured"))
 	}
 	return nil
 }
 
 func (c *Controller) ensureSnapshot() error {
 	if c == nil {
-		return fmt.Errorf("mysekai controller is not initialized")
+		return usererror.Misconfigured(errors.New("mysekai controller is not initialized"))
 	}
 	// Direct mysekai JSON takes priority (no suite data required).
 	if len(c.rawMySekaiJSON) > 0 {
 		return nil
 	}
 	if c.snapshot == nil {
-		return fmt.Errorf("user snapshot is not available (bind Toolbox or provide snapshot)")
+		return snapshot.ErrMySekaiUnavailable
 	}
 	if err := c.snapshot.Require(); err != nil {
 		return err
@@ -289,7 +293,7 @@ func (c *Controller) decodeSnapshotBytes(rawBytes []byte) (map[string]any, error
 	err := decodeJSONUseNumber(rawBytes, &merged)
 	finishDecode()
 	if err != nil {
-		return nil, fmt.Errorf("decode mysekai data: %w", err)
+		return nil, usererror.Wrap(usererror.CodeSetup, i18n.M("mysekai.data_invalid"), fmt.Errorf("decode mysekai data: %w", err))
 	}
 
 	// When using raw mysekai JSON directly (not merged via userdata.Service),

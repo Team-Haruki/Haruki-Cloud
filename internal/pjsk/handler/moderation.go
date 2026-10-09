@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -126,7 +127,7 @@ func validateQQID(value string) (string, error) {
 
 func executeGlobalModeration(rc *RequestContext) (onebot11.Message, error) {
 	if rc == nil || rc.App == nil || rc.App.BanChecker == nil {
-		return nil, usererror.Misconfigured(fmt.Errorf("global moderation: ban checker is not configured"))
+		return nil, usererror.Misconfigured(usererror.Misconfigured(errors.New("global moderation: ban checker is not configured")))
 	}
 	switch rc.Cmd.Mode {
 	case modeGlobalKill:

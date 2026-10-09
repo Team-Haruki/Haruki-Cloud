@@ -1,7 +1,8 @@
 package sk
 
 import (
-	"fmt"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -10,7 +11,7 @@ import (
 
 func (c *Controller) BuildPlayerTraceRequest(req drawing.PlayerTraceRequest) (*drawing.PlayerTraceRequest, error) {
 	if len(req.Ranks) == 0 {
-		return nil, fmt.Errorf("sk player-trace request has no ranks")
+		return nil, usererror.Misuse(i18n.M("sk.target_required"))
 	}
 	return &req, nil
 }
@@ -25,7 +26,7 @@ func (c *Controller) RenderPlayerTrace(req drawing.PlayerTraceRequest) ([]byte, 
 
 func (c *Controller) RenderPlayerTraceImage(req drawing.PlayerTraceRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildPlayerTraceRequest(req)
@@ -65,22 +66,22 @@ func (c *Controller) buildPrimaryPlayerTrace(query TrackerRankQuery) ([]drawing.
 	if query.UserID != nil {
 		ranks, err := c.buildUserTraceFromTracker(query.Region, query.EventID, *query.UserID, query.WlCharacterID)
 		if err == nil && len(ranks) == 0 {
-			err = fmt.Errorf("no trace data available for user")
+			err = usererror.New(usererror.CodeNotFound, i18n.M("sk.trace.no_user_data"))
 		}
 		return ranks, nil, err
 	}
 	if len(query.Ranks) == 0 {
-		return nil, nil, fmt.Errorf("player-trace requires user_id or rank")
+		return nil, nil, usererror.Misuse(i18n.M("sk.target_required"))
 	}
 	if len(query.Ranks) > 2 {
-		return nil, nil, fmt.Errorf("player-trace 最多支持两个排名")
+		return nil, nil, usererror.Misuse(i18n.M("sk.player_trace.max_two"))
 	}
 	first, err := c.buildPlayerTraceByRankFromTracker(query.Region, query.EventID, query.Ranks[0], query.WlCharacterID)
 	if err != nil {
 		return nil, nil, err
 	}
 	if len(first) == 0 {
-		return nil, nil, fmt.Errorf("no trace data available for rank %d", query.Ranks[0])
+		return nil, nil, usererror.New(usererror.CodeNotFound, i18n.M("sk.trace.no_rank_data", i18n.Data{"Rank": query.Ranks[0]}))
 	}
 	if len(query.Ranks) == 1 {
 		return first, nil, nil
@@ -121,7 +122,7 @@ func (c *Controller) playerTraceCharacterIcon(query TrackerRankQuery) *string {
 
 func (c *Controller) BuildRankTraceRequest(req drawing.RankTraceRequest) (*drawing.RankTraceRequest, error) {
 	if len(req.Ranks) == 0 {
-		return nil, fmt.Errorf("sk rank-trace request has no ranks")
+		return nil, usererror.Misuse(i18n.M("sk.target_required"))
 	}
 	return &req, nil
 }
@@ -134,7 +135,7 @@ func (c *Controller) BuildRankTraceRequestFromTracker(req TrackerRankQuery) (*dr
 		return nil, err
 	}
 	if normalized.UserID != nil {
-		return nil, fmt.Errorf("rank-trace 暂不支持按用户查询，请使用排名")
+		return nil, usererror.Misuse(i18n.M("sk.rank_trace.user_unsupported"))
 	}
 	targetRank := normalized.Ranks[0]
 	trace, err := c.buildRankTraceFromTracker(normalized.Region, normalized.EventID, targetRank, normalized.WlCharacterID)
@@ -165,7 +166,7 @@ func (c *Controller) RenderRankTrace(req drawing.RankTraceRequest) ([]byte, erro
 
 func (c *Controller) RenderRankTraceImage(req drawing.RankTraceRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildRankTraceRequest(req)

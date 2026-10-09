@@ -1,0 +1,69 @@
+# 活动：查活动、活动列表、活动记录、活动规划。
+
+[event.not_found_in_region]
+description = "在某个区服找不到指定 ID 的活动。占位符：Region=区服显示名；ID=活动 ID。"
+other = "{{.Region}}未找到活动 {{.ID}}"
+
+[event.query_required]
+description = "查活动但没有写参数。"
+other = "请写要查询的活动"
+
+[event.not_found]
+description = "查活动时找不到匹配的活动（不确定区服时）。"
+other = "未找到对应的活动"
+
+[event.not_found_in_region_hint]
+description = "在某个区服查活动时找不到匹配的活动，提示可以加区服前缀查其他区服。占位符：Region=区服显示名。"
+other = "{{.Region}}未找到对应的活动\n查询其他区服的活动请加区服前缀，例如 /cn查活动"
+
+[event.unreleased]
+description = "查询的活动还没有开始。"
+other = "该活动还未开始"
+
+[event.no_ongoing]
+description = "需要当前活动的指令，但当前没有进行中的活动。"
+other = "当前没有进行中的活动"
+
+[event.no_match]
+description = "按条件筛选活动后没有结果。"
+other = "没有符合条件的活动"
+
+[event.record.no_history]
+description = "活动记录：该账号没有任何活动记录。"
+other = "没有找到活动记录"
+
+[event.planner.target_required]
+description = "活动规划没有写目标 PT 或目标名次。"
+other = "请写目标 PT 或目标名次，例如 pt1000w 或 t100"
+
+[event.planner.no_songs]
+description = "活动规划没有可计算的歌曲。"
+other = "没有可计算的歌曲"
+
+[event.planner.no_deck]
+description = "活动规划：组卡服务没有返回某首歌的卡组数据或 PT。占位符：Song=用户写的歌曲。"
+other = "组卡服务没有返回“{{.Song}}”的卡组数据，请稍后再试"
+
+[event.planner.no_current]
+description = "活动规划没有指定活动，且当前没有进行中的活动。占位符：Region=区服显示名。"
+other = "{{.Region}}当前没有进行中的活动，请在指令里写活动 ID，例如 event123"
+
+[event.planner.simulated_rank]
+description = "模拟活动按名次规划（模拟活动没有榜线）。占位符：Rank=名次。"
+other = "模拟活动不能按 T{{.Rank}} 读取榜线，请直接写目标 PT"
+
+[event.planner.no_line]
+description = "活动规划按名次读取榜线，但查榜服务没有该名次的有效榜线。占位符：Rank=名次。"
+other = "查榜服务没有 T{{.Rank}} 的有效榜线"
+
+[event.planner.no_line_wl]
+description = "活动规划按 WL 章节名次读取榜线，但查榜服务没有该名次的有效榜线。占位符：Rank=名次。"
+other = "查榜服务没有该 WL 章节 T{{.Rank}} 的有效榜线"
+
+[event.planner.wl_character_required]
+description = "活动规划在 WL 活动按章节单榜规划，但没有写章节角色。"
+other = "WL 章节单榜需要写章节角色，要按活动总榜规划请加“总榜”"
+
+[event.planner.boost_range]
+description = "活动规划的火数不在 1~10。"
+other = "火数只能是 1~10"

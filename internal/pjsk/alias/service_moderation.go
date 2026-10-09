@@ -2,25 +2,26 @@ package alias
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/aliassubmissionban"
 	"haruki-cloud/database/pjsk/pendingalias"
-	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 func (s *Service) GetSubmitter(ctx context.Context, platform, platformUserID string, reviewID int64) (*PjskAliasRecord, error) {
 	if !s.IsReady() {
-		return nil, onebot11.NewReplayError("别名服务未就绪，请稍后再试")
+		return nil, errAliasUnavailable()
 	}
 	if _, _, err := s.requireAdmin(ctx, platform, platformUserID); err != nil {
 		return nil, err
 	}
 	if reviewID <= 0 {
-		return nil, onebot11.NewReplayError("请输入正确的待审核ID")
+		return nil, usererror.Invalid(i18n.M("alias.review_id_positive"))
 	}
 
 	row, err := s.pjsk.PendingAlias.Query().
@@ -31,7 +32,7 @@ func (s *Service) GetSubmitter(ctx context.Context, platform, platformUserID str
 		Only(ctx)
 	if err != nil {
 		if pjskdb.IsNotFound(err) {
-			return nil, onebot11.NewReplayError("未找到待审核别名ID: %d", reviewID)
+			return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"IDs": strconv.FormatInt(reviewID, 10)}))
 		}
 		return nil, err
 	}
@@ -40,14 +41,14 @@ func (s *Service) GetSubmitter(ctx context.Context, platform, platformUserID str
 		return nil, err
 	}
 	if len(records) != 1 {
-		return nil, fmt.Errorf("未找到待审核别名ID: %d", reviewID)
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("alias.review_not_found", i18n.Data{"IDs": strconv.FormatInt(reviewID, 10)}))
 	}
 	return &records[0], nil
 }
 
 func (s *Service) BanSubmitter(ctx context.Context, platform, platformUserID, targetPlatform, targetPlatformUserID string) (*SubmissionBanRecord, error) {
 	if !s.IsReady() {
-		return nil, onebot11.NewReplayError("别名服务未就绪，请稍后再试")
+		return nil, errAliasUnavailable()
 	}
 	if err := s.requireWritable(); err != nil {
 		return nil, err
@@ -62,7 +63,7 @@ func (s *Service) BanSubmitter(ctx context.Context, platform, platformUserID, ta
 	targetPlatform = strings.TrimSpace(targetPlatform)
 	targetPlatformUserID = strings.TrimSpace(targetPlatformUserID)
 	if targetPlatform == "" || targetPlatformUserID == "" {
-		return nil, onebot11.NewReplayError("请输入要禁用的用户ID")
+		return nil, usererror.Misuse(i18n.M("alias.ban_target_required"))
 	}
 
 	row, err := s.pjsk.AliasSubmissionBan.Query().

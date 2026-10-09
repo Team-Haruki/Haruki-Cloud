@@ -2,14 +2,15 @@ package handler
 
 import (
 	"context"
-	json "haruki-cloud/internal/jsonutil"
 	"strings"
 	"testing"
 
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestNoteNumHandleBuildsCommandRequest(t *testing.T) {
@@ -162,9 +163,7 @@ func TestBPMHandleReturnsUpdatedHelp(t *testing.T) {
 		Context:    context.Background(),
 		TriggerCmd: "/查BPM",
 	})
-	if err == nil || !strings.Contains(err.Error(), "请输入要查询 BPM 的歌曲名") {
-		t.Fatalf("expected updated BPM help, got %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "music.bpm.query_required")
 }
 
 func TestBPMSearchHandleReturnsUpdatedHelp(t *testing.T) {
@@ -178,9 +177,7 @@ func TestBPMSearchHandleReturnsUpdatedHelp(t *testing.T) {
 		Context:    context.Background(),
 		TriggerCmd: "/bpms",
 	})
-	if err == nil || !strings.Contains(err.Error(), "请输入要反查的 BPM 数值") {
-		t.Fatalf("expected BPM search help, got %v", err)
-	}
+	testutil.RequireUserError(t, err, "", "music.bpm.value_required")
 }
 
 func TestFormatMusicBPMSequenceDoesNotTruncate(t *testing.T) {

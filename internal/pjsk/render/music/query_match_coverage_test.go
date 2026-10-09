@@ -56,9 +56,9 @@ func TestAmbiguousMusicErrorExtractionBranches(t *testing.T) {
 		candidates: []musicQueryCandidate{{ID: 3, Title: "Three"}, {ID: -1, Title: "bad"}, {ID: 2, Title: "Two"}},
 	}
 	{
-		testutil.Require(t, strings.Contains(typed.Error(), "music3/Three"), "ambiguous error was not recognized: %v", typed)
+		testutil.Require(t, strings.Contains(typed.Error(), "music3：Three"), "ambiguous error was not recognized: %v", typed)
 		testutil.Require(t, isMusicAmbiguousError(typed), "ambiguous error was not recognized: %v", typed)
-		testutil.Require(t, isMusicAmbiguousError(errors.New("匹配到多个歌曲")), "ambiguous error was not recognized: %v", typed)
+		testutil.Require(t, !isMusicAmbiguousError(errors.New("匹配到多个歌曲")), "ambiguity must be judged by type, not text: %v", typed)
 	}
 	{
 		testutil.RequireArgs(t, !(isMusicAmbiguousError(nil)), "non-ambiguous error was recognized")
@@ -73,7 +73,7 @@ func TestAmbiguousMusicErrorExtractionBranches(t *testing.T) {
 	textErr := errors.New("prefix\n music10/Ten \nMUSIC2/Two\nmusic10/Duplicate\nmusicx/Bad\nmusic0/Zero\nmusic7 no slash")
 	{
 		got := ExtractAmbiguousMusicIDs(textErr)
-		testutil.Require(t, reflect.DeepEqual(got, []int{2, 10}), "text ambiguous IDs = %v", got)
+		testutil.Require(t, got == nil, "IDs must not be parsed from error text: %v", got)
 	}
 	{
 
@@ -166,7 +166,7 @@ func TestResolveUniqueMusicQueryAllMatchKinds(t *testing.T) {
 		_, err := resolveUniqueMusicQuery(newQueryMatchSource(), "missing", true)
 		{
 			testutil.Require(t, !(err == nil), "allow-unreleased missing error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "not found"), "allow-unreleased missing error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.not_found", "allow-unreleased missing error = %v", err)
 		}
 	}
 
@@ -212,7 +212,7 @@ func TestResolveUniqueMusicQueryAllMatchKinds(t *testing.T) {
 		_, err := resolveUniqueMusicQuery(newQueryMatchSource(), "absent", false)
 		{
 			testutil.Require(t, !(err == nil), "missing query error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "not found"), "missing query error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.not_found", "missing query error = %v", err)
 		}
 	}
 

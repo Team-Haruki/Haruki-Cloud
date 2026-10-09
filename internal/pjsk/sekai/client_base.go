@@ -13,6 +13,7 @@ import (
 
 	"haruki-cloud/config"
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 	"haruki-cloud/utils/usererror"
@@ -27,18 +28,20 @@ const (
 	slowHTTPLogThreshold     = 2 * time.Second
 )
 
-// sanitizeNetworkError strips embedded URLs from HTTP client errors so that
-// internal service hostnames are never exposed in user-facing messages.
-// The original error type is intentionally discarded; only the sanitized
-// message text is preserved.
-func sanitizeNetworkError(err error) error {
+// sanitizeNetworkError wraps a transport failure of service as an
+// upstreamerr.TransportError whose text is "<prefix>: <cause>" with the
+// cause's URLs (internal hostnames) removed. The original error stays
+// reachable through Unwrap for errors.Is checks, and its kind (timeout or
+// unavailable) is judged from its type.
+func sanitizeNetworkError(service upstreamerr.Service, prefix string, err error) error {
 	if err == nil {
 		return nil
 	}
-	if usererror.MessageContainsSensitiveURL(err.Error()) {
-		return errors.New("network request failed")
+	text := err.Error()
+	if usererror.MessageContainsSensitiveURL(text) {
+		text = "network request failed"
 	}
-	return errors.New(err.Error())
+	return upstreamerr.Transport(service, prefix+": "+text, err)
 }
 
 // newRestyClient returns a resty.Client with the shared logging and the

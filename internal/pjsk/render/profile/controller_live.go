@@ -1,6 +1,7 @@
 package profile
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 )
 
 func cloneProfileDataSources(sources []drawing.ProfileDataSource) []drawing.ProfileDataSource {
@@ -90,7 +92,7 @@ func (c *Controller) BuildProfileRequestFromAPIWithSnapshot(query Query, resp *s
 
 func (c *Controller) buildProfileRequestFromAPIState(query Query, resp *sekai.GetAnotherProfileResponse, frames []snapshot.RawUserFrame, snapshot snapshot.Snapshot) (*drawing.ProfileRequest, error) {
 	if c == nil || c.sources == nil {
-		return nil, fmt.Errorf("profile controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("profile controller is not initialized"))
 	}
 	if resp == nil {
 		return nil, fmt.Errorf("nil API response")
@@ -99,7 +101,7 @@ func (c *Controller) buildProfileRequestFromAPIState(query Query, resp *sekai.Ge
 	region := c.sources.ResolveRegion(renderregion.Normalize(query.Region))
 	source, ok := c.sources.SourceForRegion(region)
 	if !ok {
-		return nil, fmt.Errorf("profile data source is not configured")
+		return nil, usererror.Misconfigured(errors.New("profile data source is not configured"))
 	}
 
 	state := resolveProfileRenderState(resp, snapshot)
@@ -165,7 +167,7 @@ func (c *Controller) BuildDetailedProfileCardFromAPIWithSnapshot(query Query, re
 
 func (c *Controller) buildDetailedProfileCardFromAPIState(query Query, resp *sekai.GetAnotherProfileResponse, frames []snapshot.RawUserFrame, snapshot snapshot.Snapshot) (*drawing.DetailedProfileCardRequest, error) {
 	if c == nil || c.sources == nil {
-		return nil, fmt.Errorf("profile controller is not initialized")
+		return nil, usererror.Misconfigured(errors.New("profile controller is not initialized"))
 	}
 	if resp == nil {
 		return nil, fmt.Errorf("nil API response")
@@ -174,7 +176,7 @@ func (c *Controller) buildDetailedProfileCardFromAPIState(query Query, resp *sek
 	region := c.sources.ResolveRegion(renderregion.Normalize(query.Region))
 	source, ok := c.sources.SourceForRegion(region)
 	if !ok {
-		return nil, fmt.Errorf("profile data source is not configured")
+		return nil, usererror.Misconfigured(errors.New("profile data source is not configured"))
 	}
 
 	state := resolveProfileRenderState(resp, snapshot)
@@ -258,7 +260,7 @@ func (c *Controller) RenderProfileFromAPI(query Query, resp *sekai.GetAnotherPro
 
 func (c *Controller) RenderProfileFromAPIImage(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildProfileRequestFromAPI(query, resp, framesJSON)
@@ -279,7 +281,7 @@ func (c *Controller) RenderProfileFromAPIWithSnapshot(query Query, resp *sekai.G
 
 func (c *Controller) RenderProfileFromAPIWithSnapshotImage(query Query, resp *sekai.GetAnotherProfileResponse, snapshot snapshot.Snapshot) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildProfileRequestFromAPIWithSnapshot(query, resp, snapshot)

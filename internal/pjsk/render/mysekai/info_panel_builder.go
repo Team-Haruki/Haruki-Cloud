@@ -25,7 +25,7 @@ func (c *Controller) BuildInfoPanelRequest(query InfoPanelQuery) (*drawing.Profi
 
 func (c *Controller) RenderInfoPanelImage(query InfoPanelQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, drawing.ErrNotConfigured
 	}
 	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildInfoPanelRequest(query)

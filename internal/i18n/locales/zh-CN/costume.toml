@@ -1,0 +1,242 @@
+# 服装：查服装、服装列表、3D 预览与 3D 组合。
+
+[costume.part.outfit]
+description = "部件名称，用在 costume.* 的 Part 占位符里：服装。"
+other = "服装"
+
+[costume.part.accessory]
+description = "部件名称，用在 costume.* 的 Part 占位符里：饰品。"
+other = "饰品"
+
+[costume.part.hair]
+description = "部件名称，用在 costume.* 的 Part 占位符里：发型。"
+other = "发型"
+
+[costume.part.character]
+description = "部件名称，用在 costume.combo.duplicate 的 Part 占位符里：角色。"
+other = "角色"
+
+[costume.part.outfit_color]
+description = "部件名称，用在 costume.combo.duplicate 的 Part 占位符里：服装颜色。"
+other = "服装颜色"
+
+[costume.part.accessory_color]
+description = "部件名称，用在 costume.combo.duplicate 的 Part 占位符里：饰品颜色。"
+other = "饰品颜色"
+
+[costume.param_name.color_index]
+description = "参数名称，用在 common.out_of_range 的 Param 占位符里：查服装的颜色序号。"
+other = "颜色序号"
+
+[costume.param_name.character_id]
+description = "参数名称，用在 common.out_of_range 的 Param 占位符里：3D 角色 ID。"
+other = "角色 ID"
+
+[costume.not_for_character]
+description = "服装、饰品或发型不适用于指定的角色。占位符：Part=部件名称（costume.part.*）；ID=部件 ID；Character=角色 ID。"
+other = "{{.Part}} {{.ID}} 不适用于角色 ID {{.Character}}"
+
+[costume.accessory_raw_ambiguous]
+description = "饰品原始 ID 在该角色下对应多个独立饰品。占位符：RawID=原始 ID；Character=角色 ID；IDs=候选饰品 ID，用“、”分隔。"
+other = "饰品原始 ID {{.RawID}} 在角色 ID {{.Character}} 下对应多个独立饰品（ID：{{.IDs}}），请写明饰品 ID"
+
+[costume.color_index_min]
+description = "查服装的颜色序号小于 1。"
+other = "颜色序号超出范围，请写从 1 开始的颜色序号"
+
+[costume.card_has_no_costume]
+description = "查服装时该卡牌没有服装。"
+other = "该卡牌没有服装"
+
+[costume.combo_not_found]
+description = "找不到服装、角色、颜色的组合。占位符：Outfit=服装 ID；Character=角色 ID；Color=颜色 ID。"
+other = "找不到服装 ID {{.Outfit}}、角色 ID {{.Character}}、颜色 ID {{.Color}} 的组合"
+
+[costume.part_name_not_found]
+description = "按名称找不到角色的部件。占位符：Character=角色 ID；Part=部件名称（costume.part.*）；Name=用户写的名称。"
+other = "找不到角色 ID {{.Character}} 的{{.Part}}“{{.Name}}”"
+
+[costume.part_name_ambiguous]
+description = "按名称匹配到角色的多个部件。占位符：Character=角色 ID；Part=部件名称（costume.part.*）；Name=用户写的名称；IDs=候选 ID，用“、”分隔。"
+other = "角色 ID {{.Character}} 有多个{{.Part}}匹配“{{.Name}}”（ID：{{.IDs}}），请写明组件 ID"
+
+[costume.query.type_invalid]
+description = "服装查询的类型不是服装、饰品或发型。"
+other = "查询类型必须是服装、饰品或发型"
+
+[costume.query.character_id_required]
+description = "“角色”后面没有写 1~31 的 ID。"
+other = "“角色”后面请写 1~31 的角色 ID"
+
+[costume.query.character_required]
+description = "需要角色但没有写 1~31 的 ID 或完整角色名。"
+other = "请写 1~31 的角色 ID 或完整的角色名"
+
+[costume.query.duplicate_character_id]
+description = "角色 ID 写了不止一次。"
+other = "角色 ID 重复"
+
+[costume.query.duplicate_character]
+description = "角色写了不止一次。"
+other = "重复指定了角色"
+
+[costume.query.part_name_required]
+description = "只写了角色 ID，没有写组件名称。"
+other = "除了角色 ID，还需要写组件名称"
+
+[costume.query.unknown_param]
+description = "服装查询里有无法识别的参数，作为 common.bad_param 的原因行。"
+other = "无法识别这个参数"
+
+[costume.query.part_param_conflict]
+description = "部件参数重复，或与查询类型不匹配。占位符：Part=部件名称（costume.part.*）。"
+other = "{{.Part}}参数重复或与查询类型不匹配"
+
+[costume.query.duplicate_color_id]
+description = "颜色 ID 写了不止一次。"
+other = "颜色 ID 重复"
+
+[costume.query.param_not_accepted]
+description = "组件查询不接受某个参数，作为 common.bad_param 的原因行。"
+other = "组件查询不接受这个参数"
+
+[costume.query.too_many_params]
+description = "服装查询的参数太多。"
+other = "查询参数过多"
+
+[costume.query.part_id_required]
+description = "没有写部件 ID。占位符：Part=部件名称（costume.part.*）。"
+other = "请写{{.Part}} ID"
+
+[costume.query.color_id_range]
+description = "颜色 ID 不在 1~4 之间。"
+other = "颜色 ID 必须在 1~4 之间，颜色 1 为原版"
+
+[costume.query.miku_one_unit]
+description = "使用 Miku 时写了多个团名。"
+other = "使用 Miku 时只能写一个团名"
+
+[costume.query.miku_unit_required]
+description = "使用 Miku 时没有写团名。"
+other = "使用 Miku 时请同时写团名：vs、mmj、ln、vbs、wxs 或 n25"
+
+[costume.query.character_unmapped]
+description = "角色名无法对应到 3D 角色。"
+other = "无法把这个角色名对应到 3D 角色"
+
+[costume.combo.unknown_param]
+description = "3D 组合里有无法识别的参数，作为 common.bad_param 的原因行。"
+other = "无法识别这个组合参数"
+
+[costume.combo.label_missing]
+description = "3D 组合参数缺少部件标签，作为 common.bad_param 的原因行。"
+other = "缺少服装、饰品、发型或角色标签"
+
+[costume.combo.character_missing]
+description = "3D 组合的角色参数没有 ID 或角色名。"
+other = "组合里的角色缺少 ID 或完整的角色名"
+
+[costume.combo.id_missing]
+description = "3D 组合参数缺少 ID，作为 common.bad_param 的原因行。"
+other = "缺少 ID"
+
+[costume.combo.part_id_invalid]
+description = "3D 组合的部件 ID 无效。"
+other = "组合部件 ID 无效"
+
+[costume.combo.part_type_unknown]
+description = "3D 组合的部件类型无法识别，作为 common.bad_param 的原因行。"
+other = "无法识别这个组合部件类型"
+
+[costume.combo.duplicate]
+description = "3D 组合里重复写了某个部件。占位符：Part=部件名称（costume.part.*）。"
+other = "组合里重复指定了{{.Part}}"
+
+[costume.combo.color_position]
+description = "3D 组合的颜色 ID 没有紧跟在服装或饰品后面。"
+other = "颜色 ID 必须紧跟在服装或饰品后面"
+
+[costume.preview3d.disabled]
+description = "这个 Bot 没有开启 3D 预览功能。"
+other = "3D 预览功能未开启"
+
+[costume.preview3d.region_disabled]
+description = "该区服没有开启 3D 预览功能。占位符：Region=区服显示名。"
+other = "{{.Region}}没有开启 3D 预览功能"
+
+[costume.preview3d.role_mismatch]
+description = "3D 组合的部件不属于同一个角色。"
+other = "这些 3D 部件不属于同一个角色，请检查区服、角色组合和部件 ID"
+
+[costume.preview3d.outfit_unusable]
+description = "3D 组合的服装没有对应的角色模型或颜色。"
+other = "该服装没有对应的角色模型或颜色版本，请检查服装 ID、角色 ID 和颜色 ID"
+
+[costume.preview3d.accessory_unusable]
+description = "3D 组合的饰品不适用于该角色模型或颜色。"
+other = "该饰品不适用于这个角色模型或颜色，请检查饰品 ID、角色 ID 和颜色 ID"
+
+[costume.preview3d.accessory_legacy]
+description = "写的是旧版饰品短 ID。"
+other = "这是旧版饰品短 ID，请用 /饰品列表 查询完整的饰品 ID"
+
+[costume.preview3d.accessory_legacy_ids]
+description = "写的是旧版饰品短 ID，它已拆分为几个独立饰品。占位符：IDs=拆分后的饰品 ID，用“、”分隔。"
+other = "旧版饰品短 ID 已拆分为独立饰品（ID：{{.IDs}}），请写完整的饰品 ID，也可以用 /饰品列表 查询"
+
+[costume.preview3d.accessory_raw_ambiguous]
+description = "原始饰品 ID 对应多个独立饰品。"
+other = "这个原始饰品对应多个独立饰品，请改用完整的饰品 ID"
+
+[costume.preview3d.hair_unusable]
+description = "该角色没有这个发型 ID。"
+other = "该角色没有这个发型 ID，请先用 /发型列表 查询"
+
+[costume.preview3d.duplicate_role]
+description = "3D 角色数据重复（数据异常）。"
+other = "3D 角色数据存在重复，请稍后再试"
+
+[costume.preview3d.anchor_missing]
+description = "3D 组合找不到能确定角色的部件。"
+other = "找不到能确定角色的 3D 部件，请检查部件 ID"
+
+[costume.preview3d.part_unusable]
+description = "3D 组合的某个部件不能用于当前角色或组合。占位符：Part=部件名称（costume.part.*）；ID=部件 ID。"
+other = "{{.Part}} ID {{.ID}} 不能用于当前角色或组合"
+
+[costume.preview3d.head_hair_blocked]
+description = "3D 组合的饰品和发型不兼容。"
+other = "该饰品与发型不兼容，请更换其中一个部件"
+
+[costume.preview3d.part_not_exported]
+description = "3D 部件还没有导出完成。"
+other = "该 3D 部件尚未导出完成，请更换部件或稍后再试"
+
+[costume.preview3d.part_not_found]
+description = "找不到 3D 部件 ID。"
+other = "找不到这个 3D 部件 ID，请检查区服和 ID"
+
+[costume.preview3d.default_role_missing]
+description = "找不到角色的默认 3D 模型。"
+other = "找不到该角色的默认 3D 模型"
+
+[costume.preview3d.tuple_incomplete]
+description = "角色缺少完整的服装、发型或饰品数据。"
+other = "该角色缺少完整的服装、发型或饰品数据，暂时无法生成图片"
+
+[costume.preview3d.busy]
+description = "3D 渲染任务排队已满。"
+other = "3D 渲染任务繁忙，请稍后再试"
+
+[costume.preview3d.registry_failed]
+description = "读取 3D 部件数据失败。"
+other = "读取 3D 部件数据失败，请稍后再试"
+
+[costume.preview3d.capture_failed]
+description = "3D 模型渲染失败。"
+other = "3D 模型渲染失败，请稍后再试"
+
+[costume.preview3d.fetch_failed]
+description = "获取 3D 渲染图片失败。"
+other = "获取 3D 渲染图片失败，请稍后再试"
+

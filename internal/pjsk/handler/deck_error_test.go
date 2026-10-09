@@ -2,66 +2,46 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"testing"
 
+	"haruki-cloud/internal/core/upstreamerr"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/deck"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
+	"haruki-cloud/utils/usererror"
 )
 
 func TestNormalizeDeckUserFacingError(t *testing.T) {
 	testCases := []struct {
-		name    string
-		input   error
-		wantErr string
+		name  string
+		input error
+		code  usererror.Code
+		id    string
 	}{
-		{
-			name:    "music not found",
-			input:   errString("failed to search music by title or alias: music not found: 虾ex"),
-			wantErr: "JP服找不到特定的歌: 虾ex\n如果需要查其他服务器歌曲请加区服前缀",
-		},
-		{
-			name:    "snapshot required",
-			input:   errString("local user snapshot is not configured"),
-			wantErr: ErrMsgSuiteDataNotFound,
-		},
-		{
-			name:    "binding missing",
-			input:   accountdata.ErrNoBinding,
-			wantErr: ErrMsgBindingNotFound,
-		},
-		{
-			name:    "upstream timeout",
-			input:   errString("toolbox: request failed after retries: context deadline exceeded"),
-			wantErr: "获取组卡所需数据超时，请稍后重试",
-		},
-		{
-			name:    "future event locked",
-			input:   &deckEventLockedError{EventID: 170},
-			wantErr: "该活动组卡将于卡池开放后解禁",
-		},
-		{
-			name:    "deck masterdata event missing",
-			input:   errString("Event not found for eventId: 167"),
-			wantErr: "组卡服务找不到该活动的 masterdata，请更新 masterdata 后重试",
-		},
+		{"music not found", notfound.Music("虾ex"), usererror.CodeNotFound, "music.not_found_in_region"},
+		{"snapshot required", rendersnapshot.ErrNotConfigured, usererror.CodeSetup, "binding.data.not_found"},
+		{"deck service needs suite data", deck.ErrUserDataRequired, usererror.CodeSetup, "binding.data.not_found"},
+		{"binding missing", accountdata.ErrNoBinding, usererror.CodeSetup, "binding.required"},
+		{"upstream timeout", upstreamerr.Transport(upstreamerr.ServiceToolbox, "toolbox: request failed after retries", context.DeadlineExceeded), usererror.CodeTimeout, "common.timeout"},
+		{"future event locked", &deckEventLockedError{EventID: 170}, usererror.CodeForbidden, "deck.event.locked"},
+		{"deck masterdata event missing", deckRemoteError(404, "Event not found for eventId: 167"), usererror.CodeUnavailable, "upstream.deck.data_not_synced"},
+		{"unclassified deck failure", deckRemoteError(500, "boom"), usererror.CodeUnavailable, "upstream.failed"},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := normalizeDeckUserFacingError(tc.input)
-			var replyErr onebot11.ReplayError
-			ok := errors.As(err, &replyErr)
-			if !ok {
-				t.Fatalf("expected ReplayError, got %T (%v)", err, err)
-			}
-			if string(replyErr) != tc.wantErr {
-				t.Fatalf("unexpected replay error: %q", replyErr)
-			}
+			testutil.RequireUserError(t, normalizeDeckUserFacingError(tc.input), tc.code, tc.id)
 		})
 	}
+}
+
+func deckRemoteError(status int, message string) error {
+	return &deck.RemoteError{StatusCode: status, Message: message}
 }
 
 func TestExecuteDeckReturnsDisabledMessage(t *testing.T) {
@@ -98,13 +78,13 @@ func TestExecuteDeckReturnsDisabledMessage(t *testing.T) {
 }
 
 func TestNormalizeDeckUserFacingErrorForEventMusicNotFound(t *testing.T) {
-	err := normalizeDeckUserFacingErrorForCommand(errString("failed to search music by title or alias: music not found: 虾ex"), "jp", "deck-event")
-	assertReplayErrorText(t, err, "当前区服没有该歌曲")
+	err := normalizeDeckUserFacingErrorForCommand(notfound.Music("虾ex"), "jp", "deck-event")
+	testutil.RequireUserError(t, err, usererror.CodeNotFound, "music.not_found_in_region")
 }
 
 func TestNormalizeDeckUserFacingErrorForFutureEventMasterdataMissing(t *testing.T) {
-	err := normalizeDeckUserFacingErrorForCommand(errString("Event not found for eventId: 204"), "jp", "deck-event")
-	assertReplayErrorText(t, err, "组卡服务找不到该活动的数据，请使用/组卡模拟对应颜色和团的组卡")
+	err := normalizeDeckUserFacingErrorForCommand(deckRemoteError(404, "Event not found for eventId: 204"), "jp", "deck-event")
+	testutil.RequireUserError(t, err, usererror.CodeUnavailable, "deck.event.data_not_synced")
 }
 
 type errString string
@@ -123,7 +103,7 @@ func TestExecuteDeckReturnsStandardBindingReplayError(t *testing.T) {
 	}, &renderapp.App{
 		Bindings: newHandlerTestBindingService(t),
 	}))
-	assertReplayErrorText(t, err, ErrMsgBindingNotFound)
+	testutil.RequireUserError(t, err, usererror.CodeSetup, "binding.required")
 }
 
 func TestExecuteDeckReturnsStandardSuiteReplayError(t *testing.T) {
@@ -142,20 +122,12 @@ func TestExecuteDeckReturnsStandardSuiteReplayError(t *testing.T) {
 	}, &renderapp.App{
 		Bindings: service,
 	}))
-	assertReplayErrorText(t, err, buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+	typed := testutil.RequireUserError(t, err, usererror.CodeSetup, "binding.data.not_found_account")
+	if typed.Message.String() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
 		Visible:    false,
-	}))
-}
-
-func assertReplayErrorText(t *testing.T, err error, want string) {
-	t.Helper()
-	var replyErr onebot11.ReplayError
-	if !errors.As(err, &replyErr) {
-		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
-	}
-	if string(replyErr) != want {
-		t.Fatalf("unexpected replay error: %q", replyErr)
+	}).String() {
+		t.Fatalf("unexpected suite reply: %s", typed.Message)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestCharacterMissionQueryHelpers(t *testing.T) {
@@ -212,14 +213,14 @@ func assertCharacterMissionRoundHelpers(t *testing.T, groups []*CharacterMission
 
 func TestCharacterMissionSnapshotValidation(t *testing.T) {
 	var nilController *Controller
-	if _, err := nilController.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(err.Error(), "not initialized") {
+	if _, err := nilController.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "not initialized") {
 		t.Fatalf("nil controller error = %v", err)
 	}
 
 	source := &testSource{region: renderregion.JP}
 	controller := NewController(nil, nil, nil, renderregion.JP)
 	controller.RegisterSource(source)
-	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(err.Error(), "snapshot") {
+	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "snapshot") {
 		t.Fatalf("missing snapshot error = %v", err)
 	}
 
@@ -232,26 +233,26 @@ func TestCharacterMissionSnapshotValidation(t *testing.T) {
 
 	profile := &drawing.DetailedProfileCardRequest{ID: "1", Region: "JP"}
 	controller = NewController(nil, nil, &educationSnapshotStub{profile: profile, raw: &rendersnapshot.RawUserData{}}, renderregion.JP)
-	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(err.Error(), "data source") {
+	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "data source") {
 		t.Fatalf("missing source error = %v", err)
 	}
 
 	controller.RegisterSource(source)
-	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(err.Error(), "character id") {
+	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "character id") {
 		t.Fatalf("missing character id error = %v", err)
 	}
-	if _, err := controller.BuildCharacterMissionAllRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(err.Error(), "mission type") {
+	if _, err := controller.BuildCharacterMissionAllRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "mission type") {
 		t.Fatalf("missing mission type error = %v", err)
 	}
 
 	controller = NewController(nil, nil, &educationSnapshotStub{profile: profile}, renderregion.JP)
 	controller.RegisterSource(source)
-	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(err.Error(), "raw suite") {
+	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "raw suite") {
 		t.Fatalf("missing raw data error = %v", err)
 	}
 	controller = NewController(nil, nil, &educationSnapshotStub{raw: &rendersnapshot.RawUserData{}}, renderregion.JP)
 	controller.RegisterSource(source)
-	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(err.Error(), "profile") {
+	if _, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{Cid: 1}); err == nil || !strings.Contains(testutil.ErrorDetail(err), "profile") {
 		t.Fatalf("missing profile error = %v", err)
 	}
 }

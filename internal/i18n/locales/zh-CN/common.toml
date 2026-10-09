@@ -72,3 +72,51 @@ other = "组卡服务"
 [common.feature.account]
 description = "功能名，用于 common.unavailable / common.timeout：游戏账号绑定与设置。"
 other = "账号绑定服务"
+
+[common.unrecognized_args]
+description = "指令参数完全无法识别时的原因行。回复时会换成该指令自己的参数说明（guidance.*），后面接帮助指引。"
+other = "无法识别指令参数"
+
+[common.event_label]
+description = "某个区服的某期活动，用在错误提示里，例如“日服(JP)活动 123”。占位符：Region=区服显示名；ID=活动 ID。"
+other = "{{.Region}}活动 {{.ID}}"
+
+[common.param.uid_invalid]
+description = "参数错误的原因行（接在 common.bad_param 后）：游戏 UID 格式不对。"
+other = "游戏 UID 应为至少 10 位纯数字"
+
+[common.param.uid_digits]
+description = "参数错误的原因行（接在 common.bad_param 后）：游戏 UID 不是正整数。"
+other = "游戏 UID 应为纯数字"
+
+[common.param.mention_invalid]
+description = "参数错误的原因行（接在 common.bad_param 后）：@ 后面不是有效的 QQ 号。"
+other = "@ 后面应为 QQ 号"
+
+[common.param.rank_invalid]
+description = "参数错误的原因行（接在 common.bad_param 后）：名次不是正整数。"
+other = "名次应为正整数，多个名次用空格分隔，范围写成“起始-结束”"
+
+[common.param.rank_range_order]
+description = "名次范围的起始大于结束。"
+other = "起始名次不能大于结束名次"
+
+[common.param_name.page]
+description = "参数名称，用在 common.out_of_range 的 Param 占位符里：页码。"
+other = "页码"
+
+[common.no_args]
+description = "不需要参数的指令写了参数。"
+other = "这个指令不需要参数"
+
+[common.param_name.value]
+description = "参数名称，用在 common.out_of_range 的 Param 占位符里：数值。"
+other = "数值"
+
+[common.param.integer]
+description = "参数错误的原因行（接在 common.bad_param 后）：应为整数。"
+other = "应为整数"
+
+[common.self_only]
+description = "只能查询自己的数据的指令，但指定了别人或 UID。"
+other = "这个指令只能查询自己的数据，可以用 u序号 选择自己的账号"

@@ -9,6 +9,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/testutil"
 )
 
 // gateMaterialGroups builds mysekaiGateMaterialGroups rows for every level in
@@ -117,7 +118,7 @@ func TestBuildDoorUpgradeRequestJP70CapShowsLevels41To70(t *testing.T) {
 	}
 
 	// Level 70 is max.
-	if _, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{Region: "jp", Query: "2", Profile: &drawing.ProfileCardRequest{}}); err == nil || !strings.Contains(err.Error(), "already max level") {
+	if _, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{Region: "jp", Query: "2", Profile: &drawing.ProfileCardRequest{}}); err == nil || testutil.MessageID(err) != "mysekai.gate.max_level" {
 		t.Fatalf("expected gate 2 at level 70 to be reported as max, got err=%v", err)
 	}
 
@@ -146,7 +147,7 @@ func TestBuildDoorUpgradeRequest40CapRegionUnchanged(t *testing.T) {
 		t.Fatalf("expected only level 40 to remain, got %v", levels)
 	}
 
-	if _, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{Region: "jp", Query: "1", Profile: &drawing.ProfileCardRequest{}}); err == nil || !strings.Contains(err.Error(), "already max level") {
+	if _, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{Region: "jp", Query: "1", Profile: &drawing.ProfileCardRequest{}}); err == nil || testutil.MessageID(err) != "mysekai.gate.max_level" {
 		t.Fatalf("expected gate 1 at 40 to stay max on a 40-cap region, got err=%v", err)
 	}
 }
@@ -204,7 +205,7 @@ func TestBuildDoorUpgradeRequestGateWithoutMaterialsReportsIt(t *testing.T) {
 	controller := newDoorUpgradeGateCapController(t, map[int]int{1: 70, 2: 70},
 		[]map[string]any{{"id": 1, "level": 40}, {"id": 6, "level": 1}}, 6)
 	_, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{Region: "jp", Query: "6", Profile: &drawing.ProfileCardRequest{}})
-	if err == nil || !strings.Contains(err.Error(), "queried gate has no upgrade materials: 6") {
+	if err == nil || testutil.MessageID(err) != "mysekai.gate.no_materials" {
 		t.Fatalf("expected gate 6 to be reported as having no materials, got err=%v", err)
 	}
 }

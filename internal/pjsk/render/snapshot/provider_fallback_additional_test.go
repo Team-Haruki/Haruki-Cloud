@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/testutil"
 )
 
 type fallbackTestSnapshot struct{ err error }
@@ -137,12 +138,12 @@ func TestToolboxMySekaiPayloadValidation(t *testing.T) {
 		}
 	}
 	provider := NewToolboxMySekaiPayloadProvider(bindings, client)
-	if _, err := provider.Resolve(ctx, Selector{}, false); err == nil || !strings.Contains(err.Error(), "selector is incomplete") {
+	if _, err := provider.Resolve(ctx, Selector{}, false); err == nil || !strings.Contains(testutil.ErrorDetail(err), "selector is incomplete") {
 		t.Fatalf("incomplete selector error = %v", err)
 	}
 
 	bindings.bindings["jp"] = &accountdata.ResolvedBinding{PJSKUserID: "not-a-number", Server: "jp", MySekaiVisible: true}
-	if _, err := provider.Resolve(ctx, Selector{IMPlatform: "qq", IMUserID: "1", Region: renderregion.JP}, false); err == nil || !strings.Contains(err.Error(), "invalid bound") {
+	if _, err := provider.Resolve(ctx, Selector{IMPlatform: "qq", IMUserID: "1", Region: renderregion.JP}, false); err == nil || !strings.Contains(testutil.ErrorDetail(err), "invalid bound") {
 		t.Fatalf("invalid UID error = %v", err)
 	}
 	bindings.bindings["jp"] = &accountdata.ResolvedBinding{PJSKUserID: "123", Server: "jp", MySekaiVisible: true}
@@ -162,17 +163,17 @@ func TestResolveExplicitMySekaiPayloadBinding(t *testing.T) {
 	if _, err := resolveMySekaiPayloadBinding(ctx, nil, "qq", "1", renderregion.JP, "", false); !errors.Is(err, ErrProviderUnavailable) {
 		t.Fatalf("nil binding lookup error = %v", err)
 	}
-	if _, err := resolveExplicitMySekaiPayloadBinding(ctx, bindings, "qq", "1", renderregion.Unknown, "123"); err == nil || !strings.Contains(err.Error(), "multiple bindings") {
+	if _, err := resolveExplicitMySekaiPayloadBinding(ctx, bindings, "qq", "1", renderregion.Unknown, "123"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "multiple bindings") {
 		t.Fatalf("ambiguous explicit binding error = %v", err)
 	}
 	resolved, err := resolveExplicitMySekaiPayloadBinding(ctx, bindings, "qq", "1", renderregion.JP, "123")
 	if err != nil || resolved.BindingID != 1 {
 		t.Fatalf("explicit binding = %#v, %v", resolved, err)
 	}
-	if _, err := resolveExplicitMySekaiPayloadBinding(ctx, bindings, "qq", "1", renderregion.JP, "missing"); err == nil || !strings.Contains(err.Error(), "not found") {
+	if _, err := resolveExplicitMySekaiPayloadBinding(ctx, bindings, "qq", "1", renderregion.JP, "missing"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "not found") {
 		t.Fatalf("missing explicit binding error = %v", err)
 	}
-	if _, err := resolveExplicitMySekaiPayloadBinding(ctx, bindings, "qq", "1", renderregion.JP, "456"); err == nil || !strings.Contains(err.Error(), "does not expose") {
+	if _, err := resolveExplicitMySekaiPayloadBinding(ctx, bindings, "qq", "1", renderregion.JP, "456"); err == nil || !strings.Contains(testutil.ErrorDetail(err), "does not expose") {
 		t.Fatalf("hidden explicit binding error = %v", err)
 	}
 	if mySekaiPayloadBindingAllowed(nil) || mySekaiPayloadBindingAllowed(&accountdata.ResolvedBinding{}) || !mySekaiPayloadBindingAllowed(resolved) {

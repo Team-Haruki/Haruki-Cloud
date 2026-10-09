@@ -11,7 +11,8 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/gamecharacter"
 	sekaimusic "haruki-cloud/database/sekai/music"
-	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/i18n"
+	"haruki-cloud/utils/usererror"
 )
 
 // TryResolveMusicID attempts to resolve a token to a music ID.
@@ -105,14 +106,14 @@ func (s *Service) resolveEntityByToken(ctx context.Context, aliasType, token str
 	case PjskAliasTypeCharacter:
 		return s.resolveCharacterByToken(ctx, token)
 	default:
-		return EntityRef{}, onebot11.NewReplayError("不支持的别名类型: %s", aliasType)
+		return EntityRef{}, usererror.Wrap(usererror.CodeInternal, i18n.M("alias.type_unsupported"), fmt.Errorf("unsupported alias type %q", aliasType))
 	}
 }
 
 func (s *Service) resolveMusicByToken(ctx context.Context, token string) (EntityRef, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
-		return EntityRef{}, fmt.Errorf("请输入%s", entityTokenPrompt(PjskAliasTypeMusic))
+		return EntityRef{}, usererror.Misuse(i18n.M("alias.target_required.music"))
 	}
 	if ref, ok, err := s.tryResolveMusicByID(ctx, token); err != nil || ok {
 		return ref, err
@@ -123,13 +124,13 @@ func (s *Service) resolveMusicByToken(ctx context.Context, token string) (Entity
 	if ref, ok, err := s.tryResolveMusicByApprovedAlias(ctx, token); err != nil || ok {
 		return ref, err
 	}
-	return EntityRef{}, fmt.Errorf("未找到对应%s，请检查%s", aliasTypeLabel(PjskAliasTypeMusic), entityTokenPrompt(PjskAliasTypeMusic))
+	return EntityRef{}, usererror.New(usererror.CodeNotFound, i18n.M("alias.target_not_found.music"))
 }
 
 func (s *Service) resolveCharacterByToken(ctx context.Context, token string) (EntityRef, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
-		return EntityRef{}, fmt.Errorf("请输入%s", entityTokenPrompt(PjskAliasTypeCharacter))
+		return EntityRef{}, usererror.Misuse(i18n.M("alias.target_required.character"))
 	}
 	if ref, ok, err := s.tryResolveCharacterByID(ctx, token); err != nil || ok {
 		return ref, err
@@ -140,7 +141,7 @@ func (s *Service) resolveCharacterByToken(ctx context.Context, token string) (En
 	if ref, ok, err := s.tryResolveCharacterByApprovedAlias(ctx, token); err != nil || ok {
 		return ref, err
 	}
-	return EntityRef{}, fmt.Errorf("未找到对应%s，请检查%s", aliasTypeLabel(PjskAliasTypeCharacter), entityTokenPrompt(PjskAliasTypeCharacter))
+	return EntityRef{}, usererror.New(usererror.CodeNotFound, i18n.M("alias.target_not_found.character"))
 }
 
 func (s *Service) tryResolveMusicByID(ctx context.Context, token string) (EntityRef, bool, error) {
@@ -155,7 +156,7 @@ func (s *Service) tryResolveMusicByID(ctx context.Context, token string) (Entity
 		return EntityRef{}, true, err
 	}
 	if len(rows) == 0 {
-		return EntityRef{}, true, fmt.Errorf("未找到%s: %d", aliasTypeIDLabel(PjskAliasTypeMusic), id)
+		return EntityRef{}, true, usererror.New(usererror.CodeNotFound, i18n.M("alias.id_not_found.music", i18n.Data{"ID": id}))
 	}
 	return EntityRef{AliasType: PjskAliasTypeMusic, ID: id, Name: preferredMusicTitle(rows, id)}, true, nil
 }
@@ -269,7 +270,7 @@ func (s *Service) tryResolveCharacterByID(ctx context.Context, token string) (En
 		return EntityRef{}, true, err
 	}
 	if len(rows) == 0 {
-		return EntityRef{}, true, onebot11.NewReplayError("未找到%s: %d", aliasTypeIDLabel(PjskAliasTypeCharacter), id)
+		return EntityRef{}, true, usererror.New(usererror.CodeNotFound, i18n.M("alias.id_not_found.character", i18n.Data{"ID": id}))
 	}
 	return EntityRef{AliasType: PjskAliasTypeCharacter, ID: id, Name: preferredCharacterName(rows, id)}, true, nil
 }
@@ -359,7 +360,7 @@ func uniqueMusicFromRows(rows []*sekaiDB.Music, sourceName string) (EntityRef, e
 		grouped[int(row.GameID)] = append(grouped[int(row.GameID)], row)
 	}
 	if len(grouped) == 0 {
-		return EntityRef{}, fmt.Errorf("未找到对应%s", aliasTypeLabel(PjskAliasTypeMusic))
+		return EntityRef{}, usererror.New(usererror.CodeNotFound, i18n.M("alias.target_not_found.music"))
 	}
 	musicIDs := make([]int, 0, len(grouped))
 	titles := make(map[int]string, len(grouped))

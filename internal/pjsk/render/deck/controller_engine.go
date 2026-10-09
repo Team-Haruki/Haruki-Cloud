@@ -2,15 +2,17 @@ package deck
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"path/filepath"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/utils/logger"
+	"haruki-cloud/utils/usererror"
 )
 
 func (c *Controller) buildAutoRecommendWithEngine(ctx context.Context, query AutoQuery) (*drawing.DeckRequest, error) {
@@ -130,7 +132,7 @@ func (c *Controller) resolveAutoRecommendResources(ctx context.Context, query Au
 		return autoRecommendResources{}, err
 	}
 	if c.engine == nil {
-		return autoRecommendResources{}, fmt.Errorf("deck recommend engine is not configured")
+		return autoRecommendResources{}, errDeckNotConfigured
 	}
 
 	region, recType, err := c.normalizeAutoQuery(query)
@@ -155,7 +157,7 @@ func (c *Controller) resolveAutoRecommendResources(ctx context.Context, query Au
 	musicMetaPath := c.resolveMusicMetaFilePath()
 	finishMeta()
 	if len(musicMeta) == 0 && musicMetaPath == "" {
-		return autoRecommendResources{}, fmt.Errorf("deck recommend requires music meta data")
+		return autoRecommendResources{}, usererror.Unavailable(i18n.FeatureDeck, errors.New("deck recommend requires music meta data"))
 	}
 	if err := ctx.Err(); err != nil {
 		return autoRecommendResources{}, err

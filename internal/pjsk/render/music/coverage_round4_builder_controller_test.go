@@ -91,7 +91,7 @@ func TestFindMusicChartsByNoteCountFinderBranches(t *testing.T) {
 		_, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 10, Region: "jp", Difficulty: "easy"})
 		{
 			testutil.Require(t, !(err == nil), "filtered no-match error = %v", err)
-			testutil.Require(t, strings.Contains(err.Error(), "easy"), "filtered no-match error = %v", err)
+			testutil.Require(t, testutil.MessageID(err) == "music.note_count.no_chart_difficulty", "filtered no-match error = %v", err)
 		}
 	}
 
@@ -100,7 +100,7 @@ func TestFindMusicChartsByNoteCountFinderBranches(t *testing.T) {
 		_, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 10, Region: "jp"})
 		{
 			testutil.Require(t, !(err == nil), "unfiltered no-match error = %v", err)
-			testutil.Require(t, !(strings.Contains(err.Error(), "easy")), "unfiltered no-match error = %v", err)
+			testutil.Require(t, !(strings.Contains(testutil.ErrorDetail(err), "easy")), "unfiltered no-match error = %v", err)
 		}
 	}
 

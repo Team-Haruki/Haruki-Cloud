@@ -13,8 +13,10 @@ import (
 
 	"haruki-cloud/config"
 	"haruki-cloud/internal/cachepersist"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/storage"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
@@ -134,7 +136,7 @@ func (c *forecastDataCache) CachedBySource(region string, eventID int, ranks []i
 
 func (c *forecastDataCache) CachedBySourceQuery(query ForecastQuery) (map[string]ForecastSourceData, error) {
 	if c == nil {
-		return nil, errors.New("forecast cache is not configured")
+		return nil, usererror.Misconfigured(errors.New("forecast cache is not configured"))
 	}
 	normalizedQuery := normalizeForecastQuery(query)
 	key, ok := newForecastDataCacheKey(normalizedQuery)
@@ -170,7 +172,7 @@ func (c *forecastDataCache) CachedBySourceQuery(query ForecastQuery) (map[string
 		c.startRefreshWithProvider(refreshProvider, key, normalizedQuery)
 	}
 	if lenNonEmptyForecastData(data) == 0 {
-		return nil, errors.New("预测缓存暂无这些档位的数据")
+		return nil, usererror.New(usererror.CodeNotFound, i18n.M("sk.predict.no_tiers"))
 	}
 	return data, nil
 }
@@ -208,7 +210,7 @@ func (c *forecastDataCache) RefreshNow(ctx context.Context, region string, event
 
 func (c *forecastDataCache) RefreshNowQuery(ctx context.Context, query ForecastQuery) error {
 	if c == nil {
-		return errors.New("forecast cache is not configured")
+		return usererror.Misconfigured(errors.New("forecast cache is not configured"))
 	}
 	normalizedQuery := normalizeForecastQuery(query)
 	key, ok := newForecastDataCacheKey(normalizedQuery)
@@ -268,7 +270,7 @@ func (c *forecastDataCache) beginRefresh(key forecastDataCacheKey) (ForecastProv
 
 func (c *forecastDataCache) beginRefreshLocked(key forecastDataCacheKey) (ForecastProvider, error) {
 	if c.provider == nil {
-		return nil, errors.New("forecast provider is not configured")
+		return nil, usererror.Misconfigured(errors.New("forecast provider is not configured"))
 	}
 	if _, ok := c.inFlight[key]; ok {
 		return nil, errForecastRefreshInProgress
@@ -494,7 +496,7 @@ func fetchForecastDataWithRetry(ctx context.Context, provider ForecastProvider, 
 
 func fetchForecastData(ctx context.Context, provider ForecastProvider, query ForecastQuery) (map[string]ForecastSourceData, error) {
 	if provider == nil {
-		return nil, errors.New("forecast provider is not configured")
+		return nil, usererror.Misconfigured(errors.New("forecast provider is not configured"))
 	}
 	if bySourceQuery, ok := provider.(ForecastProviderBySourceQuery); ok {
 		return bySourceQuery.FetchBySourceQuery(ctx, query)

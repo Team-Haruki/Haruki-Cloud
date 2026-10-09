@@ -545,6 +545,7 @@ As of this revision the project is **considered functionally complete**:
 | World Link | WL（WL 活动、WL 章节） | WorldLink、wl活动 |
 | 活动点数 | PT（名词）、pt（数字后单位） | 目标PT、1234PT |
 | 演出能量（火） | 演出能量（游戏里的正式名称，图片、目录和帮助正文都用它）；帮助里首次提到或需要用户输入时写“演出能量（火）”。火是用户输入的简写，输入写法 `5火`、`10火`、`5体力` 原样保留在反引号里 | 显示文本里的体力、火数 |
+| 演出能量道具 | 演出能量道具（背包里恢复演出能量的道具，图片、目录和帮助正文都用它）；`火罐` 只是 `/查背包` 的分类输入写法，帮助里写在反引号里（“`火罐`：演出能量道具……”），回复里写成关键词“火罐” | 显示文本里的火罐 |
 | 欢乐嘉年华活动 | 欢乐嘉年华(5v5)（半角括号，图片、目录和帮助正文都用它，例如“欢乐嘉年华(5v5) 胜率预测”）；用户输入仍写 `5v5` | 单独的 5v5 作显示名、5v5（欢乐嘉年华） |
 | 排名追踪 | 排名追踪，帮助的用法和示例只写 `/排名追踪`（`/档线轨迹` 只作为已注册别名） | 档线轨迹 |
 | 个人信息 | 个人信息、个人信息背景、自定义个人信息、模块化个人信息 | 个人资料、资料卡、模块化资料、profile、自定义档案 |
@@ -578,7 +579,7 @@ As of this revision the project is **considered functionally complete**:
 
 | 测试 | 位置 | 规则 |
 |---|---|---|
-| `TestCatalogStyle` | `internal/i18n` | 目录零容忍：汉字后半角冒号、中文半角括号、中英之间缺空格、单句结尾"。"、禁用词（您、请稍后重试、未就绪、命令、Toolbox、SekaiAPI、Tracker、masterdata、Cloud、suite、Mysekai、套装、档线、分数线、体力、（状态、`"` 等）、`%s` 占位符、缺 description、占位符未说明、ID 格式 |
+| `TestCatalogStyle` | `internal/i18n` | 目录零容忍：汉字后半角冒号、中文半角括号、中英之间缺空格、单句结尾"。"、禁用词（您、请稍后重试、未就绪、命令、Toolbox、SekaiAPI、Tracker、masterdata、Cloud、suite、Mysekai、套装、档线、分数线、体力、（状态、`"` 等）、只许作输入写法的词（火罐：只能出现在反引号或“”里）、`%s` 占位符、缺 description、占位符未说明、ID 格式 |
 | `TestCatalogIntegrity` | `internal/i18n` | 代码引用的 ID 都存在、占位符一一对应、没有未使用的 ID、其他语言不多出 ID |
 | `TestCatalogDescriptionReferencesExist` | `internal/i18n` | description 里提到的消息 ID 都存在（可用 `*` 表示一组） |
 | `TestEveryMessageRendersWithSampleData` | `internal/i18n` | 每条消息都能用示例数据渲染，占位符都出现在结果里，没有残留模板语法 |

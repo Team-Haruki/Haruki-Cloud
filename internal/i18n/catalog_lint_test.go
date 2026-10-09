@@ -23,6 +23,7 @@ var (
 	hanLatinAdjacent   = regexp.MustCompile(`\p{Han}[A-Za-z0-9]|[A-Za-z0-9]\p{Han}`)
 	commandToken       = regexp.MustCompile(`/[^\s“”"'，。、；：）（]+`)
 	positionalVerb     = regexp.MustCompile(`%[-+# 0]*\d*(\.\d+)?[sdvqfgxXtwT]`)
+	quotedKeyword      = regexp.MustCompile(`“[^“”]*”`)
 	reservedIDSegments = []string{"id", "description", "hash", "leftdelim", "rightdelim", "zero", "one", "two", "few", "many", "other", "translation"}
 )
 
@@ -61,6 +62,13 @@ var bannedTerms = []struct{ term, why string }{
 	{"❌", "文字回复不用 emoji"},
 }
 
+// bannedDisplayTerms are words users type but that must not be displayed as
+// the name of a thing. They may appear only as input syntax: in code spans
+// (help documents, removed before linting) or quoted as a keyword “…”.
+var bannedDisplayTerms = []struct{ term, why string }{
+	{"火罐", "显示文字写“演出能量道具”；输入写法放在反引号（帮助）或“”（回复）里"},
+}
+
 type lintFinding struct {
 	rule   string
 	detail string
@@ -74,6 +82,12 @@ func lintCopyText(text string) []lintFinding {
 	for _, banned := range bannedTerms {
 		if strings.Contains(text, banned.term) {
 			add("banned_term", fmt.Sprintf("%q: %s", banned.term, banned.why))
+		}
+	}
+	unquoted := quotedKeyword.ReplaceAllString(text, "\u2063")
+	for _, banned := range bannedDisplayTerms {
+		if strings.Contains(unquoted, banned.term) {
+			add("banned_display_term", fmt.Sprintf("%q: %s", banned.term, banned.why))
 		}
 	}
 	if m := hanColon.FindString(text); m != "" {
@@ -158,6 +172,7 @@ func TestCatalogStyle(t *testing.T) {
 func TestCatalogStyleLintCatchesViolations(t *testing.T) {
 	cases := map[string]CatalogEntry{
 		"banned_term":            {ID: "common.x", File: "common.toml", Description: "d", Text: "您好"},
+		"banned_display_term":    {ID: "common.x", File: "common.toml", Description: "d", Text: "合计 3 个火罐"},
 		"halfwidth_colon":        {ID: "common.x", File: "common.toml", Description: "d", Text: "原因: x"},
 		"halfwidth_paren":        {ID: "common.x", File: "common.toml", Description: "d", Text: "队长次数(EX)"},
 		"han_latin_space":        {ID: "common.x", File: "common.toml", Description: "d", Text: "最多5个"},
@@ -226,6 +241,22 @@ func TestHelpDocStyle(t *testing.T) {
 		}
 	}
 	checkZero(t, "help document style", current)
+}
+
+// TestBannedDisplayTermsAllowInputSyntax keeps 火罐 usable as input syntax
+// (a code span in help, a “” keyword in replies) while banning it as a name.
+func TestBannedDisplayTermsAllowInputSyntax(t *testing.T) {
+	for _, text := range []string{"可以写“水晶”、“火罐”或“记忆”", "请写一个分类：“火罐”"} {
+		if findings := lintCopyText(text); len(findings) != 0 {
+			t.Errorf("lintCopyText(%q) = %+v, want no findings", text, findings)
+		}
+	}
+	if counts := helpDocStyleCounts("- `火罐`：演出能量道具\n- `/查背包 火罐`\n"); counts["banned_display_term"] != 0 {
+		t.Errorf("code spans flagged: %v", counts)
+	}
+	if counts := helpDocStyleCounts("- 不含水晶、火罐和记忆\n"); counts["banned_display_term"] != 1 {
+		t.Errorf("display use not flagged: %v", counts)
+	}
 }
 
 func TestHelpDocStyleCountsSkipCode(t *testing.T) {

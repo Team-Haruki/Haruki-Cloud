@@ -1,8 +1,8 @@
 # 背包：/查背包 和背包筛选。
 
 [inventory.filter_unknown]
-description = "背包筛选参数无法识别，作为 common.bad_param 的原因行。"
-other = "可以写水晶、火罐、ms材料或记忆"
+description = "背包筛选参数无法识别，作为 common.bad_param 的原因行。“”里是用户要输入的分类写法；“火罐”是演出能量道具分类的输入写法，显示文字里不用。"
+other = "可以写“水晶”、“火罐”、“ms材料”或“记忆”"
 
 [inventory.memory_cn_unavailable]
 description = "国服(CN)查背包时不支持记忆。占位符：Region=国服的区服显示名“国服(CN)”。"
@@ -19,7 +19,7 @@ description = "图片：背包分组标题：货币。"
 other = "货币"
 
 [inventory.image.section.boost]
-description = "图片：背包分组标题：演出能量（火罐等）。"
+description = "图片：背包分组标题：演出能量道具。"
 other = "演出能量"
 
 [inventory.image.section.basic]
@@ -59,7 +59,7 @@ description = "图片：背包分组标题：其他。"
 other = "其他"
 
 [inventory.image.boost_total]
-description = "图片：/查背包 火罐 时，演出能量分组标题后面加上合计能恢复多少。占位符：Title=分组标题（inventory.image.section.boost）；Total=所有演出能量道具合计可恢复的点数。"
+description = "图片：查背包的演出能量道具分类（/查背包 火罐）时，演出能量分组标题后面加上合计能恢复多少。占位符：Title=分组标题（inventory.image.section.boost）；Total=所有演出能量道具合计可恢复的点数。"
 other = "{{.Title}}（合计可恢复 {{.Total}} 点）"
 
 [inventory.image.coin.title]

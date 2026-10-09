@@ -38,8 +38,8 @@ description = "数据名称：烤森数据。用在 binding.data.* 和 binding.t
 other = "烤森（MySekai）数据"
 
 [binding.toolbox_link]
-description = "工具箱地址，作为单独一行接在需要用户去工具箱操作的提示后面。"
-other = "工具箱地址：https://haruki.seiunx.com/"
+description = "工具箱地址，接在需要用户去工具箱操作的提示后面：一行标签，下一行是地址本身。"
+other = "工具箱地址：\nhttps://haruki.seiunx.com/"
 
 [binding.data.not_found]
 description = "需要私有数据的指令，但找不到有效数据，且不知道是哪个账号。占位符：Data=数据名称（binding.data_kind.*）；ToolboxLink=工具箱地址（binding.toolbox_link）。"
@@ -129,10 +129,6 @@ other = "所选账号不属于{{.Region}}"
 description = "要清除的账号不是当前的默认绑定。占位符：Scope=范围，“全局”或区服显示名。"
 other = "所选账号不是你当前的{{.Scope}}默认绑定"
 
-[binding.region_invalid]
-description = "写的区服代码不支持。作为 common.bad_param 的原因行。"
-other = "区服只能是 jp、cn、tw、kr、en"
-
 [binding.region_required]
 description = "需要区服但没有写。"
 other = "请写区服"
@@ -149,13 +145,9 @@ other = "请写两个不同的账号序号"
 description = "/绑定 没有写游戏 UID。"
 other = "请写要绑定的游戏 UID"
 
-[binding.bind.uid_digits]
-description = "/绑定 的游戏 UID 不是纯数字，作为 common.bad_param 的原因行。"
-other = "游戏 UID 应为纯数字"
-
 [binding.bind.failed_all]
 description = "/绑定 在所有区服都没能确认这个游戏 UID，下面逐行列出各区服的结果。占位符：Lines=各区服结果，每行一个（binding.bind.failure.*）。"
-other = "所有区服都没能确认这个游戏 UID，请检查 UID 是否正确\n{{.Lines}}"
+other = "所有区服都没能确认这个游戏 UID，请检查游戏 UID 是否正确\n{{.Lines}}"
 
 [binding.bind.failure.not_found]
 description = "binding.bind.failed_all 里的一行：该区服没有这个玩家。占位符：Region=区服显示名。"
@@ -172,7 +164,3 @@ other = "{{.Region}}查询失败，请稍后再试"
 [binding.verify.not_listed]
 description = "快速验证时，该区服的绑定账号不在工具箱的验证列表里。占位符：Region=区服显示名。"
 other = "{{.Region}}的绑定账号不在快速验证列表中，请先在 Haruki 工具箱完成验证"
-
-[binding.uid.self_only]
-description = "/查uid 只能查询自己的绑定账号。"
-other = "只能查询自己绑定账号的 UID"

@@ -16,17 +16,9 @@ other = "暂时没有这些档位的预测数据"
 description = "榜线预测：活动结束前最后 1 小时不再提供预测。"
 other = "活动结束前最后 1 小时停止提供预测"
 
-[sk.no_ongoing_event]
-description = "需要进行中的活动（榜线预测等），但当前没有进行中的活动。"
-other = "当前没有进行中的活动"
-
 [sk.event_required]
 description = "查榜类指令没有指定活动，也无法推断当前活动。"
 other = "当前没有可推断的活动，请指定活动 ID"
-
-[sk.region_invalid]
-description = "查榜类指令的区服不是支持的区服。"
-other = "区服只能是 jp、cn、tw、kr、en"
 
 [sk.target_required]
 description = "查榜类指令既没有名次也没有玩家。"

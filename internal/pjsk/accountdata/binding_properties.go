@@ -17,7 +17,7 @@ func unverifiedBindingProfileBGError(binding *pjskdb.UserBinding) error {
 	server := strings.ToLower(strings.TrimSpace(bindingServer(binding)))
 	return usererror.Setup(i18n.M("profile.bg.unverified", i18n.Data{
 		"Region":      i18n.RegionLabel(server),
-		"Command":     "/" + server + "pjsk verify",
+		"Command":     "/" + server + "pjsk验证", //copylint:ignore 指令触发词
 		"ToolboxLink": i18n.M("binding.toolbox_link"),
 	}))
 }

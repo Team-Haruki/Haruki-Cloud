@@ -141,3 +141,15 @@ func TestCommandErrorTextRepliesTimeoutForRequestDeadline(t *testing.T) {
 		t.Fatalf("game data deadline reply = %q, want %q", got, want)
 	}
 }
+
+// The Haruki toolbox address line survives the sanitizer.
+func TestSanitizeErrorReplyKeepsToolboxLink(t *testing.T) {
+	reply := i18n.M("binding.toolbox.not_bound", i18n.Data{"Data": i18n.M("binding.data_kind.suite"), "ToolboxLink": i18n.M("binding.toolbox_link")})
+	want := reply.String()
+	if !strings.Contains(want, "https://") {
+		t.Fatalf("reply has no toolbox address: %q", want)
+	}
+	if got := sanitizeErrorReply(context.Background(), reply, i18n.DefaultLocale); got != want {
+		t.Fatalf("sanitized reply = %q, want %q", got, want)
+	}
+}

@@ -48,7 +48,7 @@ func normalizeTrackerQueryInputs(req TrackerRankQuery) (TrackerRankQuery, error)
 	normalized := req
 	normalized.Region = normalizeTrackerServer(req.Region)
 	if normalized.Region == "" {
-		return TrackerRankQuery{}, usererror.Invalid(i18n.M("sk.region_invalid"))
+		return TrackerRankQuery{}, usererror.Invalid(i18n.M("common.param.region_invalid"))
 	}
 	normalized.Ranks = normalizeRanks(req.Ranks)
 	if normalized.UserID != nil && *normalized.UserID <= 0 {

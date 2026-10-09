@@ -257,7 +257,7 @@ func ensureSKPredictionAllowed(meta eventMeta) error {
 	}
 	now := time.Now().UnixMilli()
 	if now >= meta.aggregateAt {
-		return usererror.New(usererror.CodeNotFound, i18n.M("sk.no_ongoing_event"))
+		return usererror.New(usererror.CodeNotFound, i18n.M("event.no_ongoing"))
 	}
 	stopAt := meta.aggregateAt - int64(time.Hour/time.Millisecond)
 	if now >= stopAt {

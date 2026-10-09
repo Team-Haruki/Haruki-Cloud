@@ -206,8 +206,8 @@ func TestProfileBackgroundRequiresVerifiedBinding(t *testing.T) {
 		t.Fatal("expected unverified binding to reject bg upload")
 	}
 	typed := testutil.RequireUserError(t, err, usererror.CodeSetup, "profile.bg.unverified")
-	if !strings.Contains(typed.Error(), "/jppjsk verify") {
-		t.Fatalf("unexpected error: %v", err)
+	if command := typed.Message.Data["Command"]; command != "/jppjsk验证" {
+		t.Fatalf("Command = %v, want the documented /jppjsk验证", command)
 	}
 }
 

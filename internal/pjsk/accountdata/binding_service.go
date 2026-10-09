@@ -96,7 +96,7 @@ func (s *BindingService) Bind(ctx context.Context, platform, platformUserID, raw
 		return nil, usererror.Misuse(i18n.M("binding.bind.uid_required"))
 	}
 	if !isNumericUID(uid) {
-		return nil, usererror.BadParam(uid, i18n.M("binding.bind.uid_digits"))
+		return nil, usererror.BadParam(uid, i18n.M("common.param.uid_digits"))
 	}
 
 	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)

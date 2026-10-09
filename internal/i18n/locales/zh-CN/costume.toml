@@ -118,7 +118,7 @@ other = "使用 Miku 时只能写一个团名"
 
 [costume.query.miku_unit_required]
 description = "使用 Miku 时没有写团名。"
-other = "使用 Miku 时请同时写团名：vs、mmj、ln、vbs、wxs 或 n25"
+other = "使用 Miku 时请同时写团名：ln、mmj、vbs、ws、25h 或 vs"
 
 [costume.query.character_unmapped]
 description = "角色名无法对应到 3D 角色。"
@@ -266,4 +266,3 @@ other = "女装"
 [costume.image.gender_other]
 description = "图片：服装列表按性别筛选时的说明：不分性别的服装。"
 other = "其他"
-

@@ -3,7 +3,7 @@
 
 [guidance.arrest]
 description = "路由 arrest（逮捕）的参数无法识别时的原因行。"
-other = "无法识别参数，请写 u序号、@群友 或游戏 UID"
+other = "无法识别参数，请写 u序号、@群友或游戏 UID"
 
 [guidance.card_box]
 description = "路由 card/box（查箱）的参数无法识别时的原因行。"
@@ -95,7 +95,7 @@ other = "无法识别参数，请写卡池 ID、序号（如 -1）、event123 �
 
 [guidance.inventory_list]
 description = "路由 inventory/list（查背包）的参数无法识别时的原因行。"
-other = "无法识别参数，请写一个分类：水晶、火罐、ms材料 或记忆"
+other = "无法识别参数，请写一个分类：水晶、火罐、ms材料或记忆"
 
 [guidance.misc_birthday]
 description = "路由 misc/birthday（角色生日）的参数无法识别时的原因行。"
@@ -191,7 +191,7 @@ other = "无法识别参数，请写角色名，可以加 all"
 
 [guidance.profile]
 description = "路由 profile（个人信息）的参数无法识别时的原因行。"
-other = "无法识别参数，请写 u序号、@群友 或游戏 UID"
+other = "无法识别参数，请写 u序号、@群友或游戏 UID"
 
 [guidance.profile_arrest_difficulty]
 description = "路由 profile/arrest-difficulty（查水表难度）的参数无法识别时的原因行。"
@@ -255,11 +255,11 @@ other = "无法识别参数，请写歌曲名或歌曲 ID，多首歌用 | 分�
 
 [guidance.sk_check_room]
 description = "路由 sk/check-room（查房）的参数无法识别时的原因行。"
-other = "无法识别参数，请写名次、游戏 UID、u序号 或 @群友"
+other = "无法识别参数，请写名次、游戏 UID、u序号或 @群友"
 
 [guidance.sk_csb]
 description = "路由 sk/csb（查水表）的参数无法识别时的原因行。"
-other = "无法识别参数，请写名次、游戏 UID、u序号 或 @群友"
+other = "无法识别参数，请写名次、游戏 UID、u序号或 @群友"
 
 [guidance.sk_daily_speed]
 description = "路由 sk/daily-speed（日速）的参数无法识别时的原因行。"
@@ -271,7 +271,7 @@ other = "无法识别参数，请使用正整数名次，多个名次用空格�
 
 [guidance.sk_player_trace]
 description = "路由 sk/player-trace（玩家追踪）的参数无法识别时的原因行。"
-other = "无法识别参数，请写游戏 UID、名次、u序号 或 @群友"
+other = "无法识别参数，请写游戏 UID、名次、u序号或 @群友"
 
 [guidance.sk_predict]
 description = "路由 sk/predict（榜线预测）的参数无法识别时的原因行。"

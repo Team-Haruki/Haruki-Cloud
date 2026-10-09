@@ -122,7 +122,7 @@ func (sekaiHandlers) ProfileUIDHandle() HarukiSekaiCommandHandler {
 			}
 			selector := strings.TrimSpace(ctx.UIDArg())
 			if strings.HasPrefix(selector, "@") {
-				return nil, usererror.Forbidden(i18n.M("binding.uid.self_only"))
+				return nil, usererror.Forbidden(i18n.M("common.self_only"))
 			}
 			if selector != "" && !isBindingSelector(selector) {
 				return nil, profileUIDUsageError()

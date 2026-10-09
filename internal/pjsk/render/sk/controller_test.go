@@ -4119,7 +4119,7 @@ func TestBuildPredictLineRequestFromTrackerReportsNoActiveAfterEventEnded(t *tes
 	if err == nil {
 		t.Fatal("expected no-active prediction error, got nil")
 	}
-	testutil.RequireUserError(t, err, usererror.CodeNotFound, "sk.no_ongoing_event")
+	testutil.RequireUserError(t, err, usererror.CodeNotFound, "event.no_ongoing")
 }
 
 func TestBuildPredictLineRequestFromTrackerStopsInLastWorldBloomChapterHour(t *testing.T) {

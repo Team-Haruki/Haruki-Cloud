@@ -372,8 +372,8 @@ func TestProfileAndCheckDataExecutionGuards(t *testing.T) {
 		p    userQueryParams
 		want string
 	}{
-		{mode: "mysekai", p: userQueryParams{Mode: "uid"}, want: "profile.data_status.self_only"},
-		{mode: "suite", p: userQueryParams{Mode: "uid"}, want: "profile.data_status.self_only"},
+		{mode: "mysekai", p: userQueryParams{Mode: "uid"}, want: "common.self_only"},
+		{mode: "suite", p: userQueryParams{Mode: "uid"}, want: "common.self_only"},
 	} {
 		params, _ := json.Marshal(tt.p)
 		rc.Cmd.Mode = tt.mode

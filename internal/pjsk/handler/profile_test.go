@@ -530,7 +530,7 @@ func TestProfileUIDHandleRejectsAtUser(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected at-user query to be rejected")
 	}
-	testutil.RequireUserError(t, err, "", "binding.uid.self_only")
+	testutil.RequireUserError(t, err, "", "common.self_only")
 }
 
 func TestProfileUIDHandleRejectsRawUID(t *testing.T) {
@@ -748,7 +748,7 @@ func TestProfileChartStyleHandleRequiresArgs(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing args error, got nil")
 	}
-	testutil.RequireUserError(t, err, "", "profile.chart_style.invalid")
+	testutil.RequireUserError(t, err, "", "profile.chart_style.required")
 }
 
 func TestProfileArrestDifficultyHandleParsesArgs(t *testing.T) {

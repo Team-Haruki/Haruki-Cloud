@@ -10,7 +10,7 @@ other = "找不到要比较的歌曲，请写歌曲 ID、歌曲名或别名"
 
 [deck.compare.needs_fixed_deck]
 description = "歌曲比较没有限定歌曲，也没有固定卡组。"
-other = "不限定比较的歌曲时必须固定卡组，可以加上 #5 个卡牌 ID 或“当前”"
+other = "不限定比较的歌曲时必须固定卡组，可以加上“#”和 5 个卡牌 ID（如“#123 456 789 1011 1213”）或“当前”"
 
 [deck.compare.no_data]
 description = "歌曲比较没有得到任何可比较的结果。"
@@ -38,15 +38,15 @@ other = "请依次写 5 个非负技能数值：队长、技能 2、技能 3、�
 
 [deck.multilive.teammate_power]
 description = "多人 Live 组卡的队友综合力无法识别。"
-other = "队友综合力应为数字，例如 队友综合 25w"
+other = "队友综合力应为数字，例如“队友综合 25w”"
 
 [deck.multilive.teammate_score_up]
 description = "多人 Live 组卡的队友实效无法识别。"
-other = "队友实效应为整数，例如 队友实效 200"
+other = "队友实效应为整数，例如“队友实效 200”"
 
 [deck.multilive.score_up_lower_bound]
 description = "多人 Live 组卡的实效下限无法识别。"
-other = "实效下限应为整数，例如 实效 200"
+other = "实效下限应为整数，例如“实效 200”"
 
 [deck.fixed.empty]
 description = "组卡的 # 后面没有写固定卡牌或角色。"
@@ -118,7 +118,7 @@ other = "模拟活动组卡需要同时写团名和属性，也可以写活动 I
 
 [deck.no_event.simulated_unsupported]
 description = "长草组卡写了团名和属性（模拟活动）。占位符：Command=活动组卡指令，例如 /组卡。"
-other = "长草组卡不能模拟活动，按团名和属性组卡请使用 {{.Command}} 团名 属性"
+other = "长草组卡不能模拟活动，按团名和属性组卡请使用“{{.Command}} 团名 属性”"
 
 [deck.event.locked]
 description = "未开始活动的组卡要等卡池开放后才能使用。"
@@ -130,7 +130,7 @@ other = "当前没有可用于组卡的活动"
 
 [deck.event.data_not_synced]
 description = "活动组卡：组卡服务还没有该活动的数据。"
-other = "组卡服务还没有该活动的数据，可以用 /组卡 团名 属性 模拟活动组卡"
+other = "组卡服务还没有该活动的数据，可以用“/组卡 团名 属性”模拟活动组卡"
 
 [deck.wl.not_wl_event]
 description = "组卡指定了 WL 章节，但该活动不是 WL 活动。占位符：Event=活动（common.event_label）。"
@@ -138,7 +138,7 @@ other = "{{.Event}}不是 WL 活动，不能指定章节"
 
 [deck.wl.finale_from_wl2]
 description = "组卡指定了 wl1 终章（终章从 wl2 开始）。"
-other = "终章从 wl2 开始，请使用 wl2 终章 或 wl3 终章"
+other = "终章从“wl2”开始，请写“wl2 终章”或“wl3 终章”"
 
 [deck.wl.finale_needs_leader]
 description = "WL 终章组卡没有指定队长角色。占位符：Turn=WL 期数。"
@@ -154,7 +154,7 @@ other = "请指定要查询的 WL 角色章节，例如 wl1 miku 或 event{{.Eve
 
 [deck.wl.chapter_required_mysekai]
 description = "烤森组卡在 WL 活动没有指定角色章节。占位符：EventID=活动 ID。"
-other = "请指定要查询的 WL 角色章节，例如 烤森组卡 wl1 miku 或 烤森组卡 event{{.EventID}} miku"
+other = "请指定要查询的 WL 角色章节，例如“/烤森组卡 wl1 miku”或“/烤森组卡 event{{.EventID}} miku”"
 
 [deck.wl.turn_invalid]
 description = "WL 活动序号无效。"

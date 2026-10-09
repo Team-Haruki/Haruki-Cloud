@@ -89,6 +89,10 @@ other = "{{.Region}}活动 {{.ID}}"
 description = "参数错误的原因行（接在 common.bad_param 后）：游戏 UID 格式不对。"
 other = "游戏 UID 应为至少 10 位纯数字"
 
+[common.param.region_invalid]
+description = "写的区服代码不支持。作为 common.bad_param 的原因行，或单独作为回复（查榜类指令）。"
+other = "区服只能是 jp、cn、tw、kr、en"
+
 [common.param.uid_digits]
 description = "参数错误的原因行（接在 common.bad_param 后）：游戏 UID 不是正整数。"
 other = "游戏 UID 应为纯数字"
@@ -122,8 +126,8 @@ description = "参数错误的原因行（接在 common.bad_param 后）：应�
 other = "应为整数"
 
 [common.self_only]
-description = "只能查询自己的数据的指令，但指定了别人或 UID。"
-other = "这个指令只能查询自己的数据，可以用 u序号 选择自己的账号"
+description = "只能查询自己的数据的指令（/sud、/msd、/查uid、/逮捕 等），但指定了别人或游戏 UID。"
+other = "这个指令只能查询自己的数据，可以用“u序号”选择自己的账号"
 
 [common.processed]
 description = "图片前的一行文字，说明这次按什么条件处理（组卡、卡牌列表等）。占位符：Summary=用“ / ”连接的条件，例如“日服(JP) / 活动组卡 / 活动 123 / EXPERT”或“国服(CN) / 卡牌列表 / 卡牌 ID 1001、1002”。"

@@ -188,7 +188,7 @@ description = "列表为空时的占位文字，用在 account.settings.arrest_d
 other = "无"
 
 [account.settings.chart_style_set]
-description = "/谱面样式 设置成功。占位符：Style=谱面样式名（英文代码，例如“default”）。"
+description = "/谱面样式 设置成功。占位符：Style=谱面样式名（英文代码，例如“black”）。"
 other = "已将谱面样式设为 {{.Style}}"
 
 [account.settings.modular_enabled]

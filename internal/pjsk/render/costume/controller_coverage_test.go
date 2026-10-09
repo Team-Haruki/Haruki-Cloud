@@ -860,3 +860,16 @@ func TestParseComboQueryEchoesTypedLabel(t *testing.T) {
 		}
 	}
 }
+
+// The unit names the Miku unit message lists are all accepted.
+func TestMikuUnitMessageListsAcceptedUnits(t *testing.T) {
+	text := i18n.T("costume.query.miku_unit_required")
+	for _, unit := range []string{"ln", "mmj", "vbs", "ws", "25h", "vs"} {
+		if !strings.Contains(text, unit) {
+			t.Errorf("message %q does not list %q", text, unit)
+		}
+		if _, ok := parseCostumeUnitAlias(unit); !ok {
+			t.Errorf("listed unit %q is not accepted", unit)
+		}
+	}
+}

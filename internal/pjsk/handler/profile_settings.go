@@ -308,7 +308,7 @@ func (sekaiHandlers) ProfileChartStyleHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, usererror.Misuse(i18n.M("profile.chart_style.invalid"))
+				return nil, usererror.Misuse(i18n.M("profile.chart_style.required"))
 			}
 			params := newProfileSettingsParams(ctx)
 			params.ChartStyle = args
@@ -480,7 +480,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			return rejectCNMySekai(rc)
 		}
 		if p.Mode != "self" {
-			return nil, usererror.Forbidden(i18n.M("profile.data_status.self_only"))
+			return nil, usererror.Forbidden(i18n.M("common.self_only"))
 		}
 
 		binding, hid, err := resolveBinding(false, true)
@@ -505,7 +505,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		bindingServer = binding.Server
 	default:
 		if p.Mode != "self" {
-			return nil, usererror.Forbidden(i18n.M("profile.data_status.self_only"))
+			return nil, usererror.Forbidden(i18n.M("common.self_only"))
 		}
 		binding, hid, err := resolveBinding(true, false)
 		if err != nil {

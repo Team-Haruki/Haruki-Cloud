@@ -277,7 +277,7 @@ func normalizeDefaultScope(scope string) (string, i18n.Message, error) {
 	}
 	normalized := renderregion.Normalize(scope)
 	if normalized.IsZero() {
-		return "", i18n.Message{}, usererror.BadParam(scope, i18n.M("binding.region_invalid"))
+		return "", i18n.Message{}, usererror.BadParam(scope, i18n.M("common.param.region_invalid"))
 	}
 	return normalized.String(), i18n.RegionLabel(normalized.String()), nil
 }

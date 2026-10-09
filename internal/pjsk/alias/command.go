@@ -44,11 +44,11 @@ func executeDeleteCommand(ctx context.Context, service *Service, raw json.RawMes
 	if err != nil {
 		return nil, err
 	}
-	lines := []string{fmt.Sprintf("已删除 %d 条%s已审核别名：", len(records), aliasTypeLabel(params.AliasType))}
+	lines := make([]i18n.Message, 0, len(records))
 	for _, record := range records {
-		lines = append(lines, formatApprovedAliasRecord(record))
+		lines = append(lines, approvedAliasRecordMessage(record))
 	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return []byte(i18n.T("alias.delete.done", i18n.Data{"Count": len(records), "Kind": aliasKind(params.AliasType), "Records": lines})), nil
 }
 
 func executeAddCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
@@ -60,11 +60,7 @@ func executeAddCommand(ctx context.Context, service *Service, raw json.RawMessag
 	if err != nil {
 		return nil, err
 	}
-	lines := []string{fmt.Sprintf("已提交 %d 条%s别名审核申请，审核ID如下：", len(records), aliasTypeLabel(params.AliasType))}
-	for _, record := range records {
-		lines = append(lines, formatAliasRecord(record))
-	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return []byte(i18n.T("alias.add.done", i18n.Data{"Count": len(records), "Kind": aliasKind(params.AliasType), "Records": aliasRecordMessages(records)})), nil
 }
 
 func executeQueryCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
@@ -76,17 +72,15 @@ func executeQueryCommand(ctx context.Context, service *Service, raw json.RawMess
 	if err != nil {
 		return nil, err
 	}
-	lines := []string{
-		fmt.Sprintf("%s: %d", aliasTypeIDLabel(params.AliasType), result.Entity.ID),
-		fmt.Sprintf("%s: %s", aliasTypeNameLabel(params.AliasType), result.Entity.Name),
+	entity := i18n.Data{"ID": result.Entity.ID, "Name": result.Entity.Name}
+	header := i18n.T("alias.query.music", entity)
+	if params.AliasType == PjskAliasTypeCharacter {
+		header = i18n.T("alias.query.character", entity)
 	}
 	if len(result.Aliases) == 0 {
-		lines = append(lines, "已审核别名: 无")
-	} else {
-		lines = append(lines, fmt.Sprintf("已审核别名（%d 条）:", len(result.Aliases)))
-		lines = append(lines, result.Aliases...)
+		return []byte(header + "\n" + i18n.T("alias.query.none")), nil
 	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return []byte(header + "\n" + i18n.T("alias.query.list", i18n.Data{"Count": len(result.Aliases), "Aliases": strings.Join(result.Aliases, "\n")})), nil
 }
 
 func executePendingListCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
@@ -99,13 +93,9 @@ func executePendingListCommand(ctx context.Context, service *Service, raw json.R
 		return nil, err
 	}
 	if len(records) == 0 {
-		return []byte("当前没有待审核别名"), nil
+		return []byte(i18n.T("alias.pending.none")), nil
 	}
-	lines := []string{fmt.Sprintf("当前共有 %d 条待审核别名：", len(records))}
-	for _, record := range records {
-		lines = append(lines, formatAliasRecord(record))
-	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return []byte(i18n.T("alias.pending.list", i18n.Data{"Count": len(records), "Records": aliasRecordMessages(records)})), nil
 }
 
 func executeSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
@@ -117,7 +107,7 @@ func executeSubmitterCommand(ctx context.Context, service *Service, raw json.Raw
 	if err != nil {
 		return nil, err
 	}
-	return []byte(fmt.Sprintf("别名提交者：\n%s\n提交者: %s", formatAliasRecord(*record), record.SubmittedBy)), nil
+	return []byte(i18n.T("alias.submitter.result", i18n.Data{"Record": aliasRecordMessage(*record), "Submitter": record.SubmittedBy})), nil
 }
 
 func executeBanSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
@@ -135,7 +125,7 @@ func executeBanSubmitterCommand(ctx context.Context, service *Service, raw json.
 	if err != nil {
 		return nil, err
 	}
-	return []byte(fmt.Sprintf("已禁止用户 %s:%s 提交别名", record.Platform, record.PlatformUserID)), nil
+	return []byte(i18n.T("alias.ban.done", i18n.Data{"User": record.Platform + ":" + record.PlatformUserID})), nil
 }
 
 func executeApproveCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
@@ -147,11 +137,7 @@ func executeApproveCommand(ctx context.Context, service *Service, raw json.RawMe
 	if err != nil {
 		return nil, err
 	}
-	lines := []string{fmt.Sprintf("已通过 %d 条别名审核：", len(records))}
-	for _, record := range records {
-		lines = append(lines, formatAliasRecord(record))
-	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return []byte(i18n.T("alias.approve.done", i18n.Data{"Count": len(records), "Records": aliasRecordMessages(records)})), nil
 }
 
 func executeRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
@@ -163,8 +149,7 @@ func executeRejectCommand(ctx context.Context, service *Service, raw json.RawMes
 	if err != nil {
 		return nil, err
 	}
-	lines := []string{"已拒绝别名审核：", formatRejectedAliasRecord(*record, params.Reason)}
-	return []byte(strings.Join(lines, "\n")), nil
+	return []byte(i18n.T("alias.reject.done", i18n.Data{"Record": rejectedAliasRecordMessage(*record, params.Reason)})), nil
 }
 
 func executeBatchRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
@@ -172,16 +157,16 @@ func executeBatchRejectCommand(ctx context.Context, service *Service, raw json.R
 	if err != nil {
 		return nil, err
 	}
-	const reason = "批量拒绝"
+	reason := i18n.T("alias.batch_reject.reason")
 	records, err := service.RejectMany(ctx, params.Platform, params.PlatformUserID, params.ReviewIDs, reason)
 	if err != nil {
 		return nil, err
 	}
-	lines := []string{fmt.Sprintf("已批量拒绝 %d 条别名审核：", len(records))}
+	lines := make([]i18n.Message, 0, len(records))
 	for _, record := range records {
-		lines = append(lines, formatRejectedAliasRecord(record, reason))
+		lines = append(lines, rejectedAliasRecordMessage(record, reason))
 	}
-	return []byte(strings.Join(lines, "\n")), nil
+	return []byte(i18n.T("alias.batch_reject.done", i18n.Data{"Count": len(records), "Records": lines})), nil
 }
 
 func decodeDeleteParams(raw json.RawMessage) (DeleteCommandParams, error) {

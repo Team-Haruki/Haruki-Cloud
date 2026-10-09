@@ -49,7 +49,7 @@ func (s *Service) loadMusicTitles(ctx context.Context, musicIDs []int) (map[int]
 			result[musicID] = preferredMusicTitle(items, musicID)
 			continue
 		}
-		result[musicID] = fmt.Sprintf("%s%d", aliasTypeLabel(PjskAliasTypeMusic), musicID)
+		result[musicID] = fallbackEntityName(PjskAliasTypeMusic, musicID)
 	}
 	return result, nil
 }
@@ -86,7 +86,7 @@ func (s *Service) loadCharacterNames(ctx context.Context, characterIDs []int) (m
 			result[characterID] = preferredCharacterName(items, characterID)
 			continue
 		}
-		result[characterID] = fmt.Sprintf("%s%d", aliasTypeLabel(PjskAliasTypeCharacter), characterID)
+		result[characterID] = fallbackEntityName(PjskAliasTypeCharacter, characterID)
 	}
 	return result, nil
 }
@@ -106,7 +106,7 @@ func preferredMusicTitle(rows []*sekaiDB.Music, musicID int) string {
 		}
 	}
 	if bestTitle == "" {
-		return fmt.Sprintf("%s%d", aliasTypeLabel(PjskAliasTypeMusic), musicID)
+		return fallbackEntityName(PjskAliasTypeMusic, musicID)
 	}
 	return bestTitle
 }
@@ -129,7 +129,7 @@ func preferredCharacterName(rows []*sekaiDB.Gamecharacter, characterID int) stri
 		}
 	}
 	if bestName == "" {
-		return fmt.Sprintf("%s%d", aliasTypeLabel(PjskAliasTypeCharacter), characterID)
+		return fallbackEntityName(PjskAliasTypeCharacter, characterID)
 	}
 	return bestName
 }
@@ -230,7 +230,7 @@ func (e *AmbiguousError) userError() *usererror.Error {
 	return usererror.New(usererror.CodeAmbiguous, i18n.M("alias.ambiguous", i18n.Data{"Kind": aliasKind(e.AliasType), "Candidates": lines}))
 }
 
-func ambiguousEntityError(aliasType, sourceName string, ids []int, names map[int]string) error {
+func ambiguousEntityError(aliasType string, ids []int, names map[int]string) error {
 	return &AmbiguousError{AliasType: aliasType, IDs: ids, names: names}
 }
 
@@ -305,48 +305,12 @@ func errAliasUnavailable() error {
 	return usererror.Unavailable(i18n.M("alias.feature"), errors.New("alias service is not ready"))
 }
 
-func aliasTypeLabel(aliasType string) string {
-	switch aliasType {
-	case PjskAliasTypeMusic:
-		return "歌曲"
-	case PjskAliasTypeCharacter:
-		return "角色"
-	default:
-		return "未知类型"
+// fallbackEntityName names a song or character whose game data has no name.
+func fallbackEntityName(aliasType string, id int) string {
+	if aliasType == PjskAliasTypeCharacter {
+		return i18n.T("alias.fallback_name.character", i18n.Data{"ID": id})
 	}
-}
-
-func aliasTypeIDLabel(aliasType string) string {
-	switch aliasType {
-	case PjskAliasTypeMusic:
-		return "歌曲ID"
-	case PjskAliasTypeCharacter:
-		return "角色ID"
-	default:
-		return "目标ID"
-	}
-}
-
-func aliasTypeNameLabel(aliasType string) string {
-	switch aliasType {
-	case PjskAliasTypeMusic:
-		return "曲名"
-	case PjskAliasTypeCharacter:
-		return "角色名"
-	default:
-		return "名称"
-	}
-}
-
-func entityTokenPrompt(aliasType string) string {
-	switch aliasType {
-	case PjskAliasTypeMusic:
-		return "歌曲ID、曲名或已审核别名"
-	case PjskAliasTypeCharacter:
-		return "角色ID、角色名或已审核别名"
-	default:
-		return "ID、名称或已审核别名"
-	}
+	return i18n.T("alias.fallback_name.music", i18n.Data{"ID": id})
 }
 
 func buildActorLabel(platform, platformUserID string) string {
@@ -387,14 +351,34 @@ func sortAliasTexts(values []string) {
 	})
 }
 
-func formatAliasRecord(record PjskAliasRecord) string {
-	return fmt.Sprintf("审核ID: %d | 类型: %s | 目标ID: %d | 名称: %s | 别名: %s", record.ReviewID, aliasTypeLabel(record.Entity.AliasType), record.Entity.ID, record.Entity.Name, record.Alias)
+func aliasRecordMessage(record PjskAliasRecord) i18n.Message {
+	return i18n.M("alias.record.pending", i18n.Data{
+		"ReviewID": record.ReviewID,
+		"Kind":     aliasKind(record.Entity.AliasType),
+		"Name":     record.Entity.Name,
+		"EntityID": record.Entity.ID,
+		"Alias":    record.Alias,
+	})
 }
 
-func formatRejectedAliasRecord(record PjskAliasRecord, reason string) string {
-	return formatAliasRecord(record) + "\n原因: " + reason
+func aliasRecordMessages(records []PjskAliasRecord) []i18n.Message {
+	lines := make([]i18n.Message, 0, len(records))
+	for _, record := range records {
+		lines = append(lines, aliasRecordMessage(record))
+	}
+	return lines
 }
 
-func formatApprovedAliasRecord(record ApprovedAliasRecord) string {
-	return fmt.Sprintf("别名ID: %d | 类型: %s | 目标ID: %d | 名称: %s | 别名: %s", record.AliasID, aliasTypeLabel(record.Entity.AliasType), record.Entity.ID, record.Entity.Name, record.Alias)
+func rejectedAliasRecordMessage(record PjskAliasRecord, reason string) i18n.Message {
+	return i18n.M("alias.record.rejected", i18n.Data{"Record": aliasRecordMessage(record), "Reason": reason})
+}
+
+func approvedAliasRecordMessage(record ApprovedAliasRecord) i18n.Message {
+	return i18n.M("alias.record.approved", i18n.Data{
+		"AliasID":  record.AliasID,
+		"Kind":     aliasKind(record.Entity.AliasType),
+		"Name":     record.Entity.Name,
+		"EntityID": record.Entity.ID,
+		"Alias":    record.Alias,
+	})
 }

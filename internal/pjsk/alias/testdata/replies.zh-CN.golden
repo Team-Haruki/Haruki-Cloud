@@ -1,0 +1,54 @@
+== query music
+歌曲 ID：74
+歌曲名：Tell Your World
+已审核别名（1 条）：
+tyw
+== query character (none)
+角色 ID：21
+角色名：初音ミク
+已审核别名：无
+== pending (none)
+当前没有待审核别名
+== add music
+已提交 2 条歌曲别名，等待审核：
+待审核 ID 1：歌曲「Tell Your World」（ID 74）的别名“告诉你的世界”
+待审核 ID 2：歌曲「Tell Your World」（ID 74）的别名“世界”
+== add character
+已提交 2 条角色别名，等待审核：
+待审核 ID 3：角色「初音ミク」（ID 21）的别名“葱”
+待审核 ID 4：角色「初音ミク」（ID 21）的别名“公主殿下”
+== pending
+当前共有 4 条待审核别名：
+待审核 ID 1：歌曲「Tell Your World」（ID 74）的别名“告诉你的世界”
+待审核 ID 2：歌曲「Tell Your World」（ID 74）的别名“世界”
+待审核 ID 3：角色「初音ミク」（ID 21）的别名“葱”
+待审核 ID 4：角色「初音ミク」（ID 21）的别名“公主殿下”
+== submitter
+待审核 ID 1：歌曲「Tell Your World」（ID 74）的别名“告诉你的世界”
+提交者：qq:10001
+== approve
+已通过 2 条别名：
+待审核 ID 1：歌曲「Tell Your World」（ID 74）的别名“告诉你的世界”
+待审核 ID 3：角色「初音ミク」（ID 21）的别名“葱”
+== reject
+已拒绝别名：
+待审核 ID 2：歌曲「Tell Your World」（ID 74）的别名“世界”
+原因：与已有别名重复
+== batch reject
+已拒绝 1 条别名：
+待审核 ID 4：角色「初音ミク」（ID 21）的别名“公主殿下”
+原因：批量拒绝
+== ban submitter
+已禁止用户 qq:10001 提交别名
+== delete music
+已删除 1 条歌曲别名：
+别名 ID 1：歌曲「Tell Your World」（ID 74）的别名“tyw”
+== query music (after review)
+歌曲 ID：74
+歌曲名：Tell Your World
+已审核别名（1 条）：
+告诉你的世界
+== fallback name (music)
+歌曲 9999
+== fallback name (character)
+角色 99

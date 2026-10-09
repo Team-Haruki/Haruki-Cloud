@@ -8,6 +8,7 @@ import (
 	"haruki-cloud/config"
 	ent "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/user"
+	"haruki-cloud/internal/i18n"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
@@ -20,11 +21,11 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 
 	var req InternalVerifyRequest
 	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, "请求格式错误")
+		return api.JSONResponse(c, fiber.StatusBadRequest, i18n.T("account.api.request_invalid"))
 	}
 
 	if req.BotID == "" || req.SessionToken == "" {
-		return api.JSONResponse(c, fiber.StatusBadRequest, "缺少 bot_id 或 session_token")
+		return api.JSONResponse(c, fiber.StatusBadRequest, i18n.T("account.api.verify_fields_missing"))
 	}
 
 	// 验证 JWT session token

@@ -97,7 +97,7 @@ func TestResolverAmbiguityAndMissingIDs(t *testing.T) {
 	if _, err := deps.service.resolveCharacterByToken(ctx, " "); err == nil {
 		t.Fatal("empty character token resolved")
 	}
-	if _, err := uniqueMusicFromRows(nil, "title"); err == nil {
+	if _, err := uniqueMusicFromRows(nil); err == nil {
 		t.Fatal("empty music rows resolved")
 	}
 }

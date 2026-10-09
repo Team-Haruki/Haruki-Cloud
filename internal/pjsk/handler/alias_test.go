@@ -209,7 +209,7 @@ func TestAliasBanSubmitterHandleUsesMention(t *testing.T) {
 }
 
 func TestParseAliasSubmissionTargetSupportsActorLabel(t *testing.T) {
-	platform, userID, err := parseAliasSubmissionTarget("discord:987654", "qq", nil, "usage")
+	platform, userID, err := parseAliasSubmissionTarget("discord:987654", "qq", nil)
 	if err != nil {
 		t.Fatalf("parseAliasSubmissionTarget() error = %v", err)
 	}

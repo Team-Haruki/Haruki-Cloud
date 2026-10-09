@@ -1653,7 +1653,7 @@ func TestExecuteProfileBGAdjustReturnsPreviewImage(t *testing.T) {
 	if !ok {
 		t.Fatalf("unexpected text segment data: %+v", message[1].Data)
 	}
-	if !strings.Contains(textData.Text, "已更新JP服个人信息背景设置") {
+	if !strings.Contains(textData.Text, i18n.T("account.bg.adjusted", i18n.Data{"Region": i18n.RegionLabel("jp")})) {
 		t.Fatalf("unexpected text summary: %q", textData.Text)
 	}
 	if captured.BgSettings == nil {

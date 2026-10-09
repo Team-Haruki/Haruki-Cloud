@@ -7,6 +7,7 @@ import (
 	"haruki-cloud/api"
 	"haruki-cloud/config"
 	"haruki-cloud/database/bot/user"
+	"haruki-cloud/internal/i18n"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
@@ -17,6 +18,9 @@ import (
 type authResponseError struct {
 	status  int
 	message string
+	// replay marks a consumed nonce, reported as a replay rather than a
+	// failed login.
+	replay bool
 }
 
 type authenticatedBot struct {
@@ -96,7 +100,7 @@ func (h *UserHandler) Logout(c fiber.Ctx) error {
 	// 验证请求携带的 session token 与 Redis 中存储的一致
 	sessionToken := c.Get(api.HeaderBotSessionToken)
 	if sessionToken == "" {
-		return api.JSONResponse(c, fiber.StatusUnauthorized, "缺少注销所需的会话令牌")
+		return api.JSONResponse(c, fiber.StatusUnauthorized, i18n.T("account.api.logout_token_missing"))
 	}
 	stored, err := h.svc.getRedisKey(ctx, RedisKeySessionToken, botIDStr)
 	if err != nil || stored != sessionToken {
@@ -107,7 +111,7 @@ func (h *UserHandler) Logout(c fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	return api.JSONResponse(c, fiber.StatusOK, "已注销")
+	return api.JSONResponse(c, fiber.StatusOK, i18n.T("account.api.logged_out"))
 }
 
 // deleteSession 从 Redis 删除指定 bot_id 的 session

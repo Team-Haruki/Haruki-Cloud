@@ -30,8 +30,7 @@ func (sekaiHandlers) MusicAliasQueryHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasQueryHandler(
 		aliases.PjskAliasTypeMusic,
 		"alias/music",
-		[]string{"/pjsk alias", "/music alias", "/歌曲别名", "/查歌曲别名"},
-		"/music alias",
+		[]string{"/pjsk alias", "/music alias", "/歌曲别名", "/查歌曲别名"}, //copylint:ignore command triggers
 	)
 }
 
@@ -39,8 +38,7 @@ func (sekaiHandlers) MusicAliasAddHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasAddHandler(
 		aliases.PjskAliasTypeMusic,
 		"alias/music/add",
-		[]string{"/music alias add", "/pjsk alias add", "/pjskalias add", "/添加歌曲别名", "/歌曲别名添加"},
-		"/music alias add",
+		[]string{"/music alias add", "/pjsk alias add", "/pjskalias add", "/添加歌曲别名", "/歌曲别名添加"}, //copylint:ignore command triggers
 	)
 }
 
@@ -48,8 +46,7 @@ func (sekaiHandlers) MusicAliasDeleteHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasDeleteHandler(
 		aliases.PjskAliasTypeMusic,
 		"alias/music/del",
-		[]string{"/music alias del", "/pjsk alias del", "/pjskalias del", "/删除歌曲别名", "/歌曲别名删除"},
-		"/music alias del",
+		[]string{"/music alias del", "/pjsk alias del", "/pjskalias del", "/删除歌曲别名", "/歌曲别名删除"}, //copylint:ignore command triggers
 	)
 }
 
@@ -57,8 +54,7 @@ func (sekaiHandlers) CharacterAliasQueryHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasQueryHandler(
 		aliases.PjskAliasTypeCharacter,
 		"alias/character",
-		[]string{"/pjsk chara alias", "/chara alias", "/character alias", "/角色别名", "/查角色别名"},
-		"/chara alias",
+		[]string{"/pjsk chara alias", "/chara alias", "/character alias", "/角色别名", "/查角色别名"}, //copylint:ignore command triggers
 	)
 }
 
@@ -66,8 +62,7 @@ func (sekaiHandlers) CharacterAliasAddHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasAddHandler(
 		aliases.PjskAliasTypeCharacter,
 		"alias/character/add",
-		[]string{"/pjsk chara alias add", "/chara alias add", "/character alias add", "/添加角色别名", "/角色别名添加"},
-		"/chara alias add",
+		[]string{"/pjsk chara alias add", "/chara alias add", "/character alias add", "/添加角色别名", "/角色别名添加"}, //copylint:ignore command triggers
 	)
 }
 
@@ -75,8 +70,7 @@ func (sekaiHandlers) CharacterAliasDeleteHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasDeleteHandler(
 		aliases.PjskAliasTypeCharacter,
 		"alias/character/del",
-		[]string{"/pjsk chara alias del", "/chara alias del", "/character alias del", "/删除角色别名", "/角色别名删除"},
-		"/chara alias del",
+		[]string{"/pjsk chara alias del", "/chara alias del", "/character alias del", "/删除角色别名", "/角色别名删除"}, //copylint:ignore command triggers
 	)
 }
 
@@ -87,7 +81,6 @@ func (sekaiHandlers) AliasPendingHandle() HarukiSekaiCommandHandler {
 			"/待审核别名", "/别名待审核",
 			"/歌曲别名待审核", "/角色别名待审核",
 		},
-		Helper:      "使用方式:\n/待审核别名",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
@@ -102,14 +95,12 @@ func (sekaiHandlers) AliasPendingHandle() HarukiSekaiCommandHandler {
 }
 
 func (sekaiHandlers) AliasSubmitterHandle() HarukiSekaiCommandHandler {
-	const usage = "使用方式:\n/查询别名提交者 待审核ID"
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        "alias/submitter",
 		Commands:    []string{"/查询别名提交者", "/别名提交者"},
-		Helper:      usage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			reviewID, err := parseAliasReviewID(strings.TrimSpace(ctx.GetArgs()), usage)
+			reviewID, err := parseAliasReviewID(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
 			}
@@ -123,18 +114,15 @@ func (sekaiHandlers) AliasSubmitterHandle() HarukiSekaiCommandHandler {
 }
 
 func (sekaiHandlers) AliasBanSubmitterHandle() HarukiSekaiCommandHandler {
-	const usage = "使用方式:\n/禁用别名提交 用户ID\n/禁用别名提交 @用户"
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        "alias/ban_submitter",
 		Commands:    []string{"/禁用别名提交", "/禁止别名提交"},
-		Helper:      usage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			targetPlatform, targetUserID, err := parseAliasSubmissionTarget(
 				strings.TrimSpace(ctx.GetArgs()),
 				ctx.GetPlatform(),
 				ctx.GetAtIds(),
-				usage,
 			)
 			if err != nil {
 				return nil, err
@@ -155,7 +143,6 @@ func (sekaiHandlers) AliasApproveHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/同意别名", "/通过别名",
 		},
-		Helper:      "使用方式:\n/同意别名 待审核ID1 待审核ID2 ...",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			reviewIDs, err := parseAliasReviewIDs(strings.TrimSpace(ctx.GetArgs()))
@@ -194,14 +181,12 @@ func (sekaiHandlers) AliasRejectHandle() HarukiSekaiCommandHandler {
 }
 
 func (sekaiHandlers) AliasBatchRejectHandle() HarukiSekaiCommandHandler {
-	const usage = "使用方式:\n/批量拒绝别名 待审核ID1 待审核ID2 ..."
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        "alias/batch-reject",
 		Commands:    []string{"/批量拒绝别名"},
-		Helper:      usage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			reviewIDs, err := parseAliasReviewIDsWithUsage(strings.TrimSpace(ctx.GetArgs()), usage)
+			reviewIDs, err := parseAliasReviewIDs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
 			}
@@ -214,11 +199,10 @@ func (sekaiHandlers) AliasBatchRejectHandle() HarukiSekaiCommandHandler {
 	}, executeAlias)
 }
 
-func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
+func newEntityAliasQueryHandler(aliasType, path string, commands []string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        path,
 		Commands:    commands,
-		Helper:      aliasQueryHelp(aliasType, sampleCommand),
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			target := strings.TrimSpace(ctx.GetArgs())
@@ -233,14 +217,13 @@ func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampl
 	}, executeAlias)
 }
 
-func newEntityAliasAddHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
+func newEntityAliasAddHandler(aliasType, path string, commands []string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        path,
 		Commands:    commands,
-		Helper:      aliasAddHelp(aliasType, sampleCommand),
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasAddHelp(aliasType, sampleCommand))
+			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
 			}
@@ -255,14 +238,13 @@ func newEntityAliasAddHandler(aliasType, path string, commands []string, sampleC
 	}, executeAlias)
 }
 
-func newEntityAliasDeleteHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
+func newEntityAliasDeleteHandler(aliasType, path string, commands []string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path:        path,
 		Commands:    commands,
-		Helper:      aliasDeleteHelp(aliasType, sampleCommand),
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasDeleteHelp(aliasType, sampleCommand))
+			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
 			}
@@ -286,66 +268,7 @@ func aliasTargetRequiredError(aliasType string) error {
 	return usererror.Misuse(i18n.M("alias.target_required.music"))
 }
 
-func aliasQueryHelp(aliasType, sampleCommand string) string {
-	return fmt.Sprintf(`使用方式:
-%s %s
-
-说明:
-- 按 %s 的顺序查找
-- 只能查询已审核通过的%s别名`, sampleCommand, aliasQueryTokenPrompt(aliasType), aliasQueryTokenPrompt(aliasType), aliasTypeLabel(aliasType))
-}
-
-func aliasAddHelp(aliasType, sampleCommand string) string {
-	return fmt.Sprintf(`使用方式:
-%s
-%s
-别名1
-别名2
-...
-
-说明:
-- 第二行开始每行填写一个别名
-- 至少提供一个非空别名
-- 新别名会进入待审核列表，不会直接生效`, sampleCommand, aliasQueryTokenPrompt(aliasType))
-}
-
-func aliasDeleteHelp(aliasType, sampleCommand string) string {
-	return fmt.Sprintf(`使用方式:
-%s
-%s
-别名1
-别名2
-...
-
-说明:
-- 只能删除已审核通过的%s别名
-- 第二行开始每行填写一个要删除的别名
-- 仅别名审核管理员可用`, sampleCommand, aliasQueryTokenPrompt(aliasType), aliasTypeLabel(aliasType))
-}
-
-func aliasTypeLabel(aliasType string) string {
-	switch aliasType {
-	case aliases.PjskAliasTypeMusic:
-		return "歌曲"
-	case aliases.PjskAliasTypeCharacter:
-		return "角色"
-	default:
-		return "目标"
-	}
-}
-
-func aliasQueryTokenPrompt(aliasType string) string {
-	switch aliasType {
-	case aliases.PjskAliasTypeMusic:
-		return "歌曲ID 或 曲名 或 已审核别名"
-	case aliases.PjskAliasTypeCharacter:
-		return "角色ID 或 角色名 或 已审核别名"
-	default:
-		return "ID 或 名称 或 已审核别名"
-	}
-}
-
-func parseEntityAliasBulkArgs(args, usage string) (string, []string, error) {
+func parseEntityAliasBulkArgs(args string) (string, []string, error) {
 	args = strings.TrimSpace(strings.ReplaceAll(args, "\r\n", "\n"))
 	if args == "" {
 		return "", nil, usererror.Misuse(i18n.M("alias.bulk_usage"))
@@ -372,10 +295,6 @@ func parseEntityAliasBulkArgs(args, usage string) (string, []string, error) {
 }
 
 func parseAliasReviewIDs(args string) ([]int64, error) {
-	return parseAliasReviewIDsWithUsage(args, "使用方式:\n/同意别名 待审核ID1 待审核ID2 ...")
-}
-
-func parseAliasReviewIDsWithUsage(args, usage string) ([]int64, error) {
 	fields := strings.Fields(strings.TrimSpace(args))
 	if len(fields) == 0 {
 		return nil, usererror.Misuse(i18n.M("alias.review_ids_required"))
@@ -391,7 +310,7 @@ func parseAliasReviewIDsWithUsage(args, usage string) ([]int64, error) {
 	return result, nil
 }
 
-func parseAliasReviewID(args, usage string) (int64, error) {
+func parseAliasReviewID(args string) (int64, error) {
 	fields := strings.Fields(strings.TrimSpace(args))
 	if len(fields) != 1 {
 		return 0, usererror.Misuse(i18n.M("alias.single_review_id"))
@@ -403,7 +322,7 @@ func parseAliasReviewID(args, usage string) (int64, error) {
 	return reviewID, nil
 }
 
-func parseAliasSubmissionTarget(args, currentPlatform string, atIDs []string, usage string) (string, string, error) {
+func parseAliasSubmissionTarget(args, currentPlatform string, atIDs []string) (string, string, error) {
 	currentPlatform = strings.TrimSpace(currentPlatform)
 	if len(atIDs) > 0 && strings.TrimSpace(atIDs[0]) != "" {
 		return currentPlatform, strings.TrimSpace(atIDs[0]), nil
@@ -539,8 +458,8 @@ func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType str
 	switch strings.TrimSpace(aliasType) {
 	case aliases.PjskAliasTypeMusic:
 		req := drawing.AliasListRequest{
-			Title:       "歌曲别名",
-			EntityLabel: "歌曲ID",
+			Title:       i18n.T("alias.image.title.music"),
+			EntityLabel: i18n.T("alias.image.entity_label.music"),
 			EntityID:    result.Entity.ID,
 			EntityName:  result.Entity.Name,
 			TimeZone:    timeZone,
@@ -555,8 +474,8 @@ func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType str
 		return req, true
 	case aliases.PjskAliasTypeCharacter:
 		return drawing.AliasListRequest{
-			Title:                   "角色别名",
-			EntityLabel:             "角色ID",
+			Title:                   i18n.T("alias.image.title.character"),
+			EntityLabel:             i18n.T("alias.image.entity_label.character"),
 			EntityID:                result.Entity.ID,
 			EntityName:              result.Entity.Name,
 			TimeZone:                timeZone,

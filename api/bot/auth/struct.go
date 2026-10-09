@@ -4,6 +4,7 @@ import (
 	"context"
 	"haruki-cloud/internal/core/buildpolicy"
 	"haruki-cloud/internal/core/secevent"
+	"haruki-cloud/internal/i18n"
 	"time"
 
 	"haruki-cloud/api"
@@ -92,24 +93,25 @@ const (
 
 // ================= Error Messages =================
 
-const (
-	ErrInvalidCredential    = "凭证无效"
-	ErrInvalidEncryptedData = "加密载荷无效"
-	ErrAuthTimestampExpired = "认证请求已过期"
-	ErrBotIDMismatch        = "bot_id 不匹配"
-	ErrAuthFailed           = "认证失败"
-	ErrSessionExpired       = "会话已过期或无效"
-	ErrRateLimitExceeded    = "请求过于频繁，请稍后再试"
-	ErrReplayDetected       = "检测到重复请求"
-	ErrOwnerBanned          = "Bot 所有者已被全局封禁"
-	ErrSecureChannelMissing = "认证请求必须经由 Noise 安全通道"
-	ErrRequestBindingBroken = "请求上下文不匹配"
-	ErrNoiseKeyMismatch     = "Noise 公钥标识不匹配"
-	ErrInvalidNonce         = "nonce 无效"
+// Messages returned to the bot program (catalog account.api.*).
+var (
+	ErrInvalidCredential    = i18n.T("account.api.credential_invalid")
+	ErrInvalidEncryptedData = i18n.T("account.api.payload_invalid")
+	ErrAuthTimestampExpired = i18n.T("account.api.auth_expired")
+	ErrBotIDMismatch        = i18n.T("account.api.bot_id_mismatch")
+	ErrAuthFailed           = i18n.T("account.api.auth_failed")
+	ErrSessionExpired       = i18n.T("account.api.session_expired")
+	ErrRateLimitExceeded    = i18n.T("account.api.rate_limited")
+	ErrReplayDetected       = i18n.T("account.api.replay_detected")
+	ErrOwnerBanned          = i18n.T("account.api.owner_banned")
+	ErrSecureChannelMissing = i18n.T("account.api.secure_channel_required")
+	ErrRequestBindingBroken = i18n.T("account.api.request_binding_mismatch")
+	ErrNoiseKeyMismatch     = i18n.T("account.api.noise_key_mismatch")
+	ErrInvalidNonce         = i18n.T("account.api.nonce_invalid")
 	// ErrClientNotAuthorized covers every build-policy rejection (unknown or
 	// revoked build, revoked version/bot, blocked source) with one message so
 	// the response does not reveal which rule matched.
-	ErrClientNotAuthorized = "客户端未获授权"
+	ErrClientNotAuthorized = i18n.T("account.api.client_not_authorized")
 )
 
 // ================= Service Structs =================

@@ -76,7 +76,7 @@ func TestParseBirthdayMonitorCommandSupportsRegionPrefix(t *testing.T) {
 
 func TestParseBirthdayMonitorCommandRejectsAllMaterialsDisabled(t *testing.T) {
 	_, err := ParseBirthdayMonitorCommand("/烤森生日监听 钻石关闭")
-	if err == nil || !strings.Contains(err.Error(), "至少需要开启一种监听材料") {
+	if testutil.MessageID(err) != "subscription.birthday.materials_required" {
 		t.Fatalf("error = %v, want all-disabled error", err)
 	}
 }

@@ -814,7 +814,7 @@ func TestBotEndpointGetReturnsTextJSON(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 
-	assertSingleTextMessage(t, body, "你还没有绑定任何PJSK账号")
+	assertSingleTextMessage(t, body, i18n.T("binding.none"))
 }
 
 func TestBotEndpointRegionPrefixedBindListFiltersBindings(t *testing.T) {
@@ -843,7 +843,7 @@ func TestBotEndpointRegionPrefixedBindListFiltersBindings(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 
-	assertSingleTextMessage(t, body, "已绑定CN服账号列表（u序号按该区服编号）:\nu1 [CN] 748********663 (全局默认 / CN服默认)")
+	assertSingleTextMessage(t, body, i18n.T("account.list.header_region", i18n.Data{"Region": i18n.RegionLabel("cn")})+"\n"+i18n.T("account.list.item_marked", i18n.Data{"Index": 1, "Account": i18n.AccountLabel("cn", "748********663", true), "Marks": i18n.T("account.mark.global_default") + "、" + i18n.T("account.mark.region_default", i18n.Data{"Region": i18n.RegionLabel("cn")})}))
 }
 
 func TestBotEndpointBindListFiltersTransportRegionAfterClientStripsPrefix(t *testing.T) {
@@ -872,7 +872,7 @@ func TestBotEndpointBindListFiltersTransportRegionAfterClientStripsPrefix(t *tes
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 
-	assertSingleTextMessage(t, body, "已绑定CN服账号列表（u序号按该区服编号）:\nu1 [CN] 748********663 (全局默认 / CN服默认)")
+	assertSingleTextMessage(t, body, i18n.T("account.list.header_region", i18n.Data{"Region": i18n.RegionLabel("cn")})+"\n"+i18n.T("account.list.item_marked", i18n.Data{"Index": 1, "Account": i18n.AccountLabel("cn", "748********663", true), "Marks": i18n.T("account.mark.global_default") + "、" + i18n.T("account.mark.region_default", i18n.Data{"Region": i18n.RegionLabel("cn")})}))
 }
 
 func TestBotEndpointRegionPrefixedQueryUIDUsesRegionBinding(t *testing.T) {
@@ -965,7 +965,7 @@ func TestBotEndpointRegionPrefixedHideIDSyncsProfileSettingsParams(t *testing.T)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已隐藏 [EN] 394********123 的ID信息")
+	assertSingleTextMessage(t, body, i18n.T("account.visibility.hide_uid", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -1017,7 +1017,7 @@ func TestBotEndpointTransportRegionShowSuiteSyncsProfileSettingsParams(t *testin
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已展示 [EN] 394********123 的抓包信息")
+	assertSingleTextMessage(t, body, i18n.T("account.visibility.show_suite", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -1063,7 +1063,7 @@ func TestBotEndpointRegionPrefixedHideSuiteSyncsProfileSettingsParams(t *testing
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已隐藏 [EN] 394********123 的抓包信息")
+	assertSingleTextMessage(t, body, i18n.T("account.visibility.hide_suite", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -3034,7 +3034,7 @@ func TestBotEndpointProfileTimeZoneCompatReroutesLegacyProfilePath(t *testing.T)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "已设置PJSK时区为 Asia/Hong_Kong")
+	assertSingleTextMessage(t, body, i18n.T("account.settings.timezone_set", i18n.Data{"TimeZone": "Asia/Hong_Kong"}))
 }
 
 func TestBotEndpointWrongCommandRejects400(t *testing.T) {

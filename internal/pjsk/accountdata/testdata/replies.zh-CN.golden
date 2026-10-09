@@ -1,0 +1,93 @@
+== bind list (none)
+你还没有绑定任何游戏账号
+== bind list (none in region)
+你还没有绑定任何韩服(KR)账号
+== bind list
+已绑定的游戏账号（u序号按全部账号编号）：
+u1 [日服(JP)] 748*************370（全局默认、日服(JP)默认）
+u2 [国服(CN)] 123456789（国服(CN)默认）
+u3 [台服(TW)] 987***321
+== bind list (region)
+日服(JP)已绑定的游戏账号（u序号按该区服编号）：
+u1 [日服(JP)] 748*************370（全局默认、日服(JP)默认）
+== bind
+已绑定 [日服(JP)] 748*************370（ほのか）
+这个账号之前已经绑定过，没有重复添加
+已自动设为全局默认绑定
+已自动设为日服(JP)默认绑定
+这个游戏 UID 在多个区服都存在，已按 jp、cn、tw、kr、en 的顺序绑定第一个找到的区服
+== unbind
+已解绑 [台服(TW)] 987***321
+已将全局默认绑定改为 [国服(CN)] 123456789
+已将日服(JP)默认绑定改为 [日服(JP)] 748*************370
+== default set (global)
+已将全局默认绑定设为 [国服(CN)] 123456789
+== default set (region)
+已将日服(JP)默认绑定设为 [日服(JP)] 748*************370
+== default cleared (global)
+已取消全局默认绑定 [国服(CN)] 123456789
+== default cleared (region)
+已取消日服(JP)默认绑定 [日服(JP)] 748*************370
+== swap (region)
+已交换日服(JP)账号 u1 和 u2 的顺序
+日服(JP)已绑定的游戏账号（u序号按该区服编号）：
+u1 [日服(JP)] 748*************370（全局默认、日服(JP)默认）
+== verify list
+已绑定游戏账号的验证状态（u序号按全部账号编号）：
+u1 [日服(JP)] 748*************370 已验证（全局默认、日服(JP)默认）
+u2 [国服(CN)] 123456789 未验证（国服(CN)默认）
+u3 [台服(TW)] 987***321 未验证
+== verify list (region)
+日服(JP)已绑定游戏账号的验证状态（u序号按该区服编号）：
+u1 [日服(JP)] 748*************370 已验证（全局默认、日服(JP)默认）
+== hide uid
+已隐藏 [日服(JP)] 748*************370 的游戏 UID
+== show uid
+已公开 [国服(CN)] 123456789 的游戏 UID
+== hide suite
+已隐藏 [日服(JP)] 748*************370 的抓包数据
+== show suite
+已展示 [日服(JP)] 748*************370 的抓包数据
+== hide mysekai
+已隐藏 [日服(JP)] 748*************370 的烤森数据
+== show mysekai
+已展示 [日服(JP)] 748*************370 的烤森数据
+== arrest difficulty
+已设置逮捕难度
+开启：EXPERT、MASTER
+关闭：EASY、NORMAL、HARD、APPEND
+== arrest difficulty (none)
+已设置逮捕难度
+开启：无
+关闭：EASY、NORMAL、HARD、EXPERT、MASTER、APPEND
+== bg settings
+日服(JP)个人信息背景设置
+账号：[日服(JP)] 748*************370
+方向：竖屏
+模糊度：5
+透明度：70
+== bg settings (none)
+台服(TW)还没有设置个人信息背景
+== timezone candidates
+偏移量“+9”对应多个时区，请改用下面的时区名设置：
+Etc/Zone
+Etc/Zonex
+Etc/Zonexx
+Etc/Zone
+Etc/Zonex
+Etc/Zonexx
+Etc/Zone
+Etc/Zonex
+Etc/Zonexx
+Etc/Zone
+Etc/Zonex
+Etc/Zonexx
+Etc/Zone
+Etc/Zonex
+Etc/Zonexx
+Etc/Zone
+Etc/Zonex
+Etc/Zonexx
+Etc/Zone
+Etc/Zonex
+……以及另外 2 个时区

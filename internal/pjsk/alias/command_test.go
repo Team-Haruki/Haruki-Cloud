@@ -2,6 +2,7 @@ package alias
 
 import (
 	"context"
+	"haruki-cloud/internal/i18n"
 	"strings"
 	"testing"
 
@@ -47,7 +48,7 @@ func TestExecuteCommandReviewLifecycle(t *testing.T) {
 		PlatformUserID: " submitter ",
 		Target:         " 7001 ",
 		Aliases:        []string{"待通过", "待拒绝", "批量拒绝一", "批量拒绝二"},
-	}, "已提交 4 条")
+	}, i18n.T("alias.add.done", i18n.Data{"Count": 4, "Kind": i18n.M("alias.kind.music"), "Records": ""}))
 
 	pending, err := deps.service.ListPending(ctx, "qq", "admin")
 	if err != nil || len(pending) != 4 {
@@ -55,25 +56,25 @@ func TestExecuteCommandReviewLifecycle(t *testing.T) {
 	}
 	executeAliasCommand(t, ctx, deps.service, ModePendingList, ReviewListCommandParams{
 		Platform: "qq", PlatformUserID: "admin",
-	}, "当前共有 4 条")
+	}, i18n.T("alias.pending.list", i18n.Data{"Count": 4, "Records": ""}))
 	executeAliasCommand(t, ctx, deps.service, ModeSubmitter, SubmitterCommandParams{
 		Platform: "qq", PlatformUserID: "admin", ReviewID: pending[0].ReviewID,
 	}, "submitter")
 	executeAliasCommand(t, ctx, deps.service, ModeApprove, ApproveCommandParams{
 		Platform: "qq", PlatformUserID: "admin", ReviewIDs: []int64{pending[0].ReviewID},
-	}, "已通过 1 条")
+	}, i18n.T("alias.approve.done", i18n.Data{"Count": 1, "Records": ""}))
 	executeAliasCommand(t, ctx, deps.service, ModeReject, RejectCommandParams{
 		Platform: "qq", PlatformUserID: "admin", ReviewID: pending[1].ReviewID, Reason: " 重复 ",
 	}, "重复")
 	executeAliasCommand(t, ctx, deps.service, ModeBatchReject, BatchRejectCommandParams{
 		Platform: "qq", PlatformUserID: "admin", ReviewIDs: []int64{pending[2].ReviewID, pending[3].ReviewID},
-	}, "已批量拒绝 2 条")
+	}, i18n.T("alias.batch_reject.done", i18n.Data{"Count": 2, "Records": ""}))
 	executeAliasCommand(t, ctx, deps.service, ModeBanSubmitter, BanSubmitterCommandParams{
 		Platform:             "qq",
 		PlatformUserID:       "admin",
 		TargetPlatform:       "qq",
 		TargetPlatformUserID: "submitter",
-	}, "已禁止用户 qq:submitter")
+	}, i18n.T("alias.ban.done", i18n.Data{"User": "qq:submitter"}))
 
 	executeAliasCommand(t, ctx, deps.service, ModeDelete, DeleteCommandParams{
 		AliasType:      PjskAliasTypeMusic,
@@ -81,14 +82,14 @@ func TestExecuteCommandReviewLifecycle(t *testing.T) {
 		PlatformUserID: "admin",
 		Target:         "7001",
 		Aliases:        []string{"旧别名", "待通过"},
-	}, "已删除 2 条")
+	}, i18n.T("alias.delete.done", i18n.Data{"Count": 2, "Kind": i18n.M("alias.kind.music"), "Records": ""}))
 	executeAliasCommand(t, ctx, deps.service, ModeQuery, QueryCommandParams{
 		AliasType: PjskAliasTypeMusic,
 		Target:    "7001",
-	}, "已审核别名: 无")
+	}, i18n.T("alias.query.none"))
 	executeAliasCommand(t, ctx, deps.service, ModePendingList, ReviewListCommandParams{
 		Platform: "qq", PlatformUserID: "admin",
-	}, "当前没有待审核别名")
+	}, i18n.T("alias.pending.none"))
 }
 
 func TestAliasCommandDecodersRejectInvalidParams(t *testing.T) {

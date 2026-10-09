@@ -47,3 +47,7 @@ other = "可以写材料名、开关、监听时长或 u序号"
 [subscription.birthday.event_no_data]
 description = "生日材料监听推送事件里没有可以绘制的地图数据（推送时拿到的事件不完整）。"
 other = "这次监听推送缺少可绘制的地图数据"
+
+[subscription.birthday.empty_result]
+description = "生日材料监听推送：这次烤森生日材料更新里没有用户订阅的材料。"
+other = "本次生日材料更新没有你订阅的材料"

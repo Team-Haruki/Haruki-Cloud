@@ -152,36 +152,12 @@ description = "同 profile.data_status.mysekai_expired，但不知道是哪个�
 other = "当前绑定账号的烤森（MySekai）数据已过期\n{{.Uploaded}}\n要查看最新数据，请在 Haruki 工具箱重新上传烤森数据\n要继续查看已过期的数据，请在指令后加上“force”"
 
 [profile.data_status.uploaded]
-description = "数据状态回复的上传时间行。占位符：Time=上传时间（format.time.datetime），例如“2026-10-09 14:05 (UTC+8)”；Age=距今多久（profile.data_status.age.*），例如“3小时20分钟前”。"
+description = "数据状态回复的上传时间行。占位符：Time=上传时间（format.time.datetime），例如“2026-10-09 14:05 (UTC+8)”；Age=距今多久（format.ago.*），例如“3小时20分钟前”。"
 other = "上次上传：{{.Time}}（{{.Age}}）"
 
 [profile.data_status.uploaded_unknown]
 description = "数据状态回复的上传时间行，上传时间未知时使用。"
 other = "上次上传时间未知"
-
-[profile.data_status.age.just_now]
-description = "上传时间距今不到 1 分钟，用在 profile.data_status.uploaded 的 Age 里。"
-other = "刚刚"
-
-[profile.data_status.age.minutes]
-description = "上传时间距今不到 1 小时，用在 profile.data_status.uploaded 的 Age 里，例如“5分钟前”。时长写法与 format.duration.* 一致，数字和单位之间不加空格。占位符：Minutes=分钟数。"
-other = "{{.Minutes}}分钟前"
-
-[profile.data_status.age.hours]
-description = "上传时间距今整小时数，例如“3小时前”。占位符：Hours=小时数。"
-other = "{{.Hours}}小时前"
-
-[profile.data_status.age.hours_minutes]
-description = "上传时间距今不到 1 天，例如“3小时20分钟前”。占位符：Hours=小时数；Minutes=分钟数。"
-other = "{{.Hours}}小时{{.Minutes}}分钟前"
-
-[profile.data_status.age.days]
-description = "上传时间距今整天数，例如“2天前”。占位符：Days=天数。"
-other = "{{.Days}}天前"
-
-[profile.data_status.age.days_hours]
-description = "上传时间距今 1 天以上，例如“2天3小时前”。占位符：Days=天数；Hours=小时数。"
-other = "{{.Days}}天{{.Hours}}小时前"
 
 [profile.data_status.self_only]
 description = "/sud、/msd 只能查询自己的数据，但指定了别人或游戏 UID。"

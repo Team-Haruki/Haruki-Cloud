@@ -340,7 +340,7 @@ func TestSummaryCharacterLabel(t *testing.T) {
 			character: 8,
 			want:      "a",
 		},
-		{name: "numeric fallback", source: nil, nicknames: map[string]int{"other": 1}, character: 99, want: i18n.T("render.fallback.character", i18n.Data{"ID": 99})},
+		{name: "numeric fallback", source: nil, nicknames: map[string]int{"other": 1}, character: 99, want: i18n.T("common.fallback.character", i18n.Data{"ID": 99})},
 	}
 
 	for _, tt := range tests {

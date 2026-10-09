@@ -272,12 +272,12 @@ staticcheck ./...
   with only the dependencies under test populated (the rest are nil-safe).
 - When adding or extending an interface, all test mock implementations of that
   interface must be updated to implement the new methods.
-- User-copy guards (see §12) run as ordinary tests: `internal/i18n` (catalog
-  style, catalog integrity, copylint ratchet, help-doc style ratchet, helper
-  golden file) and `internal/pjsk/handler` (help-doc triggers, route help
-  coverage). After lowering a ratchet count or changing helper output,
-  regenerate with `HARUKI_UPDATE_GOLDEN=1 go test ./internal/i18n/` and
-  review the diff.
+- User-copy guards (see §12) run as ordinary tests and all require zero
+  findings: `internal/i18n` (catalog style, catalog integrity, every message
+  renders, copylint, help-doc style, helper golden file) and
+  `internal/pjsk/handler` (help-doc triggers, route help coverage, help
+  layout, help examples). After changing helper output or a golden reply,
+  regenerate with `HARUKI_UPDATE_GOLDEN=1 go test ./...` and review the diff.
 
 ---
 
@@ -403,8 +403,10 @@ As of this revision the project is **considered functionally complete**:
   `zh-CN` 字符串。ID 必须写成字符串字面量，占位符写成 `i18n.Data{...}` 字面量，
   这样完整性测试才能检查。不要手写 `i18n.Message{...}`。
 - 共享格式一律用 `internal/i18n` 的函数，不要自己拼：`RegionLabel`、
-  `AccountLabel`、`MaskUID`、`FormatUserTime`、`FormatDuration`、`Thousands`、
-  `Wan`、`Percent`/`PercentN`、`PageLabel`、`DifficultyLabel`、`LiveTypeLabel`，
+  `RegionName`（只给自己加括号的图片用）、`AccountLabel`、`MaskUID`、
+  `FormatUserTime`、`TimeAgo`、`UploadedLine`、`FormatDuration`、`Thousands`、
+  `Wan`、`Decimal`、`Percent`/`PercentN`、`PageLabel`、`DifficultyLabel`、
+  `LiveTypeLabel`、`EchoQuery`、`LinesText`，
   以及错误模板 `Unavailable`、`Timeout`、`NotFound`、`Ambiguous`、
   `OutOfRange`、`BadParam`、`Usage`、`WithUsage`、`RequestFailed`、
   `Misconfigured`、`ReadOnly`。
@@ -537,6 +539,11 @@ As of this revision the project is **considered functionally complete**:
 - 日志、内部错误原因、测试数据、运维工具（`cmd/`、`scripts/`）。
 - 存进数据库、之后原样显示的值（例如系统写入的封禁原因），在该行末尾标注
   `//copylint:ignore <原因>`。
+- 上游服务写的状态和错误文本（`internal/core/upstreamerr`）。
+- 代码里的触发词、关键字和游戏数据只用这两种标注，原因必须写：单行在行尾写
+  `//copylint:ignore <原因>`；整张表（`var`/`const` 声明）在声明的注释里写一行
+  `//copylint:ignore-block <原因>`。常用原因：`解析关键字`、`指令触发词`、
+  `角色名（游戏数据）`。只放解析表的目录和文件列在 `copylintAllowedPaths`。
 
 ### 12.7 防回退测试
 
@@ -544,18 +551,20 @@ As of this revision the project is **considered functionally complete**:
 |---|---|---|
 | `TestCatalogStyle` | `internal/i18n` | 目录零容忍：汉字后半角冒号、中文半角括号、中英之间缺空格、单句结尾"。"、禁用词（您、请稍后重试、未就绪、命令、Toolbox、SekaiAPI、Tracker、masterdata、Cloud、suite、Mysekai、套装、档线、分数线、（状态、`"` 等）、`%s` 占位符、缺 description、占位符未说明、ID 格式 |
 | `TestCatalogIntegrity` | `internal/i18n` | 代码引用的 ID 都存在、占位符一一对应、没有未使用的 ID、其他语言不多出 ID |
-| `TestCopylintRatchet` | `internal/i18n` | 非测试 Go 代码里的中文字面量和"中文 + %w/%v"的 `fmt.Errorf`，按文件计数，只许减少（`testdata/copylint.baseline`） |
-| `TestHelpDocStyleRatchet` | `internal/i18n` | 帮助文档的标点、空格和禁用词，按文件计数，只许减少（`testdata/helpdoc_style.baseline`） |
+| `TestEveryMessageRendersWithSampleData` | `internal/i18n` | 每条消息都能用示例数据渲染，占位符都出现在结果里，没有残留模板语法 |
+| `TestCopylint` | `internal/i18n` | 非测试 Go 代码里没有中文字面量和"中文 + %w/%v"的 `fmt.Errorf`（标注见 12.6） |
+| `TestHelpDocStyle` | `internal/i18n` | 帮助文档的标点、空格和禁用词零容忍（反引号和代码块不检查） |
 | `TestHelperGolden` | `internal/i18n` | 共享格式函数的中文输出（`testdata/helpers.zh-CN.golden`） |
 | `TestHelpDocTerms` | `internal/i18n` | 帮助文档正文（反引号和代码块以外）不用术语表的禁用写法 |
-| `TestHelpDocTriggersAreRegistered` | `internal/pjsk/handler` | 帮助文档里反引号中的 `/指令` 都能解析到已注册指令（已知缺口在 `testdata/helpdoc_unregistered_triggers.txt`） |
-| `TestEveryRouteHasHelpDoc` | `internal/pjsk/handler` | 每个已注册路由都有自己的帮助文档（缺口在 `testdata/helpdoc_missing_routes.txt`） |
+| `TestHelpDocTriggersAreRegistered` | `internal/pjsk/handler` | 帮助文档里反引号中的 `/指令` 都能解析到已注册指令 |
+| `TestEveryRouteHasHelpDoc` | `internal/pjsk/handler` | 每个已注册路由都有自己的帮助文档 |
 | `TestEveryHelpDocIsReachable` | `internal/pjsk/handler` | 没有用户看不到的帮助文档（只允许路由文档、`generic`、`mysekai_blueprint`） |
 | `TestHelpDocsFollowLayout` | `internal/pjsk/handler` | 帮助版式：`# 标题`、用法/参数/示例/说明按顺序，不手写区服前缀说明（版式见 `docs/i18n.md`） |
 | `TestHelpDocExamplesParse` | `internal/pjsk/handler` | `## 示例` 里的每个示例都能被该文档的路由解析 |
 
-基线和允许清单只能缩小：修完问题后用 `HARUKI_UPDATE_GOLDEN=1 go test ./internal/i18n/`
-重新生成基线，并删除允许清单里已修好的行（测试会提示）。不要为了让测试通过而调高基线。
+这些测试都要求零发现，没有基线。唯一的允许清单是
+`internal/i18n/testdata/unused_ids.allowlist`（暂时没有代码引用的消息 ID，每行写原因），
+目前为空。
 
 ## Git commits
 

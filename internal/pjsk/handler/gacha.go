@@ -18,7 +18,8 @@ import (
 var (
 	reGachaCardFilter = regexp.MustCompile(`(?i)\bcard(\d+)\b`)
 	reGachaPageP      = regexp.MustCompile(`(?i)\bp(\d+)\b`)
-	reGachaPageCN     = regexp.MustCompile(`(\d+)页`)
+	//copylint:ignore-block 解析关键字
+	reGachaPageCN = regexp.MustCompile(`(\d+)页`)
 )
 
 func (sekaiHandlers) GachaHandle() HarukiSekaiCommandHandler {
@@ -94,16 +95,16 @@ func parseMultiGachaQuery(args string) (map[string]any, string) {
 		"include_past": true,
 	}
 
-	if strings.Contains(remaining, "复刻") {
-		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "复刻", ""))
+	if strings.Contains(remaining, "复刻") { //copylint:ignore 解析关键字
+		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "复刻", "")) //copylint:ignore 解析关键字
 		params["is_rerelease"] = true
 	}
-	if strings.Contains(remaining, "回响") {
-		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "回响", ""))
+	if strings.Contains(remaining, "回响") { //copylint:ignore 解析关键字
+		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "回响", "")) //copylint:ignore 解析关键字
 		params["is_recall"] = true
 	}
-	if strings.Contains(remaining, "当前") {
-		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "当前", ""))
+	if strings.Contains(remaining, "当前") { //copylint:ignore 解析关键字
+		remaining = strings.TrimSpace(strings.ReplaceAll(remaining, "当前", "")) //copylint:ignore 解析关键字
 		params["only_current"] = true
 	}
 

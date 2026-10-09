@@ -46,8 +46,10 @@ var CharacterMissionExBaseTypes = map[string]struct{}{
 	"waiting_room": {},
 }
 
+//copylint:ignore-block 解析关键字
 var CharacterMissionAllKeywords = []string{"all", "全部", "全量", "总表", "表格"}
 
+//copylint:ignore-block 解析关键字
 var characterMissionTypeAliases = map[string][]string{
 	"play_live":                                  {"队长次数", "角色次数", "队长游玩次数", "角色游玩次数", "队长", "队长次数ex", "队长次数(ex)", "角色次数ex"},
 	"waiting_room":                               {"休息室次数", "休息室", "控制室", "休息室次数ex", "休息室次数(ex)"},

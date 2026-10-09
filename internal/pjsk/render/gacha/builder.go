@@ -17,8 +17,10 @@ const gachaEndPaddingMillis = int64(time.Minute / time.Millisecond)
 const defaultGachaListPageSize = 100
 
 var (
+	//copylint:ignore-block 卡池名前缀（游戏数据原文）
 	gachaRereleasePrefixes = []string{"[it's back]", "[재등장]", "[复刻]", "[復刻]"}
-	gachaRecallPrefixes    = []string{"[回响]"}
+	//copylint:ignore-block 卡池名前缀（游戏数据原文）
+	gachaRecallPrefixes = []string{"[回响]"}
 )
 
 func NewBuilder(source DataSource, assetHelper *assets.AssetHelper) *Builder {

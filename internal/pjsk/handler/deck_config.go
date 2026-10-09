@@ -35,7 +35,7 @@ func extractDeckCardConfigs(args string, params *deckAutoQueryParams) string {
 }
 
 func applyDeckSupportConfig(field string, params *deckAutoQueryParams) bool {
-	const prefix = "支援"
+	const prefix = "支援" //copylint:ignore 解析关键字
 	if !strings.HasPrefix(field, prefix) {
 		return false
 	}

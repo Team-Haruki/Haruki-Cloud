@@ -31,6 +31,7 @@ var (
 	ErrSoloLiveNotFound = errors.New("solo virtual live not found")
 )
 
+//copylint:ignore-block 解析关键字
 var soloQueryKeywords = []string{"solo", "ソロ", "个人", "個人", "单人", "單人"}
 
 // IsDetailQuery reports whether a /vlive argument asks for a solo live

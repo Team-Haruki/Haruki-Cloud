@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	//copylint:ignore-block 歌曲名（游戏数据）
 	defaultChallengeDeckMusicQuery = "虚無さん"
 	defaultChallengeDeckMusicDiff  = "master"
 )

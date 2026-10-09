@@ -5095,7 +5095,7 @@ func TestExecuteCardListAutoFallbackToCardBoxOmitsUserInfo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeCard list: %v", err)
 	}
-	assertCardSummaryMessage(t, message, "已处理"+i18n.RegionLabel("jp").String()+" / "+i18n.T("render_card.summary.mode.list")+" / "+i18n.T("render_card.summary.card_count", i18n.Data{"Count": 90})+"。")
+	assertCardSummaryMessage(t, message, i18n.T("common.processed", i18n.Data{"Summary": i18n.RegionLabel("jp").String() + " / " + i18n.T("render_card.summary.mode.list") + " / " + i18n.T("render_card.summary.card_count", i18n.Data{"Count": 90})}))
 	if captured.UserInfo != nil {
 		t.Fatalf("expected auto-fallback card box to omit user info, got %+v", captured.UserInfo)
 	}

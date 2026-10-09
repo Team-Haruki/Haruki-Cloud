@@ -130,7 +130,7 @@ func assertCharacterMissionMetadataLookups(t *testing.T, mission *CharacterMissi
 	if got := characterMissionDisplayName(1); got != "星乃一歌" {
 		t.Fatalf("known character display name = %q", got)
 	}
-	if got := characterMissionDisplayName(99); got != i18n.T("education.character_fallback", i18n.Data{"ID": 99}) {
+	if got := characterMissionDisplayName(99); got != i18n.T("common.fallback.character", i18n.Data{"ID": 99}) {
 		t.Fatalf("fallback character display name = %q", got)
 	}
 }

@@ -96,7 +96,7 @@ func isCardBoxQuery(args string) bool {
 	return hasCardBoxControlToken(lower, "box") ||
 		hasCardBoxControlToken(lower, "id") ||
 		hasCardBoxControlToken(lower, "before") ||
-		hasCardBoxControlToken(lower, "时间") ||
+		hasCardBoxControlToken(lower, "时间") || //copylint:ignore 解析关键字
 		hasCardBoxUnownedToken(lower)
 }
 
@@ -131,7 +131,7 @@ func newCardListParams(ctx HarrukiSekaiHandlerContext, args string, strictFilter
 }
 
 func newCardBoxParams(ctx HarrukiSekaiHandlerContext, args string, strictFilterOnly bool) (map[string]any, error) {
-	if hasCardBoxControlToken(args, "时间") && (hasCardBoxUnownedToken(args) || cardBoxGroupBy(strings.ReplaceAll(args, "时间", "")) != "") {
+	if hasCardBoxControlToken(args, "时间") && (hasCardBoxUnownedToken(args) || cardBoxGroupBy(strings.ReplaceAll(args, "时间", "")) != "") { //copylint:ignore 解析关键字
 		return nil, usererror.Invalid(i18n.M("card.time_mode_conflict"))
 	}
 	params, err := newSelfQueryParamsMap(ctx)
@@ -148,12 +148,12 @@ func newCardBoxParams(ctx HarrukiSekaiHandlerContext, args string, strictFilterO
 }
 
 func cleanCardBoxArgs(args string) string {
-	lower := strings.ToLower(strings.ReplaceAll(args, "属性", " "))
+	lower := strings.ToLower(strings.ReplaceAll(args, "属性", " ")) //copylint:ignore 解析关键字
 	tokens := strings.FieldsFunc(lower, isCardBoxTokenSeparator)
 	kept := make([]string, 0, len(tokens))
 	for _, token := range tokens {
 		switch token {
-		case "时间", "id", "box", "before", "attr", "attrs", "attribute", "attributes", "未持有", "未拥有", "unowned", "missing", "miss":
+		case "时间", "id", "box", "before", "attr", "attrs", "attribute", "attributes", "未持有", "未拥有", "unowned", "missing", "miss": //copylint:ignore 解析关键字
 			continue
 		default:
 			kept = append(kept, token)
@@ -163,11 +163,11 @@ func cleanCardBoxArgs(args string) string {
 }
 
 func cardBoxGroupBy(args string) string {
-	if hasCardBoxControlToken(args, "时间") {
+	if hasCardBoxControlToken(args, "时间") { //copylint:ignore 解析关键字
 		return card.CardBoxGroupByTime
 	}
 	lower := strings.ToLower(strings.TrimSpace(args))
-	if strings.Contains(args, "属性") ||
+	if strings.Contains(args, "属性") || //copylint:ignore 解析关键字
 		hasCardBoxControlToken(lower, "attr") ||
 		hasCardBoxControlToken(lower, "attrs") ||
 		hasCardBoxControlToken(lower, "attribute") ||
@@ -178,8 +178,8 @@ func cardBoxGroupBy(args string) string {
 }
 
 func hasCardBoxUnownedToken(text string) bool {
-	return hasCardBoxControlToken(text, "未持有") ||
-		hasCardBoxControlToken(text, "未拥有") ||
+	return hasCardBoxControlToken(text, "未持有") || //copylint:ignore 解析关键字
+		hasCardBoxControlToken(text, "未拥有") || //copylint:ignore 解析关键字
 		hasCardBoxControlToken(text, "unowned") ||
 		hasCardBoxControlToken(text, "missing") ||
 		hasCardBoxControlToken(text, "miss")
@@ -335,7 +335,7 @@ func prependCardSummary(image onebot11.Message, summary string) onebot11.Message
 	if strings.TrimSpace(summary) == "" {
 		return image
 	}
-	text := onebot11.Text(fmt.Sprintf("已处理%s。", summary))
+	text := onebot11.Text(i18n.T("common.processed", i18n.Data{"Summary": summary}))
 	return append(onebot11.Message{text}, image...)
 }
 

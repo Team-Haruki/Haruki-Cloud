@@ -213,9 +213,9 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 	}
 
 	allCharacter, args := extractEducationAreaFlag(args, educationAreaAllCharacterAliases...)
-	plant, args := extractEducationAreaFlag(args, "花树", "树花", "植物")
-	tree, args := extractEducationAreaFlag(args, "树", "tree")
-	flower, args := extractEducationAreaFlag(args, "花", "flower")
+	plant, args := extractEducationAreaFlag(args, "花树", "树花", "植物") //copylint:ignore 解析关键字
+	tree, args := extractEducationAreaFlag(args, "树", "tree")       //copylint:ignore 解析关键字
+	flower, args := extractEducationAreaFlag(args, "花", "flower")   //copylint:ignore 解析关键字
 	unit, args := extractEducationAreaUnit(args)
 	attr, args := extractEducationAreaAttr(args)
 	cid, characterQuery, args := extractEducationAreaCharacter(args)
@@ -238,6 +238,8 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 
 // educationAreaAllCharacterAliases select the every-character area item
 // (JP 7.0.0 想いの大樹).
+//
+//copylint:ignore-block 解析关键字
 var educationAreaAllCharacterAliases = []string{"大树", "大樹", "想いの大樹", "想いの大树", "思念之树", "全角色", "全员"}
 
 // normalizeEducationAreaError turns a filter for an area item the region
@@ -275,7 +277,7 @@ func extractEducationAreaFullFlag(args string) (bool, string) {
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
 		switch strings.ToLower(strings.TrimSpace(field)) {
-		case "full", "全部":
+		case "full", "全部": //copylint:ignore 解析关键字
 			full = true
 		default:
 			remaining = append(remaining, field)

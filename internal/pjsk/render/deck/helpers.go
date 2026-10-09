@@ -397,7 +397,7 @@ func parseBonusTarget(raw string) (int, error) {
 	cleaned := strings.TrimSpace(raw)
 	cleaned = strings.TrimSuffix(cleaned, "%")
 	cleaned = strings.TrimSuffix(cleaned, "％")
-	cleaned = strings.TrimSpace(strings.ReplaceAll(cleaned, "加成", ""))
+	cleaned = strings.TrimSpace(strings.ReplaceAll(cleaned, "加成", "")) //copylint:ignore 解析关键字
 	return strconv.Atoi(strings.TrimSpace(cleaned))
 }
 

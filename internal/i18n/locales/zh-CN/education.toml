@@ -120,10 +120,6 @@ other = "烤森对话"
 description = "角色任务图片里 EX 任务当前所在的轮次。占位符：Round=轮次，从 1 开始。"
 other = "EX 第 {{.Round}} 轮"
 
-[education.character_fallback]
-description = "角色任务图片里拿不到角色名时代替角色名。占位符：ID=角色 ID。"
-other = "角色 {{.ID}}"
-
 [education.area.all_characters]
 description = "区域道具图片里，对所有角色生效的道具（例如「想いの大樹」）没有目标图标，用这段文字代替。"
 other = "全角色"

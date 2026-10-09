@@ -227,11 +227,11 @@ func extractDeckFinaleLeaderSelection(args string, params *deckAutoQueryParams) 
 }
 
 func extractDeckWorldBloomFinaleTurn(args string) (int, string, bool) {
-	if !strings.Contains(args, "终章") {
+	if !strings.Contains(args, "终章") { //copylint:ignore 解析关键字
 		return 0, normalizeDeckSpaces(args), false
 	}
 
-	remaining := normalizeDeckSpaces(strings.Replace(args, "终章", " ", 1))
+	remaining := normalizeDeckSpaces(strings.Replace(args, "终章", " ", 1)) //copylint:ignore 解析关键字
 	matches := deckWlTurnRegex.FindStringSubmatch(remaining)
 	if len(matches) < 2 {
 		return 0, remaining, false
@@ -337,8 +337,8 @@ func invalidDeckWorldBloomTurnUsageError(trigger string) error {
 
 func extractDeckExplicitEventID(args string) (*int, string) {
 	normalized := normalizeDeckSpaces(args)
-	if strings.Contains(args, "终章") {
-		return intPtr(180), normalizeDeckSpaces(strings.Replace(args, "终章", "", 1))
+	if strings.Contains(args, "终章") { //copylint:ignore 解析关键字
+		return intPtr(180), normalizeDeckSpaces(strings.Replace(args, "终章", "", 1)) //copylint:ignore 解析关键字
 	}
 	matches := deckEventIDRegex.FindStringSubmatch(normalized)
 	if len(matches) < 3 {
@@ -506,7 +506,7 @@ func validateNoEventDeckArgs(args, trigger string) error {
 }
 
 func normalizeNoEventDeckHintTrigger(trigger string) string {
-	trigger = strings.Replace(trigger, "最强", "", 1)
-	trigger = strings.Replace(trigger, "长草", "", 1)
+	trigger = strings.Replace(trigger, "最强", "", 1) //copylint:ignore 解析关键字
+	trigger = strings.Replace(trigger, "长草", "", 1) //copylint:ignore 解析关键字
 	return trigger
 }

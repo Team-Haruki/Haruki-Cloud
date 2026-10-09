@@ -48,7 +48,7 @@ func tryRerouteProfileBindCommand(ctx HarrukiSekaiHandlerContext, args string) (
 	}
 
 	switch strings.ToLower(strings.TrimSpace(tokens[0])) {
-	case "列表", "list":
+	case "列表", "list": //copylint:ignore 解析关键字
 		if len(tokens) != 1 {
 			return nil, true, usererror.Misuse(i18n.M("common.no_args"))
 		}
@@ -57,7 +57,7 @@ func tryRerouteProfileBindCommand(ctx HarrukiSekaiHandlerContext, args string) (
 			params.Server = ""
 		}
 		return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindList, params), true, nil
-	case "交换", "swap":
+	case "交换", "swap": //copylint:ignore 解析关键字
 		if len(tokens) != 3 {
 			return nil, true, usererror.Misuse(i18n.M("binding.swap.selectors_required"))
 		}
@@ -76,14 +76,14 @@ func buildProfileBindDerivedTrigger(ctx HarrukiSekaiHandlerContext, mode string)
 	switch mode {
 	case "list":
 		if ctx.HasExplicitRegion() {
-			return fmt.Sprintf("/%s绑定列表", ctx.Region().String())
+			return fmt.Sprintf("/%s绑定列表", ctx.Region().String()) //copylint:ignore 指令触发词
 		}
-		return "/绑定列表"
+		return "/绑定列表" //copylint:ignore 指令触发词
 	case "swap":
 		if ctx.HasExplicitRegion() {
-			return fmt.Sprintf("/%s绑定交换", ctx.Region().String())
+			return fmt.Sprintf("/%s绑定交换", ctx.Region().String()) //copylint:ignore 指令触发词
 		}
-		return "/绑定交换"
+		return "/绑定交换" //copylint:ignore 指令触发词
 	default:
 		return ctx.originalTriggerCmd
 	}

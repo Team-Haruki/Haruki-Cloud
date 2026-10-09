@@ -25,6 +25,17 @@ var regionNames = map[string]Message{
 // RegionCodes lists the region codes in display order (jp, cn, tw, kr, en).
 var RegionCodes = []string{"jp", "cn", "tw", "kr", "en"}
 
+// RegionName is the bare region name without its code, e.g. "日服". Use
+// RegionLabel for display; RegionName is only for an image that adds its own
+// brackets around the name. An unknown code is shown upper-cased.
+func RegionName(region string) Message {
+	code := strings.ToLower(strings.TrimSpace(region))
+	if name, ok := regionNames[code]; ok {
+		return name
+	}
+	return Verbatim(strings.ToUpper(code))
+}
+
 // RegionLabel is the display name of a region, e.g. "日服(JP)". region is a
 // region code in any case; an unknown code is shown upper-cased.
 func RegionLabel(region string) Message {

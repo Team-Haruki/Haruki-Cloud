@@ -192,14 +192,13 @@ func birthdayRegionLocation(region renderregion.Value) *time.Location {
 	return time.FixedZone(fmt.Sprintf("UTC%+d", offset), offset*3600)
 }
 
+// birthdayRegionName is the bare region name; Drawing draws it in brackets
+// itself, so the birthday image cannot take RegionLabel yet.
 func birthdayRegionName(region renderregion.Value) string {
-	if name, ok := birthdayRegionNames[region]; ok {
-		return name
-	}
 	if region.IsZero() {
-		return "日服"
+		region = renderregion.JP
 	}
-	return strings.ToUpper(region.String())
+	return i18n.RegionName(region.String()).String()
 }
 
 func isBirthdayFifthAnniv(region renderregion.Value) bool {

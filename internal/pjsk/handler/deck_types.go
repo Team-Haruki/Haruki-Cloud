@@ -81,31 +81,37 @@ type deckAliasRule struct {
 }
 
 var (
+	//copylint:ignore-block 解析关键字
 	deckEventIDRegex = regexp.MustCompile(`(?i)(活动|event)\s*(\d+)`)
 	deckWlTurnRegex  = regexp.MustCompile(`(?i)\bwl([1-9]\d*)\b`)
 )
 
-var deckPowerTargetKeywords = []string{"综合力", "综合", "总合力", "总和", "power"}
-var deckSkillTargetKeywords = []string{"倍率", "实效", "skill", "时效"}
-var deckCurrentDeckKeywords = []string{"当前", "目前"}
-var deckMusicCompareKeywords = []string{"歌曲比较", "歌曲对比", "歌曲排行", "歌曲排名", "歌曲推荐"}
-var deckBoostKeywords = []string{"boost", "火", "体力", "体"}
-var deckAreaItemKeywords = []string{"区域道具", "道具", "areaitem"}
-var deckMaxProfileKeywords = []string{"顶配", "满配"}
-var deckSubMaxProfileKeywords = []string{"次顶配", "次满配", "中配"}
-var deckSkillMaxKeywords = []string{"满技能", "满技", "skillmax", "技能满级", "slv4"}
-var deckMasterMaxKeywords = []string{"满突破", "满破", "rankmax", "mastermax", "5破", "五破"}
-var deckEpisodeReadKeywords = []string{"剧情已读", "满剧情", "前后篇已读", "前后篇", "已读"}
-var deckCanvasKeywords = []string{"满画布", "全画布", "画布", "满画板", "全画板", "画板"}
-var deckDisableKeywords = []string{"禁用", "disable"}
-var deckKeepAfterTrainingKeywords = []string{"bfes不变", "bf不变"}
-var deckTeammatePowerKeywords = []string{"队友综合力", "队友总合力", "队友综合", "队友总和"}
-var deckTeammateScoreUpKeywords = []string{"队友实效", "队友技能", "队友时效"}
-var deckSkillOrderKeywords = []string{"技能顺序", "技能排列"}
-var deckSkillReferenceKeywords = []string{"技能抽取", "技能吸取"}
-var deckMaxKeywords = []string{"最高", "最大", "最优", "最强", "最佳"}
-var deckMinKeywords = []string{"最低", "最小", "最差", "最弱", "最烂"}
-var deckAverageKeywords = []string{"平均", "均值", "期望"}
+//copylint:ignore-block 解析关键字
+var (
+	deckPowerTargetKeywords       = []string{"综合力", "综合", "总合力", "总和", "power"}
+	deckSkillTargetKeywords       = []string{"倍率", "实效", "skill", "时效"}
+	deckCurrentDeckKeywords       = []string{"当前", "目前"}
+	deckMusicCompareKeywords      = []string{"歌曲比较", "歌曲对比", "歌曲排行", "歌曲排名", "歌曲推荐"}
+	deckBoostKeywords             = []string{"boost", "火", "体力", "体"}
+	deckAreaItemKeywords          = []string{"区域道具", "道具", "areaitem"}
+	deckMaxProfileKeywords        = []string{"顶配", "满配"}
+	deckSubMaxProfileKeywords     = []string{"次顶配", "次满配", "中配"}
+	deckSkillMaxKeywords          = []string{"满技能", "满技", "skillmax", "技能满级", "slv4"}
+	deckMasterMaxKeywords         = []string{"满突破", "满破", "rankmax", "mastermax", "5破", "五破"}
+	deckEpisodeReadKeywords       = []string{"剧情已读", "满剧情", "前后篇已读", "前后篇", "已读"}
+	deckCanvasKeywords            = []string{"满画布", "全画布", "画布", "满画板", "全画板", "画板"}
+	deckDisableKeywords           = []string{"禁用", "disable"}
+	deckKeepAfterTrainingKeywords = []string{"bfes不变", "bf不变"}
+	deckTeammatePowerKeywords     = []string{"队友综合力", "队友总合力", "队友综合", "队友总和"}
+	deckTeammateScoreUpKeywords   = []string{"队友实效", "队友技能", "队友时效"}
+	deckSkillOrderKeywords        = []string{"技能顺序", "技能排列"}
+	deckSkillReferenceKeywords    = []string{"技能抽取", "技能吸取"}
+	deckMaxKeywords               = []string{"最高", "最大", "最优", "最强", "最佳"}
+	deckMinKeywords               = []string{"最低", "最小", "最差", "最弱", "最烂"}
+	deckAverageKeywords           = []string{"平均", "均值", "期望"}
+)
+
+//copylint:ignore-block 解析关键字
 var deckUnitFilterKeywords = map[string][]string{
 	"light_sound":    {"纯ln", "仅ln"},
 	"idol":           {"纯mmj", "仅mmj"},
@@ -115,12 +121,15 @@ var deckUnitFilterKeywords = map[string][]string{
 	"piapro":         {"纯vs", "纯v", "仅vs", "仅v"},
 }
 var deckAttrFilterAliases = filteralias.AttributeGroups()
+
+//copylint:ignore-block 解析关键字
 var deckInlineDifficultySuffixes = []string{
 	"append", "expert", "master", "normal", "easy", "hard",
 	"粉谱", "红谱", "紫谱", "蓝谱", "绿谱", "黄谱",
 	"apd", "app", "exp", "mas", "nm", "ez", "hd", "ex", "ma",
 }
 
+//copylint:ignore-block 解析关键字
 var deckRarityPrefixes = []struct {
 	prefix string
 	apply  func(*deckAutoQueryParams, renderdeck.CardConfigPatch)

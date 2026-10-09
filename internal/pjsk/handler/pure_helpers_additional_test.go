@@ -100,7 +100,7 @@ func testArrestTextFormatting(t *testing.T) {
 
 func testArrestValueFormatting(t *testing.T) {
 	t.Helper()
-	if arrestChallengeCharacterLabel(21, " Miku ").String() != "Miku" || arrestChallengeCharacterLabel(21, "").ID != "misc.arrest.character_id" {
+	if arrestChallengeCharacterLabel(21, " Miku ").String() != "Miku" || arrestChallengeCharacterLabel(21, "").ID != "common.fallback.character" {
 		t.Fatal("challenge character label mismatch")
 	}
 	regions := []struct {

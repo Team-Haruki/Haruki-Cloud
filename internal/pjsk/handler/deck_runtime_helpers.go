@@ -87,7 +87,7 @@ func deckCharacterSummary(query string, id *int) (i18n.Message, bool) {
 	if id == nil || *id <= 0 {
 		return i18n.Message{}, false
 	}
-	return i18n.M("deck.summary.character_id", i18n.Data{"ID": *id}), true
+	return i18n.M("common.fallback.character", i18n.Data{"ID": *id}), true
 }
 
 func applyDefaultChallengeDeckAutoQueryMusic(q *deck.AutoQuery) {

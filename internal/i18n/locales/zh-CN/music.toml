@@ -265,3 +265,7 @@ other = "自制谱面"
 [music.image.custom_chart.bpm_range]
 description = "图片：自制谱面 BPM 变化较多时的显示。占位符：Min=最低 BPM；Max=最高 BPM；Segments=不同 BPM 的段数。"
 other = "{{.Min}}~{{.Max}}（{{.Segments}} 段）"
+
+[music.b30.unavailable]
+description = "/b30 的回复：官方没有公开详细定数，所以不提供 B30。"
+other = "官方没有公开详细定数，暂不提供 B30"

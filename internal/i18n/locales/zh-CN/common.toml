@@ -120,3 +120,27 @@ other = "应为整数"
 [common.self_only]
 description = "只能查询自己的数据的指令，但指定了别人或 UID。"
 other = "这个指令只能查询自己的数据，可以用 u序号 选择自己的账号"
+
+[common.processed]
+description = "图片前的一行文字，说明这次按什么条件处理（组卡、卡牌列表等）。占位符：Summary=用“ / ”连接的条件，例如“日服(JP) / 活动组卡 / 活动 123 / EXPERT”或“国服(CN) / 卡牌列表 / 卡牌 ID 1001, 1002”。"
+other = "已处理{{.Summary}}"
+
+[common.fallback.character]
+description = "游戏数据里找不到角色名时显示的占位名称（文字回复和图片里都会用到）。占位符：ID=角色 ID。"
+other = "角色 #{{.ID}}"
+
+[common.fallback.event]
+description = "游戏数据里找不到活动名时显示的占位名称（榜线图、组卡图等）。占位符：ID=活动 ID。"
+other = "活动 #{{.ID}}"
+
+[common.fallback.music]
+description = "游戏数据里找不到歌曲名时显示的占位名称（别名记录、歌曲候选列表等）。占位符：ID=歌曲 ID。"
+other = "歌曲 #{{.ID}}"
+
+[common.fallback.mysekai_material]
+description = "游戏数据里找不到烤森材料名时显示的占位名称（道具一览、限时蓝图等图片）。占位符：ID=材料 ID。"
+other = "烤森材料 #{{.ID}}"
+
+[common.fallback.item]
+description = "游戏数据里找不到物品名时显示的占位名称（烤森商店等图片）。占位符：ID=物品 ID。"
+other = "物品 #{{.ID}}"

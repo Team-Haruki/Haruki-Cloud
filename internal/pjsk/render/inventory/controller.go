@@ -347,7 +347,7 @@ func (c *Controller) inventoryMysekaiMaterialItems(region renderregion.Value, ra
 		meta := md.mysekaiMaterials[material.MysekaiMaterialID]
 		name := strings.TrimSpace(meta.Name)
 		if name == "" {
-			name = i18n.T("inventory.image.unnamed.mysekai_material", i18n.Data{"ID": material.MysekaiMaterialID})
+			name = i18n.T("common.fallback.mysekai_material", i18n.Data{"ID": material.MysekaiMaterialID})
 		}
 		category := "mysekai"
 		if isMysekaiMemory(meta) {

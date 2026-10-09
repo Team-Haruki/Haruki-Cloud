@@ -558,8 +558,8 @@ func testControllerCoverageCharacterAndSortHelpers(t *testing.T) {
 		character *masterdata.Character
 		want      string
 	}{
-		{nil, i18n.T("costume.image.character_fallback", i18n.Data{"ID": 7})},
-		{&masterdata.Character{FirstName: " ", GivenName: " "}, i18n.T("costume.image.character_fallback", i18n.Data{"ID": 7})},
+		{nil, i18n.T("common.fallback.character", i18n.Data{"ID": 7})},
+		{&masterdata.Character{FirstName: " ", GivenName: " "}, i18n.T("common.fallback.character", i18n.Data{"ID": 7})},
 		{&masterdata.Character{FirstName: "Hatsune", GivenName: "Miku"}, "HatsuneMiku"},
 	} {
 		if got := characterName(test.character, 7); got != test.want {

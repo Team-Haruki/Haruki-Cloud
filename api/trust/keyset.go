@@ -59,7 +59,7 @@ func (s *keysetSource) handler(c fiber.Ctx) error {
 	body, err := s.load()
 	if err != nil {
 		slog.WarnContext(c.Context(), "trust keyset unavailable", "error_type", fmt.Sprintf("%T", err))
-		return api.JSONResponse(c, fiber.StatusServiceUnavailable, "信任密钥集暂不可用")
+		return api.JSONResponse(c, fiber.StatusServiceUnavailable, "trust keyset unavailable")
 	}
 	c.Set("Content-Type", "application/json; charset=utf-8")
 	c.Set("Cache-Control", "public, max-age=60")

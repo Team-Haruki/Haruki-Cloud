@@ -1,2 +1,0 @@
-# Ratchet baseline: <key>\t<count>. Counts may only go down.
-# Regenerate with HARUKI_UPDATE_GOLDEN=1 go test ./internal/i18n/ after fixing findings.

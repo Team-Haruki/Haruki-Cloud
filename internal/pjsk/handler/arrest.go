@@ -243,7 +243,7 @@ func arrestChallengeCharacterLabel(characterID int, resolvedName string) i18n.Me
 	if name := strings.TrimSpace(resolvedName); name != "" {
 		return i18n.Verbatim(name)
 	}
-	return i18n.M("misc.arrest.character_id", i18n.Data{"ID": characterID})
+	return i18n.M("common.fallback.character", i18n.Data{"ID": characterID})
 }
 
 func arrestDisplayUID(uid int64, visible bool) string {
@@ -291,7 +291,7 @@ func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
 	text := i18n.T("misc.reg_time.result", i18n.Data{
 		"UID":  i18n.MaskUID(pjskUserID, target.Visible),
 		"Time": i18n.FormatUserTime(regTime, loc),
-		"Ago":  displaytime.FormatRelativeDuration(time.Since(regTime)),
+		"Ago":  i18n.TimeAgo(time.Since(regTime)),
 	})
 	return onebot11.Message{onebot11.Text(text)}, nil
 }

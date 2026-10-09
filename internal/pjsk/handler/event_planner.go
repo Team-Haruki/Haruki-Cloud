@@ -51,11 +51,16 @@ type eventPlannerSongSelection struct {
 	MusicID    int    `json:"music_id,omitempty"`
 }
 
+//copylint:ignore-block 解析关键字
 var (
-	eventPlannerTargetRankRE   = regexp.MustCompile(`(?i)(?:^|\s)t\s*([0-9]+)|([0-9]+)\s*名`)
-	eventPlannerTargetPointRE  = regexp.MustCompile(`(?i)(?:目标pt|目标|pt|打到)\s*([0-9][0-9,._]*(?:万|億|亿|w|k)?)`)
+	eventPlannerTargetRankRE = regexp.MustCompile(`(?i)(?:^|\s)t\s*([0-9]+)|([0-9]+)\s*名`)
+	//copylint:ignore-block 解析关键字
+	eventPlannerTargetPointRE = regexp.MustCompile(`(?i)(?:目标pt|目标|pt|打到)\s*([0-9][0-9,._]*(?:万|億|亿|w|k)?)`)
+	//copylint:ignore-block 解析关键字
 	eventPlannerCurrentPointRE = regexp.MustCompile(`(?i)(?:当前pt|已有pt|已打|现在pt)\s*([0-9][0-9,._]*(?:万|億|亿|w|k)?)`)
-	eventPlannerBoostRE        = regexp.MustCompile(`([0-9]{1,2})\s*火`)
+	//copylint:ignore-block 解析关键字
+	eventPlannerBoostRE = regexp.MustCompile(`([0-9]{1,2})\s*火`)
+	//copylint:ignore-block 解析关键字
 	eventPlannerTotalRankingRE = regexp.MustCompile(`(?i)(?:总榜|總榜|total|overall)`)
 )
 
@@ -494,9 +499,9 @@ func eventPlannerSongsForRequest(params eventPlannerCommandParams, query renderd
 		return []eventPlannerSongSelection{selection}
 	}
 	return []eventPlannerSongSelection{
-		{Query: "虾", Difficulty: "expert"},
-		{Query: "龙", Difficulty: "hard", MusicID: eventPlannerLostAndFoundMusicID},
-		{Query: "野车", Difficulty: "master", MusicID: eventPlannerOmakaseMusicID},
+		{Query: "虾", Difficulty: "expert"},                                         //copylint:ignore 歌曲昵称（解析关键字）
+		{Query: "龙", Difficulty: "hard", MusicID: eventPlannerLostAndFoundMusicID}, //copylint:ignore 歌曲昵称（解析关键字）
+		{Query: "野车", Difficulty: "master", MusicID: eventPlannerOmakaseMusicID},   //copylint:ignore 歌曲昵称（解析关键字）
 	}
 }
 
@@ -794,8 +799,8 @@ func parseEventPlannerBareTargetPoint(args string) (int64, string) {
 			continue
 		}
 		lower := strings.ToLower(clean)
-		if strings.HasPrefix(lower, "t") || strings.Contains(lower, "火") ||
-			strings.HasPrefix(lower, "event") || strings.HasPrefix(lower, "活动") {
+		if strings.HasPrefix(lower, "t") || strings.Contains(lower, "火") || //copylint:ignore 解析关键字
+			strings.HasPrefix(lower, "event") || strings.HasPrefix(lower, "活动") { //copylint:ignore 解析关键字
 			remaining = append(remaining, token)
 			continue
 		}
@@ -820,7 +825,7 @@ func parseEventPlannerHumanNumber(raw string) (int64, error) {
 		text string
 		mul  float64
 	}{
-		{"亿", 100000000}, {"億", 100000000}, {"万", 10000}, {"w", 10000}, {"k", 1000},
+		{"亿", 100000000}, {"億", 100000000}, {"万", 10000}, {"w", 10000}, {"k", 1000}, //copylint:ignore 解析关键字
 	} {
 		if strings.HasSuffix(clean, suffix.text) {
 			multiplier = suffix.mul
@@ -868,7 +873,7 @@ func parseEventPlannerSongs(args string) ([]eventPlannerSongSelection, string) {
 }
 
 func eventPlannerAfterSongMarker(args string) (string, string, bool) {
-	markers := []string{"歌曲", "歌", "曲"}
+	markers := []string{"歌曲", "歌", "曲"} //copylint:ignore 解析关键字
 	best := -1
 	markerLen := 0
 	for _, marker := range markers {
@@ -917,9 +922,9 @@ func applyEventPlannerDefaultSongDifficulties(songs []eventPlannerSongSelection)
 
 func defaultEventPlannerSongDifficulty(query string) string {
 	switch strings.TrimSpace(strings.ToLower(query)) {
-	case "虾":
+	case "虾": //copylint:ignore 解析关键字
 		return "expert"
-	case "龙":
+	case "龙": //copylint:ignore 解析关键字
 		return "hard"
 	default:
 		return "master"
@@ -928,9 +933,9 @@ func defaultEventPlannerSongDifficulty(query string) string {
 
 func eventPlannerMusicIDOverride(query string) int {
 	switch strings.TrimSpace(strings.ToLower(query)) {
-	case "龙":
+	case "龙": //copylint:ignore 解析关键字
 		return eventPlannerLostAndFoundMusicID
-	case "野车", "omakase", "随机":
+	case "野车", "omakase", "随机": //copylint:ignore 解析关键字
 		return eventPlannerOmakaseMusicID
 	default:
 		return 0
@@ -942,18 +947,18 @@ func eventPlannerLooksLikeSongToken(token string) bool {
 		return false
 	}
 	lower := strings.ToLower(token)
-	if strings.Contains(lower, "火") || strings.HasPrefix(lower, "event") || strings.HasPrefix(lower, "活动") ||
+	if strings.Contains(lower, "火") || strings.HasPrefix(lower, "event") || strings.HasPrefix(lower, "活动") || //copylint:ignore 解析关键字
 		strings.HasPrefix(lower, "pt") {
 		return false
 	}
 	switch lower {
-	case "solo", "单人", "auto", "自动", "multi", "多人", "协力":
+	case "solo", "单人", "auto", "自动", "multi", "多人", "协力": //copylint:ignore 解析关键字
 		return false
 	}
 	if strings.HasPrefix(lower, "t") && len(lower) > 1 && eventPlannerIsDigits(lower[1:]) {
 		return false
 	}
-	if eventPlannerContainsAny(lower, "当前", "最优", "最佳", "目标", "已有", "现在", "卡组", "主队", "队友", "实效", "综合", "画布", "已读") {
+	if eventPlannerContainsAny(lower, "当前", "最优", "最佳", "目标", "已有", "现在", "卡组", "主队", "队友", "实效", "综合", "画布", "已读") { //copylint:ignore 解析关键字
 		return false
 	}
 	if value, err := parseEventPlannerHumanNumber(lower); err == nil && value > 0 {

@@ -200,10 +200,6 @@ other = "该团目前只有 {{.Available}} 期 WL，无法查询 wl{{.Turn}}"
 description = "/实效 的计算结果。占位符：Leader=队长技能加成（百分比）；Internal=5 张卡技能加成之和（内部值）；ScoreUp=实效（百分比）；Multiplier=倍率，即 1 + 实效 / 100。"
 other = "队长技能加成：{{.Leader}}\n内部值：{{.Internal}}\n实效：{{.ScoreUp}}\n倍率：{{.Multiplier}}"
 
-[deck.done]
-description = "组卡图片前的一行文字，说明这次处理的是什么组卡。占位符：Summary=用“ / ”连接的组卡条件，例如“日服(JP) / 活动组卡 / 活动 123 / EXPERT”，各段见 deck.mode.* 和 deck.summary.*。"
-other = "已处理{{.Summary}}"
-
 [deck.done_toolbox_hint]
 description = "活动组卡结果后的第二行，引导用户使用工具箱的组卡推荐。"
 other = "需要更精确、更快或参数更多的组卡，请使用 Haruki 工具箱的组卡推荐功能"
@@ -255,10 +251,6 @@ other = "指定队长：{{.Character}}"
 [deck.summary.challenge_character]
 description = "组卡条件摘要（deck.done）里指定的挑战 Live 角色。占位符：Character=用户写的角色名，或 deck.summary.character_id。"
 other = "挑战角色：{{.Character}}"
-
-[deck.summary.character_id]
-description = "组卡条件摘要里只知道角色 ID 时代替角色名。占位符：ID=角色 ID。"
-other = "角色 ID {{.ID}}"
 
 [deck.live.mysekai]
 description = "烤森组卡图片的 Live 类型名（其他 Live 类型用 format.live_type.*）。"

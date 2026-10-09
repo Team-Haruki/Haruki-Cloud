@@ -88,7 +88,7 @@ func shouldSkipMissingTrackerRanks(req TrackerRankQuery) bool {
 func normalizeTrackerSpeedConfig(req TrackerRankQuery) (periodSeconds int64, unitPeriodSeconds int64, unitText string) {
 	unit := strings.ToLower(strings.TrimSpace(req.SpeedUnit))
 	switch unit {
-	case "d", "day", "daily", "日":
+	case "d", "day", "daily", "日": //copylint:ignore 解析关键字
 		unitPeriodSeconds = 24 * 60 * 60
 		unitText = i18n.T("sk.speed.unit_day")
 	default:

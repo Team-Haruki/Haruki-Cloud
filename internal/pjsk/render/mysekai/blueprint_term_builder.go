@@ -201,7 +201,7 @@ func (c *Controller) blueprintTermCostText(groupID int) string {
 		materialID := intNumber(row["mysekaiMaterialId"], 0)
 		name := stringValue(materials[materialID]["name"])
 		if name == "" {
-			name = i18n.T("mysekai.image.material_unknown", i18n.Data{"ID": materialID})
+			name = i18n.T("common.fallback.mysekai_material", i18n.Data{"ID": materialID})
 		}
 		parts = append(parts, i18n.T("mysekai.image.material_quantity", i18n.Data{"Name": name, "Quantity": intNumber(row["quantity"], 0)}))
 	}

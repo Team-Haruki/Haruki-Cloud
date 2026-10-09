@@ -308,9 +308,9 @@ func errAliasUnavailable() error {
 // fallbackEntityName names a song or character whose game data has no name.
 func fallbackEntityName(aliasType string, id int) string {
 	if aliasType == PjskAliasTypeCharacter {
-		return i18n.T("alias.fallback_name.character", i18n.Data{"ID": id})
+		return i18n.T("common.fallback.character", i18n.Data{"ID": id})
 	}
-	return i18n.T("alias.fallback_name.music", i18n.Data{"ID": id})
+	return i18n.T("common.fallback.music", i18n.Data{"ID": id})
 }
 
 func buildActorLabel(platform, platformUserID string) string {

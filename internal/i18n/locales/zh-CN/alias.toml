@@ -130,14 +130,6 @@ other = "请写一个用户（@用户或 QQ 号）"
 
 # ---- 成功回复 ----
 
-[alias.fallback_name.music]
-description = "游戏数据里找不到歌曲名时代替歌曲名显示。占位符：ID=歌曲 ID。"
-other = "歌曲 {{.ID}}"
-
-[alias.fallback_name.character]
-description = "游戏数据里找不到角色名时代替角色名显示。占位符：ID=角色 ID。"
-other = "角色 {{.ID}}"
-
 [alias.query.music]
 description = "/歌曲别名 的文字回复开头（别名较少、不转图片时）。占位符：ID=歌曲 ID；Name=歌曲名（游戏数据原文）。"
 other = "歌曲 ID：{{.ID}}\n歌曲名：{{.Name}}"

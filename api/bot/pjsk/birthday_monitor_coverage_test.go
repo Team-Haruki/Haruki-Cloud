@@ -479,7 +479,7 @@ func TestBirthdayMonitorCommandHandlerCreateAndCancelSuccess(t *testing.T) {
 	resp, body := birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/monitor", request, fiber.MIMEApplicationJSON)
 	{
 		testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "create monitor status=%d body=%s", resp.StatusCode, body)
-		testutil.Require(t, strings.Contains(string(body), "有效期 10 分钟"), "create monitor status=%d body=%s", resp.StatusCode, body)
+		testutil.Require(t, strings.Contains(string(body), i18n.T("subscription.birthday.updated", i18n.Data{"Minutes": 10})), "create monitor status=%d body=%s", resp.StatusCode, body)
 		testutil.Require(t, strings.Contains(string(body), "client_actions"), "create monitor status=%d body=%s", resp.StatusCode, body)
 		testutil.Require(t, strings.Contains(string(body), "hmes_sse"), "create monitor status=%d body=%s", resp.StatusCode, body)
 	}
@@ -489,7 +489,7 @@ func TestBirthdayMonitorCommandHandlerCreateAndCancelSuccess(t *testing.T) {
 	resp, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/monitor", request, fiber.MIMEApplicationJSON)
 	{
 		testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "cancel monitor status=%d body=%s", resp.StatusCode, body)
-		testutil.Require(t, strings.Contains(string(body), "监听已取消"), "cancel monitor status=%d body=%s", resp.StatusCode, body)
+		testutil.Require(t, strings.Contains(string(body), i18n.T("subscription.birthday.cancelled")), "cancel monitor status=%d body=%s", resp.StatusCode, body)
 	}
 	testutil.Require(t, !(guard.completed != 2), "guard completion count = %d", guard.completed)
 

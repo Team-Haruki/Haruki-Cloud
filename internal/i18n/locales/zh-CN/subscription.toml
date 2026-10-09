@@ -51,3 +51,11 @@ other = "这次监听推送缺少可绘制的地图数据"
 [subscription.birthday.empty_result]
 description = "生日材料监听推送：这次烤森生日材料更新里没有用户订阅的材料。"
 other = "本次生日材料更新没有你订阅的材料"
+
+[subscription.birthday.cancelled]
+description = "/烤森生日取消监听 成功：已取消当前账号在本群的生日材料监听。"
+other = "已取消烤森生日材料监听"
+
+[subscription.birthday.updated]
+description = "/烤森生日监听 成功：已创建或更新生日材料监听。占位符：Minutes=监听有效期，单位分钟。"
+other = "已更新烤森生日材料监听，有效期 {{.Minutes}} 分钟"

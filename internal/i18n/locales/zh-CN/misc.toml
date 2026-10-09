@@ -20,10 +20,6 @@ other = "[{{.Difficulty}}] Clear {{.Clear}} / FC {{.FC}} / AP {{.AP}}"
 description = "/逮捕 文字回复的最后一行：挑战 Live 最高分。占位符：Character=挑战角色名，或 misc.arrest.character_id；Score=最高分，5 位以上加千分位。"
 other = "挑战 Live（{{.Character}}）：{{.Score}} 分"
 
-[misc.arrest.character_id]
-description = "/逮捕 查不到挑战角色名时代替角色名。占位符：ID=角色 ID。"
-other = "角色 ID {{.ID}}"
-
 [misc.reg_time.result]
-description = "/注册时间 的回复。占位符：UID=游戏 UID，未公开时中间打码；Time=按 UID 推算的注册时间（format.time.datetime，按用户时区）；Ago=距今多久，例如“约 3 天前”。"
+description = "/注册时间 的回复。占位符：UID=游戏 UID，未公开时中间打码；Time=按 UID 推算的注册时间（format.time.datetime，按用户时区）；Ago=距今多久（format.ago.*），例如“3天7小时前”。"
 other = "游戏 UID {{.UID}} 的注册时间：{{.Time}}（{{.Ago}}）"

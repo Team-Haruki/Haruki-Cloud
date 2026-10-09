@@ -149,7 +149,7 @@ func (c *Controller) applyRecommendFilterMetadata(request *drawing.DeckRequest, 
 func (c *Controller) applyRecommendEventMetadata(request *drawing.DeckRequest, region renderregion.Value, finalEventID int) {
 	if finalEventID > 0 {
 		request.EventID = drawing.IntPtr(finalEventID)
-		eventName := i18n.T("event.fallback_name", i18n.Data{"ID": finalEventID})
+		eventName := i18n.T("common.fallback.event", i18n.Data{"ID": finalEventID})
 		request.EventName = &eventName
 		if _, eventSource, ok := c.resolveEventSource(region); ok {
 			if eventInfo, err := eventSource.GetEventByID(finalEventID); err == nil && eventInfo != nil {

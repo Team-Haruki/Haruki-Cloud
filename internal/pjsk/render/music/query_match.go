@@ -279,7 +279,7 @@ func dedupeMusicMatchTitles(matches []*masterdata.Music) map[int]string {
 		}
 		title := strings.TrimSpace(item.Title)
 		if title == "" {
-			title = i18n.T("render_music.fallback_title", i18n.Data{"ID": item.ID})
+			title = i18n.T("common.fallback.music", i18n.Data{"ID": item.ID})
 		}
 		deduped[item.ID] = title
 	}

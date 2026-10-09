@@ -267,6 +267,3 @@ other = "女装"
 description = "图片：服装列表按性别筛选时的说明：不分性别的服装。"
 other = "其他"
 
-[costume.image.character_fallback]
-description = "图片：游戏数据里找不到角色名时，用角色 ID 代替。占位符：ID=角色 ID。"
-other = "角色 {{.ID}}"

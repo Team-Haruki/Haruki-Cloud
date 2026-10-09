@@ -3165,7 +3165,7 @@ func TestBotManifestEndpoint(t *testing.T) {
 	if err := json.Unmarshal(respBody, &envelope); err != nil {
 		t.Fatalf("decode manifest: %v raw=%s", err, respBody)
 	}
-	if !strings.Contains(envelope.Message, "指令清单不可用") {
+	if !strings.Contains(envelope.Message, "command manifest unavailable") {
 		t.Fatalf("expected unavailable manifest message, got: %s", envelope.Message)
 	}
 }

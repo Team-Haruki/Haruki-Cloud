@@ -115,8 +115,8 @@ func TestAliasLabelsAndPresentationHelpers(t *testing.T) {
 			t.Errorf("aliasKind(%q) = %q, want %q", aliasType, got.ID, id)
 		}
 	}
-	if fallbackEntityName(PjskAliasTypeCharacter, 7) != i18n.T("alias.fallback_name.character", i18n.Data{"ID": 7}) ||
-		fallbackEntityName(PjskAliasTypeMusic, 7) != i18n.T("alias.fallback_name.music", i18n.Data{"ID": 7}) {
+	if fallbackEntityName(PjskAliasTypeCharacter, 7) != i18n.T("common.fallback.character", i18n.Data{"ID": 7}) ||
+		fallbackEntityName(PjskAliasTypeMusic, 7) != i18n.T("common.fallback.music", i18n.Data{"ID": 7}) {
 		t.Fatal("fallback entity names are incorrect")
 	}
 	for _, tc := range []struct{ platform, id, want string }{

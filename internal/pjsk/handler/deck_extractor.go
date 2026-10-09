@@ -88,13 +88,13 @@ func extractDeckLiveType(args string, params *deckAutoQueryParams) string {
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
 		switch field {
-		case "多人", "协力", "multi":
+		case "多人", "协力", "multi": //copylint:ignore 解析关键字
 			params.LiveType = "multi"
 			continue
-		case "单人", "solo":
+		case "单人", "solo": //copylint:ignore 解析关键字
 			params.LiveType = "solo"
 			continue
-		case "自动", "auto":
+		case "自动", "auto": //copylint:ignore 解析关键字
 			params.LiveType = "auto"
 			continue
 		}
@@ -324,17 +324,17 @@ func parseDeckAreaItemKeyword(fields []string, index int, field string, keyword 
 }
 
 func parsePositiveDeckLevel(raw string) (int, bool) {
-	raw = strings.TrimSuffix(strings.TrimSpace(raw), "级")
+	raw = strings.TrimSuffix(strings.TrimSpace(raw), "级") //copylint:ignore 解析关键字
 	level, err := strconv.Atoi(strings.TrimSpace(raw))
 	return level, err == nil && level > 0
 }
 
 func parseDeckAreaItemToken(field string) (int, bool) {
 	field = strings.TrimSpace(strings.ToLower(field))
-	if !strings.HasSuffix(field, "级") || len(field) <= len("级") {
+	if !strings.HasSuffix(field, "级") || len(field) <= len("级") { //copylint:ignore 解析关键字
 		return 0, false
 	}
-	raw := strings.TrimSpace(strings.TrimSuffix(field, "级"))
+	raw := strings.TrimSpace(strings.TrimSuffix(field, "级")) //copylint:ignore 解析关键字
 	if !looksLikeDeckNumericToken(raw) {
 		return 0, false
 	}
@@ -391,7 +391,7 @@ func extractDeckAttrFilter(args string, params *deckAutoQueryParams) string {
 func deckAttrForField(field string) (string, bool) {
 	for attr, aliases := range deckAttrFilterAliases {
 		for _, alias := range aliases {
-			if field == "纯"+alias || field == "仅"+alias {
+			if field == "纯"+alias || field == "仅"+alias { //copylint:ignore 解析关键字
 				return attr, true
 			}
 		}

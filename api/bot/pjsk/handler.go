@@ -23,6 +23,7 @@ import (
 	"haruki-cloud/internal/core/secevent"
 	"haruki-cloud/internal/core/trustsign"
 	commandregistry "haruki-cloud/internal/handler"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/middleware/secure"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/onebot11"
@@ -238,14 +239,14 @@ func verifyBotOwnerNotBanned(botDBClient *botDB.Client, checker *accountdata.Ban
 		defer finish()
 		botID, err := strconv.Atoi(strings.TrimSpace(c.Params("botId")))
 		if err != nil {
-			return botResponse(c, fiber.StatusUnauthorized, "Bot 会话无效")
+			return botResponse(c, fiber.StatusUnauthorized, i18n.T("account.api.bot_session_invalid"))
 		}
 		owner, err := botDBClient.User.Query().
 			Where(botuser.BotIDEQ(botID)).
 			Only(c.Context())
 		if err != nil {
 			if botDB.IsNotFound(err) {
-				return botResponse(c, fiber.StatusUnauthorized, "Bot 会话无效")
+				return botResponse(c, fiber.StatusUnauthorized, i18n.T("account.api.bot_session_invalid"))
 			}
 			return api.InternalError(c)
 		}
@@ -304,21 +305,21 @@ func validateBotHandlerRequest(c fiber.Ctx, expectedPath string, commands []stri
 	setCommandTraceMetadata(c, "", expectedPath)
 	req, err := parseBotRequest(c)
 	if err != nil {
-		return BotCommandRequest{}, "", false, &botHandlerRejection{message: "请求格式错误", cause: err}
+		return BotCommandRequest{}, "", false, &botHandlerRejection{message: i18n.T("account.api.request_invalid"), cause: err}
 	}
 	traceCommand := allowedCommandTraceLabel(req.MatchedCommand, commands)
 	setCommandTraceMetadata(c, traceCommand, expectedPath)
 	finishValidation := commandtrace.MeasurePhase(c.Context(), "request_validate")
 	defer finishValidation()
 	if len(req.Message) == 0 {
-		return req, traceCommand, false, &botHandlerRejection{message: "缺少 message"}
+		return req, traceCommand, false, &botHandlerRejection{message: i18n.T("account.api.message_missing")}
 	}
 	if req.MatchedCommand == "" {
-		return req, traceCommand, false, &botHandlerRejection{message: "缺少 matched_command"}
+		return req, traceCommand, false, &botHandlerRejection{message: i18n.T("account.api.matched_command_missing")}
 	}
 	allowCompatReroute := allowBotCompatReroute(expectedPath)
 	if !slices.Contains(commands, req.MatchedCommand) && !allowCompatReroute {
-		return req, traceCommand, false, &botHandlerRejection{message: "当前接口不允许使用该 matched_command"}
+		return req, traceCommand, false, &botHandlerRejection{message: i18n.T("account.api.matched_command_not_allowed")}
 	}
 	return req, traceCommand, allowCompatReroute, nil
 }
@@ -544,7 +545,7 @@ func encodeSharedCommandResult(ctx context.Context, envelope botResponseEnvelope
 
 func commandErrorEnvelope(ctx context.Context, err error, expectedPath, matchedCommand string) botResponseEnvelope {
 	if _, ok := errors.AsType[*botValidationError](err); ok {
-		return newBotResponseEnvelope(fiber.StatusBadRequest, "指令与当前接口不匹配",
+		return newBotResponseEnvelope(fiber.StatusBadRequest, i18n.T("account.api.command_path_mismatch"),
 			BotCommandErrorResponse{
 				Error:          err.Error(),
 				ExpectedPath:   expectedPath,
@@ -833,7 +834,7 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	}
 	if matched.Handler.GetPath() != expectedPath {
 		return nil, &botValidationError{
-			msg:        fmt.Sprintf("matched_command 属于接口路径 %s", matched.Handler.GetPath()),
+			msg:        fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath()),
 			actualPath: matched.Handler.GetPath(),
 		}
 	}
@@ -900,9 +901,9 @@ func fallbackBotCommandMatch(matched, actual commandregistry.MatchedHandler, loo
 		return actual, nil
 	}
 	if !botCommandMatchRegistered(matched, lookupOK) {
-		return commandregistry.MatchedHandler{}, &botValidationError{msg: fmt.Sprintf("matched_command 未注册: %s", matchedCommand)}
+		return commandregistry.MatchedHandler{}, &botValidationError{msg: fmt.Sprintf("matched_command is not registered: %s", matchedCommand)}
 	}
-	return commandregistry.MatchedHandler{}, &botValidationError{msg: fmt.Sprintf("matched_command 未开放给 Bot API: %s", matchedCommand)}
+	return commandregistry.MatchedHandler{}, &botValidationError{msg: fmt.Sprintf("matched_command is not open to the bot API: %s", matchedCommand)}
 }
 
 func resolveBotCommandArgs(message string, matched commandregistry.MatchedHandler, matchedCommand string) (string, string, error) {
@@ -912,7 +913,7 @@ func resolveBotCommandArgs(message string, matched commandregistry.MatchedHandle
 	}
 	actual := commandregistry.MatchCommandHandler(message)
 	if actual.Handler == nil || actual.Handler.IsDisabled() || actual.Handler.GetPath() != matched.Handler.GetPath() {
-		return "", "", &botValidationError{msg: fmt.Sprintf("message 与 matched_command 不匹配: %s", matchedCommand)}
+		return "", "", &botValidationError{msg: fmt.Sprintf("message does not match matched_command: %s", matchedCommand)}
 	}
 	return strings.TrimSpace(string(actual.ArgText)), actual.Command, nil
 }
@@ -962,7 +963,7 @@ func buildManifestHandler(botDBClient *botDB.Client, preview3DEnabled bool, sign
 	return func(c fiber.Ctx) error {
 		if botDBClient == nil {
 			return api.JSONResponse(c, fiber.StatusNotImplemented,
-				"指令清单不可用：bot 数据库未配置", nil)
+				"command manifest unavailable", nil)
 		}
 		entry, failure := cache.get(time.Now(), func() ([]byte, string) {
 			return buildManifestPayload(c.Context(), botDBClient, preview3DEnabled)
@@ -1040,7 +1041,7 @@ func buildManifestPayload(ctx context.Context, botDBClient *botDB.Client, previe
 		Order(commandmanifest.ByCommandPriority(sql.OrderDesc())).
 		All(ctx)
 	if err != nil {
-		return nil, "加载指令清单失败"
+		return nil, "failed to load command manifest"
 	}
 
 	clientPolicyScopes := commandManifestClientPolicyScopes()
@@ -1067,7 +1068,7 @@ func buildManifestPayload(ctx context.Context, botDBClient *botDB.Client, previe
 	}
 	payload, err := json.Marshal(manifest)
 	if err != nil {
-		return nil, "编码指令清单失败"
+		return nil, "failed to encode command manifest"
 	}
 	return payload, ""
 }
@@ -1080,13 +1081,13 @@ func encodeManifestResponse(payload []byte, signer *trustsign.Signer) ([]byte, s
 	if signer != nil {
 		envelope, err := signer.Sign(trustsign.DomainManifest, trustsign.EncodingJSON, payload)
 		if err != nil {
-			return nil, "签名指令清单失败"
+			return nil, "failed to sign command manifest"
 		}
 		data = envelope
 	}
 	body, err := json.Marshal(api.BuildResponseMap(fiber.StatusOK, api.ResponseOK, data))
 	if err != nil {
-		return nil, "编码指令清单失败"
+		return nil, "failed to encode command manifest"
 	}
 	return body, ""
 }

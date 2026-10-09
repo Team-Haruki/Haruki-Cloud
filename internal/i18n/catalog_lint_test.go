@@ -3,21 +3,17 @@ package i18n
 import (
 	"fmt"
 	"io/fs"
-	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
-	"strconv"
 	"strings"
 	"testing"
 )
 
 // Catalog style lint. Every rule below comes from the copy spec in AGENTS.md
-// ("用户文案规范"). Catalog messages must pass with zero findings; help
-// documents are checked in ratchet mode against testdata/helpdoc_style.baseline
-// until the help-doc migration has cleaned them up.
+// ("用户文案规范"). Catalog messages and help documents must both pass with
+// zero findings.
 
 var (
 	idPattern          = regexp.MustCompile(`^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$`)
@@ -213,10 +209,9 @@ func helpDocStyleCounts(markdown string) map[string]int {
 	return counts
 }
 
-// TestHelpDocStyleRatchet fails when a help document gains style findings
-// compared to testdata/helpdoc_style.baseline. Regenerate the baseline with
-// HARUKI_UPDATE_GOLDEN=1 after fixing documents, so the counts only go down.
-func TestHelpDocStyleRatchet(t *testing.T) {
+// TestHelpDocStyle fails on any punctuation, spacing or banned-term finding
+// in a help document (code spans and code blocks are not checked).
+func TestHelpDocStyle(t *testing.T) {
 	current := map[string]int{}
 	for _, locale := range Locales() {
 		for _, key := range HelpDocKeys(locale) {
@@ -229,7 +224,7 @@ func TestHelpDocStyleRatchet(t *testing.T) {
 			}
 		}
 	}
-	checkRatchet(t, "helpdoc_style.baseline", current)
+	checkZero(t, "help document style", current)
 }
 
 func TestHelpDocStyleCountsSkipCode(t *testing.T) {
@@ -239,10 +234,9 @@ func TestHelpDocStyleCountsSkipCode(t *testing.T) {
 	}
 }
 
-// checkRatchet compares per-key counts with a "key<TAB>count" baseline file.
-// A key may only keep or lower its count; keys missing from the baseline
-// count as zero.
-func checkRatchet(t *testing.T, name string, current map[string]int) {
+// checkZero fails for every key with a non-zero count. Keys are
+// "<file>\t<rule>".
+func checkZero(t *testing.T, what string, current map[string]int) {
 	t.Helper()
 	keys := make([]string, 0, len(current))
 	for key, n := range current {
@@ -251,57 +245,10 @@ func checkRatchet(t *testing.T, name string, current map[string]int) {
 		}
 	}
 	sort.Strings(keys)
-	var b strings.Builder
-	b.WriteString("# Ratchet baseline: <key>\\t<count>. Counts may only go down.\n")
-	b.WriteString("# Regenerate with HARUKI_UPDATE_GOLDEN=1 go test ./internal/i18n/ after fixing findings.\n")
 	for _, key := range keys {
-		fmt.Fprintf(&b, "%s\t%d\n", key, current[key])
+		t.Errorf("%s: %d finding(s)", strings.ReplaceAll(key, "\t", " "), current[key])
 	}
-	if updateGolden {
-		compareGolden(t, name, b.String())
-		return
+	if len(keys) > 0 {
+		t.Errorf("%s findings must be zero; fix them (see AGENTS.md 用户文案规范)", what)
 	}
-	baseline := readRatchetBaseline(t, name)
-	var increased []string
-	lowered := 0
-	for _, key := range keys {
-		if current[key] > baseline[key] {
-			increased = append(increased, fmt.Sprintf("%s: %d > baseline %d", key, current[key], baseline[key]))
-		}
-	}
-	for key, n := range baseline {
-		if current[key] < n {
-			lowered++
-		}
-	}
-	for _, line := range increased {
-		t.Errorf("%s", line)
-	}
-	if len(increased) > 0 {
-		t.Errorf("new copy findings above the %s ratchet; fix them (see AGENTS.md 用户文案规范) instead of raising the baseline", name)
-	}
-	if lowered > 0 {
-		t.Logf("%d entries are below the %s baseline; lock the progress with HARUKI_UPDATE_GOLDEN=1", lowered, name)
-	}
-}
-
-func readRatchetBaseline(t *testing.T, name string) map[string]int {
-	t.Helper()
-	data, err := os.ReadFile(filepath.Join("testdata", name))
-	if err != nil {
-		t.Fatalf("read %s: %v (generate with HARUKI_UPDATE_GOLDEN=1)", name, err)
-	}
-	baseline := map[string]int{}
-	for _, line := range strings.Split(string(data), "\n") {
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		idx := strings.LastIndex(line, "\t")
-		n, err := strconv.Atoi(line[idx+1:])
-		if idx < 0 || err != nil {
-			t.Fatalf("%s: malformed line %q", name, line)
-		}
-		baseline[line[:idx]] = n
-	}
-	return baseline
 }

@@ -33,7 +33,7 @@ func (c *Controller) resolveEventMeta(eventID int, region renderregion.Value) ev
 	const defaultWindow = int64(6 * time.Hour / time.Millisecond)
 	now := time.Now().UnixMilli()
 	meta := eventMeta{
-		name:        i18n.T("event.fallback_name", i18n.Data{"ID": eventID}),
+		name:        i18n.T("common.fallback.event", i18n.Data{"ID": eventID}),
 		startAt:     now - defaultWindow,
 		aggregateAt: now + defaultWindow,
 	}

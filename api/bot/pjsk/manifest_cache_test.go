@@ -39,14 +39,14 @@ func TestManifestCacheReusesSignedEnvelope(t *testing.T) {
 		t.Fatalf("changed payload must be re-encoded with a new ETag: %+v encodes=%d", changed, encodes)
 	}
 	// A failed refresh keeps serving the last good manifest.
-	failing := func() ([]byte, string) { return nil, "加载指令清单失败" }
+	failing := func() ([]byte, string) { return nil, "failed to load command manifest" }
 	if stale, failure := cache.get(start.Add(5*manifestRefreshInterval), failing, encode); failure != "" || stale.etag != changed.etag {
 		t.Fatalf("stale fallback = %+v %q", stale, failure)
 	}
 	if _, failure := (&manifestCache{}).get(start, failing, encode); failure == "" {
 		t.Fatal("an empty cache must report the failure")
 	}
-	if _, failure := (&manifestCache{}).get(start, build, func([]byte) ([]byte, string) { return nil, "签名指令清单失败" }); failure == "" {
+	if _, failure := (&manifestCache{}).get(start, build, func([]byte) ([]byte, string) { return nil, "failed to sign command manifest" }); failure == "" {
 		t.Fatal("an encode failure must be reported")
 	}
 }

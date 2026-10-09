@@ -1,18 +1,6 @@
 # 图片渲染：Cloud 发给 Drawing、会被画进图片的通用标签（各图片共用）。
 # 各图片自己的标签在 render_<领域>.toml。
 
-[render.fallback.character]
-description = "游戏数据里找不到角色名时显示的占位名称。占位符：ID=角色 ID。"
-other = "角色 #{{.ID}}"
-
-[render.fallback.event]
-description = "游戏数据里找不到活动名时显示的占位名称（榜线图、组卡图）。占位符：ID=活动 ID。"
-other = "活动 #{{.ID}}"
-
-[render.fallback.item]
-description = "游戏数据里找不到物品名时显示的占位名称（烤森商店等）。占位符：ID=物品 ID。"
-other = "物品 #{{.ID}}"
-
 [render.progress]
 description = "图片里带名称的收集进度，例如“总收集进度：12/40（30%）”。占位符：Label=进度名称，见 render_mysekai.progress.*；Ratio=进度数值，见 render.progress_ratio。"
 other = "{{.Label}}：{{.Ratio}}"

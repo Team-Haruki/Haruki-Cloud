@@ -2,8 +2,6 @@ package handler
 
 import (
 	"context"
-	"os"
-	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
@@ -35,41 +33,17 @@ func helpDocTriggers(markdown string) []string {
 // registered command: a registered spelling (region-prefixed forms are
 // registered too), optionally followed by arguments. Arguments written
 // directly after the command must not start with a Chinese character, since
-// "/歌曲榜" would otherwise pass as "/歌曲" plus "榜".
+// "/歌曲表" would otherwise pass as "/歌曲" plus "表".
 func helpDocTriggerResolves(span string) bool {
 	return helpDocSpanCommand(span) != ""
 }
 
-func readHelpDocAllowlist(t *testing.T, name string) map[string]bool {
+// requireNoHelpDocFindings fails for every finding.
+func requireNoHelpDocFindings(t *testing.T, findings []string, explain string) {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("testdata", name))
-	if err != nil {
-		t.Fatalf("read %s: %v", name, err)
-	}
-	entries := map[string]bool{}
-	for _, line := range strings.Split(string(data), "\n") {
-		if line = strings.TrimSpace(line); line != "" && !strings.HasPrefix(line, "#") {
-			entries[line] = true
-		}
-	}
-	return entries
-}
-
-// checkHelpDocAllowlist fails for findings missing from the allowlist and
-// for allowlist entries that no longer fail (so the list only shrinks).
-func checkHelpDocAllowlist(t *testing.T, name string, findings []string, explain string) {
-	t.Helper()
-	allowed := readHelpDocAllowlist(t, name)
 	sort.Strings(findings)
 	for _, finding := range findings {
-		if !allowed[finding] {
-			t.Errorf("%s (%s)", strings.ReplaceAll(finding, "\t", " "), explain)
-		}
-	}
-	for entry := range allowed {
-		if !slices.Contains(findings, entry) {
-			t.Errorf("testdata/%s: %q is fixed; remove it from the list", name, entry)
-		}
+		t.Errorf("%s (%s)", strings.ReplaceAll(finding, "\t", " "), explain)
 	}
 }
 
@@ -83,9 +57,8 @@ func helpDocMarkdown(t *testing.T, key string) string {
 }
 
 // TestHelpDocTriggersAreRegistered checks that every command a help document
-// shows in backticks can actually be sent. Known gaps are listed in
-// testdata/helpdoc_unregistered_triggers.txt; fix the document or register
-// the documented spelling as an alias, then delete the line.
+// shows in backticks can actually be sent. Fix the document, or register the
+// documented spelling as an alias when that is unambiguous.
 func TestHelpDocTriggersAreRegistered(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 	var findings []string
@@ -97,7 +70,7 @@ func TestHelpDocTriggersAreRegistered(t *testing.T) {
 		}
 	}
 	findings = slices.Compact(sortedStrings(findings))
-	checkHelpDocAllowlist(t, "helpdoc_unregistered_triggers.txt", findings, "help document shows a command that is not registered")
+	requireNoHelpDocFindings(t, findings, "help document shows a command that is not registered")
 }
 
 func sortedStrings(values []string) []string {
@@ -106,8 +79,7 @@ func sortedStrings(values []string) []string {
 }
 
 // TestEveryRouteHasHelpDoc checks that each registered bot route has its own
-// help document (locales/<locale>/help/<route path with / as _>.md). Known
-// gaps are listed in testdata/helpdoc_missing_routes.txt.
+// help document (locales/<locale>/help/<route path with / as _>.md).
 func TestEveryRouteHasHelpDoc(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 	var findings []string
@@ -116,7 +88,7 @@ func TestEveryRouteHasHelpDoc(t *testing.T) {
 			findings = append(findings, route.Path)
 		}
 	}
-	checkHelpDocAllowlist(t, "helpdoc_missing_routes.txt", findings, "route has no help document")
+	requireNoHelpDocFindings(t, findings, "route has no help document")
 }
 
 // helpDocRouteKeys maps every help document a user can reach to the route it

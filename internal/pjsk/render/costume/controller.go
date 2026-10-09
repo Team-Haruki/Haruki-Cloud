@@ -2575,14 +2575,14 @@ func partTypeName(partType string) string {
 // the character is unknown.
 func characterName(character *masterdata.Character, fallbackID int) string {
 	if character == nil {
-		return i18n.T("costume.image.character_fallback", i18n.Data{"ID": fallbackID})
+		return i18n.T("common.fallback.character", i18n.Data{"ID": fallbackID})
 	}
 	name := strings.TrimSpace(strings.TrimSpace(character.FirstName) + strings.TrimSpace(character.GivenName))
 	if name == "" {
 		name = strings.TrimSpace(character.GivenName)
 	}
 	if name == "" {
-		return i18n.T("costume.image.character_fallback", i18n.Data{"ID": fallbackID})
+		return i18n.T("common.fallback.character", i18n.Data{"ID": fallbackID})
 	}
 	return name
 }
@@ -2674,7 +2674,7 @@ func buildFilterLabel(query ListQuery) string {
 		parts = append(parts, query.Character)
 	}
 	if query.Character3DID > 0 {
-		parts = append(parts, i18n.T("costume.image.character_fallback", i18n.Data{"ID": query.Character3DID}))
+		parts = append(parts, i18n.T("common.fallback.character", i18n.Data{"ID": query.Character3DID}))
 	}
 	if len(query.AccessoryIDs) > 0 {
 		parts = append(parts, i18n.T("costume.image.filter_ids", i18n.Data{"IDs": joinCostumeIDs(query.AccessoryIDs)}))

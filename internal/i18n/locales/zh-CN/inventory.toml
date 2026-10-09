@@ -96,28 +96,24 @@ other = "虚拟 Live 等玩法中使用的货币"
 
 [inventory.image.unnamed.material]
 description = "图片：游戏数据里没有名称的材料。占位符：ID=材料 ID。"
-other = "材料 {{.ID}}"
+other = "材料 #{{.ID}}"
 
 [inventory.image.unnamed.gacha_ticket]
 description = "图片：游戏数据里没有名称的招募券。占位符：ID=招募券 ID。"
-other = "招募券 {{.ID}}"
+other = "招募券 #{{.ID}}"
 
 [inventory.image.unnamed.practice_ticket]
 description = "图片：游戏数据里没有名称的练习乐谱。占位符：ID=练习乐谱 ID。"
-other = "练习乐谱 {{.ID}}"
+other = "练习乐谱 #{{.ID}}"
 
 [inventory.image.unnamed.skill_practice_ticket]
 description = "图片：游戏数据里没有名称的技能升级乐谱。占位符：ID=技能升级乐谱 ID。"
-other = "技能升级乐谱 {{.ID}}"
+other = "技能升级乐谱 #{{.ID}}"
 
 [inventory.image.unnamed.gacha_ceil_item]
 description = "图片：游戏数据里没有名称的招募贴纸（招募保底兑换道具）。占位符：ID=道具 ID。"
-other = "招募贴纸 {{.ID}}"
-
-[inventory.image.unnamed.mysekai_material]
-description = "图片：游戏数据里没有名称的烤森材料。占位符：ID=材料 ID。"
-other = "烤森材料 {{.ID}}"
+other = "招募贴纸 #{{.ID}}"
 
 [inventory.image.unnamed.boost_item]
 description = "图片：游戏数据里没有名称的演出能量道具。占位符：ID=道具 ID。"
-other = "演出能量道具 {{.ID}}"
+other = "演出能量道具 #{{.ID}}"

@@ -4,6 +4,3 @@
 description = "歌曲详情图片里排行矩阵的时速数值。占位符：Value=每小时活动 PT，大于等于 1 万时以万为单位，如“12.35万”。"
 other = "{{.Value}}/h"
 
-[render_music.fallback_title]
-description = "歌曲在游戏数据里没有标题时显示的占位名称（如歌曲匹配到多首时的候选列表）。占位符：ID=歌曲 ID。"
-other = "歌曲 #{{.ID}}"

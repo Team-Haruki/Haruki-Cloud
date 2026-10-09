@@ -1,4 +1,0 @@
-# Help documents that show a command which is not registered: <doc>.md<TAB><command>.
-# Fix the document, or register the documented spelling as an alias when that is
-# unambiguous, then delete the line. TestHelpDocTriggersAreRegistered fails for new
-# entries and for lines that no longer fail.

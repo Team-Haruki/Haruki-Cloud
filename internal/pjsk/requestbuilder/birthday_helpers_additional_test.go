@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sekaidb "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -63,9 +64,9 @@ func TestBirthdayDateRegionAndPathHelpers(t *testing.T) {
 	}
 	testutil.Require(t, !(birthdayRegionLocation(renderregion.Unknown).String() != "UTC+9"), "unknown region location = %v", birthdayRegionLocation(renderregion.Unknown))
 	{
-		testutil.RequireArgs(t, !(birthdayRegionName(renderregion.Unknown) != "日服"), "birthday region names are incorrect")
+		testutil.RequireArgs(t, !(birthdayRegionName(renderregion.Unknown) != i18n.RegionName("jp").String()), "birthday region names are incorrect")
 		testutil.RequireArgs(t, !(birthdayRegionName(renderregion.Value("xx")) != "XX"), "birthday region names are incorrect")
-		testutil.RequireArgs(t, !(birthdayRegionName(renderregion.CN) != "国服"), "birthday region names are incorrect")
+		testutil.RequireArgs(t, !(birthdayRegionName(renderregion.CN) != i18n.RegionName("cn").String()), "birthday region names are incorrect")
 	}
 	{
 		testutil.RequireArgs(t, isBirthdayFifthAnniv(renderregion.JP), "fifth anniversary region classification failed")

@@ -77,12 +77,12 @@ type birthdayTokenValidationResponse struct {
 const birthdayMonitorCommandPath = "mysekai/birthday-monitor"
 
 var birthdayMonitorCommandPrefixes = []string{
-	"/烤森生日取消监听",
+	"/烤森生日取消监听", //copylint:ignore 指令触发词
 	"/mysekai birthday unmonitor",
-	"/ms生日取消监听",
-	"/烤森生日监听",
+	"/ms生日取消监听", //copylint:ignore 指令触发词
+	"/烤森生日监听",   //copylint:ignore 指令触发词
 	"/mysekai birthday monitor",
-	"/ms生日监听",
+	"/ms生日监听", //copylint:ignore 指令触发词
 }
 
 var birthdayMonitorCommandPrefixRegions = []string{"jp", "tw", "kr", "en", "cn"}
@@ -170,7 +170,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 				return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(requestCtx, err, birthdayMonitorCommandPath, ""))})
 			}
 			setCommandTraceOutcome(c, "ok", nil)
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("烤森生日材料监听已取消。")})
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(i18n.T("subscription.birthday.cancelled"))})
 		}
 
 		result, err := service.CreateOrUpdate(requestCtx, req.Platform, req.PlatformUserID, req.PlatformGroupID, botID, req.SelfID, req.Server, regionExplicit, text, req.NotifyEmpty)
@@ -185,7 +185,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(commandErrorText(requestCtx, err, birthdayMonitorCommandPath, ""))})
 		}
 
-		visible := onebot11.Message{onebot11.Text(fmt.Sprintf("烤森生日材料监听已更新，有效期 %d 分钟。", int(result.Duration.Minutes())))}
+		visible := onebot11.Message{onebot11.Text(i18n.T("subscription.birthday.updated", i18n.Data{"Minutes": int(result.Duration.Minutes())}))}
 		actions := birthdayMonitorActions(result)
 		setCommandTraceOutcome(c, "ok", nil)
 		return botResponseWithActions(c, fiber.StatusOK, api.ResponseOK, visible, actions)
@@ -299,7 +299,7 @@ func makeBirthdayMonitorActiveHandler(renderApp *renderapp.App) fiber.Handler {
 		service := newBirthdayMonitorService(renderApp)
 		result, err := service.ActiveForUpload(c.Context(), c.Query("region"), c.Query("uid"))
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusInternalServerError, "查询生日监听状态失败，请稍后再试")
+			return api.JSONResponse(c, fiber.StatusInternalServerError, "failed to query birthday monitor status")
 		}
 		return c.Status(fiber.StatusOK).JSON(activeBirthdaySubscriptionResponse{
 			Active:         result.Active,
@@ -316,7 +316,7 @@ func makeBirthdayMonitorTokenValidateHandler(renderApp *renderapp.App) fiber.Han
 		service := newBirthdayMonitorService(renderApp)
 		result, err := service.ValidateToken(c.Context(), c.Query("subscription_id"), c.Query("subscription_version"), c.Query("token"))
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusInternalServerError, "校验生日监听令牌失败，请稍后再试")
+			return api.JSONResponse(c, fiber.StatusInternalServerError, "failed to validate birthday monitor token")
 		}
 		resp := birthdayTokenValidationResponse{Valid: result.Valid}
 		if result.Valid && result.Subscription != nil {
@@ -350,7 +350,7 @@ func makeBirthdayMonitorEventWriteHandler(renderApp *renderapp.App) fiber.Handle
 			FilteredPayload:    payload,
 		})
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusBadRequest, "写入生日监听事件失败")
+			return api.JSONResponse(c, fiber.StatusBadRequest, "failed to store birthday monitor event")
 		}
 		return c.Status(fiber.StatusOK).JSON(birthdayEventWriteResponse{
 			EventID:        stored.EventID,

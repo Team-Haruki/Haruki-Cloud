@@ -17,15 +17,15 @@ import (
 //   - errorf_han_wrap: fmt.Errorf calls whose Chinese format wraps or prints
 //     another error with %w or %v (the cause's raw text then reaches users).
 //
-// It runs in ratchet mode against testdata/copylint.baseline: a file may
-// keep or lower its counts but never raise them, and a new file starts at
-// zero. Not copy, and therefore skipped:
+// Every count must be zero. Not copy, and therefore skipped:
 //
 //   - command triggers (Commands: / PrefixArgs: lists) and the alias, parser
 //     and game-data tables in copylintAllowedPaths;
 //   - log calls (logger.*, slog.*, log.*);
 //   - struct tags;
-//   - a literal on a line ending with "//copylint:ignore <reason>".
+//   - a literal on a line ending with "//copylint:ignore <reason>";
+//   - every literal of a var/const declaration whose doc comment has a line
+//     "//copylint:ignore-block <reason>" (keyword and game-data tables).
 //
 // Directories outside the request path (cmd/, scripts/, integration/,
 // deploy/) are operator tools and are not scanned.
@@ -91,6 +91,16 @@ func copylintCounts(src goSource) map[string]int {
 	}
 	ast.Inspect(src.file, func(n ast.Node) bool {
 		switch node := n.(type) {
+		case *ast.GenDecl:
+			if hasIgnoreBlock(node.Doc) {
+				markSkipped(node)
+				return true
+			}
+			for _, spec := range node.Specs {
+				if value, ok := spec.(*ast.ValueSpec); ok && hasIgnoreBlock(value.Doc) {
+					markSkipped(value)
+				}
+			}
 		case *ast.Field:
 			if node.Tag != nil {
 				skip[node.Tag] = true
@@ -136,12 +146,26 @@ func copylintCounts(src goSource) map[string]int {
 	return counts
 }
 
-// TestCopylintRatchet fails when Go code gains Chinese literals or
-// error-wrapping Chinese Errorf calls compared to testdata/copylint.baseline.
-// Move the copy into a catalog (docs/i18n.md) instead of raising the
-// baseline; after removing literals, lock the progress with
-// HARUKI_UPDATE_GOLDEN=1 go test ./internal/i18n/.
-func TestCopylintRatchet(t *testing.T) {
+// hasIgnoreBlock reports whether a doc comment marks its declaration as not
+// copy ("//copylint:ignore-block <reason>"). The reason is required.
+func hasIgnoreBlock(doc *ast.CommentGroup) bool {
+	if doc == nil {
+		return false
+	}
+	for _, comment := range doc.List {
+		text := strings.TrimPrefix(comment.Text, "//")
+		if reason, ok := strings.CutPrefix(text, "copylint:ignore-block"); ok && strings.TrimSpace(reason) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// TestCopylint fails when non-test Go code holds a Chinese literal or an
+// error-wrapping Chinese Errorf call. Move the copy into a catalog
+// (docs/i18n.md); mark parser keywords and game data with
+// //copylint:ignore or //copylint:ignore-block and a reason.
+func TestCopylint(t *testing.T) {
 	root := repoRoot(t)
 	current := map[string]int{}
 	for _, src := range parseRepoGo(t, root) {
@@ -152,7 +176,7 @@ func TestCopylintRatchet(t *testing.T) {
 			current[src.rel+"\t"+rule] = n
 		}
 	}
-	checkRatchet(t, "copylint.baseline", current)
+	checkZero(t, "copylint", current)
 }
 
 func TestCopylintRules(t *testing.T) {
@@ -174,15 +198,28 @@ func TestCopylintRules(t *testing.T) {
 		"\t_ = fmt.Errorf(\"查询失败: %w\", err)\n" +
 		"\t_ = fmt.Errorf(\"查询失败\")\n" +
 		"\treturn h{Commands: []string{\"/查曲\"}}, fmt.Errorf(\"未找到：%v\", err)\n" +
-		"}\n"
+		"}\n" +
+		"\n" +
+		"//copylint:ignore-block 解析关键字\n" +
+		"var keywords = []string{\"全部\"}\n" +
+		"\n" +
+		"var (\n" +
+		"\t// tiers are parser keywords.\n" +
+		"\t//copylint:ignore-block 解析关键字\n" +
+		"\ttiers = []string{\"档位\"}\n" +
+		"\tlabel = \"标签\"\n" +
+		")\n" +
+		"\n" +
+		"//copylint:ignore-block\n" +
+		"var noReason = \"没有原因\"\n"
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "x.go", code, parser.ParseComments)
 	if err != nil {
 		t.Fatal(err)
 	}
 	counts := copylintCounts(goSource{rel: "internal/x.go", fset: fset, file: file})
-	if counts["han_literal"] != 3 || counts["errorf_han_wrap"] != 2 {
-		t.Fatalf("copylintCounts() = %v, want 3 literals and 2 wraps", counts)
+	if counts["han_literal"] != 5 || counts["errorf_han_wrap"] != 2 {
+		t.Fatalf("copylintCounts() = %v, want 5 literals and 2 wraps", counts)
 	}
 	for rel, skipped := range map[string]bool{
 		"internal/pjsk/handler/music.go":       false,

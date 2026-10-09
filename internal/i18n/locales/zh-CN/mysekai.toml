@@ -218,10 +218,6 @@ other = "【限时额外材料：{{.Materials}}】"
 description = "图片：一种烤森材料和数量，例如“木材×3”。占位符：Name=材料名（游戏数据原文）或 mysekai.image.material_unknown；Quantity=数量。"
 other = "{{.Name}}×{{.Quantity}}"
 
-[mysekai.image.material_unknown]
-description = "图片：游戏数据里没有名称的烤森材料。占位符：ID=材料 ID。"
-other = "烤森材料 {{.ID}}"
-
 [mysekai.image.fixture.craftable]
 description = "图片：/msf 家具详情的标签：可以制作。这一组标签都不带 emoji。"
 other = "【可制作】"
@@ -324,7 +320,7 @@ other = "工具"
 
 [mysekai.image.shop.item_unnamed]
 description = "图片：游戏数据里没有名称的烤森商店商品。占位符：ID=商品 ID。"
-other = "商品 {{.ID}}"
+other = "商品 #{{.ID}}"
 
 [mysekai.image.shop.tag_owned]
 description = "图片：接在烤森商店商品名后面的标签：已经持有这个蓝图。"

@@ -176,10 +176,6 @@ other = "{{.Region}}没有具体名次数据，只显示获得的档位（例如
 description = "活动记录图片里每期活动的档位（按获得的称号推算）。占位符：Tier=档位，例如 100 表示前 100 名。"
 other = "T{{.Tier}}"
 
-[event.fallback_name]
-description = "查榜、组卡图片里拿不到活动名称时代替活动名。占位符：ID=活动 ID。"
-other = "活动 {{.ID}}"
-
 [event.type.marathon]
 description = "活动列表图和活动详情图里的活动类型名：马拉松活动。"
 other = "马拉松"

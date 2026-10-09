@@ -1,2 +1,0 @@
-# Registered bot routes without their own help document (route path).
-# Add locales/zh-CN/help/<path with / as _>.md, then delete the line.

@@ -25,9 +25,9 @@ func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
 	}
 
 	liveType, remaining := extractMusicBoardMappedArg(args, map[string][]string{
-		"solo":  {"单人", "solo", "挑战"},
-		"multi": {"多人", "multi"},
-		"auto":  {"自动", "auto"},
+		"solo":  {"单人", "solo", "挑战"}, //copylint:ignore 解析关键字
+		"multi": {"多人", "multi"},      //copylint:ignore 解析关键字
+		"auto":  {"自动", "auto"},       //copylint:ignore 解析关键字
 	}, "solo")
 	params.LiveType = liveType
 	args = remaining
@@ -37,18 +37,18 @@ func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
 		defaultTarget = pointsPerTimeMetric
 	}
 	target, remaining := extractMusicBoardMappedArg(args, map[string][]string{
-		"score":             {"live分数", "分数", "score"},
-		pointsPerTimeMetric: {"时间效率", "pt/h", "pt时间", "时速"},
-		"pt":                {"火效率", "pt/火", "pt"},
-		"tps":               {"每秒点击", "tps"},
-		"time":              {"时长", "时间"},
+		"score":             {"live分数", "分数", "score"},      //copylint:ignore 解析关键字
+		pointsPerTimeMetric: {"时间效率", "pt/h", "pt时间", "时速"}, //copylint:ignore 解析关键字
+		"pt":                {"火效率", "pt/火", "pt"},          //copylint:ignore 解析关键字
+		"tps":               {"每秒点击", "tps"},                //copylint:ignore 解析关键字
+		"time":              {"时长", "时间"},                   //copylint:ignore 解析关键字
 	}, defaultTarget)
 	params.Target = target
 	args = remaining
 
 	order, remaining := extractMusicBoardMappedArg(args, map[string][]string{
-		"asc":  {"升序", "从低到高", "从小到大"},
-		"desc": {"降序", "从高到低", "从大到小"},
+		"asc":  {"升序", "从低到高", "从小到大"}, //copylint:ignore 解析关键字
+		"desc": {"降序", "从高到低", "从大到小"}, //copylint:ignore 解析关键字
 	}, "desc")
 	params.Ascend = order == "asc"
 	args = remaining
@@ -58,9 +58,9 @@ func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
 		defaultStrategy = "max"
 	}
 	strategy, remaining := extractMusicBoardMappedArg(args, map[string][]string{
-		"max": {"最优", "最高", "最大", "最强", "max"},
-		"min": {"最差", "最低", "最小", "最弱", "min"},
-		"avg": {"平均", "期望", "随机", "均值", "avg"},
+		"max": {"最优", "最高", "最大", "最强", "max"}, //copylint:ignore 解析关键字
+		"min": {"最差", "最低", "最小", "最弱", "min"}, //copylint:ignore 解析关键字
+		"avg": {"平均", "期望", "随机", "均值", "avg"}, //copylint:ignore 解析关键字
 	}, defaultStrategy)
 	params.SkillStrategy = strategy
 	args = remaining
@@ -275,10 +275,10 @@ func extractMusicBoardMappedArg(args string, aliasMap map[string][]string, defau
 
 func extractMusicBoardPower(args string) (int, string, error) {
 	for _, token := range strings.Fields(args) {
-		if !strings.Contains(token, "综合") {
+		if !strings.Contains(token, "综合") { //copylint:ignore 解析关键字
 			continue
 		}
-		value, err := parseMusicBoardLargeNumber(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "综合", ""))
+		value, err := parseMusicBoardLargeNumber(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "综合", "")) //copylint:ignore 解析关键字
 		if err != nil || value <= 0 {
 			return 0, "", usererror.BadParam(token, i18n.M("score.board.power_invalid"))
 		}
@@ -289,10 +289,10 @@ func extractMusicBoardPower(args string) (int, string, error) {
 
 func extractMusicBoardDeckBonus(args string) (float64, string, error) {
 	for _, token := range strings.Fields(args) {
-		if !strings.Contains(token, "加成") {
+		if !strings.Contains(token, "加成") { //copylint:ignore 解析关键字
 			continue
 		}
-		raw := strings.TrimRight(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "加成", ""), "%")
+		raw := strings.TrimRight(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "加成", ""), "%") //copylint:ignore 解析关键字
 		value, err := strconv.ParseFloat(raw, 64)
 		if err != nil || value <= 0 {
 			return 0, "", usererror.BadParam(token, i18n.M("score.board.bonus_invalid"))
@@ -304,10 +304,10 @@ func extractMusicBoardDeckBonus(args string) (float64, string, error) {
 
 func extractMusicBoardInterval(args string) (float64, string, error) {
 	for _, token := range strings.Fields(args) {
-		if !strings.Contains(token, "间隔") {
+		if !strings.Contains(token, "间隔") { //copylint:ignore 解析关键字
 			continue
 		}
-		raw := strings.TrimRight(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "间隔", ""), "秒s")
+		raw := strings.TrimRight(strings.ReplaceAll(strings.ToLower(strings.TrimSpace(token)), "间隔", ""), "秒s") //copylint:ignore 解析关键字
 		value, err := strconv.ParseFloat(raw, 64)
 		if err != nil || value <= 0 {
 			return 0, "", usererror.BadParam(token, i18n.M("score.board.interval_invalid"))

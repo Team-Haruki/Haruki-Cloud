@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func TestUploadAgeZhCN(t *testing.T) {
+func TestTimeAgoZhCN(t *testing.T) {
 	cases := []struct {
 		age  time.Duration
 		want string
@@ -19,8 +19,8 @@ func TestUploadAgeZhCN(t *testing.T) {
 		{51*time.Hour + 59*time.Minute, "2天3小时前"},
 	}
 	for _, tc := range cases {
-		if got := UploadAge(tc.age).String(); got != tc.want {
-			t.Errorf("UploadAge(%v) = %q, want %q", tc.age, got, tc.want)
+		if got := TimeAgo(tc.age).String(); got != tc.want {
+			t.Errorf("TimeAgo(%v) = %q, want %q", tc.age, got, tc.want)
 		}
 	}
 }

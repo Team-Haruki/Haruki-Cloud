@@ -227,7 +227,7 @@ func deckRecommendType(mode string) (string, bool) {
 }
 
 func buildDeckDoneText(query deck.AutoQuery) string {
-	done := i18n.M("deck.done", i18n.Data{"Summary": formatDeckQuerySummary(query)})
+	done := i18n.M("common.processed", i18n.Data{"Summary": formatDeckQuerySummary(query)})
 	if query.RecommendType == "event" {
 		return i18n.LinesText([]i18n.Message{done, i18n.M("deck.done_toolbox_hint")})
 	}

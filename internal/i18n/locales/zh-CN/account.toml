@@ -358,3 +358,23 @@ other = "查询绑定状态失败，请稍后再试"
 [account.api.binding_lookup_unavailable]
 description = "群绑定检查接口：绑定查询暂时不可用（服务没有配置好或正在维护）。"
 other = "绑定查询暂时不可用，请稍后再试"
+
+[account.api.bot_session_invalid]
+description = "Bot 指令接口：URL 里的 bot_id 无效，或这个 Bot 没有注册。返回给 Bot 客户端。"
+other = "Bot 会话无效"
+
+[account.api.message_missing]
+description = "Bot 指令接口：请求里没有 message 字段。返回给 Bot 客户端。"
+other = "缺少 message"
+
+[account.api.matched_command_missing]
+description = "Bot 指令接口：请求里没有 matched_command 字段。返回给 Bot 客户端。"
+other = "缺少 matched_command"
+
+[account.api.matched_command_not_allowed]
+description = "Bot 指令接口：matched_command 不属于当前接口。返回给 Bot 客户端。"
+other = "当前接口不允许使用该 matched_command"
+
+[account.api.command_path_mismatch]
+description = "Bot 指令接口：消息里的指令和请求的接口不一致，响应数据里附带英文诊断信息。返回给 Bot 客户端。"
+other = "指令与当前接口不匹配"

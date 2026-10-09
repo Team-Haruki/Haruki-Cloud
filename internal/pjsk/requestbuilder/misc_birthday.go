@@ -47,13 +47,6 @@ var (
 		renderregion.EN: 0,
 		renderregion.KR: 9,
 	}
-	birthdayRegionNames = map[renderregion.Value]string{
-		renderregion.JP: "日服",
-		renderregion.CN: "国服",
-		renderregion.TW: "台服",
-		renderregion.EN: "国际服",
-		renderregion.KR: "韩服",
-	}
 	birthdayFifthAnnivRegions = map[renderregion.Value]struct{}{
 		renderregion.JP: {},
 	}
@@ -85,6 +78,7 @@ var (
 		25: {Month: 11, Day: 5},
 		26: {Month: 2, Day: 17},
 	}
+	//copylint:ignore-block 角色昵称（解析关键字）
 	miscBirthdayDefaultNicknames = map[string]int{
 		"ick": 1, "ichika": 1, "星乃一歌": 1,
 		"saki": 2, "咲希": 2, "天马咲希": 2,

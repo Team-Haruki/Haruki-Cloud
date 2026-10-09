@@ -44,17 +44,17 @@ func LiveShortLabel(liveType string) string {
 
 // CharacterFallbackName is shown when no character name is known.
 func CharacterFallbackName(characterID int) string {
-	return i18n.T("render.fallback.character", i18n.Data{"ID": characterID})
+	return i18n.T("common.fallback.character", i18n.Data{"ID": characterID})
 }
 
 // EventFallbackName is shown when no event name is known.
 func EventFallbackName(eventID int) string {
-	return i18n.T("render.fallback.event", i18n.Data{"ID": eventID})
+	return i18n.T("common.fallback.event", i18n.Data{"ID": eventID})
 }
 
 // ItemFallbackName is shown when no item name is known.
 func ItemFallbackName(itemID int) string {
-	return i18n.T("render.fallback.item", i18n.Data{"ID": itemID})
+	return i18n.T("common.fallback.item", i18n.Data{"ID": itemID})
 }
 
 // ProgressText is a named collection progress line, e.g.

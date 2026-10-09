@@ -474,9 +474,10 @@ func characterMissionDisplayName(cid int) string {
 	if nickname, ok := characterNicknameFallbacks[cid]; ok {
 		return nickname
 	}
-	return i18n.T("education.character_fallback", i18n.Data{"ID": cid})
+	return i18n.T("common.fallback.character", i18n.Data{"ID": cid})
 }
 
+//copylint:ignore-block 角色名（游戏数据）
 var characterIDDisplayNames = map[int]string{
 	1:  "星乃一歌",
 	2:  "天马咲希",

@@ -2,23 +2,23 @@
 # 这些消息由 internal/i18n 的格式化函数生成，调用方不直接引用这些 ID。
 
 [format.region.name.jp]
-description = "区服名称，只在 format.region.label 里使用。"
+description = "区服名称（RegionName），用在 format.region.label 里；单独使用只限渲染服务自己会加括号的位置（生日图片）。"
 other = "日服"
 
 [format.region.name.cn]
-description = "区服名称，只在 format.region.label 里使用。"
+description = "区服名称（RegionName），用在 format.region.label 里；单独使用只限渲染服务自己会加括号的位置（生日图片）。"
 other = "国服"
 
 [format.region.name.tw]
-description = "区服名称，只在 format.region.label 里使用。"
+description = "区服名称（RegionName），用在 format.region.label 里；单独使用只限渲染服务自己会加括号的位置（生日图片）。"
 other = "台服"
 
 [format.region.name.kr]
-description = "区服名称，只在 format.region.label 里使用。"
+description = "区服名称（RegionName），用在 format.region.label 里；单独使用只限渲染服务自己会加括号的位置（生日图片）。"
 other = "韩服"
 
 [format.region.name.en]
-description = "区服名称，只在 format.region.label 里使用。"
+description = "区服名称（RegionName），用在 format.region.label 里；单独使用只限渲染服务自己会加括号的位置（生日图片）。"
 other = "国际服"
 
 [format.region.label]
@@ -96,3 +96,27 @@ other = "自动 Live"
 [format.live_type.challenge]
 description = "Live 类型显示名（LiveTypeLabel），对应 challenge。"
 other = "挑战 Live"
+
+[format.ago.just_now]
+description = "距今多久（TimeAgo）：不到 1 分钟。用在数据状态的上传时间和 /注册时间 里。"
+other = "刚刚"
+
+[format.ago.minutes]
+description = "距今多久（TimeAgo）：不到 1 小时，例如“5分钟前”。时长写法与 format.duration.* 一致，数字和单位之间不加空格。占位符：Minutes=分钟数。"
+other = "{{.Minutes}}分钟前"
+
+[format.ago.hours]
+description = "距今多久（TimeAgo）：整小时数，例如“3小时前”。占位符：Hours=小时数。"
+other = "{{.Hours}}小时前"
+
+[format.ago.hours_minutes]
+description = "距今多久（TimeAgo）：不到 1 天，例如“3小时20分钟前”。占位符：Hours=小时数；Minutes=分钟数。"
+other = "{{.Hours}}小时{{.Minutes}}分钟前"
+
+[format.ago.days]
+description = "距今多久（TimeAgo）：整天数，例如“2天前”。占位符：Days=天数。"
+other = "{{.Days}}天前"
+
+[format.ago.days_hours]
+description = "距今多久（TimeAgo）： 1 天以上，例如“2天3小时前”。占位符：Days=天数；Hours=小时数。"
+other = "{{.Days}}天{{.Hours}}小时前"

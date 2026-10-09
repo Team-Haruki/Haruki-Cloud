@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
@@ -221,7 +222,7 @@ func TestB30HandleReturnsUnavailableMessage(t *testing.T) {
 		t.Fatalf("unexpected message: %+v", message)
 	}
 	data, ok := message[0].Data.(onebot11.TextData)
-	if !ok || data.Text != ratingUnavailableMessage {
+	if !ok || data.Text != i18n.T("music.b30.unavailable") {
 		t.Fatalf("unexpected text data: %+v", message[0].Data)
 	}
 }

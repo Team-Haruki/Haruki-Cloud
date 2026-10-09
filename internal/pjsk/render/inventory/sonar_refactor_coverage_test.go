@@ -35,7 +35,7 @@ func TestInventoryRefactorFallbackItemsAndInvalidEntries(t *testing.T) {
 		i18n.T("inventory.image.unnamed.practice_ticket", i18n.Data{"ID": 13}),
 		i18n.T("inventory.image.unnamed.skill_practice_ticket", i18n.Data{"ID": 14}),
 		i18n.T("inventory.image.unnamed.gacha_ceil_item", i18n.Data{"ID": 15}),
-		i18n.T("inventory.image.unnamed.mysekai_material", i18n.Data{"ID": 16}),
+		i18n.T("common.fallback.mysekai_material", i18n.Data{"ID": 16}),
 		i18n.T("inventory.image.unnamed.boost_item", i18n.Data{"ID": 17}),
 	} {
 		found := false

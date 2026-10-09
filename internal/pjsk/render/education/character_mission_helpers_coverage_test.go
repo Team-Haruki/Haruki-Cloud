@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
@@ -13,7 +14,7 @@ import (
 )
 
 func TestCharacterMissionQueryHelpers(t *testing.T) {
-	if got := CharacterMissionShortName("play_live"); got != "队长次数" {
+	if got := CharacterMissionShortName("play_live"); got != i18n.T("render_education.mission.play_live") {
 		t.Fatalf("known short name = %q", got)
 	}
 	if got := CharacterMissionShortName("future_type"); got != "future_type" {
@@ -123,7 +124,7 @@ func assertCharacterMissionMetadataLookups(t *testing.T, mission *CharacterMissi
 	if got := characterMissionDisplayName(1); got != "星乃一歌" {
 		t.Fatalf("known character display name = %q", got)
 	}
-	if got := characterMissionDisplayName(99); got != "角色99" {
+	if got := characterMissionDisplayName(99); got != i18n.T("render.fallback.character", i18n.Data{"ID": 99}) {
 		t.Fatalf("fallback character display name = %q", got)
 	}
 }

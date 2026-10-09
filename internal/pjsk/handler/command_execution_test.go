@@ -49,10 +49,11 @@ import (
 	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
 
-	_ "github.com/mattn/go-sqlite3"
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/utils/usererror"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type handlerTestBindingValidator struct{}
@@ -5094,7 +5095,7 @@ func TestExecuteCardListAutoFallbackToCardBoxOmitsUserInfo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeCard list: %v", err)
 	}
-	assertCardSummaryMessage(t, message, "已处理JP / 卡牌列表 / 90张指定卡牌。")
+	assertCardSummaryMessage(t, message, "已处理"+i18n.RegionLabel("jp").String()+" / "+i18n.T("render_card.summary.mode.list")+" / "+i18n.T("render_card.summary.card_count", i18n.Data{"Count": 90})+"。")
 	if captured.UserInfo != nil {
 		t.Fatalf("expected auto-fallback card box to omit user info, got %+v", captured.UserInfo)
 	}

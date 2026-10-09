@@ -4,33 +4,34 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-var CharacterMissionShortNames = map[string]string{
-	"play_live":                                  "队长次数",
-	"play_live_ex":                               "队长次数(EX)",
-	"waiting_room":                               "休息室次数",
-	"waiting_room_ex":                            "休息室次数(EX)",
-	"collect_costume_3d":                         "服装",
-	"collect_stamp":                              "表情",
-	"read_area_talk":                             "区域对话",
-	"read_card_episode_first":                    "卡面剧情前篇",
-	"read_card_episode_second":                   "卡面剧情后篇",
-	"collect_another_vocal":                      "Another Vocal",
-	"area_item_level_up_character":               "单人家具升级次数",
-	"area_item_level_up_unit":                    "团家具升级次数",
-	"area_item_level_up_reality_world":           "属性道具（树&花）升级次数",
-	"area_item_level_up_all_character":           "想いの大樹升级次数",
-	"collect_member":                             "卡面",
-	"skill_level_up_rare":                        "技能等级升级次数（★4&生日卡）",
-	"skill_level_up_standard":                    "技能等级升级次数（★1~★3）",
-	"master_rank_up_rare":                        "专精等级升级次数（★4&生日卡）",
-	"master_rank_up_standard":                    "专精等级升级次数（★1~★3）",
-	"collect_character_archive_voice":            "台词",
-	"collect_mysekai_fixture":                    "MySekai家具数量",
-	"collect_mysekai_canvas":                     "MySekai画布数量",
-	"read_mysekai_fixture_unique_character_talk": "MySekai对话",
+var characterMissionShortNames = map[string]i18n.Message{
+	"play_live":                                  i18n.M("render_education.mission.play_live"),
+	"play_live_ex":                               i18n.M("render_education.mission.play_live_ex"),
+	"waiting_room":                               i18n.M("render_education.mission.waiting_room"),
+	"waiting_room_ex":                            i18n.M("render_education.mission.waiting_room_ex"),
+	"collect_costume_3d":                         i18n.M("render_education.mission.collect_costume_3d"),
+	"collect_stamp":                              i18n.M("render_education.mission.collect_stamp"),
+	"read_area_talk":                             i18n.M("render_education.mission.read_area_talk"),
+	"read_card_episode_first":                    i18n.M("render_education.mission.read_card_episode_first"),
+	"read_card_episode_second":                   i18n.M("render_education.mission.read_card_episode_second"),
+	"collect_another_vocal":                      i18n.M("render_education.mission.collect_another_vocal"),
+	"area_item_level_up_character":               i18n.M("render_education.mission.area_item_level_up_character"),
+	"area_item_level_up_unit":                    i18n.M("render_education.mission.area_item_level_up_unit"),
+	"area_item_level_up_reality_world":           i18n.M("render_education.mission.area_item_level_up_reality_world"),
+	"area_item_level_up_all_character":           i18n.M("render_education.mission.area_item_level_up_all_character"),
+	"collect_member":                             i18n.M("render_education.mission.collect_member"),
+	"skill_level_up_rare":                        i18n.M("render_education.mission.skill_level_up_rare"),
+	"skill_level_up_standard":                    i18n.M("render_education.mission.skill_level_up_standard"),
+	"master_rank_up_rare":                        i18n.M("render_education.mission.master_rank_up_rare"),
+	"master_rank_up_standard":                    i18n.M("render_education.mission.master_rank_up_standard"),
+	"collect_character_archive_voice":            i18n.M("render_education.mission.collect_character_archive_voice"),
+	"collect_mysekai_fixture":                    i18n.M("render_education.mission.collect_mysekai_fixture"),
+	"collect_mysekai_canvas":                     i18n.M("render_education.mission.collect_mysekai_canvas"),
+	"read_mysekai_fixture_unique_character_talk": i18n.M("render_education.mission.read_mysekai_fixture_unique_character_talk"),
 }
 
 var CharacterMissionExTypes = map[string]struct{}{
@@ -70,15 +71,14 @@ var characterMissionTypeAliases = map[string][]string{
 }
 
 func init() {
-	for missionType, shortName := range CharacterMissionShortNames {
-		normalized := normalizeCharacterMissionQuery(shortName)
-		characterMissionTypeAliases[missionType] = append(characterMissionTypeAliases[missionType], normalized, strings.ToLower(missionType))
+	for missionType := range characterMissionShortNames {
+		characterMissionTypeAliases[missionType] = append(characterMissionTypeAliases[missionType], strings.ToLower(missionType))
 	}
 }
 
 func CharacterMissionShortName(missionType string) string {
-	if value, ok := CharacterMissionShortNames[missionType]; ok {
-		return value
+	if value, ok := characterMissionShortNames[missionType]; ok {
+		return value.String()
 	}
 	return missionType
 }

@@ -5,6 +5,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
@@ -21,14 +22,14 @@ func TestBuildInfoPanelRequestKeepsOnlyTheMySekaiSource(t *testing.T) {
 				ID: "12345678901234567", Region: "JP", Nickname: "Tester",
 				LeaderImagePath: "user/leader.png", HasFrame: true, FramePaths: frame,
 			},
-			DataSources: []drawing.ProfileDataSource{{Name: "Suite数据", UpdateTime: &suiteTime}},
+			DataSources: []drawing.ProfileDataSource{{Name: common.DataSourceLabel(drawing.DataSourceSuite), Kind: drawing.DataSourceSuite, UpdateTime: &suiteTime}},
 		},
 	})
 	if err != nil {
 		t.Fatalf("BuildInfoPanelRequest() error = %v", err)
 	}
-	if len(req.DataSources) != 1 || req.DataSources[0].Name != mySekaiDataLabel {
-		t.Fatalf("data sources = %+v, want only %s", req.DataSources, mySekaiDataLabel)
+	if len(req.DataSources) != 1 || req.DataSources[0].Name != common.DataSourceLabel(drawing.DataSourceMySekai) {
+		t.Fatalf("data sources = %+v, want only %s", req.DataSources, common.DataSourceLabel(drawing.DataSourceMySekai))
 	}
 	if got := req.DataSources[0].UpdateTime; got == nil || *got != 1790841600000 {
 		t.Fatalf("mysekai update time = %v, want the upload time in ms", got)
@@ -74,14 +75,14 @@ func TestBuildInfoPanelRequestIncludeSuiteKeepsBothSources(t *testing.T) {
 	profile := func() *drawing.ProfileCardRequest {
 		return &drawing.ProfileCardRequest{
 			Profile:     &drawing.BasicProfile{ID: "1", Region: "JP", Nickname: "Tester", LeaderImagePath: "user/leader.png"},
-			DataSources: []drawing.ProfileDataSource{{Name: "Suite数据", UpdateTime: &suiteTime}},
+			DataSources: []drawing.ProfileDataSource{{Name: common.DataSourceLabel(drawing.DataSourceSuite), Kind: drawing.DataSourceSuite, UpdateTime: &suiteTime}},
 		}
 	}
 	both, err := controller.BuildInfoPanelRequest(InfoPanelQuery{Region: "jp", Profile: profile(), IncludeSuite: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(both.DataSources) != 2 || both.DataSources[0].Name != "Suite数据" || both.DataSources[1].Name != mySekaiDataLabel {
+	if len(both.DataSources) != 2 || both.DataSources[0].Name != common.DataSourceLabel(drawing.DataSourceSuite) || both.DataSources[1].Name != common.DataSourceLabel(drawing.DataSourceMySekai) {
 		t.Fatalf("data sources = %+v, want Suite then MySekai", both.DataSources)
 	}
 	if both.MysekaiLevel == nil || *both.MysekaiLevel != 42 {
@@ -91,7 +92,7 @@ func TestBuildInfoPanelRequestIncludeSuiteKeepsBothSources(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(only.DataSources) != 1 || only.DataSources[0].Name != mySekaiDataLabel {
+	if len(only.DataSources) != 1 || only.DataSources[0].Name != common.DataSourceLabel(drawing.DataSourceMySekai) {
 		t.Fatalf("ms panel data sources = %+v, want only MySekai", only.DataSources)
 	}
 }

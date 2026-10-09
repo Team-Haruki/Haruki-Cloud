@@ -1,13 +1,15 @@
 package music
 
 import (
-	"fmt"
 	"math"
 	"slices"
 	"strconv"
+	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -15,15 +17,10 @@ var (
 	musicDetailLeaderboardLiveTypeOrder = []string{"solo", "multi", "auto"}
 	musicDetailLeaderboardTargetOrder   = []string{"score", "pt", pointsPerTimeMetric}
 
-	musicDetailLeaderboardLiveTypes = map[string]string{
-		"solo":  "单人",
-		"multi": "多人",
-		"auto":  "AUTO",
-	}
-	musicDetailLeaderboardTargets = map[string]string{
-		"score":             "分数",
-		"pt":                "PT",
-		pointsPerTimeMetric: "时速",
+	musicDetailLeaderboardTargets = map[string]i18n.Message{
+		"score":             i18n.M("render_music.leaderboard.target.score"),
+		"pt":                i18n.M("render_music.leaderboard.target.pt"),
+		pointsPerTimeMetric: i18n.M("render_music.leaderboard.target.pt_time"),
 	}
 	musicDetailLeaderboardSkills = map[string][]float64{
 		"solo":  {musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill},
@@ -55,7 +52,7 @@ func (c *Controller) enrichMusicDetailRequest(req *drawing.MusicDetailRequest, r
 	}
 
 	req.LeaderboardMatrix = matrix
-	req.LeaderboardLiveTypes = cloneMusicDetailLabels(musicDetailLeaderboardLiveTypes, musicDetailLeaderboardLiveTypeOrder)
+	req.LeaderboardLiveTypes = musicDetailLiveTypeLabels(musicDetailLeaderboardLiveTypeOrder)
 	req.LeaderboardTargets = cloneMusicDetailLabels(musicDetailLeaderboardTargets, musicDetailLeaderboardTargetOrder)
 	req.LeaderboardMusicNum = intPtr(total)
 }
@@ -102,12 +99,10 @@ func formatMusicDetailLength(seconds float64) string {
 	if seconds < 0 {
 		seconds = 0
 	}
-	minutes := int(seconds) / 60
-	remain := seconds - float64(minutes*60)
-	if remain < 0 {
-		remain = 0
-	}
-	return fmt.Sprintf("%.1f秒（%d分%.1f秒）", seconds, minutes, remain)
+	return i18n.T("render_music.detail.length", i18n.Data{
+		"Seconds":  strconv.FormatFloat(seconds, 'f', 1, 64),
+		"Duration": i18n.FormatDuration(time.Duration(seconds * float64(time.Second))),
+	})
 }
 
 func (c *Controller) resolveMusicDetailLeaderboard(region renderregion.Value, source DataSource, builder *Builder, musicID int) ([][]*drawing.LeaderboardInfo, int) {
@@ -175,27 +170,37 @@ func formatMusicDetailLeaderboardValue(row musicBoardRow, liveType, target strin
 	switch target {
 	case "score":
 		score := derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, "score"))
-		return fmt.Sprintf("%.1f%%", score*100)
+		return i18n.Percent(score * 100)
 	case "pt":
 		pt := derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, "pt"))
 		return strconv.Itoa(int(math.Round(pt)))
 	case pointsPerTimeMetric:
 		ptPerHour := derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, pointsPerTimeMetric))
-		return fmt.Sprintf("%.2fw/h", ptPerHour/10000.0)
+		return i18n.T("render_music.leaderboard.pt_per_hour", i18n.Data{"Value": i18n.Wan(ptPerHour)})
 	default:
 		return "-"
 	}
 }
 
-func cloneMusicDetailLabels(input map[string]string, order []string) map[string]string {
+func cloneMusicDetailLabels(input map[string]i18n.Message, order []string) map[string]string {
 	if len(input) == 0 {
 		return nil
 	}
 	result := make(map[string]string, len(input))
 	for _, key := range order {
 		if value, ok := input[key]; ok {
-			result[key] = value
+			result[key] = value.String()
 		}
+	}
+	return result
+}
+
+// musicDetailLiveTypeLabels names the leaderboard rows with the short live
+// type labels; the row header is too narrow for "单人 Live".
+func musicDetailLiveTypeLabels(order []string) map[string]string {
+	result := make(map[string]string, len(order))
+	for _, key := range order {
+		result[key] = common.LiveShortLabel(key)
 	}
 	return result
 }

@@ -32,7 +32,7 @@ func resolveFuzzyMusicQuery(source DataSource, query string, allowUnreleased boo
 	now := currentMusicVisibilityTime()
 	matches, bestScores := collectFuzzyMusicMatches(source, normalizedQuery, now, allowUnreleased)
 	if len(matches) > 0 {
-		return selectUniqueMusicMatch("模糊匹配", bestFuzzyMusicMatches(matches, bestScores))
+		return selectUniqueMusicMatch(musicMatchSourceFuzzy, bestFuzzyMusicMatches(matches, bestScores))
 	}
 	if !allowUnreleased && hasUnreleasedFuzzyMusicMatch(source, normalizedQuery, now) {
 		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)

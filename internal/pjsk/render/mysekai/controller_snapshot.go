@@ -356,9 +356,7 @@ func replaceWithMySekaiDataSource(profile *drawing.ProfileCardRequest, merged ma
 		profile.DataSources = []drawing.ProfileDataSource{entry}
 		return
 	}
-	profile.DataSources = []drawing.ProfileDataSource{{
-		Name: mySekaiDataLabel,
-	}}
+	profile.DataSources = []drawing.ProfileDataSource{common.NewDataSource(drawing.DataSourceMySekai)}
 }
 
 func stripProfileDataSourceDetails(profile *drawing.ProfileCardRequest) {
@@ -378,13 +376,14 @@ func mergeMySekaiDataSources(profile *drawing.ProfileCardRequest, merged map[str
 	entry, ok := mysekaiDataSourceFromMerged(profile, merged)
 	if !ok {
 		if replaceSingle && len(profile.DataSources) == 1 {
-			profile.DataSources[0].Name = mySekaiDataLabel
+			profile.DataSources[0].Name = common.DataSourceLabel(drawing.DataSourceMySekai)
+			profile.DataSources[0].Kind = drawing.DataSourceMySekai
 		}
 		return
 	}
 
 	for i := range profile.DataSources {
-		if strings.TrimSpace(profile.DataSources[i].Name) == mySekaiDataLabel {
+		if profile.DataSources[i].Kind == drawing.DataSourceMySekai {
 			profile.DataSources[i] = entry
 			return
 		}
@@ -412,9 +411,7 @@ func mysekaiDataSourceFromMerged(profile *drawing.ProfileCardRequest, merged map
 		}
 	}
 
-	entry := drawing.ProfileDataSource{
-		Name: mySekaiDataLabel,
-	}
+	entry := common.NewDataSource(drawing.DataSourceMySekai)
 	if updateTime > 0 {
 		entry.UpdateTime = &updateTime
 	}

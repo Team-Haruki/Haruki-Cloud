@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -19,7 +20,7 @@ func TestMusicDetailMetaResidualPureBranches(t *testing.T) {
 	if got := controller.resolveMusicDetailBPM(renderregion.JP, 0, "master"); got != nil {
 		t.Fatalf("zero-ID BPM = %v, want nil", got)
 	}
-	if got := formatMusicDetailLength(-5); got != "0.0秒（0分0.0秒）" {
+	if got := formatMusicDetailLength(-5); got != i18n.T("render_music.detail.length", i18n.Data{"Seconds": "0.0", "Duration": i18n.FormatDuration(0)}) {
 		t.Fatalf("negative length = %q", got)
 	}
 	if matrix, total := controller.resolveMusicDetailLeaderboard(renderregion.JP, nil, nil, 1); matrix != nil || total != 0 {

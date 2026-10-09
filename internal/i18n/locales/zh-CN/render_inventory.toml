@@ -1,0 +1,109 @@
+# 图片渲染：道具一览图片里由 Cloud 提供的标签。
+
+[render_inventory.section.currency]
+description = "道具一览图片的分组标题：货币。"
+other = "货币"
+
+[render_inventory.section.boost]
+description = "道具一览图片的分组标题：演出能量（火）。"
+other = "演出能量"
+
+[render_inventory.section.boost_total]
+description = "道具一览图片在只看演出能量时的分组标题，带可恢复的火数。占位符：Title=分组标题，见 render_inventory.section.boost；Total=全部演出能量道具可恢复的火数。"
+other = "{{.Title}} · 可恢复 {{.Total}} 火"
+
+[render_inventory.section.basic]
+description = "道具一览图片的分组标题：基础材料。"
+other = "基础材料"
+
+[render_inventory.section.training]
+description = "道具一览图片的分组标题：育成材料。"
+other = "育成材料"
+
+[render_inventory.section.costume]
+description = "道具一览图片的分组标题：服装材料。"
+other = "服装材料"
+
+[render_inventory.section.music]
+description = "道具一览图片的分组标题：音乐与演唱相关道具。"
+other = "音乐与演唱"
+
+[render_inventory.section.tickets]
+description = "道具一览图片的分组标题：招募券与兑换券。"
+other = "招募与兑换券"
+
+[render_inventory.section.event]
+description = "道具一览图片的分组标题：活动材料。"
+other = "活动材料"
+
+[render_inventory.section.memory]
+description = "道具一览图片的分组标题：记忆（烤森里的角色记忆道具）。"
+other = "记忆"
+
+[render_inventory.section.mysekai]
+description = "道具一览图片的分组标题：烤森材料。"
+other = "烤森材料"
+
+[render_inventory.section.misc]
+description = "道具一览图片的分组标题：其他道具。"
+other = "其他"
+
+[render_inventory.currency.coin.name]
+description = "道具一览图片里的货币名称：金币。"
+other = "金币"
+
+[render_inventory.currency.coin.text]
+description = "道具一览图片里金币的说明文字。"
+other = "游戏内的基础货币，用于成员育成等"
+
+[render_inventory.currency.free_jewel.name]
+description = "道具一览图片里的货币名称：免费获得的水晶。"
+other = "免费水晶"
+
+[render_inventory.currency.free_jewel.text]
+description = "道具一览图片里免费水晶的说明文字。"
+other = "免费获得的水晶，可用于招募等"
+
+[render_inventory.currency.paid_jewel.name]
+description = "道具一览图片里的货币名称：购买获得的水晶。"
+other = "付费水晶"
+
+[render_inventory.currency.paid_jewel.text]
+description = "道具一览图片里付费水晶的说明文字。"
+other = "购买获得的水晶，可用于招募等"
+
+[render_inventory.currency.virtual_coin.name]
+description = "道具一览图片里的货币名称：虚拟币。"
+other = "虚拟币"
+
+[render_inventory.currency.virtual_coin.text]
+description = "道具一览图片里虚拟币的说明文字。"
+other = "在虚拟 Live 等玩法中使用的货币"
+
+[render_inventory.fallback.material]
+description = "道具一览图片里，游戏数据没有名称的材料的占位名称。占位符：ID=材料 ID。"
+other = "材料 #{{.ID}}"
+
+[render_inventory.fallback.gacha_ticket]
+description = "道具一览图片里，游戏数据没有名称的招募券的占位名称。占位符：ID=招募券 ID。"
+other = "招募券 #{{.ID}}"
+
+[render_inventory.fallback.practice_ticket]
+description = "道具一览图片里，游戏数据没有名称的练习乐谱的占位名称。占位符：ID=练习乐谱 ID。"
+other = "练习乐谱 #{{.ID}}"
+
+[render_inventory.fallback.skill_practice_ticket]
+description = "道具一览图片里，游戏数据没有名称的技能升级乐谱的占位名称。占位符：ID=技能升级乐谱 ID。"
+other = "技能升级乐谱 #{{.ID}}"
+
+[render_inventory.fallback.gacha_ceil_item]
+description = "道具一览图片里，游戏数据没有名称的招募兑换道具的占位名称。占位符：ID=道具 ID。"
+other = "招募贴纸 #{{.ID}}"
+
+[render_inventory.fallback.mysekai_material]
+description = "道具一览图片里，游戏数据没有名称的烤森材料的占位名称。占位符：ID=烤森材料 ID。"
+other = "烤森材料 #{{.ID}}"
+
+[render_inventory.fallback.boost_item]
+description = "道具一览图片里，游戏数据没有名称的演出能量道具的占位名称。占位符：ID=道具 ID。"
+other = "演出能量道具 #{{.ID}}"

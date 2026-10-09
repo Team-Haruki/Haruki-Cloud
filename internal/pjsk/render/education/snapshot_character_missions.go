@@ -5,8 +5,10 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/render/common"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 )
 
@@ -458,7 +460,7 @@ func characterMissionRoundDetails(groups []*CharacterMissionParameterGroup, curr
 		return 0, 0, 0, ""
 	}
 	round, progress, need := characterMissionCurrentRound(groups, current)
-	return round, progress, need, fmt.Sprintf("EX %d 回目", round)
+	return round, progress, need, i18n.T("render_education.mission.ex_round", i18n.Data{"Round": round})
 }
 
 func isCharacterMissionExType(missionType string) bool {
@@ -473,7 +475,7 @@ func characterMissionDisplayName(cid int) string {
 	if nickname, ok := characterNicknameFallbacks[cid]; ok {
 		return nickname
 	}
-	return fmt.Sprintf("角色%d", cid)
+	return common.CharacterFallbackName(cid)
 }
 
 var characterIDDisplayNames = map[int]string{

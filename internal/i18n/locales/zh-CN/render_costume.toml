@@ -1,0 +1,25 @@
+# 图片渲染：服装图片里由 Cloud 提供的标签。部件名称沿用 costume.part.*。
+
+[render_costume.list.title]
+description = "服装列表图片的标题。占位符：Filter=筛选条件，多个条件用“ / ”分隔，见 render_costume.filter.*。"
+other = "{{.Filter}} 查询结果"
+
+[render_costume.list.all]
+description = "服装列表图片在没有筛选条件时用的筛选条件名，填进 render_costume.list.title。"
+other = "全部服装"
+
+[render_costume.filter.male]
+description = "服装列表图片标题里的筛选条件：男性服装。"
+other = "男装"
+
+[render_costume.filter.female]
+description = "服装列表图片标题里的筛选条件：女性服装。"
+other = "女装"
+
+[render_costume.filter.other_gender]
+description = "服装列表图片标题里的筛选条件：性别不限定的服装。"
+other = "其他"
+
+[render_costume.filter.ids]
+description = "服装列表图片标题里的筛选条件：指定的饰品 ID。占位符：IDs=ID 列表，用“、”分隔。"
+other = "ID {{.IDs}}"

@@ -1,0 +1,41 @@
+# 图片渲染：榜线相关图片（榜线、时速、预测）里由 Cloud 提供的标签，以及查榜时附带的提示。
+
+[render_sk.stale_self_record]
+description = "查自己的榜线时，玩家已掉出查榜服务的记录范围，图片下方附带的提示。"
+other = "你已不在可记录范围内，仅展示最后一次记录到的信息"
+
+[render_sk.predict.notice]
+description = "榜线预测图片底部的说明。"
+other = "预测数据仅供参考，冲榜请以实际榜线为准"
+
+[render_sk.predict.title]
+description = "榜线预测图片的标题。占位符：Event=活动名称。"
+other = "{{.Event}} 预测"
+
+[render_sk.predict.source.kit33]
+description = "榜线预测图片里的预测来源名称：33Kit。"
+other = "33Kit 预测"
+
+[render_sk.predict.source.moesekai]
+description = "榜线预测图片里的预测来源名称：Moesekai。"
+other = "Moesekai 预测"
+
+[render_sk.predict.source.sekarun]
+description = "榜线预测图片里的预测来源名称：SekaRun。"
+other = "SekaRun 预测"
+
+[render_sk.predict.source.local]
+description = "榜线预测图片里的预测来源名称：本 Bot 自己的预测。"
+other = "本地预测"
+
+[render_sk.predict.source.generic]
+description = "榜线预测图片里的预测来源名称：未注明来源的预测。"
+other = "预测"
+
+[render_sk.speed.unit.day]
+description = "时速图片里的时间单位，Drawing 拼成“近……换算日速”和表头“日速”。"
+other = "日"
+
+[render_sk.speed.unit.hour]
+description = "时速图片里的时间单位，Drawing 拼成“近……换算时速”和表头“时速”。"
+other = "时"

@@ -854,7 +854,7 @@ func TestExecuteMySekaiResourceUsesPayloadProviderWithoutSnapshot(t *testing.T) 
 		if req.Profile.MysekaiLevel == nil || *req.Profile.MysekaiLevel != 9 {
 			t.Fatalf("expected mysekai rank on profile, got %+v", req.Profile.MysekaiLevel)
 		}
-		if len(req.Profile.DataSources) != 1 || req.Profile.DataSources[0].Name != "Mysekai数据" {
+		if len(req.Profile.DataSources) != 1 || req.Profile.DataSources[0].Name != i18n.T("render.data_source.mysekai") {
 			t.Fatalf("expected mysekai-only profile data source, got %+v", req.Profile.DataSources)
 		}
 		_, _ = w.Write([]byte("mysekai-resource"))
@@ -1172,7 +1172,7 @@ func TestExecuteMySekaiFixtureDetailSkipsBindingAndSnapshot(t *testing.T) {
 		if len(reqs) != 1 {
 			t.Fatalf("expected 1 fixture detail request, got %+v", reqs)
 		}
-		if reqs[0].Title != "【JP-2001】Wood Chair" {
+		if reqs[0].Title != i18n.T("render_mysekai.fixture.title", i18n.Data{"Region": i18n.RegionLabel("jp"), "ID": 2001, "Name": "Wood Chair"}) {
 			t.Fatalf("unexpected title: %+v", reqs[0])
 		}
 		_, _ = w.Write([]byte("fixture-detail"))

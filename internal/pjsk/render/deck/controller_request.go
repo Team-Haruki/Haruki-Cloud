@@ -5,8 +5,10 @@ import (
 	"math"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -299,7 +301,7 @@ func applyRecommendMusicRequestFields(request *drawing.DeckRequest, option map[s
 		if musicID := optionInt(option, "music_id"); musicID > 0 {
 			request.MusicID = drawing.IntPtr(musicID)
 			if musicID == 10000 {
-				request.MusicTitle = drawing.StringPtr("おまかせ (所有歌曲平均)")
+				request.MusicTitle = drawing.StringPtr(i18n.T("render_deck.omakase_title"))
 				request.MusicCoverPath = drawing.StringPtr("static_images/omakase.png")
 			}
 		}
@@ -366,7 +368,7 @@ func applyRecommendDeckSelectionRequestFields(request *drawing.DeckRequest, opti
 func applyLimitedAutoScoreNotice(request *drawing.DeckRequest, decks []RecommendDeck) {
 	for _, deck := range decks {
 		if deck.LimitedAutoScoreCoefficient > 0.700001 {
-			request.AutoScoreNotice = drawing.StringPtr(fmt.Sprintf("使用终章期间限定 AUTO 数值（判定系数 %.1f）", deck.LimitedAutoScoreCoefficient))
+			request.AutoScoreNotice = drawing.StringPtr(i18n.T("render_deck.limited_auto_notice", i18n.Data{"Coefficient": strconv.FormatFloat(deck.LimitedAutoScoreCoefficient, 'f', 1, 64)}))
 			break
 		}
 	}

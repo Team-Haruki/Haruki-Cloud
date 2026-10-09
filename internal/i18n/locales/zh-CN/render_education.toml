@@ -1,0 +1,101 @@
+# 图片渲染：养成相关图片（角色任务、区域道具）里由 Cloud 提供的标签。
+
+[render_education.mission.play_live]
+description = "角色任务图片里的任务类型名称：队长（Live 时的队长角色）游玩次数。"
+other = "队长次数"
+
+[render_education.mission.play_live_ex]
+description = "角色任务图片里的任务类型名称：队长次数的 EX 阶段。"
+other = "队长次数（EX）"
+
+[render_education.mission.waiting_room]
+description = "角色任务图片里的任务类型名称：休息室（Live 等待室）次数。"
+other = "休息室次数"
+
+[render_education.mission.waiting_room_ex]
+description = "角色任务图片里的任务类型名称：休息室次数的 EX 阶段。"
+other = "休息室次数（EX）"
+
+[render_education.mission.collect_costume_3d]
+description = "角色任务图片里的任务类型名称：收集服装数量。"
+other = "服装"
+
+[render_education.mission.collect_stamp]
+description = "角色任务图片里的任务类型名称：收集贴纸数量。"
+other = "贴纸"
+
+[render_education.mission.read_area_talk]
+description = "角色任务图片里的任务类型名称：阅读区域对话数量。"
+other = "区域对话"
+
+[render_education.mission.read_card_episode_first]
+description = "角色任务图片里的任务类型名称：阅读卡面剧情前篇数量。"
+other = "卡面剧情前篇"
+
+[render_education.mission.read_card_episode_second]
+description = "角色任务图片里的任务类型名称：阅读卡面剧情后篇数量。"
+other = "卡面剧情后篇"
+
+[render_education.mission.collect_another_vocal]
+description = "角色任务图片里的任务类型名称：收集 Another Vocal 数量（游戏内名称）。"
+other = "Another Vocal"
+
+[render_education.mission.area_item_level_up_character]
+description = "角色任务图片里的任务类型名称：区域道具中单个角色的家具升级次数。"
+other = "单人家具升级次数"
+
+[render_education.mission.area_item_level_up_unit]
+description = "角色任务图片里的任务类型名称：区域道具中团体家具的升级次数。"
+other = "团家具升级次数"
+
+[render_education.mission.area_item_level_up_reality_world]
+description = "角色任务图片里的任务类型名称：区域道具中属性道具（树和花）的升级次数。"
+other = "属性道具（树&花）升级次数"
+
+[render_education.mission.area_item_level_up_all_character]
+description = "角色任务图片里的任务类型名称：区域道具「想いの大樹」（全角色道具，游戏内名称）的升级次数。"
+other = "「想いの大樹」升级次数"
+
+[render_education.mission.collect_member]
+description = "角色任务图片里的任务类型名称：收集卡牌数量。"
+other = "卡面"
+
+[render_education.mission.skill_level_up_rare]
+description = "角色任务图片里的任务类型名称：四星和生日卡的技能等级升级次数。"
+other = "技能等级升级次数（★4&生日卡）"
+
+[render_education.mission.skill_level_up_standard]
+description = "角色任务图片里的任务类型名称：一星到三星卡的技能等级升级次数。"
+other = "技能等级升级次数（★1~★3）"
+
+[render_education.mission.master_rank_up_rare]
+description = "角色任务图片里的任务类型名称：四星和生日卡的专精等级升级次数。"
+other = "专精等级升级次数（★4&生日卡）"
+
+[render_education.mission.master_rank_up_standard]
+description = "角色任务图片里的任务类型名称：一星到三星卡的专精等级升级次数。"
+other = "专精等级升级次数（★1~★3）"
+
+[render_education.mission.collect_character_archive_voice]
+description = "角色任务图片里的任务类型名称：收集角色台词数量。"
+other = "台词"
+
+[render_education.mission.collect_mysekai_fixture]
+description = "角色任务图片里的任务类型名称：收集烤森家具数量。"
+other = "烤森家具数量"
+
+[render_education.mission.collect_mysekai_canvas]
+description = "角色任务图片里的任务类型名称：收集烤森画布数量。"
+other = "烤森画布数量"
+
+[render_education.mission.read_mysekai_fixture_unique_character_talk]
+description = "角色任务图片里的任务类型名称：阅读烤森家具角色对话数量。"
+other = "烤森对话"
+
+[render_education.mission.ex_round]
+description = "角色任务图片里 EX 任务当前所在的轮次。占位符：Round=轮次。"
+other = "EX 第 {{.Round}} 轮"
+
+[render_education.area_item.all_characters]
+description = "区域道具图片里，对全部角色生效的道具（如「想いの大樹」）在目标图标位置显示的文字。"
+other = "全角色"

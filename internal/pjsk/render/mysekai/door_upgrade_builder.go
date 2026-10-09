@@ -8,6 +8,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/utils/usererror"
 )
 
@@ -251,7 +252,8 @@ func (c *Controller) doorUpgradeProfile(region renderregion.Value, merged map[st
 	}
 	profile := c.mysekaiProfileCard(region, merged, query, false)
 	if profile != nil && len(profile.DataSources) > 0 {
-		profile.DataSources[0].Name = "Suite数据"
+		profile.DataSources[0].Name = common.DataSourceLabel(drawing.DataSourceSuite)
+		profile.DataSources[0].Kind = drawing.DataSourceSuite
 	}
 	return profile
 }

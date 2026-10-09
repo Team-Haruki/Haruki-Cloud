@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -343,7 +344,7 @@ func TestTrackerIdentityAdditional(t *testing.T) {
 	info, err = controller.buildSingleRankFromTracker("jp", 1, 100, nil)
 	{
 		testutil.Require(t, !(err != nil), "sanitized rank identity = %+v, %v", info, err)
-		testutil.Require(t, !(info.Name != "Rank 100"), "sanitized rank identity = %+v, %v", info, err)
+		testutil.Require(t, !(info.Name != i18n.T("render.fallback.rank_name", i18n.Data{"Rank": 100})), "sanitized rank identity = %+v, %v", info, err)
 	}
 
 	info, err = controller.buildSingleUserBaseFromTracker("jp", 1, 123, nil)

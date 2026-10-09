@@ -1,0 +1,105 @@
+# 图片渲染：歌曲相关图片（歌曲排行、歌曲详情、自制谱面、歌曲奖励）里由 Cloud 提供的标签。
+
+[render_music.board.title]
+description = "歌曲排行图片的标题。占位符：Board=排行名称，见 render_music.board.name*；Target=排序指标，见 render_music.board.target.*；Order=升序或降序；Page=页码，如“第 1/3 页”。"
+other = "{{.Board}} - {{.Target}} {{.Order}} - {{.Page}}"
+
+[render_music.board.name]
+description = "歌曲排行图片标题里的排行名称（不区分 Live 类型时，如按每秒点击或歌曲时长排序）。"
+other = "歌曲排行"
+
+[render_music.board.name_live]
+description = "歌曲排行图片标题里的排行名称（区分 Live 类型时）。占位符：LiveType=Live 类型，如“单人 Live”。"
+other = "{{.LiveType}} 歌曲排行"
+
+[render_music.board.target.score]
+description = "歌曲排行的排序指标：Live 分数。"
+other = "Live 分数"
+
+[render_music.board.target.pt]
+description = "歌曲排行的排序指标：每次消耗体力获得的活动 PT。"
+other = "活动 PT/体力"
+
+[render_music.board.target.pt_time]
+description = "歌曲排行的排序指标：单位时间获得的活动 PT。"
+other = "活动 PT/时间"
+
+[render_music.board.target.tps]
+description = "歌曲排行的排序指标：每秒点击数。"
+other = "每秒点击"
+
+[render_music.board.target.time]
+description = "歌曲排行的排序指标：歌曲时长。"
+other = "歌曲时长"
+
+[render_music.board.order.desc]
+description = "歌曲排行的排序方向：降序。"
+other = "降序"
+
+[render_music.board.order.asc]
+description = "歌曲排行的排序方向：升序。"
+other = "升序"
+
+[render_music.board.param.effective_skill]
+description = "歌曲排行图片的参数说明：多人 Live 的实效技能。占位符：Percent=实效，已带 %。"
+other = "实效 {{.Percent}}"
+
+[render_music.board.param.skills]
+description = "歌曲排行图片的参数说明：5 张卡的技能加成。占位符：Skills=5 个技能加成数值，用“/”分隔。"
+other = "技能 {{.Skills}}"
+
+[render_music.board.param.strategy]
+description = "歌曲排行图片的参数说明：技能发动顺序策略。占位符：Strategy=策略名，大写英文，如 AVG、MAX。"
+other = "策略 {{.Strategy}}"
+
+[render_music.board.param.power]
+description = "歌曲排行图片的参数说明：卡组综合力。占位符：Power=综合力数值。"
+other = "综合 {{.Power}}"
+
+[render_music.board.param.bonus]
+description = "歌曲排行图片的参数说明：活动加成。占位符：Percent=活动加成，已带 %。"
+other = "加成 {{.Percent}}"
+
+[render_music.board.param.interval]
+description = "歌曲排行图片的参数说明：两局之间的间隔时间。占位符：Seconds=秒数，最多 1 位小数。"
+other = "间隔 {{.Seconds}}秒"
+
+[render_music.leaderboard.target.score]
+description = "歌曲详情图片里排行矩阵的列名：分数。空间很小，只写两个字。"
+other = "分数"
+
+[render_music.leaderboard.target.pt]
+description = "歌曲详情图片里排行矩阵的列名：活动 PT。"
+other = "PT"
+
+[render_music.leaderboard.target.pt_time]
+description = "歌曲详情图片里排行矩阵的列名：时速（每小时活动 PT）。"
+other = "时速"
+
+[render_music.leaderboard.pt_per_hour]
+description = "歌曲详情图片里排行矩阵的时速数值。占位符：Value=每小时活动 PT，大于等于 1 万时以万为单位，如“12.35万”。"
+other = "{{.Value}}/h"
+
+[render_music.detail.length]
+description = "歌曲详情图片里的歌曲时长。占位符：Seconds=总秒数，1 位小数；Duration=按分秒显示的时长，如“2分03秒”。"
+other = "{{.Seconds}}秒（{{.Duration}}）"
+
+[render_music.rewards.estimate_notice]
+description = "歌曲奖励图片在没有使用抓包数据、只能估算时显示的说明。"
+other = "当前未使用抓包数据（Suite），以下为基于公开信息的估算结果"
+
+[render_music.rewards.estimate_notice_with_reason]
+description = "歌曲奖励图片只能估算时的说明，前面带上无法使用抓包数据的原因。占位符：Reason=原因，一行目录文案。"
+other = "{{.Reason}}\n以下为基于公开信息的估算结果"
+
+[render_music.custom_chart.fallback_author]
+description = "自制谱面图片里，谱面作者和谱面 ID 都未知时显示的名称。"
+other = "自制谱面"
+
+[render_music.custom_chart.bpm_range]
+description = "自制谱面图片里，BPM 变化超过 3 段时显示的范围。占位符：Min=最小 BPM；Max=最大 BPM；Count=BPM 段数。"
+other = "{{.Min}}~{{.Max}}（{{.Count}} 段）"
+
+[render_music.fallback_title]
+description = "歌曲在游戏数据里没有标题时显示的占位名称（如歌曲匹配到多首时的候选列表）。占位符：ID=歌曲 ID。"
+other = "歌曲 #{{.ID}}"

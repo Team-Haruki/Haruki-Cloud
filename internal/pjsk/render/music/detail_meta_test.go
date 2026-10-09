@@ -1,11 +1,13 @@
 package music
 
 import (
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -159,7 +161,7 @@ func TestBuildMusicDetailRequestIncludesMetadataFields(t *testing.T) {
 	if len(req.MusicInfo.MVInfo) != 2 || req.MusicInfo.MVInfo[0] != "mv" {
 		t.Fatalf("expected mv_info copied from categories, got %#v", req.MusicInfo.MVInfo)
 	}
-	if req.Length == nil || *req.Length != "120.0秒（2分0.0秒）" {
+	if req.Length == nil || *req.Length != i18n.T("render_music.detail.length", i18n.Data{"Seconds": "120.0", "Duration": i18n.FormatDuration(2 * time.Minute)}) {
 		t.Fatalf("expected formatted length from music meta, got %#v", req.Length)
 	}
 	if req.Bpm == nil || *req.Bpm != 120 {

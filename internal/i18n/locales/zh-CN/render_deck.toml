@@ -1,0 +1,9 @@
+# 图片渲染：组卡图片里由 Cloud 提供的标签。Live 类型短标签见 render.live_short.*。
+
+[render_deck.omakase_title]
+description = "组卡图片里，按“所有歌曲平均”组卡时显示的歌曲名（游戏里的「おまかせ」选曲）。"
+other = "自动选曲（所有歌曲平均）"
+
+[render_deck.limited_auto_notice]
+description = "组卡图片里，使用终章期间限定的自动 Live 数值时的说明。占位符：Coefficient=判定系数，1 位小数。"
+other = "使用终章期间限定的自动 Live 数值（判定系数 {{.Coefficient}}）"

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/urlhost"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -129,7 +130,7 @@ func TestBuildHousingCompetitionLineSamplesAndRanksByReviewCount(t *testing.T) {
 	}
 	{
 		testutil.Require(t, !(result.Request.Description == nil), "unexpected notice: %v", result.Request.Description)
-		testutil.Require(t, !(*result.Request.Description != HousingCompetitionNotice), "unexpected notice: %v", result.Request.Description)
+		testutil.Require(t, !(*result.Request.Description != i18n.T("render_mysekai.housing.notice")), "unexpected notice: %v", result.Request.Description)
 	}
 	{
 		testutil.Require(t, !(result.Request.BannerImagePath == nil), "unexpected banner path: %v", result.Request.BannerImagePath)

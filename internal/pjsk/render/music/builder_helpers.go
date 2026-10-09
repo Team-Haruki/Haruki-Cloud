@@ -153,7 +153,7 @@ var vocalLocalizationByRegion = map[renderregion.Value]map[string]string{
 	},
 	renderregion.TW: {
 		"sekai":                 "「世界」",
-		virtualSingerLowerLabel: "虚擬歌手",
+		virtualSingerLowerLabel: "虛擬歌手",
 	},
 	renderregion.KR: {
 		"sekai":                 "세카이",

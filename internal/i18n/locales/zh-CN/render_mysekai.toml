@@ -1,0 +1,173 @@
+# 图片渲染：烤森相关图片（商店、蓝图、家具、唱片、对话、烤森百景）里由 Cloud 提供的标签。
+
+[render_mysekai.shop.title]
+description = "烤森商店图片的标题，通行证生效时使用。"
+other = "烤森商店（按上传数据）"
+
+[render_mysekai.shop.title_pass_inactive]
+description = "烤森商店图片的标题，玩家的通行证未生效时使用。"
+other = "烤森商店（按上传数据，通行证未生效）"
+
+[render_mysekai.shop.type.blueprint_daily]
+description = "烤森商店图片里的分组标题：每日蓝图。"
+other = "每日蓝图"
+
+[render_mysekai.shop.type.blueprint_weekly]
+description = "烤森商店图片里的分组标题：每周蓝图。"
+other = "每周蓝图"
+
+[render_mysekai.shop.type.material]
+description = "烤森商店图片里的分组标题：材料。"
+other = "材料"
+
+[render_mysekai.shop.type.tool]
+description = "烤森商店图片里的分组标题：工具。"
+other = "工具"
+
+[render_mysekai.shop.item.owned]
+description = "烤森商店图片里，接在商品名后的状态标签：已持有该蓝图。"
+other = "【已持有】"
+
+[render_mysekai.shop.item.not_owned]
+description = "烤森商店图片里，接在商品名后的状态标签：未持有该蓝图。"
+other = "【未持有】"
+
+[render_mysekai.shop.item.storage_full]
+description = "烤森商店图片里，接在商品名后的状态标签：材料仓库已满，买不了。"
+other = "【材料仓库已满】"
+
+[render_mysekai.shop.item.pass_required]
+description = "烤森商店图片里，接在商品名后的状态标签：需要通行证。"
+other = "【需通行证】"
+
+[render_mysekai.shop.item.bought]
+description = "烤森商店图片里，接在商品名后的状态标签：本期已购买。"
+other = "【本期已购买】"
+
+[render_mysekai.shop.item.remaining]
+description = "烤森商店图片里，接在商品名后的状态标签：还能买几次。占位符：Count=剩余购买次数。"
+other = "【剩余 {{.Count}} 次】"
+
+[render_mysekai.blueprint_term.tab.limited_term]
+description = "限时蓝图图片的标签页标题，也用在家具详情里描述限时期间。"
+other = "限时蓝图"
+
+[render_mysekai.blueprint_term.tab.birthday_anniversary]
+description = "限时蓝图图片的标签页标题：生日和周年纪念蓝图。"
+other = "生日/周年蓝图"
+
+[render_mysekai.blueprint_term.period]
+description = "家具详情图片（/msf）里蓝图的限时期间。占位符：Tab=标签页标题，见 render_mysekai.blueprint_term.tab.*；Start=开始时间；End=结束时间；时间按 FormatUserTime 格式化。"
+other = "【{{.Tab}} {{.Start}} ~ {{.End}}】"
+
+[render_mysekai.blueprint_term.period_ended]
+description = "家具详情图片（/msf）里已结束的蓝图限时期间。占位符：Tab=标签页标题；Start=开始时间；End=结束时间。"
+other = "【{{.Tab}} {{.Start}} ~ {{.End}}（已结束）】"
+
+[render_mysekai.blueprint_term.period_upcoming]
+description = "家具详情图片（/msf）里还没开始的蓝图限时期间。占位符：Tab=标签页标题；Start=开始时间；End=结束时间。"
+other = "【{{.Tab}} {{.Start}} ~ {{.End}}（未开始）】"
+
+[render_mysekai.blueprint_term.craft_limit]
+description = "家具详情图片（/msf）里限时期间的制作次数上限。占位符：Count=最多制作次数。"
+other = "【限时期间最多制作 {{.Count}} 次】"
+
+[render_mysekai.blueprint_term.extra_materials]
+description = "家具详情图片（/msf）里限时期间需要的额外材料。占位符：Materials=材料列表，每项为“材料名×数量”，用“、”分隔。"
+other = "【限时额外材料：{{.Materials}}】"
+
+[render_mysekai.blueprint_term.material_fallback]
+description = "限时额外材料在游戏数据里没有名称时显示的占位名称。占位符：ID=烤森材料 ID。"
+other = "烤森材料 #{{.ID}}"
+
+[render_mysekai.fixture.title]
+description = "家具详情图片（/msf）的标题。占位符：Region=区服显示名，如“日服(JP)”；ID=家具 ID；Name=家具名（游戏数据原文）。"
+other = "【{{.Region}} #{{.ID}}】{{.Name}}"
+
+[render_mysekai.fixture.assemble.yes]
+description = "家具详情图片（/msf）的基本信息标签：可以制作。"
+other = "【可制作】"
+
+[render_mysekai.fixture.assemble.no]
+description = "家具详情图片（/msf）的基本信息标签：不可制作。"
+other = "【不可制作】"
+
+[render_mysekai.fixture.disassemble.yes]
+description = "家具详情图片（/msf）的基本信息标签：可以回收。"
+other = "【可回收】"
+
+[render_mysekai.fixture.disassemble.no]
+description = "家具详情图片（/msf）的基本信息标签：不可回收。"
+other = "【不可回收】"
+
+[render_mysekai.fixture.player_action.yes]
+description = "家具详情图片（/msf）的基本信息标签：玩家可以与家具交互。"
+other = "【玩家可交互】"
+
+[render_mysekai.fixture.player_action.no]
+description = "家具详情图片（/msf）的基本信息标签：玩家不能与家具交互。"
+other = "【玩家不可交互】"
+
+[render_mysekai.fixture.character_action.yes]
+description = "家具详情图片（/msf）的基本信息标签：角色会与家具交互。"
+other = "【角色可交互】"
+
+[render_mysekai.fixture.character_action.no]
+description = "家具详情图片（/msf）的基本信息标签：角色不会与家具交互。"
+other = "【角色无交互】"
+
+[render_mysekai.fixture.sketch.yes]
+description = "家具详情图片（/msf）的蓝图信息标签：蓝图可以抄写。"
+other = "【蓝图可抄写】"
+
+[render_mysekai.fixture.sketch.no]
+description = "家具详情图片（/msf）的蓝图信息标签：蓝图不可抄写。"
+other = "【蓝图不可抄写】"
+
+[render_mysekai.fixture.convert.yes]
+description = "家具详情图片（/msf）的蓝图信息标签：蓝图可以合成获得。"
+other = "【蓝图可合成】"
+
+[render_mysekai.fixture.convert.no]
+description = "家具详情图片（/msf）的蓝图信息标签：蓝图不可合成获得。"
+other = "【蓝图不可合成】"
+
+[render_mysekai.fixture.craft_limit]
+description = "家具详情图片（/msf）的蓝图信息标签：最多制作次数。占位符：Count=最多制作次数。"
+other = "【最多制作 {{.Count}} 次】"
+
+[render_mysekai.fixture.craft_unlimited]
+description = "家具详情图片（/msf）的蓝图信息标签：没有制作次数限制。"
+other = "【无制作次数限制】"
+
+[render_mysekai.progress.fixture_total]
+description = "家具列表图片的收集进度名称，用在 render.progress 的 Label 里。"
+other = "总收集进度（不含生日家具）"
+
+[render_mysekai.progress.music_record_total]
+description = "烤森唱片图片的收集进度名称，用在 render.progress 的 Label 里。"
+other = "总收集进度"
+
+[render_mysekai.talk.title_unread]
+description = "对话家具列表图片的标题（只显示未读对话时），带阅读进度。占位符：Done=已读对话数；Total=对话总数；Percent=已读百分比，已带 %。"
+other = "未读对话家具列表（进度：{{.Done}}/{{.Total}}，{{.Percent}}）"
+
+[render_mysekai.talk.title_all]
+description = "对话家具列表图片的标题（显示全部对话时）。占位符：Count=对话总数。"
+other = "对话家具列表（共 {{.Count}} 条对话）"
+
+[render_mysekai.talk.unread_hint]
+description = "未读对话家具列表图片底部的说明。"
+other = "仅展示未读对话的家具，灰色表示未获得蓝图"
+
+[render_mysekai.housing.title]
+description = "烤森百景图片的标题。占位符：Name=本期烤森百景名称（游戏数据原文，可能为空）。"
+other = "烤森百景 {{.Name}}"
+
+[render_mysekai.housing.notice]
+description = "烤森百景图片底部的说明。"
+other = "结果基于统计得出，不一定精确，仅供参考"
+
+[render_mysekai.housing.round_fallback]
+description = "烤森百景在游戏数据里没有名称时的占位名称。占位符：Round=期数。"
+other = "第 {{.Round}} 期"

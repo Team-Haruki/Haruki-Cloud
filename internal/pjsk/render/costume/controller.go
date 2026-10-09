@@ -17,6 +17,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/utils/logger"
@@ -686,7 +687,7 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 
 func (c *Controller) buildResolvedCostumeDetailRequest(region renderregion.Value, source DataSource, costumeInfo *masterdata.Costume3d, query Query) (*drawing.CostumeDetailRequest, error) {
 	if expectedPart, ok := normalizePartType(query.ExpectedPartType); ok && costumeInfo.PartType != expectedPart {
-		return nil, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, partTypeName(costumeInfo.PartType), partTypeName(expectedPart))
+		return nil, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, costumeInfo.PartType, expectedPart)
 	}
 	variants, err := source.GetCostumeVariants(costumeInfo.GroupID, costumeInfo.PartType, costumeInfo.CharacterID)
 	if err != nil || len(variants) == 0 {
@@ -855,7 +856,7 @@ func (c *Controller) RenderCostumeDetailImage(query Query) (drawing.ImageResult,
 	}
 	if expectedPart, ok := normalizePartType(query.ExpectedPartType); ok && costumeInfo.PartType != expectedPart {
 		finishBuild()
-		return drawing.ImageResult{}, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, partTypeName(costumeInfo.PartType), partTypeName(expectedPart))
+		return drawing.ImageResult{}, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, costumeInfo.PartType, expectedPart)
 	}
 	payload, err := c.buildResolvedCostumeDetailRequest(region, source, costumeInfo, query)
 	if err != nil {
@@ -2559,11 +2560,11 @@ func comboDuplicateError(part i18n.Message) error {
 func partTypeName(partType string) string {
 	switch strings.TrimSpace(partType) {
 	case "body":
-		return "服装"
+		return i18n.T("costume.part.outfit")
 	case "head":
-		return "饰品"
+		return i18n.T("costume.part.accessory")
 	case "hair":
-		return "发型"
+		return i18n.T("costume.part.hair")
 	default:
 		return partType
 	}
@@ -2571,14 +2572,14 @@ func partTypeName(partType string) string {
 
 func characterName(character *masterdata.Character, fallbackID int) string {
 	if character == nil {
-		return fmt.Sprintf("角色%d", fallbackID)
+		return common.CharacterFallbackName(fallbackID)
 	}
 	name := strings.TrimSpace(strings.TrimSpace(character.FirstName) + strings.TrimSpace(character.GivenName))
 	if name == "" {
 		name = strings.TrimSpace(character.GivenName)
 	}
 	if name == "" {
-		return fmt.Sprintf("角色%d", fallbackID)
+		return common.CharacterFallbackName(fallbackID)
 	}
 	return name
 }
@@ -2645,9 +2646,9 @@ func joinCostumeIDs(ids []int) string {
 func buildListTitle(query ListQuery) *string {
 	label := buildFilterLabel(query)
 	if label == "" {
-		label = "全部服装"
+		label = i18n.T("render_costume.list.all")
 	}
-	title := fmt.Sprintf("%s 查询结果", label)
+	title := i18n.T("render_costume.list.title", i18n.Data{"Filter": label})
 	return &title
 }
 
@@ -2659,21 +2660,21 @@ func buildFilterLabel(query ListQuery) string {
 	if query.Gender != "" {
 		switch query.Gender {
 		case "male":
-			parts = append(parts, "男装")
+			parts = append(parts, i18n.T("render_costume.filter.male"))
 		case "female":
-			parts = append(parts, "女装")
+			parts = append(parts, i18n.T("render_costume.filter.female"))
 		case "secret":
-			parts = append(parts, "其他")
+			parts = append(parts, i18n.T("render_costume.filter.other_gender"))
 		}
 	}
 	if query.Character != "" {
 		parts = append(parts, query.Character)
 	}
 	if query.Character3DID > 0 {
-		parts = append(parts, fmt.Sprintf("角色%d", query.Character3DID))
+		parts = append(parts, common.CharacterFallbackName(query.Character3DID))
 	}
 	if len(query.AccessoryIDs) > 0 {
-		parts = append(parts, "ID"+joinCostumeIDs(query.AccessoryIDs))
+		parts = append(parts, i18n.T("render_costume.filter.ids", i18n.Data{"IDs": joinCostumeIDs(query.AccessoryIDs)}))
 	}
 	if query.Keyword != "" {
 		parts = append(parts, query.Keyword)

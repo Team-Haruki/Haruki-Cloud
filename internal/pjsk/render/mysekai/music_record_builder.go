@@ -5,9 +5,11 @@ import (
 	"sort"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
@@ -37,7 +39,7 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 		CategoryMusicrecords: categories,
 	}
 	if totalCount > 0 {
-		request.ProgressMessage = new(fmt.Sprintf("总收集进度: %d/%d (%.1f%%)", obtainedCount, totalCount, percent(obtainedCount, totalCount)))
+		request.ProgressMessage = new(common.ProgressText(i18n.M("render_mysekai.progress.music_record_total"), obtainedCount, totalCount))
 	}
 	return request, nil
 }
@@ -147,7 +149,7 @@ func (c *Controller) buildMusicRecordCategory(region renderregion.Value, showID 
 	return &drawing.MysekaiCategoryMusicrecord{
 		Tag:             tag,
 		TagIconPath:     icon,
-		ProgressMessage: new(fmt.Sprintf("%d/%d (%.1f%%)", obtainedCount, total, percent(obtainedCount, total))),
+		ProgressMessage: new(common.ProgressRatio(obtainedCount, total)),
 		Musicrecords:    records,
 	}, total, obtainedCount
 }

@@ -67,7 +67,8 @@ func buildProfileCardDataSources(detail *drawing.DetailedProfileCardRequest, sna
 	}
 	return []drawing.ProfileDataSource{
 		{
-			Name:   "Sekai API",
+			Name:   common.DataSourceLabel(drawing.DataSourcePublic),
+			Kind:   drawing.DataSourcePublic,
 			Source: new(detail.Source),
 			Mode:   common.CloneStringPtr(detail.Mode),
 		},

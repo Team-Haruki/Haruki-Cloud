@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -164,11 +165,11 @@ func (b *Builder) unitIconPathByCharacter(charID int, region renderregion.Value)
 func (b *Builder) displayEventType(code string) string {
 	switch strings.ToLower(code) {
 	case "marathon":
-		return "马拉松"
+		return i18n.T("render_event.type.marathon")
 	case "cheerful_carnival":
-		return "5v5"
+		return i18n.T("render_event.type.cheerful_carnival")
 	case "world_bloom":
-		return "WorldLink"
+		return i18n.T("render_event.type.world_bloom")
 	default:
 		return code
 	}

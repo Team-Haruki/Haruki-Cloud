@@ -282,9 +282,9 @@ func totalComboRewardForDifficulty(diff string) int {
 
 func musicRewardEstimateMessage(reason string) string {
 	if reason == "" {
-		return "当前未使用 Suite 抓包数据，以下为基于公开信息的估算结果。"
+		return i18n.T("render_music.rewards.estimate_notice")
 	}
-	return reason + "\n以下为基于公开信息的估算结果。"
+	return i18n.T("render_music.rewards.estimate_notice_with_reason", i18n.Data{"Reason": reason})
 }
 
 func (c *Controller) validRewardMusicIDs(region renderregion.Value, source DataSource, builder *Builder) map[int]struct{} {

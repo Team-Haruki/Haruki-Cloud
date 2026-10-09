@@ -330,7 +330,7 @@ func buildCustomChartArtist(entry customChartEntry) string {
 	case scoreID != "":
 		return scoreID
 	default:
-		return "自制谱"
+		return i18n.T("render_music.custom_chart.fallback_author")
 	}
 }
 
@@ -1025,7 +1025,11 @@ func formatCustomChartBPMs(events []struct {
 	}
 	sortedValues := append([]float64(nil), values...)
 	sort.Float64s(sortedValues)
-	return fmt.Sprintf("%s-%s（%d段）", formatCustomChartFloat(sortedValues[0]), formatCustomChartFloat(sortedValues[len(sortedValues)-1]), len(values))
+	return i18n.T("render_music.custom_chart.bpm_range", i18n.Data{
+		"Min":   formatCustomChartFloat(sortedValues[0]),
+		"Max":   formatCustomChartFloat(sortedValues[len(sortedValues)-1]),
+		"Count": len(values),
+	})
 }
 
 func customChartFloatValue(value any) (float64, bool) {

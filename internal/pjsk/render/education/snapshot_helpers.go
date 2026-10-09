@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
@@ -102,7 +103,7 @@ func (c *Controller) areaItemTargetIcon(levels []*AreaItemLevel) string {
 
 // areaItemTargetLabelAllCharacters is shown instead of a target icon for an
 // item whose unconditional rows boost every character.
-const areaItemTargetLabelAllCharacters = "全角色"
+var areaItemTargetLabelAllCharacters = i18n.M("render_education.area_item.all_characters")
 
 // areaItemTargetLabel names the target of an item that has no target icon:
 // an every-character item (JP 7.0.0 想いの大樹). Empty otherwise.
@@ -112,7 +113,7 @@ func areaItemTargetLabel(levels []*AreaItemLevel, targetIconPath string) string 
 	}
 	for _, level := range levels {
 		if isAllTargetAreaItemLevel(level) && !isMultiUnitAreaItemLevel(level) {
-			return areaItemTargetLabelAllCharacters
+			return areaItemTargetLabelAllCharacters.String()
 		}
 	}
 	return ""

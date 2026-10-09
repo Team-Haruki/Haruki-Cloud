@@ -72,10 +72,10 @@ func TestMusicBoardLoadsDisplayDataForSelectedRows(t *testing.T) {
 		query    BoardQuery
 		wantHash string
 	}{
-		{name: "first page", query: BoardQuery{}, wantHash: "711510f5e16023a904bda0b323b1cb628f893322290c7e622014c3d897eb40d8"},
-		{name: "second page", query: BoardQuery{Page: 2}, wantHash: "187bbc839e035aa5a2b2cd151305a566c38c169b591fda3508f63eb3aabd4ea5"},
-		{name: "filtered with pinned difficulties", query: BoardQuery{Page: 2, DiffFilter: []string{"master"}, LevelFilter: ">=31", SpecQueries: []string{"1*"}}, wantHash: "a8378905fef743701ef8cf745b0c0ec843930617559cfc7b9b3a616ee7a88063"},
-		{name: "one difficulty per song", query: BoardQuery{Page: 2, Target: "time", SpecQueries: []string{"1*"}}, wantHash: "924e84b7ee6ab8213280ac4a20004b7cde43b933434d4293b67439ea513c33c1"},
+		{name: "first page", query: BoardQuery{}, wantHash: "8480014808f918c43d95f5aaeafb9b6cb7e165fc1654be18cda6575e9dd46bc1"},
+		{name: "second page", query: BoardQuery{Page: 2}, wantHash: "7968f1a129fa3a0d645f462a4ee3c9ed32a3d0c5855f2b486c1deb9389bfe16d"},
+		{name: "filtered with pinned difficulties", query: BoardQuery{Page: 2, DiffFilter: []string{"master"}, LevelFilter: ">=31", SpecQueries: []string{"1*"}}, wantHash: "32eebba6e3035367510dac389abd8e4e975eaa119176b5e830b0cdd2dd189a78"},
+		{name: "one difficulty per song", query: BoardQuery{Page: 2, Target: "time", SpecQueries: []string{"1*"}}, wantHash: "5b8ffc7441f81b285960b30e539d118bdcd1735d052ea5d396801c1146a2c6e0"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

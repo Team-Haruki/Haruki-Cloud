@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -78,39 +79,35 @@ func fixtureColorImages(resolve pathResolver, item map[string]any) []drawing.Mys
 }
 
 func fixtureBasicInfo(item map[string]any) []string {
-	boolLabel := func(ok bool, yes, no string) string {
-		if ok {
-			return yes
-		}
-		return no
-	}
 	info := []string{
-		boolLabel(boolValue(item["isAssembled"]), "【🔨可制作】", "【❌不可制作】"),
-		boolLabel(boolValue(item["isDisassembled"]), "【♻️可回收】", "【❌不可回收】"),
+		fixtureBoolLabel(boolValue(item["isAssembled"]), i18n.M("render_mysekai.fixture.assemble.yes"), i18n.M("render_mysekai.fixture.assemble.no")),
+		fixtureBoolLabel(boolValue(item["isDisassembled"]), i18n.M("render_mysekai.fixture.disassemble.yes"), i18n.M("render_mysekai.fixture.disassemble.no")),
 	}
 	playerAction := stringValue(item["mysekaiFixturePlayerActionType"]) != "" && stringValue(item["mysekaiFixturePlayerActionType"]) != "no_action"
-	info = append(info, boolLabel(playerAction, "【👋玩家可交互】", "【❌玩家不可交互】"))
-	info = append(info, boolLabel(boolValue(item["isGameCharacterAction"]), "【🎡角色可交互】", "【❌角色无交互】"))
+	info = append(info, fixtureBoolLabel(playerAction, i18n.M("render_mysekai.fixture.player_action.yes"), i18n.M("render_mysekai.fixture.player_action.no")))
+	info = append(info, fixtureBoolLabel(boolValue(item["isGameCharacterAction"]), i18n.M("render_mysekai.fixture.character_action.yes"), i18n.M("render_mysekai.fixture.character_action.no")))
 	return info
 }
 
 func fixtureBlueprintInfo(blueprint map[string]any) []string {
-	boolLabel := func(ok bool, yes, no string) string {
-		if ok {
-			return yes
-		}
-		return no
-	}
 	limit := intNumber(blueprint["craftCountLimit"], 0)
 	info := []string{
-		boolLabel(boolValue(blueprint["isEnableSketch"]), "【📝蓝图可抄写】", "【蓝图不可抄写】"),
-		boolLabel(boolValue(blueprint["isObtainedByConvert"]), "【🎁蓝图可合成】", "【蓝图不可合成】"),
+		fixtureBoolLabel(boolValue(blueprint["isEnableSketch"]), i18n.M("render_mysekai.fixture.sketch.yes"), i18n.M("render_mysekai.fixture.sketch.no")),
+		fixtureBoolLabel(boolValue(blueprint["isObtainedByConvert"]), i18n.M("render_mysekai.fixture.convert.yes"), i18n.M("render_mysekai.fixture.convert.no")),
 	}
 	if limit > 0 {
-		info = append(info, fmt.Sprintf("【最多制作%d次】", limit))
-		return info
+		return append(info, i18n.T("render_mysekai.fixture.craft_limit", i18n.Data{"Count": limit}))
 	}
-	return append(info, "【无制作次数限制】")
+	return append(info, i18n.T("render_mysekai.fixture.craft_unlimited"))
+}
+
+// fixtureBoolLabel picks the yes or no label of a fixture detail tag. The
+// tags of one image carry no emoji, so every tag reads the same way.
+func fixtureBoolLabel(ok bool, yes, no i18n.Message) string {
+	if ok {
+		return yes.String()
+	}
+	return no.String()
 }
 
 func fixtureTags(item map[string]any, tags map[int]map[string]any) []string {

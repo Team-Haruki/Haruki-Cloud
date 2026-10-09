@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 
 	"haruki-cloud/internal/onebot11"
@@ -136,8 +137,8 @@ func TestExecuteSuiteInfoPanelRendersTheSuiteCard(t *testing.T) {
 	if len(sources) != 1 {
 		t.Fatalf("data_sources = %#v, want the Suite source", body["data_sources"])
 	}
-	if name, _ := sources[0].(map[string]any)["name"].(string); name != "Suite数据" {
-		t.Fatalf("data source = %q, want Suite数据", name)
+	if name, _ := sources[0].(map[string]any)["name"].(string); name != i18n.T("render.data_source.suite") {
+		t.Fatalf("data source = %q, want the suite label", name)
 	}
 	if _, ok := body["dt"]; !ok {
 		t.Fatal("request carries no dt for the watermark")
@@ -272,7 +273,7 @@ func allInfoPanelProfile() *drawing.ProfileCardRequest {
 	suiteTime := int64(1790838000000)
 	return &drawing.ProfileCardRequest{
 		Profile:     &drawing.BasicProfile{ID: "1", Region: "JP", Nickname: "Panel", LeaderImagePath: "leader.png"},
-		DataSources: []drawing.ProfileDataSource{{Name: "Suite数据", UpdateTime: &suiteTime}},
+		DataSources: []drawing.ProfileDataSource{{Name: i18n.T("render.data_source.suite"), Kind: drawing.DataSourceSuite, UpdateTime: &suiteTime}},
 	}
 }
 
@@ -302,7 +303,7 @@ func TestInfoPanelAllRendersBothSourcesWithMySekaiLevel(t *testing.T) {
 		name, _ := source.(map[string]any)["name"].(string)
 		names = append(names, name)
 	}
-	if strings.Join(names, ",") != "Suite数据,Mysekai数据" {
+	if strings.Join(names, ",") != i18n.T("render.data_source.suite")+","+i18n.T("render.data_source.mysekai") {
 		t.Fatalf("data sources = %v, want Suite then MySekai", names)
 	}
 	if level, _ := body["mysekai_level"].(float64); level != 9 {

@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/utils/usererror"
 )
 
@@ -56,7 +57,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		MainGenres: collector.mainGenres(mainGenreMap, subGenreMap),
 	}
 	if options.showProgress && collector.totalAll > 0 {
-		message := fmt.Sprintf("总收集进度（不含生日家具）: %d/%d (%.1f%%)", collector.totalObtained, collector.totalAll, percent(collector.totalObtained, collector.totalAll))
+		message := common.ProgressText(i18n.M("render_mysekai.progress.fixture_total"), collector.totalObtained, collector.totalAll)
 		request.ProgressMessage = &message
 	}
 	return request, nil
@@ -282,7 +283,7 @@ func (c *fixtureListCollector) progressMessage(obtained, total int) *string {
 	if !c.options.showProgress || total <= 0 {
 		return nil
 	}
-	message := fmt.Sprintf("%d/%d (%.1f%%)", obtained, total, percent(obtained, total))
+	message := common.ProgressRatio(obtained, total)
 	return &message
 }
 
@@ -365,7 +366,7 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 		subGenre := subGenreMap[subGenreID]
 
 		request := drawing.MysekaiFixtureDetailRequest{
-			Title:              fmt.Sprintf("【%s-%d】%s", strings.ToUpper(region.String()), fixtureID, stringValue(fixture["name"])),
+			Title:              i18n.T("render_mysekai.fixture.title", i18n.Data{"Region": i18n.RegionLabel(region.String()), "ID": fixtureID, "Name": stringValue(fixture["name"])}),
 			Images:             fixtureColorImages(func(p string) string { return c.regionPath(region, p) }, fixture),
 			MainGenreName:      stringValue(mainGenre["name"]),
 			MainGenreImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(mainGenre["assetbundleName"]))),

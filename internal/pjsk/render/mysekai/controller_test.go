@@ -18,6 +18,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 
 	json "haruki-cloud/internal/jsonutil"
@@ -851,7 +852,7 @@ func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Suite数据", Source: new("suite_dump"), Mode: new("leader")},
+			{Name: common.DataSourceLabel(drawing.DataSourceSuite), Kind: drawing.DataSourceSuite, Source: new("suite_dump"), Mode: new("leader")},
 		},
 	}
 	merged := map[string]any{
@@ -873,7 +874,7 @@ func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 	if len(got.DataSources) != 2 {
 		t.Fatalf("expected 2 data sources, got %+v", got.DataSources)
 	}
-	if got.DataSources[1].Name != "Mysekai数据" {
+	if got.DataSources[1].Name != common.DataSourceLabel(drawing.DataSourceMySekai) {
 		t.Fatalf("unexpected mysekai data source: %+v", got.DataSources[1])
 	}
 	if got.DataSources[1].UpdateTime == nil || *got.DataSources[1].UpdateTime != 1776000000123 {
@@ -898,7 +899,7 @@ func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testin
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Sekai API", Mode: new("leader")},
+			{Name: common.DataSourceLabel(drawing.DataSourcePublic), Kind: drawing.DataSourcePublic, Mode: new("leader")},
 		},
 	}
 	merged := map[string]any{
@@ -913,8 +914,8 @@ func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testin
 	if got == nil || len(got.DataSources) != 1 {
 		t.Fatalf("expected one mysekai data source, got %+v", got)
 	}
-	if got.DataSources[0].Name != "Mysekai数据" {
-		t.Fatalf("expected single source renamed to Mysekai数据, got %+v", got.DataSources[0])
+	if got.DataSources[0].Name != common.DataSourceLabel(drawing.DataSourceMySekai) {
+		t.Fatalf("expected single source renamed to the MySekai label, got %+v", got.DataSources[0])
 	}
 	if got.DataSources[0].UpdateTime == nil || *got.DataSources[0].UpdateTime != 1776000000000 {
 		t.Fatalf("unexpected mysekai update time: %+v", got.DataSources[0].UpdateTime)
@@ -937,7 +938,7 @@ func TestMysekaiProfileCardKeepsBothSourcesWhenRequested(t *testing.T) {
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Suite数据", Source: new("suite_dump"), Mode: new("leader")},
+			{Name: common.DataSourceLabel(drawing.DataSourceSuite), Kind: drawing.DataSourceSuite, Source: new("suite_dump"), Mode: new("leader")},
 		},
 	}
 	merged := map[string]any{
@@ -952,7 +953,7 @@ func TestMysekaiProfileCardKeepsBothSourcesWhenRequested(t *testing.T) {
 	if got == nil || len(got.DataSources) != 2 {
 		t.Fatalf("expected suite + mysekai data sources, got %+v", got)
 	}
-	if got.DataSources[0].Name != "Suite数据" || got.DataSources[1].Name != "Mysekai数据" {
+	if got.DataSources[0].Name != common.DataSourceLabel(drawing.DataSourceSuite) || got.DataSources[1].Name != common.DataSourceLabel(drawing.DataSourceMySekai) {
 		t.Fatalf("unexpected data source order: %+v", got.DataSources)
 	}
 	if got.DataSources[0].Source != nil || got.DataSources[0].Mode != nil {
@@ -1482,7 +1483,7 @@ func TestBuildDoorUpgradeRequestUsesMysekaiSourceOnly(t *testing.T) {
 				LeaderImagePath: "user/leader.png",
 			},
 			DataSources: []drawing.ProfileDataSource{
-				{Name: "Suite数据"},
+				{Name: common.DataSourceLabel(drawing.DataSourceSuite), Kind: drawing.DataSourceSuite},
 			},
 		},
 	})
@@ -1492,8 +1493,8 @@ func TestBuildDoorUpgradeRequestUsesMysekaiSourceOnly(t *testing.T) {
 	if req.Profile == nil || len(req.Profile.DataSources) != 1 {
 		t.Fatalf("expected one top data source, got %+v", req.Profile)
 	}
-	if req.Profile.DataSources[0].Name != "Suite数据" {
-		t.Fatalf("expected top source to be Suite数据, got %+v", req.Profile.DataSources)
+	if req.Profile.DataSources[0].Name != common.DataSourceLabel(drawing.DataSourceSuite) {
+		t.Fatalf("expected top source to be the suite label, got %+v", req.Profile.DataSources)
 	}
 	if req.Profile.DataSources[0].Source != nil || req.Profile.DataSources[0].Mode != nil {
 		t.Fatalf("expected single source details to be hidden, got %+v", req.Profile.DataSources[0])
@@ -1536,7 +1537,7 @@ func TestBuildResourceRequestUsesMysekaiSourceOnly(t *testing.T) {
 				LeaderImagePath: "user/leader.png",
 			},
 			DataSources: []drawing.ProfileDataSource{
-				{Name: "Suite数据"},
+				{Name: common.DataSourceLabel(drawing.DataSourceSuite), Kind: drawing.DataSourceSuite},
 			},
 		},
 	})
@@ -1546,8 +1547,8 @@ func TestBuildResourceRequestUsesMysekaiSourceOnly(t *testing.T) {
 	if len(req.Profile.DataSources) != 1 {
 		t.Fatalf("expected one top data source, got %+v", req.Profile.DataSources)
 	}
-	if req.Profile.DataSources[0].Name != "Mysekai数据" {
-		t.Fatalf("expected top source to be Mysekai数据, got %+v", req.Profile.DataSources)
+	if req.Profile.DataSources[0].Name != common.DataSourceLabel(drawing.DataSourceMySekai) {
+		t.Fatalf("expected top source to be the MySekai label, got %+v", req.Profile.DataSources)
 	}
 	if req.Profile.DataSources[0].Source != nil || req.Profile.DataSources[0].Mode != nil {
 		t.Fatalf("expected single source details to be hidden, got %+v", req.Profile.DataSources[0])

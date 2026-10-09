@@ -22,7 +22,6 @@ const (
 	MaxHousingCompetitionSampleCount         = 10
 	DefaultHousingCompetitionRefreshInterval = 10 * time.Second
 	MaxHousingCompetitionRankCount           = 5
-	HousingCompetitionNotice                 = "基于统计得出结果并不一定精确，仅供参考"
 	housingCompetitionIdleCheckInterval      = time.Hour
 )
 
@@ -145,8 +144,8 @@ func (c *Controller) BuildHousingCompetitionLine(ctx context.Context, api Housin
 	request := drawing.MysekaiHousingCompetitionRequest{
 		CompetitionID:     competition.ID,
 		Region:            region.String(),
-		Name:              strings.TrimSpace("烤森百景 " + competition.Name),
-		Description:       drawing.StringPtr(HousingCompetitionNotice),
+		Name:              strings.TrimSpace(i18n.T("render_mysekai.housing.title", i18n.Data{"Name": competition.Name})),
+		Description:       drawing.StringPtr(i18n.T("render_mysekai.housing.notice")),
 		BannerImagePath:   stringPtrIfNotEmpty(competition.BannerImgPath),
 		BannerImageBase64: controller.housingCompetitionBannerBase64(competition),
 		SampleCount:       refreshedCount,
@@ -430,7 +429,7 @@ func (c *Controller) housingCompetitionInfoFromMasterdata(item map[string]any) H
 		BackNumberAccentColorCode:          stringValueFrom(item, "backNumberAccentColorCode"),
 	}
 	if info.Name == "" {
-		info.Name = fmt.Sprintf("第%d期", info.ID)
+		info.Name = i18n.T("render_mysekai.housing.round_fallback", i18n.Data{"Round": info.ID})
 	}
 	if info.BackgroundImageAssetbundleFileName != "" {
 		info.BannerImgPath = c.regionPath(

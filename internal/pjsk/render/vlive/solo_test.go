@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
@@ -114,7 +115,7 @@ func TestBuildListRequestCollapsesSoloGroupWithoutGroupTable(t *testing.T) {
 		t.Fatalf("expected a collapsed entry named after the first live, got %+v", req.Lives)
 	}
 	text, err := controller.RenderText(ListQuery{Region: "jp", Now: soloTestNow})
-	if err != nil || !strings.Contains(text, "【2】ソロ（一歌）") || !strings.Contains(text, "共3场个人Live") || strings.Contains(text, "【492】") {
+	if err != nil || !strings.Contains(text, "【2】ソロ（一歌）") || !strings.Contains(text, soloCountLine(3)) || strings.Contains(text, "【492】") {
 		t.Fatalf("text list = %q err=%v", text, err)
 	}
 }
@@ -199,4 +200,10 @@ func TestIsDetailQuery(t *testing.T) {
 			t.Errorf("IsDetailQuery(%q) = %v, want %v", query, got, want)
 		}
 	}
+}
+
+// soloCountLine is the "N 场个人虚拟 Live" line of a collapsed solo entry.
+func soloCountLine(count int) string {
+	entry := i18n.T("render_vlive.text.entry_solo", i18n.Data{"ID": 0, "Name": "", "Count": count, "Start": "", "End": ""})
+	return strings.Split(entry, "\n")[1]
 }

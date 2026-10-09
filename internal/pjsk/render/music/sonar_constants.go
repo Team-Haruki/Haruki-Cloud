@@ -10,4 +10,7 @@ const (
 	aprilFoolLabel           = "April Fool"
 	ensembleStarsCollabLabel = "Ensemble Stars!! Collab"
 	virtualSingerLowerLabel  = "virtual singer"
+	// Match sources recorded on ambiguous-query errors (internal, not shown).
+	musicMatchSourceTitle = "title_or_alias"
+	musicMatchSourceFuzzy = "fuzzy"
 )

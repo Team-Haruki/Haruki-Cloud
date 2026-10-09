@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -261,39 +262,38 @@ func (c *Controller) RenderText(query ListQuery) (string, error) {
 		return "", err
 	}
 	if len(lives) == 0 {
-		return "当前没有虚拟Live", nil
+		return i18n.T("render_vlive.text.empty"), nil
 	}
 
-	loc, timeZone := displaytime.LoadLocation(query.TimeZone)
+	loc, _ := displaytime.LoadLocation(query.TimeZone)
 
 	var groups map[int]*Group
 	if source, ok := c.sources.SourceForRegion(region); ok {
 		groups = c.groupsFor(source, region, lives)
 	}
 
-	var builder strings.Builder
-	builder.WriteString(fmt.Sprintf("%s 虚拟Live列表", strings.ToUpper(region.String())))
+	blocks := []string{i18n.T("render_vlive.text.header", i18n.Data{"Region": i18n.RegionLabel(region.String())})}
 	for _, live := range collapseSoloGroups(lives, groups) {
-		builder.WriteString("\n\n")
-		builder.WriteString(fmt.Sprintf("【%d】%s\n", live.ID, fallbackLiveName(live.Name, live.ID)))
+		name := fallbackLiveName(live.Name, live.ID)
+		start := i18n.FormatUserTime(live.StartAt, loc)
+		end := i18n.FormatUserTime(live.EndAt, loc)
+		var entry, status string
 		if len(live.Members) > 0 {
-			builder.WriteString(fmt.Sprintf("共%d场个人Live\n", len(live.Members)))
+			entry = i18n.T("render_vlive.text.entry_solo", i18n.Data{"ID": live.ID, "Name": name, "Count": len(live.Members), "Start": start, "End": end})
+		} else {
+			entry = i18n.T("render_vlive.text.entry", i18n.Data{"ID": live.ID, "Name": name, "Start": start, "End": end})
 		}
-		builder.WriteString(fmt.Sprintf("开始: %s\n", displaytime.FormatTime(live.StartAt.In(loc), virtualLiveTimeLayout)))
-		builder.WriteString(fmt.Sprintf("结束: %s\n", displaytime.FormatTime(live.EndAt.In(loc), virtualLiveTimeLayout)))
-		builder.WriteString("状态: ")
 		switch {
 		case live.Living:
-			builder.WriteString("当前Live进行中")
+			status = i18n.T("render_vlive.text.status_live", i18n.Data{"Rest": live.RestCount})
 		case live.Current != nil:
-			builder.WriteString(fmt.Sprintf("下一场: %s", displaytime.FormatTime(live.Current.StartAt.In(loc), virtualLiveTimeLayout)))
+			status = i18n.T("render_vlive.text.status_next", i18n.Data{"Next": i18n.FormatUserTime(live.Current.StartAt, loc), "Rest": live.RestCount})
 		default:
-			builder.WriteString("已结束")
+			status = i18n.T("render_vlive.text.status_ended", i18n.Data{"Rest": live.RestCount})
 		}
-		builder.WriteString(fmt.Sprintf(" | 剩余场次: %d", live.RestCount))
+		blocks = append(blocks, entry+"\n"+status)
 	}
-	builder.WriteString(fmt.Sprintf("\n\n时区: %s", timeZone))
-	return builder.String(), nil
+	return strings.Join(blocks, "\n\n"), nil
 }
 
 func (c *Controller) resolveRegion(region string) renderregion.Value {
@@ -493,7 +493,7 @@ func unixTime(value int64) time.Time {
 
 func fallbackLiveName(name string, id int) string {
 	if strings.TrimSpace(name) == "" {
-		return fmt.Sprintf("Virtual Live #%d", id)
+		return i18n.T("render_vlive.fallback_name", i18n.Data{"ID": id})
 	}
 	return name
 }

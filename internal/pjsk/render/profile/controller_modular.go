@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -126,7 +127,7 @@ func buildDefaultModularProfilePreset(
 
 	return drawing.ModularProfilePreset{
 		ID:     "default_widgets_v1",
-		Name:   "默认模块个人信息",
+		Name:   i18n.T("render_profile.modular.default_preset"),
 		Source: "cloud_default",
 		Theme: map[string]any{
 			"style":            "dark_soft_panel",

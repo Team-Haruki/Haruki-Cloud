@@ -8,7 +8,6 @@ import (
 
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/observability/commandtrace"
-	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/usererror"
 )
@@ -23,9 +22,9 @@ type BlueprintTermQuery struct {
 	NowMillis int64 `json:"-"`
 }
 
-var blueprintTermTabTitles = map[string]string{
-	"limited_term":         "限时蓝图",
-	"birthday_anniversary": "生日/周年蓝图",
+var blueprintTermTabTitles = map[string]i18n.Message{
+	"limited_term":         i18n.M("render_mysekai.blueprint_term.tab.limited_term"),
+	"birthday_anniversary": i18n.M("render_mysekai.blueprint_term.tab.birthday_anniversary"),
 }
 
 var blueprintTermTabOrder = map[string]int{"limited_term": 0, "birthday_anniversary": 1}
@@ -34,10 +33,10 @@ var blueprintTermTabOrder = map[string]int{"limited_term": 0, "birthday_annivers
 // gets one generic tab.
 func blueprintTermTabTitle(tabType string) string {
 	if title, ok := blueprintTermTabTitles[tabType]; ok {
-		return title
+		return title.String()
 	}
 	if tabType == "" {
-		return "限时蓝图"
+		return blueprintTermTabTitles["limited_term"].String()
 	}
 	return tabType
 }
@@ -167,20 +166,22 @@ func (c *Controller) fixtureBlueprintTermInfo(blueprintID int, now int64) []stri
 	start := int64(intNumber(chosen["startAt"], 0))
 	end := int64(intNumber(chosen["endAt"], 0))
 	label := blueprintTermTabTitle(stringValue(chosen["mysekaiBlueprintTermTabType"]))
-	period := fmt.Sprintf("%s ~ %s", formatBlueprintTermTime(start), formatBlueprintTermTime(end))
-	status := ""
+	startAt, endAt := formatBlueprintTermTime(start), formatBlueprintTermTime(end)
+	var line string
 	switch {
 	case end < now:
-		status = "(已结束)"
+		line = i18n.T("render_mysekai.blueprint_term.period_ended", i18n.Data{"Tab": label, "Start": startAt, "End": endAt})
 	case start > now:
-		status = "(未开始)"
+		line = i18n.T("render_mysekai.blueprint_term.period_upcoming", i18n.Data{"Tab": label, "Start": startAt, "End": endAt})
+	default:
+		line = i18n.T("render_mysekai.blueprint_term.period", i18n.Data{"Tab": label, "Start": startAt, "End": endAt})
 	}
-	info := []string{fmt.Sprintf("【⏰%s %s%s】", label, period, status)}
+	info := []string{line}
 	if limit := intNumber(chosen["craftLimit"], 0); limit > 0 {
-		info = append(info, fmt.Sprintf("【限时期间最多制作%d次】", limit))
+		info = append(info, i18n.T("render_mysekai.blueprint_term.craft_limit", i18n.Data{"Count": limit}))
 	}
 	if costs := c.blueprintTermCostText(intNumber(chosen["mysekaiBlueprintTermMysekaiMaterialCostGroupId"], 0)); costs != "" {
-		info = append(info, fmt.Sprintf("【限时额外材料：%s】", costs))
+		info = append(info, i18n.T("render_mysekai.blueprint_term.extra_materials", i18n.Data{"Materials": costs}))
 	}
 	return info
 }
@@ -199,15 +200,15 @@ func (c *Controller) blueprintTermCostText(groupID int) string {
 		materialID := intNumber(row["mysekaiMaterialId"], 0)
 		name := stringValue(materials[materialID]["name"])
 		if name == "" {
-			name = fmt.Sprintf("素材#%d", materialID)
+			name = i18n.T("render_mysekai.blueprint_term.material_fallback", i18n.Data{"ID": materialID})
 		}
 		parts = append(parts, fmt.Sprintf("%s×%d", name, intNumber(row["quantity"], 0)))
 	}
 	return strings.Join(parts, "、")
 }
 
-func formatBlueprintTermTime(ms int64) string {
-	return displaytime.FormatTime(displaytime.TimeFromUnixMillis(ms, displaytime.DefaultTimeZone), "2006-01-02 15:04")
+func formatBlueprintTermTime(ms int64) i18n.Message {
+	return i18n.FormatUserTime(time.UnixMilli(ms), nil)
 }
 
 // RenderBlueprintTerm renders the limited-time blueprint view.

@@ -4,7 +4,9 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/testutil"
 )
@@ -174,7 +176,15 @@ func TestFixtureDetailShowsBlueprintTermLines(t *testing.T) {
 		t.Fatalf("BuildFixtureDetailRequests() error = %v", err)
 	}
 	info := strings.Join(reqs[0].BasicInfo, "\n")
-	for _, want := range []string{"生日/周年蓝图", "(未开始)", "【限时期间最多制作1次】", "【限时额外材料：思い出のかけら×3】"} {
+	for _, want := range []string{
+		i18n.T("render_mysekai.blueprint_term.period_upcoming", i18n.Data{
+			"Tab":   i18n.T("render_mysekai.blueprint_term.tab.birthday_anniversary"),
+			"Start": i18n.FormatUserTime(time.UnixMilli(5000), nil),
+			"End":   i18n.FormatUserTime(time.UnixMilli(9000), nil),
+		}),
+		i18n.T("render_mysekai.blueprint_term.craft_limit", i18n.Data{"Count": 1}),
+		i18n.T("render_mysekai.blueprint_term.extra_materials", i18n.Data{"Materials": "思い出のかけら×3"}),
+	} {
 		if !strings.Contains(info, want) {
 			t.Fatalf("basic info missing %q:\n%s", want, info)
 		}

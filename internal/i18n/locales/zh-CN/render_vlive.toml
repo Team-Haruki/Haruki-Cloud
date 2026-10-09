@@ -1,0 +1,33 @@
+# 图片渲染：虚拟 Live 图片里由 Cloud 提供的标签，以及虚拟 Live 列表的文字版。
+
+[render_vlive.fallback_name]
+description = "虚拟 Live 在游戏数据里没有名称时显示的占位名称（图片和文字版共用）。占位符：ID=虚拟 Live ID。"
+other = "虚拟 Live #{{.ID}}"
+
+[render_vlive.text.empty]
+description = "虚拟 Live 列表文字版：当前没有可显示的虚拟 Live。"
+other = "当前没有虚拟 Live"
+
+[render_vlive.text.header]
+description = "虚拟 Live 列表文字版的第一行。占位符：Region=区服显示名，如“日服(JP)”。"
+other = "{{.Region}} 虚拟 Live 列表"
+
+[render_vlive.text.entry]
+description = "虚拟 Live 列表文字版里一场虚拟 Live 的开头几行。占位符：ID=虚拟 Live ID；Name=虚拟 Live 名称；Start=开始时间；End=结束时间；时间按 FormatUserTime 格式化。"
+other = "【{{.ID}}】{{.Name}}\n开始：{{.Start}}\n结束：{{.End}}"
+
+[render_vlive.text.entry_solo]
+description = "虚拟 Live 列表文字版里一组个人虚拟 Live 的开头几行。占位符：ID=虚拟 Live ID；Name=虚拟 Live 名称；Count=个人虚拟 Live 场数；Start=开始时间；End=结束时间。"
+other = "【{{.ID}}】{{.Name}}\n共 {{.Count}} 场个人虚拟 Live\n开始：{{.Start}}\n结束：{{.End}}"
+
+[render_vlive.text.status_live]
+description = "虚拟 Live 列表文字版的状态行：正在进行。占位符：Rest=剩余场次。"
+other = "状态：进行中 | 剩余场次：{{.Rest}}"
+
+[render_vlive.text.status_next]
+description = "虚拟 Live 列表文字版的状态行：下一场的开始时间。占位符：Next=下一场开始时间；Rest=剩余场次。"
+other = "状态：下一场 {{.Next}} | 剩余场次：{{.Rest}}"
+
+[render_vlive.text.status_ended]
+description = "虚拟 Live 列表文字版的状态行：已结束。占位符：Rest=剩余场次。"
+other = "状态：已结束 | 剩余场次：{{.Rest}}"

@@ -187,7 +187,7 @@ func normalizeAmbiguousAliasMusic(source DataSource, aliasErr error, now int64, 
 	if len(ids) == 0 {
 		return nil, aliasErr
 	}
-	musicInfo, err := selectUniqueMusicMatch("曲名/别名", collectVisibleMusicMatchesByID(source, ids, now, allowUnreleased))
+	musicInfo, err := selectUniqueMusicMatch(musicMatchSourceTitle, collectVisibleMusicMatchesByID(source, ids, now, allowUnreleased))
 	if musicInfo == nil && err == nil {
 		return nil, aliasErr
 	}

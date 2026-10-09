@@ -3,6 +3,7 @@ package education
 import (
 	"context"
 	"errors"
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"math"
 	"os"
@@ -2068,7 +2069,7 @@ func TestBuildCharacterMissionOverviewIncludesAllCharacterAreaItemMission(t *tes
 		t.Fatalf("unexpected achievement order: %q, %q", req.AchievementRows[0].MissionType, req.AchievementRows[1].MissionType)
 	}
 	row := req.AchievementRows[1]
-	if row.Title != "想いの大樹升级次数" || row.Current != 3 {
+	if row.Title != i18n.T("render_education.mission.area_item_level_up_all_character") || row.Current != 3 {
 		t.Fatalf("unexpected all-character row: %+v", row)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
@@ -121,17 +122,14 @@ func TestRenderTextFiltersAndFormatsLives(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RenderText() error = %v", err)
 	}
-	if !strings.Contains(text, "JP 虚拟Live列表") {
+	if !strings.HasPrefix(text, i18n.T("render_vlive.text.header", i18n.Data{"Region": i18n.RegionLabel("jp")})) {
 		t.Fatalf("missing header: %q", text)
 	}
-	if !strings.Contains(text, "【1001】Future Live") || !strings.Contains(text, "下一场:") {
+	if !strings.Contains(text, "【1001】Future Live") || !strings.Contains(text, i18n.T("render_vlive.text.status_next", i18n.Data{"Next": i18n.FormatUserTime(now.Add(2*time.Hour), nil), "Rest": 2})) {
 		t.Fatalf("missing future live text: %q", text)
 	}
-	if !strings.Contains(text, "【1002】Ongoing Live") || !strings.Contains(text, "当前Live进行中") {
+	if !strings.Contains(text, "【1002】Ongoing Live") || !strings.Contains(text, i18n.T("render_vlive.text.status_live", i18n.Data{"Rest": 0})) {
 		t.Fatalf("missing ongoing live text: %q", text)
-	}
-	if !strings.Contains(text, "剩余场次: 2") {
-		t.Fatalf("missing rest count: %q", text)
 	}
 	if strings.Contains(text, "Too Far") || strings.Contains(text, "Already Ended") || strings.Contains(text, "Too Long") {
 		t.Fatalf("unexpected filtered lives in text: %q", text)
@@ -150,7 +148,7 @@ func TestRenderTextReturnsEmptyMessageWhenNoUpcomingLives(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RenderText() error = %v", err)
 	}
-	if text != "当前没有虚拟Live" {
+	if text != i18n.T("render_vlive.text.empty") {
 		t.Fatalf("unexpected empty text: %q", text)
 	}
 }

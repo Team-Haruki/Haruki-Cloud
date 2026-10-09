@@ -13,10 +13,6 @@ import (
 	"haruki-cloud/utils/usererror"
 )
 
-const (
-	skPredictionNotice = "预测数据仅供参考，请以实际为准规划好冲榜计划"
-)
-
 func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineRequest, error) {
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	defer finishBuild()
@@ -103,12 +99,12 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 		Region:           normalized.Region,
 		StartAt:          meta.startAt,
 		AggregateAt:      meta.aggregateAt,
-		Name:             strings.TrimSpace(meta.name + " 预测"),
+		Name:             strings.TrimSpace(i18n.T("render_sk.predict.title", i18n.Data{"Event": meta.name})),
 		BannerImgPath:    meta.bannerPath,
 		Ranks:            currentRanks,
 		CurrentRanks:     currentRanks,
 		ForecastColumns:  columns,
-		PredictionNotice: skPredictionNotice,
+		PredictionNotice: i18n.T("render_sk.predict.notice"),
 		Full:             normalized.Full,
 	}
 	c.applyForecastWorldBloomFields(&line, normalized)
@@ -157,14 +153,18 @@ func buildForecastColumn(sourceKey string, sourceData ForecastSourceData, ranks 
 }
 
 func forecastSourceName(sourceKey string) string {
-	names := map[string]string{
-		"33kit": "33Kit预测", "moesekai": "Moesekai预测", "sekarun": "SekaRun预测",
-		"local": "本地预测", "forecast": "预测",
-	}
-	if name := strings.TrimSpace(names[sourceKey]); name != "" {
-		return name
+	if name, ok := forecastSourceNames[sourceKey]; ok {
+		return name.String()
 	}
 	return sourceKey
+}
+
+var forecastSourceNames = map[string]i18n.Message{
+	"33kit":    i18n.M("render_sk.predict.source.kit33"),
+	"moesekai": i18n.M("render_sk.predict.source.moesekai"),
+	"sekarun":  i18n.M("render_sk.predict.source.sekarun"),
+	"local":    i18n.M("render_sk.predict.source.local"),
+	"forecast": i18n.M("render_sk.predict.source.generic"),
 }
 
 func (c *Controller) buildCurrentForecastRanks(req TrackerRankQuery, ranks []int) []drawing.RankInfo {

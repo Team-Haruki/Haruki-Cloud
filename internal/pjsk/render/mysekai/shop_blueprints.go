@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"sort"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/render/common"
 )
 
 // The client uses !isBought for each offered blueprint. purchaseLimit in
@@ -79,7 +81,7 @@ func (c *Controller) buildBlueprintShopGroups(query ShopQuery, merged map[string
 		shopType := "blueprint_" + period
 		group := groups[shopType]
 		if group == nil {
-			title := mysekaiShopTypeTitles[shopType]
+			title := mysekaiShopTypeTitle(shopType)
 			group = &drawing.MysekaiShopGroup{ShopType: shopType, Title: &title}
 			groups[shopType] = group
 		}
@@ -98,28 +100,28 @@ func decorateShopRequest(request *drawing.MysekaiShopRequest) {
 	for gi := range request.Shops {
 		for ii := range request.Shops[gi].Items {
 			item := &request.Shops[gi].Items[ii]
-			name := fmt.Sprintf("ID %d", item.ID)
+			name := common.ItemFallbackName(item.ID)
 			if item.Name != nil && *item.Name != "" {
 				name = *item.Name
 			}
 			if item.Owned != nil {
 				if *item.Owned {
-					name += "【已持有】"
+					name += i18n.T("render_mysekai.shop.item.owned")
 				} else {
-					name += "【未持有】"
+					name += i18n.T("render_mysekai.shop.item.not_owned")
 				}
 			}
 			if item.MaterialCapacityCount != nil && *item.MaterialCapacityCount == 0 {
-				name += "【材料仓库已满】"
+				name += i18n.T("render_mysekai.shop.item.storage_full")
 			}
 			if request.PassActive != nil && !*request.PassActive {
-				name += "【需通行证】"
+				name += i18n.T("render_mysekai.shop.item.pass_required")
 			}
 			if item.IsBought != nil && *item.IsBought {
-				name += "【本期已购买】"
+				name += i18n.T("render_mysekai.shop.item.bought")
 			}
 			if item.RemainingCount != nil && item.IsBought == nil {
-				name += fmt.Sprintf("【剩余%d次】", *item.RemainingCount)
+				name += i18n.T("render_mysekai.shop.item.remaining", i18n.Data{"Count": *item.RemainingCount})
 			}
 			item.Name = &name
 		}

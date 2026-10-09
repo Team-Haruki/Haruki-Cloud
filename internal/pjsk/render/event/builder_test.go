@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -149,8 +150,8 @@ func TestBuildEventListRequestWorldBloomNoCharacterAvatar(t *testing.T) {
 	}
 
 	brief := req.EventInfo[0]
-	if brief.EventType != "WorldLink" {
-		t.Fatalf("expected WorldLink event type, got %q", brief.EventType)
+	if brief.EventType != i18n.T("render_event.type.world_bloom") {
+		t.Fatalf("expected WL event type, got %q", brief.EventType)
 	}
 	if brief.EventCharaPath != nil {
 		t.Fatalf("WL should not expose character avatar in list, got %q", *brief.EventCharaPath)

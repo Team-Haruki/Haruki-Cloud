@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -17,13 +18,13 @@ type cardDistributionBucket struct {
 
 var cardBoxAttributeOrder = []string{"cute", "cool", "pure", "happy", "mysterious"}
 
-var cardBoxAttributeLabels = map[string]string{
-	"cute":       "可爱",
-	"cool":       "帅气",
-	"pure":       "纯真",
-	"happy":      "快乐",
-	"mysterious": "神秘",
-	"unknown":    "未分类",
+var cardBoxAttributeLabels = map[string]i18n.Message{
+	"cute":       i18n.M("render_card.attr.cute"),
+	"cool":       i18n.M("render_card.attr.cool"),
+	"pure":       i18n.M("render_card.attr.pure"),
+	"happy":      i18n.M("render_card.attr.happy"),
+	"mysterious": i18n.M("render_card.attr.mysterious"),
+	"unknown":    i18n.M("render_card.attr.unknown"),
 }
 
 var cardBoxAttributeColors = map[string]string{
@@ -209,8 +210,8 @@ func cardBoxAttributeSortKey(attr string) int {
 }
 
 func cardBoxAttributeLabel(attr string) string {
-	if label := cardBoxAttributeLabels[attr]; label != "" {
-		return label
+	if label, ok := cardBoxAttributeLabels[attr]; ok {
+		return label.String()
 	}
 	return attr
 }

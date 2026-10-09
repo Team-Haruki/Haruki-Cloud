@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -45,7 +46,7 @@ func testCustomChartTitlesAndArtists(t *testing.T) {
 		{customChartEntry{UserName: " Maker ", ID: " score "}, "Maker/score"},
 		{customChartEntry{UserName: "Maker"}, "Maker"},
 		{customChartEntry{ID: "score"}, "score"},
-		{customChartEntry{}, "自制谱"},
+		{customChartEntry{}, i18n.T("render_music.custom_chart.fallback_author")},
 	}
 	for _, tc := range artistCases {
 		if got := buildCustomChartArtist(tc.entry); got != tc.want {
@@ -393,7 +394,7 @@ func testCustomChartBPMFormatting(t *testing.T) {
 		{EventType: 0, ChangeValue: 240},
 		{EventType: 0, ChangeValue: 90},
 	}
-	if got := formatCustomChartBPMs(events); got != "90-240（4段）" {
+	if got := formatCustomChartBPMs(events); got != i18n.T("render_music.custom_chart.bpm_range", i18n.Data{"Min": "90", "Max": "240", "Count": 4}) {
 		t.Fatalf("formatted BPMs = %q", got)
 	}
 	if got := formatCustomChartBPMs(events[:3]); got != "" {

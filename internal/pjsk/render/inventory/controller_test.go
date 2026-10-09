@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -424,7 +425,7 @@ func TestBuildListRequestFromSnapshotFiltersSpecialInventoryItems(t *testing.T) 
 			testutil.Require(t, !(err != nil), "BuildListRequestFromSnapshot() error = %v", err)
 			testutil.Require(t, !(req.TotalItems != len(tt.wantIDs)), "TotalItems = %d, want %d", req.TotalItems, len(tt.wantIDs))
 
-			if tt.filter == FilterBoost && req.Sections[0].Title != "演出能量 · 可恢复体力 40x🔥" {
+			if tt.filter == FilterBoost && req.Sections[0].Title != i18n.T("render_inventory.section.boost_total", i18n.Data{"Title": i18n.T("render_inventory.section.boost"), "Total": 40}) {
 				t.Fatalf("unexpected boost title: %q", req.Sections[0].Title)
 			}
 			for _, id := range tt.wantIDs {

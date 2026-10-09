@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
@@ -321,7 +322,7 @@ func TestMusicBoardTextQueryAndSmallHelpers(t *testing.T) {
 		{LiveType: "solo", Target: "tps", Page: 1, Skills: []float64{1, 1, 1, 1, 1}},
 	} {
 		title, subtitle := buildMusicBoardTexts(query, 3)
-		if !strings.Contains(title, "第1页/共3页") {
+		if !strings.Contains(title, i18n.PageLabel(1, 3).String()) {
 			t.Fatalf("board title = %q", title)
 		}
 		_ = subtitle

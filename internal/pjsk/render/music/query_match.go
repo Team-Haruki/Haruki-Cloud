@@ -2,7 +2,6 @@ package music
 
 import (
 	"errors"
-	"fmt"
 	"slices"
 	"sort"
 	"strings"
@@ -114,25 +113,25 @@ func resolveUniqueMusicQuery(source DataSource, query string, allowUnreleased bo
 	if matches := collectMusicMatches(source, func(musicInfo *masterdata.Music) bool {
 		return strings.EqualFold(strings.TrimSpace(musicInfo.Title), query)
 	}, now, allowUnreleased); len(matches) > 0 {
-		return selectUniqueMusicMatch("曲名/别名", matches)
+		return selectUniqueMusicMatch(musicMatchSourceTitle, matches)
 	}
 
 	if matches := collectMusicMatches(source, func(musicInfo *masterdata.Music) bool {
 		return strings.Contains(strings.ToLower(strings.TrimSpace(musicInfo.Title)), queryLower)
 	}, now, allowUnreleased); len(matches) > 0 {
-		return selectUniqueMusicMatch("曲名/别名", matches)
+		return selectUniqueMusicMatch(musicMatchSourceTitle, matches)
 	}
 
 	if matches := collectLocalizedMusicMatches(source, func(title string) bool {
 		return strings.EqualFold(strings.TrimSpace(title), query)
 	}, now, allowUnreleased); len(matches) > 0 {
-		return selectUniqueMusicMatch("曲名/别名", matches)
+		return selectUniqueMusicMatch(musicMatchSourceTitle, matches)
 	}
 
 	if matches := collectLocalizedMusicMatches(source, func(title string) bool {
 		return strings.Contains(strings.ToLower(strings.TrimSpace(title)), queryLower)
 	}, now, allowUnreleased); len(matches) > 0 {
-		return selectUniqueMusicMatch("曲名/别名", matches)
+		return selectUniqueMusicMatch(musicMatchSourceTitle, matches)
 	}
 	if allowUnreleased {
 		return nil, notfound.Music(query)
@@ -178,7 +177,7 @@ func resolveUniqueMusicKeyword(source DataSource, keyword string, allowUnrelease
 	if len(matches) == 0 {
 		return nil, nil
 	}
-	return selectUniqueMusicMatch("曲名/别名", matches)
+	return selectUniqueMusicMatch(musicMatchSourceTitle, matches)
 }
 
 func collectMusicMatches(source DataSource, matcher func(*masterdata.Music) bool, now int64, allowUnreleased bool) []*masterdata.Music {
@@ -280,7 +279,7 @@ func dedupeMusicMatchTitles(matches []*masterdata.Music) map[int]string {
 		}
 		title := strings.TrimSpace(item.Title)
 		if title == "" {
-			title = fmt.Sprintf("music%d", item.ID)
+			title = i18n.T("render_music.fallback_title", i18n.Data{"ID": item.ID})
 		}
 		deduped[item.ID] = title
 	}

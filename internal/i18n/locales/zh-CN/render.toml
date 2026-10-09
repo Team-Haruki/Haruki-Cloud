@@ -1,0 +1,58 @@
+# 图片渲染：Cloud 发给 Drawing、会被画进图片的通用标签（各图片共用）。
+# 各图片自己的标签在 render_<领域>.toml。
+
+[render.data_source.suite]
+description = "个人信息卡片上的数据来源标签：玩家上传的抓包数据。Drawing 会去掉结尾的“数据”拼成“抓包更新时间”。"
+other = "抓包数据"
+
+[render.data_source.mysekai]
+description = "个人信息卡片上的数据来源标签：玩家上传的烤森数据。Drawing 会去掉结尾的“数据”拼成“烤森更新时间”。"
+other = "烤森数据"
+
+[render.data_source.public]
+description = "个人信息卡片上的数据来源标签：没有使用抓包数据，只用了游戏公开的个人信息。"
+other = "公开信息"
+
+[render.placeholder.nickname]
+description = "未绑定游戏账号时，图片顶部占位个人信息卡片上显示的昵称（Bot 自称）。"
+other = "HarukiBot"
+
+[render.fallback.character]
+description = "游戏数据里找不到角色名时显示的占位名称。占位符：ID=角色 ID。"
+other = "角色 #{{.ID}}"
+
+[render.fallback.event]
+description = "游戏数据里找不到活动名时显示的占位名称（榜线图、组卡图）。占位符：ID=活动 ID。"
+other = "活动 #{{.ID}}"
+
+[render.fallback.rank_name]
+description = "榜线图里某个名次的玩家名未知时显示的占位名称。占位符：Rank=名次。"
+other = "第 {{.Rank}} 名"
+
+[render.fallback.item]
+description = "游戏数据里找不到物品名时显示的占位名称（烤森商店等）。占位符：ID=物品 ID。"
+other = "物品 #{{.ID}}"
+
+[render.progress]
+description = "图片里带名称的收集进度，例如“总收集进度：12/40（30%）”。占位符：Label=进度名称，见 render_mysekai.progress.*；Ratio=进度数值，见 render.progress_ratio。"
+other = "{{.Label}}：{{.Ratio}}"
+
+[render.progress_ratio]
+description = "图片里的进度数值，例如烤森家具、唱片各分类旁的“12/40（30%）”。占位符：Done=已完成数量；Total=总数量；Percent=完成百分比，已带 %。"
+other = "{{.Done}}/{{.Total}}（{{.Percent}}）"
+
+[render.live_short.solo]
+description = "Live 类型的短标签，用在空间很小的位置（歌曲详情的排行矩阵行头、组卡图标题后缀）。完整写法见 format.live_type.*。"
+other = "单人"
+
+[render.live_short.multi]
+description = "Live 类型的短标签，用在空间很小的位置（歌曲详情的排行矩阵行头、组卡图标题后缀）。完整写法见 format.live_type.*。"
+other = "多人"
+
+[render.live_short.auto]
+description = "Live 类型的短标签，用在空间很小的位置（歌曲详情的排行矩阵行头、组卡图标题后缀）。完整写法见 format.live_type.*。"
+other = "自动"
+
+[render.live_short.mysekai]
+description = "组卡图标题后缀里的烤森组卡类型短标签。"
+other = "烤森"

@@ -1,0 +1,5 @@
+# 图片渲染：个人信息图片里由 Cloud 提供的标签。
+
+[render_profile.modular.default_preset]
+description = "模块化个人信息图片使用的默认模板名称（玩家没有自定义模板时）。"
+other = "默认模块化个人信息"

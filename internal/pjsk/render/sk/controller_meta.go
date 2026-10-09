@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/eventutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -32,7 +33,7 @@ func (c *Controller) resolveEventMeta(eventID int, region renderregion.Value) ev
 	const defaultWindow = int64(6 * time.Hour / time.Millisecond)
 	now := time.Now().UnixMilli()
 	meta := eventMeta{
-		name:        fmt.Sprintf("Event #%d", eventID),
+		name:        common.EventFallbackName(eventID),
 		startAt:     now - defaultWindow,
 		aggregateAt: now + defaultWindow,
 	}

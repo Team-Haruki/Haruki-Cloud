@@ -105,15 +105,47 @@ other = "已取消{{.Region}}默认绑定 {{.Account}}"
 description = "取消默认绑定成功但拿不到账号详情时的回复（正常情况下不会出现）。"
 other = "已取消默认绑定"
 
-# ---- 可见性（/隐藏id、/展示抓包、/隐藏烤森抓包 等） ----
+# ---- 可见性（/隐藏id、/隐藏sk、/隐藏个人信息、/隐藏逮捕、/隐藏全部、/展示抓包、/隐藏烤森抓包、/隐私设置 等） ----
 
 [account.visibility.hide_uid]
-description = "/隐藏id 成功：个人信息和查询结果里不再显示完整的游戏 UID。占位符：Account=账号显示名（UID 已打码）。"
+description = "/隐藏id 成功：回复和图片里不再显示完整的游戏 UID（只打码，其他设置不变）。占位符：Account=账号显示名（UID 已打码）。"
 other = "已隐藏 {{.Account}} 的游戏 UID"
 
 [account.visibility.show_uid]
-description = "/展示id 成功：个人信息和查询结果里显示完整的游戏 UID。占位符：Account=账号显示名（完整 UID）。"
+description = "/展示id 成功：回复和图片里显示完整的游戏 UID。占位符：Account=账号显示名（完整 UID）。"
 other = "已展示 {{.Account}} 的游戏 UID"
+
+[account.visibility.hide_sk]
+description = "/隐藏sk 成功：其他人不能再通过 @ 查询该账号的活动排名。占位符：Account=账号显示名。"
+other = "已隐藏 {{.Account}} 的活动排名"
+
+[account.visibility.show_sk]
+description = "/显示sk 成功：其他人可以通过 @ 查询该账号的活动排名。占位符：Account=账号显示名。"
+other = "已展示 {{.Account}} 的活动排名"
+
+[account.visibility.hide_profile]
+description = "/隐藏个人信息 成功：其他人不能再通过 @ 查看该账号的个人信息和用该账号数据生成的结果（组卡、烤森等）。占位符：Account=账号显示名。"
+other = "已隐藏 {{.Account}} 的个人信息"
+
+[account.visibility.show_profile]
+description = "/显示个人信息 成功：其他人可以通过 @ 查看该账号的个人信息。占位符：Account=账号显示名。"
+other = "已展示 {{.Account}} 的个人信息"
+
+[account.visibility.hide_arrest]
+description = "/隐藏逮捕 成功：其他人不能再通过 @ 逮捕该账号。占位符：Account=账号显示名。"
+other = "已隐藏 {{.Account}} 的逮捕信息"
+
+[account.visibility.show_arrest]
+description = "/显示逮捕 成功：其他人可以通过 @ 逮捕该账号。占位符：Account=账号显示名。"
+other = "已展示 {{.Account}} 的逮捕信息"
+
+[account.visibility.hide_all]
+description = "/隐藏全部 成功：一次隐藏游戏 UID、活动排名、个人信息和逮捕信息（抓包数据和烤森数据有自己的指令，不受影响）。占位符：Account=账号显示名。"
+other = "已隐藏 {{.Account}} 的游戏 UID、活动排名、个人信息和逮捕信息"
+
+[account.visibility.show_all]
+description = "/显示全部 成功：一次展示游戏 UID、活动排名、个人信息和逮捕信息（抓包数据和烤森数据不受影响）。占位符：Account=账号显示名。"
+other = "已展示 {{.Account}} 的游戏 UID、活动排名、个人信息和逮捕信息"
 
 [account.visibility.hide_suite]
 description = "/隐藏抓包 成功：其他人不能再查询该账号的抓包数据。占位符：Account=账号显示名。"
@@ -130,6 +162,26 @@ other = "已隐藏 {{.Account}} 的烤森数据"
 [account.visibility.show_mysekai]
 description = "/展示烤森抓包 成功：恢复展示该账号的烤森数据。占位符：Account=账号显示名。"
 other = "已展示 {{.Account}} 的烤森数据"
+
+[account.visibility.changed]
+description = "可见性指令（/隐藏id、/隐藏sk、/隐藏全部、/展示抓包 等）的回复：先写改了什么，再列出该账号的全部可见性设置。占位符：Result=改了什么（account.visibility.hide_* 或 show_*）；Settings=全部设置（account.visibility.settings）。"
+other = "{{.Result}}\n当前设置：\n{{.Settings}}"
+
+[account.visibility.status]
+description = "/隐私设置 的回复：列出该账号的全部可见性设置。占位符：Account=账号显示名；Settings=全部设置（account.visibility.settings）。"
+other = "{{.Account}} 的隐私设置：\n{{.Settings}}"
+
+[account.visibility.settings]
+description = "一个账号的全部可见性设置，每项一行。占位符：UID=游戏 UID 是否完整显示；SK=其他人能否通过 @ 查询活动排名；Profile=其他人能否通过 @ 查看个人信息；Arrest=其他人能否通过 @ 逮捕；Suite=抓包数据是否展示；MySekai=烤森数据是否展示。取值都是 account.visibility.state.*。"
+other = "游戏 UID：{{.UID}}\n活动排名：{{.SK}}\n个人信息：{{.Profile}}\n逮捕信息：{{.Arrest}}\n抓包数据：{{.Suite}}\n烤森数据：{{.MySekai}}"
+
+[account.visibility.state.shown]
+description = "可见性设置的取值：展示。"
+other = "展示"
+
+[account.visibility.state.hidden]
+description = "可见性设置的取值：隐藏。"
+other = "隐藏"
 
 # ---- 验证（/pjsk验证、/pjsk验证列表） ----
 

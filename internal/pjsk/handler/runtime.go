@@ -221,7 +221,7 @@ func (rc *RequestContext) GetSelfTarget() *ResolvedGameTarget {
 		rc.selfTarget = &ResolvedGameTarget{
 			HarukiUserID: harukiUserID,
 			PJSKUserID:   binding.PJSKUserID,
-			Visible:      binding.Visible,
+			UIDVisible:   binding.Visibility.UID,
 			BgSettings:   binding.Bg,
 			Binding:      binding,
 		}

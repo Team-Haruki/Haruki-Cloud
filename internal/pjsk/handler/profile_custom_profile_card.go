@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"slices"
 	"strconv"
 	"strings"
@@ -78,7 +79,7 @@ func executeProfileCustomProfileCard(rc *RequestContext) (onebot11.Message, erro
 	mergeParams(rc.Cmd.Params, &params)
 
 	region := regionWithDefault(rc.Cmd.Region)
-	target, err := resolveGameTarget(rc.Ctx, params.userQueryParams(), region, rc.Cmd.RegionExplicit, rc.App)
+	target, err := resolveGameTarget(rc.Ctx, params.userQueryParams(), region, rc.Cmd.RegionExplicit, rc.App, accountdata.ExposureProfile)
 	if err != nil {
 		return nil, err
 	}

@@ -247,37 +247,91 @@ func (sekaiHandlers) ProfileShowMySekaiHandle() HarukiSekaiCommandHandler {
 	}, executeProfile)
 }
 
-func (sekaiHandlers) ProfileHideIDHandle() HarukiSekaiCommandHandler {
+// visibilitySettingHandler is a command that changes (or, for
+// ProfileModeVisibility, lists) the visibility settings of one of the
+// requester's own bindings, chosen with an optional u序号.
+func visibilitySettingHandler(path, mode string, commands ...string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		Commands: []string{
-			"/pjsk hide id", "/pjsk隐藏id", "/pjsk隐藏ID", "/隐藏id", "/隐藏ID", "/隐藏uid",
-		},
-		Path: "profile/visibility/hide",
+		Commands: commands,
+		Path:     path,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeHideID, newProfileSettingsParams(ctx, selector)), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, mode, newProfileSettingsParams(ctx, selector)), nil
 		},
 	}, executeProfile)
 }
 
+// ProfileHideIDHandle masks the game UID in replies and images. It used to
+// hide every exposure; /隐藏全部 does that now.
+func (sekaiHandlers) ProfileHideIDHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/visibility/hide", accountdata.ProfileModeHideID,
+		"/pjsk hide id", "/pjsk隐藏id", "/pjsk隐藏ID", "/隐藏id", "/隐藏ID", "/隐藏uid", //copylint:ignore 指令触发词
+	)
+}
+
 func (sekaiHandlers) ProfileShowIDHandle() HarukiSekaiCommandHandler {
-	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		Commands: []string{
-			"/pjsk show id", "/pjsk显示id", "/pjsk显示ID", "/pjsk展示id", "/pjsk展示ID",
-			"/展示id", "/展示ID", "/显示id", "/显示ID", "/显示uid",
-		},
-		Path: "profile/visibility/show",
-		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			selector, err := resolveSettingsSelector(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeShowID, newProfileSettingsParams(ctx, selector)), nil
-		},
-	}, executeProfile)
+	return visibilitySettingHandler("profile/visibility/show", accountdata.ProfileModeShowID,
+		"/pjsk show id", "/pjsk显示id", "/pjsk显示ID", "/pjsk展示id", "/pjsk展示ID", //copylint:ignore 指令触发词
+		"/展示id", "/展示ID", "/显示id", "/显示ID", "/显示uid", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileHideSKHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/sk/hide", accountdata.ProfileModeHideSK,
+		"/pjsk hide sk", "/pjsk隐藏sk", "/pjsk隐藏SK", "/隐藏sk", "/隐藏SK", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileShowSKHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/sk/show", accountdata.ProfileModeShowSK,
+		"/pjsk show sk", "/pjsk显示sk", "/pjsk显示SK", "/pjsk展示sk", "/pjsk展示SK", //copylint:ignore 指令触发词
+		"/显示sk", "/显示SK", "/展示sk", "/展示SK", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileHideInfoHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/info/hide", accountdata.ProfileModeHideInfo,
+		"/pjsk hide profile", "/pjsk隐藏个人信息", "/隐藏个人信息", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileShowInfoHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/info/show", accountdata.ProfileModeShowInfo,
+		"/pjsk show profile", "/pjsk显示个人信息", "/pjsk展示个人信息", "/显示个人信息", "/展示个人信息", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileHideArrestHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/arrest/hide", accountdata.ProfileModeHideArrest,
+		"/pjsk hide arrest", "/pjsk隐藏逮捕", "/隐藏逮捕", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileShowArrestHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/arrest/show", accountdata.ProfileModeShowArrest,
+		"/pjsk show arrest", "/pjsk显示逮捕", "/pjsk展示逮捕", "/显示逮捕", "/展示逮捕", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileHideAllHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/visibility/hide-all", accountdata.ProfileModeHideAll,
+		"/pjsk hide all", "/pjsk隐藏全部", "/隐藏全部", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileShowAllHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/visibility/show-all", accountdata.ProfileModeShowAll,
+		"/pjsk show all", "/pjsk显示全部", "/pjsk展示全部", "/显示全部", "/展示全部", //copylint:ignore 指令触发词
+	)
+}
+
+func (sekaiHandlers) ProfileVisibilityHandle() HarukiSekaiCommandHandler {
+	return visibilitySettingHandler("profile/visibility/status", accountdata.ProfileModeVisibility,
+		"/pjsk privacy", "/pjsk隐私设置", "/隐私设置", "/可见性设置", //copylint:ignore 指令触发词
+	)
 }
 
 func (sekaiHandlers) ProfileTimeZoneHandle() HarukiSekaiCommandHandler {
@@ -500,7 +554,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		dataType = sekaiapi.ToolboxDataTypeMySekai
 		label = privateDataMySekai
 		pjskUID = binding.PJSKUserID
-		bindingVisible = binding.Visible
+		bindingVisible = binding.Visibility.UID
 		resolvedHarukiID = hid
 		bindingServer = binding.Server
 	default:
@@ -524,7 +578,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		dataType = sekaiapi.ToolboxDataTypeSuite
 		label = privateDataSuite
 		pjskUID = binding.PJSKUserID
-		bindingVisible = binding.Visible
+		bindingVisible = binding.Visibility.UID
 		resolvedHarukiID = hid
 		bindingServer = binding.Server
 	}

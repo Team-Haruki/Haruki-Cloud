@@ -22,7 +22,7 @@ func TestNormalizeToolboxDataFetchError(t *testing.T) {
 	binding := &accountdata.ResolvedBinding{
 		Server:         "jp",
 		PJSKUserID:     "12345678901234",
-		Visible:        false,
+		Visibility:     accountdata.UniformVisibility(false),
 		SuiteVisible:   true,
 		MySekaiVisible: true,
 	}
@@ -64,7 +64,7 @@ func TestPrivateDataNotFoundErrorsExplainHiddenBindings(t *testing.T) {
 	binding := &accountdata.ResolvedBinding{
 		Server:         "cn",
 		PJSKUserID:     "7558747506658564903",
-		Visible:        true,
+		Visibility:     accountdata.UniformVisibility(true),
 		SuiteVisible:   false,
 		MySekaiVisible: false,
 	}

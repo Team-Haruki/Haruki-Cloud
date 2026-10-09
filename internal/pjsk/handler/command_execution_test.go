@@ -172,7 +172,7 @@ func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 	if err.Error() != privateDataHiddenMessage("mysekai", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -397,9 +397,7 @@ func TestResolveTrackerTargetUserRejectsHiddenAtTarget(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected hidden-target error, got nil")
 	}
-	if !strings.Contains(err.Error(), "已隐藏个人信息") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.RequireUserError(t, err, usererror.CodeForbidden, "binding.target_hidden_sk")
 	if req.UserID != nil {
 		t.Fatalf("expected unresolved user id, got %+v", req.UserID)
 	}
@@ -1156,7 +1154,7 @@ func TestExecuteMusicListRequiresSuiteSnapshotWhenBindingVisible(t *testing.T) {
 	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1883,7 +1881,7 @@ func TestExecuteMusicProgressRequiresResolvableSuiteSnapshot(t *testing.T) {
 	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1933,7 +1931,7 @@ func TestExecuteMusicRewardsRequiresSuiteSnapshot(t *testing.T) {
 	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -4964,7 +4962,7 @@ func TestExecuteCardBoxWithoutQueryRequiresSuiteData(t *testing.T) {
 	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -5139,7 +5137,7 @@ func TestExecuteCardBoxRequiresOwnedCardDataWhenShowBoxEnabled(t *testing.T) {
 	if err.Error() != privateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected error: %v", err)
 	}

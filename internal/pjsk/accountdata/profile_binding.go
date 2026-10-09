@@ -237,5 +237,5 @@ func formatBindingSwapResultText(left, right, server string, items []BindingList
 // bindingAccountLabel is the "[日服(JP)] 123***789" label of a bound
 // account, with the UID masked unless the user made it visible.
 func bindingAccountLabel(item BindingListItem) i18n.Message {
-	return i18n.AccountLabel(item.Server, item.UserID, item.Visible)
+	return i18n.AccountLabel(item.Server, item.UserID, item.Visibility.UID)
 }

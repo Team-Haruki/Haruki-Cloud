@@ -187,7 +187,7 @@ func resolveExplicitMySekaiPayloadBinding(
 		BindingID:      match.BindingID,
 		PJSKUserID:     match.UserID,
 		Server:         match.Server,
-		Visible:        match.Visible,
+		Visibility:     match.Visibility,
 		SuiteVisible:   match.SuiteVisible,
 		MySekaiVisible: match.MySekaiVisible,
 		Verified:       match.Verified,

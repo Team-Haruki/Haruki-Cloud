@@ -749,7 +749,7 @@ internal/pjsk/chartstyle/
 | 本地用户快照 | `render/snapshot/local.go` 读取本地 JSON 文件（user.json, music_metas.json, mysekai.json），应迁移至 DB 驱动 |
 | MySekai Masterdata | 依赖本地文件，未完全转为 DB 驱动 |
 | Deck 引擎 | 简化版实现，原生 CGo 引擎未迁入 |
-| Profile 扩展命令未完成 | `internal/pjsk/handler/profile.go` 等 | 绑定/解绑/默认绑定、`swap bind`（`profile/bind/swap`）、隐藏/展示抓包、隐藏/展示 ID（`profile_settings.go`）、注册时间（`arrest.go`）已接入；服务状态、抓包模式尚无对应命令 |
+| Profile 扩展命令未完成 | `internal/pjsk/handler/profile.go` 等 | 绑定/解绑/默认绑定、`swap bind`（`profile/bind/swap`）、隐藏/展示抓包、按暴露方式拆分的隐藏/展示（游戏 UID、活动排名、个人信息、逮捕，`/隐藏全部`、`/隐私设置`；`profile_settings.go`）、注册时间（`arrest.go`）已接入；服务状态、抓包模式尚无对应命令 |
 
 ---
 

@@ -966,7 +966,7 @@ func TestBotEndpointRegionPrefixedHideIDSyncsProfileSettingsParams(t *testing.T)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, i18n.T("account.visibility.hide_uid", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
+	assertSingleTextMessageContains(t, body, i18n.T("account.visibility.hide_uid", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -975,11 +975,11 @@ func TestBotEndpointRegionPrefixedHideIDSyncsProfileSettingsParams(t *testing.T)
 	for _, item := range items {
 		switch item.Server {
 		case "jp":
-			if !item.Visible {
+			if !item.Visibility.UID {
 				t.Fatalf("jp visibility was changed by /en隐藏ID: %+v", item)
 			}
 		case "en":
-			if item.Visible {
+			if item.Visibility.UID {
 				t.Fatalf("en visibility was not hidden: %+v", item)
 			}
 		}
@@ -1018,7 +1018,7 @@ func TestBotEndpointTransportRegionShowSuiteSyncsProfileSettingsParams(t *testin
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, i18n.T("account.visibility.show_suite", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
+	assertSingleTextMessageContains(t, body, i18n.T("account.visibility.show_suite", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -1064,7 +1064,7 @@ func TestBotEndpointRegionPrefixedHideSuiteSyncsProfileSettingsParams(t *testing
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, i18n.T("account.visibility.hide_suite", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
+	assertSingleTextMessageContains(t, body, i18n.T("account.visibility.hide_suite", i18n.Data{"Account": i18n.AccountLabel("en", "394********123", true)}))
 
 	items, err := bindings.List(ctx, "qq", "12345")
 	if err != nil {
@@ -2606,7 +2606,7 @@ func TestBotEndpointSKQueryReturnsTextWhenTargetUserIsHidden(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "已隐藏个人信息")
+	assertSingleTextMessageContains(t, body, i18n.T("binding.target_hidden_sk"))
 }
 
 func TestBotEndpointSKQueryAllowsHiddenSelfBinding(t *testing.T) {

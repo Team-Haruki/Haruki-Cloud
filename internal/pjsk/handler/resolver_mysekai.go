@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"slices"
 	"strings"
 
@@ -68,7 +69,7 @@ func resolveMySekaiRenderContextWithOptions(
 		return result, nil
 	}
 
-	target, err := resolveGameTarget(ctx, params, regionStr, regionExplicit, app)
+	target, err := resolveGameTarget(ctx, params, regionStr, regionExplicit, app, accountdata.ExposureProfile)
 	if err != nil {
 		return mySekaiRenderContext{}, err
 	}

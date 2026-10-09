@@ -69,6 +69,62 @@ func (_c *UserBindingCreate) SetNillableVisible(v *bool) *UserBindingCreate {
 	return _c
 }
 
+// SetUIDVisible sets the "uid_visible" field.
+func (_c *UserBindingCreate) SetUIDVisible(v bool) *UserBindingCreate {
+	_c.mutation.SetUIDVisible(v)
+	return _c
+}
+
+// SetNillableUIDVisible sets the "uid_visible" field if the given value is not nil.
+func (_c *UserBindingCreate) SetNillableUIDVisible(v *bool) *UserBindingCreate {
+	if v != nil {
+		_c.SetUIDVisible(*v)
+	}
+	return _c
+}
+
+// SetSkVisible sets the "sk_visible" field.
+func (_c *UserBindingCreate) SetSkVisible(v bool) *UserBindingCreate {
+	_c.mutation.SetSkVisible(v)
+	return _c
+}
+
+// SetNillableSkVisible sets the "sk_visible" field if the given value is not nil.
+func (_c *UserBindingCreate) SetNillableSkVisible(v *bool) *UserBindingCreate {
+	if v != nil {
+		_c.SetSkVisible(*v)
+	}
+	return _c
+}
+
+// SetProfileVisible sets the "profile_visible" field.
+func (_c *UserBindingCreate) SetProfileVisible(v bool) *UserBindingCreate {
+	_c.mutation.SetProfileVisible(v)
+	return _c
+}
+
+// SetNillableProfileVisible sets the "profile_visible" field if the given value is not nil.
+func (_c *UserBindingCreate) SetNillableProfileVisible(v *bool) *UserBindingCreate {
+	if v != nil {
+		_c.SetProfileVisible(*v)
+	}
+	return _c
+}
+
+// SetArrestVisible sets the "arrest_visible" field.
+func (_c *UserBindingCreate) SetArrestVisible(v bool) *UserBindingCreate {
+	_c.mutation.SetArrestVisible(v)
+	return _c
+}
+
+// SetNillableArrestVisible sets the "arrest_visible" field if the given value is not nil.
+func (_c *UserBindingCreate) SetNillableArrestVisible(v *bool) *UserBindingCreate {
+	if v != nil {
+		_c.SetArrestVisible(*v)
+	}
+	return _c
+}
+
 // SetSuiteVisible sets the "suite_visible" field.
 func (_c *UserBindingCreate) SetSuiteVisible(v bool) *UserBindingCreate {
 	_c.mutation.SetSuiteVisible(v)
@@ -257,6 +313,22 @@ func (_c *UserBindingCreate) createSpec() (*UserBinding, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Visible(); ok {
 		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)
 		_node.Visible = value
+	}
+	if value, ok := _c.mutation.UIDVisible(); ok {
+		_spec.SetField(userbinding.FieldUIDVisible, field.TypeBool, value)
+		_node.UIDVisible = &value
+	}
+	if value, ok := _c.mutation.SkVisible(); ok {
+		_spec.SetField(userbinding.FieldSkVisible, field.TypeBool, value)
+		_node.SkVisible = &value
+	}
+	if value, ok := _c.mutation.ProfileVisible(); ok {
+		_spec.SetField(userbinding.FieldProfileVisible, field.TypeBool, value)
+		_node.ProfileVisible = &value
+	}
+	if value, ok := _c.mutation.ArrestVisible(); ok {
+		_spec.SetField(userbinding.FieldArrestVisible, field.TypeBool, value)
+		_node.ArrestVisible = &value
 	}
 	if value, ok := _c.mutation.SuiteVisible(); ok {
 		_spec.SetField(userbinding.FieldSuiteVisible, field.TypeBool, value)

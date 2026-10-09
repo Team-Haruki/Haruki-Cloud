@@ -130,14 +130,14 @@ func executeArrest(rc *RequestContext) (onebot11.Message, error) {
 
 	region := regionWithDefault(rc.Cmd.Region)
 
-	target, err := resolveGameTarget(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App)
+	target, err := resolveGameTarget(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App, accountdata.ExposureArrest)
 	if err != nil {
 		return nil, err
 	}
 	region = resolvedTargetRegion(region, target)
 	harukiUserID := target.HarukiUserID
 	pjskUserID := target.PJSKUserID
-	visible := target.Visible
+	visible := target.UIDVisible
 
 	resp, err := fetchCachedSekaiUserProfile(rc.Ctx, rc.App, region, pjskUserID)
 	if err != nil {
@@ -273,7 +273,7 @@ func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
 
 	region := regionWithDefault(rc.Cmd.Region)
 
-	target, err := resolveGameTarget(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App)
+	target, err := resolveGameTarget(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App, accountdata.ExposureProfile)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +289,7 @@ func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
 	loc, _ := displaytime.LoadLocation(timeZone)
 	regTime := time.Unix(ts, 0)
 	text := i18n.T("misc.reg_time.result", i18n.Data{
-		"UID":  i18n.MaskUID(pjskUserID, target.Visible),
+		"UID":  i18n.MaskUID(pjskUserID, target.UIDVisible),
 		"Time": i18n.FormatUserTime(regTime, loc),
 		"Ago":  i18n.TimeAgo(time.Since(regTime)),
 	})

@@ -82,7 +82,7 @@ func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardR
 	}
 
 	queryParams := rc.requestScopedSelfQuery()
-	target, err := resolveGameTarget(rc.Ctx, queryParams, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
+	target, err := resolveGameTarget(rc.Ctx, queryParams, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App, accountdata.ExposureProfile)
 	if err != nil {
 		return nil, nil
 	}
@@ -124,7 +124,7 @@ func cloneDetailedProfileForTarget(detail *drawing.DetailedProfileCardRequest, t
 	}
 	cloned.Rank = commonCloneIntPtr(detail.Rank)
 	cloned.UserCards = append([]any(nil), detail.UserCards...)
-	cloned.IsHideUID = !target.Visible
+	cloned.IsHideUID = !target.UIDVisible
 	if resolvedRegion := strings.TrimSpace(resolvedTargetRegion(region, target)); resolvedRegion != "" {
 		cloned.Region = strings.ToUpper(resolvedRegion)
 	}
@@ -164,7 +164,7 @@ func cloneProfileCardForTarget(card *drawing.ProfileCardRequest, target Resolved
 		if card.Profile.FramePaths != nil {
 			profile.FramePaths = new(*card.Profile.FramePaths)
 		}
-		profile.IsHideUID = !target.Visible
+		profile.IsHideUID = !target.UIDVisible
 		if resolvedRegion := strings.TrimSpace(resolvedTargetRegion(region, target)); resolvedRegion != "" {
 			profile.Region = strings.ToUpper(resolvedRegion)
 		}
@@ -248,7 +248,7 @@ func buildPublicMusicProfilesFromResolvedTarget(
 
 	q := profile.Query{
 		Region:     region,
-		Visible:    target.Visible,
+		Visible:    target.UIDVisible,
 		BgSettings: target.BgSettings,
 	}
 	profileCtrl := app.Profiles.WithContext(ctx)
@@ -296,7 +296,7 @@ func buildPublicProfileCardForTargetWithPrefetch(ctx context.Context, target Res
 	}
 	q := profile.Query{
 		Region:     region,
-		Visible:    target.Visible,
+		Visible:    target.UIDVisible,
 		BgSettings: target.BgSettings,
 	}
 	var (

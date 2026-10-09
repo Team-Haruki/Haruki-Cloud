@@ -23,8 +23,16 @@ type UserBinding struct {
 	GameAccountID *int `json:"game_account_id,omitempty"`
 	// Persistent binding display order
 	DisplayOrder int `json:"display_order,omitempty"`
-	// Visible holds the value of the "visible" field.
+	// Deprecated: true only when uid, sk, profile and arrest are all visible. Kept in sync for rollback; read only as the fallback for a NULL per-exposure flag
 	Visible bool `json:"visible,omitempty"`
+	// Show the full game UID in replies and images; NULL until bootstrapped from visible
+	UIDVisible *bool `json:"uid_visible,omitempty"`
+	// Let other users look up this account's event ranking (sk) via @; NULL until bootstrapped from visible
+	SkVisible *bool `json:"sk_visible,omitempty"`
+	// Let other users view this account's profile and account data via @; NULL until bootstrapped from visible
+	ProfileVisible *bool `json:"profile_visible,omitempty"`
+	// Let other users run the arrest lookup on this account via @; NULL until bootstrapped from visible
+	ArrestVisible *bool `json:"arrest_visible,omitempty"`
 	// Controls visibility of suite/capture data
 	SuiteVisible bool `json:"suite_visible,omitempty"`
 	// Controls visibility of mysekai private data
@@ -73,7 +81,7 @@ func (*UserBinding) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case userbinding.FieldVisible, userbinding.FieldSuiteVisible, userbinding.FieldMysekaiVisible, userbinding.FieldVerified:
+		case userbinding.FieldVisible, userbinding.FieldUIDVisible, userbinding.FieldSkVisible, userbinding.FieldProfileVisible, userbinding.FieldArrestVisible, userbinding.FieldSuiteVisible, userbinding.FieldMysekaiVisible, userbinding.FieldVerified:
 			values[i] = new(sql.NullBool)
 		case userbinding.FieldID, userbinding.FieldHarukiUserID, userbinding.FieldGameAccountID, userbinding.FieldDisplayOrder:
 			values[i] = new(sql.NullInt64)
@@ -122,6 +130,34 @@ func (_m *UserBinding) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field visible", values[i])
 			} else if value.Valid {
 				_m.Visible = value.Bool
+			}
+		case userbinding.FieldUIDVisible:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field uid_visible", values[i])
+			} else if value.Valid {
+				_m.UIDVisible = new(bool)
+				*_m.UIDVisible = value.Bool
+			}
+		case userbinding.FieldSkVisible:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field sk_visible", values[i])
+			} else if value.Valid {
+				_m.SkVisible = new(bool)
+				*_m.SkVisible = value.Bool
+			}
+		case userbinding.FieldProfileVisible:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field profile_visible", values[i])
+			} else if value.Valid {
+				_m.ProfileVisible = new(bool)
+				*_m.ProfileVisible = value.Bool
+			}
+		case userbinding.FieldArrestVisible:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field arrest_visible", values[i])
+			} else if value.Valid {
+				_m.ArrestVisible = new(bool)
+				*_m.ArrestVisible = value.Bool
 			}
 		case userbinding.FieldSuiteVisible:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -200,6 +236,26 @@ func (_m *UserBinding) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("visible=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Visible))
+	builder.WriteString(", ")
+	if v := _m.UIDVisible; v != nil {
+		builder.WriteString("uid_visible=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.SkVisible; v != nil {
+		builder.WriteString("sk_visible=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.ProfileVisible; v != nil {
+		builder.WriteString("profile_visible=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.ArrestVisible; v != nil {
+		builder.WriteString("arrest_visible=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("suite_visible=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SuiteVisible))

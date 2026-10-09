@@ -20,6 +20,14 @@ const (
 	FieldDisplayOrder = "display_order"
 	// FieldVisible holds the string denoting the visible field in the database.
 	FieldVisible = "visible"
+	// FieldUIDVisible holds the string denoting the uid_visible field in the database.
+	FieldUIDVisible = "uid_visible"
+	// FieldSkVisible holds the string denoting the sk_visible field in the database.
+	FieldSkVisible = "sk_visible"
+	// FieldProfileVisible holds the string denoting the profile_visible field in the database.
+	FieldProfileVisible = "profile_visible"
+	// FieldArrestVisible holds the string denoting the arrest_visible field in the database.
+	FieldArrestVisible = "arrest_visible"
 	// FieldSuiteVisible holds the string denoting the suite_visible field in the database.
 	FieldSuiteVisible = "suite_visible"
 	// FieldMysekaiVisible holds the string denoting the mysekai_visible field in the database.
@@ -55,6 +63,10 @@ var Columns = []string{
 	FieldGameAccountID,
 	FieldDisplayOrder,
 	FieldVisible,
+	FieldUIDVisible,
+	FieldSkVisible,
+	FieldProfileVisible,
+	FieldArrestVisible,
 	FieldSuiteVisible,
 	FieldMysekaiVisible,
 	FieldVerified,
@@ -109,6 +121,26 @@ func ByDisplayOrder(opts ...sql.OrderTermOption) OrderOption {
 // ByVisible orders the results by the visible field.
 func ByVisible(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVisible, opts...).ToFunc()
+}
+
+// ByUIDVisible orders the results by the uid_visible field.
+func ByUIDVisible(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUIDVisible, opts...).ToFunc()
+}
+
+// BySkVisible orders the results by the sk_visible field.
+func BySkVisible(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSkVisible, opts...).ToFunc()
+}
+
+// ByProfileVisible orders the results by the profile_visible field.
+func ByProfileVisible(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProfileVisible, opts...).ToFunc()
+}
+
+// ByArrestVisible orders the results by the arrest_visible field.
+func ByArrestVisible(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldArrestVisible, opts...).ToFunc()
 }
 
 // BySuiteVisible orders the results by the suite_visible field.

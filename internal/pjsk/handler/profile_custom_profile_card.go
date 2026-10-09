@@ -30,7 +30,7 @@ func (sekaiHandlers) ProfileCustomProfileCardHandle() HarukiSekaiCommandHandler 
 		ParseUIDArg: commandBoolPtr(true),
 		Path:        "profile/custom-profile-card",
 		Commands: []string{
-			"/自定义个人信息", "/cp",
+			"/自定义个人信息", "/cp", "/自定义资料卡",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			params, err := buildProfileCustomProfileCardParams(ctx)

@@ -296,7 +296,7 @@ func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
 		Path: "mysekai/talk-list",
 		Commands: []string{
 			"/pjsk mysekai blueprint", "/mysekai blueprint",
-			"/msb", "/mysekai 蓝图",
+			"/msb", "/mysekai 蓝图", "/烤森蓝图",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selfParams := map[string]any{}

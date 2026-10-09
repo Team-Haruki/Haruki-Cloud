@@ -377,7 +377,7 @@ domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1" }
    （生产必配 Noise 密钥；未配置时仅测试用 JSON 明文）
 3. 会话 token 在请求体顶层字段 `session_token` 里随密文传输，不再放请求头；
    `/pjsk` 下所有 POST（含 birthday-monitor 的 render / ack）都必须携带
-4. `BotCommandRequest.enableParamEcho` 默认为 `false`；客户端只有显式传 `true` 时，参数解析错误才会回显具体参数
+4. 错误回复只来自文案目录，不按请求字段回显参数
 5. `BotCommandRequest` 另有四个可选字段：
    - `event_time` / `event_id`：平台事件时间戳（OneBot time）用于事件级去重——
      同一条消息被多个 bot 观测到时时间一致，已消费的响应选举保留 120s，可区分
@@ -844,7 +844,6 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | `docs/database-schemas.cn.md` | 数据库 Schema 详解 |
 | `docs/pjsk-command-system.cn.md` | PJSK 指令解析 + 请求构建系统技术文档 |
 | `docs/toolbox-api.cn.md` | 上游 Toolbox API 契约 |
-| `docs/deck_refer_help.md` | `deck` 命令族用户帮助文本 |
 
 ---
 

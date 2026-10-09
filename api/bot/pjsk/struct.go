@@ -14,10 +14,6 @@ type BotCommandRequest struct {
 	NotifyEmpty     bool             `json:"notify_empty,omitempty" msgpack:"notify_empty,omitempty"`
 	MatchedCommand  string           `json:"matched_command" msgpack:"matched_command"`
 	Message         onebot11.Message `json:"message" msgpack:"message"`
-	// EnableParamEcho is accepted for protocol compatibility and ignored:
-	// error replies are always built from the catalog (typed user errors),
-	// and a parameter is echoed only where its catalog message says so.
-	EnableParamEcho bool `json:"enableParamEcho,omitempty" msgpack:"enableParamEcho,omitempty"`
 	// EventTime is the platform-side event timestamp (OneBot `time`, unix
 	// seconds). Every bot observing the same group message reports the same
 	// value, while a user re-sending the same command produces a new one, so it

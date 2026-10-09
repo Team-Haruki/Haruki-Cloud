@@ -26,7 +26,6 @@ type CommandRequest struct {
 	IsForce           bool
 	CommandPath       string
 	TriggerCommand    string
-	HelpText          string
 	RequesterPlatform string
 	RequesterUserID   string
 	RequesterGroupID  string

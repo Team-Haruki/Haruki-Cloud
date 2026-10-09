@@ -58,7 +58,7 @@ func resolveSettingsSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 }
 
 var profileTimeZoneBaseCommands = []string{
-	"/pjsk时区", "/pjsktimezone", "/pjsktz",
+	"/pjsk时区", "/pjsktimezone", "/pjsktz", "/时区", //copylint:ignore command triggers
 }
 
 func profileTimeZoneCommands() []string {
@@ -218,7 +218,7 @@ func (sekaiHandlers) ProfileShowSuiteHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) ProfileHideMySekaiHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
-			"/pjsk hide mysekai", "/pjsk隐藏烤森抓包", "/隐藏烤森抓包",
+			"/pjsk hide mysekai", "/pjsk隐藏烤森抓包", "/隐藏烤森抓包", "/隐藏烤森",
 		},
 		Path: "profile/mysekai/hide",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -234,7 +234,7 @@ func (sekaiHandlers) ProfileHideMySekaiHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) ProfileShowMySekaiHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
-			"/pjsk show mysekai", "/pjsk显示烤森抓包", "/pjsk展示烤森抓包", "/展示烤森抓包",
+			"/pjsk show mysekai", "/pjsk显示烤森抓包", "/pjsk展示烤森抓包", "/展示烤森抓包", "/显示烤森",
 		},
 		Path: "profile/mysekai/show",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -250,7 +250,7 @@ func (sekaiHandlers) ProfileShowMySekaiHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) ProfileHideIDHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
-			"/pjsk hide id", "/pjsk隐藏id", "/pjsk隐藏ID", "/隐藏id", "/隐藏ID",
+			"/pjsk hide id", "/pjsk隐藏id", "/pjsk隐藏ID", "/隐藏id", "/隐藏ID", "/隐藏uid",
 		},
 		Path: "profile/visibility/hide",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -267,7 +267,7 @@ func (sekaiHandlers) ProfileShowIDHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
 			"/pjsk show id", "/pjsk显示id", "/pjsk显示ID", "/pjsk展示id", "/pjsk展示ID",
-			"/展示id", "/展示ID", "/显示id", "/显示ID",
+			"/展示id", "/展示ID", "/显示id", "/显示ID", "/显示uid",
 		},
 		Path: "profile/visibility/show",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -320,7 +320,7 @@ func (sekaiHandlers) ProfileChartStyleHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) ProfileEnableModularHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
-			"/开启模块个人信息", "/开启模块化个人信息", "/pjsk modular profile on",
+			"/开启模块个人信息", "/开启模块化个人信息", "/pjsk modular profile on", "/开启模块化资料",
 		},
 		Path:        "profile/modular/enable",
 		ParseUIDArg: common.BoolPtr(false),
@@ -336,7 +336,7 @@ func (sekaiHandlers) ProfileEnableModularHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) ProfileDisableModularHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
-			"/关闭模块个人信息", "/关闭模块化个人信息", "/pjsk modular profile off",
+			"/关闭模块个人信息", "/关闭模块化个人信息", "/pjsk modular profile off", "/关闭模块化资料",
 		},
 		Path:        "profile/modular/disable",
 		ParseUIDArg: common.BoolPtr(false),
@@ -378,7 +378,7 @@ func (sekaiHandlers) ProfileCheckDataHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
 			"/pjsk check data", "/pjsk抓包", "/pjsk抓包状态", "/pjsk抓包数据", "/pjsk抓包查询",
-			"/抓包数据", "/抓包状态", "/抓包信息", "/sud",
+			"/抓包数据", "/抓包状态", "/抓包信息", "/sud", "/检查数据",
 		},
 		Path: "profile/check-data",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -396,7 +396,7 @@ func (sekaiHandlers) MsdHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/msd",
 			"/pjsk check mysekai data",
-			"/pjsk烤森抓包数据", "/pjsk烤森抓包", "/烤森抓包", "/烤森抓包数据",
+			"/pjsk烤森抓包数据", "/pjsk烤森抓包", "/烤森抓包", "/烤森抓包数据", "/检查烤森数据",
 		},
 		Path: "profile/check-data-mysekai",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {

@@ -11,15 +11,6 @@ import (
 	"haruki-cloud/utils/usererror"
 )
 
-const inventoryListHelp = `使用方式:
-/查背包
-/查背包 水晶
-/查背包 火罐
-/查背包 ms材料
-/查背包 记忆
-
-空参数默认不展示水晶、火罐、MySekai 材料和记忆。国服 MySekai 功能永不开启，不支持 ms材料；国服也不支持记忆。`
-
 type inventoryListParams struct {
 	userQueryParams
 	Filter renderinventory.Filter `json:"filter,omitempty"`
@@ -32,7 +23,6 @@ func (sekaiHandlers) InventoryListHandle() HarukiSekaiCommandHandler {
 			"/背包一览", "/查背包", "/持有物", "/查持有物",
 			"/pjsk inventory", "/inventory",
 		},
-		Helper: inventoryListHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			params, err := buildInventoryListParams(ctx)
 			if err != nil {

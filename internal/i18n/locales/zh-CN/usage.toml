@@ -1,0 +1,30 @@
+# 指令帮助（-help）里由程序生成的部分：标题兜底、区服说明、指令别名、纯文字版的小标题。
+# 帮助正文在 help/*.md，版式见 docs/i18n.md 的“帮助文档”一节。
+
+[usage.help.title]
+description = "帮助图片的标题兜底：帮助文档没有一级标题时使用。"
+other = "指令帮助"
+
+[usage.help.section_region]
+description = "帮助文档末尾自动生成的小标题，下面说明这个指令能用哪些区服。只出现在和区服有关的指令里。"
+other = "区服"
+
+[usage.help.region_prefix]
+description = "“区服”小标题下的第一行，说明区服前缀的写法。占位符：Codes=这个指令支持的区服代码，按 jp、cn、tw、kr、en 排列，每个都是代码格式（如 `jp` `cn`）；Example=带区服前缀的指令示例，代码格式（如 `/jp查曲`）。"
+other = "在指令前加区服代码可以指定区服：{{.Codes}}，例如 {{.Example}}"
+
+[usage.help.region_default]
+description = "“区服”小标题下的第二行，说明不写区服时用哪个区服。占位符：Region=没有默认绑定时使用的区服显示名（如“日服(JP)”）。"
+other = "不写时使用默认绑定的区服，没有默认绑定时使用{{.Region}}"
+
+[usage.help.region_only]
+description = "“区服”小标题下唯一的一行：这个指令只支持一个区服。占位符：Region=区服显示名（如“日服(JP)”）。"
+other = "只支持{{.Region}}"
+
+[usage.help.section_aliases]
+description = "帮助文档末尾自动生成的小标题，下面列出正文没有写到的其他指令写法。"
+other = "指令别名"
+
+[usage.help.plain_heading]
+description = "渲染服务不可用时，帮助以纯文字发送，Markdown 小标题改成这一行。占位符：Heading=小标题文字（如“用法”）。"
+other = "{{.Heading}}："

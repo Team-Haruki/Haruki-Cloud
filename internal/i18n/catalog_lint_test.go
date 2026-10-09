@@ -82,7 +82,7 @@ func lintCopyText(text string) []lintFinding {
 	if m := hanColon.FindString(text); m != "" {
 		add("halfwidth_colon", fmt.Sprintf("%q: 汉字后用全角“：”", m))
 	}
-	if m := hanParen.FindString(text); m != "" {
+	if m := hanParen.FindString(stripRegionLabels(text)); m != "" {
 		add("halfwidth_paren", fmt.Sprintf("%q: 中文里用全角“（）”", m))
 	}
 	stripped := commandToken.ReplaceAllString(text, " ")

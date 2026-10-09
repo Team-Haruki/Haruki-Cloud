@@ -15,29 +15,12 @@ import (
 	"haruki-cloud/utils/usererror"
 )
 
-const searchSingleCardHelp = `查单张卡的方式:
-1. 直接使用卡牌ID
-2. 角色昵称+负数 代表角色新卡，例如 mnr-1 代表 mnr 最新一张卡
-3. 直接使用负数代表全局倒序已上线卡，例如 -1 代表当前区服最新上线卡`
-
-const searchMultiCardHelp = `查询多张卡牌的筛选参数:
-角色昵称：miku
-团/团oc/团vs/纯vs：mmj mmjoc mmjv 纯v/原v
-稀有度/属性/技能：4 四星 生日 蓝 蓝星 判 判卡 分 分卡 奶 奶卡 p分
-限定类型：非限 限定 期间限定 fes cfes bfes 联动限定
-年份：25年 去年
-活动id或者箱活缩写：event123 mnr1
-以上参数可以混合使用，用空格分隔`
-
-const cardSearchHelp = searchSingleCardHelp + "\n\n" + searchMultiCardHelp
-
 func (sekaiHandlers) CardDetailHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path: "card/detail",
 		Commands: []string{
 			"/card-detail", "/查卡", "/查牌", "/查卡牌", "/pjsk card",
 		},
-		Helper: cardSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveCardDetailOrList(ctx, false)
 		},
@@ -50,7 +33,6 @@ func (sekaiHandlers) CardListHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/卡牌列表", "/cards", "/pjsk cards", "/card-list",
 		},
-		Helper: cardSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveCardDetailOrList(ctx, true)
 		},

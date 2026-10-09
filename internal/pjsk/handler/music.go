@@ -146,7 +146,6 @@ func (sekaiHandlers) BPMHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/pjsk bpm", "/查bpm", "/查BPM",
 		},
-		Helper: bpmDetailHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
@@ -173,7 +172,6 @@ func (sekaiHandlers) BPMSearchHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/bpms", "/bpm搜索", "/BPM搜索", "/pjsk bpms", "/pjsk bpm search",
 		},
-		Helper: bpmSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
@@ -195,18 +193,6 @@ func (sekaiHandlers) BPMSearchHandle() HarukiSekaiCommandHandler {
 		},
 	}, executeMusic)
 }
-
-const bpmDetailHelp = `请输入要查询 BPM 的歌曲名、别名或歌曲 ID，例如:
-/查BPM Help me, ERINNNNNN!!
-/查BPM music123 master
-
-如果匹配到多个歌曲，会返回候选列表，请改用歌曲 ID 查询。`
-
-const bpmSearchHelp = `请输入要反查的 BPM 数值，例如:
-/bpms 200
-/bpm搜索 200 expert
-
-返回包含该 BPM 的歌曲列表；即使只有一个匹配结果也按列表输出。`
 
 func (sekaiHandlers) MusicCoverHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{

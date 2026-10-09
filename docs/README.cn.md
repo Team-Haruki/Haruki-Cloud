@@ -16,7 +16,6 @@
 | [sk-tracker-cloud-contract.cn.md](sk-tracker-cloud-contract.cn.md) | SK 渲染链路对 Event Tracker cloud API 的语义契约 |
 | [public-bot-v2-api.cn.md](public-bot-v2-api.cn.md) | 公开（无需鉴权）Bot 查询 API |
 | [player-frame-overrides.md](player-frame-overrides.md) | `pjsk_render.player_frame_overrides` 运维配置 |
-| [deck_refer_help.md](deck_refer_help.md) | `deck` 命令族用户帮助文本 |
 | [i18n.md](i18n.md) | 用户文案目录、帮助文档、增加和审查文案、增加语言 |
 
 ## 项目级说明

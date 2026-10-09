@@ -152,12 +152,9 @@ func TestBPMSearchHandleBuildsCommandRequest(t *testing.T) {
 	}
 }
 
-func TestBPMHandleReturnsUpdatedHelp(t *testing.T) {
+func TestBPMHandleRequiresQuery(t *testing.T) {
 	h := sekaiHandlers{}.BPMHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
-	if h.GetHelper() != bpmDetailHelp {
-		t.Fatalf("unexpected helper: %q", h.GetHelper())
-	}
 
 	_, err := h.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
@@ -166,12 +163,9 @@ func TestBPMHandleReturnsUpdatedHelp(t *testing.T) {
 	testutil.RequireUserError(t, err, "", "music.bpm.query_required")
 }
 
-func TestBPMSearchHandleReturnsUpdatedHelp(t *testing.T) {
+func TestBPMSearchHandleRequiresValue(t *testing.T) {
 	h := sekaiHandlers{}.BPMSearchHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
-	if h.GetHelper() != bpmSearchHelp {
-		t.Fatalf("unexpected helper: %q", h.GetHelper())
-	}
 
 	_, err := h.Handle(&PjskHandlerContext{
 		Context:    context.Background(),

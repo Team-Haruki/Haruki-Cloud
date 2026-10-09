@@ -54,7 +54,7 @@ func (sekaiHandlers) ProfileHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Path: "profile",
 		Commands: []string{
-			"/个人中心", "/profile", "/个人信息",
+			"/个人中心", "/profile", "/个人信息", "/个人资料",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			p, err := resolveUserQueryParams(ctx)

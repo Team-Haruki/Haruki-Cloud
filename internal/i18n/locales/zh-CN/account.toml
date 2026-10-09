@@ -113,7 +113,7 @@ other = "已隐藏 {{.Account}} 的游戏 UID"
 
 [account.visibility.show_uid]
 description = "/展示id 成功：个人信息和查询结果里显示完整的游戏 UID。占位符：Account=账号显示名（完整 UID）。"
-other = "已公开 {{.Account}} 的游戏 UID"
+other = "已展示 {{.Account}} 的游戏 UID"
 
 [account.visibility.hide_suite]
 description = "/隐藏抓包 成功：其他人不能再查询该账号的抓包数据。占位符：Account=账号显示名。"

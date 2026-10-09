@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -322,7 +321,7 @@ func hasNoDeckWorldBloomCharacter(q *deck.AutoQuery) bool {
 func (r *deckEventSelectionResolver) resolveCharacterID() error {
 	charID := *r.query.WorldBloomCharacterID
 	if !trackerWorldBloomHasCharacter(r.chapters, charID) {
-		return usererror.Invalid(i18n.M("sk.wl.no_character_chapter", i18n.Data{"Event": eventLabel(r.region.String(), r.eventID), "Character": strconv.Itoa(charID)}))
+		return usererror.Invalid(i18n.M("sk.wl.no_character_chapter", i18n.Data{"Event": eventLabel(r.region.String(), r.eventID), "Character": characterLabel(r.ctx, r.app, charID)}))
 	}
 	ensureDeckWorldBloomEventTurnMetadata(r.ctx, r.app, r.region, r.eventInfo, r.chapters, r.query)
 	return nil

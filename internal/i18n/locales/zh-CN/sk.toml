@@ -125,7 +125,7 @@ description = "查 WL 榜线时没有指定章节。"
 other = "查询 WL 榜线需要指定章节，可以使用 wl、wl2 或 wlmiku"
 
 [sk.wl.no_character_chapter]
-description = "该活动没有指定角色的 WL 章节。占位符：Event=活动（common.event_label）；Character=用户写的角色名或角色 ID。"
+description = "该活动没有指定角色的 WL 章节。占位符：Event=活动（common.event_label）；Character=角色名（取自游戏数据，找不到时为 common.fallback.character）。"
 other = "{{.Event}}没有“{{.Character}}”的 WL 章节"
 
 [sk.wl.chapter_incomplete]

@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"context"
 	"strings"
 
 	"haruki-cloud/internal/i18n"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/utils/usererror"
 )
 
@@ -28,4 +30,11 @@ func unrecognizedUnlessTyped(err error) error {
 // eventLabel names an event of region in error replies, e.g. "日服(JP)活动 123".
 func eventLabel(region string, eventID int) i18n.Message {
 	return i18n.M("common.event_label", i18n.Data{"Region": i18n.RegionLabel(strings.ToLower(strings.TrimSpace(region))), "ID": eventID})
+}
+
+// characterLabel names a game character in replies: its name from game
+// data, or the placeholder name when game data has none. Use it where the
+// user's own words for the character are no longer known.
+func characterLabel(ctx context.Context, app *renderapp.App, characterID int) i18n.Message {
+	return arrestChallengeCharacterLabel(characterID, resolveArrestChallengeCharacterName(ctx, app, characterID))
 }

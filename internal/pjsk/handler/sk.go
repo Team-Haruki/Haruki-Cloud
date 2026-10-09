@@ -558,7 +558,7 @@ func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, r
 	if req.WlCharacterID != nil {
 		chapter := findWorldBloomChapterByCharacterID(chapters, *req.WlCharacterID)
 		if chapter == nil {
-			return usererror.Invalid(i18n.M("sk.wl.no_character_chapter", i18n.Data{"Event": eventLabel(region.String(), req.EventID), "Character": strconv.Itoa(*req.WlCharacterID)}))
+			return usererror.Invalid(i18n.M("sk.wl.no_character_chapter", i18n.Data{"Event": eventLabel(region.String(), req.EventID), "Character": characterLabel(ctx, app, *req.WlCharacterID)}))
 		}
 		applyTrackerWorldBloomChapterTiming(req, chapter)
 		skTrackerDebugLogger.DebugContext(ctx, "world link tracker selection resolved",

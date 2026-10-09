@@ -49,6 +49,10 @@ var (
 	}
 	birthdayFifthAnnivRegions = map[renderregion.Value]struct{}{
 		renderregion.JP: {},
+		renderregion.CN: {},
+		renderregion.TW: {},
+		renderregion.EN: {},
+		renderregion.KR: {},
 	}
 	characterBirthdays = map[int]birthdayDate{
 		1:  {Month: 8, Day: 11},

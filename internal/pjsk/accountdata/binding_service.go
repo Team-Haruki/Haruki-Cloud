@@ -12,14 +12,17 @@ import (
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	usersdb "haruki-cloud/database/users"
 	"haruki-cloud/internal/cluster"
+	"haruki-cloud/internal/i18n"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/censor"
+	"haruki-cloud/utils/usererror"
 )
 
 const (
-	bannedGameAccountBindWarning   = "你正在尝试绑定已被封禁用户，请不要再次尝试"
 	bannedGameAccountBindThreshold = 3
-	bannedGameAccountBindBanReason = "多次尝试绑定被封禁游戏账号"
+	// Stored in the users database as the ban reason and shown verbatim in
+	// later ban replies; data, not catalog copy.
+	bannedGameAccountBindBanReason = "多次尝试绑定被封禁游戏账号" //copylint:ignore stored ban reason
 )
 
 // BindingService manages user game account bindings.
@@ -141,9 +144,9 @@ func (s *BindingService) Bind(ctx context.Context, platform, platformUserID, raw
 				return nil, err
 			}
 			if banned {
-				return nil, banError("PJSK 功能", bannedGameAccountBindBanReason)
+				return nil, banError(i18n.M("moderation.feature.pjsk"), bannedGameAccountBindBanReason)
 			}
-			return nil, errors.New(bannedGameAccountBindWarning)
+			return nil, usererror.Forbidden(i18n.M("moderation.bind_banned_account_warning"))
 		}
 		displayOrder, orderErr := nextBindingDisplayOrderTx(ctx, tx, harukiUserID)
 		if orderErr != nil {

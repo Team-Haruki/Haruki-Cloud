@@ -512,7 +512,7 @@ func failedSharedBotCommand(
 	if isExpectedCommandError(err) {
 		metadata.Outcome = "rejected"
 	} else {
-		metadata.ErrorMessage = usererror.RedactForLog(err.Error(), usererror.DefaultLogMessageLimit)
+		metadata.ErrorMessage = usererror.RedactForLog(usererror.LogText(err), usererror.DefaultLogMessageLimit)
 		logger.ErrorContext(ctx, "bot command "+stage+" failed",
 			"command_path", commandPath,
 			"command", command,
@@ -553,6 +553,11 @@ func commandErrorEnvelope(err error, expectedPath, matchedCommand string, enable
 				MatchedCommand: matchedCommand,
 			})
 	}
+	if typed, ok := usererror.As(err); ok {
+		// Typed user errors carry finished catalog text: no rewriting.
+		return newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK,
+			[]onebot11.Segment{onebot11.Text(typedUserErrorText(typed))})
+	}
 	if replyErr, ok := errors.AsType[onebot11.ReplayError](err); ok {
 		return newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK,
 			[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(string(replyErr), enableParamEcho, matchedCommand, expectedPath))})
@@ -588,8 +593,9 @@ func isExpectedCommandError(err error) bool {
 		return true
 	}
 	// Unparsable queries, unknown names and out-of-range indexes are the
-	// user's input, not a failure of Cloud or its upstreams.
-	if usererror.IsInput(err) {
+	// user's input, not a failure of Cloud or its upstreams; typed errors
+	// decide by their code.
+	if usererror.IsExpected(err) {
 		return true
 	}
 	_, ok := errors.AsType[onebot11.ReplayError](err)

@@ -7,8 +7,11 @@ import (
 	"time"
 
 	usersenttest "haruki-cloud/database/users/enttest"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/utils/usererror"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -31,8 +34,9 @@ func TestBanServiceKillAndBack(t *testing.T) {
 	if err != nil || !banned {
 		t.Fatalf("IsGloballyBanned() = %v, %v", banned, err)
 	}
-	if err := service.CheckBan(ctx, "qq", "123456789", parser.ModuleMusic); err == nil || !strings.Contains(err.Error(), "恶意滥用") || !strings.Contains(err.Error(), "封禁至") {
-		t.Fatalf("unexpected CheckBan() error: %v", err)
+	err = service.CheckBan(ctx, "qq", "123456789", parser.ModuleMusic)
+	if typed, ok := usererror.As(err); !ok || typed.Code != usererror.CodeForbidden || typed.Message.ID != "moderation.banned_reason_until" || typed.Message.Data["Reason"] != "恶意滥用" {
+		t.Fatalf("unexpected CheckBan() error: %#v", err)
 	}
 
 	if err := service.Back(ctx, "123456789"); err != nil {
@@ -98,5 +102,27 @@ func TestBanServiceGlobalAdminRosterIsExplicit(t *testing.T) {
 	}
 	if service.IsAdmin("qq", "9001") || service.IsAdmin("discord", "3164679932") {
 		t.Fatal("unconfigured or non-QQ identity was authorized")
+	}
+}
+
+func TestBanServiceCheckBanShowsExpiryInRequesterTimeZone(t *testing.T) {
+	client := usersenttest.Open(t, "sqlite3", "file:global_ban_timezone?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = client.Close() })
+	service := accountdata.NewBanService(client)
+	expiresAt := time.Now().Add(72 * time.Hour)
+	if _, err := service.Kill(context.Background(), "123456789", "恶意滥用", &expiresAt); err != nil {
+		t.Fatalf("Kill() error = %v", err)
+	}
+	ctx := displaytime.WithRequestTimeZone(context.Background(), "Asia/Tokyo")
+	typed, ok := usererror.As(service.CheckBan(ctx, "qq", "123456789", parser.ModuleMusic))
+	if !ok {
+		t.Fatal("CheckBan() did not return a typed error")
+	}
+	shown, ok := typed.Message.Data["ExpiresAt"].(i18n.Message)
+	if !ok || shown.ID != "format.time.datetime" || shown.Data["Offset"] != "+9" {
+		t.Fatalf("expiry = %#v", typed.Message.Data["ExpiresAt"])
+	}
+	if want := expiresAt.In(time.FixedZone("JST", 9*3600)).Format("2006-01-02 15:04"); shown.Data["DateTime"] != want {
+		t.Fatalf("expiry time = %v, want %s", shown.Data["DateTime"], want)
 	}
 }

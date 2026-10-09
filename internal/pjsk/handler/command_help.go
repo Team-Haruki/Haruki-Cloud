@@ -2,21 +2,16 @@ package handler
 
 import (
 	"context"
-	"embed"
-	"errors"
 	"fmt"
-	"io/fs"
 	"slices"
 	"strings"
 
 	corehandler "haruki-cloud/internal/handler"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 )
-
-//go:embed helpdocs/*.md
-var commandHelpDocs embed.FS
 
 func commandHelpMessage(ctx context.Context, resolved *CommandRequest, app *renderapp.App) (onebot11.Message, error) {
 	finishBuild := measurePayloadBuild(ctx)
@@ -160,14 +155,7 @@ func readCommandHelpMarkdown(key string) (string, bool, error) {
 	if key == "" {
 		return "", false, nil
 	}
-	data, err := commandHelpDocs.ReadFile("helpdocs/" + key + ".md")
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return "", false, nil
-		}
-		return "", false, err
-	}
-	return strings.TrimSpace(string(data)), true, nil
+	return i18n.HelpDoc(i18n.DefaultLocale, key)
 }
 
 func commandHelpFamily(path string) string {

@@ -239,7 +239,7 @@ func normalizeDeckUserFacingErrorForCommand(err error, region string, mode strin
 		return nil
 	}
 
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 

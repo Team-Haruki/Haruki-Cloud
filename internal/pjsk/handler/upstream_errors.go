@@ -24,7 +24,7 @@ func normalizeTrackerUserFacingError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 
@@ -78,7 +78,7 @@ func normalizeDrawingUserFacingError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 
@@ -129,7 +129,7 @@ func normalizeSKPlayerTraceDrawingError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 	if isDrawingDataInsufficientError(err) {
@@ -172,7 +172,7 @@ func normalizeDeckServiceUserFacingError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 

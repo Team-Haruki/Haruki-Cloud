@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	pjskdb "haruki-cloud/database/pjsk"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
@@ -174,7 +175,7 @@ func testProfileBindingResultFormatting(t *testing.T, visible, hidden BindingLis
 	if text := formatBindingSwapResultText("u1", "u2", "", nil); !strings.Contains(text, "已交换") {
 		t.Fatalf("global swap text = %q", text)
 	}
-	if formatBindingUID(visible) != visible.UserID || formatBindingUID(hidden) == hidden.UserID || maskUID("123") != "123" || maskUID("123456789") != "123***789" {
+	if formatBindingUID(visible) != visible.UserID || formatBindingUID(hidden) == hidden.UserID || i18n.MaskUID("123", false) != "123" || i18n.MaskUID("123456789", false) != "123***789" {
 		t.Fatal("binding UID formatting mismatch")
 	}
 }

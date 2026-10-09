@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -455,7 +456,7 @@ func testPrivateDataMessages(t *testing.T) {
 
 func testMaskingAndFallbackText(t *testing.T) {
 	t.Helper()
-	if maskUserFacingGameID("", false) != "" || maskUserFacingGameID("123", false) != "123" || maskUserFacingGameID("1234567890", true) != "1234567890" || maskUserFacingGameID("1234567890", false) != "123****890" {
+	if i18n.MaskUID("", false) != "" || i18n.MaskUID("123", false) != "123" || i18n.MaskUID("1234567890", true) != "1234567890" || i18n.MaskUID("1234567890", false) != "123****890" {
 		t.Fatal("game ID masking mismatch")
 	}
 	if stringPtr("") != nil {

@@ -4,6 +4,7 @@ go 1.27.0
 
 require (
 	entgo.io/ent v0.14.6
+	github.com/BurntSushi/toml v1.6.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/alicebob/miniredis/v2 v2.39.0
 	github.com/andybalholm/brotli v1.2.5
@@ -16,6 +17,7 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/mitchellh/hashstructure/v2 v2.0.2
+	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/redis/go-redis/v9 v9.22.0
 	github.com/shamaton/msgpack/v3 v3.2.3
 	golang.org/x/crypto v0.57.0

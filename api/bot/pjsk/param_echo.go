@@ -3,10 +3,11 @@ package pjsk
 import (
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/utils/usererror"
 )
 
-const genericClientErrorText = "请求处理失败，请稍后再试"
+var genericClientErrorText = i18n.RequestFailed().String()
 
 type paramEchoRedaction struct {
 	prefix      string
@@ -109,6 +110,17 @@ var paramEchoSeparatorMarkers = []string{
 	"不支持的服务器",
 	"unable to parse",
 	"failed to resolve",
+}
+
+// typedUserErrorText is the reply for a typed user error. Its text comes
+// from the catalog and is shown as is; only a sensitive URL (which a catalog
+// message never contains) falls back to the generic reply.
+func typedUserErrorText(err *usererror.Error) string {
+	text := strings.TrimSpace(err.Error())
+	if text == "" || usererror.MessageContainsSensitiveURL(text) {
+		return genericClientErrorText
+	}
+	return text
 }
 
 func clientErrorText(message string, enableParamEcho bool) string {

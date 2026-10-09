@@ -28,8 +28,13 @@ func Inputf(format string, args ...any) error {
 }
 
 // IsInput reports whether err, or any error it wraps, was marked with Input
-// or Inputf.
+// or Inputf, or is a typed Error whose code is a user-input code.
 func IsInput(err error) bool {
-	_, ok := errors.AsType[*inputError](err)
-	return ok
+	if _, ok := errors.AsType[*inputError](err); ok {
+		return true
+	}
+	if typed, ok := As(err); ok {
+		return typed.Code.IsInput()
+	}
+	return false
 }

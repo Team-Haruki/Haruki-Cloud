@@ -1,0 +1,14 @@
+# Ratchet baseline: <key>\t<count>. Counts may only go down.
+# Regenerate with HARUKI_UPDATE_GOLDEN=1 go test ./internal/i18n/ after fixing findings.
+locales/zh-CN/help/card.md	banned_term	1
+locales/zh-CN/help/deck.md	banned_term	2
+locales/zh-CN/help/education.md	banned_term	1
+locales/zh-CN/help/inventory.md	banned_term	1
+locales/zh-CN/help/profile_suite_hide.md	banned_term	3
+locales/zh-CN/help/profile_suite_show.md	banned_term	3
+locales/zh-CN/help/score.md	banned_term	3
+locales/zh-CN/help/sk.md	banned_term	2
+locales/zh-CN/help/sk_line.md	banned_term	2
+locales/zh-CN/help/sk_predict.md	banned_term	2
+locales/zh-CN/help/sk_query.md	banned_term	1
+locales/zh-CN/help/sk_speed.md	banned_term	1

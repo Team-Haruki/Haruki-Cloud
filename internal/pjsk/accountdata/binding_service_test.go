@@ -2,7 +2,6 @@ package accountdata_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
@@ -10,6 +9,7 @@ import (
 	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/pjsk/accountdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/usererror"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -61,17 +61,20 @@ func TestBindingServiceBannedGameAccountAttemptsBanAfterThirdWarning(t *testing.
 		t.Fatalf("create banned game account: %v", err)
 	}
 
-	const warning = "你正在尝试绑定已被封禁用户，请不要再次尝试"
 	for attempt := 1; attempt <= 3; attempt++ {
 		_, err := service.Bind(ctx, "qq", "42", "9000")
 		if err == nil {
 			t.Fatalf("attempt %d unexpectedly succeeded", attempt)
 		}
+		typed, ok := usererror.As(err)
+		if !ok || typed.Code != usererror.CodeForbidden {
+			t.Fatalf("attempt %d error = %#v, want a forbidden user error", attempt, err)
+		}
 		switch {
-		case attempt < 3 && err.Error() != warning:
-			t.Fatalf("attempt %d expected warning, got %q", attempt, err.Error())
-		case attempt == 3 && !strings.Contains(err.Error(), "您已被禁止使用PJSK 功能，原因：多次尝试绑定被封禁游戏账号"):
-			t.Fatalf("attempt %d expected ban message, got %q", attempt, err.Error())
+		case attempt < 3 && typed.Message.ID != "moderation.bind_banned_account_warning":
+			t.Fatalf("attempt %d expected warning, got %s", attempt, typed.Message.ID)
+		case attempt == 3 && (typed.Message.ID != "moderation.banned_reason" || typed.Message.Data["Reason"] != "多次尝试绑定被封禁游戏账号"):
+			t.Fatalf("attempt %d expected ban message, got %+v", attempt, typed.Message)
 		}
 	}
 
@@ -173,9 +176,8 @@ func TestBindingServiceBannedGameAccountCountsAfterUnbind(t *testing.T) {
 	if err == nil {
 		t.Fatalf("rebind unbound banned account unexpectedly succeeded")
 	}
-	const warning = "你正在尝试绑定已被封禁用户，请不要再次尝试"
-	if err.Error() != warning {
-		t.Fatalf("expected warning, got %q", err.Error())
+	if typed, ok := usererror.As(err); !ok || typed.Message.ID != "moderation.bind_banned_account_warning" {
+		t.Fatalf("expected warning, got %#v", err)
 	}
 
 	u, err := usersClient.User.Query().Only(ctx)

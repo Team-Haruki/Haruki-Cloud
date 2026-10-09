@@ -10,7 +10,9 @@ import (
 
 	usersdb "haruki-cloud/database/users"
 	usersenttest "haruki-cloud/database/users/enttest"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/utils/usererror"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -185,17 +187,18 @@ func TestGlobalBanStatusHelpers(t *testing.T) {
 	if !status.Active || status.Reason != "reason" || status.ExpiresAt == nil {
 		t.Fatalf("active global ban status = %+v", status)
 	}
-	if err := globalBanError(GlobalBanStatus{Active: true, Reason: "permanent"}); err == nil || strings.Contains(err.Error(), "封禁至") {
-		t.Fatalf("permanent global ban error = %v", err)
-	}
-	if err := globalBanError(status); err == nil || !strings.Contains(err.Error(), "封禁至") {
-		t.Fatalf("timed global ban error = %v", err)
-	}
-	if err := banError("功能", ""); err == nil || strings.Contains(err.Error(), "原因") {
-		t.Fatalf("reason-less ban error = %v", err)
-	}
-	if err := banError("功能", "reason"); err == nil || !strings.Contains(err.Error(), "reason") {
-		t.Fatalf("reasoned ban error = %v", err)
+	requireBanMessage(t, globalBanError(GlobalBanStatus{Active: true, Reason: "permanent"}, nil), "moderation.banned_reason")
+	requireBanMessage(t, globalBanError(status, nil), "moderation.banned_reason_until")
+	requireBanMessage(t, globalBanError(GlobalBanStatus{Active: true, ExpiresAt: &future}, nil), "moderation.banned_until")
+	requireBanMessage(t, banError(i18n.M("moderation.feature.alias"), ""), "moderation.banned")
+	requireBanMessage(t, banError(i18n.M("moderation.feature.alias"), "reason"), "moderation.banned_reason")
+}
+
+func requireBanMessage(t *testing.T, err error, id string) {
+	t.Helper()
+	typed, ok := usererror.As(err)
+	if !ok || typed.Code != usererror.CodeForbidden || typed.Message.ID != id {
+		t.Fatalf("ban error = %#v, want forbidden %s", err, id)
 	}
 }
 

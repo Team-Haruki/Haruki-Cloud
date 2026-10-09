@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/render/cachefill"
@@ -130,7 +131,7 @@ func buildPrivateDataNotFoundMessage(dataLabel string, binding *accountdata.Reso
 	}
 
 	server := strings.ToUpper(strings.TrimSpace(binding.Server))
-	uid := maskUserFacingGameID(binding.PJSKUserID, binding.Visible)
+	uid := i18n.MaskUID(binding.PJSKUserID, binding.Visible)
 	if server == "" || uid == "" {
 		return fmt.Sprintf("没有找到有效的 %s 数据，%s\n%s", dataLabel, ErrMsgPrivateDataSetupGuide, ErrMsgToolboxURL)
 	}
@@ -156,7 +157,7 @@ func formatUserFacingBindingAccount(binding *accountdata.ResolvedBinding) string
 		return ""
 	}
 	server := strings.ToUpper(strings.TrimSpace(binding.Server))
-	uid := maskUserFacingGameID(binding.PJSKUserID, binding.Visible)
+	uid := i18n.MaskUID(binding.PJSKUserID, binding.Visible)
 	switch {
 	case server != "" && uid != "":
 		return fmt.Sprintf("%s服%s", server, uid)
@@ -183,7 +184,7 @@ func normalizeToolboxDataFetchError(err error, dataLabel string, binding *accoun
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 
@@ -247,7 +248,7 @@ func normalizeSekaiAPIFetchError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 
@@ -289,14 +290,6 @@ func normalizeSekaiAPIFetchError(err error) error {
 	return err
 }
 
-func maskUserFacingGameID(uid string, visible bool) string {
-	uid = strings.TrimSpace(uid)
-	if uid == "" || visible || len(uid) <= 6 {
-		return uid
-	}
-	return uid[:3] + strings.Repeat("*", len(uid)-6) + uid[len(uid)-3:]
-}
-
 // WrapDomainError converts well-known domain errors into ReplayError so that
 // transport layers (e.g. api/bot/pjsk) only need to distinguish ReplayError
 // from unexpected errors, without duplicating Chinese user-facing messages.
@@ -304,7 +297,7 @@ func WrapDomainError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 	message := strings.TrimSpace(err.Error())

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
@@ -30,7 +29,7 @@ func normalizeMySekaiUserFacingError(err error, mode string) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 

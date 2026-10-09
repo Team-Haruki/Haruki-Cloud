@@ -3,6 +3,7 @@ package accountdata
 import (
 	"context"
 	"fmt"
+	"haruki-cloud/internal/i18n"
 	json "haruki-cloud/internal/jsonutil"
 	"strings"
 
@@ -153,7 +154,7 @@ func formatBindResultText(result *BindResult) string {
 		return "绑定成功"
 	}
 
-	lines := []string{fmt.Sprintf("%s服绑定成功: %s (%s)", strings.ToUpper(result.Server), result.UserName, maskUID(result.UserID))}
+	lines := []string{fmt.Sprintf("%s服绑定成功: %s (%s)", strings.ToUpper(result.Server), result.UserName, i18n.MaskUID(result.UserID, false))}
 	if result.AlreadyBound {
 		lines = append(lines, "该账号此前已绑定，本次跳过重复写入")
 	}
@@ -209,12 +210,5 @@ func formatBindingUID(item BindingListItem) string {
 	if item.Visible {
 		return item.UserID
 	}
-	return maskUID(item.UserID)
-}
-
-func maskUID(uid string) string {
-	if len(uid) <= 6 {
-		return uid
-	}
-	return uid[:3] + strings.Repeat("*", len(uid)-6) + uid[len(uid)-3:]
+	return i18n.MaskUID(item.UserID, false)
 }

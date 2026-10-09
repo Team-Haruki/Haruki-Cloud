@@ -17,7 +17,7 @@ func normalizeCardUserFacingErrorForLookup(err error, region string, fallbackQue
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 	var unreleased *releasecheck.UnreleasedError
@@ -106,7 +106,7 @@ func normalizeMusicUserFacingErrorForLookup(err error, region string, fallbackQu
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 	var unreleased *releasecheck.UnreleasedError
@@ -229,7 +229,7 @@ func normalizeEventUserFacingErrorForRegion(err error, region string) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 	var unreleased *releasecheck.UnreleasedError
@@ -270,7 +270,7 @@ func normalizeGachaUserFacingError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+	if isUserFacingError(err) {
 		return err
 	}
 	var unreleased *releasecheck.UnreleasedError

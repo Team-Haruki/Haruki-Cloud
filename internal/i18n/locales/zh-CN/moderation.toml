@@ -1,0 +1,97 @@
+# 封禁与全局管理：/kill、/back 的回复，以及被封禁用户看到的提示。
+
+[moderation.kill.usage_reason]
+description = "/kill 参数数量不对时的原因行，后面会接帮助指引。"
+other = "需要提供 QQ 号和封禁原因，天数可选"
+
+[moderation.back.usage_reason]
+description = "/back 参数数量不对时的原因行，后面会接帮助指引。"
+other = "需要提供一个 QQ 号"
+
+[moderation.kill.self]
+description = "管理员尝试用 /kill 封禁自己。"
+other = "不能封禁自己"
+
+[moderation.qq_invalid]
+description = "/kill、/back 的 QQ 号参数不是正整数，作为 common.bad_param 的原因行。"
+other = "QQ 号必须是正整数"
+
+[moderation.kill.days_invalid]
+description = "/kill 的天数参数不是正整数，作为 common.bad_param 的原因行。"
+other = "封禁天数必须是正整数"
+
+[moderation.kill.reason_required]
+description = "/kill 没有填写封禁原因。"
+other = "请填写封禁原因"
+
+[moderation.kill.reason_too_long]
+description = "/kill 的封禁原因过长。占位符：Max=允许的最多字符数。"
+other = "封禁原因不能超过 {{.Max}} 个字符"
+
+[moderation.kill.expiry_past]
+description = "/kill 计算出的解封时间早于当前时间。"
+other = "解封时间必须晚于当前时间"
+
+[moderation.not_admin]
+description = "非全局管理员使用 /kill 或 /back。"
+other = "只有全局管理员可以使用此指令"
+
+[moderation.kill.done_permanent]
+description = "/kill 永久封禁成功后回复管理员。占位符：QQ=被封禁的 QQ 号；Reason=封禁原因，管理员输入的原文。"
+other = "已全局封禁 QQ 号 {{.QQ}}\n原因：{{.Reason}}\n期限：永久"
+
+[moderation.kill.done_until]
+description = "/kill 限时封禁成功后回复管理员。占位符：QQ=被封禁的 QQ 号；Reason=封禁原因，管理员输入的原文；ExpiresAt=解封时间，按管理员时区格式化。"
+other = "已全局封禁 QQ 号 {{.QQ}}\n原因：{{.Reason}}\n解封时间：{{.ExpiresAt}}"
+
+[moderation.back.done]
+description = "/back 解封成功后回复管理员。占位符：QQ=被解封的 QQ 号。"
+other = "已解除 QQ 号 {{.QQ}} 的全局封禁"
+
+[moderation.back.not_found]
+description = "/back 的 QQ 号从未使用过 Bot，没有用户记录。占位符：QQ=管理员输入的 QQ 号。"
+other = "没有找到 QQ 号 {{.QQ}} 的用户记录"
+
+[moderation.banned]
+description = "被封禁用户使用指令时的回复（没有原因、永久）。占位符：Feature=被禁止的功能，取自 moderation.feature.*。"
+other = "你已被禁止使用{{.Feature}}"
+
+[moderation.banned_reason]
+description = "被封禁用户使用指令时的回复（有原因、永久）。占位符：Feature=被禁止的功能，取自 moderation.feature.*；Reason=封禁原因，管理员输入或系统记录的原文。"
+other = "你已被禁止使用{{.Feature}}，原因：{{.Reason}}"
+
+[moderation.banned_until]
+description = "被封禁用户使用指令时的回复（没有原因、限时）。占位符：Feature=被禁止的功能，取自 moderation.feature.*；ExpiresAt=解封时间，按用户时区格式化。"
+other = "你已被禁止使用{{.Feature}}\n解封时间：{{.ExpiresAt}}"
+
+[moderation.banned_reason_until]
+description = "被封禁用户使用指令时的回复（有原因、限时）。占位符：Feature=被禁止的功能，取自 moderation.feature.*；Reason=封禁原因，管理员输入或系统记录的原文；ExpiresAt=解封时间，按用户时区格式化。"
+other = "你已被禁止使用{{.Feature}}，原因：{{.Reason}}\n解封时间：{{.ExpiresAt}}"
+
+[moderation.feature.all]
+description = "被禁止的功能：全局封禁，禁止使用全部功能。"
+other = "所有功能"
+
+[moderation.feature.pjsk]
+description = "被禁止的功能：所有 PJSK 相关指令。"
+other = "PJSK 相关功能"
+
+[moderation.feature.main]
+description = "被禁止的功能：除查榜、别名、烤森以外的 PJSK 查询指令。"
+other = "PJSK 查询功能"
+
+[moderation.feature.ranking]
+description = "被禁止的功能：查榜、榜线、追踪等排名指令。"
+other = "查榜功能"
+
+[moderation.feature.alias]
+description = "被禁止的功能：别名查询与提交。"
+other = "别名功能"
+
+[moderation.feature.mysekai]
+description = "被禁止的功能：烤森相关指令。"
+other = "烤森功能"
+
+[moderation.bind_banned_account_warning]
+description = "用户尝试绑定属于被封禁用户的游戏账号时的警告；累计 3 次后自动封禁。"
+other = "你正在尝试绑定已被封禁的游戏账号，请不要再次尝试"

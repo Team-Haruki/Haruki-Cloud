@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/displaytime"
@@ -562,7 +563,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, resolvedHarukiID)
 	uploadTime := displaytime.TimeFromUnixSeconds(ts, timeZone)
 	relDur := displaytime.FormatRelativeDuration(displaytime.Now(timeZone).Sub(displaytime.TimeFromUnixSeconds(ts, timeZone)))
-	maskedUID := maskPJSKUID(pjskUID, bindingVisible)
+	maskedUID := i18n.MaskUID(pjskUID, bindingVisible)
 
 	text := fmt.Sprintf("UID %s 的%s数据更新时间:\n%s (%s) (%s)",
 		maskedUID, label, displaytime.FormatTime(uploadTime, "2006-01-02 15:04:05"), timeZone, relDur)

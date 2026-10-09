@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/displaytime"
@@ -238,7 +239,7 @@ func arrestChallengeCharacterLabel(characterID int, resolvedName string) string 
 }
 
 func arrestDisplayUID(uid int64, visible bool) string {
-	return maskPJSKUID(strconv.FormatInt(uid, 10), visible)
+	return i18n.MaskUID(strconv.FormatInt(uid, 10), visible)
 }
 
 func arrestCharacterRegionRank(region string) int {
@@ -301,7 +302,7 @@ func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
 	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, target.HarukiUserID)
 	regTime := displaytime.TimeFromUnixSeconds(ts, timeZone)
 	relDur := displaytime.FormatRelativeDuration(displaytime.Now(timeZone).Sub(displaytime.TimeFromUnixSeconds(ts, timeZone)))
-	maskedUID := maskPJSKUID(pjskUserID, target.Visible)
+	maskedUID := i18n.MaskUID(pjskUserID, target.Visible)
 
 	text := fmt.Sprintf("UID %s 注册时间如下\n%s (%s) (%s)",
 		maskedUID, displaytime.FormatTime(regTime, "2006-01-02 15:04:05"), timeZone, relDur)

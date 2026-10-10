@@ -465,7 +465,7 @@ events 角色与 API 角色是同一镜像的两个进程（`haruki-server event
 | POST | `/internal/subscriptions/:id/close` | 共享内部令牌 | 关闭某订阅版本的全部流（`subscription_version` 放在查询参数或 JSON 正文） |
 
 - **状态码约定**：缺参数 400；订阅令牌无效（不存在、未生效、已过期、版本不符）401，Client 收到后永久停止重连；其他失败（数据库不可用、只读节点、连接数达到上限、正在关闭）一律 503。投递时订阅已失效返回 409，Toolbox 不重试。
-- **事件流**：每帧 `event: birthday_monitor_update`，`id:` 为 `realtime_events.id`，`data:` 为单行 JSON（字段名与旧网关相同）；连接开头发送 `retry:`，每 15 秒发送注释心跳。先按 `id` 重放未确认、未作废的事件（`Last-Event-ID` 之后），再推送实时事件。
+- **事件流**：每帧 `event: birthday_monitor_update`，`id:` 为 `realtime_events.id`，`data:` 为单行 JSON（字段名与旧网关相同）；连接开头发送 `retry:`，每 15 秒发送注释心跳。先按 `id` 重放未确认、未作废的事件（`Last-Event-ID` 之后），再推送实时事件。重放时跳过 `replay_grace`（默认 20 秒）内刚投递过的事件，避免 Client 渲染中途重连导致重复推送；这些事件未确认时由 90 秒重投补发。
 - **作废策略**：默认 `latest`，新事件作废同一订阅版本中更早的未确认事件；`all` 最多保留 `replay_max` 条。
 - **确认与重投**：Client 渲染并发送后调用 `/birthday-monitor/ack`，API 角色先写 `acked_at`，再通知 Toolbox 删除载荷（Toolbox 失败只记日志）。已投递超过 90 秒仍未确认的事件在在线连接上重投，投递 3 次后作废。
 - **订阅变更**：更新或取消订阅时，API 角色作废旧版本的未确认事件，并通知 events 角色（及并行期的旧网关）关闭旧版本的流；events 角色每 15 秒也会检查在线订阅，关闭已失效的流。

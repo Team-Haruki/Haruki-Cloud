@@ -60,11 +60,13 @@ func Run(ctx context.Context) {
 	manifestSigner := initManifestSigner(mainLogger)
 	buildPolicy := initBuildPolicy(mainLogger)
 	securityMonitor := initSecurityMonitor(mainLogger, redisClient)
+	authIPBan := initAuthIPBan(ctx, mainLogger, app, redisClient, securityMonitor)
 	botDBClient := initBot(ctx, mainLogger, app, redisClient, botAuth.BotAuthOptions{
 		NoiseKeys:   noiseKeys,
 		BanChecker:  banChecker,
 		BuildPolicy: buildPolicy,
 		Security:    securityMonitor,
+		IPBan:       authIPBan,
 	})
 	botRouteDispatchers := botPJSK.RegisterPJSKBotRoutesWithOptions(ctx, app, renderRuntime, redisClient, botDBClient, botPJSK.BotRouteOptions{
 		NoiseKeys:      noiseKeys,

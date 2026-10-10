@@ -1,15 +1,16 @@
 # 客户端构建许可与安全事件
 
-本文描述 Cloud 侧的两项机制：
+本文描述 Cloud 侧的三项机制：
 
 1. **构建许可与撤销**：AuthV3 登录时按发布清单放行客户端构建，并能紧急撤销某个
    build、版本、bot 凭据或来源地址；已签发的会话同样受撤销约束。
 2. **安全事件与告警**：登录失败、重放、限速、构建被拒、登录来源突变、客户端身份
    突变等事件统一打点，超阈值时推送 webhook。
+3. **登录失败自动封禁**：同一来源地址登录失败次数过多时，自动禁止它登录一段时间。
 
 代码位置：`internal/core/buildpolicy`（策略文档与判定）、`internal/core/secevent`
-（事件与告警）、`api/bot/auth/session_v3.go`（登录接入）、
-`api/bot_session_middleware.go`（会话撤销）。
+（事件与告警）、`internal/core/authban`（登录失败自动封禁）、
+`api/bot/auth/session_v3.go`（登录接入）、`api/bot_session_middleware.go`（会话撤销）。
 
 ## 前提与边界
 
@@ -118,6 +119,7 @@ AuthV3 签发的 session JWT 带 `bid`（build_id）和 `cv`（client_version）
 | `login_source_changed` | 登录成功，但来源 IP 与上次不同。 |
 | `client_changed` | 登录成功，但 `client_version` 或 `build_id` 与上次不同。 |
 | `policy_unavailable` | 策略文件读不到或已过期，登录被放行。 |
+| `ip_banned` | 来源地址因登录失败过多被封禁（见下文“登录失败自动封禁”）。每次封禁都告警，不走阈值。 |
 
 ### 告警
 
@@ -142,6 +144,18 @@ security:
 接收端按这个形状实现，改动须两边同步。`bot_id`、`build_id`、`client_version`、
 `source_ip`、`reason`、`node` 为空时省略，其余字段总是存在。
 
+`ip_banned` 告警不经计数，每次封禁发一次：`source_ip` 是被封的地址（IPv6 为 /64），
+没有 `bot_id`；`count`、`threshold`、`window_seconds` 是触发封禁的失败次数、封禁阈值和
+计数窗口；另带 `ban_seconds`（本次封禁时长）和 `bot_ids`（窗口内出现过的 bot，最多 20 个）。
+接收端忽略不认识的字段，所以 `reason` 里也用文字写了这两项：
+
+```json
+{"kind":"ip_banned","source_ip":"203.0.113.50",
+ "reason":"10 login failures in 10m0s; banned for 6h0m0s (ban 1 within 168h0m0s); bots 30042042",
+ "enforced":true,"count":10,"threshold":10,"window_seconds":600,"node":"node-a",
+ "time":"2026-10-10T09:00:00Z","ban_seconds":21600,"bot_ids":["30042042"]}
+```
+
 投递规则：
 
 - 请求头 `Content-Type: application/json`；配置了 `alert_webhook_token` 时再带
@@ -154,6 +168,114 @@ security:
 计数放在 Redis（`haruki:sec:<kind>:<subject>`），多实例共享。环境变量：
 `HARUKI_SECURITY_ALERT_WEBHOOK_URL`、`HARUKI_SECURITY_ALERT_WEBHOOK_TOKEN`、
 `HARUKI_SECURITY_ALERT_THRESHOLD`、`HARUKI_SECURITY_ALERT_WINDOW`。
+
+## 登录失败自动封禁
+
+同一来源地址在窗口内登录失败达到阈值，就禁止它在 AuthV3 登录接口
+（`POST /api/v3/bot/:bot_id/auth`）登录一段时间。
+
+### 默认值
+
+```yaml
+security:
+  auth_ip_ban:
+    enabled: true
+    threshold: 10              # 窗口内计入的失败次数达到这个值就封禁
+    window: 10m                # 固定窗口，从第一次失败开始
+    ban_duration: 6h           # 第一次封禁时长
+    max_ban_duration: 24h      # 重复封禁逐次翻倍，最长到这个值；不大于 ban_duration 时不升级
+    escalation_window: 168h    # 最近一次封禁后，封禁次数记多久
+    count_build_rejected: true # 构建策略拒绝（enforce）也计入
+    exempt_known_bots: true    # 近期从该地址登录成功过的 bot 不受封禁影响
+    known_bot_ttl: 168h
+    block_bot_routes: false    # 封禁是否同时拦截其他 bot 接口
+    never_ban_cidrs: []        # 额外的永不封禁地址 / CIDR
+```
+
+环境变量：`HARUKI_SECURITY_AUTH_IP_BAN_` 加大写字段名（`ENABLED`、`THRESHOLD`、`WINDOW`、
+`DURATION`、`MAX_DURATION`、`ESCALATION_WINDOW`、`COUNT_BUILD_REJECTED`、
+`EXEMPT_KNOWN_BOTS`、`KNOWN_BOT_TTL`、`BLOCK_BOT_ROUTES`、`NEVER_BAN_CIDRS`，后者逗号分隔）。
+没有 Redis 时不启用。
+
+### 计入哪些失败
+
+| 计入 | 不计入 |
+|------|--------|
+| 凭据错误、bot 不存在、`bot_id` 不是数字或不一致（400 `auth_failed`） | 每 bot 每分钟 10 次的登录限速（429） |
+| 载荷无法解析、请求上下文不符、时间戳过期、nonce 格式不对（400） | bot 所有者被全局封禁（403） |
+| 登录 nonce 重放（400 `replay_detected`） | 服务端错误（5xx） |
+| 空请求体或无法解开的 Noise 握手（400） | 构建策略 `log-only` 下的报告（登录照常放行） |
+| 构建策略拒绝（403，`count_build_rejected` 为 true 时） | 指令接口的请求 nonce 重放 |
+
+登录成功**不会**清零该地址的失败次数：计数属于地址，如果一次成功登录就能清零，
+攻击者用自己的有效凭据就能不断洗掉对其他 bot 的失败记录。成功登录只把这个 bot 记为
+该地址的“已知 bot”（`exempt_known_bots`）。
+
+### 封禁范围
+
+- 被封地址请求登录接口时，在 Noise 握手、数据库和 bcrypt 之前直接返回 429，带
+  `Retry-After`（秒），正文是目录消息 `account.api.auth_banned`（“认证失败次数过多，
+  请稍后再试”，明文，不回显地址）。客户端对非 200 只看状态码。封禁期间的请求不再计数。
+- 已签发的会话不受影响：默认只拦登录接口，指令、manifest、注销照常工作，因为一个出口
+  地址上常有多个 bot。`block_bot_routes: true` 时，`/api/v2/bot/<bot_id>/…` 和
+  `/api/v3/bot/<bot_id>/…` 的其他接口也对被封地址返回 429。
+- `exempt_known_bots`：最近 `known_bot_ttl` 内从该地址登录成功、之后没有再从该地址失败过
+  的 bot，在封禁期间仍可登录（按 URL 里的 `bot_id` 判断，凭据照常校验）。这个 bot 一旦从该
+  地址失败，就失去豁免。
+- IPv6 按 /64 计数和封禁。
+- 永不封禁：回环、私有地址、链路本地、`100.64.0.0/10`、`0.0.0.0/8`，以及
+  `never_ban_cidrs` 里的地址。封这些地址等于封掉代理或内部调用方后面的所有人。
+  如果 API 也经 CDN 提供、且 CDN 回源时没有可信的转发头，Cloud 看到的是 CDN 节点地址，
+  应把 CDN 的回源地址段加进 `never_ban_cidrs`。
+
+### 来源地址
+
+使用 `c.IP()`，与安全事件的 `source_ip` 相同：只有 TCP 对端在
+`backend.trusted_proxies` 里时才读 `backend.proxy_header`（默认 `X-Forwarded-For`），
+并且从右往左跳过可信代理，取第一个不是可信代理的合法地址（Fiber
+`EnableIPValidation`）。客户端自己写在该头最左边的值不会被采用。
+
+### 存储
+
+计数和封禁在 Redis（多实例共享，重启不丢），每次失败由一段 Lua 脚本原子完成计数、
+判阈值、计算时长和写入封禁，并发请求不会越过阈值或重复封禁：
+
+| 键 | 内容 |
+|----|------|
+| `haruki:authban:fail:<ip>` | 当前窗口的失败次数，TTL 为窗口剩余时间 |
+| `haruki:authban:bots:<ip>` | 当前窗口出现过的 bot_id（最多 20 个） |
+| `haruki:authban:ban:<ip>` | 封禁（hash：since、until、level、count、bots），TTL 为封禁剩余时间 |
+| `haruki:authban:level:<ip>` | 封禁次数，用于升级，TTL 为 `escalation_window` |
+| `haruki:authban:known:<ip>` | 已知 bot，TTL 为 `known_bot_ttl` |
+| `haruki:authban:active` | 有序集合，成员为地址，分值为到期时间（毫秒），供列表和到期日志使用 |
+
+Redis 出错时放行（记 WARN `auth ip ban store unavailable`）。
+
+### 日志与指标
+
+- 开始：WARN `auth ip ban started`（`source_ip`、`failures`、`window`、`ban_duration`、
+  `level`、`until`、`last_reason`、`bot_ids`），同时上报 `ip_banned` 安全事件。
+- 到期：每分钟检查一次，INFO `auth ip ban expired`（多实例只记一次）。
+- 手动解封：WARN `auth ip ban lifted`。
+- `/debug/vars` 的 `auth_ip_ban`：`failures_counted`、`bans`、`requests_rejected`、
+  `known_bot_exempted`、`bans_expired`、`bans_lifted`、`redis_errors`。
+
+### 管理接口
+
+`VerifyAPIAuthorization` 鉴权（同 `/internal/bot/*`），只在功能启用时注册：
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/internal/bot/auth-bans` | 当前封禁列表（最多 500 条，按到期时间排序） |
+| GET | `/internal/bot/auth-bans?ip=<地址>` | 该地址的全部状态：封禁、窗口内失败次数和 bot、升级次数、已知 bot、是否永不封禁 |
+| DELETE | `/internal/bot/auth-bans?ip=<地址>` | 解封并清空失败次数、窗口 bot 和升级次数（保留已知 bot） |
+
+`ip` 可以是地址或 IPv6 /64；IPv6 地址按所在 /64 处理。列表项：
+
+```json
+{"ip":"203.0.113.50","since":"2026-10-10T09:00:00Z","until":"2026-10-10T15:00:00Z",
+ "retry_after_seconds":21000,"level":1,"failures":10,"bot_ids":["30042042"]}
+```
 
 ## 撤销手册
 

@@ -43,6 +43,9 @@ const (
 	// KindPolicyUnavailable means the build policy could not be loaded and
 	// logins were admitted fail-open.
 	KindPolicyUnavailable Kind = "policy_unavailable"
+	// KindIPBanned is a source address banned from AuthV3 login after too
+	// many failures. It alerts on every occurrence (see Event.Alert).
+	KindIPBanned Kind = "ip_banned"
 )
 
 // Event is one occurrence. BotID is the counting subject when set, else
@@ -56,6 +59,21 @@ type Event struct {
 	Reason        string
 	// Enforced tells whether the request was actually rejected.
 	Enforced bool
+	// Alert, when set, raises an alert for this one event without counting
+	// it against the threshold; its numbers replace the monitor's.
+	Alert *AlertDetail
+}
+
+// AlertDetail carries the numbers of an event that is already the result of
+// its own threshold (an IP ban): the failures that triggered it, the
+// threshold and window they were counted against, the ban length and the
+// bots seen in the window.
+type AlertDetail struct {
+	Count       int64
+	Threshold   int
+	Window      time.Duration
+	BanDuration time.Duration
+	BotIDs      []string
 }
 
 // Reporter receives events. Implementations must be safe for concurrent use.
@@ -177,6 +195,10 @@ func (m *Monitor) Report(ctx context.Context, ev Event) {
 	attrs := eventAttrs(ev)
 	m.logger.LogAttrs(ctx, slog.LevelWarn, "security event", attrs...)
 
+	if ev.Alert != nil {
+		m.raise(ctx, ev, attrs, ev.Alert.Count, ev.Alert.Threshold, ev.Alert.Window)
+		return
+	}
 	if m.counter == nil {
 		return
 	}
@@ -199,6 +221,11 @@ func (m *Monitor) Report(ctx context.Context, ev Event) {
 	if count != int64(m.cfg.Threshold) {
 		return
 	}
+	m.raise(ctx, ev, attrs, count, m.cfg.Threshold, m.cfg.Window)
+}
+
+// raise logs one alert and posts it to the webhook.
+func (m *Monitor) raise(ctx context.Context, ev Event, attrs []slog.Attr, count int64, threshold int, window time.Duration) {
 	alert := alertPayload{
 		Kind:          string(ev.Kind),
 		BotID:         ev.BotID,
@@ -208,15 +235,19 @@ func (m *Monitor) Report(ctx context.Context, ev Event) {
 		Reason:        ev.Reason,
 		Enforced:      ev.Enforced,
 		Count:         count,
-		Threshold:     m.cfg.Threshold,
-		WindowSeconds: int64(m.cfg.Window / time.Second),
+		Threshold:     threshold,
+		WindowSeconds: int64(window / time.Second),
 		Node:          m.cfg.Node,
 		Time:          time.Now().UTC().Format(time.RFC3339),
 	}
+	if ev.Alert != nil {
+		alert.BanSeconds = int64(ev.Alert.BanDuration / time.Second)
+		alert.BotIDs = ev.Alert.BotIDs
+	}
 	m.logger.LogAttrs(ctx, slog.LevelError, "security alert", append(attrs,
 		slog.Int64("count", count),
-		slog.Int("threshold", m.cfg.Threshold),
-		slog.Duration("window", m.cfg.Window),
+		slog.Int("threshold", threshold),
+		slog.Duration("window", window),
 	)...)
 	payload, err := json.Marshal(alert)
 	if err != nil {
@@ -250,6 +281,10 @@ type alertPayload struct {
 	WindowSeconds int64  `json:"window_seconds"`
 	Node          string `json:"node,omitempty"`
 	Time          string `json:"time"`
+	// BanSeconds and BotIDs are set only on ip_banned alerts; receivers
+	// that do not know them ignore them (Reason repeats both in text).
+	BanSeconds int64    `json:"ban_seconds,omitempty"`
+	BotIDs     []string `json:"bot_ids,omitempty"`
 }
 
 func eventAttrs(ev Event) []slog.Attr {
@@ -272,6 +307,12 @@ func eventAttrs(ev Event) []slog.Attr {
 	}
 	if ev.Reason != "" {
 		attrs = append(attrs, slog.String("reason", ev.Reason))
+	}
+	if ev.Alert != nil {
+		attrs = append(attrs, slog.Duration("ban_duration", ev.Alert.BanDuration))
+		if len(ev.Alert.BotIDs) > 0 {
+			attrs = append(attrs, slog.Any("bot_ids", ev.Alert.BotIDs))
+		}
 	}
 	return attrs
 }

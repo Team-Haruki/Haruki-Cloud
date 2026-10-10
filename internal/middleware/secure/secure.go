@@ -23,6 +23,10 @@ const (
 	// LocalNoiseKeyID carries the id of the static key that decrypted the
 	// request.
 	LocalNoiseKeyID = "secure_noise_key_id"
+	// LocalHandshakeFailed is set to true when the request was rejected
+	// before the handler because its body was empty or not a valid Noise NK
+	// message for any configured key (the login IP ban counts it).
+	LocalHandshakeFailed = "secure_noise_failed"
 )
 
 // Config defines the config for Secure middleware.
@@ -64,6 +68,7 @@ func New(config Config) fiber.Handler {
 		ciphertext := c.Body()
 		if len(ciphertext) == 0 {
 			finishDecrypt()
+			c.Locals(LocalHandshakeFailed, true)
 			return sendJSON(fiber.StatusBadRequest, fiber.Map{"error": "Empty body"})
 		}
 
@@ -74,6 +79,7 @@ func New(config Config) fiber.Handler {
 			finishDecrypt()
 			commandtrace.SetErrorType(c.Context(), fmt.Sprintf("%T", err))
 			slog.WarnContext(c.Context(), "noise handshake/decrypt failed", "error_type", fmt.Sprintf("%T", err))
+			c.Locals(LocalHandshakeFailed, true)
 			return sendJSON(fiber.StatusBadRequest, fiber.Map{"error": "Secure handshake failed (Decrypt)"})
 		}
 		finishDecrypt()

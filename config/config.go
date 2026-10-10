@@ -163,6 +163,22 @@ func envBoolPtr(name string, dst **bool) {
 	}
 }
 
+// applyAuthIPBanEnv applies the HARUKI_SECURITY_AUTH_IP_BAN_* overrides.
+func applyAuthIPBanEnv(dst *AuthIPBanConfig) error {
+	const prefix = "HARUKI_SECURITY_AUTH_IP_BAN_"
+	envBoolPtr(prefix+"ENABLED", &dst.Enabled)
+	envInt(prefix+"THRESHOLD", &dst.Threshold)
+	envDuration(prefix+"WINDOW", &dst.Window)
+	envDuration(prefix+"DURATION", &dst.BanDuration)
+	envDuration(prefix+"MAX_DURATION", &dst.MaxBanDuration)
+	envDuration(prefix+"ESCALATION_WINDOW", &dst.EscalationWindow)
+	envBoolPtr(prefix+"COUNT_BUILD_REJECTED", &dst.CountBuildRejected)
+	envBoolPtr(prefix+"EXEMPT_KNOWN_BOTS", &dst.ExemptKnownBots)
+	envDuration(prefix+"KNOWN_BOT_TTL", &dst.KnownBotTTL)
+	envBool(prefix+"BLOCK_BOT_ROUTES", &dst.BlockBotRoutes)
+	return envStringSlice(prefix+"NEVER_BAN_CIDRS", &dst.NeverBanCIDRs)
+}
+
 // envPool overrides a pool block from <prefix>_MAX_OPEN, _MAX_IDLE,
 // _CONN_MAX_LIFETIME and _CONN_MAX_IDLE_TIME.
 func envPool(prefix string, dst *dbpool.Config) {
@@ -452,6 +468,9 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_SECURITY_ALERT_WEBHOOK_TOKEN", &cfg.Security.AlertWebhookToken)
 	envInt("HARUKI_SECURITY_ALERT_THRESHOLD", &cfg.Security.AlertThreshold)
 	envDuration("HARUKI_SECURITY_ALERT_WINDOW", &cfg.Security.AlertWindow)
+	if err := applyAuthIPBanEnv(&cfg.Security.AuthIPBan); err != nil {
+		return err
+	}
 	envStr("HARUKI_DIAGNOSTICS_LISTEN_ADDR", &cfg.Diagnostics.ListenAddr)
 	envBool("HARUKI_DIAGNOSTICS_ALLOW_NON_LOOPBACK", &cfg.Diagnostics.AllowNonLoopback)
 	envDuration("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", &cfg.HarukiBotDB.ResponseElectionWindow)
@@ -1119,6 +1138,49 @@ type SecurityConfig struct {
 	AlertThreshold int `yaml:"alert_threshold"`
 	// AlertWindow is the counting window. 0 = 10m.
 	AlertWindow time.Duration `yaml:"alert_window"`
+	// AuthIPBan bans a source address from AuthV3 login after repeated
+	// failures (docs/build-policy.cn.md).
+	AuthIPBan AuthIPBanConfig `yaml:"auth_ip_ban"`
+}
+
+// AuthIPBanConfig tunes the automatic login ban per source address. Zero
+// values take the defaults noted on each field.
+type AuthIPBanConfig struct {
+	// Enabled switches the ban on. nil = true.
+	Enabled *bool `yaml:"enabled"`
+	// Threshold is the number of counted failures inside Window that bans
+	// the address. 0 = 10.
+	Threshold int `yaml:"threshold"`
+	// Window is the fixed counting window, started by the first failure.
+	// 0 = 10m.
+	Window time.Duration `yaml:"window"`
+	// BanDuration is the first ban's length. 0 = 6h.
+	BanDuration time.Duration `yaml:"ban_duration"`
+	// MaxBanDuration caps escalation: each repeat ban inside
+	// EscalationWindow doubles the previous length up to this value.
+	// 0 = 24h; a value at or below BanDuration disables escalation.
+	MaxBanDuration time.Duration `yaml:"max_ban_duration"`
+	// EscalationWindow is how long an address's ban count is remembered
+	// after its latest ban. 0 = 168h.
+	EscalationWindow time.Duration `yaml:"escalation_window"`
+	// CountBuildRejected counts enforced build-policy rejections as
+	// failures. nil = true.
+	CountBuildRejected *bool `yaml:"count_build_rejected"`
+	// ExemptKnownBots lets a bot that logged in successfully from the banned
+	// address within KnownBotTTL (and has not failed from it since) keep
+	// logging in. nil = true.
+	ExemptKnownBots *bool `yaml:"exempt_known_bots"`
+	// KnownBotTTL is how long a successful login keeps its bot known for
+	// that address. 0 = 168h.
+	KnownBotTTL time.Duration `yaml:"known_bot_ttl"`
+	// BlockBotRoutes also rejects every other bot route (commands, manifest,
+	// logout) from a banned address. Off by default: one address often
+	// hosts several bots.
+	BlockBotRoutes bool `yaml:"block_bot_routes"`
+	// NeverBanCIDRs adds addresses or CIDRs that are never banned to the
+	// built-in loopback, private, link-local and shared (100.64.0.0/10)
+	// ranges.
+	NeverBanCIDRs []string `yaml:"never_ban_cidrs"`
 }
 
 // DiagnosticsConfig is diagnostics: an opt-in plain-HTTP listener, separate

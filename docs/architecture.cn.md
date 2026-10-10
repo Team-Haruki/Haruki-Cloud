@@ -556,6 +556,8 @@ Cloud 的处理：
 - `image.ref_index` 统计写行，含 `image.content_lock`、`image.lookup`、`image.index`。
 - `drawing.store_ref`、`drawing.store_ref_degraded`、`drawing.store_ref_unsupported`、`image.ref_duplicate`、`image.ref_index_error` 为计数事件。
 
+**节点故障转移。** 配置了多个 `drawing_targets` 时，一次渲染请求如果在目标节点上失败，且能证明该节点没有收到完整请求，就换一个节点重发一次同样的请求（只重发一次，请求上下文已取消或到期时不重发）。这类失败包括：没有拿到连接（拨号失败、连接被拒、DNS 或 TLS 握手失败），或请求还没写完连接就断开且没有收到任何响应字节。拿到连接后的超时、请求已完整发出后的断开，以及任何 HTTP 响应（包括 5xx 和 503）都不重发，因为节点可能已经处理了请求。失败的节点在 30 秒内被后续请求跳过（全部节点都在冷却时仍照常选一个），节点一旦有响应就恢复。第一个节点没有收到请求，所以不会写入任何对象；产物 key 按内容 hash 计算，重发也不会重复发布。trace 计数事件为 `drawing.failover`，`drawing.http` 每次尝试各计一次，WARN 日志 `drawing request failed` 带 `target`、`connection_failure`、`failover` 字段。
+
 **GC。** `utils/imagecache.GC` 由应用生命周期管理，`gc_enabled` 默认关闭，`gc_dry_run` 默认开启。过期渲染索引的 DELETE 原子复核选取时的过期条件，避免删除已续期的行。物理对象回收另外受 `gc_object_delete_enabled` 控制，只有所有 Cloud 与 Drawing 写入者采用同一生命周期协议后才能开启。内容写入与回收按内容 hash 使用 PostgreSQL 事务锁；回收先提交索引退役与持久 outbox，再在新事务中复核引用并删除旧 generation 对象。删除失败的债务保存在数据库，重启后继续处理。随机 generation key 使超时后晚到的旧 DELETE 无法命中新写入的对象。上传前独立提交意图记录，上传与索引成功后消费；进程崩溃或索引失败留下的意图可在期限后回收。
 
 `cmd/image-cache-reconcile` 分页检查索引指向的对象，默认只检查；`--repair` 仅移除已确认缺失对象的索引引用，供后续请求重画，不删除对象。该工具使用只读 schema 探测，不执行 DDL；只接受无本地目录覆盖、bucket 根路径的显式 S3 槽位，避免检查错误存储目标。正常图片缓存命中仍保持零 HEAD/GET。

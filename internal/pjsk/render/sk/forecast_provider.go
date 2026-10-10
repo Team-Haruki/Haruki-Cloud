@@ -29,13 +29,32 @@ func NewRemoteForecastProvider() *RemoteForecastProvider {
 
 func NewRemoteForecastProviderWithConfig(cfg ForecastConfig) *RemoteForecastProvider {
 	localBaseURL := strings.TrimRight(strings.TrimSpace(cfg.LocalBaseURL), "/")
+	client := newForecastHTTPClient()
+	external := client
+	if proxyURL := strings.TrimSpace(cfg.ProxyURL); proxyURL != "" {
+		external = newForecastHTTPClient().SetProxy(proxyURL)
+	}
 	return &RemoteForecastProvider{
-		http: resty.New().
-			SetTimeout(config.SKForecastHTTPClientTimeout).
-			SetResponseBodyLimit(forecastMaxResponseBytes).
-			SetRetryCount(2),
+		http:             client,
+		external:         external,
 		localForecastURL: localBaseURL,
 	}
+}
+
+func newForecastHTTPClient() *resty.Client {
+	return resty.New().
+		SetTimeout(config.SKForecastHTTPClientTimeout).
+		SetResponseBodyLimit(forecastMaxResponseBytes).
+		SetRetryCount(2)
+}
+
+// clientFor picks the proxied client for third-party sources and the direct
+// one for the local forecast service.
+func (p *RemoteForecastProvider) clientFor(url string) *resty.Client {
+	if p.external == nil || (p.localForecastURL != "" && strings.HasPrefix(url, p.localForecastURL+"/")) {
+		return p.http
+	}
+	return p.external
 }
 
 func (p *RemoteForecastProvider) Fetch(ctx context.Context, region string, eventID int, ranks []int) (map[int]ForecastScore, error) {

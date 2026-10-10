@@ -145,12 +145,18 @@ type ForecastProviderBySourceQuery interface {
 }
 
 type RemoteForecastProvider struct {
-	http             *resty.Client
+	http *resty.Client
+	// external serves the third-party sources; it differs from http only
+	// when ForecastConfig.ProxyURL is set.
+	external         *resty.Client
 	localForecastURL string
 }
 
 type ForecastConfig struct {
 	LocalBaseURL string
+	// ProxyURL routes the third-party forecast sources (not LocalBaseURL)
+	// through an HTTP proxy, e.g. http://proxy:7890. Empty means direct.
+	ProxyURL string
 	// CacheStore/CacheKey name the persisted forecast cache object. When
 	// CacheStore is nil, CachePath (a local file, "" -> no persistence) is
 	// used instead.

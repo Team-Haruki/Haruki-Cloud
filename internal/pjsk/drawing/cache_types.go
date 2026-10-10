@@ -24,6 +24,9 @@ type localRenderCache struct {
 	maxEntries     int
 	maxBytes       int64
 	ttl            time.Duration
+	// placeholderTTL is the fixed lifetime of a render Drawing flagged with
+	// missing-asset placeholders; 0 (the default) keeps such renders out.
+	placeholderTTL time.Duration
 	flight         singleflight.Group
 }
 
@@ -50,6 +53,10 @@ type RenderCacheConfig struct {
 	TouchInterval time.Duration
 	// FetchTimeout bounds one ref byte read (default 10s).
 	FetchTimeout time.Duration
+	// PlaceholderTTL is pjsk_render.drawing_cache.placeholder_ttl: <= 0 (the
+	// default) never caches a render flagged with missing-asset placeholders;
+	// a positive value keeps it in-process for that fixed, non-sliding time.
+	PlaceholderTTL time.Duration
 }
 
 type RenderCacheClient struct {
@@ -62,6 +69,11 @@ type RenderCacheClient struct {
 	fetcher     *artifactFetcher
 	flight      singleflight.Group
 	pending     *localRenderCache
+	// placeholder holds renders Drawing flagged with missing-asset
+	// placeholders, in-process only and for a fixed placeholderTTL: they never
+	// reach render_cache_index, whose hits slide the TTL. nil when disabled.
+	placeholder    *localRenderCache
+	placeholderTTL time.Duration
 }
 
 type renderCacheEndpoint struct {

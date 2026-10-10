@@ -229,6 +229,36 @@ func (lc *localRenderCache) removeEntryLocked(key string, entry *localRenderEntr
 	}
 }
 
+// setPlaceholder keeps a render Drawing drew with missing-asset placeholders
+// for placeholderEntryTTL only. The entry is never permanent and a hit never
+// extends it, so the real image is rendered once the asset has arrived.
+func (lc *localRenderCache) setPlaceholder(ctx context.Context, key string, data []byte, ruleTTL time.Duration, infinite bool) {
+	if lc == nil {
+		return
+	}
+	if ruleTTL <= 0 && !infinite {
+		ruleTTL = lc.ttl
+	}
+	ttl := placeholderEntryTTL(ruleTTL, infinite, lc.placeholderTTL)
+	if ttl <= 0 {
+		return
+	}
+	lc.set(key, data, ttl, false)
+	commandtrace.RecordOperation(ctx, "drawing.cache_placeholder_store", 0)
+}
+
+// delete drops key's entry, if any.
+func (lc *localRenderCache) delete(key string) {
+	if lc == nil {
+		return
+	}
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
+	if entry := lc.entries[key]; entry != nil {
+		lc.removeEntryLocked(key, entry)
+	}
+}
+
 func cloneRenderBytes(data []byte) []byte {
 	if data == nil {
 		return nil
@@ -282,7 +312,10 @@ func (lc *localRenderCache) RenderSharedContext(ctx context.Context, endpoint st
 			if err != nil {
 				return nil, err
 			}
-			if !renderNoStore(sharedCtx) {
+			switch {
+			case renderPlaceholders(sharedCtx) > 0:
+				lc.setPlaceholder(sharedCtx, key, data, ttl, policy.Infinite)
+			case !renderNoStore(sharedCtx):
 				lc.set(key, data, ttl, policy.Infinite)
 			}
 			return data, nil
@@ -307,13 +340,19 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 	if cfg.TTL <= 0 || index == nil {
 		return nil
 	}
-	return &RenderCacheClient{
-		ttl:         cfg.TTL,
-		index:       index,
-		indexWriter: newRenderIndexWriter(index, cfg.TouchInterval),
-		fetcher:     newArtifactFetcher(cfg.Artifacts, cfg.Hosts, cfg.FetchTimeout),
-		pending:     newLocalRenderCacheWithLimits(pendingRenderCacheTTLIndex, 128, pendingRenderCacheMaxBytes),
+	client := &RenderCacheClient{
+		ttl:            cfg.TTL,
+		index:          index,
+		indexWriter:    newRenderIndexWriter(index, cfg.TouchInterval),
+		fetcher:        newArtifactFetcher(cfg.Artifacts, cfg.Hosts, cfg.FetchTimeout),
+		pending:        newLocalRenderCacheWithLimits(pendingRenderCacheTTLIndex, 128, pendingRenderCacheMaxBytes),
+		placeholderTTL: effectivePlaceholderTTL(cfg.PlaceholderTTL),
 	}
+	if client.placeholderTTL > 0 {
+		client.placeholder = newLocalRenderCacheWithLimits(client.placeholderTTL, placeholderRenderCacheMaxEntries, placeholderRenderCacheMaxBytes)
+		client.placeholder.placeholderTTL = client.placeholderTTL
+	}
+	return client
 }
 
 func (c *RenderCacheClient) Render(endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
@@ -440,6 +479,11 @@ func (c *RenderCacheClient) renderRemoteImageWork(ctx context.Context, endpoint,
 		}
 		return ImageBytes(data), nil
 	}
+	if data, ok := c.placeholder.get(key); ok {
+		commandtrace.RecordOperation(ctx, "drawing.cache_placeholder_hit", 0)
+		commandtrace.RecordOperation(ctx, drawingCacheHitTraceField, 0)
+		return ImageBytes(data), nil
+	}
 	lookupStarted := time.Now()
 	cached, hit := c.lookupIndexContext(ctx, key)
 	if hit {
@@ -482,11 +526,26 @@ func (c *RenderCacheClient) renderRemoteMiss(ctx context.Context, endpoint, key 
 		return ImageResult{}, err
 	}
 	noStore := renderNoStore(ctx) || (directive != nil && directive.outcome.NoStore)
+	flagged := renderPlaceholders(ctx) > 0
+	if !flagged {
+		// A complete render (a forced one, say) supersedes a flagged entry.
+		c.placeholder.delete(key)
+	}
 	if directive != nil && directive.outcome.Ref != nil {
 		if noStore || directive.outcome.StoreRef {
 			return ImageResult{ref: directive.outcome.Ref, fetcher: c.fetcher}, nil
 		}
 		return c.pendingRef(key, policy, ttl, directive.outcome.Ref), nil
+	}
+	// A render with "?" placeholders keys under the same request as the real
+	// image will once the asset ships. Drawing indexed nothing; keep the bytes
+	// in-process for the fixed placeholder TTL only (a no-store path never
+	// looks them up).
+	if flagged {
+		if !mode.skipsStore(policy.APIPath) {
+			c.placeholder.setPlaceholder(ctx, key, image, ttl, policy.Infinite)
+		}
+		return ImageBytes(image), nil
 	}
 	// Complete bytes from an old Drawing or a degraded write can be retained
 	// briefly. An explicit no-store response (missing asset or changed renderer)

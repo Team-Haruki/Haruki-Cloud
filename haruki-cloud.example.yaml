@@ -319,6 +319,12 @@ pjsk_render:
     storage_dir: "/data/haruki/cache/drawing"  # only seeds the legacy derivation of storage.cache
     ttl: "10m"                         # endpoint rules may override this (e.g. /sk uses 10s buckets)
     force_cooldown: "1m"               # per user+command limit for --force/强制刷新; <0 disables. env HARUKI_PJSK_RENDER_DRAWING_CACHE_FORCE_COOLDOWN
+    # Renders Drawing flags with X-Haruki-Render-Missing-Assets (a "?" placeholder for an asset not shipped yet)
+    # are logged (metric=drawing_placeholder_render) and, by default, never cached anywhere, so the real image
+    # appears on the first request after the asset arrives. A positive value instead keeps them in-process for
+    # that long, never extended on a hit and never longer than the endpoint's own TTL (also on infinite
+    # endpoints). 0 (default) or <0 = never cache. env HARUKI_PJSK_RENDER_DRAWING_CACHE_PLACEHOLDER_TTL
+    placeholder_ttl: "0s"
   drawing_timeout: "30s"      # env HARUKI_PJSK_RENDER_DRAWING_TIMEOUT
   drawing_retry_count: 2      # env HARUKI_PJSK_RENDER_DRAWING_RETRY_COUNT
   # Drawing artifact mode (C13 directive headers; Drawing uploads the image and answers an ArtifactRef).

@@ -133,7 +133,7 @@ func TestArtifactHeadersOnCachedAllowListedRequest(t *testing.T) {
 		t.Fatalf("card box = %q, %v", data, err)
 	}
 	ttl := strconv.FormatInt(directiveTTLSeconds(resolveRenderCacheRule("/api/pjsk/card/box").TTL, false), 10)
-	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/card/box")), "1", ttl, "4", "api/pjsk/card/box")
+	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/card/box")), "1", ttl, "6", "api/pjsk/card/box")
 
 	if _, err := client.GenerateEventList(&EventListRequest{}); err != nil {
 		t.Fatalf("event list: %v", err)
@@ -200,12 +200,12 @@ func TestArtifactHeadersOnUncachedCallSites(t *testing.T) {
 	if data, err := client.GenerateEventDetail(&EventDetailRequest{}); err != nil || string(data) != "plain-png" {
 		t.Fatalf("event detail = %q, %v", data, err)
 	}
-	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/event/detail")), "0", "86400", "4", "api/pjsk/event/detail")
+	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/event/detail")), "0", "86400", "6", "api/pjsk/event/detail")
 	server.setShape(shapeDegraded)
 	if data, err := client.GenerateAliasList(&AliasListRequest{}); err != nil || string(data) != "degraded-png" {
 		t.Fatalf("alias list = %q, %v", data, err)
 	}
-	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/misc/alias-list")), "0", "0", "4", "api/pjsk/misc/alias-list")
+	requireFullDirective(t, harukiHeaders(server.lastHeaders("/api/pjsk/misc/alias-list")), "0", "0", "6", "api/pjsk/misc/alias-list")
 
 	server.setShape(shapeRef)
 	if data, err := client.GenerateAliasList(&AliasListRequest{}); err == nil || data != nil || !strings.Contains(testutil.ErrorDetail(err), "uncached endpoint /api/pjsk/misc/alias-list") {

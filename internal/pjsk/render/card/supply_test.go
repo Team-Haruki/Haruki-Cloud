@@ -1,6 +1,10 @@
 package card
 
-import "testing"
+import (
+	"testing"
+
+	"haruki-cloud/internal/i18n"
+)
 
 func TestExtractSupplyKeywords(t *testing.T) {
 	extractor := NewExtractor(nil)
@@ -71,5 +75,41 @@ func TestMatchesRawSupplyFilter(t *testing.T) {
 				t.Fatalf("matchesRawSupplyFilter(%q, %q) = %t, want %t", tc.filter, tc.raw, got, tc.want)
 			}
 		})
+	}
+}
+
+// TestSupplyLabelsComeFromTheCatalogWithTheirKey pins the contract with
+// Drawing: the raw key decides the icon and the background there, and the
+// label is catalog copy that may change freely.
+func TestSupplyLabelsComeFromTheCatalogWithTheirKey(t *testing.T) {
+	cases := []struct {
+		raw, key, listID, detailID string
+	}{
+		{"", "normal", "", "render_card.supply.permanent"},
+		{"not_limited", "normal", "", "render_card.supply.permanent"},
+		{"term_limited", "term_limited", "render_card.supply.term_limited", "render_card.supply.term_limited"},
+		{"festival_limited", "colorful_festival_limited", "render_card.supply.colorful_festival_limited", "render_card.supply.colorful_festival_limited"},
+		{"bloom_festival_limited", "bloom_festival_limited", "render_card.supply.bloom_festival_limited", "render_card.supply.bloom_festival_limited"},
+		{"unit_event_limited", "unit_event_limited", "render_card.supply.unit_event_limited", "render_card.supply.unit_event_limited"},
+		{"collaboration_limited", "collaboration_limited", "render_card.supply.collaboration_limited", "render_card.supply.collaboration_limited"},
+		{"rarity_birthday", "birthday", "render_card.supply.birthday", "render_card.supply.birthday"},
+	}
+	for _, tc := range cases {
+		if got := supplyTypeKey(tc.raw); got != tc.key {
+			t.Errorf("supplyTypeKey(%q) = %q, want %q", tc.raw, got, tc.key)
+		}
+		wantList := ""
+		if tc.listID != "" {
+			wantList = i18n.T(tc.listID)
+		}
+		if got := formatSupplyTypeForList(tc.raw); got != wantList {
+			t.Errorf("formatSupplyTypeForList(%q) = %q, want %q", tc.raw, got, wantList)
+		}
+		if got := formatSupplyTypeForDetail(tc.raw); got != i18n.T(tc.detailID) {
+			t.Errorf("formatSupplyTypeForDetail(%q) = %q, want %q", tc.raw, got, i18n.T(tc.detailID))
+		}
+	}
+	if got := supplyTypeKey("future_limited"); got != "future_limited" {
+		t.Errorf("an unknown raw supply passes through as its key, got %q", got)
 	}
 }

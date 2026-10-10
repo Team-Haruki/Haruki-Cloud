@@ -50,7 +50,10 @@ func (b *Builder) buildCardBasic(card *masterdata.Card, region renderregion.Valu
 		info.Unit = &unit
 	}
 
-	supplyType := formatSupplyTypeForList(b.source.GetCardSupplyType(card))
+	rawSupply := b.source.GetCardSupplyType(card)
+	supplyKey := supplyTypeKey(rawSupply)
+	info.SupplyTypeKey = &supplyKey
+	supplyType := formatSupplyTypeForList(rawSupply)
 	if strings.TrimSpace(supplyType) != "" {
 		info.SupplyType = &supplyType
 	}

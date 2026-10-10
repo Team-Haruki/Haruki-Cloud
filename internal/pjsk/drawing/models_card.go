@@ -61,6 +61,7 @@ type CardBasic struct {
 	Unit             *string                    `json:"unit,omitempty"`
 	ReleaseAt        *int64                     `json:"release_at,omitempty"`
 	SupplyType       *string                    `json:"supply_type,omitempty"`
+	SupplyTypeKey    *string                    `json:"supply_type_key,omitempty"` // raw key; Drawing keys the limited icon and background on it
 	Rare             *string                    `json:"rare,omitempty"`
 	Attr             *string                    `json:"attr,omitempty"`
 	Prefix           *string                    `json:"prefix,omitempty"`

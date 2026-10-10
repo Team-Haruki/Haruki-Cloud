@@ -383,6 +383,9 @@ func TestBuildAliasListImageRequestIncludesMusicJacketPath(t *testing.T) {
 	if req.MusicJacketPath == nil || *req.MusicJacketPath != "music/jacket/jacket_test/jacket_test.png" {
 		t.Fatalf("unexpected music jacket path: %+v", req.MusicJacketPath)
 	}
+	if req.EntityType != aliases.PjskAliasTypeMusic {
+		t.Fatalf("entity_type = %q, want the raw music key", req.EntityType)
+	}
 }
 
 func TestBuildAliasListImageRequestCharacterIncludesTrimTimezoneAndSilhouette(t *testing.T) {
@@ -399,6 +402,9 @@ func TestBuildAliasListImageRequestCharacterIncludesTrimTimezoneAndSilhouette(t 
 	}
 	if req.TimeZone != "Asia/Shanghai" {
 		t.Fatalf("unexpected timezone: %q", req.TimeZone)
+	}
+	if req.EntityType != aliases.PjskAliasTypeCharacter {
+		t.Fatalf("entity_type = %q, want the raw character key", req.EntityType)
 	}
 	if req.DT <= 0 {
 		t.Fatalf("expected dt to be populated, got %d", req.DT)

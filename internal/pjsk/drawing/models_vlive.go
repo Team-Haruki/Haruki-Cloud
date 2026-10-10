@@ -54,6 +54,7 @@ type VLiveDetailRequest struct {
 type VLiveDetailLive struct {
 	ID                int    `json:"id"`
 	Name              string `json:"name,omitempty"`
+	ShortName         string `json:"short_name,omitempty"` // the part of Name that tells the lives of a group apart
 	CharacterIconPath string `json:"character_icon_path,omitempty"`
 	CurrentStartAt    any    `json:"current_start_at,omitempty"`
 	CurrentEndAt      any    `json:"current_end_at,omitempty"`

@@ -5,8 +5,32 @@ description = "卡牌列表图片里，叠在还未上线卡牌缩略图上的�
 other = "未上线"
 
 [render_card.supply.permanent]
-description = "卡牌详情图片里，常驻卡的获取方式标签（限定卡的标签与 Drawing 约定，暂不在目录里）。"
+description = "卡牌详情图片里，常驻卡的获取方式标签（卡牌列表和卡牌一览里常驻卡不显示标签）。"
 other = "常驻"
+
+[render_card.supply.term_limited]
+description = "卡牌详情、卡牌列表和卡牌一览图片里，期间限定卡的获取方式标签。渲染服务按同时发送的原始类型选图标和背景，不看这段文字。"
+other = "期间限定"
+
+[render_card.supply.colorful_festival_limited]
+description = "卡牌详情、卡牌列表和卡牌一览图片里，Colorful Festival 限定卡的获取方式标签。渲染服务按同时发送的原始类型选图标和背景，不看这段文字。"
+other = "CFes 限定"
+
+[render_card.supply.bloom_festival_limited]
+description = "卡牌详情、卡牌列表和卡牌一览图片里，Bloom Festival 限定卡的获取方式标签。渲染服务按同时发送的原始类型选图标和背景，不看这段文字。"
+other = "BFes 限定"
+
+[render_card.supply.unit_event_limited]
+description = "卡牌详情、卡牌列表和卡牌一览图片里，WL 限定卡的获取方式标签。渲染服务按同时发送的原始类型选图标和背景，不看这段文字。"
+other = "WL 限定"
+
+[render_card.supply.collaboration_limited]
+description = "卡牌详情、卡牌列表和卡牌一览图片里，联动限定卡的获取方式标签。渲染服务按同时发送的原始类型选图标和背景，不看这段文字。"
+other = "联动限定"
+
+[render_card.supply.birthday]
+description = "卡牌详情图片里，生日卡的获取方式标签（生日卡不算限定，卡牌列表里不加标签和限定背景）。"
+other = "生日"
 
 [render_card.attr.cute]
 description = "卡牌一览图片按属性分组时的分组名称：可爱（粉）。"

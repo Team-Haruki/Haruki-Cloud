@@ -460,6 +460,7 @@ func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType str
 		req := drawing.AliasListRequest{
 			Title:       i18n.T("alias.image.title.music"),
 			EntityLabel: i18n.T("alias.image.entity_label.music"),
+			EntityType:  aliases.PjskAliasTypeMusic,
 			EntityID:    result.Entity.ID,
 			EntityName:  result.Entity.Name,
 			TimeZone:    timeZone,
@@ -476,6 +477,7 @@ func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType str
 		return drawing.AliasListRequest{
 			Title:                   i18n.T("alias.image.title.character"),
 			EntityLabel:             i18n.T("alias.image.entity_label.character"),
+			EntityType:              aliases.PjskAliasTypeCharacter,
 			EntityID:                result.Entity.ID,
 			EntityName:              result.Entity.Name,
 			TimeZone:                timeZone,

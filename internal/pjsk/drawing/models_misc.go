@@ -58,6 +58,7 @@ type CharaBirthdayRequest struct {
 type AliasListRequest struct {
 	Title                   string   `json:"title"`
 	EntityLabel             string   `json:"entity_label"`
+	EntityType              string   `json:"entity_type,omitempty"` // raw key (music, character); Drawing keys the accent on it
 	EntityID                int      `json:"entity_id"`
 	EntityName              string   `json:"entity_name"`
 	TimeZone                string   `json:"timezone,omitempty"`

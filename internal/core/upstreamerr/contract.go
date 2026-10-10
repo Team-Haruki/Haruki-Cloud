@@ -5,11 +5,41 @@ import (
 	"strings"
 )
 
+// Structured error codes: the "code" field of an error body. A code is
+// matched before the message and the status, so a service that sends one is
+// classified without reading its wording. Pinned by TestUpstreamCodeContract.
+const (
+	// Drawing: "code" of a failed render ({"detail": ..., "code": ...}).
+	RenderCodeAssetMissing     = "asset_missing"
+	RenderCodeAssetBroken      = "asset_broken"
+	RenderCodeDataInsufficient = "data_insufficient"
+	RenderCodeContentTooLarge  = "content_too_large"
+)
+
+var codeRules = map[Service]map[string]Kind{
+	ServiceRender: {
+		RenderCodeAssetMissing:     KindAssetMissing,
+		RenderCodeAssetBroken:      KindAssetBroken,
+		RenderCodeDataInsufficient: KindDataInsufficient,
+		RenderCodeContentTooLarge:  KindContentTooLarge,
+	},
+}
+
+// MatchCode maps a service's structured error code to a Kind (KindUnknown
+// for an empty or unknown code).
+func MatchCode(service Service, code string) Kind {
+	if kind, ok := codeRules[service][strings.TrimSpace(code)]; ok {
+		return kind
+	}
+	return KindUnknown
+}
+
 // The upstream error vocabulary Cloud depends on. These strings are written
 // by other repositories (Toolbox, SekaiAPI, the tracker, the deck service,
 // Drawing); changing them there silently changes the reply a user gets, so
-// every one of them is pinned by TestUpstreamContract. Prefer status codes:
-// a message is only matched where the status alone is ambiguous.
+// every one of them is pinned by TestUpstreamContract. Prefer status codes
+// and structured codes: a message is only matched where neither decides.
+// The Drawing messages are the fallback for a Drawing that predates "code".
 const (
 	// Toolbox: "message" field of 403 / 404 / 401 bodies.
 	ToolboxMessageInvalidPlatform  = "invalid platform or platform_user_id"

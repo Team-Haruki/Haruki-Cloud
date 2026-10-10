@@ -27,27 +27,31 @@ func normalizeSupplyType(raw string) string {
 	}
 }
 
-// formatSupplyTypeForList returns the supply label of a limited card. Drawing
-// matches these exact values to choose the limited-card icon (its
-// TERM_LIMITED_SUPPLY_TYPES and FES_LIMITED_SUPPLY_TYPES sets), so they are a
-// cross-repo contract rather than catalog copy until Drawing accepts the raw
-// supply key.
+// supplyTypeKey is the raw supply key sent to Drawing as supply_type_key.
+// Drawing chooses the limited icon and background from it; the label from
+// formatSupplyTypeForList / formatSupplyTypeForDetail is display text only.
+func supplyTypeKey(raw string) string {
+	return normalizeSupplyType(raw)
+}
+
+// formatSupplyTypeForList returns the supply label of a limited card, or ""
+// for a permanent one.
 func formatSupplyTypeForList(raw string) string {
 	switch normalizeSupplyType(raw) {
 	case "normal", "":
 		return ""
 	case "term_limited":
-		return "期间限定" //copylint:ignore Drawing matches this value
+		return i18n.T("render_card.supply.term_limited")
 	case "colorful_festival_limited":
-		return "CFes限定" //copylint:ignore Drawing matches this value
+		return i18n.T("render_card.supply.colorful_festival_limited")
 	case "bloom_festival_limited":
-		return "BFes限定" //copylint:ignore Drawing matches this value
+		return i18n.T("render_card.supply.bloom_festival_limited")
 	case "unit_event_limited":
-		return "WL限定" //copylint:ignore Drawing matches this value
+		return i18n.T("render_card.supply.unit_event_limited")
 	case "collaboration_limited":
-		return "联动限定" //copylint:ignore Drawing matches this value
+		return i18n.T("render_card.supply.collaboration_limited")
 	case "birthday":
-		return "生日" //copylint:ignore Drawing matches this value
+		return i18n.T("render_card.supply.birthday")
 	default:
 		return strings.TrimSpace(raw)
 	}

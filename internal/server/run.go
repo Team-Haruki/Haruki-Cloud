@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	botAuth "haruki-cloud/api/bot/auth"
+	"os"
 
 	harukiConfig "haruki-cloud/config"
 	harukiLogger "haruki-cloud/utils/logger"
@@ -18,6 +19,10 @@ import (
 )
 
 func Run(ctx context.Context) {
+	if ResolveRole(os.Args[1:], os.Getenv("HARUKI_ROLE")) == RoleEvents {
+		RunEvents(ctx)
+		return
+	}
 	loggerWriter := setupLogging()
 	mainLogger := harukiLogger.NewLogger("Main", harukiConfig.Cfg.Backend.LogLevel, loggerWriter)
 	defer closeMainLogFile(mainLogger)
@@ -33,11 +38,13 @@ func Run(ctx context.Context) {
 	banChecker.SetAdminQQIDs(harukiConfig.Cfg.Moderation.AdminQQIDs)
 	chunithmMainClient, chunithmMusicClient := initChunithmIfEnabled(ctx, mainLogger, app, redisClient)
 	pjskClient := initPJSKIfEnabled(ctx, mainLogger, app, redisClient)
+	embeddedEvents := initEmbeddedEvents(ctx, mainLogger, app, pjskClient)
 	startSekaiDBRemoteSync(ctx, mainLogger)
 	sekaiClient := initSekaiIfEnabled(ctx, mainLogger)
 	renderRuntime := initPJSKRenderIfEnabled(ctx, mainLogger, sekaiClient, pjskClient)
 	censorService := initCensorIfEnabled(ctx, mainLogger, renderRuntime)
 	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, banChecker, censorService)
+	wireEventStreams(renderRuntime, eventStreamCloser(embeddedEvents))
 	wireAliasCacheInvalidation(renderRuntime, redisClient)
 	startRenderHostProbers(ctx, renderRuntime)
 	startStorageDiagnostics(ctx, renderRuntime, mainLogger)

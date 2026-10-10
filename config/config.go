@@ -374,6 +374,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_BACKEND_SSL_CERT", &cfg.Backend.SSLCert)
 	envStr("HARUKI_BACKEND_SSL_KEY", &cfg.Backend.SSLKey)
 	envStr("HARUKI_BACKEND_LOG_LEVEL", &cfg.Backend.LogLevel)
+	envStr("HARUKI_BACKEND_MAIN_LOG_FILE", &cfg.Backend.MainLogFile)
 	envBool("HARUKI_BACKEND_ACCESS_LOG_PROBES", &cfg.Backend.AccessLogProbes)
 	envStr("HARUKI_BACKEND_ACCEPT_AUTHORIZATION", &cfg.Backend.AcceptAuthorization)
 	envStr("HARUKI_BACKEND_ACCEPT_USER_AGENT", &cfg.Backend.AcceptUserAgent)
@@ -475,6 +476,9 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_HMES_INTERNAL_BASE_URL", &cfg.HMES.InternalBaseURL)
 	envStr("HARUKI_HMES_INTERNAL_TOKEN", &cfg.HMES.InternalToken)
 	envStr("HARUKI_HMES_USER_AGENT", &cfg.HMES.UserAgent)
+
+	// Realtime events role
+	applyEventsEnvOverrides(&cfg.Events)
 
 	// Tracker
 	envStr("HARUKI_TRACKER_BASE_URL", &cfg.Tracker.BaseURL)
@@ -1204,6 +1208,7 @@ type Config struct {
 	Redis       RedisConfig       `yaml:"redis"`
 	Toolbox     ToolboxConfig     `yaml:"toolbox"`
 	HMES        HMESConfig        `yaml:"hmes"`
+	Events      EventsConfig      `yaml:"events"`
 	SekaiAPI    SekaiAPIConfig    `yaml:"sekai_api"`
 	Tracker     TrackerConfig     `yaml:"tracker"`
 }

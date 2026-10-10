@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
+	"haruki-cloud/database/pjsk/realtimeevent"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -156,6 +157,21 @@ func (_c *MysekaiBirthdaySubscriptionCreate) AddEvents(v ...*MysekaiBirthdaySubs
 		ids[i] = v[i].ID
 	}
 	return _c.AddEventIDs(ids...)
+}
+
+// AddRealtimeEventIDs adds the "realtime_events" edge to the RealtimeEvent entity by IDs.
+func (_c *MysekaiBirthdaySubscriptionCreate) AddRealtimeEventIDs(ids ...int64) *MysekaiBirthdaySubscriptionCreate {
+	_c.mutation.AddRealtimeEventIDs(ids...)
+	return _c
+}
+
+// AddRealtimeEvents adds the "realtime_events" edges to the RealtimeEvent entity.
+func (_c *MysekaiBirthdaySubscriptionCreate) AddRealtimeEvents(v ...*RealtimeEvent) *MysekaiBirthdaySubscriptionCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddRealtimeEventIDs(ids...)
 }
 
 // Mutation returns the MysekaiBirthdaySubscriptionMutation object of the builder.
@@ -385,6 +401,22 @@ func (_c *MysekaiBirthdaySubscriptionCreate) createSpec() (*MysekaiBirthdaySubsc
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(mysekaibirthdaysubscriptionevent.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.RealtimeEventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   mysekaibirthdaysubscription.RealtimeEventsTable,
+			Columns: []string{mysekaibirthdaysubscription.RealtimeEventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(realtimeevent.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

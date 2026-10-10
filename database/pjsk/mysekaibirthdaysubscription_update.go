@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/predicate"
+	"haruki-cloud/database/pjsk/realtimeevent"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -223,6 +224,21 @@ func (_u *MysekaiBirthdaySubscriptionUpdate) AddEvents(v ...*MysekaiBirthdaySubs
 	return _u.AddEventIDs(ids...)
 }
 
+// AddRealtimeEventIDs adds the "realtime_events" edge to the RealtimeEvent entity by IDs.
+func (_u *MysekaiBirthdaySubscriptionUpdate) AddRealtimeEventIDs(ids ...int64) *MysekaiBirthdaySubscriptionUpdate {
+	_u.mutation.AddRealtimeEventIDs(ids...)
+	return _u
+}
+
+// AddRealtimeEvents adds the "realtime_events" edges to the RealtimeEvent entity.
+func (_u *MysekaiBirthdaySubscriptionUpdate) AddRealtimeEvents(v ...*RealtimeEvent) *MysekaiBirthdaySubscriptionUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddRealtimeEventIDs(ids...)
+}
+
 // Mutation returns the MysekaiBirthdaySubscriptionMutation object of the builder.
 func (_u *MysekaiBirthdaySubscriptionUpdate) Mutation() *MysekaiBirthdaySubscriptionMutation {
 	return _u.mutation
@@ -247,6 +263,27 @@ func (_u *MysekaiBirthdaySubscriptionUpdate) RemoveEvents(v ...*MysekaiBirthdayS
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEventIDs(ids...)
+}
+
+// ClearRealtimeEvents clears all "realtime_events" edges to the RealtimeEvent entity.
+func (_u *MysekaiBirthdaySubscriptionUpdate) ClearRealtimeEvents() *MysekaiBirthdaySubscriptionUpdate {
+	_u.mutation.ClearRealtimeEvents()
+	return _u
+}
+
+// RemoveRealtimeEventIDs removes the "realtime_events" edge to RealtimeEvent entities by IDs.
+func (_u *MysekaiBirthdaySubscriptionUpdate) RemoveRealtimeEventIDs(ids ...int64) *MysekaiBirthdaySubscriptionUpdate {
+	_u.mutation.RemoveRealtimeEventIDs(ids...)
+	return _u
+}
+
+// RemoveRealtimeEvents removes "realtime_events" edges to RealtimeEvent entities.
+func (_u *MysekaiBirthdaySubscriptionUpdate) RemoveRealtimeEvents(v ...*RealtimeEvent) *MysekaiBirthdaySubscriptionUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveRealtimeEventIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -427,6 +464,51 @@ func (_u *MysekaiBirthdaySubscriptionUpdate) sqlSave(ctx context.Context) (_node
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(mysekaibirthdaysubscriptionevent.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RealtimeEventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   mysekaibirthdaysubscription.RealtimeEventsTable,
+			Columns: []string{mysekaibirthdaysubscription.RealtimeEventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(realtimeevent.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedRealtimeEventsIDs(); len(nodes) > 0 && !_u.mutation.RealtimeEventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   mysekaibirthdaysubscription.RealtimeEventsTable,
+			Columns: []string{mysekaibirthdaysubscription.RealtimeEventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(realtimeevent.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RealtimeEventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   mysekaibirthdaysubscription.RealtimeEventsTable,
+			Columns: []string{mysekaibirthdaysubscription.RealtimeEventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(realtimeevent.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -647,6 +729,21 @@ func (_u *MysekaiBirthdaySubscriptionUpdateOne) AddEvents(v ...*MysekaiBirthdayS
 	return _u.AddEventIDs(ids...)
 }
 
+// AddRealtimeEventIDs adds the "realtime_events" edge to the RealtimeEvent entity by IDs.
+func (_u *MysekaiBirthdaySubscriptionUpdateOne) AddRealtimeEventIDs(ids ...int64) *MysekaiBirthdaySubscriptionUpdateOne {
+	_u.mutation.AddRealtimeEventIDs(ids...)
+	return _u
+}
+
+// AddRealtimeEvents adds the "realtime_events" edges to the RealtimeEvent entity.
+func (_u *MysekaiBirthdaySubscriptionUpdateOne) AddRealtimeEvents(v ...*RealtimeEvent) *MysekaiBirthdaySubscriptionUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddRealtimeEventIDs(ids...)
+}
+
 // Mutation returns the MysekaiBirthdaySubscriptionMutation object of the builder.
 func (_u *MysekaiBirthdaySubscriptionUpdateOne) Mutation() *MysekaiBirthdaySubscriptionMutation {
 	return _u.mutation
@@ -671,6 +768,27 @@ func (_u *MysekaiBirthdaySubscriptionUpdateOne) RemoveEvents(v ...*MysekaiBirthd
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEventIDs(ids...)
+}
+
+// ClearRealtimeEvents clears all "realtime_events" edges to the RealtimeEvent entity.
+func (_u *MysekaiBirthdaySubscriptionUpdateOne) ClearRealtimeEvents() *MysekaiBirthdaySubscriptionUpdateOne {
+	_u.mutation.ClearRealtimeEvents()
+	return _u
+}
+
+// RemoveRealtimeEventIDs removes the "realtime_events" edge to RealtimeEvent entities by IDs.
+func (_u *MysekaiBirthdaySubscriptionUpdateOne) RemoveRealtimeEventIDs(ids ...int64) *MysekaiBirthdaySubscriptionUpdateOne {
+	_u.mutation.RemoveRealtimeEventIDs(ids...)
+	return _u
+}
+
+// RemoveRealtimeEvents removes "realtime_events" edges to RealtimeEvent entities.
+func (_u *MysekaiBirthdaySubscriptionUpdateOne) RemoveRealtimeEvents(v ...*RealtimeEvent) *MysekaiBirthdaySubscriptionUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveRealtimeEventIDs(ids...)
 }
 
 // Where appends a list predicates to the MysekaiBirthdaySubscriptionUpdate builder.
@@ -881,6 +999,51 @@ func (_u *MysekaiBirthdaySubscriptionUpdateOne) sqlSave(ctx context.Context) (_n
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(mysekaibirthdaysubscriptionevent.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RealtimeEventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   mysekaibirthdaysubscription.RealtimeEventsTable,
+			Columns: []string{mysekaibirthdaysubscription.RealtimeEventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(realtimeevent.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedRealtimeEventsIDs(); len(nodes) > 0 && !_u.mutation.RealtimeEventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   mysekaibirthdaysubscription.RealtimeEventsTable,
+			Columns: []string{mysekaibirthdaysubscription.RealtimeEventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(realtimeevent.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RealtimeEventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   mysekaibirthdaysubscription.RealtimeEventsTable,
+			Columns: []string{mysekaibirthdaysubscription.RealtimeEventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(realtimeevent.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

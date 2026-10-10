@@ -33,6 +33,9 @@ type PendingAlias func(*sql.Selector)
 // ProfileBGCleanup is the predicate function for profilebgcleanup builders.
 type ProfileBGCleanup func(*sql.Selector)
 
+// RealtimeEvent is the predicate function for realtimeevent builders.
+type RealtimeEvent func(*sql.Selector)
+
 // RejectedAlias is the predicate function for rejectedalias builders.
 type RejectedAlias func(*sql.Selector)
 

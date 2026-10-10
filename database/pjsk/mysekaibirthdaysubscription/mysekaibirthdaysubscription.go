@@ -44,6 +44,8 @@ const (
 	FieldCancelledAt = "cancelled_at"
 	// EdgeEvents holds the string denoting the events edge name in mutations.
 	EdgeEvents = "events"
+	// EdgeRealtimeEvents holds the string denoting the realtime_events edge name in mutations.
+	EdgeRealtimeEvents = "realtime_events"
 	// Table holds the table name of the mysekaibirthdaysubscription in the database.
 	Table = "mysekai_birthday_subscriptions"
 	// EventsTable is the table that holds the events relation/edge.
@@ -53,6 +55,13 @@ const (
 	EventsInverseTable = "mysekai_birthday_subscription_events"
 	// EventsColumn is the table column denoting the events relation/edge.
 	EventsColumn = "subscription_id"
+	// RealtimeEventsTable is the table that holds the realtime_events relation/edge.
+	RealtimeEventsTable = "realtime_events"
+	// RealtimeEventsInverseTable is the table name for the RealtimeEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "realtimeevent" package.
+	RealtimeEventsInverseTable = "realtime_events"
+	// RealtimeEventsColumn is the table column denoting the realtime_events relation/edge.
+	RealtimeEventsColumn = "subscription_id"
 )
 
 // Columns holds all SQL columns for mysekaibirthdaysubscription fields.
@@ -197,10 +206,31 @@ func ByEvents(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEventsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByRealtimeEventsCount orders the results by realtime_events count.
+func ByRealtimeEventsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRealtimeEventsStep(), opts...)
+	}
+}
+
+// ByRealtimeEvents orders the results by realtime_events terms.
+func ByRealtimeEvents(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRealtimeEventsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newEventsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EventsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EventsTable, EventsColumn),
+	)
+}
+func newRealtimeEventsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RealtimeEventsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RealtimeEventsTable, RealtimeEventsColumn),
 	)
 }

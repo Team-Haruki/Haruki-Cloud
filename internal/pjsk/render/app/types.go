@@ -37,6 +37,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/internal/pjsk/render/vlive"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/realtime"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/censor"
 	"haruki-cloud/utils/imagecache"
@@ -210,10 +211,13 @@ type App struct {
 	ImageCache         *imagecache.Client
 	// ImageIndex is the image cache index (image_cache.pg_url), nil when it
 	// is not configured or failed to open. Image cache GC runs on it.
-	ImageIndex      *imagecache.PGStore
-	Censor          *censor.Service
-	SekaiAPI        *sekaiapi.HarukiSekaiAPIClient
-	Toolbox         *sekaiapi.HarukiToolboxClient
+	ImageIndex *imagecache.PGStore
+	Censor     *censor.Service
+	SekaiAPI   *sekaiapi.HarukiSekaiAPIClient
+	Toolbox    *sekaiapi.HarukiToolboxClient
+	// EventStreams closes the realtime streams of a replaced or cancelled
+	// birthday subscription; nil when no events role is configured.
+	EventStreams    realtime.Closer
 	Tracker         *sekaiapi.TrackerClient
 	Stores          storage.Set
 	ImageHosts      *urlhost.Set

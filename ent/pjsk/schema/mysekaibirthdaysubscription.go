@@ -47,6 +47,8 @@ func (MysekaiBirthdaySubscription) Fields() []ent.Field {
 func (MysekaiBirthdaySubscription) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("events", MysekaiBirthdaySubscriptionEvent.Type),
+		edge.To("realtime_events", RealtimeEvent.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }
 

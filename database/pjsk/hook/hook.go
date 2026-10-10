@@ -116,6 +116,18 @@ func (f ProfileBGCleanupFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.ProfileBGCleanupMutation", m)
 }
 
+// The RealtimeEventFunc type is an adapter to allow the use of ordinary
+// function as RealtimeEvent mutator.
+type RealtimeEventFunc func(context.Context, *pjsk.RealtimeEventMutation) (pjsk.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RealtimeEventFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Value, error) {
+	if mv, ok := m.(*pjsk.RealtimeEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.RealtimeEventMutation", m)
+}
+
 // The RejectedAliasFunc type is an adapter to allow the use of ordinary
 // function as RejectedAlias mutator.
 type RejectedAliasFunc func(context.Context, *pjsk.RejectedAliasMutation) (pjsk.Value, error)

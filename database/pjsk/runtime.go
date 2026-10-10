@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/pjsk/profilebgcleanup"
+	"haruki-cloud/database/pjsk/realtimeevent"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -204,6 +205,44 @@ func init() {
 	profilebgcleanupDescCreatedAt := profilebgcleanupFields[6].Descriptor()
 	// profilebgcleanup.DefaultCreatedAt holds the default value on creation for the created_at field.
 	profilebgcleanup.DefaultCreatedAt = profilebgcleanupDescCreatedAt.Default.(func() time.Time)
+	realtimeeventFields := schema.RealtimeEvent{}.Fields()
+	_ = realtimeeventFields
+	// realtimeeventDescTopic is the schema descriptor for topic field.
+	realtimeeventDescTopic := realtimeeventFields[1].Descriptor()
+	// realtimeevent.TopicValidator is a validator for the "topic" field. It is called by the builders before save.
+	realtimeevent.TopicValidator = realtimeeventDescTopic.Validators[0].(func(string) error)
+	// realtimeeventDescSubscriptionVersion is the schema descriptor for subscription_version field.
+	realtimeeventDescSubscriptionVersion := realtimeeventFields[3].Descriptor()
+	// realtimeevent.SubscriptionVersionValidator is a validator for the "subscription_version" field. It is called by the builders before save.
+	realtimeevent.SubscriptionVersionValidator = realtimeeventDescSubscriptionVersion.Validators[0].(func(string) error)
+	// realtimeeventDescEventID is the schema descriptor for event_id field.
+	realtimeeventDescEventID := realtimeeventFields[4].Descriptor()
+	// realtimeevent.EventIDValidator is a validator for the "event_id" field. It is called by the builders before save.
+	realtimeevent.EventIDValidator = realtimeeventDescEventID.Validators[0].(func(string) error)
+	// realtimeeventDescPayloadRef is the schema descriptor for payload_ref field.
+	realtimeeventDescPayloadRef := realtimeeventFields[5].Descriptor()
+	// realtimeevent.DefaultPayloadRef holds the default value on creation for the payload_ref field.
+	realtimeevent.DefaultPayloadRef = realtimeeventDescPayloadRef.Default.(string)
+	// realtimeevent.PayloadRefValidator is a validator for the "payload_ref" field. It is called by the builders before save.
+	realtimeevent.PayloadRefValidator = realtimeeventDescPayloadRef.Validators[0].(func(string) error)
+	// realtimeeventDescEmptyResult is the schema descriptor for empty_result field.
+	realtimeeventDescEmptyResult := realtimeeventFields[6].Descriptor()
+	// realtimeevent.DefaultEmptyResult holds the default value on creation for the empty_result field.
+	realtimeevent.DefaultEmptyResult = realtimeeventDescEmptyResult.Default.(bool)
+	// realtimeeventDescCreatedAt is the schema descriptor for created_at field.
+	realtimeeventDescCreatedAt := realtimeeventFields[7].Descriptor()
+	// realtimeevent.DefaultCreatedAt holds the default value on creation for the created_at field.
+	realtimeevent.DefaultCreatedAt = realtimeeventDescCreatedAt.Default.(func() time.Time)
+	// realtimeeventDescDeliveryCount is the schema descriptor for delivery_count field.
+	realtimeeventDescDeliveryCount := realtimeeventFields[9].Descriptor()
+	// realtimeevent.DefaultDeliveryCount holds the default value on creation for the delivery_count field.
+	realtimeevent.DefaultDeliveryCount = realtimeeventDescDeliveryCount.Default.(int)
+	// realtimeeventDescSupersededReason is the schema descriptor for superseded_reason field.
+	realtimeeventDescSupersededReason := realtimeeventFields[13].Descriptor()
+	// realtimeevent.DefaultSupersededReason holds the default value on creation for the superseded_reason field.
+	realtimeevent.DefaultSupersededReason = realtimeeventDescSupersededReason.Default.(string)
+	// realtimeevent.SupersededReasonValidator is a validator for the "superseded_reason" field. It is called by the builders before save.
+	realtimeevent.SupersededReasonValidator = realtimeeventDescSupersededReason.Validators[0].(func(string) error)
 	rejectedaliasFields := schema.RejectedAlias{}.Fields()
 	_ = rejectedaliasFields
 	// rejectedaliasDescAliasType is the schema descriptor for alias_type field.

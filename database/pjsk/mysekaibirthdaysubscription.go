@@ -56,9 +56,11 @@ type MysekaiBirthdaySubscription struct {
 type MysekaiBirthdaySubscriptionEdges struct {
 	// Events holds the value of the events edge.
 	Events []*MysekaiBirthdaySubscriptionEvent `json:"events,omitempty"`
+	// RealtimeEvents holds the value of the realtime_events edge.
+	RealtimeEvents []*RealtimeEvent `json:"realtime_events,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // EventsOrErr returns the Events value or an error if the edge
@@ -68,6 +70,15 @@ func (e MysekaiBirthdaySubscriptionEdges) EventsOrErr() ([]*MysekaiBirthdaySubsc
 		return e.Events, nil
 	}
 	return nil, &NotLoadedError{edge: "events"}
+}
+
+// RealtimeEventsOrErr returns the RealtimeEvents value or an error if the edge
+// was not loaded in eager-loading.
+func (e MysekaiBirthdaySubscriptionEdges) RealtimeEventsOrErr() ([]*RealtimeEvent, error) {
+	if e.loadedTypes[1] {
+		return e.RealtimeEvents, nil
+	}
+	return nil, &NotLoadedError{edge: "realtime_events"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -209,6 +220,11 @@ func (_m *MysekaiBirthdaySubscription) Value(name string) (ent.Value, error) {
 // QueryEvents queries the "events" edge of the MysekaiBirthdaySubscription entity.
 func (_m *MysekaiBirthdaySubscription) QueryEvents() *MysekaiBirthdaySubscriptionEventQuery {
 	return NewMysekaiBirthdaySubscriptionClient(_m.config).QueryEvents(_m)
+}
+
+// QueryRealtimeEvents queries the "realtime_events" edge of the MysekaiBirthdaySubscription entity.
+func (_m *MysekaiBirthdaySubscription) QueryRealtimeEvents() *RealtimeEventQuery {
+	return NewMysekaiBirthdaySubscriptionClient(_m.config).QueryRealtimeEvents(_m)
 }
 
 // Update returns a builder for updating this MysekaiBirthdaySubscription.

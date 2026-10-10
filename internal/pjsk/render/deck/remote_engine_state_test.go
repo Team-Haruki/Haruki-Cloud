@@ -26,11 +26,12 @@ func sha256Hex(data []byte) string {
 }
 
 type fakeDeckState struct {
-	stateStatus int
-	stateBody   string
-	advertise   bool
-	refuseZstd  bool
-	zstdReply   bool
+	stateStatus    int
+	stateBody      string
+	registryStatus int
+	advertise      bool
+	refuseZstd     bool
+	zstdReply      bool
 
 	mu              sync.Mutex
 	musicPushes     int
@@ -39,6 +40,7 @@ type fakeDeckState struct {
 	encodedBodies   int
 	identityBodies  int
 	lastMusicData   []byte
+	registryBodies  [][]byte
 	refusedRequests atomic.Int32
 }
 
@@ -89,6 +91,13 @@ func (f *fakeDeckState) handler(t *testing.T) http.HandlerFunc {
 			f.reply(w, `{"status":"ok"}`)
 		case "/update/masterdata/registry", "/update/masterdata":
 			f.masterPushes++
+			if r.URL.Path == "/update/masterdata/registry" {
+				f.registryBodies = append(f.registryBodies, raw)
+				if f.registryStatus != 0 {
+					w.WriteHeader(f.registryStatus)
+					return
+				}
+			}
 			f.reply(w, `{"status":"ok","contentHash":"remote-hash"}`)
 		default:
 			http.NotFound(w, r)
@@ -189,6 +198,86 @@ func TestEnsureReadyPushesWhenTargetStateDiffersOrIsUnavailable(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A target that pulls a region from the registry keeps that region's metas
+// current itself. Cloud's copy can lag the registry, and pushing it rolled the
+// target back, so Cloud asks the target to revalidate against the registry
+// instead of pushing.
+func TestEnsureReadyNeverPushesMusicMetasToRegistryOwnedRegion(t *testing.T) {
+	meta := largeMusicMeta()
+	owned := `{"regions":{"jp":{"contentHash":"remote-hash","source":"registry","musicMetasDigest":"` + sha256Hex([]byte("registry copy")) + `"}},` +
+		`"musicMetas":{"jp":"` + sha256Hex([]byte("registry copy")) + `"}}`
+
+	for _, tc := range []struct {
+		name           string
+		meta           []byte
+		path           string
+		registry       bool
+		registryStatus int
+	}{
+		{name: "string metas, registry mode", meta: meta, registry: true},
+		{name: "string metas, directory mode", meta: meta},
+		{name: "file-path metas", path: "/data/metas.json", registry: true},
+		{name: "revalidation fails", meta: meta, registry: true, registryStatus: http.StatusBadGateway},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fake := &fakeDeckState{stateBody: owned, registryStatus: tc.registryStatus}
+			recommender, _ := newFakeDeckRecommender(t, fake, tc.registry)
+			ctx, trace := commandtrace.WithNewTrace(context.Background())
+			exec := testRemoteExecution(t, recommender)
+			defer exec.Release()
+			if err := recommender.ensureReady(ctx, exec, "jp", tc.meta, tc.path); err != nil {
+				t.Fatalf("ensureReady() error = %v", err)
+			}
+			if fake.musicPushes != 0 {
+				t.Fatalf("music metas pushed %d times to a registry-owned region", fake.musicPushes)
+			}
+			if len(fake.registryBodies) != 1 {
+				t.Fatalf("registry revalidations = %d, want 1", len(fake.registryBodies))
+			}
+			body := string(fake.registryBodies[0])
+			if !strings.Contains(body, `"region":"jp"`) || strings.Contains(body, "content_hash") {
+				t.Fatalf("revalidation must name only the region, got %s", body)
+			}
+			if _, ok := traceOperation(trace.Snapshot(), "deck.ready_music_metas_registry"); !ok {
+				t.Fatal("registry ownership must be recorded in the trace")
+			}
+			// Ready for this copy now: the next call neither probes nor pushes.
+			if err := recommender.ensureReady(ctx, exec, "jp", tc.meta, tc.path); err != nil {
+				t.Fatalf("repeat ensureReady() error = %v", err)
+			}
+			if fake.stateProbes != 1 || fake.musicPushes != 0 || len(fake.registryBodies) != 1 {
+				t.Fatalf("repeat: probes=%d pushes=%d revalidations=%d", fake.stateProbes, fake.musicPushes, len(fake.registryBodies))
+			}
+		})
+	}
+
+	t.Run("region without registry metas is still pushed", func(t *testing.T) {
+		fake := &fakeDeckState{stateBody: `{"regions":{"jp":{"contentHash":"remote-hash","source":"registry"}}}`}
+		recommender, _ := newFakeDeckRecommender(t, fake, true)
+		exec := testRemoteExecution(t, recommender)
+		defer exec.Release()
+		if err := recommender.ensureReady(context.Background(), exec, "jp", meta, ""); err != nil {
+			t.Fatalf("ensureReady() error = %v", err)
+		}
+		if fake.musicPushes != 1 || len(fake.registryBodies) != 0 {
+			t.Fatalf("pushes=%d revalidations=%d, want 1 and 0", fake.musicPushes, len(fake.registryBodies))
+		}
+	})
+
+	t.Run("revalidation adopts the target's registry hash", func(t *testing.T) {
+		fake := &fakeDeckState{stateBody: owned}
+		recommender, _ := newFakeDeckRecommender(t, fake, true)
+		exec := testRemoteExecution(t, recommender)
+		defer exec.Release()
+		if err := recommender.ensureReady(context.Background(), exec, "jp", meta, ""); err != nil {
+			t.Fatalf("ensureReady() error = %v", err)
+		}
+		if got := recommender.currentRegistryContentHash(); got != "remote-hash" {
+			t.Fatalf("registry hash = %q, want remote-hash", got)
+		}
+	})
 }
 
 func TestEnsureReadyNeverSkipsFilePathMusicMetas(t *testing.T) {
@@ -346,7 +435,7 @@ func TestDeckPostRejectsUndecodableResponses(t *testing.T) {
 
 func TestRemoteDeckStateAccessorsTolerateNil(t *testing.T) {
 	var state *remoteDeckState
-	if state.musicMetasDigest("jp") != "" || state.contentHash("jp") != "" {
+	if state.musicMetasDigest("jp") != "" || state.contentHash("jp") != "" || state.registryOwnsMusicMetas("jp") {
 		t.Fatal("nil state reports nothing")
 	}
 	var recommender *RemoteDeckRecommender

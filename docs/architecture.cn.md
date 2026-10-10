@@ -66,7 +66,7 @@
 
 ```
 Haruki-Cloud/
-├── main.go                       # ── 主服务入口（唯一运行的进程）──
+├── main.go                       # ── 进程入口：默认 API 角色；`haruki-server events`（或 HARUKI_ROLE=events）启动 events 角色 ──
 │
 ├── cmd/                          # ── 一次性 CLI 工具 ──
 │   ├── trust-signer/             #   离线 Ed25519 签名工具（keyset / manifest）
@@ -100,6 +100,7 @@ Haruki-Cloud/
 │   ├── jsonutil/                 #   JSON 门面（json/v2 引擎 + v1 兼容语义）
 │   ├── middleware/secure/        #   安全中间件
 │   ├── observability/commandtrace/ # 命令执行追踪
+│   ├── realtime/                 #   实时事件网关（SSE 推送、事件入库、重投、过期流关闭、GC；见 §5.7）
 │   ├── onebot11/                 #   OneBot11 协议工具（消息段、CQ 码、错误）
 │   ├── storage/                  #   文件读写抽象：Store 接口、fs / s3（Garage）后端、槽位配置
 │   └── pjsk/                     #   PJSK 核心子系统
@@ -239,8 +240,14 @@ censor:                    # 内容审核（百度/腾讯凭据 + censor DB）
 toolbox:                   # Toolbox 外部服务
   base_url: ""
 
-hmes:                      # HMES 外部服务（public/internal base_url + token）
+hmes:                      # public_base_url：下发给 Client 的 SSE 基址；internal_*：旧网关并行期的关闭通知
   public_base_url: ""
+
+events:                    # 实时事件角色（SSE 网关）；字段说明见 haruki-cloud.example.yaml
+  embedded: false          # true 时把路由挂到主应用（开发、集成测试、应急）
+  port: 7911
+  internal_base_url: ""    # API 角色关闭流时调用的 events 角色地址
+  ingest_token_sha256: ""  # Toolbox 投递令牌的 SHA-256（专用令牌，不复用共享内部令牌）
 
 sekai_api:                 # 上游 Sekai API 客户端
   base_url: ""
@@ -445,6 +452,25 @@ domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1" }
 | POST | `/internal/bot/statistics/record/:botID` | 统计数据上报 |
 | POST | `/api/internal/group-guard/binding/check` | 群成员绑定检查 |
 | POST | `/api/internal/group-guard/binding/check-batch` | 群成员绑定批量检查 |
+
+### 5.7 实时事件（events 角色）
+
+events 角色与 API 角色是同一镜像的两个进程（`haruki-server events`），只打开 PJSK 数据库，不做迁移、不启动 Redis 和渲染运行时；`events.embedded=true` 时同样的路由挂在主应用上。只有 API 角色执行（只增不改的）迁移，所以先部署 API 角色，再部署 events 角色。
+
+| 方法 | 路径 | 鉴权 | 说明 |
+|------|------|------|------|
+| GET | `/healthz` | 无 | 存活探针 |
+| GET | `/sse` | 订阅令牌 | Client 的 SSE 流；参数 `subscription_id`、`subscription_version`（也接受 `version`）、`token` |
+| POST | `/internal/events` | 专用投递令牌（裸值或 `Bearer `） | Toolbox 投递事件 `{event_id, subscription_id, subscription_version, payload_ref, empty_result}` |
+| POST | `/internal/subscriptions/:id/close` | 共享内部令牌 | 关闭某订阅版本的全部流（`subscription_version` 放在查询参数或 JSON 正文） |
+
+- **状态码约定**：缺参数 400；订阅令牌无效（不存在、未生效、已过期、版本不符）401，Client 收到后永久停止重连；其他失败（数据库不可用、只读节点、连接数达到上限、正在关闭）一律 503。投递时订阅已失效返回 409，Toolbox 不重试。
+- **事件流**：每帧 `event: birthday_monitor_update`，`id:` 为 `realtime_events.id`，`data:` 为单行 JSON（字段名与旧网关相同）；连接开头发送 `retry:`，每 15 秒发送注释心跳。先按 `id` 重放未确认、未作废的事件（`Last-Event-ID` 之后），再推送实时事件。
+- **作废策略**：默认 `latest`，新事件作废同一订阅版本中更早的未确认事件；`all` 最多保留 `replay_max` 条。
+- **确认与重投**：Client 渲染并发送后调用 `/birthday-monitor/ack`，API 角色先写 `acked_at`，再通知 Toolbox 删除载荷（Toolbox 失败只记日志）。已投递超过 90 秒仍未确认的事件在在线连接上重投，投递 3 次后作废。
+- **订阅变更**：更新或取消订阅时，API 角色作废旧版本的未确认事件，并通知 events 角色（及并行期的旧网关）关闭旧版本的流；events 角色每 15 秒也会检查在线订阅，关闭已失效的流。
+- **连接上限**：全局 `max_conns`（默认 5000，超出 503）；同一订阅版本最多 3 条，第 4 条连接会关闭最早的一条。
+- **并行运行**：设置 `events.legacy_forward_url` 后，每条新入库的事件同时原样转发给旧网关（尽力而为）。
 
 ---
 

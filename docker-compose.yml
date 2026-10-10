@@ -203,6 +203,9 @@ services:
       HARUKI_TRACKER_BASE_URL: ${HARUKI_TRACKER_BASE_URL:-}
       HARUKI_TRACKER_TOKEN: ${HARUKI_TRACKER_TOKEN:-}
 
+      # ── Realtime events role (close notifications) ───────────────────────
+      HARUKI_EVENTS_INTERNAL_BASE_URL: ${HARUKI_EVENTS_INTERNAL_BASE_URL:-}
+
       # ── Content censor ────────────────────────────────────────────────────
       HARUKI_CENSOR_BAIDU_API_KEY: ${HARUKI_CENSOR_BAIDU_API_KEY:-}
       HARUKI_CENSOR_BAIDU_SECRET: ${HARUKI_CENSOR_BAIDU_SECRET:-}
@@ -349,3 +352,53 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  # ── Haruki-Cloud events role (realtime SSE gateway) ─────────────────────────
+  # Same image, second process: `haruki-server events`. It opens only the PJSK
+  # database and never migrates it, so it starts after the API role. Expose
+  # 7911 to the public reverse proxy over a private network only, and route
+  # just /sse and /healthz publicly; /internal/* stays private.
+  haruki-cloud-events:
+    build: .
+    container_name: haruki-cloud-events
+    command: ["events"]
+    restart: unless-stopped
+    user: "10001:10001"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - haruki-net
+    volumes:
+      - ./haruki-cloud.yaml:/app/haruki-cloud.yaml:ro
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      HARUKI_PROFILE: ${HARUKI_PROFILE:-production}
+      HARUKI_NODE_NAME: ${HARUKI_NODE_NAME:-}
+      HARUKI_NODE_READ_ONLY: ${HARUKI_NODE_READ_ONLY:-false}
+      HARUKI_BACKEND_LOG_LEVEL: ${HARUKI_EVENTS_LOG_LEVEL:-INFO}
+      HARUKI_PJSK_ENABLED: "true"
+      HARUKI_PJSK_DB_TYPE: postgres
+      HARUKI_PJSK_DB_URL: >-
+        host=${PG_HOST:-postgres} port=${PG_PORT:-5432}
+        user=${PJSK_DB_USER:-haruki_pjsk} password=${PJSK_DB_PASSWORD:-changeme}
+        dbname=${PJSK_DB_NAME:-haruki_pjsk} sslmode=${PG_SSLMODE:-disable}
+      # The close route accepts the shared internal token the API role sends.
+      HARUKI_BOT_INTERNAL_API_TOKEN: ${HARUKI_BOT_INTERNAL_API_TOKEN:-}
+      HARUKI_EVENTS_PORT: ${HARUKI_EVENTS_PORT:-7911}
+      HARUKI_EVENTS_INGEST_TOKEN_SHA256: ${HARUKI_EVENTS_INGEST_TOKEN_SHA256:-}
+      HARUKI_EVENTS_LEGACY_FORWARD_URL: ${HARUKI_EVENTS_LEGACY_FORWARD_URL:-}
+      HARUKI_EVENTS_LEGACY_FORWARD_TOKEN: ${HARUKI_EVENTS_LEGACY_FORWARD_TOKEN:-}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:7911/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      haruki-cloud:
+        condition: service_started

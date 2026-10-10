@@ -454,7 +454,7 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 
 ### 6.12 `mysekai_birthday_subscription_events` 表
 
-过滤后的生日派对上传事件。HMES 只转发事件 ID，Cloud 是事实来源。
+旧的无版本订阅写入的生日派对上传事件。带版本的订阅（Toolbox 保存载荷）改用 `realtime_events`。
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -468,6 +468,28 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 | `upload_time` | time | — | 数据上传时间 |
 | `created_at` | time | immutable | 记录时间 |
 | `acknowledged_at` | time | optional | 确认时间 |
+
+### 6.12.1 `realtime_events` 表（实时推送事件）
+
+events 角色投递给 Client 的事件（`internal/realtime`）。载荷仍在 Toolbox，这里只存引用；`id` 同时是 SSE 的 `id:` 与重放游标。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | bigint | PK，自增 | SSE 事件 ID |
+| `topic` | string(64) | — | 事件主题（`mysekai_birthday`） |
+| `subscription_id` | int | FK → `mysekai_birthday_subscriptions.id`，ON DELETE CASCADE | 所属订阅 |
+| `subscription_version` | string(64) | — | 订阅版本 |
+| `event_id` | string(128) | — | Toolbox 生成的事件 ID，原样保存 |
+| `payload_ref` | string(512) | default "" | Toolbox 载荷引用 |
+| `empty_result` | bool | default false | 是否无命中 |
+| `created_at` | time | immutable | 入库时间 |
+| `expires_at` | time | — | 订阅过期时间 + 10 分钟；超过 7 天后由 GC 删除 |
+| `delivery_count` | int | default 0 | 投递次数 |
+| `last_delivered_at` | time | optional | 最近投递时间 |
+| `acked_at` | time | optional | 确认时间 |
+| `superseded_at` / `superseded_reason` | time / string(32) | optional / default "" | 作废时间与原因（`replaced`、`overflow`、`delivery_limit`、`subscription_replaced`、`subscription_cancelled`） |
+
+唯一索引：`(subscription_id, subscription_version, event_id)`（重复投递幂等）；部分索引：`(subscription_id, subscription_version, id) WHERE acked_at IS NULL AND superseded_at IS NULL`；另有 `expires_at` 索引。
 
 ### 6.13 `profile_bg_cleanups` 表（个人背景图对象清理）
 

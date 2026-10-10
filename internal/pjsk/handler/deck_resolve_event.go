@@ -253,7 +253,7 @@ func (r *deckEventSelectionResolver) loadEvent() (bool, error) {
 	eventInfo, err := queryDeckEventByID(r.ctx, r.app, r.region, r.eventID)
 	if err != nil {
 		if sekaidb.IsNotFound(err) {
-			return true, nil
+			return true, usererror.New(usererror.CodeNotFound, i18n.M("event.not_found_in_region", i18n.Data{"Region": i18n.RegionLabel(r.region.String()), "UserID": i18n.UserNumber(r.eventID)}))
 		}
 		return true, fmt.Errorf("query deck event %d failed: %w", r.eventID, err)
 	}

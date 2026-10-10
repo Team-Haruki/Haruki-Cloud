@@ -2712,6 +2712,8 @@ func TestResolveDeckCharacterSelectionsRejectsUnknownWorldBloomQuery(t *testing.
 		Save(ctx); err != nil {
 		t.Fatalf("create gamecharacter: %v", err)
 	}
+	now := time.Now().UnixMilli()
+	seedBridgeTestRegularEvent(t, ctx, sekaiClient, "jp", 123, now-int64(48*time.Hour/time.Millisecond), now-int64(24*time.Hour/time.Millisecond))
 
 	query := renderdeck.AutoQuery{
 		Region:                   "jp",
@@ -2730,6 +2732,23 @@ func TestResolveDeckCharacterSelectionsRejectsUnknownWorldBloomQuery(t *testing.
 	if query.MusicQuery != "" {
 		t.Fatalf("unexpected music query fallback: %q", query.MusicQuery)
 	}
+}
+
+func TestResolveDeckCharacterSelectionsRejectsEventMissingFromRegion(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_unknown_event?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+	seedBridgeTestRegularEvent(t, ctx, sekaiClient, "jp", 186, now-int64(48*time.Hour/time.Millisecond), now-int64(24*time.Hour/time.Millisecond))
+
+	query := renderdeck.AutoQuery{
+		Region:        "cn",
+		RecommendType: "event",
+		EventID:       drawing.IntPtr(186),
+	}
+
+	err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient})
+	testutil.RequireUserError(t, err, usererror.CodeNotFound, "event.not_found_in_region")
 }
 
 func TestResolveDeckCharacterSelectionsResolvesExplicitWorldBloomSelector(t *testing.T) {

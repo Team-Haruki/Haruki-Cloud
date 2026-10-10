@@ -65,6 +65,9 @@ type ArtifactRef struct {
 	IndexWritten   bool    `json:"index_written"`
 	UploadElapsed  float64 `json:"upload_elapsed"`
 	NodeName       string  `json:"node_name"` // rendering node; host preference
+	// MissingAssets is a store-ref's placeholder count; always 0 on an
+	// index-written ref, absent (0) from older Drawing nodes.
+	MissingAssets int64 `json:"missing_assets"`
 }
 
 // parseArtifactRef decodes and validates an artifact ref body. cdn_path only

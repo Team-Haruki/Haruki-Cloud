@@ -192,7 +192,8 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			StoreRefBucket:  imageCacheBucket(harukiConfig.Cfg.PJSKRender.Storage.ImageCache),
 		},
 		DrawingCache: drawing.RenderCacheConfig{
-			TTL: harukiConfig.Cfg.PJSKRender.DrawingCache.TTL,
+			TTL:            harukiConfig.Cfg.PJSKRender.DrawingCache.TTL,
+			PlaceholderTTL: harukiConfig.Cfg.PJSKRender.DrawingCache.PlaceholderTTL,
 		},
 		ImageCachePGURL:                    harukiConfig.Cfg.PJSKRender.ImageCache.PGURL,
 		ImageCachePGMaxOpen:                harukiConfig.Cfg.PJSKRender.ImageCache.PGMaxOpen,

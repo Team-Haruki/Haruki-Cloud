@@ -532,6 +532,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_STORAGE_DIR", &cfg.PJSKRender.DrawingCache.StorageDir)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_TTL", &cfg.PJSKRender.DrawingCache.TTL)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_FORCE_COOLDOWN", &cfg.PJSKRender.DrawingCache.ForceCooldown)
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_PLACEHOLDER_TTL", &cfg.PJSKRender.DrawingCache.PlaceholderTTL)
 	envInt("HARUKI_PJSK_RENDER_DRAWING_SK_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingSKMaxConcurrency)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_SK_ACQUIRE_TIMEOUT", &cfg.PJSKRender.DrawingSKAcquireTimeout)
 	envInt("HARUKI_PJSK_RENDER_DRAWING_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingMaxConcurrency)
@@ -821,6 +822,11 @@ type RenderCacheConfig struct {
 	// ForceCooldown is how often one user may force a fresh render of one
 	// command; 0 selects the default (60s), a negative value disables --force.
 	ForceCooldown time.Duration `yaml:"force_cooldown"`
+	// PlaceholderTTL is the fixed (never extended on a hit) lifetime of a
+	// render Drawing flagged with X-Haruki-Render-Missing-Assets, capped by
+	// the endpoint's own TTL; 0 selects the default (1h), a negative value
+	// keeps such renders out of the cache entirely.
+	PlaceholderTTL time.Duration `yaml:"placeholder_ttl"`
 }
 
 type ImageCacheConfig struct {

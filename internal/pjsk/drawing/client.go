@@ -369,7 +369,7 @@ func (c *HarukiDrawingClient) postPreparedOnce(endpoint string, requestBody any)
 		"duration_ms", commandtrace.Milliseconds(elapsed),
 		"response_bytes", len(resp.Body()),
 	)
-	return c.successBody(directive, resp)
+	return c.successBody(endpoint, directive, resp)
 }
 
 // drawingLegacyTargetName names the single drawing_base_url target when no
@@ -434,7 +434,7 @@ func (c *HarukiDrawingClient) postOnce(requestCtx context.Context, targetBaseURL
 // successBody branches a 200 on the directive: a degraded write and plain
 // image bytes return bytes, a JSON artifact_ref lands on the outcome and
 // returns (nil, nil). Without a directive the body is returned as today.
-func (c *HarukiDrawingClient) successBody(d *renderDirective, resp *resty.Response) ([]byte, error) {
+func (c *HarukiDrawingClient) successBody(endpoint string, d *renderDirective, resp *resty.Response) ([]byte, error) {
 	node := resp.Header().Get(headerNode)
 	contentType := resp.Header().Get("Content-Type")
 	noStore := strings.TrimSpace(resp.Header().Get(headerCacheStore)) == "0" || strings.Contains(strings.ToLower(resp.Header().Get("Cache-Control")), "no-store")
@@ -445,6 +445,8 @@ func (c *HarukiDrawingClient) successBody(d *renderDirective, resp *resty.Respon
 			d.outcome.NoStore = true
 		}
 	}
+	missingAssets := parseRenderMissingAssets(resp.Header().Get(headerRenderMissingAssets))
+	c.notePlaceholderRender(endpoint, d, node, missingAssets)
 	switch {
 	case d != nil && resp.Header().Get(headerArtifactDegraded) == "1":
 		d.outcome.Degraded = true
@@ -455,7 +457,7 @@ func (c *HarukiDrawingClient) successBody(d *renderDirective, resp *resty.Respon
 		}
 		return resp.Body(), nil
 	case d != nil && d.StoreRef && strings.EqualFold(strings.TrimSpace(resp.Header().Get(headerArtifactMode)), artifactModeStoreRef):
-		return nil, c.acceptStoreRef(d, resp, node, contentType)
+		return nil, c.acceptStoreRef(endpoint, d, resp, node, contentType, missingAssets)
 	case d != nil && d.Artifact && strings.HasPrefix(strings.ToLower(strings.TrimSpace(contentType)), "application/json"):
 		finishDecode := commandtrace.MeasureOperation(c.requestCtx, "drawing.decode")
 		ref, err := parseArtifactRef(resp.Body())
@@ -491,12 +493,15 @@ const storeRefIndexTimeout = 10 * time.Second
 // and lands the served location on the outcome. The object already exists, so
 // a failed row write is logged and the ref is still used: the image is
 // delivered, and only GC loses sight of the object.
-func (c *HarukiDrawingClient) acceptStoreRef(d *renderDirective, resp *resty.Response, node, contentType string) error {
+func (c *HarukiDrawingClient) acceptStoreRef(endpoint string, d *renderDirective, resp *resty.Response, node, contentType string, headerMissingAssets int64) error {
 	finishDecode := commandtrace.MeasureOperation(c.requestCtx, "drawing.decode")
 	ref, err := parseArtifactRef(resp.Body())
 	finishDecode()
 	if err != nil {
 		return errDrawingBadArtifact(err)
+	}
+	if headerMissingAssets == 0 {
+		c.notePlaceholderRender(endpoint, d, node, ref.MissingAssets)
 	}
 	if ref.NodeName == "" {
 		ref.NodeName = node

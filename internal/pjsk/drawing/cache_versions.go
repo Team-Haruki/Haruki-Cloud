@@ -230,8 +230,13 @@ func (c *HarukiDrawingClient) applyVersionHeaders(ctx context.Context, base stri
 
 // responseCacheability follows the response independently of artifact mode,
 // so a local bytes cache cannot retain a placeholder or a render made by a
-// node whose renderer identity changed after the last poll.
-type responseCacheability struct{ noStore atomic.Bool }
+// node whose renderer identity changed after the last poll. placeholders is
+// the X-Haruki-Render-Missing-Assets count: such a render is cached only for
+// the short placeholder TTL.
+type responseCacheability struct {
+	noStore      atomic.Bool
+	placeholders atomic.Int64
+}
 type responseCacheabilityKey struct{}
 
 func withResponseCacheability(ctx context.Context) context.Context {

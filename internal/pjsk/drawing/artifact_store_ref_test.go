@@ -244,7 +244,7 @@ func TestStoreRefIndexOutlivesACancelledCaller(t *testing.T) {
 	}
 	cancel()
 	active := client.WithContext(ctx)
-	if _, err := active.successBody(d, resp); err != nil {
+	if _, err := active.successBody("/api/pjsk/sk/speed", d, resp); err != nil {
 		t.Fatal(err)
 	}
 	if indexer.ctxErr != nil {

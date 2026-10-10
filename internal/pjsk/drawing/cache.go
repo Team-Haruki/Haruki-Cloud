@@ -79,12 +79,11 @@ func newLocalRenderCacheWithLimits(ttl time.Duration, maxEntries int, maxBytes i
 		ttl = config.LocalRenderCacheTTL
 	}
 	return &localRenderCache{
-		entries:        make(map[string]*localRenderEntry),
-		lru:            list.New(),
-		maxEntries:     maxEntries,
-		maxBytes:       maxBytes,
-		ttl:            ttl,
-		placeholderTTL: defaultPlaceholderCacheTTL,
+		entries:    make(map[string]*localRenderEntry),
+		lru:        list.New(),
+		maxEntries: maxEntries,
+		maxBytes:   maxBytes,
+		ttl:        ttl,
 	}
 }
 

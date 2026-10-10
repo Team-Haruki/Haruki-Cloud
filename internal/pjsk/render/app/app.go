@@ -428,7 +428,7 @@ func appDrawingOptions(initCtx context.Context, cfg Config, imageStore *imagecac
 	if cfg.DrawingRetryCount > 0 {
 		options = append(options, drawing.WithRetryCount(cfg.DrawingRetryCount))
 	}
-	if cfg.DrawingCache.PlaceholderTTL != 0 {
+	if cfg.DrawingCache.PlaceholderTTL > 0 {
 		options = append(options, drawing.WithPlaceholderCacheTTL(cfg.DrawingCache.PlaceholderTTL))
 	}
 	if len(cfg.DrawingArtifact.Endpoints) > 0 {

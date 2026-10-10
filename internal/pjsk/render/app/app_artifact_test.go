@@ -45,6 +45,10 @@ func TestAppDrawingOptionsAddsArtifactOptionOnlyWhenAllowListed(t *testing.T) {
 		t.Fatal("client with artifact option is nil")
 	}
 	cfg = Config{DrawingCache: drawing.RenderCacheConfig{PlaceholderTTL: -1}}
+	if got := len(appDrawingOptions(context.Background(), cfg, nil)); got != 0 {
+		t.Fatalf("disabled placeholder TTL options = %d", got)
+	}
+	cfg = Config{DrawingCache: drawing.RenderCacheConfig{PlaceholderTTL: time.Hour}}
 	if got := len(appDrawingOptions(context.Background(), cfg, nil)); got != 1 {
 		t.Fatalf("placeholder TTL options = %d", got)
 	}

@@ -132,7 +132,7 @@ func TestPlaceholderRenderIsCachedBrieflyAndNeverSlides(t *testing.T) {
 func TestPlaceholderTTLIsCappedByTheEndpointTTL(t *testing.T) {
 	server := newPlaceholderDrawingServer(t, 1)
 	client := NewHarukiDrawingClient(server.URL)
-	cache := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, Index: &fakeRenderIndex{}})
+	cache := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, Index: &fakeRenderIndex{}, PlaceholderTTL: time.Hour})
 	t.Cleanup(func() { _ = cache.Close() })
 	client.SetRenderCache(cache)
 
@@ -145,35 +145,59 @@ func TestPlaceholderTTLIsCappedByTheEndpointTTL(t *testing.T) {
 	}
 }
 
-func TestNegativePlaceholderTTLNeverCachesAFlaggedRender(t *testing.T) {
-	for _, remote := range []bool{false, true} {
-		t.Run(fmt.Sprintf("remote=%v", remote), func(t *testing.T) {
-			server := newPlaceholderDrawingServer(t, 2)
-			client := NewHarukiDrawingClient(server.URL, WithPlaceholderCacheTTL(-1))
-			if remote {
-				cache := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, Index: &fakeRenderIndex{}, PlaceholderTTL: -1})
-				t.Cleanup(func() { _ = cache.Close() })
-				if cache.placeholder != nil {
-					t.Fatal("disabled placeholder cache was constructed")
+// The default (0) keeps today's behaviour: a flagged render is never cached,
+// in-process or in the index, on any route including Infinite ones. A
+// negative value is the same.
+func TestDefaultPlaceholderTTLNeverCachesAFlaggedRender(t *testing.T) {
+	for _, configured := range []time.Duration{0, -time.Second} {
+		for _, remote := range []bool{false, true} {
+			t.Run(fmt.Sprintf("ttl=%v/remote=%v", configured, remote), func(t *testing.T) {
+				server := newPlaceholderDrawingServer(t, 2)
+				index := &fakeRenderIndex{}
+				client := NewHarukiDrawingClient(server.URL, WithArtifactConfig(ArtifactConfig{Endpoints: []string{"*"}}))
+				if configured != 0 {
+					client = NewHarukiDrawingClient(server.URL,
+						WithArtifactConfig(ArtifactConfig{Endpoints: []string{"*"}}), WithPlaceholderCacheTTL(configured))
 				}
-				client.SetRenderCache(cache)
-			}
-			for i, want := range []string{"placeholder", "placeholder", "complete", "complete"} {
-				if data, _ := renderCardList(t, client); data != want {
-					t.Fatalf("request %d = %q, want %q", i, data, want)
+				if client.localCache.placeholderTTL != 0 {
+					t.Fatalf("local placeholder TTL = %v, want disabled", client.localCache.placeholderTTL)
 				}
-			}
-			if server.calls.Load() != 3 {
-				t.Fatalf("drawing calls = %d; flagged renders must not be cached when disabled", server.calls.Load())
-			}
-		})
+				if remote {
+					cache := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, Index: index, PlaceholderTTL: configured})
+					t.Cleanup(func() { _ = cache.Close() })
+					if cache.placeholder != nil {
+						t.Fatal("disabled placeholder cache was constructed")
+					}
+					client.SetRenderCache(cache)
+				}
+				// card/list is an Infinite rule.
+				for i, want := range []string{"placeholder", "placeholder", "complete", "complete"} {
+					data, ops := renderCardList(t, client)
+					if data != want {
+						t.Fatalf("request %d = %q, want %q", i, data, want)
+					}
+					if i < 2 && (ops["drawing.placeholder_render"] != 1 || ops["drawing.cache_placeholder_store"] != 0) {
+						t.Fatalf("request %d ops = %v", i, ops)
+					}
+				}
+				if server.calls.Load() != 3 {
+					t.Fatalf("drawing calls = %d; flagged renders must not be cached by default", server.calls.Load())
+				}
+				client.localCache.mu.Lock()
+				local := len(client.localCache.entries)
+				client.localCache.mu.Unlock()
+				if want := map[bool]int{false: 1, true: 0}[remote]; local != want {
+					t.Fatalf("local cache entries = %d, want only the complete render (%d)", local, want)
+				}
+			})
+		}
 	}
 }
 
 func TestForcedCompleteRenderReplacesAFlaggedEntry(t *testing.T) {
 	server := newPlaceholderDrawingServer(t, 1)
 	client := NewHarukiDrawingClient(server.URL)
-	cache := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, Index: &fakeRenderIndex{}})
+	cache := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, Index: &fakeRenderIndex{}, PlaceholderTTL: time.Hour})
 	t.Cleanup(func() { _ = cache.Close() })
 	client.SetRenderCache(cache)
 
@@ -200,7 +224,7 @@ func TestFlaggedRenderOnANoStorePathIsCountedButNotCached(t *testing.T) {
 	client := NewHarukiDrawingClient(server.URL, WithArtifactConfig(ArtifactConfig{
 		Endpoints: []string{"*"}, NoStorePaths: []string{"api/pjsk/sk"},
 	}))
-	cache := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, Index: &fakeRenderIndex{}})
+	cache := NewRenderCacheClient(RenderCacheConfig{TTL: time.Hour, Index: &fakeRenderIndex{}, PlaceholderTTL: time.Hour})
 	t.Cleanup(func() { _ = cache.Close() })
 	client.SetRenderCache(cache)
 
@@ -258,7 +282,7 @@ func TestStoreRefMissingAssetsFieldIsNoted(t *testing.T) {
 func TestPlaceholderTTLHelpers(t *testing.T) {
 	for _, tc := range []struct {
 		configured, want time.Duration
-	}{{0, time.Hour}, {-time.Second, 0}, {5 * time.Minute, 5 * time.Minute}} {
+	}{{0, 0}, {-time.Second, 0}, {5 * time.Minute, 5 * time.Minute}} {
 		if got := effectivePlaceholderTTL(tc.configured); got != tc.want {
 			t.Errorf("effectivePlaceholderTTL(%v) = %v, want %v", tc.configured, got, tc.want)
 		}

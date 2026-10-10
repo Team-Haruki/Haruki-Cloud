@@ -824,8 +824,8 @@ type RenderCacheConfig struct {
 	ForceCooldown time.Duration `yaml:"force_cooldown"`
 	// PlaceholderTTL is the fixed (never extended on a hit) lifetime of a
 	// render Drawing flagged with X-Haruki-Render-Missing-Assets, capped by
-	// the endpoint's own TTL; 0 selects the default (1h), a negative value
-	// keeps such renders out of the cache entirely.
+	// the endpoint's own TTL. 0 (the default) or a negative value keeps such
+	// renders out of every cache.
 	PlaceholderTTL time.Duration `yaml:"placeholder_ttl"`
 }
 

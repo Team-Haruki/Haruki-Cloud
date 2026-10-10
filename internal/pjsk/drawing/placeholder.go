@@ -17,10 +17,6 @@ import (
 // it, so such renders stay uncached as before.
 const headerRenderMissingAssets = "X-Haruki-Render-Missing-Assets"
 
-// defaultPlaceholderCacheTTL is pjsk_render.drawing_cache.placeholder_ttl
-// when unset.
-const defaultPlaceholderCacheTTL = time.Hour
-
 // placeholderRenderCacheMaxEntries and placeholderRenderCacheMaxBytes bound
 // the in-process cache of flagged renders in index mode.
 const (
@@ -28,17 +24,11 @@ const (
 	placeholderRenderCacheMaxBytes   = 64 << 20
 )
 
-// effectivePlaceholderTTL resolves the configured placeholder TTL: 0 is the
-// default, a negative value disables caching flagged renders.
+// effectivePlaceholderTTL resolves the configured placeholder TTL. Caching
+// flagged renders is off by default: 0 or a negative value keeps them out of
+// every cache, and only a positive value enables the short, fixed lifetime.
 func effectivePlaceholderTTL(configured time.Duration) time.Duration {
-	switch {
-	case configured < 0:
-		return 0
-	case configured == 0:
-		return defaultPlaceholderCacheTTL
-	default:
-		return configured
-	}
+	return max(configured, 0)
 }
 
 // placeholderEntryTTL is the fixed lifetime of one flagged render: the

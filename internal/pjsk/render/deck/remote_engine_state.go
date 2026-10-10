@@ -42,6 +42,19 @@ func (s *remoteDeckState) musicMetasDigest(region string) string {
 	return strings.TrimSpace(s.Regions[region].MusicMetasDigest)
 }
 
+// registryOwnsMusicMetas reports whether the target loaded the region from
+// the master registry and holds music metas it fetched for it. Such a target
+// keeps the region's metas current by itself, so Cloud never pushes its own
+// copy there: Cloud refreshes that copy on its own, slower interval, and a push
+// made while it lags the registry rolled the target back to the previous metas.
+func (s *remoteDeckState) registryOwnsMusicMetas(region string) bool {
+	if s == nil {
+		return false
+	}
+	entry, ok := s.Regions[region]
+	return ok && strings.TrimSpace(entry.ContentHash) != "" && strings.TrimSpace(entry.MusicMetasDigest) != ""
+}
+
 func (s *remoteDeckState) contentHash(region string) string {
 	if s == nil {
 		return ""
@@ -96,8 +109,9 @@ func (r *RemoteDeckRecommender) fetchRemoteDeckState(ctx context.Context, exec *
 // adoptRemoteReadiness skips pushes the target does not need: after a Cloud
 // restart every target looks cold, but a deck-service that already holds this
 // region's registry contentHash and the exact music metas (same sha256) is
-// ready as it is. Anything unknown keeps the readiness flags as they were, so
-// the caller pushes exactly as before.
+// ready as it is. Music metas of a region the target pulls from the registry
+// are never pushed at all (see registryOwnsMusicMetas). Anything unknown keeps
+// the readiness flags as they were, so the caller pushes exactly as before.
 func (r *RemoteDeckRecommender) adoptRemoteReadiness(ctx context.Context, exec *remoteExecution, region, musicHash string, masterReady, musicReady bool) (bool, bool) {
 	remote, err := r.fetchRemoteDeckState(ctx, exec)
 	if err != nil {
@@ -115,10 +129,34 @@ func (r *RemoteDeckRecommender) adoptRemoteReadiness(ctx context.Context, exec *
 			}
 		}
 	}
-	if !musicReady && musicHash != "" && !strings.HasPrefix(musicHash, musicMetaPathHashTag) &&
-		remote.musicMetasDigest(region) == musicHash {
-		musicReady = true
-		commandtrace.RecordOperation(ctx, "deck.ready_music_metas_current", 0)
+	if !musicReady && musicHash != "" {
+		switch {
+		case !strings.HasPrefix(musicHash, musicMetaPathHashTag) && remote.musicMetasDigest(region) == musicHash:
+			musicReady = true
+			commandtrace.RecordOperation(ctx, "deck.ready_music_metas_current", 0)
+		case remote.registryOwnsMusicMetas(region):
+			r.revalidateRemoteRegistry(ctx, exec, region)
+			musicReady = true
+			commandtrace.RecordOperation(ctx, "deck.ready_music_metas_registry", 0)
+		}
 	}
 	return masterReady, musicReady
+}
+
+// revalidateRemoteRegistry asks a registry-mode target to recheck the region
+// against the registry now (manifest, then music metas, both conditional)
+// instead of being handed Cloud's copy. Whichever of Cloud and the target is
+// behind, the target ends up on the registry's current metas; one that is
+// already current answers from 304s. A failure is only logged: the target
+// keeps what it holds and catches up on its own refresh.
+func (r *RemoteDeckRecommender) revalidateRemoteRegistry(ctx context.Context, exec *remoteExecution, region string) {
+	var response remoteRegistryUpdateResponse
+	if err := r.postJSON(ctx, exec, "/update/masterdata/registry", map[string]any{"region": region}, &response); err != nil {
+		r.logger.WarnContext(ctx, "deck-service registry revalidation failed; the target keeps its music metas",
+			"upstream", deckServiceName, "region", region, "error_type", fmt.Sprintf("%T", err))
+		return
+	}
+	if r.registryURL != "" {
+		r.adoptRegistryContentHash(response.ContentHash)
+	}
 }

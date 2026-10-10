@@ -2,6 +2,7 @@ package auth
 
 import (
 	ent "haruki-cloud/database/bot"
+	"haruki-cloud/internal/core/authban"
 	"haruki-cloud/internal/core/buildpolicy"
 	"haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/core/secevent"
@@ -19,12 +20,14 @@ func RegisterBotRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.
 
 // BotAuthOptions carries the optional collaborators of the public AuthV3
 // routes. Every field is nil-safe: a nil BuildPolicy means policy off, a nil
-// Security reporter drops events.
+// Security reporter drops events, a nil IPBan disables the login IP ban and
+// its admin routes.
 type BotAuthOptions struct {
 	NoiseKeys   *crypto.KeyRing
 	BanChecker  GlobalBanChecker
 	BuildPolicy *buildpolicy.Store
 	Security    secevent.Reporter
+	IPBan       *authban.Guard
 }
 
 // RegisterBotRoutesWithBanChecker registers every bot auth route. The public
@@ -38,5 +41,6 @@ func RegisterBotRoutesWithBanChecker(app *fiber.App, dbClient *ent.Client, redis
 func RegisterBotRoutesWithOptions(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, opts BotAuthOptions) {
 	registerUserRoutes(app, dbClient, redisClient, opts)
 	registerInternalRoutes(app, dbClient, redisClient, opts.BanChecker)
+	registerIPBanAdminRoutes(app, opts.IPBan)
 	registerStatisticsRoutes(app, dbClient)
 }

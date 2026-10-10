@@ -2,6 +2,7 @@ package auth
 
 import (
 	ent "haruki-cloud/database/bot"
+	"haruki-cloud/internal/core/authban"
 	"haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/middleware/secure"
 
@@ -18,7 +19,8 @@ import (
 //
 // The secure middleware performs the per-request Noise handshake for the login
 // route, so the handler only ever sees the decrypted MsgPack payload and its
-// response is encrypted on the way out. Nothing is mounted without a key ring:
+// response is encrypted on the way out. The login IP ban runs in front of it,
+// so a banned address costs one Redis lookup and no handshake. Nothing is mounted without a key ring:
 // this Cloud line has no plaintext or shared-key login path.
 func registerUserRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, opts BotAuthOptions) {
 	if opts.NoiseKeys == nil {
@@ -28,13 +30,13 @@ func registerUserRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis
 		WithGlobalBanChecker(opts.BanChecker).
 		WithBuildPolicy(opts.BuildPolicy).
 		WithSecurityReporter(opts.Security)
-	registerAuthV3Routes(app, NewUserHandler(svc), opts.NoiseKeys)
+	registerAuthV3Routes(app, NewUserHandler(svc), opts.NoiseKeys, opts.IPBan)
 }
 
 // registerAuthV3Routes mounts the AuthV3 login route behind the Noise NK
 // middleware and the header-authenticated logout route next to it.
-func registerAuthV3Routes(app *fiber.App, h *UserHandler, noiseKeys *crypto.KeyRing) {
+func registerAuthV3Routes(app *fiber.App, h *UserHandler, noiseKeys *crypto.KeyRing, ipBan *authban.Guard) {
 	public := app.Group(AuthV3RouteBase)
-	public.Post("/:bot_id/auth", secure.New(secure.Config{KeyRing: noiseKeys}), h.AuthV3)
+	public.Post("/:bot_id/auth", ipBan.LoginMiddleware("bot_id"), secure.New(secure.Config{KeyRing: noiseKeys}), h.AuthV3)
 	public.Delete("/:bot_id/logout", h.Logout)
 }

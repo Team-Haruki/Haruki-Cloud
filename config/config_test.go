@@ -843,3 +843,41 @@ func TestDrawingArtifactStoreRefDefaultsYAMLAndEnv(t *testing.T) {
 	got = cfg.PJSKRender.DrawingArtifact.EffectiveStoreRefPaths()
 	testutil.Require(t, len(got) == 2 && got[1] == "api/pjsk/event/detail", "env list = %v", got)
 }
+
+func TestAuthIPBanFromYAMLAndEnv(t *testing.T) {
+	var cfg Config
+	err := yaml.Unmarshal([]byte("security:\n  auth_ip_ban:\n    enabled: false\n    threshold: 7\n    window: 5m\n    ban_duration: 1h\n    never_ban_cidrs: [\"203.0.113.0/24\"]\n"), &cfg)
+	testutil.Require(t, err == nil, "unmarshal: %v", err)
+	ban := cfg.Security.AuthIPBan
+	testutil.Require(t, ban.Enabled != nil && !*ban.Enabled, "enabled = %v", ban.Enabled)
+	testutil.Check(t, ban.Threshold == 7 && ban.Window == 5*time.Minute && ban.BanDuration == time.Hour, "yaml = %+v", ban)
+	testutil.Check(t, ban.CountBuildRejected == nil && ban.ExemptKnownBots == nil, "unset tri-state flags must stay nil: %+v", ban)
+
+	for name, value := range map[string]string{
+		"ENABLED": "true", "THRESHOLD": "12", "WINDOW": "15m", "DURATION": "2h", "MAX_DURATION": "8h",
+		"ESCALATION_WINDOW": "48h", "COUNT_BUILD_REJECTED": "false", "EXEMPT_KNOWN_BOTS": "false",
+		"KNOWN_BOT_TTL": "24h", "BLOCK_BOT_ROUTES": "true", "NEVER_BAN_CIDRS": "198.51.100.7, 2001:db8::/32",
+	} {
+		t.Setenv("HARUKI_SECURITY_AUTH_IP_BAN_"+name, value)
+	}
+	testutil.Require(t, ApplyEnvOverrides(&cfg) == nil, "ApplyEnvOverrides failed")
+	ban = cfg.Security.AuthIPBan
+	testutil.Check(t, ban.Enabled != nil && *ban.Enabled, "env enabled = %v", ban.Enabled)
+	testutil.Check(t, ban.Threshold == 12 && ban.Window == 15*time.Minute && ban.BanDuration == 2*time.Hour &&
+		ban.MaxBanDuration == 8*time.Hour && ban.EscalationWindow == 48*time.Hour && ban.KnownBotTTL == 24*time.Hour,
+		"env durations = %+v", ban)
+	testutil.Check(t, ban.CountBuildRejected != nil && !*ban.CountBuildRejected, "count_build_rejected = %v", ban.CountBuildRejected)
+	testutil.Check(t, ban.ExemptKnownBots != nil && !*ban.ExemptKnownBots, "exempt_known_bots = %v", ban.ExemptKnownBots)
+	testutil.Check(t, ban.BlockBotRoutes, "block_bot_routes not applied")
+	testutil.Check(t, len(ban.NeverBanCIDRs) == 2 && ban.NeverBanCIDRs[1] == "2001:db8::/32", "never_ban = %#v", ban.NeverBanCIDRs)
+}
+
+func TestExampleConfigAuthIPBanDefaults(t *testing.T) {
+	cfg, err := ReadConfig(filepath.Join("..", "haruki-cloud.example.yaml"))
+	testutil.Require(t, err == nil, "read example: %v", err)
+	ban := cfg.Security.AuthIPBan
+	testutil.Check(t, ban.Enabled != nil && !*ban.Enabled, "example enabled = %v", ban.Enabled)
+	testutil.Check(t, ban.Threshold == 10 && ban.Window == 10*time.Minute && ban.BanDuration == 6*time.Hour &&
+		ban.MaxBanDuration == 24*time.Hour && ban.EscalationWindow == 168*time.Hour && !ban.BlockBotRoutes,
+		"example auth_ip_ban = %+v", ban)
+}

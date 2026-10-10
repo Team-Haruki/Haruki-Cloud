@@ -335,6 +335,10 @@ other = "会话已过期或无效"
 description = "Bot 登录接口：同一个 Bot 登录过于频繁。"
 other = "请求过于频繁，请稍后再试"
 
+[account.api.auth_banned]
+description = "Bot 登录接口：同一来源登录失败次数过多，暂时禁止登录（在加密通道之前返回，不说明来源和解封时间）。"
+other = "认证失败次数过多，请稍后再试"
+
 [account.api.replay_detected]
 description = "Bot 登录接口：同一个登录请求被重复发送（nonce 已用过）。"
 other = "检测到重复请求"

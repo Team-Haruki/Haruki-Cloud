@@ -318,3 +318,51 @@ func TestWebhookEmptyURLSkipsDelivery(t *testing.T) {
 		t.Fatalf("logs = %s", logs)
 	}
 }
+
+// TestIPBannedAlertsEveryTime: an ip_banned event is already the result of
+// its own threshold, so it alerts on each occurrence with its own numbers
+// and never touches the per-kind counter.
+func TestIPBannedAlertsEveryTime(t *testing.T) {
+	counter := &memCounter{}
+	logs := &syncBuffer{}
+	m := New(Config{WebhookURL: "http://example.invalid/hook", Threshold: 5, Window: time.Minute, Node: "node-a"}, counter)
+	m.logger = slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	var delivered [][]byte
+	m.post = func(_ context.Context, payload []byte) error {
+		delivered = append(delivered, payload)
+		return nil
+	}
+	m.spawn = func(f func()) { f() }
+
+	ev := Event{
+		Kind: KindIPBanned, SourceIP: "203.0.113.50", Reason: "10 login failures", Enforced: true,
+		Alert: &AlertDetail{Count: 10, Threshold: 10, Window: 10 * time.Minute, BanDuration: 6 * time.Hour, BotIDs: []string{"76313098"}},
+	}
+	m.Report(context.Background(), ev)
+	m.Report(context.Background(), ev)
+	if len(delivered) != 2 {
+		t.Fatalf("alerts = %d, want one per ban", len(delivered))
+	}
+	if len(counter.counts) != 0 {
+		t.Fatalf("ip_banned touched the counter: %v", counter.counts)
+	}
+	const want = `{"kind":"ip_banned","source_ip":"203.0.113.50","reason":"10 login failures","enforced":true,` +
+		`"count":10,"threshold":10,"window_seconds":600,"node":"node-a","time":"`
+	if !strings.HasPrefix(string(delivered[0]), want) || !strings.HasSuffix(string(delivered[0]), `","ban_seconds":21600,"bot_ids":["76313098"]}`) {
+		t.Fatalf("payload = %s", delivered[0])
+	}
+	out := logs.String()
+	if !strings.Contains(out, "security alert") || !strings.Contains(out, "ban_duration=6h0m0s") || !strings.Contains(out, "bot_ids=[76313098]") {
+		t.Fatalf("logs = %s", out)
+	}
+
+	// Without a counter (no Redis) the ban alert still goes out.
+	bare := New(Config{}, nil)
+	bare.spawn = func(f func()) { f() }
+	posted := 0
+	bare.post = func(context.Context, []byte) error { posted++; return nil }
+	bare.Report(context.Background(), Event{Kind: KindIPBanned, SourceIP: "203.0.113.50", Alert: &AlertDetail{}})
+	if posted != 1 {
+		t.Fatalf("alert without counter posted %d times", posted)
+	}
+}

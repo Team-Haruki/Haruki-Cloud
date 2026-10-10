@@ -570,15 +570,37 @@ pjsk_render:
 security:
   # Security events (auth_failed, replay_detected, rate_limited,
   # build_rejected, session_revoked, login_source_changed, client_changed,
-  # policy_unavailable) are always logged with event=security. When one kind
-  # crosses alert_threshold occurrences for the same bot / source inside
-  # alert_window, one JSON alert is POSTed here (ERROR log only when empty).
+  # policy_unavailable, ip_banned) are always logged with event=security. When
+  # one kind crosses alert_threshold occurrences for the same bot / source
+  # inside alert_window, one JSON alert is POSTed here (ERROR log only when
+  # empty); ip_banned alerts on every ban.
   alert_webhook_url: ""
   # Sent as "Authorization: Bearer <token>" on each alert POST when set.
   # Redirects are never followed, so the token only reaches this URL's host.
   alert_webhook_token: ""
   alert_threshold: 5
   alert_window: 10m
+  # Ban a source address (IPv6: its /64) from AuthV3 login after repeated
+  # failures; see docs/build-policy.cn.md. Needs Redis. The address is the
+  # one c.IP() resolves from backend.proxy_header / trusted_proxies above.
+  # Env HARUKI_SECURITY_AUTH_IP_BAN_<FIELD> (ENABLED, THRESHOLD, WINDOW,
+  # DURATION, MAX_DURATION, ESCALATION_WINDOW, COUNT_BUILD_REJECTED,
+  # EXEMPT_KNOWN_BOTS, KNOWN_BOT_TTL, BLOCK_BOT_ROUTES, NEVER_BAN_CIDRS).
+  auth_ip_ban:
+    enabled: false             # off by default; set true to turn the ban on
+    threshold: 10              # counted failures inside window that ban
+    window: 10m                # fixed window started by the first failure
+    ban_duration: 6h           # first ban
+    max_ban_duration: 24h      # repeat bans double up to this (<= ban_duration: no escalation)
+    escalation_window: 168h    # how long earlier bans are remembered
+    count_build_rejected: true # enforced build-policy rejections count too
+    exempt_known_bots: true    # bots that logged in from the address recently keep logging in
+    known_bot_ttl: 168h
+    block_bot_routes: false    # also refuse command/manifest/logout routes from banned addresses
+    # Extra addresses / CIDRs never banned, on top of the built-in loopback,
+    # private, link-local and 100.64.0.0/10 ranges (e.g. a CDN's edge
+    # addresses when it reaches Cloud without a trusted forwarding header).
+    never_ban_cidrs: []
 
 diagnostics:
   # Opt-in plain-HTTP listener, separate from the public server, serving

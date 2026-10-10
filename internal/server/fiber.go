@@ -42,16 +42,7 @@ const (
 func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 	accessLogFileHandle = nil
 	accessLogAsyncWriter = nil
-	app := fiber.New(fiber.Config{
-		BodyLimit:   globalRequestBodyLimit,
-		JSONEncoder: json.Marshal,
-		JSONDecoder: json.Unmarshal,
-		ProxyHeader: harukiConfig.Cfg.Backend.ProxyHeader,
-		TrustProxy:  harukiConfig.Cfg.Backend.EnableTrustProxy,
-		TrustProxyConfig: fiber.TrustProxyConfig{
-			Proxies: harukiConfig.Cfg.Backend.TrustProxies,
-		},
-	})
+	app := fiber.New(fiberConfig())
 
 	app.Use(requestid.New())
 	if harukiConfig.Cfg.Backend.AccessLog != "" {
@@ -80,6 +71,26 @@ func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 	app.Use(requestBodyLimitMiddleware())
 	registerReadinessRoute(app)
 	return app
+}
+
+// fiberConfig is the server's Fiber configuration. c.IP() reads ProxyHeader
+// only when the TCP peer is one of trusted_proxies; EnableIPValidation then
+// walks the header right to left past the trusted hops and returns the first
+// valid address that is not a trusted proxy. Without it Fiber returns the raw
+// header, so a chain such as "spoofed, real" would reach the security
+// counters and the login IP ban verbatim.
+func fiberConfig() fiber.Config {
+	return fiber.Config{
+		BodyLimit:          globalRequestBodyLimit,
+		JSONEncoder:        json.Marshal,
+		JSONDecoder:        json.Unmarshal,
+		ProxyHeader:        harukiConfig.Cfg.Backend.ProxyHeader,
+		EnableIPValidation: true,
+		TrustProxy:         harukiConfig.Cfg.Backend.EnableTrustProxy,
+		TrustProxyConfig: fiber.TrustProxyConfig{
+			Proxies: harukiConfig.Cfg.Backend.TrustProxies,
+		},
+	}
 }
 
 // requestBodyLimitMiddleware applies tighter endpoint-family limits before any

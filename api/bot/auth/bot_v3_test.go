@@ -78,7 +78,7 @@ func newAuthV3TestEnv(t *testing.T) *authV3TestEnv {
 	internalHandler := NewInternalHandler(NewInternalServiceWithStore(client, store).WithGlobalBanChecker(ban))
 
 	app := fiber.New()
-	registerAuthV3Routes(app, userHandler, ring)
+	registerAuthV3Routes(app, userHandler, ring, nil)
 	// Deliberately unwrapped mount to prove the handler refuses plaintext.
 	app.Post("/unwrapped/:bot_id/auth", userHandler.AuthV3)
 	app.Group("/internal/bot", api.VerifyAPIAuthorization()).Post("/verify-session", internalHandler.VerifySession)

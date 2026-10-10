@@ -6,8 +6,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 	"haruki-cloud/api"
+	"haruki-cloud/internal/core/authban"
 	"haruki-cloud/internal/core/buildpolicy"
 	"haruki-cloud/internal/core/secevent"
 	"haruki-cloud/internal/pjsk/render/assetindex"
@@ -711,6 +713,48 @@ func initSecurityMonitor(mainLogger *harukiLogger.Logger, redisClient *redis.Cli
 		mainLogger.Warn("security alert webhook is not configured; alerts are logged only")
 	}
 	return monitor
+}
+
+// authIPBanSweepInterval is how often expired login IP bans are logged.
+const authIPBanSweepInterval = time.Minute
+
+// initAuthIPBan builds the AuthV3 login IP ban; see buildAuthIPBan.
+func initAuthIPBan(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis.Client, reporter secevent.Reporter) *authban.Guard {
+	guard, err := buildAuthIPBan(ctx, mainLogger, app, redisClient, reporter)
+	if err != nil {
+		fatalStartup(mainLogger, "invalid security.auth_ip_ban.never_ban_cidrs", "error_type", fmt.Sprintf("%T", err))
+	}
+	return guard
+}
+
+// buildAuthIPBan returns nil when the ban is disabled in config or Redis is
+// missing. With block_bot_routes it also guards every bot route, so it must
+// run before those routes are registered. The expiry sweeper stops with ctx.
+func buildAuthIPBan(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis.Client, reporter secevent.Reporter) (*authban.Guard, error) {
+	cfg, enabled := authban.ConfigFromSettings(harukiConfig.Cfg.Security.AuthIPBan)
+	if !enabled {
+		mainLogger.Info("auth ip ban disabled")
+		return nil, nil
+	}
+	if redisClient == nil {
+		mainLogger.Warn("auth ip ban needs Redis; disabled")
+		return nil, nil
+	}
+	guard, err := authban.New(cfg, redisClient, reporter)
+	if err != nil {
+		return nil, err
+	}
+	if guard.BlocksBotRoutes() {
+		app.Use(guard.BotRoutesMiddleware())
+	}
+	go guard.RunExpirySweeper(ensureContext(ctx), authIPBanSweepInterval)
+	eff := guard.Config()
+	mainLogger.Info("auth ip ban enabled",
+		"threshold", eff.Threshold, "window", eff.Window.String(),
+		"ban_duration", eff.BanDuration.String(), "max_ban_duration", eff.MaxBanDuration.String(),
+		"count_build_rejected", eff.CountBuildRejected, "exempt_known_bots", eff.ExemptKnownBots,
+		"block_bot_routes", eff.BlockBotRoutes, "extra_never_ban", len(eff.NeverBan))
+	return guard, nil
 }
 
 type redisSecurityCounter struct{ rc *redis.Client }

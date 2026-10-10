@@ -70,6 +70,7 @@ Haruki-Cloud/
 ├── internal/
 │   ├── cachepersist/       # bounded background writer for rebuildable cache snapshots
 │   ├── cluster/            # node role / read-only mode helpers (config.Cfg.Node)
+│   ├── core/authban/       # AuthV3 login IP ban after repeated failures (docs/build-policy.cn.md)
 │   ├── core/buildpolicy/   # AuthV3 client build allowlist / revocations (docs/build-policy.cn.md)
 │   ├── core/crypto/        # Noise protocol helpers
 │   ├── core/dbpool/        # database/sql pool sizing / recycling

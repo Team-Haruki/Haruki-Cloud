@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"haruki-cloud/internal/core/authban"
 	"haruki-cloud/internal/core/buildpolicy"
 	"haruki-cloud/internal/core/secevent"
 	"log/slog"
@@ -36,6 +37,7 @@ func (h *UserHandler) AuthV3(c fiber.Ctx) error {
 	botIDStr := c.Params("bot_id")
 	botID, err := strconv.Atoi(botIDStr)
 	if err != nil {
+		authban.MarkFailure(c, authban.ReasonAuthFailed)
 		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthFailed)
 	}
 
@@ -57,9 +59,11 @@ func (h *UserHandler) AuthV3(c fiber.Ctx) error {
 	payload, authErr := h.decodeAuthPayloadV3(ctx, c, botIDStr)
 	if authErr != nil {
 		h.reportSecurity(ctx, authFailureEvent(botIDStr, c.IP(), authErr))
+		markLoginFailure(c, authErr, authban.ReasonAuthFailed)
 		return sendAuthResponseError(c, authErr)
 	}
 	if authErr := h.applyBuildPolicy(ctx, c, botIDStr, payload); authErr != nil {
+		markLoginFailure(c, authErr, authban.ReasonBuildRejected)
 		return sendAuthResponseError(c, authErr)
 	}
 	authenticated, authErr := h.authenticateBot(ctx, botID, botIDStr, payload.Credential)
@@ -68,6 +72,7 @@ func (h *UserHandler) AuthV3(c fiber.Ctx) error {
 			Kind: secevent.KindAuthFailed, BotID: botIDStr, BuildID: payload.BuildID,
 			ClientVersion: payload.ClientVersion, SourceIP: c.IP(), Reason: authErr.message, Enforced: true,
 		})
+		markLoginFailure(c, authErr, authban.ReasonAuthFailed)
 		return sendAuthResponseError(c, authErr)
 	}
 
@@ -96,6 +101,7 @@ func (h *UserHandler) AuthV3(c fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
+	authban.MarkSuccess(c)
 	h.reportLoginAnomalies(ctx, botIDStr, c.IP(), authenticated, payload)
 	if !cluster.IsReadOnly() {
 		h.recordLoginV3(ctx, authenticated.userID, c.IP(), payload)
@@ -134,6 +140,23 @@ func authFailureEvent(botID, sourceIP string, authErr *authResponseError) seceve
 		kind = secevent.KindReplayDetected
 	}
 	return secevent.Event{Kind: kind, BotID: botID, SourceIP: sourceIP, Reason: authErr.message, Enforced: true}
+}
+
+// markLoginFailure reports a rejection to the login IP ban. Only rejections
+// caused by what the client sent count: a 400 (bad credential, unknown bot,
+// malformed or replayed payload) and the build-policy 403. A 5xx is the
+// server's fault and a banned owner (also 403) already blocks the bot, so
+// neither counts against the address that other bots may share.
+func markLoginFailure(c fiber.Ctx, authErr *authResponseError, reason authban.Reason) {
+	switch {
+	case authErr.status == fiber.StatusBadRequest:
+		if authErr.replay {
+			reason = authban.ReasonReplay
+		}
+		authban.MarkFailure(c, reason)
+	case authErr.status == fiber.StatusForbidden && reason == authban.ReasonBuildRejected:
+		authban.MarkFailure(c, reason)
+	}
 }
 
 // applyBuildPolicy evaluates the release allowlist / revocations before the

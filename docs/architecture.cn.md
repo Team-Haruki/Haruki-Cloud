@@ -340,6 +340,9 @@ AuthV3 契约（请求体 Noise NK Message 1，响应体 Message 2，payload 均
 服务端可配置多把 Noise 静态密钥（`noise_private_key` + `noise_keys`），每把有 key_id。
 客户端可通过 `X-Haruki-Noise-Key-Id` 请求头提示所用公钥；缺省时服务端依次尝试全部密钥。
 响应头 `X-Haruki-Noise-Key-Id` 回传实际匹配的 key_id。auth 限流为每 bot_id 每分钟 10 次。
+开启 `security.auth_ip_ban.enabled` 后（默认关闭），同一来源地址登录失败过多会被自动禁止登录（默认 10 分钟内 10 次封 6 小时），被封地址在
+Noise 握手之前收到明文 429 和 `Retry-After`，见 [build-policy.cn.md](build-policy.cn.md)
+“登录失败自动封禁”。
 
 #### 信任密钥集与签名（trustsign）
 
@@ -450,6 +453,8 @@ domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1" }
 |------|------|------|
 | POST | `/internal/bot/verify-session` | 验证 bot_id + session_token |
 | POST | `/internal/bot/statistics/record/:botID` | 统计数据上报 |
+| GET | `/internal/bot/auth-bans` | 登录失败自动封禁：当前封禁；`?ip=` 查看单个地址（见 `docs/build-policy.cn.md`） |
+| DELETE | `/internal/bot/auth-bans?ip=<地址>` | 解封并清空该地址的计数 |
 | POST | `/api/internal/group-guard/binding/check` | 群成员绑定检查 |
 | POST | `/api/internal/group-guard/binding/check-batch` | 群成员绑定批量检查 |
 
@@ -844,6 +849,7 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | `session_v3.go` | AuthV3 登录 Handler（Noise NK 通道，nonce 单次消费，请求上下文绑定） | — |
 | `internal.go` | 内部 session 验证 | `/internal/bot/verify-session` |
 | `statistics.go` | 统计上报 Handler | `/internal/bot/statistics/record/:botID` |
+| `ipban_admin.go` | 登录失败自动封禁的管理接口（`internal/core/authban`） | `/internal/bot/auth-bans` |
 | `telemetry.go` / `telemetry_dispatcher.go` | Bot 遥测采集与转发 | — |
 | `struct.go` / `helper.go` | 结构体与辅助函数 | — |
 

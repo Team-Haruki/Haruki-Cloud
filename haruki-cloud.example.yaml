@@ -316,6 +316,7 @@ pjsk_render:
     base_url: ""              # required for source=registry (e.g. http://100.76.159.97:9998); optional mirror host for legacy
   sk_forecast:
     local_base_url: "http://100.109.13.111:18746"
+    proxy_url: ""             # optional HTTP proxy for the third-party sources (33kit, moesekai, sekarun); the local service stays direct
     cache_path: "/data/haruki/cache/drawing/sk_forecast_cache.json"
   mysekai_housing_competition:
     cache_path: "/data/haruki/cache/drawing/mysekai_housing_competition_stats.json"

@@ -577,6 +577,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_SOURCE", &cfg.PJSKRender.MusicMeta.Source)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_BASE_URL", &cfg.PJSKRender.MusicMeta.BaseURL)
 	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_LOCAL_BASE_URL", &cfg.PJSKRender.SKForecast.LocalBaseURL)
+	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_PROXY_URL", &cfg.PJSKRender.SKForecast.ProxyURL)
 	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_CACHE_PATH", &cfg.PJSKRender.SKForecast.CachePath)
 	envStr("HARUKI_PJSK_RENDER_MYSEKAI_HOUSING_COMPETITION_CACHE_PATH", &cfg.PJSKRender.MySekaiHousingCompetition.CachePath)
 	envDuration("HARUKI_PJSK_RENDER_MYSEKAI_HOUSING_COMPETITION_REFRESH_INTERVAL", &cfg.PJSKRender.MySekaiHousingCompetition.RefreshInterval)
@@ -939,6 +940,7 @@ type MusicMetaConfig struct {
 
 type SKForecastConfig struct {
 	LocalBaseURL string `yaml:"local_base_url"`
+	ProxyURL     string `yaml:"proxy_url"` // HTTP proxy for the third-party forecast sources only
 	CachePath    string `yaml:"cache_path"`
 }
 

@@ -91,7 +91,7 @@ func parseSekaRunScore(values []string) (int, bool) {
 
 func (p *RemoteForecastProvider) getJSON(ctx context.Context, url string, out any) error {
 	finishHTTP := commandtrace.MeasureOperation(ctx, "forecast.http")
-	resp, err := p.http.R().
+	resp, err := p.clientFor(url).R().
 		SetContext(ctx).
 		SetHeader("User-Agent", version.UserAgent()).
 		Get(url)
@@ -113,7 +113,7 @@ func (p *RemoteForecastProvider) getJSON(ctx context.Context, url string, out an
 
 func (p *RemoteForecastProvider) getText(ctx context.Context, url string) (string, error) {
 	finishHTTP := commandtrace.MeasureOperation(ctx, "forecast.http")
-	resp, err := p.http.R().
+	resp, err := p.clientFor(url).R().
 		SetContext(ctx).
 		SetHeader("User-Agent", version.UserAgent()).
 		Get(url)

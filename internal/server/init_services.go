@@ -241,6 +241,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		MetaLoader:         metaLoader,
 		SKForecast: renderapp.SKForecastConfig{
 			LocalBaseURL: harukiConfig.Cfg.PJSKRender.SKForecast.LocalBaseURL,
+			ProxyURL:     harukiConfig.Cfg.PJSKRender.SKForecast.ProxyURL,
 			CacheStore:   cacheTargets.forecast,
 			CacheKey:     cacheTargets.forecastKey,
 		},

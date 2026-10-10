@@ -272,7 +272,10 @@ event name).
   hook that checks the column exists, copies anything still needed out of
   it, and runs `ALTER TABLE … DROP COLUMN` in one transaction. Example:
   `accountdata.DropLegacyVisibleColumn` (`user_bindings.visible`, dropped in
-  3.12.0). Write down which releases can no longer be rolled back to.
+  3.12.0). A drop is not additive: stop every older API-role instance
+  before the new one starts (a full-stop upgrade, which a single replaced
+  container already is), because an older binary still writes the column.
+  Write down which releases can no longer be rolled back to.
 
 ### Common ent gotcha
 

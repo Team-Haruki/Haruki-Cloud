@@ -342,7 +342,7 @@ Edge：
 1. 3.9.0 之前只有一个 `visible`，`false` 时隐藏全部。3.9.0 起每种暴露方式一个开关，`/隐藏全部`、`/显示全部` 一次改四个；当时用 `visible` 初始化了四个分项。
 2. 任何分项变化都同时写全部四项；新建绑定在创建时就写入四项（`accountdata.NewBindingVisibility`：只隐藏 UID，sk、个人信息、逮捕三项显示）。导入工具按导出数据的单个 `visible` 写四项。抓包和烤森开关不变。
 3. 读取时 `NULL` 分项按“隐藏”处理（`bindingVisibility`）。只有 3.9.0 之前的二进制会写出 `NULL`，按隐藏处理不会比用户的设置暴露更多。
-4. **`visible` 列已在 3.12.0 删除。** ent 的 auto-migrate 不会自己删列，所以由 `accountdata.DropLegacyVisibleColumn` 在 auto-migrate 之后（只在可写节点，`migratePJSKData`）执行：列还在时先把仍为 `NULL` 的分项按 `visible` 补齐（即 3.9.0 的初始化最后再跑一次），再 `ALTER TABLE user_bindings DROP COLUMN visible`，同一个事务；列已经不在时什么都不做，每次启动都可以执行。只读节点跳过，由主库复制过去。
+4. **`visible` 列已在 3.12.0 删除。** ent 的 auto-migrate 不会自己删列，所以由 `accountdata.DropLegacyVisibleColumn` 在 auto-migrate 之后（只在可写节点，`migratePJSKData`）执行：列还在时先把仍为 `NULL` 的分项按 `visible` 补齐（即 3.9.0 的初始化最后再跑一次），再 `ALTER TABLE user_bindings DROP COLUMN visible`，同一个事务；列已经不在时什么都不做，每次启动都可以执行。只读节点跳过，由主库复制过去。删列不是“只加不减”的变更：升级必须整体停旧起新，新版本启动后不能再有旧版本的 API 进程连着这个库（旧版本建绑定时还会写 `visible`，删列后会失败）。生产上 API 只有一个实例，按容器替换，本来就是这样；events 角色不碰 `user_bindings`。
 5. **回滚限制**：删列之后不能再回滚到 3.9.0 之前的版本。那些版本只认 `visible`，它们的 auto-migrate 会以默认值 `true` 重新加回这一列，结果所有绑定都按“全部显示”处理。回滚到 3.9.0~3.11.x 是安全的：它们同样会加回 `visible`（全部为 `true`），但只在分项为 `NULL` 时读它，而删列前已经补齐，没有 `NULL`；再升级时这一列会被再次删除。
 
 ### 6.5 `user_default_bindings` 表（默认绑定指针）

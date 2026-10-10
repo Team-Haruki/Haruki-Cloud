@@ -147,6 +147,9 @@ var legacyVisibleColumns = []string{
 // per-exposure flag that is still NULL (the 3.9.0 bootstrap, run one last
 // time), then drops it, in one transaction where the dialect allows. When the
 // column is already gone it does nothing, so it is safe on every start.
+// It is not additive: no older API-role process may still run against the
+// database (it writes visible on every binding insert), so the upgrade must
+// stop the old instance before the new one starts.
 //
 // After it has run, a rollback below 3.9.0 is no longer possible: such a
 // binary only reads visible, and its auto-migrate would re-add the column

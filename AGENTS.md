@@ -495,7 +495,7 @@ As of this revision the project is **considered functionally complete**:
     （`errors.Is`/`errors.As`、`usererror.As`、消息 ID），不要匹配错误文本。
   - 最后一道防线：`i18n.SanitizeMessage` 丢掉不是由任何目录消息渲染出来的行
     （丢掉的行写日志），结果为空或含敏感 URL 时回复通用错误。字面文字太少的
-    模板行（如 `u{{.Index}} {{.Account}}`、`{{.Value}}万`、
+    模板行（如 `u{{.Index}} {{.Account}}`、`{{.Value}}w`、
     `{{.Region}}活动 {{.ID}}`）是弱模式，只在回复本身用到该消息时才认。
   - **参数回显默认关闭。** 客户端没有在请求里设 `enableParamEcho: true` 时，错误回复
     （参数错误、找不到、匹配到多个、超出范围、用法、参数引导）不能出现任何用户输入：
@@ -554,7 +554,7 @@ As of this revision the project is **considered functionally complete**:
 | D | 中文与拉丁字母、数字之间加一个半角空格：`卡牌 ID`、`最多 5 个`、`游戏 UID`。例外：用户原样输入的记号（`u1`、`event123`、`t100`、`wl1`、`10火`、`/jp查曲`）和 B 的区服显示名。 |
 | E | 活动点数：名词写 PT（目标 PT、活动 PT），数字后的单位写 pt（还需 1234 pt）。 |
 | F | 不向用户提内部组件（SekaiAPI、Tracker、Cloud、Cloud 节点、masterdata、OneBot self_id、Client、数据库、上游、Drawing/绘图服务）。用功能名：获取游戏数据失败、查榜服务、渲染服务。只有 Bot 管理员能处理的问题统一回复"服务配置异常，请联系 Bot 管理员"，细节写日志或 commandtrace。 |
-| H | Cloud 负责发给 Drawing 的所有标签的本地化，从目录取预先本地化的字符串。标签只用于显示：Drawing 的行为（图标、背景、颜色、取哪一段）一律按同时发送的原始 key 决定，例如 `supply_type_key`、别名图片的 `entity_type`、数据来源的 `kind`、`live_type`、虚拟 Live 的 `short_name`；新增会影响 Drawing 行为的标签时同时发送 key，不要让 Drawing 比较文案。区服显示名 `region_label` 和账号行 `account_label`（`RegionLabel`/`AccountLabel`）由 `prepareDrawingRequestBody`（`internal/pjsk/drawing/request_labels.go`）统一加在请求、`profile`/`user_info` 和 `deck_request` 上，原始 `region` 保留给 Drawing 选颜色和素材。Drawing 目前自己本地化的原始 key 先不动，记为 Drawing 后续事项。改动图片文字时提升 `renderCacheKeyVersion`。 |
+| H | Cloud 负责发给 Drawing 的所有标签的本地化，从目录取预先本地化的字符串。标签只用于显示：Drawing 的行为（图标、背景、颜色、取哪一段）一律按同时发送的原始 key 决定，例如 `supply_type_key`、别名图片的 `entity_type`、数据来源的 `kind`、`live_type`、虚拟 Live 的 `short_name`；新增会影响 Drawing 行为的标签时同时发送 key，不要让 Drawing 比较文案。区服显示名 `region_label` 和账号行 `account_label`（`RegionLabel`/`AccountLabel`）由 `prepareDrawingRequestBody`（`internal/pjsk/drawing/request_labels.go`）统一加在请求、`profile`/`user_info` 和 `deck_request` 上，原始 `region` 保留给 Drawing 选颜色和素材。Drawing 自己画的标签（卡池类型/抽卡方式/稀有度、虚拟 Live 类型、背包道具类别、服装部件、组卡标题/算法/计算设置、活动规划、榜线倒计时和追踪图例、控分的目标 PT、卡牌一览属性、未上线、个人信息卡片的等级标签）由同一处按 Drawing 端点加在请求的 `labels` 对象上（`request_label_table.go`，键是 Drawing 的标签键，`{name}` 是 Drawing 填入的槽位，对应 Drawing AGENTS.md 的 “Caller labels and raw keys”）；个人信息标签加在每个 `profile`/`user_info` 上。`DetailedProfileCardRequest` 的数据来源发原始 `data_source_kind`（suite、mysekai、public），名称 `data_source_label` 取自 `profile.data_source.*`。Drawing 缺少某个标签时用自己的文字。改动图片文字时提升 `renderCacheKeyVersion`。 |
 | I | 帮助文档里写了但未注册的指令：没有歧义和冲突时把文档写法注册为别名，否则改文档。 |
 | J | 错误脱敏必须完整，见 12.1。 |
 | K | 烤森"数据已过期"、`/sud`（抓包状态）和 `/msd` 用同一套术语（C）、同一个时间格式函数和同一种结构。 |
@@ -571,7 +571,8 @@ As of this revision the project is **considered functionally complete**:
   URL 单独成行或两侧留空白。省略号写"……"。
 - **格式**：时间统一 `2026-10-09 14:05 (UTC+8)`（`FormatUserTime`，按用户时区，
   默认 Asia/Shanghai，禁止服务器本地时区和 `MST`）；时长 `2分03秒`
-  （`FormatDuration`）；大数用"万"（`Wan`），千分位只用 `Thousands`；百分比用
+  （`FormatDuration`）；大数用 w/kw（`Wan`：`12.35w`、`300w`，1000 万起 `1.23kw`；
+  玩家熟悉这种写法，和图片里的分数、数量写法一致，不写成“万”），千分位只用 `Thousands`；百分比用
   `Percent`；分页 `第 1/3 页`（`PageLabel`）。
 - **结构**：成功回复用"已<动词>……"；错误回复写"<原因>，<下一步>"。用法表头写
   "用法："。参数错误第一行写"参数格式不正确：“<参数>”"，下一行写具体原因

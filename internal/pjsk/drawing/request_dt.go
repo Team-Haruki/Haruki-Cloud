@@ -28,7 +28,7 @@ func prepareDrawingRequestBody(endpoint string, body any, now time.Time, ctx con
 	locale := i18n.LocaleFromContext(ctx)
 	if root := mapAt(payload); root != nil {
 		applyDrawingRequestTimeContext(parsed.Path, root, nowMs, timeZone)
-		applyDrawingRequestLabels(root, locale)
+		applyDrawingRequestLabels(parsed.Path, root, locale)
 		return payload
 	}
 
@@ -38,7 +38,7 @@ func prepareDrawingRequestBody(endpoint string, body any, now time.Time, ctx con
 			continue
 		}
 		applyDrawingRequestTimeContext(parsed.Path, root, nowMs, timeZone)
-		applyDrawingRequestLabels(root, locale)
+		applyDrawingRequestLabels(parsed.Path, root, locale)
 	}
 	return payload
 }

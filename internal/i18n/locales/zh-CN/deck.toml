@@ -303,3 +303,123 @@ other = "おまかせ（所有歌曲平均）"
 [deck.auto_score_notice]
 description = "组卡图片里的提示：WL 终章期间自动 Live 使用限定的判定系数。占位符：Coefficient=判定系数，保留 1 位小数。"
 other = "使用终章期间限定的 AUTO 数值（判定系数 {{.Coefficient}}）"
+
+[deck.image.noun.deck]
+description = "图片：组卡图片标题里的功能名，套进各组卡类型的标题。"
+other = "组卡"
+
+[deck.image.noun.planner]
+description = "图片：活动规划图片标题里的功能名，套进各组卡类型的标题。"
+other = "规划"
+
+[deck.image.title.mysekai_event]
+description = "图片：烤森活动组卡/规划的标题。占位符：EventID=活动 ID；Noun=功能名（组卡或规划）。"
+other = "烤森活动 #{{.EventID}} {{.Noun}}"
+
+[deck.image.title.mysekai_simulated]
+description = "图片：没有指定活动的烤森模拟组卡/规划的标题。占位符：Noun=功能名（组卡或规划）。"
+other = "烤森模拟活动{{.Noun}}"
+
+[deck.image.title.challenge]
+description = "图片：挑战组卡的标题。占位符：Noun=功能名（组卡或规划）。"
+other = "每日挑战{{.Noun}}"
+
+[deck.image.title.bonus]
+description = "图片：加成组卡的标题。占位符：EventID=活动 ID；Noun=功能名（组卡或规划）。"
+other = "活动 #{{.EventID}} 加成{{.Noun}}"
+
+[deck.image.title.wl_bonus]
+description = "图片：WL 加成组卡的标题。占位符：EventID=活动 ID；Noun=功能名（组卡或规划）。"
+other = "WL 活动 #{{.EventID}} 加成{{.Noun}}"
+
+[deck.image.title.event]
+description = "图片：活动组卡/规划的标题。占位符：EventID=活动 ID；Noun=功能名（组卡或规划）。"
+other = "活动 #{{.EventID}} {{.Noun}}"
+
+[deck.image.title.wl_event]
+description = "图片：WL 活动组卡/规划的标题。占位符：EventID=活动 ID；Noun=功能名（组卡或规划）。"
+other = "WL 活动 #{{.EventID}} {{.Noun}}"
+
+[deck.image.title.wl_simulated]
+description = "图片：指定了 WL 角色、没有活动 ID 的 WL 模拟组卡/规划的标题。占位符：Noun=功能名（组卡或规划）。"
+other = "WL 模拟{{.Noun}}"
+
+[deck.image.title.wl_final]
+description = "图片：WL 终章活动组卡/规划的标题。占位符：Noun=功能名（组卡或规划）。"
+other = "WL 终章活动{{.Noun}}"
+
+[deck.image.title.unit_attr]
+description = "图片：按团队和颜色模拟活动的组卡/规划的标题。占位符：Noun=功能名（组卡或规划）。"
+other = "团队+颜色模拟活动{{.Noun}}"
+
+[deck.image.title.no_event]
+description = "图片：长草组卡（无活动）的标题。占位符：Noun=功能名（组卡或规划）。"
+other = "无活动{{.Noun}}"
+
+[deck.image.algorithm.dfs]
+description = "图片：组卡图片底部“本次组卡使用算法”一行里的算法名称。"
+other = "暴力搜索"
+
+[deck.image.algorithm.sa]
+description = "图片：组卡图片底部“本次组卡使用算法”一行里的算法名称。"
+other = "模拟退火"
+
+[deck.image.algorithm.ga]
+description = "图片：组卡图片底部“本次组卡使用算法”一行里的算法名称。"
+other = "遗传算法"
+
+[deck.image.algorithm.dfs_ga]
+description = "图片：组卡图片底部“本次组卡使用算法”一行里的算法名称。"
+other = "DFS 预热遗传"
+
+[deck.image.algorithm.rl]
+description = "图片：组卡图片底部“本次组卡使用算法”一行里的算法名称。"
+other = "强化学习"
+
+[deck.image.algorithm.all]
+description = "图片：组卡图片底部“本次组卡使用算法”一行里的算法名称。"
+other = "全部算法"
+
+[deck.image.skill_order.average]
+description = "图片：组卡图片“计算设置”里的技能顺序策略。"
+other = "技能顺序：平均情况"
+
+[deck.image.skill_order.max]
+description = "图片：组卡图片“计算设置”里的技能顺序策略。"
+other = "技能顺序：最优顺序"
+
+[deck.image.skill_order.min]
+description = "图片：组卡图片“计算设置”里的技能顺序策略。"
+other = "技能顺序：最差顺序"
+
+[deck.image.skill_order.specific]
+description = "图片：组卡图片“计算设置”里的技能顺序策略。"
+other = "技能顺序：指定顺序"
+
+[deck.image.skill_reference.average]
+description = "图片：组卡图片“计算设置”里 BFes 卡花前技能的取值策略。"
+other = "BFes 花前吸取：平均值"
+
+[deck.image.skill_reference.max]
+description = "图片：组卡图片“计算设置”里 BFes 卡花前技能的取值策略。"
+other = "BFes 花前吸取：最大值"
+
+[deck.image.skill_reference.min]
+description = "图片：组卡图片“计算设置”里 BFes 卡花前技能的取值策略。"
+other = "BFes 花前吸取：最小值"
+
+[deck.image.planner.source]
+description = "图片：活动规划图片标题下，目标 PT 的来源。占位符：Source=来源说明，例如目标名次的榜线。"
+other = "来源：{{.Source}}"
+
+[deck.image.planner.target]
+description = "图片：活动规划图片里的目标 PT。占位符：Point=目标 PT，带千分位。"
+other = "目标 {{.Point}} pt"
+
+[deck.image.planner.current]
+description = "图片：活动规划图片里的当前 PT。占位符：Point=当前 PT，带千分位。"
+other = "当前 {{.Point}} pt"
+
+[deck.image.planner.remaining]
+description = "图片：活动规划图片里还需要的 PT。占位符：Point=还需的 PT，带千分位。"
+other = "还需 {{.Point}} pt"

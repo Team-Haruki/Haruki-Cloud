@@ -52,7 +52,7 @@ func TestCatalogLinePatternAnchorsAndPlaceholders(t *testing.T) {
 
 // Raw error lines must not pass as catalog text just because a catalog line
 // with a short literal ("u{{.Index}} …", "T{{.Tier}}", "ID {{.IDs}}",
-// "{{.Region}}活动 {{.ID}}", "{{.Value}}万") happens to fit them.
+// "{{.Region}}活动 {{.ID}}", "{{.Value}}w") happens to fit them.
 func TestRawErrorLinesAreNotCatalogLines(t *testing.T) {
 	for _, line := range []string{
 		"unexpected EOF",
@@ -61,7 +61,8 @@ func TestRawErrorLinesAreNotCatalogLines(t *testing.T) {
 		"Toolbox returned status 500",
 		"ID 123: pq: duplicate key value violates unique constraint",
 		"获取活动信息失败: dial tcp 10.0.0.5:8080: connect: connection refused",
-		"重试 3 次后放弃: 5万",
+		"重试 3 次后放弃: 5w",
+		"buffer 3kw",
 		"超时 30秒",
 		"tracker 2024 年",
 		"rate 12/h",
@@ -74,7 +75,7 @@ func TestRawErrorLinesAreNotCatalogLines(t *testing.T) {
 			t.Errorf("SanitizeLines(%q) kept %q", line, clean)
 		}
 	}
-	for _, line := range []string{"u{{.Index}} {{.Account}}", "T{{.Tier}}", "ID {{.IDs}}", "{{.Region}}活动 {{.ID}}", "{{.Value}}万", "{{.Value}}/h", "纯 {{.Unit}}"} {
+	for _, line := range []string{"u{{.Index}} {{.Account}}", "T{{.Tier}}", "ID {{.IDs}}", "{{.Region}}活动 {{.ID}}", "{{.Value}}w", "{{.Value}}kw", "{{.Value}}/h", "纯 {{.Unit}}"} {
 		if pattern, ok := newLinePattern(line); !ok || !pattern.weak {
 			t.Errorf("newLinePattern(%q) = %+v, %v; want a weak pattern", line, pattern, ok)
 		}

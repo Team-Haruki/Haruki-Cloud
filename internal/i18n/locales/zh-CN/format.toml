@@ -50,8 +50,12 @@ description = "1 小时及以上的时长（FormatDuration），例如“1小时
 other = "{{.Hours}}小时{{.Minutes}}分{{.Seconds}}秒"
 
 [format.wan]
-description = "以万为单位的大数（Wan），例如“12.35万”。占位符：Value=除以 10000 后的数值，最多两位小数。"
-other = "{{.Value}}万"
+description = "1 万到 1000 万之间的大数（Wan），用玩家熟悉、与图片一致的 w（万）写法，例如“12.35w”“300w”。占位符：Value=除以 10000 后的数值，最多两位小数。"
+other = "{{.Value}}w"
+
+[format.wan_kw]
+description = "1000 万及以上的大数（Wan），用 kw（千万）写法，例如“1.23kw”。占位符：Value=除以 10000000 后的数值，最多两位小数。"
+other = "{{.Value}}kw"
 
 [format.page]
 description = "分页列表的当前页（PageLabel），例如“第 1/3 页”。占位符：Page=当前页；Total=总页数。"

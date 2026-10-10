@@ -175,3 +175,59 @@ other = "日"
 [sk.rank_fallback_name]
 description = "查榜图片里某个名次拿不到玩家昵称时代替昵称。占位符：Rank=名次。"
 other = "第 {{.Rank}} 名"
+
+[sk.image.time_to_end]
+description = "图片：榜线、查榜、查房、查水表、时速和胜率预测图片标题下的活动剩余时间。占位符：Duration=剩余时长，例如“3天2小时”。"
+other = "距离活动结束还有 {{.Duration}}"
+
+[sk.image.event_ended]
+description = "图片：榜线、查榜、查房、查水表、时速和胜率预测图片里，活动已经结束时代替剩余时间的文字。"
+other = "活动已结束"
+
+[sk.image.single_chapter]
+description = "图片：排名追踪和玩家追踪图片里，WL 章节单榜的角色图标下的标签。"
+other = "单榜"
+
+[sk.image.trace.player_score]
+description = "图片：玩家追踪图片里，一名玩家的分数曲线的图例。占位符：Name=玩家名称。"
+other = "{{.Name}} 分数"
+
+[sk.image.trace.player_rank]
+description = "图片：玩家追踪图片里，一名玩家的名次曲线的图例。占位符：Name=玩家名称。"
+other = "{{.Name}} 排名"
+
+[sk.image.trace.compare_line]
+description = "图片：玩家追踪图片里，用来对比的档位榜线的图例。占位符：Rank=档位名次，例如 100。"
+other = "T{{.Rank}} 榜线"
+
+[sk.image.trace.reference_line]
+description = "图片：玩家追踪图片里，没有档位时用来对比的参考榜线的图例。"
+other = "参考榜线"
+
+[sk.image.trace.compare_current]
+description = "图片：玩家追踪图片里，用来对比的档位当前分数横线的标签。占位符：Rank=档位名次，例如 100。"
+other = "T{{.Rank}} 当前"
+
+[sk.image.trace.reference_current]
+description = "图片：玩家追踪图片里，没有档位时参考分数横线的标签。"
+other = "参考当前"
+
+[sk.image.trace.player_title]
+description = "图片：玩家追踪图片的标题，接在活动标签后面。占位符：Names=玩家名称，两名玩家时用“ vs ”连接。"
+other = "玩家：{{.Names}}"
+
+[sk.image.trace.score_line]
+description = "图片：排名追踪图片里，榜线分数曲线的图例。"
+other = "榜线"
+
+[sk.image.trace.speed]
+description = "图片：排名追踪图片里，时速曲线的图例。"
+other = "时速"
+
+[sk.image.trace.predicted_final]
+description = "图片：排名追踪图片里，预测最终分数横线的标签。占位符：Score=预测的最终分数，由渲染服务按图片里的分数写法填入（如“4500.0000w”）。"
+other = "预测最终：{{.Score}}"
+
+[sk.image.trace.rank_title]
+description = "图片：排名追踪图片的标题，接在活动标签后面。占位符：Rank=追踪的档位名次，例如 100。"
+other = "T{{.Rank}} 榜线"

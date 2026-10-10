@@ -152,13 +152,18 @@ func Thousands(n int64) string {
 	return sign + b.String()
 }
 
-// Wan shows large counts in units of 万 with up to two decimals ("12.35万",
-// "300万"); values below 10000 are shown as plain integers.
+// Wan shows large counts the way players write them, matching the images:
+// w (万) with up to two decimals ("12.35w", "300w"), and from 10 million kw
+// (千万, "1.23kw"). Values below 10000 are shown as plain integers.
 func Wan(n float64) Message {
-	if math.Abs(n) < 10000 {
+	switch abs := math.Abs(n); {
+	case abs < 10000:
 		return Verbatim(strconv.FormatInt(int64(math.Round(n)), 10))
+	case abs < 10000000:
+		return M("format.wan", Data{"Value": trimDecimals(n/10000, 2)})
+	default:
+		return M("format.wan_kw", Data{"Value": trimDecimals(n/10000000, 2)})
 	}
-	return M("format.wan", Data{"Value": trimDecimals(n/10000, 2)})
 }
 
 // Percent shows a value that is already in percent units with one decimal

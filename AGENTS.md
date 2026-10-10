@@ -495,7 +495,7 @@ As of this revision the project is **considered functionally complete**:
     （`errors.Is`/`errors.As`、`usererror.As`、消息 ID），不要匹配错误文本。
   - 最后一道防线：`i18n.SanitizeMessage` 丢掉不是由任何目录消息渲染出来的行
     （丢掉的行写日志），结果为空或含敏感 URL 时回复通用错误。字面文字太少的
-    模板行（如 `u{{.Index}} {{.Account}}`、`{{.Value}}万`、
+    模板行（如 `u{{.Index}} {{.Account}}`、`{{.Value}}w`、
     `{{.Region}}活动 {{.ID}}`）是弱模式，只在回复本身用到该消息时才认。
   - **参数回显默认关闭。** 客户端没有在请求里设 `enableParamEcho: true` 时，错误回复
     （参数错误、找不到、匹配到多个、超出范围、用法、参数引导）不能出现任何用户输入：
@@ -571,7 +571,8 @@ As of this revision the project is **considered functionally complete**:
   URL 单独成行或两侧留空白。省略号写"……"。
 - **格式**：时间统一 `2026-10-09 14:05 (UTC+8)`（`FormatUserTime`，按用户时区，
   默认 Asia/Shanghai，禁止服务器本地时区和 `MST`）；时长 `2分03秒`
-  （`FormatDuration`）；大数用"万"（`Wan`），千分位只用 `Thousands`；百分比用
+  （`FormatDuration`）；大数用 w/kw（`Wan`：`12.35w`、`300w`，1000 万起 `1.23kw`；
+  玩家熟悉这种写法，和图片里的分数、数量写法一致，不写成“万”），千分位只用 `Thousands`；百分比用
   `Percent`；分页 `第 1/3 页`（`PageLabel`）。
 - **结构**：成功回复用"已<动词>……"；错误回复写"<原因>，<下一步>"。用法表头写
   "用法："。参数错误第一行写"参数格式不正确：“<参数>”"，下一行写具体原因

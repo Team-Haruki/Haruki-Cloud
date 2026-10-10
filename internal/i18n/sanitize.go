@@ -12,7 +12,7 @@ import (
 // the last one at the end unless it ends with one.
 //
 // A weak pattern has too little literal text to tell catalog text from a raw
-// error line ("u{{.Index}} {{.Account}}", "{{.Value}}万", "{{.Region}}活动
+// error line ("u{{.Index}} {{.Account}}", "{{.Value}}w", "{{.Region}}活动
 // {{.ID}}"). It is only accepted for a reply that renders its own message.
 type linePattern struct {
 	fragments     []string

@@ -41,7 +41,7 @@ description = "背景图片文件太大。占位符：MaxMB=允许的最大 MB �
 other = "背景图片过大，最大 {{.MaxMB}} MB"
 
 [profile.bg.image_too_many_pixels]
-description = "背景图片尺寸太大。占位符：MaxPixels=允许的最大像素数（已按万显示）。"
+description = "背景图片尺寸太大。占位符：MaxPixels=允许的最大像素数（Wan 的 w/kw 写法，如“1.68kw”）。"
 other = "背景图片尺寸过大，最多 {{.MaxPixels}} 像素"
 
 [profile.bg.save_failed]

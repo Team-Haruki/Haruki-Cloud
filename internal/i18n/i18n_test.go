@@ -65,6 +65,8 @@ func TestHelperGolden(t *testing.T) {
 		{"Wan(9999)", Wan(9999).String()},
 		{"Wan(123456)", Wan(123456).String()},
 		{"Wan(3000000)", Wan(3000000).String()},
+		{"Wan(12345678)", Wan(12345678).String()},
+		{"Wan(-50000)", Wan(-50000).String()},
 		{"Percent(12.34)", Percent(12.34)},
 		{"Percent(50)", Percent(50)},
 		{"PercentN(12.3456, 2)", PercentN(12.3456, 2)},

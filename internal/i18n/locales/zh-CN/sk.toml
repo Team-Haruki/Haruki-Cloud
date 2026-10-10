@@ -225,7 +225,7 @@ description = "图片：排名追踪图片里，时速曲线的图例。"
 other = "时速"
 
 [sk.image.trace.predicted_final]
-description = "图片：排名追踪图片里，预测最终分数横线的标签。占位符：Score=预测的最终分数，以万为单位。"
+description = "图片：排名追踪图片里，预测最终分数横线的标签。占位符：Score=预测的最终分数，由渲染服务按图片里的分数写法填入（如“4500.0000w”）。"
 other = "预测最终：{{.Score}}"
 
 [sk.image.trace.rank_title]

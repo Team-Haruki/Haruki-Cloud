@@ -23,15 +23,13 @@ type UserBinding struct {
 	GameAccountID *int `json:"game_account_id,omitempty"`
 	// Persistent binding display order
 	DisplayOrder int `json:"display_order,omitempty"`
-	// Deprecated: true only when uid, sk, profile and arrest are all visible. Kept in sync for rollback; read only as the fallback for a NULL per-exposure flag
-	Visible bool `json:"visible,omitempty"`
-	// Show the full game UID in replies and images; NULL until bootstrapped from visible
+	// Show the full game UID in replies and images; always written, NULL reads as hidden
 	UIDVisible *bool `json:"uid_visible,omitempty"`
-	// Let other users look up this account's event ranking (sk) via @; NULL until bootstrapped from visible
+	// Let other users look up this account's event ranking (sk) via @; always written, NULL reads as hidden
 	SkVisible *bool `json:"sk_visible,omitempty"`
-	// Let other users view this account's profile and account data via @; NULL until bootstrapped from visible
+	// Let other users view this account's profile and account data via @; always written, NULL reads as hidden
 	ProfileVisible *bool `json:"profile_visible,omitempty"`
-	// Let other users run the arrest lookup on this account via @; NULL until bootstrapped from visible
+	// Let other users run the arrest lookup on this account via @; always written, NULL reads as hidden
 	ArrestVisible *bool `json:"arrest_visible,omitempty"`
 	// Controls visibility of suite/capture data
 	SuiteVisible bool `json:"suite_visible,omitempty"`
@@ -81,7 +79,7 @@ func (*UserBinding) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case userbinding.FieldVisible, userbinding.FieldUIDVisible, userbinding.FieldSkVisible, userbinding.FieldProfileVisible, userbinding.FieldArrestVisible, userbinding.FieldSuiteVisible, userbinding.FieldMysekaiVisible, userbinding.FieldVerified:
+		case userbinding.FieldUIDVisible, userbinding.FieldSkVisible, userbinding.FieldProfileVisible, userbinding.FieldArrestVisible, userbinding.FieldSuiteVisible, userbinding.FieldMysekaiVisible, userbinding.FieldVerified:
 			values[i] = new(sql.NullBool)
 		case userbinding.FieldID, userbinding.FieldHarukiUserID, userbinding.FieldGameAccountID, userbinding.FieldDisplayOrder:
 			values[i] = new(sql.NullInt64)
@@ -124,12 +122,6 @@ func (_m *UserBinding) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field display_order", values[i])
 			} else if value.Valid {
 				_m.DisplayOrder = int(value.Int64)
-			}
-		case userbinding.FieldVisible:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field visible", values[i])
-			} else if value.Valid {
-				_m.Visible = value.Bool
 			}
 		case userbinding.FieldUIDVisible:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -233,9 +225,6 @@ func (_m *UserBinding) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("display_order=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DisplayOrder))
-	builder.WriteString(", ")
-	builder.WriteString("visible=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Visible))
 	builder.WriteString(", ")
 	if v := _m.UIDVisible; v != nil {
 		builder.WriteString("uid_visible=")

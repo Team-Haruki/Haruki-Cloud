@@ -353,7 +353,6 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "haruki_user_id", Type: field.TypeInt},
 		{Name: "display_order", Type: field.TypeInt, Default: 0},
-		{Name: "visible", Type: field.TypeBool, Default: true},
 		{Name: "uid_visible", Type: field.TypeBool, Nullable: true},
 		{Name: "sk_visible", Type: field.TypeBool, Nullable: true},
 		{Name: "profile_visible", Type: field.TypeBool, Nullable: true},
@@ -371,7 +370,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "user_bindings_game_accounts_bindings",
-				Columns:    []*schema.Column{UserBindingsColumns[11]},
+				Columns:    []*schema.Column{UserBindingsColumns[10]},
 				RefColumns: []*schema.Column{GameAccountsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -380,7 +379,7 @@ var (
 			{
 				Name:    "userbinding_haruki_user_id_game_account_id",
 				Unique:  true,
-				Columns: []*schema.Column{UserBindingsColumns[1], UserBindingsColumns[11]},
+				Columns: []*schema.Column{UserBindingsColumns[1], UserBindingsColumns[10]},
 			},
 		},
 	}

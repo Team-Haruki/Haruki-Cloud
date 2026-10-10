@@ -323,11 +323,10 @@ Edge：`← user_bindings`（一对多）
 | `haruki_user_id` | int | — | Haruki 用户 ID（关联 users 表） |
 | `game_account_id` | int | FK, nullable | 指向 `game_accounts.id` |
 | `display_order` | int | default 0 | 绑定列表中的持久化排序 |
-| `visible` | bool | default true | **已废弃**：四个分项都展示时为 true。只为回滚保留并随分项同步写入；新代码只在分项为 NULL 时读它 |
-| `uid_visible` | bool | nullable | 回复和图片里是否显示完整游戏 UID（`/隐藏id`） |
-| `sk_visible` | bool | nullable | 其他人能否通过 @ 查询活动排名（`/隐藏sk`） |
-| `profile_visible` | bool | nullable | 其他人能否通过 @ 查看个人信息和用该账号数据生成的结果（`/隐藏个人信息`） |
-| `arrest_visible` | bool | nullable | 其他人能否通过 @ 逮捕（`/隐藏逮捕`） |
+| `uid_visible` | bool | nullable（总是写入） | 回复和图片里是否显示完整游戏 UID（`/隐藏id`） |
+| `sk_visible` | bool | nullable（总是写入） | 其他人能否通过 @ 查询活动排名（`/隐藏sk`） |
+| `profile_visible` | bool | nullable（总是写入） | 其他人能否通过 @ 查看个人信息和用该账号数据生成的结果（`/隐藏个人信息`） |
+| `arrest_visible` | bool | nullable（总是写入） | 其他人能否通过 @ 逮捕（`/隐藏逮捕`） |
 | `suite_visible` | bool | default true | 是否公开展示抓包 / suite 数据（也挡住本人查询） |
 | `mysekai_visible` | bool | default true | 是否公开展示 MySekai 私有数据（也挡住本人查询） |
 | `verified` | bool | default false | 当前绑定账号是否已验证 |
@@ -340,14 +339,11 @@ Edge：
 
 可见性分项（`uid_visible`、`sk_visible`、`profile_visible`、`arrest_visible`）：
 
-1. 原来只有一个 `visible`，`false` 时隐藏全部。拆分后每种暴露方式一个开关，`/隐藏全部`、`/显示全部` 一次改四个。
-2. 迁移（bootstrap）：启动时 auto-migrate 加四个可空列，随后（只在可写节点）执行
-   `accountdata.BootstrapBindingVisibility`：每个分项仍是 `NULL` 的行按 `visible` 初始化（`visible=false` 的绑定四项都是隐藏，`visible=true` 的都是展示），直到用户自己改某一项为止。
-3. bootstrap 只写 `NULL`：已经初始化的值在以后的启动里不会被覆盖（即使 `visible` 后来被旧版本改过），用户用指令改过的设置总是优先（指令一次写全部四项，不留 `NULL`）。可以每次启动都执行；旧版本二进制在滚动发布期间新建的行在下次启动时按同样规则初始化。
-4. 读取时 `NULL` 分项按 `visible` 处理（`bindingVisibility`），所以 bootstrap 之前和滚动发布期间行为与拆分前一致。
-5. 任何分项变化都同时写全部四项和 `visible = 四项都为 true`。回滚到只认 `visible` 的旧版本时，只隐藏了一部分的绑定按“全部隐藏”处理，不会比用户的设置暴露更多。
-6. 拆分之后新建的绑定在创建时就写入四项（`accountdata.NewBindingVisibility`），不会是 `NULL`。默认只隐藏 UID，sk、个人信息、逮捕三项显示：`/绑定` 自 2026-04-14（“Hide bound account IDs by default”）起新建绑定时写 `visible=false`，本意是默认隐藏 UID；拆分前这一个字段同时管着全部，拆分后只保留 UID 隐藏。新绑定的旧列 `visible` 因此为 `false`，回滚到旧版本时会全部隐藏，不会多暴露。导入工具按导出数据的 `visible` 写四项。抓包和烤森开关不变。
-7. TODO：`visible` 在下一个版本删除（先确认不再需要回滚到拆分前的版本），同时删掉读取时的 `NULL` 回退和 bootstrap。
+1. 3.9.0 之前只有一个 `visible`，`false` 时隐藏全部。3.9.0 起每种暴露方式一个开关，`/隐藏全部`、`/显示全部` 一次改四个；当时用 `visible` 初始化了四个分项。
+2. 任何分项变化都同时写全部四项；新建绑定在创建时就写入四项（`accountdata.NewBindingVisibility`：只隐藏 UID，sk、个人信息、逮捕三项显示）。导入工具按导出数据的单个 `visible` 写四项。抓包和烤森开关不变。
+3. 读取时 `NULL` 分项按“隐藏”处理（`bindingVisibility`）。只有 3.9.0 之前的二进制会写出 `NULL`，按隐藏处理不会比用户的设置暴露更多。
+4. **`visible` 列已在 3.12.0 删除。** ent 的 auto-migrate 不会自己删列，所以由 `accountdata.DropLegacyVisibleColumn` 在 auto-migrate 之后（只在可写节点，`migratePJSKData`）执行：列还在时先把仍为 `NULL` 的分项按 `visible` 补齐（即 3.9.0 的初始化最后再跑一次），再 `ALTER TABLE user_bindings DROP COLUMN visible`，同一个事务；列已经不在时什么都不做，每次启动都可以执行。只读节点跳过，由主库复制过去。
+5. **回滚限制**：删列之后不能再回滚到 3.9.0 之前的版本。那些版本只认 `visible`，它们的 auto-migrate 会以默认值 `true` 重新加回这一列，结果所有绑定都按“全部显示”处理。回滚到 3.9.0~3.11.x 是安全的：它们同样会加回 `visible`（全部为 `true`），但只在分项为 `NULL` 时读它，而删列前已经补齐，没有 `NULL`；再升级时这一列会被再次删除。
 
 ### 6.5 `user_default_bindings` 表（默认绑定指针）
 

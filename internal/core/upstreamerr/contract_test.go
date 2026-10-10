@@ -101,6 +101,51 @@ func TestUpstreamContract(t *testing.T) {
 	}
 }
 
+// coded is a Described error that also carries a structured code.
+type coded struct {
+	described
+	code string
+}
+
+func (c *coded) UpstreamCode() string { return c.code }
+
+// TestUpstreamCodeContract lists every structured error code Cloud depends
+// on, as the upstream services send it, and the kind it classifies as. The
+// code wins over the message and the status.
+func TestUpstreamCodeContract(t *testing.T) {
+	cases := []struct {
+		service Service
+		code    string
+		want    Kind
+	}{
+		// Drawing ("code" of the JSON error body).
+		{ServiceRender, "asset_missing", KindAssetMissing},
+		{ServiceRender, "asset_broken", KindAssetBroken},
+		{ServiceRender, "data_insufficient", KindDataInsufficient},
+		{ServiceRender, "content_too_large", KindContentTooLarge},
+	}
+	for _, tc := range cases {
+		err := &coded{described: described{service: tc.service, status: http.StatusInternalServerError, message: "not enough data"}, code: tc.code}
+		class, ok := Classify(err)
+		if !ok || class.Kind != tc.want || class.Status != http.StatusInternalServerError {
+			t.Errorf("%s code %q: Classify = %+v (ok %v), want kind %s", tc.service, tc.code, class, ok, tc.want)
+		}
+		if got := MatchCode(tc.service, tc.code); got != tc.want {
+			t.Errorf("MatchCode(%s, %q) = %s, want %s", tc.service, tc.code, got, tc.want)
+		}
+	}
+	// An unknown or empty code falls back to the message, then the status.
+	for _, code := range []string{"", "made_up"} {
+		err := &coded{described: described{service: ServiceRender, status: http.StatusInternalServerError, message: "图片文件不存在"}, code: code}
+		if class, _ := Classify(err); class.Kind != KindAssetMissing {
+			t.Errorf("code %q: Classify = %+v, want the message rule", code, class)
+		}
+	}
+	if got := MatchCode(ServiceToolbox, "asset_missing"); got != KindUnknown {
+		t.Errorf("codes are per service: MatchCode(toolbox) = %s", got)
+	}
+}
+
 // TestUpstreamStatusContract pins the status codes Cloud interprets when the
 // upstream message is empty or unknown.
 func TestUpstreamStatusContract(t *testing.T) {

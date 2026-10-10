@@ -26,6 +26,13 @@ func TestDrawingResponsesClassifyByContract(t *testing.T) {
 		{http.StatusNotFound, `{"detail":"Not Found"}`, upstreamerr.KindIncompatible},
 		{http.StatusInternalServerError, `{"detail":"boom"}`, upstreamerr.KindBadResponse},
 		{http.StatusBadGateway, ``, upstreamerr.KindUnavailable},
+		// Drawing's structured codes, for any status, before the text.
+		{http.StatusInternalServerError, `{"detail":"图片文件不存在: a.png","code":"asset_missing"}`, upstreamerr.KindAssetMissing},
+		{http.StatusInternalServerError, `{"detail":"boom","code":"asset_broken"}`, upstreamerr.KindAssetBroken},
+		{http.StatusInternalServerError, `{"detail":"list index out of range","code":"data_insufficient"}`, upstreamerr.KindDataInsufficient},
+		{http.StatusInternalServerError, `{"detail":"Canvas size is too large (1x1)","code":"content_too_large"}`, upstreamerr.KindContentTooLarge},
+		{http.StatusBadRequest, `{"detail":"not enough data","code":"asset_missing"}`, upstreamerr.KindAssetMissing},
+		{http.StatusInternalServerError, `{"detail":"boom","code":"made_up"}`, upstreamerr.KindBadResponse},
 	}
 	for _, tc := range cases {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

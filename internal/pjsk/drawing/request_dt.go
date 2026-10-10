@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/displaytime"
 )
 
@@ -24,8 +25,10 @@ func prepareDrawingRequestBody(endpoint string, body any, now time.Time, ctx con
 
 	nowMs := now.UnixMilli()
 	timeZone := displaytime.RequestTimeZoneFromContext(ctx)
+	locale := i18n.LocaleFromContext(ctx)
 	if root := mapAt(payload); root != nil {
 		applyDrawingRequestTimeContext(parsed.Path, root, nowMs, timeZone)
+		applyDrawingRequestLabels(root, locale)
 		return payload
 	}
 
@@ -35,6 +38,7 @@ func prepareDrawingRequestBody(endpoint string, body any, now time.Time, ctx con
 			continue
 		}
 		applyDrawingRequestTimeContext(parsed.Path, root, nowMs, timeZone)
+		applyDrawingRequestLabels(root, locale)
 	}
 	return payload
 }

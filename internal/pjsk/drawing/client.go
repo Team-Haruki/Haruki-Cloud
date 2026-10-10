@@ -37,10 +37,12 @@ var ErrDrawingDataInsufficient error = upstreamerr.NewSentinel(upstreamerr.Servi
 var ErrNotConfigured error = upstreamerr.NewSentinel(upstreamerr.ServiceRender, upstreamerr.KindNotConfigured, 0, "drawing client is not configured")
 
 // StatusError is a non-2xx answer of Drawing. Detail is the response's
-// "detail" for a 4xx answer (sanitized, bounded); upstreamerr classifies it.
+// "detail" for a 4xx answer (sanitized, bounded); Code is the response's
+// structured "code" for any status. upstreamerr classifies Code first.
 type StatusError struct {
 	StatusCode   int
 	Detail       string
+	Code         string
 	insufficient bool
 }
 
@@ -66,6 +68,7 @@ func (e *StatusError) Unwrap() error {
 func (e *StatusError) UpstreamService() upstreamerr.Service { return upstreamerr.ServiceRender }
 func (e *StatusError) UpstreamStatus() int                  { return e.StatusCode }
 func (e *StatusError) UpstreamMessage() string              { return e.Detail }
+func (e *StatusError) UpstreamCode() string                 { return e.Code }
 
 func WithTimeout(timeout time.Duration) ClientOption {
 	return func(client *resty.Client, _ *HarukiDrawingClient) {
@@ -367,7 +370,8 @@ func (c *HarukiDrawingClient) postPreparedOnce(endpoint string, requestBody any)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		insufficientData := drawingResponseIndicatesInsufficientData(resp.Body())
+		code := drawingResponseErrorCode(resp.Body())
+		insufficientData := drawingResponseIndicatesInsufficientData(code, resp.Body())
 		detail := ""
 		if !insufficientData && resp.StatusCode() >= http.StatusBadRequest && resp.StatusCode() < http.StatusInternalServerError {
 			detail = drawingResponseErrorDetail(resp.Body())
@@ -379,9 +383,10 @@ func (c *HarukiDrawingClient) postPreparedOnce(endpoint string, requestBody any)
 			"duration_ms", commandtrace.Milliseconds(elapsed),
 			"response_bytes", len(resp.Body()),
 			"upstream_detail", detail,
+			"upstream_code", code,
 		)
 		c.noteDirectiveRejection(endpoint, directive, resp)
-		return nil, &StatusError{StatusCode: resp.StatusCode(), Detail: detail, insufficient: insufficientData}
+		return nil, &StatusError{StatusCode: resp.StatusCode(), Detail: detail, Code: code, insufficient: insufficientData}
 	}
 	c.logger.DebugContext(requestCtx, "drawing request completed",
 		"upstream", "drawing",
@@ -655,7 +660,31 @@ func drawingResponseErrorDetail(body []byte) string {
 	return detail
 }
 
-func drawingResponseIndicatesInsufficientData(body []byte) bool {
+// drawingResponseErrorCode is the structured "code" of a Drawing error body,
+// or "" when the body has none (a Drawing that predates it) or is not JSON.
+func drawingResponseErrorCode(body []byte) string {
+	if len(body) > drawingErrorClassificationBytes {
+		body = body[:drawingErrorClassificationBytes]
+	}
+	var payload struct {
+		Code string `json:"code"`
+	}
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return ""
+	}
+	code := strings.TrimSpace(payload.Code)
+	if upstreamerr.MatchCode(upstreamerr.ServiceRender, code) == upstreamerr.KindUnknown {
+		return ""
+	}
+	return code
+}
+
+// drawingResponseIndicatesInsufficientData reports a thin-data answer: by its
+// code, else (older Drawing) by its text.
+func drawingResponseIndicatesInsufficientData(code string, body []byte) bool {
+	if code != "" {
+		return upstreamerr.MatchCode(upstreamerr.ServiceRender, code) == upstreamerr.KindDataInsufficient
+	}
 	if len(body) > drawingErrorClassificationBytes {
 		body = body[:drawingErrorClassificationBytes]
 	}

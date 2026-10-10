@@ -180,11 +180,11 @@ description = "/调整个人信息背景 成功，但不知道是哪个账号（
 other = "已更新个人信息背景设置"
 
 [profile.data_source.suite]
-description = "图片：个人信息卡片上的数据来源名称：抓包数据。渲染服务会去掉末尾的“数据”二字，显示为“抓包”。"
+description = "图片：个人信息卡片上的数据来源名称：抓包数据。渲染服务原样显示，并按同时发送的来源类型区分来源。"
 other = "抓包数据"
 
 [profile.data_source.mysekai]
-description = "图片：个人信息卡片上的数据来源名称：烤森数据。渲染服务会去掉末尾的“数据”二字，显示为“烤森”。"
+description = "图片：个人信息卡片上的数据来源名称：烤森数据。渲染服务原样显示，并按同时发送的来源类型区分来源。"
 other = "烤森数据"
 
 [profile.data_source.public]

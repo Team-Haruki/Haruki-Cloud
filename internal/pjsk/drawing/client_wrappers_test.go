@@ -171,11 +171,29 @@ func TestDrawingResponseClassificationHelpers(t *testing.T) {
 		t.Fatalf("bounded detail = %q (len=%d)", got, len(got))
 	}
 	for _, body := range []string{"DATA INSUFFICIENT", "not enough data", "数据不足", "index out of range"} {
-		if !drawingResponseIndicatesInsufficientData([]byte(body)) {
+		if !drawingResponseIndicatesInsufficientData("", []byte(body)) {
 			t.Fatalf("insufficient marker %q not detected", body)
 		}
 	}
-	if drawingResponseIndicatesInsufficientData([]byte("ordinary error")) {
+	if drawingResponseIndicatesInsufficientData("", []byte("ordinary error")) {
 		t.Fatal("ordinary error classified as insufficient data")
+	}
+	// A code decides on its own: the text is not read.
+	if !drawingResponseIndicatesInsufficientData("data_insufficient", []byte("anything")) {
+		t.Fatal("data_insufficient code not detected")
+	}
+	if drawingResponseIndicatesInsufficientData("asset_missing", []byte("not enough data")) {
+		t.Fatal("a code other than data_insufficient must win over the text")
+	}
+	for body, want := range map[string]string{
+		`{"detail":"x","code":"asset_missing"}`:       "asset_missing",
+		`{"detail":"x","code":" content_too_large "}`: "content_too_large",
+		`{"detail":"x","code":"made_up"}`:             "",
+		`{"detail":"x"}`:                              "",
+		`not json`:                                    "",
+	} {
+		if got := drawingResponseErrorCode([]byte(body)); got != want {
+			t.Fatalf("drawingResponseErrorCode(%s) = %q, want %q", body, got, want)
+		}
 	}
 }

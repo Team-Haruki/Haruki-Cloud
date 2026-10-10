@@ -21,9 +21,9 @@ type ProfileDataSource struct {
 	Source     *string `json:"source,omitempty"`
 	UpdateTime *int64  `json:"update_time,omitempty"`
 	Mode       *string `json:"mode,omitempty"`
-	// Kind identifies the source for Cloud's own logic, so code never
-	// matches on the localized Name. It is not sent to Drawing.
-	Kind DataSourceKind `json:"-"`
+	// Kind identifies the source, so code never matches on the localized
+	// Name. Drawing receives it as the raw key next to the label.
+	Kind DataSourceKind `json:"kind,omitempty"`
 }
 
 // DataSourceKind identifies what a ProfileDataSource describes.

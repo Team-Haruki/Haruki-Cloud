@@ -86,6 +86,9 @@ func TestBuilderCardBasicSkillAndAlreadyTrainedBranches(t *testing.T) {
 	if info.Unit == nil || *info.Unit != "idol" || info.SupplyType == nil {
 		t.Fatalf("unit/supply info = %+v", info)
 	}
+	if info.SupplyTypeKey == nil || *info.SupplyTypeKey == "" {
+		t.Fatalf("the raw supply key must be sent with the label: %+v", info.SupplyTypeKey)
+	}
 	if info.Skill.SkillTypeIconPath == nil || !strings.Contains(*info.Skill.SkillTypeIconPath, "skill_score_up.png") {
 		t.Fatalf("skill icon = %+v", info.Skill.SkillTypeIconPath)
 	}

@@ -223,7 +223,7 @@ func (c *Controller) BuildDetailRequest(query DetailQuery) (*drawing.VLiveDetail
 		BannerPath:      c.bannerPath(source, region, merged),
 		StartAt:         merged.StartAt.UnixMilli(),
 		EndAt:           merged.EndAt.UnixMilli(),
-		Lives:           c.buildDetailLives(source, members, byID),
+		Lives:           c.buildDetailLives(source, members, byID, merged.GroupName),
 	}
 	cost := members[0]
 	if selected != nil {
@@ -299,12 +299,27 @@ func selectSoloGroup(groups map[int][]ResolvedLive, id int, now time.Time) (int,
 	return bestID, nil
 }
 
-func (c *Controller) buildDetailLives(source DataSource, members []ResolvedLive, byID map[int]*Live) []drawing.VLiveDetailLive {
+// soloLiveShortName is the part of a member live's name after the group's
+// name (usually the character), or the whole name when nothing is left.
+func soloLiveShortName(name, groupName string) string {
+	name = strings.TrimSpace(name)
+	groupName = strings.TrimSpace(groupName)
+	if groupName != "" {
+		if rest, ok := strings.CutPrefix(name, groupName); ok && strings.TrimSpace(rest) != "" {
+			return strings.TrimSpace(rest)
+		}
+	}
+	return name
+}
+
+func (c *Controller) buildDetailLives(source DataSource, members []ResolvedLive, byID map[int]*Live, groupName string) []drawing.VLiveDetailLive {
 	out := make([]drawing.VLiveDetailLive, 0, len(members))
 	for _, member := range members {
+		name := fallbackLiveName(member.Name, member.ID)
 		item := drawing.VLiveDetailLive{
 			ID:        member.ID,
-			Name:      fallbackLiveName(member.Name, member.ID),
+			Name:      name,
+			ShortName: soloLiveShortName(name, groupName),
 			Living:    member.Living,
 			RestCount: member.RestCount,
 		}

@@ -475,6 +475,9 @@ As of this revision the project is **considered functionally complete**:
   通用回复；客户端返回实现 `upstreamerr.Described`/`Kinded` 的错误（网络错误用
   `upstreamerr.Transport`）。新增上游错误时改 `contract.go` 并补
   `contract_test.go` 和各客户端的契约测试；上游有状态码或错误码时优先用它们。
+  上游错误体里的结构化错误码（Drawing 的 `code`：`asset_missing`、`asset_broken`、
+  `data_insufficient`、`content_too_large`）由实现 `upstreamerr.Coded` 的错误带出，
+  `Classify` 先看错误码，再看文本和状态码；文本规则只留给还不发错误码的旧版本。
 
 ### 12.2 目录约定
 
@@ -501,7 +504,7 @@ As of this revision the project is **considered functionally complete**:
 | D | 中文与拉丁字母、数字之间加一个半角空格：`卡牌 ID`、`最多 5 个`、`游戏 UID`。例外：用户原样输入的记号（`u1`、`event123`、`t100`、`wl1`、`10火`、`/jp查曲`）和 B 的区服显示名。 |
 | E | 活动点数：名词写 PT（目标 PT、活动 PT），数字后的单位写 pt（还需 1234 pt）。 |
 | F | 不向用户提内部组件（SekaiAPI、Tracker、Cloud、Cloud 节点、masterdata、OneBot self_id、Client、数据库、上游、Drawing/绘图服务）。用功能名：获取游戏数据失败、查榜服务、渲染服务。只有 Bot 管理员能处理的问题统一回复"服务配置异常，请联系 Bot 管理员"，细节写日志或 commandtrace。 |
-| H | Cloud 负责发给 Drawing 的所有标签的本地化，从目录取预先本地化的字符串。Drawing 目前自己本地化的原始 key 先不动，记为 Drawing 后续事项。改动图片文字时提升 `renderCacheKeyVersion`。 |
+| H | Cloud 负责发给 Drawing 的所有标签的本地化，从目录取预先本地化的字符串。标签只用于显示：Drawing 的行为（图标、背景、颜色、取哪一段）一律按同时发送的原始 key 决定，例如 `supply_type_key`、别名图片的 `entity_type`、数据来源的 `kind`、`live_type`、虚拟 Live 的 `short_name`；新增会影响 Drawing 行为的标签时同时发送 key，不要让 Drawing 比较文案。区服显示名 `region_label` 和账号行 `account_label`（`RegionLabel`/`AccountLabel`）由 `prepareDrawingRequestBody`（`internal/pjsk/drawing/request_labels.go`）统一加在请求、`profile`/`user_info` 和 `deck_request` 上，原始 `region` 保留给 Drawing 选颜色和素材。Drawing 目前自己本地化的原始 key 先不动，记为 Drawing 后续事项。改动图片文字时提升 `renderCacheKeyVersion`。 |
 | I | 帮助文档里写了但未注册的指令：没有歧义和冲突时把文档写法注册为别名，否则改文档。 |
 | J | 错误脱敏必须完整，见 12.1。 |
 | K | 烤森"数据已过期"、`/sud`（抓包状态）和 `/msd` 用同一套术语（C）、同一个时间格式函数和同一种结构。 |

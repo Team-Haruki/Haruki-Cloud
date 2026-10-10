@@ -100,6 +100,13 @@ type Described interface {
 	UpstreamMessage() string
 }
 
+// Coded is an optional extension of Described: the structured error code of
+// the upstream answer (the "code" field of its error body). Classify matches
+// it before the message.
+type Coded interface {
+	UpstreamCode() string
+}
+
 // Kinded is an upstream error classified where it was created.
 type Kinded interface {
 	error
@@ -230,6 +237,11 @@ func Classify(err error) (Class, bool) {
 	if described, ok := errors.AsType[Described](err); ok {
 		service := described.UpstreamService()
 		status := described.UpstreamStatus()
+		if coded, ok := described.(Coded); ok {
+			if kind := MatchCode(service, coded.UpstreamCode()); kind != KindUnknown {
+				return Class{Service: service, Kind: kind, Status: status}, true
+			}
+		}
 		return Class{Service: service, Kind: classifyMessage(service, status, described.UpstreamMessage()), Status: status}, true
 	}
 	return Class{}, false

@@ -259,14 +259,23 @@ event name).
 - After editing any `ent/<db>/schema/*.go`, run `go generate ./ent/<db>/...`
   and commit both the schema change **and** the regenerated files under
   `database/<db>/`.
-- A data bootstrap that must follow a schema change (initialising a new
-  column from an old one) runs right after `Schema.Create` in
-  `init_database.go`, only on a writable node, and must be idempotent: it
-  writes only rows still `NULL`, so it never overwrites a bootstrapped or
-  user-set value, and new rows get explicit values at creation. Example:
-  `accountdata.BootstrapBindingVisibility` for the per-exposure binding
-  visibility flags. Readers treat a `NULL` new column as the old value, so a
-  rolling deploy works before the bootstrap has run.
+- A data step that must follow a schema change (initialising a new column
+  from an old one) runs right after `Schema.Create` in `init_database.go`
+  (`migratePJSKData` for the PJSK DB), only on a writable node, and must be
+  idempotent: it writes only rows still `NULL`, so it never overwrites a
+  bootstrapped or user-set value, and new rows get explicit values at
+  creation.
+- **Dropping a column.** `Schema.Create` never drops columns, and the repo
+  does not pass `migrate.WithDropColumn` (it would drop every column the
+  schema does not know, on every table). Remove the field from the ent
+  schema, then add an explicit, idempotent step to the same post-migrate
+  hook that checks the column exists, copies anything still needed out of
+  it, and runs `ALTER TABLE … DROP COLUMN` in one transaction. Example:
+  `accountdata.DropLegacyVisibleColumn` (`user_bindings.visible`, dropped in
+  3.12.0). A drop is not additive: stop every older API-role instance
+  before the new one starts (a full-stop upgrade, which a single replaced
+  container already is), because an older binary still writes the column.
+  Write down which releases can no longer be rolled back to.
 
 ### Common ent gotcha
 

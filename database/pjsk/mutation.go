@@ -8141,7 +8141,6 @@ type UserBindingMutation struct {
 	addharuki_user_id   *int
 	display_order       *int
 	adddisplay_order    *int
-	visible             *bool
 	uid_visible         *bool
 	sk_visible          *bool
 	profile_visible     *bool
@@ -8423,42 +8422,6 @@ func (m *UserBindingMutation) AddedDisplayOrder() (r int, exists bool) {
 func (m *UserBindingMutation) ResetDisplayOrder() {
 	m.display_order = nil
 	m.adddisplay_order = nil
-}
-
-// SetVisible sets the "visible" field.
-func (m *UserBindingMutation) SetVisible(b bool) {
-	m.visible = &b
-}
-
-// Visible returns the value of the "visible" field in the mutation.
-func (m *UserBindingMutation) Visible() (r bool, exists bool) {
-	v := m.visible
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldVisible returns the old "visible" field's value of the UserBinding entity.
-// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserBindingMutation) OldVisible(ctx context.Context) (v bool, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldVisible is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldVisible requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldVisible: %w", err)
-	}
-	return oldValue.Visible, nil
-}
-
-// ResetVisible resets all changes to the "visible" field.
-func (m *UserBindingMutation) ResetVisible() {
-	m.visible = nil
 }
 
 // SetUIDVisible sets the "uid_visible" field.
@@ -8880,7 +8843,7 @@ func (m *UserBindingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserBindingMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 10)
 	if m.haruki_user_id != nil {
 		fields = append(fields, userbinding.FieldHarukiUserID)
 	}
@@ -8889,9 +8852,6 @@ func (m *UserBindingMutation) Fields() []string {
 	}
 	if m.display_order != nil {
 		fields = append(fields, userbinding.FieldDisplayOrder)
-	}
-	if m.visible != nil {
-		fields = append(fields, userbinding.FieldVisible)
 	}
 	if m.uid_visible != nil {
 		fields = append(fields, userbinding.FieldUIDVisible)
@@ -8928,8 +8888,6 @@ func (m *UserBindingMutation) Field(name string) (ent.Value, bool) {
 		return m.GameAccountID()
 	case userbinding.FieldDisplayOrder:
 		return m.DisplayOrder()
-	case userbinding.FieldVisible:
-		return m.Visible()
 	case userbinding.FieldUIDVisible:
 		return m.UIDVisible()
 	case userbinding.FieldSkVisible:
@@ -8959,8 +8917,6 @@ func (m *UserBindingMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldGameAccountID(ctx)
 	case userbinding.FieldDisplayOrder:
 		return m.OldDisplayOrder(ctx)
-	case userbinding.FieldVisible:
-		return m.OldVisible(ctx)
 	case userbinding.FieldUIDVisible:
 		return m.OldUIDVisible(ctx)
 	case userbinding.FieldSkVisible:
@@ -9004,13 +8960,6 @@ func (m *UserBindingMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDisplayOrder(v)
-		return nil
-	case userbinding.FieldVisible:
-		v, ok := value.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetVisible(v)
 		return nil
 	case userbinding.FieldUIDVisible:
 		v, ok := value.(bool)
@@ -9178,9 +9127,6 @@ func (m *UserBindingMutation) ResetField(name string) error {
 		return nil
 	case userbinding.FieldDisplayOrder:
 		m.ResetDisplayOrder()
-		return nil
-	case userbinding.FieldVisible:
-		m.ResetVisible()
 		return nil
 	case userbinding.FieldUIDVisible:
 		m.ResetUIDVisible()

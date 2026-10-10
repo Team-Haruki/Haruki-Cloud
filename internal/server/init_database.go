@@ -154,6 +154,7 @@ func initPJSKIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app
 	}
 	ctx = ensureContext(ctx)
 
+	var pjskDriver *entsql.Driver
 	pjskClient := initDBClient(ctx, mainLogger, "PJSK",
 		func() (*pjskDB.Client, error) {
 			cfg := harukiConfig.Cfg.PJSK
@@ -161,13 +162,14 @@ func initPJSKIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app
 			if err != nil {
 				return nil, err
 			}
+			pjskDriver = drv
 			return pjskDB.NewClient(pjskDB.Driver(drv)), nil
 		},
 		func(c *pjskDB.Client, ctx context.Context) error {
 			if err := c.Schema.Create(ctx); err != nil {
 				return err
 			}
-			return bootstrapPJSKData(ctx, mainLogger, c)
+			return migratePJSKData(ctx, mainLogger, pjskDriver)
 		},
 	)
 
@@ -175,18 +177,18 @@ func initPJSKIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app
 	return pjskClient
 }
 
-// bootstrapPJSKData runs the idempotent data steps that follow an auto-migrate
+// migratePJSKData runs the idempotent data steps that follow an auto-migrate
 // of the PJSK database. A read-only node leaves them to the writable one.
-func bootstrapPJSKData(ctx context.Context, logger *harukiLogger.Logger, client *pjskDB.Client) error {
-	if cluster.IsReadOnly() {
+func migratePJSKData(ctx context.Context, logger *harukiLogger.Logger, drv *entsql.Driver) error {
+	if cluster.IsReadOnly() || drv == nil {
 		return nil
 	}
-	updated, err := accountdata.BootstrapBindingVisibility(ctx, client)
+	backfilled, dropped, err := accountdata.DropLegacyVisibleColumn(ctx, drv.DB(), drv.Dialect())
 	if err != nil {
 		return err
 	}
-	if updated > 0 {
-		logger.Info("bootstrapped per-exposure binding visibility from the legacy visible flag", "column_updates", updated)
+	if dropped {
+		logger.Info("dropped the legacy user_bindings.visible column", "flags_backfilled", backfilled)
 	}
 	return nil
 }

@@ -2,11 +2,13 @@ package accountdata
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	pjskdb "haruki-cloud/database/pjsk"
-	"haruki-cloud/database/pjsk/predicate"
 	"haruki-cloud/database/pjsk/userbinding"
+
+	"entgo.io/ent/dialect"
 )
 
 // Exposure is one way a bound game account is shown to people other than
@@ -79,25 +81,21 @@ func (v Visibility) With(e Exposure, shown bool) Visibility {
 	return v
 }
 
-// All reports whether every exposure is shown. It is the value kept in the
-// deprecated visible column, so a rollback to a binary that only reads
-// visible never shows more than the owner chose.
+// All reports whether every exposure is shown.
 func (v Visibility) All() bool {
 	return v.UID && v.SK && v.Profile && v.Arrest
 }
 
-// bindingVisibility reads b's per-exposure flags. A NULL flag (a row written
-// before the split and not yet bootstrapped, or by an older binary during a
-// rollout) falls back to the legacy visible column.
+// bindingVisibility reads b's per-exposure flags. Every write sets all four,
+// and DropLegacyVisibleColumn backfills the rows written before the split, so
+// a NULL flag only appears on a row written by a binary older than 3.9.0. It
+// reads as hidden: never show more than the owner may have chosen.
 func bindingVisibility(b *pjskdb.UserBinding) Visibility {
 	if b == nil {
 		return Visibility{}
 	}
 	flag := func(value *bool) bool {
-		if value == nil {
-			return b.Visible
-		}
-		return *value
+		return value != nil && *value
 	}
 	return Visibility{
 		UID:     flag(b.UIDVisible),
@@ -107,16 +105,14 @@ func bindingVisibility(b *pjskdb.UserBinding) Visibility {
 	}
 }
 
-// setBindingVisibility writes every per-exposure flag of v and the derived
-// legacy visible column, so a row never mixes set and NULL flags after a
-// change.
+// setBindingVisibility writes every per-exposure flag of v, so a row never
+// mixes set and NULL flags after a change.
 func setBindingVisibility(update *pjskdb.UserBindingUpdateOne, v Visibility) *pjskdb.UserBindingUpdateOne {
 	return update.
 		SetUIDVisible(v.UID).
 		SetSkVisible(v.SK).
 		SetProfileVisible(v.Profile).
-		SetArrestVisible(v.Arrest).
-		SetVisible(v.All())
+		SetArrestVisible(v.Arrest)
 }
 
 // createBindingVisibility is setBindingVisibility for a new binding.
@@ -125,56 +121,102 @@ func createBindingVisibility(create *pjskdb.UserBindingCreate, v Visibility) *pj
 		SetUIDVisible(v.UID).
 		SetSkVisible(v.SK).
 		SetProfileVisible(v.Profile).
-		SetArrestVisible(v.Arrest).
-		SetVisible(v.All())
+		SetArrestVisible(v.Arrest)
 }
 
 // NewBindingVisibility is the visibility a newly bound account is created
-// with; every creation path sets it explicitly, so a binding created after
-// the split never has NULL flags. Only the UID is hidden, which is what
-// "Hide bound account IDs by default" meant; ranking, profile and arrest
-// lookups are shown until the owner hides them. The legacy visible column is
-// therefore false for a new binding, so an older binary hides everything.
+// with; every creation path sets it explicitly, so a binding never has NULL
+// flags. Only the UID is hidden, which is what "Hide bound account IDs by
+// default" meant; ranking, profile and arrest lookups are shown until the
+// owner hides them.
 var NewBindingVisibility = Visibility{UID: false, SK: true, Profile: true, Arrest: true}
 
-// BootstrapBindingVisibility is the one-time bootstrap of the per-exposure
-// flags from the legacy visible column, run after every auto-migrate:
+// legacyVisibleColumns are the per-exposure columns that took their first
+// value from the legacy user_bindings.visible column.
+var legacyVisibleColumns = []string{
+	userbinding.FieldUIDVisible,
+	userbinding.FieldSkVisible,
+	userbinding.FieldProfileVisible,
+	userbinding.FieldArrestVisible,
+}
+
+// DropLegacyVisibleColumn removes the deprecated user_bindings.visible column
+// (replaced by the per-exposure flags in 3.9.0). It runs after the PJSK
+// auto-migrate on a writable node; ent's auto-migrate never drops a column on
+// its own. When the column still exists it first copies it into every
+// per-exposure flag that is still NULL (the 3.9.0 bootstrap, run one last
+// time), then drops it, in one transaction where the dialect allows. When the
+// column is already gone it does nothing, so it is safe on every start.
+// It is not additive: no older API-role process may still run against the
+// database (it writes visible on every binding insert), so the upgrade must
+// stop the old instance before the new one starts.
 //
-//   - a binding that was hidden (visible=false) gets every exposure hidden,
-//     one that was shown gets every exposure shown;
-//   - it only writes flags that are still NULL, so a bootstrapped value is
-//     never overwritten on a later start, and a value the owner set with a
-//     toggle (which writes all four flags) always wins;
-//   - bindings created after the split get explicit flags at creation
-//     (NewBindingVisibility), so the only NULLs left are pre-split rows and
-//     rows an older binary created during a rolling deploy, which the next
-//     start bootstraps the same way.
+// After it has run, a rollback below 3.9.0 is no longer possible: such a
+// binary only reads visible, and its auto-migrate would re-add the column
+// with the default true, showing every account. Rolling back to 3.9.0-3.11.x
+// stays safe: they re-add the column, but read it only for NULL flags, and
+// there are none.
 //
-// It returns the number of flag values written.
-func BootstrapBindingVisibility(ctx context.Context, client *pjskdb.Client) (int, error) {
-	if client == nil {
-		return 0, nil
+// It returns the number of flag values backfilled and whether the column was
+// dropped.
+func DropLegacyVisibleColumn(ctx context.Context, db *sql.DB, dialectName string) (backfilled int64, dropped bool, err error) {
+	if db == nil {
+		return 0, false, nil
 	}
-	type column struct {
-		name  string
-		isNil predicate.UserBinding
-		set   func(*pjskdb.UserBindingUpdate, bool) *pjskdb.UserBindingUpdate
+	exists, err := legacyVisibleColumnExists(ctx, db, dialectName)
+	if err != nil || !exists {
+		return 0, false, err
 	}
-	columns := []column{
-		{userbinding.FieldUIDVisible, userbinding.UIDVisibleIsNil(), (*pjskdb.UserBindingUpdate).SetUIDVisible},
-		{userbinding.FieldSkVisible, userbinding.SkVisibleIsNil(), (*pjskdb.UserBindingUpdate).SetSkVisible},
-		{userbinding.FieldProfileVisible, userbinding.ProfileVisibleIsNil(), (*pjskdb.UserBindingUpdate).SetProfileVisible},
-		{userbinding.FieldArrestVisible, userbinding.ArrestVisibleIsNil(), (*pjskdb.UserBindingUpdate).SetArrestVisible},
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, false, fmt.Errorf("drop user_bindings.visible: begin: %w", err)
 	}
-	total := 0
-	for _, col := range columns {
-		for _, visible := range []bool{false, true} {
-			n, err := col.set(client.UserBinding.Update().Where(col.isNil, userbinding.Visible(visible)), visible).Save(ctx)
-			if err != nil {
-				return total, fmt.Errorf("bootstrap user_bindings.%s: %w", col.name, err)
-			}
-			total += n
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+	for _, col := range legacyVisibleColumns {
+		res, execErr := tx.ExecContext(ctx, "UPDATE "+userbinding.Table+" SET "+col+" = visible WHERE "+col+" IS NULL")
+		if execErr != nil {
+			return backfilled, false, fmt.Errorf("backfill user_bindings.%s: %w", col, execErr)
+		}
+		if n, rowsErr := res.RowsAffected(); rowsErr == nil {
+			backfilled += n
 		}
 	}
-	return total, nil
+	if _, err = tx.ExecContext(ctx, "ALTER TABLE "+userbinding.Table+" DROP COLUMN visible"); err != nil {
+		return backfilled, false, fmt.Errorf("drop user_bindings.visible: %w", err)
+	}
+	if err = tx.Commit(); err != nil {
+		return backfilled, false, fmt.Errorf("drop user_bindings.visible: commit: %w", err)
+	}
+	return backfilled, true, nil
+}
+
+func legacyVisibleColumnExists(ctx context.Context, db *sql.DB, dialectName string) (bool, error) {
+	query, err := legacyVisibleColumnQuery(dialectName)
+	if err != nil {
+		return false, err
+	}
+	var n int
+	if err := db.QueryRowContext(ctx, query).Scan(&n); err != nil {
+		return false, fmt.Errorf("look up user_bindings.visible: %w", err)
+	}
+	return n > 0, nil
+}
+
+// legacyVisibleColumnQuery returns a query counting the visible column of
+// user_bindings in the current schema.
+func legacyVisibleColumnQuery(dialectName string) (string, error) {
+	switch dialectName {
+	case dialect.Postgres:
+		return "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'user_bindings' AND column_name = 'visible'", nil
+	case dialect.MySQL:
+		return "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'user_bindings' AND column_name = 'visible'", nil
+	case dialect.SQLite:
+		return "SELECT COUNT(*) FROM pragma_table_info('user_bindings') WHERE name = 'visible'", nil
+	default:
+		return "", fmt.Errorf("drop user_bindings.visible: unsupported dialect %q", dialectName)
+	}
 }

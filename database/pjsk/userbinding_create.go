@@ -55,20 +55,6 @@ func (_c *UserBindingCreate) SetNillableDisplayOrder(v *int) *UserBindingCreate 
 	return _c
 }
 
-// SetVisible sets the "visible" field.
-func (_c *UserBindingCreate) SetVisible(v bool) *UserBindingCreate {
-	_c.mutation.SetVisible(v)
-	return _c
-}
-
-// SetNillableVisible sets the "visible" field if the given value is not nil.
-func (_c *UserBindingCreate) SetNillableVisible(v *bool) *UserBindingCreate {
-	if v != nil {
-		_c.SetVisible(*v)
-	}
-	return _c
-}
-
 // SetUIDVisible sets the "uid_visible" field.
 func (_c *UserBindingCreate) SetUIDVisible(v bool) *UserBindingCreate {
 	_c.mutation.SetUIDVisible(v)
@@ -232,10 +218,6 @@ func (_c *UserBindingCreate) defaults() {
 		v := userbinding.DefaultDisplayOrder
 		_c.mutation.SetDisplayOrder(v)
 	}
-	if _, ok := _c.mutation.Visible(); !ok {
-		v := userbinding.DefaultVisible
-		_c.mutation.SetVisible(v)
-	}
 	if _, ok := _c.mutation.SuiteVisible(); !ok {
 		v := userbinding.DefaultSuiteVisible
 		_c.mutation.SetSuiteVisible(v)
@@ -257,9 +239,6 @@ func (_c *UserBindingCreate) check() error {
 	}
 	if _, ok := _c.mutation.DisplayOrder(); !ok {
 		return &ValidationError{Name: "display_order", err: errors.New(`pjsk: missing required field "UserBinding.display_order"`)}
-	}
-	if _, ok := _c.mutation.Visible(); !ok {
-		return &ValidationError{Name: "visible", err: errors.New(`pjsk: missing required field "UserBinding.visible"`)}
 	}
 	if _, ok := _c.mutation.SuiteVisible(); !ok {
 		return &ValidationError{Name: "suite_visible", err: errors.New(`pjsk: missing required field "UserBinding.suite_visible"`)}
@@ -309,10 +288,6 @@ func (_c *UserBindingCreate) createSpec() (*UserBinding, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DisplayOrder(); ok {
 		_spec.SetField(userbinding.FieldDisplayOrder, field.TypeInt, value)
 		_node.DisplayOrder = value
-	}
-	if value, ok := _c.mutation.Visible(); ok {
-		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)
-		_node.Visible = value
 	}
 	if value, ok := _c.mutation.UIDVisible(); ok {
 		_spec.SetField(userbinding.FieldUIDVisible, field.TypeBool, value)

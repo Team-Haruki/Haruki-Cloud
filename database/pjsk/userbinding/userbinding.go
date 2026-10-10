@@ -18,8 +18,6 @@ const (
 	FieldGameAccountID = "game_account_id"
 	// FieldDisplayOrder holds the string denoting the display_order field in the database.
 	FieldDisplayOrder = "display_order"
-	// FieldVisible holds the string denoting the visible field in the database.
-	FieldVisible = "visible"
 	// FieldUIDVisible holds the string denoting the uid_visible field in the database.
 	FieldUIDVisible = "uid_visible"
 	// FieldSkVisible holds the string denoting the sk_visible field in the database.
@@ -62,7 +60,6 @@ var Columns = []string{
 	FieldHarukiUserID,
 	FieldGameAccountID,
 	FieldDisplayOrder,
-	FieldVisible,
 	FieldUIDVisible,
 	FieldSkVisible,
 	FieldProfileVisible,
@@ -85,8 +82,6 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultDisplayOrder holds the default value on creation for the "display_order" field.
 	DefaultDisplayOrder int
-	// DefaultVisible holds the default value on creation for the "visible" field.
-	DefaultVisible bool
 	// DefaultSuiteVisible holds the default value on creation for the "suite_visible" field.
 	DefaultSuiteVisible bool
 	// DefaultMysekaiVisible holds the default value on creation for the "mysekai_visible" field.
@@ -116,11 +111,6 @@ func ByGameAccountID(opts ...sql.OrderTermOption) OrderOption {
 // ByDisplayOrder orders the results by the display_order field.
 func ByDisplayOrder(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDisplayOrder, opts...).ToFunc()
-}
-
-// ByVisible orders the results by the visible field.
-func ByVisible(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldVisible, opts...).ToFunc()
 }
 
 // ByUIDVisible orders the results by the uid_visible field.

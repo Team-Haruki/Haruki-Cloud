@@ -69,11 +69,6 @@ func DisplayOrder(v int) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldEQ(FieldDisplayOrder, v))
 }
 
-// Visible applies equality check predicate on the "visible" field. It's identical to VisibleEQ.
-func Visible(v bool) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldEQ(FieldVisible, v))
-}
-
 // UIDVisible applies equality check predicate on the "uid_visible" field. It's identical to UIDVisibleEQ.
 func UIDVisible(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldEQ(FieldUIDVisible, v))
@@ -217,16 +212,6 @@ func DisplayOrderLT(v int) predicate.UserBinding {
 // DisplayOrderLTE applies the LTE predicate on the "display_order" field.
 func DisplayOrderLTE(v int) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldLTE(FieldDisplayOrder, v))
-}
-
-// VisibleEQ applies the EQ predicate on the "visible" field.
-func VisibleEQ(v bool) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldEQ(FieldVisible, v))
-}
-
-// VisibleNEQ applies the NEQ predicate on the "visible" field.
-func VisibleNEQ(v bool) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldNEQ(FieldVisible, v))
 }
 
 // UIDVisibleEQ applies the EQ predicate on the "uid_visible" field.

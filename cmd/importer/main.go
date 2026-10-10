@@ -280,7 +280,7 @@ func createBindingIfMissing(ctx context.Context, pjsk *pjskDB.Client, harukiUser
 	}
 	// The legacy export has one visibility flag; it applies to every exposure.
 	_, err = pjsk.UserBinding.Create().SetHarukiUserID(harukiUserID).SetGameAccountID(gameAccountID).SetDisplayOrder(displayOrder).
-		SetVisible(visible).SetUIDVisible(visible).SetSkVisible(visible).SetProfileVisible(visible).SetArrestVisible(visible).
+		SetUIDVisible(visible).SetSkVisible(visible).SetProfileVisible(visible).SetArrestVisible(visible).
 		Save(ctx)
 	if pjskDB.IsConstraintError(err) {
 		return false, "", nil

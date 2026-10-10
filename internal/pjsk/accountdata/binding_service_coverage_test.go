@@ -308,7 +308,7 @@ func testBindingDisplayOrderAndFallback(t *testing.T, ctx context.Context, servi
 		t.Fatalf("delete defaults: %v", err)
 	}
 	first := items[0]
-	if _, err := client.UserBinding.UpdateOneID(first.BindingID).SetVisible(true).Save(ctx); err != nil {
+	if _, err := setBindingVisibility(client.UserBinding.UpdateOneID(first.BindingID), UniformVisibility(true)).Save(ctx); err != nil {
 		t.Fatalf("make fallback binding visible: %v", err)
 	}
 	if harukiID, got, err := service.ResolveUserBinding(ctx, "qq", "42", first.Server); err != nil || harukiID != 42 || got.BindingID != first.BindingID {

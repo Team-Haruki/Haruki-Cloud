@@ -91,20 +91,6 @@ func (_u *UserBindingUpdate) AddDisplayOrder(v int) *UserBindingUpdate {
 	return _u
 }
 
-// SetVisible sets the "visible" field.
-func (_u *UserBindingUpdate) SetVisible(v bool) *UserBindingUpdate {
-	_u.mutation.SetVisible(v)
-	return _u
-}
-
-// SetNillableVisible sets the "visible" field if the given value is not nil.
-func (_u *UserBindingUpdate) SetNillableVisible(v *bool) *UserBindingUpdate {
-	if v != nil {
-		_u.SetVisible(*v)
-	}
-	return _u
-}
-
 // SetUIDVisible sets the "uid_visible" field.
 func (_u *UserBindingUpdate) SetUIDVisible(v bool) *UserBindingUpdate {
 	_u.mutation.SetUIDVisible(v)
@@ -327,9 +313,6 @@ func (_u *UserBindingUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.AddedDisplayOrder(); ok {
 		_spec.AddField(userbinding.FieldDisplayOrder, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.Visible(); ok {
-		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)
-	}
 	if value, ok := _u.mutation.UIDVisible(); ok {
 		_spec.SetField(userbinding.FieldUIDVisible, field.TypeBool, value)
 	}
@@ -516,20 +499,6 @@ func (_u *UserBindingUpdateOne) SetNillableDisplayOrder(v *int) *UserBindingUpda
 // AddDisplayOrder adds value to the "display_order" field.
 func (_u *UserBindingUpdateOne) AddDisplayOrder(v int) *UserBindingUpdateOne {
 	_u.mutation.AddDisplayOrder(v)
-	return _u
-}
-
-// SetVisible sets the "visible" field.
-func (_u *UserBindingUpdateOne) SetVisible(v bool) *UserBindingUpdateOne {
-	_u.mutation.SetVisible(v)
-	return _u
-}
-
-// SetNillableVisible sets the "visible" field if the given value is not nil.
-func (_u *UserBindingUpdateOne) SetNillableVisible(v *bool) *UserBindingUpdateOne {
-	if v != nil {
-		_u.SetVisible(*v)
-	}
 	return _u
 }
 
@@ -784,9 +753,6 @@ func (_u *UserBindingUpdateOne) sqlSave(ctx context.Context) (_node *UserBinding
 	}
 	if value, ok := _u.mutation.AddedDisplayOrder(); ok {
 		_spec.AddField(userbinding.FieldDisplayOrder, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.Visible(); ok {
-		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.UIDVisible(); ok {
 		_spec.SetField(userbinding.FieldUIDVisible, field.TypeBool, value)

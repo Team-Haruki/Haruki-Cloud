@@ -37,6 +37,8 @@ type Event struct {
 	PayloadRef          string
 	EmptyResult         bool
 	DeliveryCount       int
+	// LastDeliveredAt is zero for an event never delivered.
+	LastDeliveredAt time.Time
 }
 
 // Key identifies the streams of one subscription version.
@@ -51,7 +53,12 @@ func (e Event) Key() Key {
 }
 
 func eventFromRow(row *pjskdb.RealtimeEvent) Event {
+	var lastDelivered time.Time
+	if row.LastDeliveredAt != nil {
+		lastDelivered = *row.LastDeliveredAt
+	}
 	return Event{
+		LastDeliveredAt:     lastDelivered,
 		ID:                  row.ID,
 		SubscriptionID:      row.SubscriptionID,
 		SubscriptionVersion: row.SubscriptionVersion,

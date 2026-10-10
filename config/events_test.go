@@ -25,6 +25,12 @@ func TestEventsConfigDefaults(t *testing.T) {
 		got.LegacyForwardURL != "http://legacy/internal/events" {
 		t.Fatalf("defaults = %+v", got)
 	}
+	if got.ReplayGrace != DefaultEventsReplayGrace {
+		t.Fatalf("replay grace default = %s", got.ReplayGrace)
+	}
+	if grace := (EventsConfig{ReplayGrace: -5 * time.Second}).WithDefaults().ReplayGrace; grace >= 0 {
+		t.Fatalf("negative replay grace = %s, want disabled", grace)
+	}
 	if policy := (EventsConfig{ReplayPolicy: "bogus"}).WithDefaults().ReplayPolicy; policy != EventsReplayLatest {
 		t.Fatalf("unknown policy = %q", policy)
 	}
@@ -58,6 +64,7 @@ func TestEventsConfigFromYAMLAndEnv(t *testing.T) {
 		"HARUKI_EVENTS_GC_INTERVAL":                "2h",
 		"HARUKI_EVENTS_RETENTION":                  "48h",
 		"HARUKI_EVENTS_EXPIRY_GRACE":               "5m",
+		"HARUKI_EVENTS_REPLAY_GRACE":               "30s",
 		"HARUKI_EVENTS_LEGACY_FORWARD_URL":         "http://legacy/internal/events",
 		"HARUKI_EVENTS_LEGACY_FORWARD_TOKEN":       "old",
 		"HARUKI_EVENTS_EMBEDDED":                   "false",
@@ -74,7 +81,7 @@ func TestEventsConfigFromYAMLAndEnv(t *testing.T) {
 		e.InternalBaseURL != "http://events:7911" || e.IngestTokenSHA256 != "abc" || e.ReplayMax != 4 || e.MaxConns != 10 ||
 		e.MaxConnsPerSubscription != 2 || e.HeartbeatInterval != 20*time.Second || e.ClientRetry != 4*time.Second ||
 		e.MaxDeliveries != 5 || e.SweepInterval != 30*time.Second || e.GCInterval != 2*time.Hour || e.Retention != 48*time.Hour ||
-		e.ExpiryGrace != 5*time.Minute || e.LegacyForwardURL != "http://legacy/internal/events" || e.LegacyForwardToken != "old" {
+		e.ExpiryGrace != 5*time.Minute || e.ReplayGrace != 30*time.Second || e.LegacyForwardURL != "http://legacy/internal/events" || e.LegacyForwardToken != "old" {
 		t.Fatalf("events config = %+v", e)
 	}
 	if cfg.Backend.MainLogFile != "/tmp/events.log" {

@@ -143,6 +143,9 @@ func (s *Service) serveStream(st *sse.Stream, c *conn, lastEventID int64) (err e
 	ctx, cancel := context.WithTimeout(st.Context(), dbTimeout)
 	replay, replayErr := s.store.Pending(ctx, c.key, lastEventID)
 	for _, event := range replay {
+		if s.recentlyDelivered(event) {
+			continue
+		}
 		ok, claimErr := s.store.Claim(ctx, event.ID, s.cfg.MaxDeliveries, s.now())
 		if claimErr != nil {
 			replayErr = claimErr
@@ -186,6 +189,16 @@ func (s *Service) serveStream(st *sse.Stream, c *conn, lastEventID int64) (err e
 			}
 		}
 	}
+}
+
+// recentlyDelivered reports whether the event went out within ReplayGrace:
+// a reconnecting Client may still be rendering it, so the replay skips it
+// and the redelivery sweep sends it again if it is never acknowledged.
+func (s *Service) recentlyDelivered(event Event) bool {
+	if s.cfg.ReplayGrace <= 0 || event.LastDeliveredAt.IsZero() {
+		return false
+	}
+	return s.now().Sub(event.LastDeliveredAt) < s.cfg.ReplayGrace
 }
 
 func writeEvent(st *sse.Stream, event Event) error {

@@ -153,6 +153,10 @@ events:
   gc_interval: "1h"
   retention: "168h"               # rows are deleted this long after expires_at
   expiry_grace: "10m"             # added to the subscription expiry for expires_at
+  # On (re)connect, skip events delivered less than this long ago (the Client
+  # may still be rendering them); redeliver_after covers them if never acked.
+  # Negative replays them immediately.
+  replay_grace: "20s"
   # Side-by-side run with the legacy gateway: every newly accepted ingest is
   # also posted verbatim to this URL (best effort) with this token.
   legacy_forward_url: ""

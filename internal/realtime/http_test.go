@@ -622,3 +622,38 @@ func TestLegacyForwardFailuresAreLogged(t *testing.T) {
 		t.Fatal("bearer")
 	}
 }
+
+func TestReplayGraceSkipsRecentlyDeliveredEvents(t *testing.T) {
+	env := newTestEnv(t, testConfig())
+	sub := env.activeSubscription()
+	first := env.connect(streamPath(sub, "v1"), nil)
+	env.ingest(sub, "v1", "rendering", "")
+	delivered := first.mustNext()
+	first.close()
+
+	// A reconnect inside the grace does not push it again.
+	second := env.connect(streamPath(sub, "v1"), nil)
+	second.expectNone(200 * time.Millisecond)
+
+	// After the grace a reconnect replays it.
+	env.clock.Advance(21 * time.Second)
+	third := env.connect(streamPath(sub, "v1"), nil)
+	if got := third.mustNext(); got.id != delivered.id {
+		t.Fatalf("replayed after the grace = %+v, want %+v", got, delivered)
+	}
+}
+
+func TestReplayGraceDisabled(t *testing.T) {
+	cfg := testConfig()
+	cfg.ReplayGrace = -time.Second
+	env := newTestEnv(t, cfg)
+	sub := env.activeSubscription()
+	first := env.connect(streamPath(sub, "v1"), nil)
+	env.ingest(sub, "v1", "again", "")
+	first.mustNext()
+	first.close()
+	second := env.connect(streamPath(sub, "v1"), nil)
+	if got := second.mustNext(); !strings.Contains(got.data, `"event_id":"again"`) {
+		t.Fatalf("replay without grace = %s", got.data)
+	}
+}

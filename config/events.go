@@ -30,6 +30,7 @@ const (
 	DefaultEventsGCInterval              = time.Hour
 	DefaultEventsRetention               = 7 * 24 * time.Hour
 	DefaultEventsExpiryGrace             = 10 * time.Minute
+	DefaultEventsReplayGrace             = 20 * time.Second
 	DefaultEventsForwardTimeout          = 5 * time.Second
 	DefaultEventsCloseTimeout            = 5 * time.Second
 	DefaultEventsShutdownTimeout         = 10 * time.Second
@@ -77,6 +78,11 @@ type EventsConfig struct {
 	Retention time.Duration `yaml:"retention"`
 	// ExpiryGrace is added to the subscription expiry for a row's expires_at.
 	ExpiryGrace time.Duration `yaml:"expiry_grace"`
+	// ReplayGrace skips, on (re)connect, events delivered less than this long
+	// ago: the Client may still be rendering them, and the RedeliverAfter
+	// redelivery covers them if they are never acknowledged. Zero means the
+	// default; a negative value replays them immediately.
+	ReplayGrace time.Duration `yaml:"replay_grace"`
 	// LegacyForwardURL, when set, receives every newly accepted ingest body
 	// verbatim (best effort), for running the old gateway side by side.
 	LegacyForwardURL   string `yaml:"legacy_forward_url"`
@@ -133,6 +139,12 @@ func (c EventsConfig) WithDefaults() EventsConfig {
 	if c.ExpiryGrace <= 0 {
 		c.ExpiryGrace = DefaultEventsExpiryGrace
 	}
+	switch {
+	case c.ReplayGrace == 0:
+		c.ReplayGrace = DefaultEventsReplayGrace
+	case c.ReplayGrace < 0:
+		c.ReplayGrace = -1
+	}
 	c.LegacyForwardURL = strings.TrimSpace(c.LegacyForwardURL)
 	c.LegacyForwardToken = strings.TrimSpace(c.LegacyForwardToken)
 	return c
@@ -156,6 +168,7 @@ func applyEventsEnvOverrides(cfg *EventsConfig) {
 	envDuration("HARUKI_EVENTS_GC_INTERVAL", &cfg.GCInterval)
 	envDuration("HARUKI_EVENTS_RETENTION", &cfg.Retention)
 	envDuration("HARUKI_EVENTS_EXPIRY_GRACE", &cfg.ExpiryGrace)
+	envDuration("HARUKI_EVENTS_REPLAY_GRACE", &cfg.ReplayGrace)
 	envStr("HARUKI_EVENTS_LEGACY_FORWARD_URL", &cfg.LegacyForwardURL)
 	envStr("HARUKI_EVENTS_LEGACY_FORWARD_TOKEN", &cfg.LegacyForwardToken)
 }

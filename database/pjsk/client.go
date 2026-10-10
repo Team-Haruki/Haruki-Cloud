@@ -20,6 +20,7 @@ import (
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/pjsk/profilebgcleanup"
+	"haruki-cloud/database/pjsk/realtimeevent"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -54,6 +55,8 @@ type Client struct {
 	PendingAlias *PendingAliasClient
 	// ProfileBGCleanup is the client for interacting with the ProfileBGCleanup builders.
 	ProfileBGCleanup *ProfileBGCleanupClient
+	// RealtimeEvent is the client for interacting with the RealtimeEvent builders.
+	RealtimeEvent *RealtimeEventClient
 	// RejectedAlias is the client for interacting with the RejectedAlias builders.
 	RejectedAlias *RejectedAliasClient
 	// UserBinding is the client for interacting with the UserBinding builders.
@@ -82,6 +85,7 @@ func (c *Client) init() {
 	c.MysekaiBirthdaySubscriptionEvent = NewMysekaiBirthdaySubscriptionEventClient(c.config)
 	c.PendingAlias = NewPendingAliasClient(c.config)
 	c.ProfileBGCleanup = NewProfileBGCleanupClient(c.config)
+	c.RealtimeEvent = NewRealtimeEventClient(c.config)
 	c.RejectedAlias = NewRejectedAliasClient(c.config)
 	c.UserBinding = NewUserBindingClient(c.config)
 	c.UserDefaultBinding = NewUserDefaultBindingClient(c.config)
@@ -187,6 +191,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		MysekaiBirthdaySubscriptionEvent: NewMysekaiBirthdaySubscriptionEventClient(cfg),
 		PendingAlias:                     NewPendingAliasClient(cfg),
 		ProfileBGCleanup:                 NewProfileBGCleanupClient(cfg),
+		RealtimeEvent:                    NewRealtimeEventClient(cfg),
 		RejectedAlias:                    NewRejectedAliasClient(cfg),
 		UserBinding:                      NewUserBindingClient(cfg),
 		UserDefaultBinding:               NewUserDefaultBindingClient(cfg),
@@ -219,6 +224,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		MysekaiBirthdaySubscriptionEvent: NewMysekaiBirthdaySubscriptionEventClient(cfg),
 		PendingAlias:                     NewPendingAliasClient(cfg),
 		ProfileBGCleanup:                 NewProfileBGCleanupClient(cfg),
+		RealtimeEvent:                    NewRealtimeEventClient(cfg),
 		RejectedAlias:                    NewRejectedAliasClient(cfg),
 		UserBinding:                      NewUserBindingClient(cfg),
 		UserDefaultBinding:               NewUserDefaultBindingClient(cfg),
@@ -254,8 +260,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Alias, c.AliasAdmin, c.AliasSubmissionBan, c.GameAccount, c.GroupAlias,
 		c.MysekaiBirthdaySubscription, c.MysekaiBirthdaySubscriptionEvent,
-		c.PendingAlias, c.ProfileBGCleanup, c.RejectedAlias, c.UserBinding,
-		c.UserDefaultBinding, c.UserPreference,
+		c.PendingAlias, c.ProfileBGCleanup, c.RealtimeEvent, c.RejectedAlias,
+		c.UserBinding, c.UserDefaultBinding, c.UserPreference,
 	} {
 		n.Use(hooks...)
 	}
@@ -267,8 +273,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Alias, c.AliasAdmin, c.AliasSubmissionBan, c.GameAccount, c.GroupAlias,
 		c.MysekaiBirthdaySubscription, c.MysekaiBirthdaySubscriptionEvent,
-		c.PendingAlias, c.ProfileBGCleanup, c.RejectedAlias, c.UserBinding,
-		c.UserDefaultBinding, c.UserPreference,
+		c.PendingAlias, c.ProfileBGCleanup, c.RealtimeEvent, c.RejectedAlias,
+		c.UserBinding, c.UserDefaultBinding, c.UserPreference,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -295,6 +301,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.PendingAlias.mutate(ctx, m)
 	case *ProfileBGCleanupMutation:
 		return c.ProfileBGCleanup.mutate(ctx, m)
+	case *RealtimeEventMutation:
+		return c.RealtimeEvent.mutate(ctx, m)
 	case *RejectedAliasMutation:
 		return c.RejectedAlias.mutate(ctx, m)
 	case *UserBindingMutation:
@@ -1113,6 +1121,22 @@ func (c *MysekaiBirthdaySubscriptionClient) QueryEvents(_m *MysekaiBirthdaySubsc
 	return query
 }
 
+// QueryRealtimeEvents queries the realtime_events edge of a MysekaiBirthdaySubscription.
+func (c *MysekaiBirthdaySubscriptionClient) QueryRealtimeEvents(_m *MysekaiBirthdaySubscription) *RealtimeEventQuery {
+	query := (&RealtimeEventClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(mysekaibirthdaysubscription.Table, mysekaibirthdaysubscription.FieldID, id),
+			sqlgraph.To(realtimeevent.Table, realtimeevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, mysekaibirthdaysubscription.RealtimeEventsTable, mysekaibirthdaysubscription.RealtimeEventsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *MysekaiBirthdaySubscriptionClient) Hooks() []Hook {
 	return c.hooks.MysekaiBirthdaySubscription
@@ -1550,6 +1574,155 @@ func (c *ProfileBGCleanupClient) mutate(ctx context.Context, m *ProfileBGCleanup
 		return (&ProfileBGCleanupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("pjsk: unknown ProfileBGCleanup mutation op: %q", m.Op())
+	}
+}
+
+// RealtimeEventClient is a client for the RealtimeEvent schema.
+type RealtimeEventClient struct {
+	config
+}
+
+// NewRealtimeEventClient returns a client for the RealtimeEvent from the given config.
+func NewRealtimeEventClient(c config) *RealtimeEventClient {
+	return &RealtimeEventClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `realtimeevent.Hooks(f(g(h())))`.
+func (c *RealtimeEventClient) Use(hooks ...Hook) {
+	c.hooks.RealtimeEvent = append(c.hooks.RealtimeEvent, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `realtimeevent.Intercept(f(g(h())))`.
+func (c *RealtimeEventClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RealtimeEvent = append(c.inters.RealtimeEvent, interceptors...)
+}
+
+// Create returns a builder for creating a RealtimeEvent entity.
+func (c *RealtimeEventClient) Create() *RealtimeEventCreate {
+	mutation := newRealtimeEventMutation(c.config, OpCreate)
+	return &RealtimeEventCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RealtimeEvent entities.
+func (c *RealtimeEventClient) CreateBulk(builders ...*RealtimeEventCreate) *RealtimeEventCreateBulk {
+	return &RealtimeEventCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RealtimeEventClient) MapCreateBulk(slice any, setFunc func(*RealtimeEventCreate, int)) *RealtimeEventCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RealtimeEventCreateBulk{err: fmt.Errorf("calling to RealtimeEventClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RealtimeEventCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RealtimeEventCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RealtimeEvent.
+func (c *RealtimeEventClient) Update() *RealtimeEventUpdate {
+	mutation := newRealtimeEventMutation(c.config, OpUpdate)
+	return &RealtimeEventUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RealtimeEventClient) UpdateOne(_m *RealtimeEvent) *RealtimeEventUpdateOne {
+	mutation := newRealtimeEventMutation(c.config, OpUpdateOne, withRealtimeEvent(_m))
+	return &RealtimeEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RealtimeEventClient) UpdateOneID(id int64) *RealtimeEventUpdateOne {
+	mutation := newRealtimeEventMutation(c.config, OpUpdateOne, withRealtimeEventID(id))
+	return &RealtimeEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RealtimeEvent.
+func (c *RealtimeEventClient) Delete() *RealtimeEventDelete {
+	mutation := newRealtimeEventMutation(c.config, OpDelete)
+	return &RealtimeEventDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RealtimeEventClient) DeleteOne(_m *RealtimeEvent) *RealtimeEventDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RealtimeEventClient) DeleteOneID(id int64) *RealtimeEventDeleteOne {
+	builder := c.Delete().Where(realtimeevent.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RealtimeEventDeleteOne{builder}
+}
+
+// Query returns a query builder for RealtimeEvent.
+func (c *RealtimeEventClient) Query() *RealtimeEventQuery {
+	return &RealtimeEventQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRealtimeEvent},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RealtimeEvent entity by its id.
+func (c *RealtimeEventClient) Get(ctx context.Context, id int64) (*RealtimeEvent, error) {
+	return c.Query().Where(realtimeevent.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RealtimeEventClient) GetX(ctx context.Context, id int64) *RealtimeEvent {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySubscription queries the subscription edge of a RealtimeEvent.
+func (c *RealtimeEventClient) QuerySubscription(_m *RealtimeEvent) *MysekaiBirthdaySubscriptionQuery {
+	query := (&MysekaiBirthdaySubscriptionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(realtimeevent.Table, realtimeevent.FieldID, id),
+			sqlgraph.To(mysekaibirthdaysubscription.Table, mysekaibirthdaysubscription.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, realtimeevent.SubscriptionTable, realtimeevent.SubscriptionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RealtimeEventClient) Hooks() []Hook {
+	return c.hooks.RealtimeEvent
+}
+
+// Interceptors returns the client interceptors.
+func (c *RealtimeEventClient) Interceptors() []Interceptor {
+	return c.inters.RealtimeEvent
+}
+
+func (c *RealtimeEventClient) mutate(ctx context.Context, m *RealtimeEventMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RealtimeEventCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RealtimeEventUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RealtimeEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RealtimeEventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("pjsk: unknown RealtimeEvent mutation op: %q", m.Op())
 	}
 }
 
@@ -2138,13 +2311,13 @@ type (
 	hooks struct {
 		Alias, AliasAdmin, AliasSubmissionBan, GameAccount, GroupAlias,
 		MysekaiBirthdaySubscription, MysekaiBirthdaySubscriptionEvent, PendingAlias,
-		ProfileBGCleanup, RejectedAlias, UserBinding, UserDefaultBinding,
-		UserPreference []ent.Hook
+		ProfileBGCleanup, RealtimeEvent, RejectedAlias, UserBinding,
+		UserDefaultBinding, UserPreference []ent.Hook
 	}
 	inters struct {
 		Alias, AliasAdmin, AliasSubmissionBan, GameAccount, GroupAlias,
 		MysekaiBirthdaySubscription, MysekaiBirthdaySubscriptionEvent, PendingAlias,
-		ProfileBGCleanup, RejectedAlias, UserBinding, UserDefaultBinding,
-		UserPreference []ent.Interceptor
+		ProfileBGCleanup, RealtimeEvent, RejectedAlias, UserBinding,
+		UserDefaultBinding, UserPreference []ent.Interceptor
 	}
 )

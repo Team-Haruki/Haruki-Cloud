@@ -22,6 +22,8 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/realtime"
+	"haruki-cloud/utils/logger"
 
 	"entgo.io/ent/dialect/sql"
 	"haruki-cloud/internal/i18n"
@@ -164,6 +166,7 @@ type Service struct {
 	db       *pjskdb.Client
 	bindings *accountdata.BindingService
 	toolbox  *sekaiapi.HarukiToolboxClient
+	streams  realtime.Closer
 	readOnly bool
 }
 
@@ -180,6 +183,15 @@ func (s *Service) SetReadOnly(readOnly bool) {
 		return
 	}
 	s.readOnly = readOnly
+}
+
+// SetEventStreams sets how replaced or cancelled subscriptions get their
+// realtime streams closed (nil: only the legacy gateway, if configured).
+func (s *Service) SetEventStreams(streams realtime.Closer) {
+	if s == nil {
+		return
+	}
+	s.streams = streams
 }
 
 func (s *Service) Ready() bool {
@@ -273,6 +285,7 @@ func (s *Service) CreateOrUpdate(
 		if err != nil {
 			return nil, err
 		}
+		s.retireStreams(ctx, existing.ID, tokenVersion(existing.Token), version, realtime.ReasonSubscriptionReplaced)
 		return &BirthdayMonitorResult{
 			Subscription:        updated,
 			Duration:            duration,
@@ -400,7 +413,7 @@ func (s *Service) Cancel(
 	if err != nil {
 		return nil, err
 	}
-	_ = s.closeBirthdayMonitorConnection(ctx, cancelled.ID, tokenVersion(sub.Token))
+	s.retireStreams(ctx, cancelled.ID, tokenVersion(sub.Token), "", realtime.ReasonSubscriptionCancelled)
 	return cancelled, nil
 }
 
@@ -451,6 +464,36 @@ func (s *Service) deleteBirthdayMonitor(ctx context.Context, subscriptionID int,
 		return usererror.Wrap(usererror.CodeUnavailable, i18n.M("subscription.birthday.cleanup_failed"), fmt.Errorf("delete toolbox birthday monitor: %w", err))
 	}
 	return nil
+}
+
+// retireStreams supersedes the pending realtime events of every version but
+// keepVersion and closes the streams of oldVersion, on the events role and
+// on the legacy gateway. Failures are logged: the subscription change has
+// already been committed, and the events role's stale sweep closes any
+// stream left behind.
+func (s *Service) retireStreams(ctx context.Context, subscriptionID int, oldVersion string, keepVersion string, reason string) {
+	if s.db != nil {
+		if _, err := realtime.NewStore(s.db).SupersedeSubscription(ctx, subscriptionID, keepVersion, reason, time.Now()); err != nil {
+			logger.WarnContext(ctx, "birthday monitor pending events not superseded",
+				"event", "birthday_events_supersede_failed", "subscription_id", subscriptionID, "error_type", fmt.Sprintf("%T", err))
+		}
+	}
+	if strings.TrimSpace(oldVersion) == "" || oldVersion == keepVersion {
+		return
+	}
+	if s.streams != nil {
+		finish := commandtrace.MeasureOperation(ctx, "events.close")
+		err := s.streams.CloseStreams(ctx, subscriptionID, oldVersion)
+		finish()
+		if err != nil {
+			logger.WarnContext(ctx, "birthday monitor stream close failed",
+				"event", "birthday_stream_close_failed", "subscription_id", subscriptionID, "error_type", fmt.Sprintf("%T", err))
+		}
+	}
+	if err := s.closeBirthdayMonitorConnection(ctx, subscriptionID, oldVersion); err != nil {
+		logger.WarnContext(ctx, "birthday monitor legacy stream close failed",
+			"event", "birthday_legacy_close_failed", "subscription_id", subscriptionID, "error_type", fmt.Sprintf("%T", err))
+	}
 }
 
 func (s *Service) closeBirthdayMonitorConnection(ctx context.Context, subscriptionID int, version string) error {
@@ -664,16 +707,12 @@ func (s *Service) AckEvent(ctx context.Context, eventID string, subscriptionID s
 	if err := s.requireWritable(); err != nil {
 		return err
 	}
+	if strings.TrimSpace(subscriptionVersion) != "" && s.toolbox != nil {
+		return s.ackRealtimeEvent(ctx, eventID, subscriptionID, subscriptionVersion, token, cloudBotID, platformGroupID, platformUserID, selfID)
+	}
 	event, err := s.EventForClient(ctx, eventID, subscriptionID, subscriptionVersion, token, cloudBotID, platformGroupID, platformUserID, selfID)
 	if err != nil {
 		return err
-	}
-	if strings.TrimSpace(subscriptionVersion) != "" && s.toolbox != nil {
-		return s.toolbox.AckMysekaiBirthdayEvent(ctx, sekaiapi.MysekaiBirthdayEventLookupRequest{
-			EventID:             event.EventID,
-			SubscriptionID:      event.SubscriptionID,
-			SubscriptionVersion: strings.TrimSpace(subscriptionVersion),
-		})
 	}
 	id, err := strconv.Atoi(event.EventID)
 	if err != nil || id <= 0 {
@@ -682,6 +721,42 @@ func (s *Service) AckEvent(ctx context.Context, eventID string, subscriptionID s
 	return s.db.MysekaiBirthdaySubscriptionEvent.UpdateOneID(id).
 		SetAcknowledgedAt(time.Now()).
 		Exec(ctx)
+}
+
+// ackRealtimeEvent records the acknowledgement in realtime_events first, so
+// the events role stops redelivering, then asks Toolbox to drop the
+// payload. A Toolbox failure is only logged: its payload expires anyway.
+func (s *Service) ackRealtimeEvent(ctx context.Context, eventID string, subscriptionID string, subscriptionVersion string, token string, cloudBotID string, platformGroupID string, platformUserID string, selfID string) error {
+	validation, err := s.ValidateToken(ctx, subscriptionID, subscriptionVersion, token)
+	if err != nil {
+		return err
+	}
+	if validation == nil || !validation.Valid || validation.Subscription == nil {
+		return fmt.Errorf("invalid subscription token")
+	}
+	sub := validation.Subscription
+	if sub.CloudBotID != strings.TrimSpace(cloudBotID) ||
+		sub.PlatformGroupID != strings.TrimSpace(platformGroupID) ||
+		sub.PlatformUserID != strings.TrimSpace(platformUserID) ||
+		sub.SelfID != strings.TrimSpace(selfID) {
+		return fmt.Errorf("subscription context mismatch")
+	}
+	eventID = strings.TrimSpace(eventID)
+	if eventID == "" {
+		return fmt.Errorf("invalid event_id")
+	}
+	if _, err := realtime.NewStore(s.db).Ack(ctx, sub.ID, validation.SubscriptionVersion, eventID, time.Now()); err != nil {
+		return err
+	}
+	if err := s.toolbox.AckMysekaiBirthdayEvent(ctx, sekaiapi.MysekaiBirthdayEventLookupRequest{
+		EventID:             eventID,
+		SubscriptionID:      strconv.Itoa(sub.ID),
+		SubscriptionVersion: validation.SubscriptionVersion,
+	}); err != nil {
+		logger.WarnContext(ctx, "birthday monitor toolbox ack failed",
+			"event", "birthday_toolbox_ack_failed", "subscription_id", sub.ID, "error_type", fmt.Sprintf("%T", err))
+	}
+	return nil
 }
 
 func (s *Service) activeSubscriptionForUID(ctx context.Context, region string, uid string) (*pjskdb.MysekaiBirthdaySubscription, error) {

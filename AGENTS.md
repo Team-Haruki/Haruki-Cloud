@@ -32,8 +32,12 @@ Haruki-Cloud is the core backend of the **HarukiBot** ecosystem. It serves:
 
 There is **one** runtime entry point: `main.go` at the repo root, which only
 sets up signal handling and calls `server.Run(ctx)` from
-`internal/server/`. Auxiliary CLIs live under `cmd/` (`importer`, `extractor`,
-`trust-signer`, `asset-index`, `image-cache-reconcile`; see §5).
+`internal/server/`. The same binary runs in two roles: the API role (default)
+and the realtime **events role** (`haruki-server events` or
+`HARUKI_ROLE=events`, booted by `RunEvents` in
+`internal/server/run_events.go`; see §3). Auxiliary CLIs live under `cmd/`
+(`importer`, `extractor`, `trust-signer`, `asset-index`,
+`image-cache-reconcile`; see §5).
 
 ---
 
@@ -83,7 +87,8 @@ Haruki-Cloud/
 │   ├── observability/upstreamcall/ # per-upstream-call timing (Drawing, deck)
 │   ├── onebot11/           # OneBot11 message helpers (was internal/pjsk/onebot11/)
 │   ├── pjsk/               # PJSK subsystem (see below)
-│   ├── server/             # bootstrap (see above)
+│   ├── realtime/           # events role: SSE hub/handler, ingest, close, redelivery/stale sweeps, GC, realtime_events store
+│   ├── server/             # bootstrap (see above); run_events.go boots the events role
 │   ├── storage/            # Store abstraction: local filesystem and S3-compatible (storage/s3) backends
 │   └── testutil/           # shared test assertions / clock helpers
 │
@@ -197,6 +202,38 @@ Redis client, and runtime config.
 - DB providers in `render/provider/db_*.go` already support per-request source
   cloning. Keep the pattern when adding new providers.
 
+### Realtime events role
+
+`internal/realtime` is the SSE gateway for birthday monitor pushes (it
+replaced the standalone HMES service; its HTTP contract is frozen: route
+paths, query parameters, JSON field names, the `birthday_monitor_update`
+event name).
+
+- **Boot.** `RunEvents` initialises only config, logging and the PJSK ent
+  client. It never runs `Schema.Create` and starts no Redis, render runtime
+  or master DB. Its Fiber app has no access log, no per-route body limits, no
+  compression and no read/write/idle timeouts. `events.embedded=true` mounts
+  the same routes on the main app instead (development, integration tests,
+  emergency fallback), registered before any `/internal` group so the group's
+  shared-token middleware does not shadow the ingest token.
+- **Migrations and deploy order.** Only the API role migrates
+  (`realtime_events` is additive). Deploy the API role first, then the events
+  role.
+- **State.** `realtime_events` (PJSK DB) is the source of truth; the hub is
+  only in-process fan-out. Payloads stay in Toolbox. Ingest is idempotent on
+  `(subscription_id, subscription_version, event_id)`; stale subscriptions get
+  409. Stream credentials are checked with a local query: a credential
+  mismatch is 401 (the Client stops for good), every other failure is 503.
+- **Lifecycle.** The API role writes `acked_at` on `/birthday-monitor/ack`
+  before telling Toolbox to drop the payload (Toolbox failures are logged
+  only), and on subscription update or cancel supersedes the old version's
+  events and closes its streams through `renderapp.App.EventStreams`
+  (`realtime.Closer`: in process when embedded, else HTTP to
+  `events.internal_base_url` with the shared internal token).
+- **Tokens.** The ingest token is dedicated; config holds only its SHA-256
+  (`events.ingest_token_sha256`). Never accept the shared internal token for
+  ingest or the ingest token for anything else.
+
 ### Naming pitfalls
 
 | Looks similar but…                                                                                                                                    |
@@ -214,7 +251,10 @@ Redis client, and runtime config.
   (for CHUNITHM: `ent/chunithm/maindb/schema/` and `ent/chunithm/music/schema/`).
 - **Auto-migrate runs at startup.** `internal/server/init_database.go`'s
   `initDBClient` helper calls `Schema.Create(ctx)` for every DB. There is no
-  separate `cmd/migrate` tool any more (it was removed).
+  separate `cmd/migrate` tool any more (it was removed). Only the API role
+  migrates; the events role opens the PJSK DB without `Schema.Create`, so
+  schema changes it depends on must be additive and ship in the API role
+  first.
 - After editing any `ent/<db>/schema/*.go`, run `go generate ./ent/<db>/...`
   and commit both the schema change **and** the regenerated files under
   `database/<db>/`.

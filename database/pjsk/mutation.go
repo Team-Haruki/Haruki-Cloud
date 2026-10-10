@@ -16,6 +16,7 @@ import (
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/pjsk/predicate"
 	"haruki-cloud/database/pjsk/profilebgcleanup"
+	"haruki-cloud/database/pjsk/realtimeevent"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -47,6 +48,7 @@ const (
 	TypeMysekaiBirthdaySubscriptionEvent = "MysekaiBirthdaySubscriptionEvent"
 	TypePendingAlias                     = "PendingAlias"
 	TypeProfileBGCleanup                 = "ProfileBGCleanup"
+	TypeRealtimeEvent                    = "RealtimeEvent"
 	TypeRejectedAlias                    = "RejectedAlias"
 	TypeUserBinding                      = "UserBinding"
 	TypeUserDefaultBinding               = "UserDefaultBinding"
@@ -2713,31 +2715,34 @@ func (m *GroupAliasMutation) ResetEdge(name string) error {
 // MysekaiBirthdaySubscriptionMutation represents an operation that mutates the MysekaiBirthdaySubscription nodes in the graph.
 type MysekaiBirthdaySubscriptionMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *int
-	region            *string
-	uid               *string
-	platform          *string
-	platform_user_id  *string
-	platform_group_id *string
-	cloud_bot_id      *string
-	self_id           *string
-	materials         *[]string
-	appendmaterials   []string
-	token             *string
-	active            *bool
-	expires_at        *time.Time
-	created_at        *time.Time
-	updated_at        *time.Time
-	cancelled_at      *time.Time
-	clearedFields     map[string]struct{}
-	events            map[int]struct{}
-	removedevents     map[int]struct{}
-	clearedevents     bool
-	done              bool
-	oldValue          func(context.Context) (*MysekaiBirthdaySubscription, error)
-	predicates        []predicate.MysekaiBirthdaySubscription
+	op                     Op
+	typ                    string
+	id                     *int
+	region                 *string
+	uid                    *string
+	platform               *string
+	platform_user_id       *string
+	platform_group_id      *string
+	cloud_bot_id           *string
+	self_id                *string
+	materials              *[]string
+	appendmaterials        []string
+	token                  *string
+	active                 *bool
+	expires_at             *time.Time
+	created_at             *time.Time
+	updated_at             *time.Time
+	cancelled_at           *time.Time
+	clearedFields          map[string]struct{}
+	events                 map[int]struct{}
+	removedevents          map[int]struct{}
+	clearedevents          bool
+	realtime_events        map[int64]struct{}
+	removedrealtime_events map[int64]struct{}
+	clearedrealtime_events bool
+	done                   bool
+	oldValue               func(context.Context) (*MysekaiBirthdaySubscription, error)
+	predicates             []predicate.MysekaiBirthdaySubscription
 }
 
 var _ ent.Mutation = (*MysekaiBirthdaySubscriptionMutation)(nil)
@@ -3430,6 +3435,60 @@ func (m *MysekaiBirthdaySubscriptionMutation) ResetEvents() {
 	m.removedevents = nil
 }
 
+// AddRealtimeEventIDs adds the "realtime_events" edge to the RealtimeEvent entity by ids.
+func (m *MysekaiBirthdaySubscriptionMutation) AddRealtimeEventIDs(ids ...int64) {
+	if m.realtime_events == nil {
+		m.realtime_events = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.realtime_events[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRealtimeEvents clears the "realtime_events" edge to the RealtimeEvent entity.
+func (m *MysekaiBirthdaySubscriptionMutation) ClearRealtimeEvents() {
+	m.clearedrealtime_events = true
+}
+
+// RealtimeEventsCleared reports if the "realtime_events" edge to the RealtimeEvent entity was cleared.
+func (m *MysekaiBirthdaySubscriptionMutation) RealtimeEventsCleared() bool {
+	return m.clearedrealtime_events
+}
+
+// RemoveRealtimeEventIDs removes the "realtime_events" edge to the RealtimeEvent entity by IDs.
+func (m *MysekaiBirthdaySubscriptionMutation) RemoveRealtimeEventIDs(ids ...int64) {
+	if m.removedrealtime_events == nil {
+		m.removedrealtime_events = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.realtime_events, ids[i])
+		m.removedrealtime_events[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRealtimeEvents returns the removed IDs of the "realtime_events" edge to the RealtimeEvent entity.
+func (m *MysekaiBirthdaySubscriptionMutation) RemovedRealtimeEventsIDs() (ids []int64) {
+	for id := range m.removedrealtime_events {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RealtimeEventsIDs returns the "realtime_events" edge IDs in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) RealtimeEventsIDs() (ids []int64) {
+	for id := range m.realtime_events {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRealtimeEvents resets all changes to the "realtime_events" edge.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetRealtimeEvents() {
+	m.realtime_events = nil
+	m.clearedrealtime_events = false
+	m.removedrealtime_events = nil
+}
+
 // Where appends a list predicates to the MysekaiBirthdaySubscriptionMutation builder.
 func (m *MysekaiBirthdaySubscriptionMutation) Where(ps ...predicate.MysekaiBirthdaySubscription) {
 	m.predicates = append(m.predicates, ps...)
@@ -3793,9 +3852,12 @@ func (m *MysekaiBirthdaySubscriptionMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *MysekaiBirthdaySubscriptionMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.events != nil {
 		edges = append(edges, mysekaibirthdaysubscription.EdgeEvents)
+	}
+	if m.realtime_events != nil {
+		edges = append(edges, mysekaibirthdaysubscription.EdgeRealtimeEvents)
 	}
 	return edges
 }
@@ -3810,15 +3872,24 @@ func (m *MysekaiBirthdaySubscriptionMutation) AddedIDs(name string) []ent.Value 
 			ids = append(ids, id)
 		}
 		return ids
+	case mysekaibirthdaysubscription.EdgeRealtimeEvents:
+		ids := make([]ent.Value, 0, len(m.realtime_events))
+		for id := range m.realtime_events {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *MysekaiBirthdaySubscriptionMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedevents != nil {
 		edges = append(edges, mysekaibirthdaysubscription.EdgeEvents)
+	}
+	if m.removedrealtime_events != nil {
+		edges = append(edges, mysekaibirthdaysubscription.EdgeRealtimeEvents)
 	}
 	return edges
 }
@@ -3833,15 +3904,24 @@ func (m *MysekaiBirthdaySubscriptionMutation) RemovedIDs(name string) []ent.Valu
 			ids = append(ids, id)
 		}
 		return ids
+	case mysekaibirthdaysubscription.EdgeRealtimeEvents:
+		ids := make([]ent.Value, 0, len(m.removedrealtime_events))
+		for id := range m.removedrealtime_events {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *MysekaiBirthdaySubscriptionMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedevents {
 		edges = append(edges, mysekaibirthdaysubscription.EdgeEvents)
+	}
+	if m.clearedrealtime_events {
+		edges = append(edges, mysekaibirthdaysubscription.EdgeRealtimeEvents)
 	}
 	return edges
 }
@@ -3852,6 +3932,8 @@ func (m *MysekaiBirthdaySubscriptionMutation) EdgeCleared(name string) bool {
 	switch name {
 	case mysekaibirthdaysubscription.EdgeEvents:
 		return m.clearedevents
+	case mysekaibirthdaysubscription.EdgeRealtimeEvents:
+		return m.clearedrealtime_events
 	}
 	return false
 }
@@ -3870,6 +3952,9 @@ func (m *MysekaiBirthdaySubscriptionMutation) ResetEdge(name string) error {
 	switch name {
 	case mysekaibirthdaysubscription.EdgeEvents:
 		m.ResetEvents()
+		return nil
+	case mysekaibirthdaysubscription.EdgeRealtimeEvents:
+		m.ResetRealtimeEvents()
 		return nil
 	}
 	return fmt.Errorf("unknown MysekaiBirthdaySubscription edge %s", name)
@@ -6276,6 +6361,1136 @@ func (m *ProfileBGCleanupMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ProfileBGCleanupMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown ProfileBGCleanup edge %s", name)
+}
+
+// RealtimeEventMutation represents an operation that mutates the RealtimeEvent nodes in the graph.
+type RealtimeEventMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *int64
+	topic                *string
+	subscription_version *string
+	event_id             *string
+	payload_ref          *string
+	empty_result         *bool
+	created_at           *time.Time
+	expires_at           *time.Time
+	delivery_count       *int
+	adddelivery_count    *int
+	last_delivered_at    *time.Time
+	acked_at             *time.Time
+	superseded_at        *time.Time
+	superseded_reason    *string
+	clearedFields        map[string]struct{}
+	subscription         *int
+	clearedsubscription  bool
+	done                 bool
+	oldValue             func(context.Context) (*RealtimeEvent, error)
+	predicates           []predicate.RealtimeEvent
+}
+
+var _ ent.Mutation = (*RealtimeEventMutation)(nil)
+
+// realtimeeventOption allows management of the mutation configuration using functional options.
+type realtimeeventOption func(*RealtimeEventMutation)
+
+// newRealtimeEventMutation creates new mutation for the RealtimeEvent entity.
+func newRealtimeEventMutation(c config, op Op, opts ...realtimeeventOption) *RealtimeEventMutation {
+	m := &RealtimeEventMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRealtimeEvent,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRealtimeEventID sets the ID field of the mutation.
+func withRealtimeEventID(id int64) realtimeeventOption {
+	return func(m *RealtimeEventMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *RealtimeEvent
+		)
+		m.oldValue = func(ctx context.Context) (*RealtimeEvent, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().RealtimeEvent.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRealtimeEvent sets the old RealtimeEvent of the mutation.
+func withRealtimeEvent(node *RealtimeEvent) realtimeeventOption {
+	return func(m *RealtimeEventMutation) {
+		m.oldValue = func(context.Context) (*RealtimeEvent, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RealtimeEventMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RealtimeEventMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("pjsk: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of RealtimeEvent entities.
+func (m *RealtimeEventMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RealtimeEventMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RealtimeEventMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().RealtimeEvent.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTopic sets the "topic" field.
+func (m *RealtimeEventMutation) SetTopic(s string) {
+	m.topic = &s
+}
+
+// Topic returns the value of the "topic" field in the mutation.
+func (m *RealtimeEventMutation) Topic() (r string, exists bool) {
+	v := m.topic
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTopic returns the old "topic" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldTopic(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTopic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTopic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTopic: %w", err)
+	}
+	return oldValue.Topic, nil
+}
+
+// ResetTopic resets all changes to the "topic" field.
+func (m *RealtimeEventMutation) ResetTopic() {
+	m.topic = nil
+}
+
+// SetSubscriptionID sets the "subscription_id" field.
+func (m *RealtimeEventMutation) SetSubscriptionID(i int) {
+	m.subscription = &i
+}
+
+// SubscriptionID returns the value of the "subscription_id" field in the mutation.
+func (m *RealtimeEventMutation) SubscriptionID() (r int, exists bool) {
+	v := m.subscription
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubscriptionID returns the old "subscription_id" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldSubscriptionID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubscriptionID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubscriptionID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubscriptionID: %w", err)
+	}
+	return oldValue.SubscriptionID, nil
+}
+
+// ResetSubscriptionID resets all changes to the "subscription_id" field.
+func (m *RealtimeEventMutation) ResetSubscriptionID() {
+	m.subscription = nil
+}
+
+// SetSubscriptionVersion sets the "subscription_version" field.
+func (m *RealtimeEventMutation) SetSubscriptionVersion(s string) {
+	m.subscription_version = &s
+}
+
+// SubscriptionVersion returns the value of the "subscription_version" field in the mutation.
+func (m *RealtimeEventMutation) SubscriptionVersion() (r string, exists bool) {
+	v := m.subscription_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubscriptionVersion returns the old "subscription_version" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldSubscriptionVersion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubscriptionVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubscriptionVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubscriptionVersion: %w", err)
+	}
+	return oldValue.SubscriptionVersion, nil
+}
+
+// ResetSubscriptionVersion resets all changes to the "subscription_version" field.
+func (m *RealtimeEventMutation) ResetSubscriptionVersion() {
+	m.subscription_version = nil
+}
+
+// SetEventID sets the "event_id" field.
+func (m *RealtimeEventMutation) SetEventID(s string) {
+	m.event_id = &s
+}
+
+// EventID returns the value of the "event_id" field in the mutation.
+func (m *RealtimeEventMutation) EventID() (r string, exists bool) {
+	v := m.event_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEventID returns the old "event_id" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldEventID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEventID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEventID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEventID: %w", err)
+	}
+	return oldValue.EventID, nil
+}
+
+// ResetEventID resets all changes to the "event_id" field.
+func (m *RealtimeEventMutation) ResetEventID() {
+	m.event_id = nil
+}
+
+// SetPayloadRef sets the "payload_ref" field.
+func (m *RealtimeEventMutation) SetPayloadRef(s string) {
+	m.payload_ref = &s
+}
+
+// PayloadRef returns the value of the "payload_ref" field in the mutation.
+func (m *RealtimeEventMutation) PayloadRef() (r string, exists bool) {
+	v := m.payload_ref
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPayloadRef returns the old "payload_ref" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldPayloadRef(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPayloadRef is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPayloadRef requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPayloadRef: %w", err)
+	}
+	return oldValue.PayloadRef, nil
+}
+
+// ResetPayloadRef resets all changes to the "payload_ref" field.
+func (m *RealtimeEventMutation) ResetPayloadRef() {
+	m.payload_ref = nil
+}
+
+// SetEmptyResult sets the "empty_result" field.
+func (m *RealtimeEventMutation) SetEmptyResult(b bool) {
+	m.empty_result = &b
+}
+
+// EmptyResult returns the value of the "empty_result" field in the mutation.
+func (m *RealtimeEventMutation) EmptyResult() (r bool, exists bool) {
+	v := m.empty_result
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmptyResult returns the old "empty_result" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldEmptyResult(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmptyResult is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmptyResult requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmptyResult: %w", err)
+	}
+	return oldValue.EmptyResult, nil
+}
+
+// ResetEmptyResult resets all changes to the "empty_result" field.
+func (m *RealtimeEventMutation) ResetEmptyResult() {
+	m.empty_result = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *RealtimeEventMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *RealtimeEventMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *RealtimeEventMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (m *RealtimeEventMutation) SetExpiresAt(t time.Time) {
+	m.expires_at = &t
+}
+
+// ExpiresAt returns the value of the "expires_at" field in the mutation.
+func (m *RealtimeEventMutation) ExpiresAt() (r time.Time, exists bool) {
+	v := m.expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpiresAt returns the old "expires_at" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldExpiresAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpiresAt: %w", err)
+	}
+	return oldValue.ExpiresAt, nil
+}
+
+// ResetExpiresAt resets all changes to the "expires_at" field.
+func (m *RealtimeEventMutation) ResetExpiresAt() {
+	m.expires_at = nil
+}
+
+// SetDeliveryCount sets the "delivery_count" field.
+func (m *RealtimeEventMutation) SetDeliveryCount(i int) {
+	m.delivery_count = &i
+	m.adddelivery_count = nil
+}
+
+// DeliveryCount returns the value of the "delivery_count" field in the mutation.
+func (m *RealtimeEventMutation) DeliveryCount() (r int, exists bool) {
+	v := m.delivery_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeliveryCount returns the old "delivery_count" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldDeliveryCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeliveryCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeliveryCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeliveryCount: %w", err)
+	}
+	return oldValue.DeliveryCount, nil
+}
+
+// AddDeliveryCount adds i to the "delivery_count" field.
+func (m *RealtimeEventMutation) AddDeliveryCount(i int) {
+	if m.adddelivery_count != nil {
+		*m.adddelivery_count += i
+	} else {
+		m.adddelivery_count = &i
+	}
+}
+
+// AddedDeliveryCount returns the value that was added to the "delivery_count" field in this mutation.
+func (m *RealtimeEventMutation) AddedDeliveryCount() (r int, exists bool) {
+	v := m.adddelivery_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDeliveryCount resets all changes to the "delivery_count" field.
+func (m *RealtimeEventMutation) ResetDeliveryCount() {
+	m.delivery_count = nil
+	m.adddelivery_count = nil
+}
+
+// SetLastDeliveredAt sets the "last_delivered_at" field.
+func (m *RealtimeEventMutation) SetLastDeliveredAt(t time.Time) {
+	m.last_delivered_at = &t
+}
+
+// LastDeliveredAt returns the value of the "last_delivered_at" field in the mutation.
+func (m *RealtimeEventMutation) LastDeliveredAt() (r time.Time, exists bool) {
+	v := m.last_delivered_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastDeliveredAt returns the old "last_delivered_at" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldLastDeliveredAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastDeliveredAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastDeliveredAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastDeliveredAt: %w", err)
+	}
+	return oldValue.LastDeliveredAt, nil
+}
+
+// ClearLastDeliveredAt clears the value of the "last_delivered_at" field.
+func (m *RealtimeEventMutation) ClearLastDeliveredAt() {
+	m.last_delivered_at = nil
+	m.clearedFields[realtimeevent.FieldLastDeliveredAt] = struct{}{}
+}
+
+// LastDeliveredAtCleared returns if the "last_delivered_at" field was cleared in this mutation.
+func (m *RealtimeEventMutation) LastDeliveredAtCleared() bool {
+	_, ok := m.clearedFields[realtimeevent.FieldLastDeliveredAt]
+	return ok
+}
+
+// ResetLastDeliveredAt resets all changes to the "last_delivered_at" field.
+func (m *RealtimeEventMutation) ResetLastDeliveredAt() {
+	m.last_delivered_at = nil
+	delete(m.clearedFields, realtimeevent.FieldLastDeliveredAt)
+}
+
+// SetAckedAt sets the "acked_at" field.
+func (m *RealtimeEventMutation) SetAckedAt(t time.Time) {
+	m.acked_at = &t
+}
+
+// AckedAt returns the value of the "acked_at" field in the mutation.
+func (m *RealtimeEventMutation) AckedAt() (r time.Time, exists bool) {
+	v := m.acked_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAckedAt returns the old "acked_at" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldAckedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAckedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAckedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAckedAt: %w", err)
+	}
+	return oldValue.AckedAt, nil
+}
+
+// ClearAckedAt clears the value of the "acked_at" field.
+func (m *RealtimeEventMutation) ClearAckedAt() {
+	m.acked_at = nil
+	m.clearedFields[realtimeevent.FieldAckedAt] = struct{}{}
+}
+
+// AckedAtCleared returns if the "acked_at" field was cleared in this mutation.
+func (m *RealtimeEventMutation) AckedAtCleared() bool {
+	_, ok := m.clearedFields[realtimeevent.FieldAckedAt]
+	return ok
+}
+
+// ResetAckedAt resets all changes to the "acked_at" field.
+func (m *RealtimeEventMutation) ResetAckedAt() {
+	m.acked_at = nil
+	delete(m.clearedFields, realtimeevent.FieldAckedAt)
+}
+
+// SetSupersededAt sets the "superseded_at" field.
+func (m *RealtimeEventMutation) SetSupersededAt(t time.Time) {
+	m.superseded_at = &t
+}
+
+// SupersededAt returns the value of the "superseded_at" field in the mutation.
+func (m *RealtimeEventMutation) SupersededAt() (r time.Time, exists bool) {
+	v := m.superseded_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSupersededAt returns the old "superseded_at" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldSupersededAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSupersededAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSupersededAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSupersededAt: %w", err)
+	}
+	return oldValue.SupersededAt, nil
+}
+
+// ClearSupersededAt clears the value of the "superseded_at" field.
+func (m *RealtimeEventMutation) ClearSupersededAt() {
+	m.superseded_at = nil
+	m.clearedFields[realtimeevent.FieldSupersededAt] = struct{}{}
+}
+
+// SupersededAtCleared returns if the "superseded_at" field was cleared in this mutation.
+func (m *RealtimeEventMutation) SupersededAtCleared() bool {
+	_, ok := m.clearedFields[realtimeevent.FieldSupersededAt]
+	return ok
+}
+
+// ResetSupersededAt resets all changes to the "superseded_at" field.
+func (m *RealtimeEventMutation) ResetSupersededAt() {
+	m.superseded_at = nil
+	delete(m.clearedFields, realtimeevent.FieldSupersededAt)
+}
+
+// SetSupersededReason sets the "superseded_reason" field.
+func (m *RealtimeEventMutation) SetSupersededReason(s string) {
+	m.superseded_reason = &s
+}
+
+// SupersededReason returns the value of the "superseded_reason" field in the mutation.
+func (m *RealtimeEventMutation) SupersededReason() (r string, exists bool) {
+	v := m.superseded_reason
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSupersededReason returns the old "superseded_reason" field's value of the RealtimeEvent entity.
+// If the RealtimeEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RealtimeEventMutation) OldSupersededReason(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSupersededReason is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSupersededReason requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSupersededReason: %w", err)
+	}
+	return oldValue.SupersededReason, nil
+}
+
+// ResetSupersededReason resets all changes to the "superseded_reason" field.
+func (m *RealtimeEventMutation) ResetSupersededReason() {
+	m.superseded_reason = nil
+}
+
+// ClearSubscription clears the "subscription" edge to the MysekaiBirthdaySubscription entity.
+func (m *RealtimeEventMutation) ClearSubscription() {
+	m.clearedsubscription = true
+	m.clearedFields[realtimeevent.FieldSubscriptionID] = struct{}{}
+}
+
+// SubscriptionCleared reports if the "subscription" edge to the MysekaiBirthdaySubscription entity was cleared.
+func (m *RealtimeEventMutation) SubscriptionCleared() bool {
+	return m.clearedsubscription
+}
+
+// SubscriptionIDs returns the "subscription" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SubscriptionID instead. It exists only for internal usage by the builders.
+func (m *RealtimeEventMutation) SubscriptionIDs() (ids []int) {
+	if id := m.subscription; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSubscription resets all changes to the "subscription" edge.
+func (m *RealtimeEventMutation) ResetSubscription() {
+	m.subscription = nil
+	m.clearedsubscription = false
+}
+
+// Where appends a list predicates to the RealtimeEventMutation builder.
+func (m *RealtimeEventMutation) Where(ps ...predicate.RealtimeEvent) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RealtimeEventMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RealtimeEventMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.RealtimeEvent, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RealtimeEventMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RealtimeEventMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (RealtimeEvent).
+func (m *RealtimeEventMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RealtimeEventMutation) Fields() []string {
+	fields := make([]string, 0, 13)
+	if m.topic != nil {
+		fields = append(fields, realtimeevent.FieldTopic)
+	}
+	if m.subscription != nil {
+		fields = append(fields, realtimeevent.FieldSubscriptionID)
+	}
+	if m.subscription_version != nil {
+		fields = append(fields, realtimeevent.FieldSubscriptionVersion)
+	}
+	if m.event_id != nil {
+		fields = append(fields, realtimeevent.FieldEventID)
+	}
+	if m.payload_ref != nil {
+		fields = append(fields, realtimeevent.FieldPayloadRef)
+	}
+	if m.empty_result != nil {
+		fields = append(fields, realtimeevent.FieldEmptyResult)
+	}
+	if m.created_at != nil {
+		fields = append(fields, realtimeevent.FieldCreatedAt)
+	}
+	if m.expires_at != nil {
+		fields = append(fields, realtimeevent.FieldExpiresAt)
+	}
+	if m.delivery_count != nil {
+		fields = append(fields, realtimeevent.FieldDeliveryCount)
+	}
+	if m.last_delivered_at != nil {
+		fields = append(fields, realtimeevent.FieldLastDeliveredAt)
+	}
+	if m.acked_at != nil {
+		fields = append(fields, realtimeevent.FieldAckedAt)
+	}
+	if m.superseded_at != nil {
+		fields = append(fields, realtimeevent.FieldSupersededAt)
+	}
+	if m.superseded_reason != nil {
+		fields = append(fields, realtimeevent.FieldSupersededReason)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RealtimeEventMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case realtimeevent.FieldTopic:
+		return m.Topic()
+	case realtimeevent.FieldSubscriptionID:
+		return m.SubscriptionID()
+	case realtimeevent.FieldSubscriptionVersion:
+		return m.SubscriptionVersion()
+	case realtimeevent.FieldEventID:
+		return m.EventID()
+	case realtimeevent.FieldPayloadRef:
+		return m.PayloadRef()
+	case realtimeevent.FieldEmptyResult:
+		return m.EmptyResult()
+	case realtimeevent.FieldCreatedAt:
+		return m.CreatedAt()
+	case realtimeevent.FieldExpiresAt:
+		return m.ExpiresAt()
+	case realtimeevent.FieldDeliveryCount:
+		return m.DeliveryCount()
+	case realtimeevent.FieldLastDeliveredAt:
+		return m.LastDeliveredAt()
+	case realtimeevent.FieldAckedAt:
+		return m.AckedAt()
+	case realtimeevent.FieldSupersededAt:
+		return m.SupersededAt()
+	case realtimeevent.FieldSupersededReason:
+		return m.SupersededReason()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RealtimeEventMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case realtimeevent.FieldTopic:
+		return m.OldTopic(ctx)
+	case realtimeevent.FieldSubscriptionID:
+		return m.OldSubscriptionID(ctx)
+	case realtimeevent.FieldSubscriptionVersion:
+		return m.OldSubscriptionVersion(ctx)
+	case realtimeevent.FieldEventID:
+		return m.OldEventID(ctx)
+	case realtimeevent.FieldPayloadRef:
+		return m.OldPayloadRef(ctx)
+	case realtimeevent.FieldEmptyResult:
+		return m.OldEmptyResult(ctx)
+	case realtimeevent.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case realtimeevent.FieldExpiresAt:
+		return m.OldExpiresAt(ctx)
+	case realtimeevent.FieldDeliveryCount:
+		return m.OldDeliveryCount(ctx)
+	case realtimeevent.FieldLastDeliveredAt:
+		return m.OldLastDeliveredAt(ctx)
+	case realtimeevent.FieldAckedAt:
+		return m.OldAckedAt(ctx)
+	case realtimeevent.FieldSupersededAt:
+		return m.OldSupersededAt(ctx)
+	case realtimeevent.FieldSupersededReason:
+		return m.OldSupersededReason(ctx)
+	}
+	return nil, fmt.Errorf("unknown RealtimeEvent field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RealtimeEventMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case realtimeevent.FieldTopic:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTopic(v)
+		return nil
+	case realtimeevent.FieldSubscriptionID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubscriptionID(v)
+		return nil
+	case realtimeevent.FieldSubscriptionVersion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubscriptionVersion(v)
+		return nil
+	case realtimeevent.FieldEventID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventID(v)
+		return nil
+	case realtimeevent.FieldPayloadRef:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPayloadRef(v)
+		return nil
+	case realtimeevent.FieldEmptyResult:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmptyResult(v)
+		return nil
+	case realtimeevent.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case realtimeevent.FieldExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpiresAt(v)
+		return nil
+	case realtimeevent.FieldDeliveryCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeliveryCount(v)
+		return nil
+	case realtimeevent.FieldLastDeliveredAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastDeliveredAt(v)
+		return nil
+	case realtimeevent.FieldAckedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAckedAt(v)
+		return nil
+	case realtimeevent.FieldSupersededAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSupersededAt(v)
+		return nil
+	case realtimeevent.FieldSupersededReason:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSupersededReason(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RealtimeEvent field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RealtimeEventMutation) AddedFields() []string {
+	var fields []string
+	if m.adddelivery_count != nil {
+		fields = append(fields, realtimeevent.FieldDeliveryCount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RealtimeEventMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case realtimeevent.FieldDeliveryCount:
+		return m.AddedDeliveryCount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RealtimeEventMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case realtimeevent.FieldDeliveryCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDeliveryCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RealtimeEvent numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RealtimeEventMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(realtimeevent.FieldLastDeliveredAt) {
+		fields = append(fields, realtimeevent.FieldLastDeliveredAt)
+	}
+	if m.FieldCleared(realtimeevent.FieldAckedAt) {
+		fields = append(fields, realtimeevent.FieldAckedAt)
+	}
+	if m.FieldCleared(realtimeevent.FieldSupersededAt) {
+		fields = append(fields, realtimeevent.FieldSupersededAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RealtimeEventMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RealtimeEventMutation) ClearField(name string) error {
+	switch name {
+	case realtimeevent.FieldLastDeliveredAt:
+		m.ClearLastDeliveredAt()
+		return nil
+	case realtimeevent.FieldAckedAt:
+		m.ClearAckedAt()
+		return nil
+	case realtimeevent.FieldSupersededAt:
+		m.ClearSupersededAt()
+		return nil
+	}
+	return fmt.Errorf("unknown RealtimeEvent nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RealtimeEventMutation) ResetField(name string) error {
+	switch name {
+	case realtimeevent.FieldTopic:
+		m.ResetTopic()
+		return nil
+	case realtimeevent.FieldSubscriptionID:
+		m.ResetSubscriptionID()
+		return nil
+	case realtimeevent.FieldSubscriptionVersion:
+		m.ResetSubscriptionVersion()
+		return nil
+	case realtimeevent.FieldEventID:
+		m.ResetEventID()
+		return nil
+	case realtimeevent.FieldPayloadRef:
+		m.ResetPayloadRef()
+		return nil
+	case realtimeevent.FieldEmptyResult:
+		m.ResetEmptyResult()
+		return nil
+	case realtimeevent.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case realtimeevent.FieldExpiresAt:
+		m.ResetExpiresAt()
+		return nil
+	case realtimeevent.FieldDeliveryCount:
+		m.ResetDeliveryCount()
+		return nil
+	case realtimeevent.FieldLastDeliveredAt:
+		m.ResetLastDeliveredAt()
+		return nil
+	case realtimeevent.FieldAckedAt:
+		m.ResetAckedAt()
+		return nil
+	case realtimeevent.FieldSupersededAt:
+		m.ResetSupersededAt()
+		return nil
+	case realtimeevent.FieldSupersededReason:
+		m.ResetSupersededReason()
+		return nil
+	}
+	return fmt.Errorf("unknown RealtimeEvent field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RealtimeEventMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.subscription != nil {
+		edges = append(edges, realtimeevent.EdgeSubscription)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RealtimeEventMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case realtimeevent.EdgeSubscription:
+		if id := m.subscription; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RealtimeEventMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RealtimeEventMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RealtimeEventMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedsubscription {
+		edges = append(edges, realtimeevent.EdgeSubscription)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RealtimeEventMutation) EdgeCleared(name string) bool {
+	switch name {
+	case realtimeevent.EdgeSubscription:
+		return m.clearedsubscription
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RealtimeEventMutation) ClearEdge(name string) error {
+	switch name {
+	case realtimeevent.EdgeSubscription:
+		m.ClearSubscription()
+		return nil
+	}
+	return fmt.Errorf("unknown RealtimeEvent unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RealtimeEventMutation) ResetEdge(name string) error {
+	switch name {
+	case realtimeevent.EdgeSubscription:
+		m.ResetSubscription()
+		return nil
+	}
+	return fmt.Errorf("unknown RealtimeEvent edge %s", name)
 }
 
 // RejectedAliasMutation represents an operation that mutates the RejectedAlias nodes in the graph.

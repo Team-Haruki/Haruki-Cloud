@@ -281,6 +281,57 @@ var (
 			},
 		},
 	}
+	// RealtimeEventsColumns holds the columns for the "realtime_events" table.
+	RealtimeEventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "topic", Type: field.TypeString, Size: 64},
+		{Name: "subscription_version", Type: field.TypeString, Size: 64},
+		{Name: "event_id", Type: field.TypeString, Size: 128},
+		{Name: "payload_ref", Type: field.TypeString, Size: 512, Default: ""},
+		{Name: "empty_result", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "delivery_count", Type: field.TypeInt, Default: 0},
+		{Name: "last_delivered_at", Type: field.TypeTime, Nullable: true},
+		{Name: "acked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "superseded_at", Type: field.TypeTime, Nullable: true},
+		{Name: "superseded_reason", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "subscription_id", Type: field.TypeInt},
+	}
+	// RealtimeEventsTable holds the schema information for the "realtime_events" table.
+	RealtimeEventsTable = &schema.Table{
+		Name:       "realtime_events",
+		Columns:    RealtimeEventsColumns,
+		PrimaryKey: []*schema.Column{RealtimeEventsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "realtime_events_mysekai_birthday_subscriptions_realtime_events",
+				Columns:    []*schema.Column{RealtimeEventsColumns[13]},
+				RefColumns: []*schema.Column{MysekaiBirthdaySubscriptionsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "realtimeevent_subscription_id_subscription_version_event_id",
+				Unique:  true,
+				Columns: []*schema.Column{RealtimeEventsColumns[13], RealtimeEventsColumns[2], RealtimeEventsColumns[3]},
+			},
+			{
+				Name:    "realtimeevent_subscription_id_subscription_version_id",
+				Unique:  false,
+				Columns: []*schema.Column{RealtimeEventsColumns[13], RealtimeEventsColumns[2], RealtimeEventsColumns[0]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "acked_at IS NULL AND superseded_at IS NULL",
+				},
+			},
+			{
+				Name:    "realtimeevent_expires_at",
+				Unique:  false,
+				Columns: []*schema.Column{RealtimeEventsColumns[7]},
+			},
+		},
+	}
 	// RejectedAliasColumns holds the columns for the "rejected_alias" table.
 	RejectedAliasColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -384,6 +435,7 @@ var (
 		MysekaiBirthdaySubscriptionEventsTable,
 		PendingAliasTable,
 		ProfileBgCleanupsTable,
+		RealtimeEventsTable,
 		RejectedAliasTable,
 		UserBindingsTable,
 		UserDefaultBindingsTable,
@@ -398,6 +450,10 @@ func init() {
 	MysekaiBirthdaySubscriptionEventsTable.ForeignKeys[0].RefTable = MysekaiBirthdaySubscriptionsTable
 	MysekaiBirthdaySubscriptionEventsTable.Annotation = &entsql.Annotation{
 		Table: "mysekai_birthday_subscription_events",
+	}
+	RealtimeEventsTable.ForeignKeys[0].RefTable = MysekaiBirthdaySubscriptionsTable
+	RealtimeEventsTable.Annotation = &entsql.Annotation{
+		Table: "realtime_events",
 	}
 	UserBindingsTable.ForeignKeys[0].RefTable = GameAccountsTable
 	UserDefaultBindingsTable.ForeignKeys[0].RefTable = UserBindingsTable

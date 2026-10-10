@@ -129,6 +129,12 @@ func VerifyAPIAuthorization() fiber.Handler {
 	}
 }
 
+// InternalAPIAuthorization is the Authorization value VerifyAPIAuthorization
+// expects, for Cloud's own calls between its roles.
+func InternalAPIAuthorization() string {
+	return configuredInternalAPIAuthorization()
+}
+
 func configuredInternalAPIAuthorization() string {
 	if authorization := strings.TrimSpace(config.Cfg.Backend.AcceptAuthorization); authorization != "" {
 		return authorization

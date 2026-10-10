@@ -109,6 +109,7 @@ func newBirthdayMonitorService(renderApp *renderapp.App) *subscription.Service {
 	}
 	service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
 	service.SetReadOnly(renderApp.Config.ReadOnly)
+	service.SetEventStreams(renderApp.EventStreams)
 	return service
 }
 

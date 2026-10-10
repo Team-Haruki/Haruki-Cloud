@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/pjsk/profilebgcleanup"
+	"haruki-cloud/database/pjsk/realtimeevent"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -94,6 +95,7 @@ func checkColumn(t, c string) error {
 			mysekaibirthdaysubscriptionevent.Table: mysekaibirthdaysubscriptionevent.ValidColumn,
 			pendingalias.Table:                     pendingalias.ValidColumn,
 			profilebgcleanup.Table:                 profilebgcleanup.ValidColumn,
+			realtimeevent.Table:                    realtimeevent.ValidColumn,
 			rejectedalias.Table:                    rejectedalias.ValidColumn,
 			userbinding.Table:                      userbinding.ValidColumn,
 			userdefaultbinding.Table:               userdefaultbinding.ValidColumn,

@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/predicate"
+	"haruki-cloud/database/pjsk/realtimeevent"
 	"math"
 
 	"entgo.io/ent"
@@ -20,11 +21,12 @@ import (
 // MysekaiBirthdaySubscriptionQuery is the builder for querying MysekaiBirthdaySubscription entities.
 type MysekaiBirthdaySubscriptionQuery struct {
 	config
-	ctx        *QueryContext
-	order      []mysekaibirthdaysubscription.OrderOption
-	inters     []Interceptor
-	predicates []predicate.MysekaiBirthdaySubscription
-	withEvents *MysekaiBirthdaySubscriptionEventQuery
+	ctx                *QueryContext
+	order              []mysekaibirthdaysubscription.OrderOption
+	inters             []Interceptor
+	predicates         []predicate.MysekaiBirthdaySubscription
+	withEvents         *MysekaiBirthdaySubscriptionEventQuery
+	withRealtimeEvents *RealtimeEventQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,6 +78,28 @@ func (_q *MysekaiBirthdaySubscriptionQuery) QueryEvents() *MysekaiBirthdaySubscr
 			sqlgraph.From(mysekaibirthdaysubscription.Table, mysekaibirthdaysubscription.FieldID, selector),
 			sqlgraph.To(mysekaibirthdaysubscriptionevent.Table, mysekaibirthdaysubscriptionevent.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, mysekaibirthdaysubscription.EventsTable, mysekaibirthdaysubscription.EventsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRealtimeEvents chains the current query on the "realtime_events" edge.
+func (_q *MysekaiBirthdaySubscriptionQuery) QueryRealtimeEvents() *RealtimeEventQuery {
+	query := (&RealtimeEventClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(mysekaibirthdaysubscription.Table, mysekaibirthdaysubscription.FieldID, selector),
+			sqlgraph.To(realtimeevent.Table, realtimeevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, mysekaibirthdaysubscription.RealtimeEventsTable, mysekaibirthdaysubscription.RealtimeEventsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -270,12 +294,13 @@ func (_q *MysekaiBirthdaySubscriptionQuery) Clone() *MysekaiBirthdaySubscription
 		return nil
 	}
 	return &MysekaiBirthdaySubscriptionQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]mysekaibirthdaysubscription.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.MysekaiBirthdaySubscription{}, _q.predicates...),
-		withEvents: _q.withEvents.Clone(),
+		config:             _q.config,
+		ctx:                _q.ctx.Clone(),
+		order:              append([]mysekaibirthdaysubscription.OrderOption{}, _q.order...),
+		inters:             append([]Interceptor{}, _q.inters...),
+		predicates:         append([]predicate.MysekaiBirthdaySubscription{}, _q.predicates...),
+		withEvents:         _q.withEvents.Clone(),
+		withRealtimeEvents: _q.withRealtimeEvents.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -290,6 +315,17 @@ func (_q *MysekaiBirthdaySubscriptionQuery) WithEvents(opts ...func(*MysekaiBirt
 		opt(query)
 	}
 	_q.withEvents = query
+	return _q
+}
+
+// WithRealtimeEvents tells the query-builder to eager-load the nodes that are connected to
+// the "realtime_events" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *MysekaiBirthdaySubscriptionQuery) WithRealtimeEvents(opts ...func(*RealtimeEventQuery)) *MysekaiBirthdaySubscriptionQuery {
+	query := (&RealtimeEventClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withRealtimeEvents = query
 	return _q
 }
 
@@ -371,8 +407,9 @@ func (_q *MysekaiBirthdaySubscriptionQuery) sqlAll(ctx context.Context, hooks ..
 	var (
 		nodes       = []*MysekaiBirthdaySubscription{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withEvents != nil,
+			_q.withRealtimeEvents != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -402,6 +439,15 @@ func (_q *MysekaiBirthdaySubscriptionQuery) sqlAll(ctx context.Context, hooks ..
 			return nil, err
 		}
 	}
+	if query := _q.withRealtimeEvents; query != nil {
+		if err := _q.loadRealtimeEvents(ctx, query, nodes,
+			func(n *MysekaiBirthdaySubscription) { n.Edges.RealtimeEvents = []*RealtimeEvent{} },
+			func(n *MysekaiBirthdaySubscription, e *RealtimeEvent) {
+				n.Edges.RealtimeEvents = append(n.Edges.RealtimeEvents, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -420,6 +466,36 @@ func (_q *MysekaiBirthdaySubscriptionQuery) loadEvents(ctx context.Context, quer
 	}
 	query.Where(predicate.MysekaiBirthdaySubscriptionEvent(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(mysekaibirthdaysubscription.EventsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.SubscriptionID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "subscription_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *MysekaiBirthdaySubscriptionQuery) loadRealtimeEvents(ctx context.Context, query *RealtimeEventQuery, nodes []*MysekaiBirthdaySubscription, init func(*MysekaiBirthdaySubscription), assign func(*MysekaiBirthdaySubscription, *RealtimeEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*MysekaiBirthdaySubscription)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(realtimeevent.FieldSubscriptionID)
+	}
+	query.Where(predicate.RealtimeEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(mysekaibirthdaysubscription.RealtimeEventsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

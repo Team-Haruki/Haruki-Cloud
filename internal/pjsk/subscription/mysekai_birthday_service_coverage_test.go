@@ -262,7 +262,8 @@ func TestBirthdayRemoteEventReadAndAck(t *testing.T) {
 
 	recorder.mu.Lock()
 	defer recorder.mu.Unlock()
-	if recorder.requests[http.MethodGet] != 2 || recorder.requests[http.MethodPost] != 1 {
+	// The ack validates locally; only the render reads the event from Toolbox.
+	if recorder.requests[http.MethodGet] != 1 || recorder.requests[http.MethodPost] != 1 {
 		t.Fatalf("remote event calls = %#v", recorder.requests)
 	}
 }

@@ -18,7 +18,6 @@ import (
 
 	"haruki-cloud/api"
 	harukiConfig "haruki-cloud/config"
-	pjskDB "haruki-cloud/database/pjsk"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/realtime"
@@ -257,7 +256,6 @@ func TestOpenEventsPJSKClientUsesConfiguredDatabase(t *testing.T) {
 	harukiConfig.Cfg.PJSK.DBURL = fmt.Sprintf("file:events_open_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano())
 	client := openEventsPJSKClient(startupTestLogger(io.Discard))
 	defer client.Close()
-	var _ *pjskDB.Client = client
 	// The events role never migrates: the table does not exist yet.
 	if err := realtime.NewStore(client).Ping(context.Background()); err == nil {
 		t.Fatal("events role created the schema")

@@ -393,7 +393,7 @@ services:
       HARUKI_EVENTS_LEGACY_FORWARD_URL: ${HARUKI_EVENTS_LEGACY_FORWARD_URL:-}
       HARUKI_EVENTS_LEGACY_FORWARD_TOKEN: ${HARUKI_EVENTS_LEGACY_FORWARD_TOKEN:-}
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:7911/healthz"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${HARUKI_EVENTS_PORT:-7911}/healthz"]
       interval: 10s
       timeout: 3s
       retries: 3

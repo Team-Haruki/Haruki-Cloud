@@ -169,6 +169,8 @@ func eventStreamCloser(embedded *realtime.Service) realtime.Closer {
 	}
 	closer := realtime.NewHTTPCloser(harukiConfig.Cfg.Events.InternalBaseURL, api.InternalAPIAuthorization(), internalCallerUserAgent())
 	if closer == nil {
+		// Return a nil interface, not a typed-nil *HTTPCloser: callers test
+		// EventStreams != nil.
 		return nil
 	}
 	return closer

@@ -240,7 +240,7 @@ censor:                    # 内容审核（百度/腾讯凭据 + censor DB）
 toolbox:                   # Toolbox 外部服务
   base_url: ""
 
-hmes:                      # public_base_url：下发给 Client 的 SSE 基址；internal_*：旧网关并行期的关闭通知
+hmes:                      # public_base_url：下发给 Client 的 SSE 基址；internal_base_url / internal_token：仍在使用，并行期向旧网关发送关闭通知，旧网关下线后留空
   public_base_url: ""
 
 events:                    # 实时事件角色（SSE 网关）；字段说明见 haruki-cloud.example.yaml

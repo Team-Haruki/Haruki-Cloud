@@ -129,6 +129,14 @@ func (p *Pool) Enabled() bool {
 	return p != nil && len(p.targets) > 0
 }
 
+// Size is the number of targets in the pool.
+func (p *Pool) Size() int {
+	if p == nil {
+		return 0
+	}
+	return len(p.targets)
+}
+
 func (p *Pool) Acquire(ctx context.Context) (*Lease, error) {
 	return p.AcquireFunc(ctx, nil)
 }

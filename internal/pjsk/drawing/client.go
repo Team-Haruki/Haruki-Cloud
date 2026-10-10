@@ -117,6 +117,7 @@ func newHarukiDrawingClient(strict bool, legacyBaseURL string, targets []upstrea
 		localCache:        newLocalRenderCache(0),
 		directiveRejected: new(atomic.Int64),
 		coding:            httpcoding.NewNegotiator(),
+		health:            newNodeHealth(drawingNodeCooldown),
 	}
 	for _, option := range options {
 		if option != nil {
@@ -325,25 +326,6 @@ func (c *HarukiDrawingClient) postPreparedOnce(endpoint string, requestBody any)
 	}
 
 	requestCtx := c.requestCtx
-	targetBaseURL := c.baseURL
-	targetName := drawingLegacyTargetName
-	var lease *upstream.Lease
-	var err error
-	if c.pool != nil && c.pool.Enabled() {
-		finishUpstreamQueue := commandtrace.MeasureOperation(requestCtx, "drawing.upstream_queue")
-		lease, err = c.pool.Acquire(requestCtx)
-		finishUpstreamQueue()
-		if err != nil {
-			return nil, upstreamerr.Tag(upstreamerr.ServiceRender, upstreamerr.KindUnavailable, "", fmt.Errorf("drawing upstream is unavailable: %w", err))
-		}
-		defer lease.Release()
-		targetBaseURL = lease.Target.BaseURL
-		targetName = lease.Target.Name
-	}
-	if strings.TrimSpace(targetBaseURL) == "" {
-		return nil, upstreamerr.Tag(upstreamerr.ServiceRender, upstreamerr.KindNotConfigured, "drawing client base_url is empty", nil)
-	}
-
 	finishEncode := commandtrace.MeasureOperation(requestCtx, "drawing.encode")
 	encodedBody, err := json.Marshal(requestBody)
 	finishEncode()
@@ -352,22 +334,14 @@ func (c *HarukiDrawingClient) postPreparedOnce(endpoint string, requestBody any)
 	}
 
 	directive := c.activeDirective()
-	tPost := time.Now()
-	finishHTTP := commandtrace.MeasureOperation(requestCtx, "drawing.http")
-	httpCtx, timing := upstreamcall.Start(requestCtx)
-	resp, err := c.sendPrepared(httpCtx, targetBaseURL, endpoint, encodedBody, directive)
-	finishHTTP()
-	elapsed := time.Since(tPost)
-	recordDrawingCall(requestCtx, timing, targetName, endpoint, len(encodedBody), resp, err)
-	if err != nil {
-		c.logger.WarnContext(requestCtx, "drawing request failed",
-			"upstream", "drawing",
-			"upstream_path", endpoint,
-			"duration_ms", commandtrace.Milliseconds(elapsed),
-			"error_type", fmt.Sprintf("%T", err),
-		)
-		return nil, upstreamerr.Transport(upstreamerr.ServiceRender, "drawing request failed: "+err.Error(), err)
+	attempt, err := c.sendWithFailover(endpoint, encodedBody, directive)
+	if attempt.lease != nil {
+		defer attempt.lease.Release()
 	}
+	if err != nil {
+		return nil, err
+	}
+	resp, elapsed := attempt.resp, attempt.elapsed
 
 	if resp.StatusCode() != http.StatusOK {
 		code := drawingResponseErrorCode(resp.Body())

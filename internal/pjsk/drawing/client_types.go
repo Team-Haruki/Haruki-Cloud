@@ -30,4 +30,7 @@ type HarukiDrawingClient struct {
 	// coding remembers which Drawing nodes take zstd request bodies; shared
 	// by clones. nil sends identity.
 	coding *httpcoding.Negotiator
+	// health holds the nodes skipped after a connection failure; shared by
+	// clones.
+	health *nodeHealth
 }

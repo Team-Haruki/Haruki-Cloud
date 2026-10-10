@@ -1146,7 +1146,7 @@ type SecurityConfig struct {
 // AuthIPBanConfig tunes the automatic login ban per source address. Zero
 // values take the defaults noted on each field.
 type AuthIPBanConfig struct {
-	// Enabled switches the ban on. nil = true.
+	// Enabled switches the ban on. nil = false: it ships dark.
 	Enabled *bool `yaml:"enabled"`
 	// Threshold is the number of counted failures inside Window that bans
 	// the address. 0 = 10.

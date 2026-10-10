@@ -587,7 +587,7 @@ security:
   # DURATION, MAX_DURATION, ESCALATION_WINDOW, COUNT_BUILD_REJECTED,
   # EXEMPT_KNOWN_BOTS, KNOWN_BOT_TTL, BLOCK_BOT_ROUTES, NEVER_BAN_CIDRS).
   auth_ip_ban:
-    enabled: true
+    enabled: false             # off by default; set true to turn the ban on
     threshold: 10              # counted failures inside window that ban
     window: 10m                # fixed window started by the first failure
     ban_duration: 6h           # first ban

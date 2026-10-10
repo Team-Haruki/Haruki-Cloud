@@ -876,7 +876,7 @@ func TestExampleConfigAuthIPBanDefaults(t *testing.T) {
 	cfg, err := ReadConfig(filepath.Join("..", "haruki-cloud.example.yaml"))
 	testutil.Require(t, err == nil, "read example: %v", err)
 	ban := cfg.Security.AuthIPBan
-	testutil.Check(t, ban.Enabled != nil && *ban.Enabled, "example enabled = %v", ban.Enabled)
+	testutil.Check(t, ban.Enabled != nil && !*ban.Enabled, "example enabled = %v", ban.Enabled)
 	testutil.Check(t, ban.Threshold == 10 && ban.Window == 10*time.Minute && ban.BanDuration == 6*time.Hour &&
 		ban.MaxBanDuration == 24*time.Hour && ban.EscalationWindow == 168*time.Hour && !ban.BlockBotRoutes,
 		"example auth_ip_ban = %+v", ban)

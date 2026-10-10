@@ -68,27 +68,32 @@ func TestBuildAuthIPBan(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	off := false
+	off, on := false, true
 	harukiConfig.Cfg.Security.AuthIPBan = harukiConfig.AuthIPBanConfig{Enabled: &off}
 	if g, err := buildAuthIPBan(ctx, logger, fiber.New(), rdb, nil); g != nil || err != nil {
 		t.Fatalf("disabled: %v %v", g, err)
 	}
+	// Unset enabled: the ban ships dark.
 	harukiConfig.Cfg.Security.AuthIPBan = harukiConfig.AuthIPBanConfig{}
+	if g, err := buildAuthIPBan(ctx, logger, fiber.New(), rdb, nil); g != nil || err != nil {
+		t.Fatalf("default config enabled the ban: %v %v", g, err)
+	}
+	harukiConfig.Cfg.Security.AuthIPBan = harukiConfig.AuthIPBanConfig{Enabled: &on}
 	if g, err := buildAuthIPBan(ctx, logger, fiber.New(), nil, nil); g != nil || err != nil {
 		t.Fatalf("without redis: %v %v", g, err)
 	}
-	harukiConfig.Cfg.Security.AuthIPBan = harukiConfig.AuthIPBanConfig{NeverBanCIDRs: []string{"bogus"}}
+	harukiConfig.Cfg.Security.AuthIPBan = harukiConfig.AuthIPBanConfig{Enabled: &on, NeverBanCIDRs: []string{"bogus"}}
 	if _, err := buildAuthIPBan(ctx, logger, fiber.New(), rdb, nil); err == nil {
 		t.Fatal("invalid never_ban_cidrs accepted")
 	}
 
-	// Defaults: on, bot routes left alone.
-	harukiConfig.Cfg.Security.AuthIPBan = harukiConfig.AuthIPBanConfig{}
+	// Enabled with the other defaults: bot routes left alone.
+	harukiConfig.Cfg.Security.AuthIPBan = harukiConfig.AuthIPBanConfig{Enabled: &on}
 	app := fiber.New(fiber.Config{ProxyHeader: fiber.HeaderXForwardedFor, EnableIPValidation: true, TrustProxy: true,
 		TrustProxyConfig: fiber.TrustProxyConfig{Proxies: []string{"0.0.0.0/32"}}})
 	guard := initAuthIPBan(ctx, logger, app, rdb, nil)
 	if guard == nil {
-		t.Fatal("default config did not enable the ban")
+		t.Fatal("enabled: true did not enable the ban")
 	}
 	cfg := guard.Config()
 	if cfg.Threshold != 10 || !cfg.CountBuildRejected || !cfg.ExemptKnownBots || cfg.BlockBotRoutes {
@@ -100,7 +105,7 @@ func TestBuildAuthIPBan(t *testing.T) {
 	}
 
 	// block_bot_routes guards the bot routes registered after it.
-	harukiConfig.Cfg.Security.AuthIPBan = harukiConfig.AuthIPBanConfig{BlockBotRoutes: true}
+	harukiConfig.Cfg.Security.AuthIPBan = harukiConfig.AuthIPBanConfig{Enabled: &on, BlockBotRoutes: true}
 	blocking := fiber.New(fiber.Config{ProxyHeader: fiber.HeaderXForwardedFor, EnableIPValidation: true, TrustProxy: true,
 		TrustProxyConfig: fiber.TrustProxyConfig{Proxies: []string{"0.0.0.0/32"}}})
 	if g, err := buildAuthIPBan(ctx, logger, blocking, rdb, nil); err != nil || !g.BlocksBotRoutes() {

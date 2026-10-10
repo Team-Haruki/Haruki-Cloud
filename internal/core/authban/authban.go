@@ -95,8 +95,8 @@ type Config struct {
 	NeverBan []string
 }
 
-// ConfigFromSettings converts the YAML / env settings. enabled is false when
-// the operator switched the ban off.
+// ConfigFromSettings converts the YAML / env settings. The ban is off unless
+// the operator sets enabled: true.
 func ConfigFromSettings(s config.AuthIPBanConfig) (cfg Config, enabled bool) {
 	return Config{
 		Threshold:          s.Threshold,
@@ -109,7 +109,7 @@ func ConfigFromSettings(s config.AuthIPBanConfig) (cfg Config, enabled bool) {
 		ExemptKnownBots:    boolOr(s.ExemptKnownBots, true),
 		BlockBotRoutes:     s.BlockBotRoutes,
 		NeverBan:           s.NeverBanCIDRs,
-	}, boolOr(s.Enabled, true)
+	}, boolOr(s.Enabled, false)
 }
 
 func boolOr(v *bool, fallback bool) bool {

@@ -97,7 +97,7 @@ func (e *testEnv) fail(t *testing.T, ip, bot string, n int) {
 
 func TestDefaultsApply(t *testing.T) {
 	cfg, enabled := ConfigFromSettings(config.AuthIPBanConfig{})
-	if !enabled || !cfg.CountBuildRejected || !cfg.ExemptKnownBots || cfg.BlockBotRoutes {
+	if enabled || !cfg.CountBuildRejected || !cfg.ExemptKnownBots || cfg.BlockBotRoutes {
 		t.Fatalf("settings defaults = %+v enabled=%v", cfg, enabled)
 	}
 	eff := cfg.withDefaults()
@@ -105,9 +105,12 @@ func TestDefaultsApply(t *testing.T) {
 		eff.MaxBanDuration != 24*time.Hour || eff.EscalationWindow != 7*24*time.Hour || eff.KnownBotTTL != 7*24*time.Hour {
 		t.Fatalf("defaults = %+v", eff)
 	}
-	off := false
+	off, on := false, true
 	if _, enabled := ConfigFromSettings(config.AuthIPBanConfig{Enabled: &off}); enabled {
 		t.Fatal("enabled: false ignored")
+	}
+	if _, enabled := ConfigFromSettings(config.AuthIPBanConfig{Enabled: &on}); !enabled {
+		t.Fatal("enabled: true ignored")
 	}
 	// A cap below the first ban means "no escalation", never a shorter ban.
 	if got := (Config{BanDuration: time.Hour, MaxBanDuration: time.Minute}).withDefaults().MaxBanDuration; got != time.Hour {

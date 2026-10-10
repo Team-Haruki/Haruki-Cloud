@@ -179,7 +179,7 @@ security:
 ```yaml
 security:
   auth_ip_ban:
-    enabled: true
+    enabled: false             # 默认关闭，设为 true 才启用
     threshold: 10              # 窗口内计入的失败次数达到这个值就封禁
     window: 10m                # 固定窗口，从第一次失败开始
     ban_duration: 6h           # 第一次封禁时长
@@ -195,7 +195,7 @@ security:
 环境变量：`HARUKI_SECURITY_AUTH_IP_BAN_` 加大写字段名（`ENABLED`、`THRESHOLD`、`WINDOW`、
 `DURATION`、`MAX_DURATION`、`ESCALATION_WINDOW`、`COUNT_BUILD_REJECTED`、
 `EXEMPT_KNOWN_BOTS`、`KNOWN_BOT_TTL`、`BLOCK_BOT_ROUTES`、`NEVER_BAN_CIDRS`，后者逗号分隔）。
-没有 Redis 时不启用。
+默认关闭（`enabled` 未设置时为 false），需要显式设为 `true`；开启后没有 Redis 时也不启用。
 
 ### 计入哪些失败
 

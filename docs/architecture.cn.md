@@ -340,7 +340,7 @@ AuthV3 契约（请求体 Noise NK Message 1，响应体 Message 2，payload 均
 服务端可配置多把 Noise 静态密钥（`noise_private_key` + `noise_keys`），每把有 key_id。
 客户端可通过 `X-Haruki-Noise-Key-Id` 请求头提示所用公钥；缺省时服务端依次尝试全部密钥。
 响应头 `X-Haruki-Noise-Key-Id` 回传实际匹配的 key_id。auth 限流为每 bot_id 每分钟 10 次。
-同一来源地址登录失败过多会被自动禁止登录（默认 10 分钟内 10 次封 6 小时），被封地址在
+开启 `security.auth_ip_ban.enabled` 后（默认关闭），同一来源地址登录失败过多会被自动禁止登录（默认 10 分钟内 10 次封 6 小时），被封地址在
 Noise 握手之前收到明文 429 和 `Retry-After`，见 [build-policy.cn.md](build-policy.cn.md)
 “登录失败自动封禁”。
 

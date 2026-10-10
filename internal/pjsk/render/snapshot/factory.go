@@ -129,6 +129,7 @@ func (f *DefaultSnapshotFactory) buildService(ctx context.Context, input BuildIn
 		HasFrame:        false,
 		Rank:            common.PositiveIntPtr(raw.UserGamedata.Rank),
 		UserCards:       buildUserCardEntries(raw.UserCards),
+		DataSourceKind:  drawing.DataSourceSuite,
 	}
 	service.musicResult = resolveMusicResultMap(raw)
 	service.challenge = &ChallengeLiveData{

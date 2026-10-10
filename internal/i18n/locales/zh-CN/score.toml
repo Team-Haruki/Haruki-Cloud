@@ -55,3 +55,7 @@ other = "这个 PT 无法用自定义房间控分，可能是 PT 过小"
 [score.music_basic_point_missing]
 description = "控分需要的歌曲基础分数据缺失。"
 other = "暂时没有该歌曲的控分数据"
+
+[score.image.target_pt]
+description = "图片：控分和自定义房间控分图片标题里目标 PT 前的标签，后面接目标 PT 数值。"
+other = "目标 PT："

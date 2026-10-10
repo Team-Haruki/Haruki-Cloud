@@ -194,3 +194,11 @@ other = "公开信息"
 [profile.image.modular_default_name]
 description = "图片：模块化个人信息默认布局的名称。"
 other = "默认模块化个人信息"
+
+[profile.image.rank_level]
+description = "图片：个人信息卡片上游戏账号等级的标签。占位符：Level=游戏账号等级。"
+other = "Lv.{{.Level}}"
+
+[profile.image.mysekai_level]
+description = "图片：个人信息卡片上烤森等级的标签。占位符：Level=烤森等级。"
+other = "烤森 Lv.{{.Level}}"

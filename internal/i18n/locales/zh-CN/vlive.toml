@@ -27,3 +27,23 @@ other = "未找到对应的个人虚拟 Live\n发送 /vlive 查看虚拟 Live �
 [vlive.fallback_name]
 description = "虚拟 Live 列表图和详情图里，Live 没有名称时显示的名称。占位符：ID=虚拟 Live ID。"
 other = "虚拟 Live #{{.ID}}"
+
+[vlive.image.type.solo_virtual_live]
+description = "图片：虚拟 Live 列表图和详情图里，虚拟 Live 类型的标签（普通虚拟 Live 不显示）。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "个人 Live"
+
+[vlive.image.type.virtual_message]
+description = "图片：虚拟 Live 列表图和详情图里，虚拟 Live 类型的标签（普通虚拟 Live 不显示）。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "Virtual Message"
+
+[vlive.image.type.cheerful_carnival]
+description = "图片：虚拟 Live 列表图和详情图里，虚拟 Live 类型的标签（普通虚拟 Live 不显示）。显示名固定为“欢乐嘉年华(5v5)”，半角括号。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "欢乐嘉年华(5v5)"
+
+[vlive.image.type.streaming]
+description = "图片：虚拟 Live 列表图和详情图里，虚拟 Live 类型的标签（普通虚拟 Live 不显示）。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "直播"
+
+[vlive.image.type.beginner]
+description = "图片：虚拟 Live 列表图和详情图里，虚拟 Live 类型的标签（普通虚拟 Live 不显示）。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "新手"

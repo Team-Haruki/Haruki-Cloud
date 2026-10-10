@@ -15,3 +15,83 @@ other = "请写要查询的卡池"
 [gacha.no_match]
 description = "按条件筛选卡池后没有结果。"
 other = "没有符合条件的卡池"
+
+[gacha.image.type.beginner]
+description = "图片：卡池详情图片里的卡池类型。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "新手"
+
+[gacha.image.type.normal]
+description = "图片：卡池详情图片里的卡池类型。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "一般"
+
+[gacha.image.type.ceil]
+description = "图片：卡池详情图片里的卡池类型。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "天井"
+
+[gacha.image.type.gift]
+description = "图片：卡池详情图片里的卡池类型。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "礼物"
+
+[gacha.image.behavior.normal]
+description = "图片：卡池详情图片里抽卡方式的名称，后面可能接抽数和次数限制。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "普通"
+
+[gacha.image.behavior.over_rarity_3_once]
+description = "图片：卡池详情图片里抽卡方式的名称，后面可能接抽数和次数限制。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "保底 3 星"
+
+[gacha.image.behavior.over_rarity_4_once]
+description = "图片：卡池详情图片里抽卡方式的名称，后面可能接抽数和次数限制。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "保底 4 星"
+
+[gacha.image.behavior.once_a_day]
+description = "图片：卡池详情图片里抽卡方式的名称，后面可能接抽数和次数限制。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "每日"
+
+[gacha.image.behavior.once_a_week]
+description = "图片：卡池详情图片里抽卡方式的名称，后面可能接抽数和次数限制。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "每周"
+
+[gacha.image.behavior.unknown]
+description = "图片：卡池详情图片里，抽卡方式无法识别时的名称。"
+other = "未知"
+
+[gacha.image.spin.single]
+description = "图片：卡池详情图片里抽卡方式后面的抽数：单抽。渲染服务在前面加“/”接在抽卡方式后面。"
+other = "单抽"
+
+[gacha.image.spin.ten]
+description = "图片：卡池详情图片里抽卡方式后面的抽数：十连。渲染服务在前面加“/”接在抽卡方式后面。"
+other = "十连"
+
+[gacha.image.colorful_pass]
+description = "图片：卡池详情图片里需要月卡的抽卡方式。占位符：Behavior=抽卡方式和抽数，例如“每日/单抽”。"
+other = "月卡{{.Behavior}}"
+
+[gacha.image.execute_limit]
+description = "图片：卡池详情图片里抽卡方式后面的次数限制。占位符：Count=最多能抽的次数。"
+other = "（限 {{.Count}} 次）"
+
+[gacha.image.rarity.rarity_1]
+description = "图片：卡池详情图片的概率表里，稀有度图标缺失时显示的稀有度名称。"
+other = "1 星"
+
+[gacha.image.rarity.rarity_2]
+description = "图片：卡池详情图片的概率表里，稀有度图标缺失时显示的稀有度名称。"
+other = "2 星"
+
+[gacha.image.rarity.rarity_3]
+description = "图片：卡池详情图片的概率表里，稀有度图标缺失时显示的稀有度名称。"
+other = "3 星"
+
+[gacha.image.rarity.rarity_4]
+description = "图片：卡池详情图片的概率表里，稀有度图标缺失时显示的稀有度名称。"
+other = "4 星"
+
+[gacha.image.rarity.rarity_birthday]
+description = "图片：卡池详情图片的概率表里，稀有度图标缺失时显示的稀有度名称。"
+other = "生日"
+
+[gacha.image.rarity.pickup]
+description = "图片：卡池详情图片的概率表里，稀有度图标缺失时显示的稀有度名称。"
+other = "当期"

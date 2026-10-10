@@ -20,7 +20,7 @@ var cacheLogger = logger.NewLoggerFromGlobal("DrawingCache")
 
 const (
 	renderCachePublic              = "public"
-	renderCacheKeyVersion          = 6
+	renderCacheKeyVersion          = 7
 	renderCacheEventListKeyVersion = 5
 	localRenderCacheMaxEntries     = 512
 	localRenderCacheMaxBytes       = 256 << 20

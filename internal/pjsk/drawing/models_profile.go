@@ -64,6 +64,11 @@ type DetailedProfileCardRequest struct {
 	FramePaths      *PlayerFramePaths `json:"frame_paths,omitempty"`
 	Rank            *int              `json:"rank,omitempty"`
 	UserCards       []any             `json:"user_cards,omitempty"`
+	// DataSourceKind is what the profile's data came from. Drawing draws
+	// DataSourceLabel for it (filled from the catalog when the request is
+	// prepared) and falls back to its own name for the kind.
+	DataSourceKind  DataSourceKind `json:"data_source_kind,omitempty"`
+	DataSourceLabel string         `json:"data_source_label,omitempty"`
 }
 
 type ProfileBgSettings struct {

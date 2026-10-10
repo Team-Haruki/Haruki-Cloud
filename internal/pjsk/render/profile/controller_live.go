@@ -49,6 +49,9 @@ func inheritSnapshotProfileMetadata(detail *drawing.DetailedProfileCardRequest, 
 		detail.UpdateTime = snapshotDetail.UpdateTime
 	}
 	detail.Mode = common.CloneStringPtr(snapshotDetail.Mode)
+	if snapshotDetail.DataSourceKind != "" {
+		detail.DataSourceKind = snapshotDetail.DataSourceKind
+	}
 	// The game-account rank chip only comes from Suite data; public-API-only
 	// profiles leave it unset.
 	detail.Rank = common.CloneIntPtr(snapshotDetail.Rank)
@@ -201,6 +204,7 @@ func (c *Controller) buildDetailedProfileCardFromAPIState(query Query, resp *sek
 		FramePath:       framePath,
 		FramePaths:      framePaths,
 		UserCards:       state.detailedUserCards,
+		DataSourceKind:  drawing.DataSourcePublic,
 	}
 	inheritSnapshotProfileMetadata(detail, snapshot, region)
 	return detail, nil

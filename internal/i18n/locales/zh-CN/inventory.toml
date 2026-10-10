@@ -117,3 +117,55 @@ other = "招募保底道具 #{{.ID}}"
 [inventory.image.unnamed.boost_item]
 description = "图片：游戏数据里没有名称的演出能量道具。占位符：ID=道具 ID。"
 other = "演出能量道具 #{{.ID}}"
+
+[inventory.image.resource_type.coin]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "金币"
+
+[inventory.image.resource_type.jewel]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "水晶"
+
+[inventory.image.resource_type.virtual_coin]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "虚拟币"
+
+[inventory.image.resource_type.boost_item]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "演出能量道具"
+
+[inventory.image.resource_type.event_item]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "活动"
+
+[inventory.image.resource_type.gacha_ticket]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "招募"
+
+[inventory.image.resource_type.gacha_ceil_item]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "招募"
+
+[inventory.image.resource_type.practice_ticket]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "育成"
+
+[inventory.image.resource_type.skill_practice_ticket]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "育成"
+
+[inventory.image.resource_type.mysekai_material]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "烤森"
+
+[inventory.image.resource_type.honor_background]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "称号背景"
+
+[inventory.image.resource_type.honor_word]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "称号文字"
+
+[inventory.image.resource_type.virtual_item]
+description = "图片：背包图片里，道具没有说明文字时代替说明显示的道具类别。渲染服务按同时发送的原始类型取这段文字，只用于显示。"
+other = "虚拟道具"

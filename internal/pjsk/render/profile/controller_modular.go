@@ -71,6 +71,7 @@ func (c *Controller) BuildModularProfileRequestFromAPIWithSnapshot(query Query, 
 		FramePath:       common.CloneStringPtr(profile.FramePath),
 		FramePaths:      profile.FramePaths,
 		UserCards:       state.detailedUserCards,
+		DataSourceKind:  drawing.DataSourcePublic,
 	}
 	inheritSnapshotProfileMetadata(detail, snap, region)
 

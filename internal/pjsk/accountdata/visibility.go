@@ -192,20 +192,28 @@ func DropLegacyVisibleColumn(ctx context.Context, db *sql.DB, dialectName string
 }
 
 func legacyVisibleColumnExists(ctx context.Context, db *sql.DB, dialectName string) (bool, error) {
-	var query string
-	switch dialectName {
-	case dialect.Postgres:
-		query = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'user_bindings' AND column_name = 'visible'"
-	case dialect.MySQL:
-		query = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'user_bindings' AND column_name = 'visible'"
-	case dialect.SQLite:
-		query = "SELECT COUNT(*) FROM pragma_table_info('user_bindings') WHERE name = 'visible'"
-	default:
-		return false, fmt.Errorf("drop user_bindings.visible: unsupported dialect %q", dialectName)
+	query, err := legacyVisibleColumnQuery(dialectName)
+	if err != nil {
+		return false, err
 	}
 	var n int
 	if err := db.QueryRowContext(ctx, query).Scan(&n); err != nil {
 		return false, fmt.Errorf("look up user_bindings.visible: %w", err)
 	}
 	return n > 0, nil
+}
+
+// legacyVisibleColumnQuery returns a query counting the visible column of
+// user_bindings in the current schema.
+func legacyVisibleColumnQuery(dialectName string) (string, error) {
+	switch dialectName {
+	case dialect.Postgres:
+		return "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'user_bindings' AND column_name = 'visible'", nil
+	case dialect.MySQL:
+		return "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'user_bindings' AND column_name = 'visible'", nil
+	case dialect.SQLite:
+		return "SELECT COUNT(*) FROM pragma_table_info('user_bindings') WHERE name = 'visible'", nil
+	default:
+		return "", fmt.Errorf("drop user_bindings.visible: unsupported dialect %q", dialectName)
+	}
 }

@@ -275,3 +275,58 @@ func TestNewBindingsGetExplicitVisibility(t *testing.T) {
 		t.Fatalf("new binding = %+v", got)
 	}
 }
+
+func TestLegacyVisibleColumnQueryPerDialect(t *testing.T) {
+	for _, d := range []string{dialect.Postgres, dialect.MySQL, dialect.SQLite} {
+		query, err := legacyVisibleColumnQuery(d)
+		if err != nil || !strings.Contains(query, "user_bindings") || !strings.Contains(query, "visible") {
+			t.Fatalf("%s: %q, %v", d, query, err)
+		}
+	}
+	if _, err := legacyVisibleColumnQuery("oracle"); err == nil {
+		t.Fatal("unsupported dialect accepted")
+	}
+}
+
+// A failed lookup, backfill or drop is reported and leaves the table as it
+// was.
+func TestDropLegacyVisibleColumnErrors(t *testing.T) {
+	ctx := context.Background()
+
+	_, db := openLegacyVisibleDB(t, "visible_drop_closed")
+	_ = db.Close()
+	if _, dropped, err := DropLegacyVisibleColumn(ctx, db, dialect.SQLite); err == nil || dropped {
+		t.Fatalf("closed db = %v, %v", dropped, err)
+	}
+
+	// A visible column without the per-exposure flags fails the backfill.
+	dsn := fmt.Sprintf("file:accountdata_visible_drop_bare_%d?mode=memory&cache=shared", time.Now().UnixNano())
+	bare, err := sql.Open("sqlite3", dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = bare.Close() })
+	if _, err := bare.Exec("CREATE TABLE user_bindings (id integer PRIMARY KEY, visible bool NOT NULL DEFAULT true)"); err != nil {
+		t.Fatal(err)
+	}
+	if _, dropped, err := DropLegacyVisibleColumn(ctx, bare, dialect.SQLite); err == nil || dropped {
+		t.Fatalf("backfill without flag columns = %v, %v", dropped, err)
+	}
+	if n := legacyColumnCount(t, bare); n != 1 {
+		t.Fatalf("failed run dropped the column (%d)", n)
+	}
+
+	// A drop the database refuses (a view depends on the column) rolls the
+	// backfill back.
+	client, viewDB := openLegacyVisibleDB(t, "visible_drop_view")
+	legacy := createLegacyBinding(t, ctx, client, viewDB, 1, "2001", false)
+	if _, err := viewDB.Exec("CREATE VIEW legacy_visible AS SELECT id, visible FROM user_bindings"); err != nil {
+		t.Fatal(err)
+	}
+	if _, dropped, err := DropLegacyVisibleColumn(ctx, viewDB, dialect.SQLite); err == nil || dropped {
+		t.Fatalf("drop under a dependent view = %v, %v", dropped, err)
+	}
+	if row, _ := reloadVisibility(t, ctx, client, legacy.ID); row.UIDVisible != nil {
+		t.Fatalf("backfill not rolled back: %+v", row)
+	}
+}

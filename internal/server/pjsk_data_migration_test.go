@@ -84,4 +84,8 @@ func TestMigratePJSKDataDropsLegacyVisibleOnlyOnWritableNodes(t *testing.T) {
 	if err := migratePJSKData(ctx, logger, nil); err != nil {
 		t.Fatalf("nil driver: %v", err)
 	}
+	_ = drv.DB().Close()
+	if err := migratePJSKData(ctx, logger, drv); err == nil {
+		t.Fatal("closed database not reported")
+	}
 }

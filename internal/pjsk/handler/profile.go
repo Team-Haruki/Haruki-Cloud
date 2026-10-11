@@ -112,7 +112,7 @@ func (sekaiHandlers) ProfileBindListHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) ProfileUIDHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{
-			"/查uid", "/uid",
+			"/查uid", "/uid", "/查id", "/id",
 		},
 		Path:        "profile/uid",
 		ParseUIDArg: common.BoolPtr(true),

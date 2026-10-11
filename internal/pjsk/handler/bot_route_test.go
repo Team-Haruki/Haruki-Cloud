@@ -76,7 +76,7 @@ func TestListBotRoutes(t *testing.T) {
 	profileUIDRoute, ok := byPath["profile/uid"]
 	testutil.RequireArgs(t, ok, "expected profile/uid route to exist")
 
-	for _, command := range []string{"/查uid", "/uid"} {
+	for _, command := range []string{"/查uid", "/uid", "/查id", "/id"} {
 		testutil.Require(t, contains(profileUIDRoute.Commands, command), "expected profile/uid commands to include %s, got %v", command, profileUIDRoute.Commands)
 
 	}

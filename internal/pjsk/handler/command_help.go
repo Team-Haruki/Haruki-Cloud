@@ -205,11 +205,15 @@ func commandHelpTitle(locale i18n.Locale, markdown string) string {
 }
 
 // withGeneratedHelpSections appends the sections every route document shares
-// and that are therefore never written by hand: which regions the command
+// and that are therefore never written by hand: common flags, regions the command
 // serves (once, instead of a copied sentence per document) and the aliases
 // the document does not already show.
 func withGeneratedHelpSections(locale i18n.Locale, markdown, path string) string {
 	sections := []string{strings.TrimSpace(markdown)}
+	if path != "" && path != BirthdayMonitorHelpPath {
+		common := "## " + i18n.M("usage.help.common_heading").In(locale) + "\n" + i18n.M("usage.help.common_flags").In(locale)
+		sections = append(sections, common)
+	}
 	if region := commandHelpRegionSection(locale, markdown, path); region != "" {
 		sections = append(sections, region)
 	}
@@ -248,6 +252,15 @@ func commandHelpRegionSection(locale i18n.Locale, markdown, path string) string 
 		return ""
 	}
 	primary, handler := commandHelpPrimaryHandler(markdown, path)
+	if path == BirthdayMonitorHelpPath {
+		for _, span := range helpDocCodeSpans(markdown) {
+			if strings.HasPrefix(span, "/") {
+				primary = strings.Fields(span)[0]
+				break
+			}
+		}
+		handler = &HarukiSekaiCommandHandler{Regions: AllRegions}
+	}
 	if handler == nil {
 		return ""
 	}
@@ -270,6 +283,9 @@ func commandHelpRegionSection(locale i18n.Locale, markdown, path string) string 
 	prefix := i18n.M("usage.help.region_prefix", i18n.Data{"Codes": strings.Join(codes, " "), "Example": example})
 	fallback := i18n.M("usage.help.region_default", i18n.Data{"Region": i18n.RegionLabel(string(regions[0]))})
 	section := heading + "\n- " + prefix.In(locale) + "\n- " + fallback.In(locale)
+	if path != BirthdayMonitorHelpPath {
+		section += "\n- " + i18n.M("usage.help.region_argument").In(locale)
+	}
 	if isCNMySekaiHelpRoute(path) {
 		section += "\n- " + i18n.M("usage.help.region_no_cn_mysekai").In(locale)
 	}

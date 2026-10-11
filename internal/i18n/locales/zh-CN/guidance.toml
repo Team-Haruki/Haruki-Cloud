@@ -51,7 +51,7 @@ other = "无法识别参数，请依次写 5 个非负技能数值：队长、�
 
 [guidance.education_area]
 description = "路由 education/area（区域道具）的参数无法识别时的原因行。"
-other = "无法识别参数，请使用团名、角色名或道具分类，full 要和分类一起写"
+other = "无法识别参数，请使用团名、角色名或道具分类；full 查看所选对象的全部等级材料表"
 
 [guidance.education_bonds]
 description = "路由 education/bonds（羁绊等级）的参数无法识别时的原因行。"
@@ -95,7 +95,7 @@ other = "无法识别参数，请写卡池 ID、序号（如 -1）、event123 �
 
 [guidance.inventory_list]
 description = "路由 inventory/list（查背包）的参数无法识别时的原因行。"
-other = "无法识别参数，请写一个分类：“水晶”、“火罐”、“ms材料”或“记忆”"
+other = "无法识别参数，请写一个分类：“音符”、“水晶”、“火罐”、“ms材料”或“记忆”"
 
 [guidance.misc_birthday]
 description = "路由 misc/birthday（角色生日）的参数无法识别时的原因行。"
@@ -127,7 +127,7 @@ other = "无法识别参数，请使用歌曲 ID、歌曲名或别名"
 
 [guidance.music_list]
 description = "路由 music/list（歌曲列表）的参数无法识别时的原因行。"
-other = "无法识别参数，请使用难度、等级、成绩筛选或“全部”"
+other = "无法识别参数，请使用歌曲、难度、等级、成绩筛选或“全部”"
 
 [guidance.music_note_count]
 description = "路由 music/note-count（查物量）的参数无法识别时的原因行。"
@@ -151,7 +151,7 @@ other = "无法识别参数，请写团体（ln、mmj、vbs、ws、25h），可�
 
 [guidance.mysekai_fixture_detail]
 description = "路由 mysekai/fixture-detail（烤森家具）的参数无法识别时的原因行。"
-other = "无法识别参数，请使用一个或多个家具 ID，或 full 加分类、关键词"
+other = "无法识别参数，请使用一个或多个家具 ID，或帮助中列出的家具分类；full 查看全部家具"
 
 [guidance.mysekai_fixture_list]
 description = "路由 mysekai/fixture-list（烤森家具列表）的参数无法识别时的原因行。"
@@ -167,7 +167,7 @@ other = "无法识别参数，请使用地图编号 1~4、all 或 force"
 
 [guidance.mysekai_music_record]
 description = "路由 mysekai/music-record（烤森唱片）的参数无法识别时的原因行。"
-other = "无法识别参数，请使用唱片名称、歌曲名或帮助中列出的筛选条件"
+other = "无法识别参数，请使用 full、id 或 u序号，唱片查询不支持歌曲关键词筛选"
 
 [guidance.mysekai_overview]
 description = "路由 mysekai/overview（烤森总览）的参数无法识别时的原因行。"

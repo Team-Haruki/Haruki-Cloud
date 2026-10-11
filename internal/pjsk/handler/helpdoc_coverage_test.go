@@ -36,7 +36,7 @@ func helpDocTriggers(markdown string) []string {
 // directly after the command must not start with a Chinese character, since
 // "/歌曲表" would otherwise pass as "/歌曲" plus "表".
 func helpDocTriggerResolves(span string) bool {
-	return helpDocSpanCommand(span) != "" || isBirthdayMonitorCommand(strings.Fields(span)[0])
+	return helpDocSpanCommand(span) != "" || isBirthdayMonitorCommand(strings.Split(span, " [")[0])
 }
 
 // isBirthdayMonitorCommand reports whether command is a spelling of the

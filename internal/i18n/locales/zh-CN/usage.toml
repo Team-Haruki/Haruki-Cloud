@@ -15,7 +15,7 @@ other = "区服代码：{{.Codes}}，加在指令前面可以指定区服，例�
 
 [usage.help.region_default]
 description = "“区服”小标题下的第二行，说明不写区服时用哪个区服。占位符：Region=没有默认绑定时使用的区服显示名（如“日服(JP)”）。"
-other = "不写时使用默认绑定的区服，没有默认绑定时使用{{.Region}}"
+other = "未指定区服时，账号查询按所选绑定账号的区服处理；不依赖绑定账号的查询默认使用{{.Region}}"
 
 [usage.help.region_no_cn_mysekai]
 description = "烤森指令帮助的“区服”小标题下的最后一行：国服不开放烤森功能，所以区服代码里没有 cn。"
@@ -32,3 +32,15 @@ other = "指令别名"
 [usage.help.plain_heading]
 description = "渲染服务不可用时，帮助以纯文字发送，Markdown 小标题改成这一行。占位符：Heading=小标题文字（如“用法”）。"
 other = "{{.Heading}}："
+
+[usage.help.region_argument]
+description = "区服说明中补充 -r 参数。只展示在通过通用解析器处理的指令中。"
+other = "区服参数：也可以在指令后写 `-r jp`，代码须在支持列表内；同时写区服代码和 `-r` 时，以 `-r` 为准"
+
+[usage.help.common_heading]
+description = "在帮助正文后自动生成的通用参数小标题。"
+other = "通用参数"
+
+[usage.help.common_flags]
+description = "普通指令共用的帮助和绘图缓存参数说明；生日监听使用独立解析器，不展示这些行。"
+other = "- `-help`、`-h`：查看帮助，单独放在指令后，不要同时写查询条件\n- `--force`、`强制刷新`：出图时跳过图片缓存重新绘制，不会重新采集游戏数据；每人每个指令 1 分钟内只生效一次，超出时照常使用缓存\n- 兼容参数：`-v`、`--verbose`、`-p`、`--preview`，目前不会改变查询结果"

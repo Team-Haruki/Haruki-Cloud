@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"testing"
+	"time"
 )
 
 func testSigner(t *testing.T, keyID string) *Signer {
@@ -143,6 +144,7 @@ func TestKeysetDocumentValidate(t *testing.T) {
 		ExpiresAt:           1_700_600_000,
 		NoiseKeys:           []KeysetKey{{KeyID: "noise-a", PublicKey: pub}, {KeyID: "noise-b", PublicKey: pub, NotBefore: 1, NotAfter: 2}},
 		ManifestSigningKeys: []KeysetKey{{KeyID: "manifest-a", PublicKey: pub}},
+		ReleaseSigningKeys:  []KeysetKey{{KeyID: "release-a", PublicKey: pub, NotAfter: 1_700_500_000}},
 		Endpoints:           map[string]string{"production": "https://api.example.com"},
 	}
 	if err := valid.Validate(); err != nil {
@@ -159,17 +161,95 @@ func TestKeysetDocumentValidate(t *testing.T) {
 		"inverted validity":   func(d *KeysetDocument) { d.NoiseKeys[1].NotAfter = 1 },
 		"plain http endpoint": func(d *KeysetDocument) { d.Endpoints["alt"] = "http://x" },
 		"blank endpoint name": func(d *KeysetDocument) { d.Endpoints[" "] = "https://x" },
+		"release key open-ended": func(d *KeysetDocument) {
+			d.ReleaseSigningKeys = []KeysetKey{{KeyID: "release-a", PublicKey: pub}}
+		},
+		"release key bad public": func(d *KeysetDocument) {
+			d.ReleaseSigningKeys = []KeysetKey{{KeyID: "release-a", PublicKey: "abcd", NotAfter: 2}}
+		},
+		"release key duplicate": func(d *KeysetDocument) {
+			d.ReleaseSigningKeys = append(d.ReleaseSigningKeys, KeysetKey{KeyID: "release-a", PublicKey: pub, NotAfter: 2})
+		},
 	}
 	for name, mutate := range cases {
 		t.Run(name, func(t *testing.T) {
 			doc := valid
 			doc.NoiseKeys = append([]KeysetKey(nil), valid.NoiseKeys...)
 			doc.ManifestSigningKeys = append([]KeysetKey(nil), valid.ManifestSigningKeys...)
+			doc.ReleaseSigningKeys = append([]KeysetKey(nil), valid.ReleaseSigningKeys...)
 			doc.Endpoints = map[string]string{"production": "https://api.example.com"}
 			mutate(&doc)
 			if err := doc.Validate(); err == nil {
 				t.Fatal("invalid document accepted")
 			}
 		})
+	}
+}
+
+func TestKeysetKeyValidAtAndReleaseKeyLookup(t *testing.T) {
+	key := KeysetKey{KeyID: "release-a", PublicKey: testSigner(t, "x").PublicKeyHex(), NotBefore: 100, NotAfter: 200}
+	for unix, want := range map[int64]bool{99: false, 100: true, 150: true, 200: true, 201: false} {
+		if got := key.ValidAt(time.Unix(unix, 0)); got != want {
+			t.Fatalf("ValidAt(%d) = %v, want %v", unix, got, want)
+		}
+	}
+	open := KeysetKey{KeyID: "open"}
+	if !open.ValidAt(time.Unix(1, 0)) || !open.ValidAt(time.Unix(1<<40, 0)) {
+		t.Fatal("zero bounds must be open")
+	}
+
+	doc := KeysetDocument{ExpiresAt: 500, ReleaseSigningKeys: []KeysetKey{key}}
+	if got, ok := doc.ReleaseKey("release-a"); !ok || got.PublicKey != key.PublicKey {
+		t.Fatalf("ReleaseKey = %+v, %v", got, ok)
+	}
+	if _, ok := doc.ReleaseKey("release-b"); ok {
+		t.Fatal("unknown release key found")
+	}
+	if doc.ExpiredAt(time.Unix(499, 0)) || !doc.ExpiredAt(time.Unix(500, 0)) {
+		t.Fatal("ExpiredAt must flip at expires_at")
+	}
+}
+
+func TestParseKeysetRequiresRootSignature(t *testing.T) {
+	root := testSigner(t, "root")
+	other := testSigner(t, "other")
+	doc := KeysetDocument{
+		Version:            2,
+		IssuedAt:           1_700_000_000,
+		ExpiresAt:          1_700_600_000,
+		NoiseKeys:          []KeysetKey{{KeyID: "noise", PublicKey: root.PublicKeyHex()}},
+		ReleaseSigningKeys: []KeysetKey{{KeyID: "release", PublicKey: other.PublicKeyHex(), NotAfter: 1_700_500_000}},
+	}
+	payload, _ := json.Marshal(doc)
+	sign := func(signer *Signer, domain string) []byte {
+		env, err := signer.Sign(domain, EncodingJSON, payload)
+		if err != nil {
+			t.Fatal(err)
+		}
+		raw, _ := json.Marshal(env)
+		return raw
+	}
+
+	got, err := ParseKeyset(sign(root, DomainKeyset), root.PublicKey())
+	if err != nil || got.Version != 2 || len(got.ReleaseSigningKeys) != 1 {
+		t.Fatalf("ParseKeyset = %+v, %v", got, err)
+	}
+	if _, err := ParseKeyset(sign(other, DomainKeyset), root.PublicKey()); !errors.Is(err, ErrBadSignature) {
+		t.Fatalf("foreign signature error = %v", err)
+	}
+	if _, err := ParseKeyset(sign(root, DomainRelease), root.PublicKey()); !errors.Is(err, ErrKeysetNotSigned) {
+		t.Fatalf("wrong domain error = %v", err)
+	}
+	if _, err := ParseKeyset(payload, root.PublicKey()); !errors.Is(err, ErrKeysetNotSigned) {
+		t.Fatalf("bare document error = %v", err)
+	}
+	if _, err := ParseKeyset([]byte("nope"), root.PublicKey()); err == nil {
+		t.Fatal("garbage accepted")
+	}
+	broken := doc
+	broken.NoiseKeys = nil
+	payload, _ = json.Marshal(broken)
+	if _, err := ParseKeyset(sign(root, DomainKeyset), root.PublicKey()); !errors.Is(err, ErrKeysetNoNoise) {
+		t.Fatalf("invalid document error = %v", err)
 	}
 }

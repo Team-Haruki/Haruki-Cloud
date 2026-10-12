@@ -88,29 +88,38 @@ type Decision struct {
 	Enforce bool
 }
 
-// Store loads the policy file lazily and re-reads it when its mtime changes,
-// at most once per reload interval. A nil *Store behaves as ModeOff.
+// Store loads the policy file lazily and re-reads it when its mtime (or the
+// trust keyset's) changes, at most once per reload interval. A nil *Store
+// behaves as ModeOff.
 type Store struct {
 	path           string
+	keysetPath     string
 	mode           Mode
 	rootPub        ed25519.PublicKey
 	now            func() time.Time
 	reloadInterval time.Duration
 
-	mu        sync.Mutex
-	checkedAt time.Time
-	modTime   time.Time
-	doc       *Document
-	err       error
+	mu            sync.Mutex
+	checkedAt     time.Time
+	modTime       time.Time
+	keysetModTime time.Time
+	doc           *Document
+	err           error
 }
 
 const defaultReloadInterval = 30 * time.Second
 
 // NewStore returns a store for path. rootPub, when non-nil, requires the file
-// to be a trustsign envelope with DomainRelease verified by that key.
-func NewStore(path string, mode Mode, rootPub ed25519.PublicKey) *Store {
+// to be a trustsign envelope with DomainRelease verified by that key, or by a
+// release signing key listed in the root-signed keyset at keysetPath. Without
+// rootPub nothing is verified and keysetPath is ignored.
+func NewStore(path string, mode Mode, rootPub ed25519.PublicKey, keysetPath string) *Store {
+	if rootPub == nil {
+		keysetPath = ""
+	}
 	return &Store{
 		path:           strings.TrimSpace(path),
+		keysetPath:     strings.TrimSpace(keysetPath),
 		mode:           mode,
 		rootPub:        rootPub,
 		now:            time.Now,
@@ -148,46 +157,138 @@ func (s *Store) Document() (*Document, error) {
 	}
 	s.checkedAt = now
 
+	doc, err := s.load(now)
+	s.doc, s.err = doc, err
+	return doc, err
+}
+
+// load re-reads the policy (and the keyset it may be verified against) when
+// either file's mtime moved. It returns the cached document otherwise.
+func (s *Store) load(now time.Time) (*Document, error) {
 	info, err := os.Stat(s.path)
 	if err != nil {
-		s.doc, s.err = nil, err
 		return nil, err
 	}
-	if s.doc != nil && info.ModTime().Equal(s.modTime) {
+	var keysetModTime time.Time
+	if s.keysetPath != "" {
+		keysetInfo, err := os.Stat(s.keysetPath)
+		if err != nil {
+			return nil, fmt.Errorf("buildpolicy: trust keyset: %w", err)
+		}
+		keysetModTime = keysetInfo.ModTime()
+	}
+	if s.doc != nil && info.ModTime().Equal(s.modTime) && keysetModTime.Equal(s.keysetModTime) && !s.doc.signerLapsed(now) {
 		return s.doc, nil
+	}
+	verifier, err := s.verifier(now)
+	if err != nil {
+		return nil, err
 	}
 	raw, err := os.ReadFile(s.path)
 	if err != nil {
-		s.doc, s.err = nil, err
 		return nil, err
 	}
-	doc, err := Parse(raw, s.rootPub)
+	doc, err := Parse(raw, verifier)
 	if err != nil {
-		s.doc, s.err = nil, err
 		return nil, err
 	}
-	s.doc, s.err, s.modTime = doc, nil, info.ModTime()
+	s.modTime, s.keysetModTime = info.ModTime(), keysetModTime
 	return doc, nil
 }
 
+// verifier builds the key material for Parse: nil without a root key, the
+// root alone without a keyset path, else the root plus the keyset the root
+// signed (an unreadable or unverifiable keyset is a hard error so delegation
+// never silently degrades to root-only).
+func (s *Store) verifier(now time.Time) (*Verifier, error) {
+	if s.rootPub == nil {
+		return nil, nil
+	}
+	verifier := &Verifier{Root: s.rootPub, Now: now}
+	if s.keysetPath == "" {
+		return verifier, nil
+	}
+	raw, err := os.ReadFile(s.keysetPath)
+	if err != nil {
+		return nil, fmt.Errorf("buildpolicy: trust keyset: %w", err)
+	}
+	keyset, err := trustsign.ParseKeyset(raw, s.rootPub)
+	if err != nil {
+		return nil, fmt.Errorf("buildpolicy: trust keyset rejected: %w", err)
+	}
+	verifier.Keyset = keyset
+	return verifier, nil
+}
+
+// Verifier holds what a signed policy may be checked against: the root public
+// key, which signs policies directly, and optionally the root-verified keyset
+// whose release_signing_keys are delegated for routine release signing.
+type Verifier struct {
+	Root   ed25519.PublicKey
+	Keyset *trustsign.KeysetDocument
+	// Now is the instant key validity windows are judged at; zero means
+	// time.Now().
+	Now time.Time
+}
+
+// verify checks the envelope's key_id against the keyset's release keys
+// first; a listed key is bound to that id and never falls back to the root,
+// so dropping a key from the keyset (or letting its window lapse) revokes it
+// outright. An unlisted key_id must verify under the root key. For a
+// delegated signer it returns the last unix second its validity covers (the
+// earlier of the key's not_after and the keyset's expiry); 0 for the root.
+func (v *Verifier) verify(env trustsign.Envelope) (int64, error) {
+	now := v.Now
+	if now.IsZero() {
+		now = time.Now()
+	}
+	if v.Keyset != nil {
+		if key, listed := v.Keyset.ReleaseKey(env.KeyID); listed {
+			if v.Keyset.ExpiredAt(now) {
+				return 0, fmt.Errorf("buildpolicy: release key %q: trust keyset has expired", env.KeyID)
+			}
+			if !key.ValidAt(now) {
+				return 0, fmt.Errorf("buildpolicy: release key %q is outside its validity window", env.KeyID)
+			}
+			pub, err := trustsign.ParsePublicKeyHex(key.PublicKey)
+			if err != nil {
+				return 0, fmt.Errorf("buildpolicy: release key %q: %w", env.KeyID, err)
+			}
+			return min(key.NotAfter, v.Keyset.ExpiresAt-1), trustsign.Verify(pub, env, trustsign.DomainRelease)
+		}
+	}
+	return 0, trustsign.Verify(v.Root, env, trustsign.DomainRelease)
+}
+
+// signerLapsed reports whether a delegated signer's validity has run out
+// since the document was verified, so the cached copy must be re-checked
+// (and rejected) even though neither file changed.
+func (d *Document) signerLapsed(now time.Time) bool {
+	return d.VerifiedUntil != 0 && now.Unix() > d.VerifiedUntil
+}
+
 // Parse decodes a policy file. It accepts a bare Document, or a trustsign
-// envelope (domain DomainRelease) whose signature is verified against rootPub
-// when rootPub is non-nil; with a root key configured a bare document is
-// refused.
-func Parse(raw []byte, rootPub ed25519.PublicKey) (*Document, error) {
+// envelope (domain DomainRelease) whose signature is verified through
+// verifier when it is non-nil; with a verifier configured a bare document is
+// refused. The loaded document records the key_id that signed it.
+func Parse(raw []byte, verifier *Verifier) (*Document, error) {
 	var env trustsign.Envelope
 	payload := raw
+	signedBy := ""
+	var verifiedUntil int64
 	if err := json.Unmarshal(raw, &env); err == nil && env.Algorithm == trustsign.Algorithm && len(env.Signature) > 0 {
 		if env.Domain != trustsign.DomainRelease {
 			return nil, fmt.Errorf("buildpolicy: envelope domain %q is not %q", env.Domain, trustsign.DomainRelease)
 		}
-		if rootPub != nil {
-			if err := trustsign.Verify(rootPub, env, trustsign.DomainRelease); err != nil {
+		if verifier != nil {
+			until, err := verifier.verify(env)
+			if err != nil {
 				return nil, fmt.Errorf("buildpolicy: signature rejected: %w", err)
 			}
+			verifiedUntil = until
 		}
-		payload = env.Payload
-	} else if rootPub != nil {
+		payload, signedBy = env.Payload, env.KeyID
+	} else if verifier != nil {
 		return nil, errors.New("buildpolicy: a signed envelope is required when a root public key is configured")
 	}
 	var doc Document
@@ -197,6 +298,7 @@ func Parse(raw []byte, rootPub ed25519.PublicKey) (*Document, error) {
 	if err := doc.Validate(); err != nil {
 		return nil, err
 	}
+	doc.SignedBy, doc.VerifiedUntil = signedBy, verifiedUntil
 	return &doc, nil
 }
 

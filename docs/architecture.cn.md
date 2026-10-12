@@ -69,7 +69,7 @@ Haruki-Cloud/
 ├── main.go                       # ── 进程入口：默认 API 角色；`haruki-server events`（或 HARUKI_ROLE=events）启动 events 角色；`haruki-server migrate` 只做迁移后退出 ──
 │
 ├── cmd/                          # ── 一次性 CLI 工具 ──
-│   ├── trust-signer/             #   离线 Ed25519 签名工具（keyset / manifest）
+│   ├── trust-signer/             #   离线 Ed25519 签名工具（keyset / manifest / release）
 │   ├── asset-index/              #   资源清单引导 / 手动发布（需先暂停该区服的更新任务）
 │   ├── image-cache-reconcile/    #   渲染缓存索引与对象核对（--repair 只移除索引引用）
 │   ├── importer/main.go          #   旧数据迁移工具（历史数据导入）
@@ -91,7 +91,7 @@ Haruki-Cloud/
 │   ├── cluster/                  #   集群节点角色 / 只读模式（config.Cfg.Node）
 │   ├── core/crypto/              #   Noise NK 协议加密工具（含多 key 密钥环）
 │   ├── core/urlhost/             #   按节点选择公开主机（image_cache.hosts / assets_base_urls）
-│   ├── core/trustsign/           #   Ed25519 分离载荷签名契约（keyset / manifest）
+│   ├── core/trustsign/           #   Ed25519 分离载荷签名契约（keyset / manifest / release）
 │   ├── core/upstream/            #   上游连接池 / Transport
 │   ├── core/upstreamerr/         #   上游错误分类（跨仓库错误约定 + 契约测试）
 │   ├── handler/                  #   统一命令注册表（handler.go + bot_route.go）
@@ -356,18 +356,23 @@ Noise 握手之前收到明文 429 和 `Retry-After`，见 [build-policy.cn.md](
 签名输入 = domain || 0x00 || payload
 Envelope = { alg:"ed25519", domain, key_id, encoding:"json"|"msgpack",
              payload:<base64 原始字节>, signature:<base64> }
-domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1" }
+domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1", "haruki-cloud/release/v1" }
 ```
 
 客户端先用对应公钥验签 `payload` 原始字节，再按 `encoding` 解码。两级密钥：
 
 1. **离线根密钥**（仅运维持有，`cmd/trust-signer keygen`）签发 keyset 文档
    （`trustsign.KeysetDocument`：version / issued_at / expires_at / noise_keys /
-   manifest_signing_keys / endpoints / minimum_client_version）。客户端内置根公钥，
-   校验签名、版本递增与有效期。
+   manifest_signing_keys / release_signing_keys / endpoints / minimum_client_version）。
+   客户端内置根公钥，校验签名、版本递增与有效期。
 2. **在线 manifest 签名密钥**（`haruki_bot.manifest_signing_key` + `_id`）由 keyset 授权，
    Cloud 用它签 command manifest。配置后 manifest 响应的 `data` 变为上述 Envelope，
    `payload` 为 `ManifestResponse` 的 JSON 字节。
+3. **发布密钥**（`release_signing_keys`，带 `not_after`）由 keyset 授权，签客户端构建
+   策略（`haruki-cloud/release/v1`）。只有 Cloud 验它：配置了
+   `build_policy_root_public_key` 时，用根公钥验 `trust_keyset_path` 的 keyset，再按信封
+   `key_id` 选发布密钥；`key_id` 不在 keyset 里则回退到根直签。详见
+   [build-policy.cn.md](build-policy.cn.md)。
 
 > Bot 自助注册链路（send-mail / register / SMTP 验证码 / Turnstile）已移除；
 > Bot 账号由运维通过 `scripts/provision_bot` 手动开通。

@@ -688,7 +688,13 @@ func initBuildPolicy(mainLogger *harukiLogger.Logger) *buildpolicy.Store {
 	} else if harukiConfig.Cfg.Profile.IsProduction() {
 		mainLogger.Warn("build policy is not signature-verified; set build_policy_root_public_key to pin the offline root")
 	}
-	store := buildpolicy.NewStore(path, mode, rootPub)
+	// The root-signed keyset served to clients also carries the delegated
+	// release signing keys, so the same file authorises policy signatures.
+	keysetPath := strings.TrimSpace(botCfg.TrustKeysetPath)
+	if rootPub != nil && keysetPath == "" {
+		mainLogger.Warn("build policy accepts root-signed envelopes only; set trust_keyset_path to honour delegated release keys")
+	}
+	store := buildpolicy.NewStore(path, mode, rootPub, keysetPath)
 	if doc, err := store.Document(); err != nil {
 		mainLogger.Warn("client build policy could not be loaded; logins are admitted fail-open until it is",
 			"build_policy_path", path, "error_type", fmt.Sprintf("%T", err))
@@ -696,7 +702,8 @@ func initBuildPolicy(mainLogger *harukiLogger.Logger) *buildpolicy.Store {
 		mainLogger.Info("client build policy loaded",
 			"build_policy_mode", string(mode), "policy_version", doc.Version, "builds", len(doc.Builds),
 			"revoked_versions", len(doc.RevokedVersions), "revoked_bots", len(doc.RevokedBots),
-			"blocked_sources", len(doc.BlockedSources), "signature_verified", rootPub != nil)
+			"blocked_sources", len(doc.BlockedSources), "signature_verified", rootPub != nil,
+			"signed_by", doc.SignedBy)
 	}
 	return store
 }

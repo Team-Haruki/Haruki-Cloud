@@ -39,7 +39,7 @@ func writeDoc(t *testing.T, dir string, doc Document) string {
 
 func enforcingStore(t *testing.T, doc Document) *Store {
 	t.Helper()
-	store := NewStore(writeDoc(t, t.TempDir(), doc), ModeEnforce, nil)
+	store := NewStore(writeDoc(t, t.TempDir(), doc), ModeEnforce, nil, "")
 	return store
 }
 
@@ -120,13 +120,13 @@ func TestModesAndNilStore(t *testing.T) {
 		t.Fatalf("nil store session = %+v", d)
 	}
 
-	logOnly := NewStore(writeDoc(t, t.TempDir(), sampleDocument()), ModeLogOnly, nil)
+	logOnly := NewStore(writeDoc(t, t.TempDir(), sampleDocument()), ModeLogOnly, nil, "")
 	d := logOnly.Evaluate(Request{BotID: "1", ClientVersion: "9.9.9", BuildID: "nope"})
 	if !d.Allowed || d.Passed || d.Code != CodeBuildUnknown || d.Enforce {
 		t.Fatalf("log-only = %+v", d)
 	}
 
-	off := NewStore("/nonexistent", ModeOff, nil)
+	off := NewStore("/nonexistent", ModeOff, nil, "")
 	if d := off.Evaluate(Request{}); !d.Allowed || d.Code != CodePolicyOff {
 		t.Fatalf("off = %+v", d)
 	}
@@ -146,7 +146,7 @@ func TestModesAndNilStore(t *testing.T) {
 }
 
 func TestMissingOrExpiredPolicyFailsOpenWithCode(t *testing.T) {
-	missing := NewStore(filepath.Join(t.TempDir(), "missing.json"), ModeEnforce, nil)
+	missing := NewStore(filepath.Join(t.TempDir(), "missing.json"), ModeEnforce, nil, "")
 	d := missing.Evaluate(Request{BotID: "1", BuildID: "x", ClientVersion: "1"})
 	if !d.Allowed || d.Passed || d.Code != CodePolicyUnavailable {
 		t.Fatalf("missing file = %+v", d)
@@ -186,7 +186,7 @@ func TestStoreReloadsOnModTime(t *testing.T) {
 	dir := t.TempDir()
 	path := writeDoc(t, dir, sampleDocument())
 	now := time.Unix(1_500_000_000, 0)
-	store := NewStore(path, ModeEnforce, nil)
+	store := NewStore(path, ModeEnforce, nil, "")
 	store.now = func() time.Time { return now }
 	req := Request{BotID: "42", ClientVersion: "3.1.0", BuildID: "b-310-linux", Now: now}
 	if d := store.Evaluate(req); d.Code != CodeOK {
@@ -227,21 +227,21 @@ func TestParseSignedEnvelope(t *testing.T) {
 	}
 	signed, _ := json.Marshal(env)
 
-	if got, err := Parse(signed, root.PublicKey()); err != nil || got.Version != 7 {
+	if got, err := Parse(signed, &Verifier{Root: root.PublicKey()}); err != nil || got.Version != 7 || got.SignedBy != "root" {
 		t.Fatalf("verified parse = %+v, %v", got, err)
 	}
-	if got, err := Parse(signed, nil); err != nil || got.Version != 7 {
+	if got, err := Parse(signed, nil); err != nil || got.Version != 7 || got.SignedBy != "root" {
 		t.Fatalf("unverified envelope parse = %+v, %v", got, err)
 	}
-	if _, err := Parse(signed, other.PublicKey()); err == nil {
+	if _, err := Parse(signed, &Verifier{Root: other.PublicKey()}); err == nil {
 		t.Fatal("wrong root accepted")
 	}
-	if _, err := Parse(payload, root.PublicKey()); err == nil {
+	if _, err := Parse(payload, &Verifier{Root: root.PublicKey()}); err == nil {
 		t.Fatal("bare document accepted despite a configured root")
 	}
 	wrongDomain, _ := root.Sign(trustsign.DomainKeyset, trustsign.EncodingJSON, payload)
 	rawWrong, _ := json.Marshal(wrongDomain)
-	if _, err := Parse(rawWrong, root.PublicKey()); err == nil {
+	if _, err := Parse(rawWrong, &Verifier{Root: root.PublicKey()}); err == nil {
 		t.Fatal("keyset-domain envelope accepted as a release policy")
 	}
 	if _, err := Parse([]byte(`{"version":0}`), nil); !errors.Is(err, ErrInvalidDocument) {

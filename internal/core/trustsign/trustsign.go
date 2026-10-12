@@ -32,7 +32,8 @@ const (
 	// DomainManifest covers the command manifest served by the Cloud.
 	DomainManifest = "haruki-cloud/manifest/v1"
 	// DomainRelease covers the client build policy (release allowlist and
-	// revocations) the Cloud enforces at login, signed by the offline root.
+	// revocations) the Cloud enforces at login, signed by the offline root
+	// or by a release key the root delegated through the keyset.
 	DomainRelease = "haruki-cloud/release/v1"
 
 	// EncodingJSON and EncodingMsgPack tell the verifier how to decode Payload

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"time"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/musicdifficultie"
@@ -17,10 +16,10 @@ func (p *dbMusicProvider) PreloadDifficulties(ctx context.Context) error {
 		return nil
 	}
 	p.difficultyMu.RLock()
-	fresh := dbBulkIndexFresh(p.difficultyIndex != nil, p.difficultyLoadedAt)
+	loaded := p.difficultyIndex != nil
 	generation := p.difficultyGeneration
 	p.difficultyMu.RUnlock()
-	if fresh {
+	if loaded {
 		return nil
 	}
 	caller := new(dbBulkIndexFlightToken)
@@ -29,10 +28,10 @@ func (p *dbMusicProvider) PreloadDifficulties(ctx context.Context) error {
 			finish := commandtrace.MeasureOperation(loadCtx, "musics.difficulty_index")
 			defer finish()
 			p.difficultyMu.RLock()
-			fresh := dbBulkIndexFresh(p.difficultyIndex != nil, p.difficultyLoadedAt)
+			loaded := p.difficultyIndex != nil
 			current := p.difficultyGeneration
 			p.difficultyMu.RUnlock()
-			if fresh || current != generation {
+			if loaded || current != generation {
 				return nil
 			}
 			items, err := p.client.Musicdifficultie.Query().Where(musicdifficultie.ServerRegionEQ(p.region.String())).Order(musicdifficultie.ByID()).All(loadCtx)
@@ -47,7 +46,6 @@ func (p *dbMusicProvider) PreloadDifficulties(ctx context.Context) error {
 			p.difficultyMu.Lock()
 			if p.difficultyGeneration == generation {
 				p.difficultyIndex = index
-				p.difficultyLoadedAt = time.Now()
 			}
 			p.difficultyMu.Unlock()
 			return nil

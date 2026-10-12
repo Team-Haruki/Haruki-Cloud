@@ -175,6 +175,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		AssetReader:     dependencies.assetReader,
 		AssetIndex:      dependencies.assetIndex,
 		lifecycleCancel: lifecycleCancel,
+		masterdataWarm:  newMasterdataWarmup(),
 		Config:          cfg,
 		initErr:         dependencies.initErr,
 	}

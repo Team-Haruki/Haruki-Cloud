@@ -9,7 +9,7 @@ import (
 func TestDatabaseProviderResetMasterdataCacheClearsPermanentCaches(t *testing.T) {
 	cards := &dbCardProvider{}
 	cards.init()
-	cards.supplyByID[1] = "supply"
+	cards.supplies.value, cards.supplies.loaded = map[int]string{1: "supply"}, true
 	characters := &dbCharacterProvider{}
 	characters.init()
 	characters.charCache[1] = &masterdata.Character{ID: 1}
@@ -35,8 +35,8 @@ func TestDatabaseProviderResetMasterdataCacheClearsPermanentCaches(t *testing.T)
 	}
 	provider.ResetMasterdataCache()
 
-	if len(cards.supplyByID) != 0 {
-		t.Fatalf("card supply cache was not reset: %+v", cards.supplyByID)
+	if cards.supplies.isLoaded() {
+		t.Fatalf("card supply index was not reset: %+v", cards.supplies.value)
 	}
 	if len(characters.charCache) != 0 {
 		t.Fatalf("character cache was not reset: %+v", characters.charCache)

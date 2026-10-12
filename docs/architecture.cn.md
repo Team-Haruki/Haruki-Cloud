@@ -201,7 +201,7 @@ pjsk_render:               # 渲染引擎配置
   image_cache: {}          # pg_url、hosts、render_index.*、gc_*、legacy_redirect
   drawing_artifact: {}     # Artifact 模式放量白名单
   local_masterdata: {}     # legacy/dev 本地 Masterdata fallback；生产默认关闭。所有 master 读取（含库存道具表、自定义名片资源、MySekai 大门皮肤/自定义谱面标签、JP musicCategories）都先走 DB，只有开启 enabled+allow_fallback（或 allow_leaks）且某张表为空/不可用时才读本地 JSON
-  masterdata_registry: {}  # url / poll_interval / settle_delays：轮询 master registry 的 /v1/master/{region}/current，contentHash（缺省时 ETag）变化时立即重置该区服 DB provider 缓存，并在 settle_delays（默认 5m、15m）后再重置以等待 DB ingest 落库；url 为空时依次取 deck_recommend.registry_url、music_meta.base_url（source=registry）
+  masterdata_registry: {}  # url / poll_interval / settle_delays：轮询 master registry 的 /v1/master/{region}/current，contentHash（缺省时 ETag）变化时立即重置该区服 DB provider 缓存，并在 settle_delays（默认 5m、15m）后再重置以等待 DB ingest 落库；每轮同时读取 sekai 库 master_ingest_version，ingest hash 变化即重置，hash 未变的重置会被跳过；url 为空时依次取 deck_recommend.registry_url、music_meta.base_url（source=registry）
 
 sekai:                     # Sekai Masterdata 数据库
   db_url: "..."
@@ -633,7 +633,13 @@ Toolbox 在内容变化时推进 `upload_time`，Cloud 沿用该值标识版本�
 
 ### 6.5 卡牌全集与 Deck 上传缓存
 
-数据库卡牌 provider 对无筛选条件的全集查询（可带 Limit）按区服缓存已转换模型，保留 release_at 排序；带筛选条件的查询沿用原有 SQL 和内存筛选。全集冷加载通过 singleflight 合并，同时填充单卡缓存，对外返回模型副本。缓存沿用主数据索引的 5 分钟 TTL，并由 ResetMasterdataCache 显式失效；generation 检查阻止刷新前的旧加载覆盖新缓存。
+数据库卡牌 provider 按区服持有一份内存卡牌索引（全集，按 release_at、game_id 排序，只保留每种参数类型的最大值），所有卡牌查询都由它回答：`Filter` 的事件卡、角色、稀有度、属性、发布年份条件在内存中按原 SQL 谓词的语义过滤，团体、技能、供给类型条件照旧在内存判断；`GetByID` 在索引已加载时直接给出肯定或否定答案；`GetByCharacterAndSeq` 在索引中按角色取第 seq 张。事件卡、卡牌供给、角色、技能等筛选所依赖的小表也各自整表加载一次。索引冷加载通过 singleflight 合并，同时填充单卡缓存，对外返回模型副本。
+
+数据库 provider 的所有整表索引（卡牌、技能、卡牌剧情、供给、事件卡、曲目难度、曲目分类、限时曲目、虚拟演唱会等）没有时间 TTL：加载后一直服务，只在主数据变化时失效（ResetMasterdataCache，由 registry 轮询和 ingest 版本驱动）；generation 检查阻止重置前的旧加载覆盖新缓存。
+
+registry 轮询循环每轮先读 sekai 库的 `master_ingest_version`（ingest 服务写入，状态为 ok 的 contentHash）：第一次观察到的 hash 记为缓存当前所持版本；此后 hash 变化即重置该区服（`ingest_changed`）。registry 指针变化触发的立即重置和 settle 跟进重置在执行前都比较该 hash，与缓存所持版本相同则跳过（日志 `masterdata cache reset skipped`）；hash 未知（无原始连接池、表不存在、ingest 非 ok 状态）时按原逻辑重置。每次重置后会在后台异步重新加载该区服的索引。
+
+HTTP 监听建立后（fiber OnListen 钩子），各区服的卡牌索引和相关小表在后台预热，预热不阻塞就绪，并发上限为 2 个区服，与重置后的重新加载共用同一个名额。
 
 Deck 的每个远端目标状态持有独立 userdata 缓存，以最终上传字节的 SHA-256 为键，仅保存远端 hash。每个目标最多 256 项、TTL 10 分钟，单个 hash 最多 4 KiB；缓存不保留用户数据或压缩包。同目标同内容上传通过 singleflight 合并，只有发起上传的请求复制和压缩数据。更改满配或筛卡预设导致最终字节变化时会重新上传。
 

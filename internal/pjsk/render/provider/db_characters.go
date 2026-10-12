@@ -68,6 +68,37 @@ func (p *dbCharacterProvider) GetByID(ctx context.Context, id int) (*masterdata.
 	return new(*model), nil
 }
 
+// preloadAll fills the character cache from the region's gamecharacters
+// table so the unit filters do not look characters up one by one.
+func (p *dbCharacterProvider) preloadAll(ctx context.Context) error {
+	p.init()
+	entities, err := p.client.Gamecharacter.Query().
+		Where(gamecharacter.ServerRegionEQ(p.region.String())).
+		All(ctx)
+	if err != nil {
+		return fmt.Errorf("query characters for region %s: %w", p.region, err)
+	}
+	p.charMu.Lock()
+	defer p.charMu.Unlock()
+	for _, entity := range entities {
+		id := int(entity.GameID)
+		if id == 0 {
+			continue
+		}
+		if _, ok := p.charCache[id]; ok {
+			continue
+		}
+		p.charCache[id] = &masterdata.Character{
+			ID:        id,
+			FirstName: entity.FirstName,
+			GivenName: entity.GivenName,
+			Unit:      entity.Unit,
+			Gender:    entity.Gender,
+		}
+	}
+	return nil
+}
+
 func (p *dbCharacterProvider) GetColorCode(ctx context.Context, id int) (string, bool) {
 	if id == 0 {
 		return "", false

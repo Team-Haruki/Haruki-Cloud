@@ -5,13 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"entgo.io/ent/dialect/sql"
-
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/card"
 	"haruki-cloud/database/sekai/cardepisode"
 	"haruki-cloud/database/sekai/eventcard"
-	"haruki-cloud/database/sekai/predicate"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/notfound"
 	"haruki-cloud/internal/pjsk/render/common"
@@ -26,12 +23,16 @@ func (p *dbCardProvider) GetByID(ctx context.Context, id int) (*masterdata.Card,
 
 	p.cardMu.RLock()
 	cached, ok := p.cardCache[id]
-	cachedAt := p.cardCachedAt[id]
-	if ok && dbBulkIndexFresh(true, cachedAt) {
-		p.cardMu.RUnlock()
+	indexed := p.allCards != nil
+	p.cardMu.RUnlock()
+	if ok {
 		return common.CloneCard(cached), nil
 	}
-	p.cardMu.RUnlock()
+	if indexed {
+		// The index holds every card of the region, so a miss is a
+		// negative answer and needs no query.
+		return nil, notfound.CardID(id)
+	}
 
 	entity, err := p.client.Card.Query().
 		Where(card.ServerRegionEQ(p.region.String()), card.GameIDEQ(int64(id))).
@@ -49,53 +50,46 @@ func (p *dbCardProvider) GetByID(ctx context.Context, id int) (*masterdata.Card,
 	}
 	p.cardMu.Lock()
 	p.cardCache[id] = model
-	p.cardCachedAt[id] = time.Now()
 	p.cardMu.Unlock()
 	return common.CloneCard(model), nil
 }
 
+// GetByCharacterAndSeq returns the character's seq-th card in release order
+// (1-based; a negative seq counts from the newest card).
 func (p *dbCardProvider) GetByCharacterAndSeq(ctx context.Context, characterID, seq int) (*masterdata.Card, error) {
 	if characterID == 0 {
 		return nil, fmt.Errorf("character id is required")
 	}
+	p.init()
 
-	entities, err := p.client.Card.Query().
-		Where(card.ServerRegionEQ(p.region.String()), card.CharacterIDEQ(int64(characterID))).
-		Order(card.ByReleaseAt()).
-		All(ctx)
+	cards, err := p.cardIndex(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query cards by character: %w", err)
 	}
-	if len(entities) == 0 {
+	var owned []*masterdata.Card
+	for _, model := range cards {
+		if model.CharacterID == characterID {
+			owned = append(owned, model)
+		}
+	}
+	if len(owned) == 0 {
 		return nil, notfound.Card("")
 	}
 
-	var entity *sekaiDB.Card
+	index := seq - 1
 	if seq < 0 {
-		index := len(entities) + seq
-		if index < 0 || index >= len(entities) {
-			return nil, notfound.Card("")
-		}
-		entity = entities[index]
-	} else {
-		if seq < 1 || seq > len(entities) {
-			return nil, notfound.Card("")
-		}
-		entity = entities[seq-1]
+		index = len(owned) + seq
 	}
-
-	p.init()
-	model, err := common.ConvertCardEntity(entity)
-	if err != nil {
-		return nil, fmt.Errorf("decode card %d for region %s: %w", entity.GameID, p.region, err)
+	if seq == 0 || index < 0 || index >= len(owned) {
+		return nil, notfound.Card("")
 	}
-	p.cardMu.Lock()
-	p.cardCache[model.ID] = model
-	p.cardCachedAt[model.ID] = time.Now()
-	p.cardMu.Unlock()
-	return common.CloneCard(model), nil
+	return common.CloneCard(owned[index]), nil
 }
 
+// Filter answers every card query from the region's in-memory index. The
+// column conditions (event cards, character, rarity, attribute and release
+// year) keep the semantics of the SQL predicates they replaced; the unit,
+// skill and supply conditions were always applied in memory.
 func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*masterdata.Card, error) {
 	if filter == nil {
 		return nil, fmt.Errorf("filter is required")
@@ -105,11 +99,11 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 		return p.getAllCards(ctx, filter.Limit)
 	}
 
-	query, empty, err := p.cardFilterQuery(ctx, filter)
+	eventCardIDs, err := p.resolveFilterEventCardIDs(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
-	if empty {
+	if filter.EventID != 0 && len(eventCardIDs) == 0 {
 		return nil, nil
 	}
 
@@ -121,22 +115,16 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 		return nil, nil
 	}
 
-	entities, err := query.Order(card.ByReleaseAt()).All(ctx)
+	cards, err := p.cardIndex(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("filter cards: %w", err)
+		return nil, err
 	}
-
-	results := make([]*masterdata.Card, 0, len(entities))
-	for _, entity := range entities {
-		model, err := common.ConvertCardEntity(entity)
-		if err != nil {
-			return nil, fmt.Errorf("decode card %d for region %s: %w", entity.GameID, p.region, err)
+	columns := newCardColumnFilter(filter, eventCardIDs)
+	results := make([]*masterdata.Card, 0)
+	for _, model := range cards {
+		if !columns.matches(model) {
+			continue
 		}
-		// The filtered entities are the same canonical card records used by
-		// GetByID. Populate the shared cache before applying in-memory filters so
-		// follow-up lookups (for example GetUnitByCardID while building CardBox)
-		// do not turn one list query into hundreds of SELECTs.
-		p.cacheFilteredCard(model)
 		if !p.cardMatchesFilter(ctx, filter, matchingSkillIDs, model) {
 			continue
 		}
@@ -148,33 +136,56 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 	return results, nil
 }
 
-func (p *dbCardProvider) cardFilterQuery(ctx context.Context, filter *CardFilter) (*sekaiDB.CardQuery, bool, error) {
-	query := p.client.Card.Query().Where(card.ServerRegionEQ(p.region.String()))
-	eventCardIDs, err := p.resolveFilterEventCardIDs(ctx, filter)
-	if err != nil {
-		return nil, false, err
-	}
-	if len(eventCardIDs) == 0 && filter.EventID != 0 {
-		return query, true, nil
+// cardColumnFilter holds the conditions the former SQL query pushed into
+// WHERE: event card membership, character, rarity, attribute and release
+// year. A nil eventCardIDs set means the filter has no event condition.
+type cardColumnFilter struct {
+	eventCardIDs map[int]struct{}
+	characterID  int
+	rarity       string
+	attr         string
+	releaseFrom  int64
+	releaseUntil int64
+}
+
+func newCardColumnFilter(filter *CardFilter, eventCardIDs []int) cardColumnFilter {
+	columns := cardColumnFilter{
+		characterID: filter.CharacterID,
+		rarity:      filter.Rarity,
+		attr:        filter.Attr,
 	}
 	if len(eventCardIDs) > 0 {
-		query = query.Where(card.GameIDIn(eventCardIDs...))
-	}
-	if filter.CharacterID != 0 {
-		query = query.Where(card.CharacterIDEQ(int64(filter.CharacterID)))
-	}
-	if filter.Rarity != "" {
-		query = query.Where(cardJsonFieldEQ("card_rarity_type", filter.Rarity))
-	}
-	if filter.Attr != "" {
-		query = query.Where(cardJsonFieldEQ("attr", filter.Attr))
+		columns.eventCardIDs = make(map[int]struct{}, len(eventCardIDs))
+		for _, id := range eventCardIDs {
+			columns.eventCardIDs[id] = struct{}{}
+		}
 	}
 	if filter.Year != 0 {
-		start := time.Date(filter.Year, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
-		end := time.Date(filter.Year+1, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
-		query = query.Where(card.ReleaseAtGTE(start), card.ReleaseAtLT(end))
+		columns.releaseFrom = time.Date(filter.Year, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
+		columns.releaseUntil = time.Date(filter.Year+1, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
 	}
-	return query, false, nil
+	return columns
+}
+
+func (f cardColumnFilter) matches(model *masterdata.Card) bool {
+	if f.eventCardIDs != nil {
+		if _, ok := f.eventCardIDs[model.ID]; !ok {
+			return false
+		}
+	}
+	if f.characterID != 0 && model.CharacterID != f.characterID {
+		return false
+	}
+	if f.rarity != "" && model.CardRarityType != f.rarity {
+		return false
+	}
+	if f.attr != "" && model.Attr != f.attr {
+		return false
+	}
+	if f.releaseUntil != 0 && (model.ReleaseAt < f.releaseFrom || model.ReleaseAt >= f.releaseUntil) {
+		return false
+	}
+	return true
 }
 
 func (p *dbCardProvider) cardFilterSkillTypeIDs(ctx context.Context, filter *CardFilter) (map[int]struct{}, error) {
@@ -188,13 +199,6 @@ func (p *dbCardProvider) cardFilterSkillTypeIDs(ctx context.Context, filter *Car
 		return nil, fmt.Errorf("load card skill filter: %w", err)
 	}
 	return ids, nil
-}
-
-func (p *dbCardProvider) cacheFilteredCard(model *masterdata.Card) {
-	p.cardMu.Lock()
-	p.cardCache[model.ID] = model
-	p.cardCachedAt[model.ID] = time.Now()
-	p.cardMu.Unlock()
 }
 
 func (p *dbCardProvider) cardMatchesFilter(ctx context.Context, filter *CardFilter, matchingSkillIDs map[int]struct{}, model *masterdata.Card) bool {
@@ -249,7 +253,7 @@ func (p *dbCardProvider) GetEpisodesByCardID(ctx context.Context, cardID int) ([
 func (p *dbCardProvider) ensureAllEpisodesLoaded(ctx context.Context) error {
 	p.init()
 	p.episodeMu.RLock()
-	loaded := dbBulkIndexFresh(p.episodesLoaded, p.episodesLoadedAt)
+	loaded := p.episodesLoaded
 	p.episodeMu.RUnlock()
 	if loaded {
 		return nil
@@ -261,7 +265,7 @@ func (p *dbCardProvider) ensureAllEpisodesLoaded(ctx context.Context) error {
 			finishIndex := commandtrace.MeasureOperation(loadCtx, "cards.episode_index")
 			defer finishIndex()
 			p.episodeMu.RLock()
-			alreadyLoaded := dbBulkIndexFresh(p.episodesLoaded, p.episodesLoadedAt)
+			alreadyLoaded := p.episodesLoaded
 			p.episodeMu.RUnlock()
 			if alreadyLoaded {
 				return nil
@@ -294,7 +298,6 @@ func (p *dbCardProvider) ensureAllEpisodesLoaded(ctx context.Context) error {
 			p.episodeMu.Lock()
 			p.episodesByCard = byCard
 			p.episodesLoaded = true
-			p.episodesLoadedAt = time.Now()
 			p.episodeMu.Unlock()
 			return nil
 		})
@@ -322,25 +325,35 @@ func cloneCardEpisodes(episodes []*masterdata.CardEpisode) []*masterdata.CardEpi
 	return result
 }
 
-func (p *dbCardProvider) resolveFilterEventCardIDs(ctx context.Context, filter *CardFilter) ([]int64, error) {
+// resolveFilterEventCardIDs returns the ids of the event's cards, or nil
+// when the filter has no event condition or the event has no cards.
+func (p *dbCardProvider) resolveFilterEventCardIDs(ctx context.Context, filter *CardFilter) ([]int, error) {
 	if filter == nil || filter.EventID == 0 {
 		return nil, nil
 	}
-	links, err := p.client.Eventcard.Query().
-		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.EventIDEQ(int64(filter.EventID))).
-		All(ctx)
+	byEvent, err := p.eventCards.get(ctx, "cards.event_card_index", p.loadEventCardIDs)
 	if err != nil {
 		return nil, fmt.Errorf("query event cards for event %d: %w", filter.EventID, err)
 	}
-	if len(links) == 0 {
-		return nil, nil
-	}
+	return byEvent[filter.EventID], nil
+}
 
-	result := make([]int64, 0, len(links))
-	for _, link := range links {
-		result = append(result, link.CardID)
+// loadEventCardIDs indexes the region's event cards by event id.
+func (p *dbCardProvider) loadEventCardIDs(ctx context.Context) (map[int][]int, error) {
+	links, err := p.client.Eventcard.Query().
+		Where(eventcard.ServerRegionEQ(p.region.String())).
+		Select(eventcard.FieldEventID, eventcard.FieldCardID).
+		Order(eventcard.ByEventID(), eventcard.ByID()).
+		All(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return result, nil
+	byEvent := make(map[int][]int)
+	for _, link := range links {
+		eventID := int(link.EventID)
+		byEvent[eventID] = append(byEvent[eventID], int(link.CardID))
+	}
+	return byEvent, nil
 }
 
 func (p *dbCardProvider) matchesUnitFilter(ctx context.Context, filter *CardFilter, cardInfo *masterdata.Card) bool {
@@ -359,10 +372,4 @@ func (p *dbCardProvider) matchesUnitFilter(ctx context.Context, filter *CardFilt
 		return false
 	}
 	return cardMatchesUnitFilter(filter, character.Unit, cardInfo.SupportUnit)
-}
-
-// cardJsonFieldEQ creates a predicate that matches a JSONB text field by its
-// unquoted string value. Works with PostgreSQL's ->> operator.
-func cardJsonFieldEQ(field, value string) predicate.Card {
-	return sql.FieldEQ(field, value)
 }

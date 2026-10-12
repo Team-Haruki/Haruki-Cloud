@@ -37,6 +37,11 @@ func TestDBCardSupplyRefactorBranches(t *testing.T) {
 		Save(ctx); err != nil {
 		t.Fatalf("create supply: %v", err)
 	}
+	// The supply index loaded by the missing lookup is served until reset.
+	if got := provider.GetSupplyType(ctx, &masterdata.Card{ID: 70, CardSupplyID: 7}); got != "normal" {
+		t.Fatalf("supply index must be served until reset, got %q", got)
+	}
+	provider.resetMasterdataCache()
 	if got := provider.GetSupplyType(ctx, &masterdata.Card{ID: 70, CardSupplyID: 7}); got != "term_limited" {
 		t.Fatalf("term-limited card supply = %q", got)
 	}

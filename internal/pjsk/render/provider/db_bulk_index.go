@@ -12,12 +12,14 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
+// Bulk indexes hold one region's master table in memory. An index is loaded
+// once per generation and served until the master data changes: a reset
+// (ResetMasterdataCache, driven by the registry pointer and the ingest
+// version) bumps the generation, drops the index and discards any load that
+// started before it. There is no time-based expiry; the ingest version check
+// in the registry poll loop is what tells a running process that the
+// database was restored in place.
 const dbBulkIndexLoadTimeout = 30 * time.Second
-
-// Database masterdata is restored in place while the service keeps running.
-// Bulk negative indexes therefore need a bounded lifetime instead of treating
-// one successful load as immutable for the whole process.
-const dbBulkIndexTTL = 5 * time.Minute
 
 type dbBulkIndexFlightToken byte
 
@@ -71,8 +73,4 @@ func waitDBBulkIndexFlight(
 		}
 		return completed.err
 	}
-}
-
-func dbBulkIndexFresh(loaded bool, loadedAt time.Time) bool {
-	return loaded && !loadedAt.IsZero() && time.Since(loadedAt) < dbBulkIndexTTL
 }

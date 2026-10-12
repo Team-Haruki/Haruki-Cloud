@@ -67,27 +67,21 @@ func TestCardAllCacheSharesLoadsAndOwnsReturns(t *testing.T) {
 	if _, err := client.Card.Update().SetPrefix("updated").Save(ctx); err != nil {
 		t.Fatal(err)
 	}
-	p.cardMu.Lock()
-	p.allCardsLoadedAt = time.Now().Add(-dbBulkIndexTTL)
-	p.cardMu.Unlock()
-	// An expired index is still served while one background flight reloads it.
+	// A loaded index is served until a masterdata reset; nothing expires it.
 	cards, err = p.Filter(ctx, &CardFilter{})
-	if err != nil || cards[0].Prefix != "jp" {
-		t.Fatalf("expired index was not served while refreshing: %v, %v", cards, err)
+	if err != nil || cards[0].Prefix != "jp" || queries.Load() != 2 {
+		t.Fatalf("loaded index was reloaded without a reset: %v, %v, queries=%d", cards, err, queries.Load())
 	}
-	waitForIndexRefresh(t, func() bool {
-		cards, err := p.Filter(ctx, &CardFilter{})
-		return err == nil && cards[0].Prefix == "updated"
-	})
-	if queries.Load() != 3 {
-		t.Fatalf("TTL refresh queries = %d, want 3", queries.Load())
+	if _, err := p.GetByID(ctx, 99); err == nil || queries.Load() != 2 {
+		t.Fatalf("missing id must be answered from the loaded index: err=%v queries=%d", err, queries.Load())
 	}
 	p.resetMasterdataCache()
-	if _, err := p.Filter(ctx, &CardFilter{}); err != nil {
-		t.Fatal(err)
+	cards, err = p.Filter(ctx, &CardFilter{})
+	if err != nil || cards[0].Prefix != "updated" {
+		t.Fatalf("reset did not invalidate all-card cache: %v, %v", cards, err)
 	}
-	if queries.Load() != 4 {
-		t.Fatal("reset did not invalidate all-card cache")
+	if queries.Load() != 3 {
+		t.Fatalf("reset reload queries = %d, want 3", queries.Load())
 	}
 }
 

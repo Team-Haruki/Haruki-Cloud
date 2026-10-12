@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"time"
 
 	"haruki-cloud/database/sekai/musiccategorie"
 	"haruki-cloud/internal/observability/commandtrace"
@@ -46,7 +45,7 @@ func (p *dbMusicProvider) fillMusicCategories(ctx context.Context, musics ...*ma
 
 func (p *dbMusicProvider) ensureMusicCategoriesLoaded(ctx context.Context) error {
 	p.categoryMu.RLock()
-	loaded := dbBulkIndexFresh(p.categoriesLoaded, p.categoriesLoadedAt)
+	loaded := p.categoriesLoaded
 	p.categoryMu.RUnlock()
 	if loaded {
 		return nil
@@ -58,7 +57,7 @@ func (p *dbMusicProvider) ensureMusicCategoriesLoaded(ctx context.Context) error
 			finishIndex := commandtrace.MeasureOperation(loadCtx, "musics.category_index")
 			defer finishIndex()
 			p.categoryMu.RLock()
-			alreadyLoaded := dbBulkIndexFresh(p.categoriesLoaded, p.categoriesLoadedAt)
+			alreadyLoaded := p.categoriesLoaded
 			p.categoryMu.RUnlock()
 			if alreadyLoaded {
 				return nil
@@ -83,7 +82,6 @@ func (p *dbMusicProvider) ensureMusicCategoriesLoaded(ctx context.Context) error
 			p.categoryMu.Lock()
 			p.categoriesByMusic = byMusic
 			p.categoriesLoaded = true
-			p.categoriesLoadedAt = time.Now()
 			p.categoryMu.Unlock()
 			return nil
 		})

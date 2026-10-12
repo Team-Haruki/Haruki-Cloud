@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/skill"
@@ -28,19 +27,16 @@ type dbSkillProvider struct {
 	characters *dbCharacterProvider
 	once       sync.Once
 
-	mu            sync.RWMutex
-	cache         map[int]*masterdata.Skill
-	cacheLoadedAt map[int]time.Time
+	mu    sync.RWMutex
+	cache map[int]*masterdata.Skill
 
-	allLoaded   bool
-	allLoadedAt time.Time
-	allLoads    singleflight.Group
+	allLoaded bool
+	allLoads  singleflight.Group
 }
 
 func (p *dbSkillProvider) init() {
 	p.once.Do(func() {
 		p.cache = make(map[int]*masterdata.Skill)
-		p.cacheLoadedAt = make(map[int]time.Time)
 	})
 }
 
@@ -52,13 +48,11 @@ func (p *dbSkillProvider) GetByID(ctx context.Context, id int) (*masterdata.Skil
 
 	p.mu.RLock()
 	cached, ok := p.cache[id]
-	cachedAt := p.cacheLoadedAt[id]
-	allLoaded := dbBulkIndexFresh(p.allLoaded, p.allLoadedAt)
-	if ok && dbBulkIndexFresh(true, cachedAt) {
-		p.mu.RUnlock()
+	allLoaded := p.allLoaded
+	p.mu.RUnlock()
+	if ok {
 		return common.CloneSkill(cached), nil
 	}
-	p.mu.RUnlock()
 	if allLoaded {
 		return nil, fmt.Errorf("skill %d not found", id)
 	}
@@ -75,7 +69,6 @@ func (p *dbSkillProvider) GetByID(ctx context.Context, id int) (*masterdata.Skil
 	}
 	p.mu.Lock()
 	p.cache[id] = model
-	p.cacheLoadedAt[id] = time.Now()
 	p.mu.Unlock()
 	return common.CloneSkill(model), nil
 }
@@ -102,7 +95,7 @@ func (p *dbSkillProvider) matchingTypeIDs(ctx context.Context, skillType string)
 func (p *dbSkillProvider) ensureAllLoaded(ctx context.Context) error {
 	p.init()
 	p.mu.RLock()
-	loaded := dbBulkIndexFresh(p.allLoaded, p.allLoadedAt)
+	loaded := p.allLoaded
 	p.mu.RUnlock()
 	if loaded {
 		return nil
@@ -114,7 +107,7 @@ func (p *dbSkillProvider) ensureAllLoaded(ctx context.Context) error {
 			finishIndex := commandtrace.MeasureOperation(loadCtx, "skills.index")
 			defer finishIndex()
 			p.mu.RLock()
-			alreadyLoaded := dbBulkIndexFresh(p.allLoaded, p.allLoadedAt)
+			alreadyLoaded := p.allLoaded
 			p.mu.RUnlock()
 			if alreadyLoaded {
 				return nil
@@ -137,13 +130,7 @@ func (p *dbSkillProvider) ensureAllLoaded(ctx context.Context) error {
 
 			p.mu.Lock()
 			p.cache = loadedSkills
-			loadedAt := time.Now()
-			p.cacheLoadedAt = make(map[int]time.Time, len(loadedSkills))
-			for id := range loadedSkills {
-				p.cacheLoadedAt[id] = loadedAt
-			}
 			p.allLoaded = true
-			p.allLoadedAt = loadedAt
 			p.mu.Unlock()
 			return nil
 		})

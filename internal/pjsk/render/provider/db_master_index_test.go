@@ -94,92 +94,48 @@ func TestDBMasterIndexDiscardsPreResetFlight(t *testing.T) {
 	}
 }
 
-// waitForIndexRefresh polls until a background index refresh is visible.
-func waitForIndexRefresh(t *testing.T, refreshed func() bool) {
-	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
-	for !refreshed() {
-		if time.Now().After(deadline) {
-			t.Fatal("background index refresh did not complete")
-		}
-		time.Sleep(time.Millisecond)
-	}
-}
-
-func expireMasterIndex[T any](index *dbMasterIndex[T]) {
-	index.mu.Lock()
-	index.loadedAt = time.Now().Add(-dbBulkIndexTTL)
-	index.mu.Unlock()
-}
-
-func TestDBMasterIndexServesStaleWhileOneFlightRefreshes(t *testing.T) {
+func TestDBMasterIndexServesLoadedValueUntilReset(t *testing.T) {
 	var index dbMasterIndex[int]
 	if value, err := index.get(t.Context(), "test.index", func(context.Context) (int, error) { return 1, nil }); err != nil || value != 1 {
 		t.Fatalf("initial load = %d, %v", value, err)
 	}
-	expireMasterIndex(&index)
-
-	entered, release := make(chan struct{}), make(chan struct{})
-	var unblock sync.Once
-	defer unblock.Do(func() { close(release) })
 	var calls atomic.Int32
-	refresh := func(context.Context) (int, error) {
-		if calls.Add(1) == 1 {
-			close(entered)
-		}
-		<-release
-		return 2, nil
-	}
-	// Readers get the previous index immediately while the reload is blocked.
+	reload := func(context.Context) (int, error) { calls.Add(1); return 2, nil }
+	// A loaded index is a complete answer until the masterdata changes:
+	// no later read reloads it on its own.
 	for range 8 {
-		value, err := index.get(t.Context(), "test.index", refresh)
+		value, err := index.get(t.Context(), "test.index", reload)
 		if err != nil || value != 1 {
-			t.Fatalf("stale read = %d, %v", value, err)
+			t.Fatalf("read = %d, %v", value, err)
 		}
 	}
-	select {
-	case <-entered:
-	case <-time.After(5 * time.Second):
-		t.Fatal("background refresh did not start")
+	if calls.Load() != 0 || !index.isLoaded() {
+		t.Fatalf("loaded index was reloaded without a reset: calls=%d loaded=%v", calls.Load(), index.isLoaded())
 	}
-	unblock.Do(func() { close(release) })
-	waitForIndexRefresh(t, func() bool {
-		value, err := index.get(t.Context(), "test.index", refresh)
-		return err == nil && value == 2
-	})
-	if calls.Load() != 1 {
-		t.Fatalf("refresh loads = %d, want 1", calls.Load())
+	index.reset()
+	if index.isLoaded() {
+		t.Fatal("reset must drop the index")
+	}
+	if value, err := index.get(t.Context(), "test.index", reload); err != nil || value != 2 || calls.Load() != 1 {
+		t.Fatalf("read after reset = %d, %v, calls=%d", value, err, calls.Load())
 	}
 }
 
-func TestDBMasterIndexKeepsStaleValueWhenRefreshFails(t *testing.T) {
+func TestDBMasterIndexRetriesAfterFailedLoad(t *testing.T) {
 	var index dbMasterIndex[int]
-	if _, err := index.get(t.Context(), "test.index", func(context.Context) (int, error) { return 1, nil }); err != nil {
-		t.Fatal(err)
-	}
-	expireMasterIndex(&index)
 	var calls atomic.Int32
 	failing := func(context.Context) (int, error) { calls.Add(1); return 0, errors.New("database unavailable") }
-	if value, err := index.get(t.Context(), "test.index", failing); err != nil || value != 1 {
-		t.Fatalf("stale read with failing refresh = %d, %v", value, err)
+	if _, err := index.get(t.Context(), "test.index", failing); err == nil {
+		t.Fatal("failed load must be reported")
 	}
-	waitForIndexRefresh(t, func() bool { return calls.Load() >= 1 })
-	// The failed refresh left the index stale, so the next reader retries it.
-	waitForIndexRefresh(t, func() bool {
-		value, err := index.get(t.Context(), "test.index", func(context.Context) (int, error) { return 3, nil })
-		return err == nil && value == 3
-	})
-}
-
-func TestDBMasterIndexResetMakesReadersWaitForNewData(t *testing.T) {
-	var index dbMasterIndex[int]
-	if _, err := index.get(t.Context(), "test.index", func(context.Context) (int, error) { return 1, nil }); err != nil {
-		t.Fatal(err)
+	if index.isLoaded() {
+		t.Fatal("failed load must not be cached")
 	}
-	expireMasterIndex(&index)
-	index.reset()
-	// After a reset nothing stale may be served, even though the TTL passed.
-	if value, err := index.get(t.Context(), "test.index", func(context.Context) (int, error) { return 2, nil }); err != nil || value != 2 {
-		t.Fatalf("read after reset = %d, %v", value, err)
+	// The failed load left nothing behind, so the next reader loads again.
+	if value, err := index.get(t.Context(), "test.index", func(context.Context) (int, error) { return 3, nil }); err != nil || value != 3 {
+		t.Fatalf("read after failure = %d, %v", value, err)
+	}
+	if calls.Load() != 1 {
+		t.Fatalf("failing loads = %d, want 1", calls.Load())
 	}
 }

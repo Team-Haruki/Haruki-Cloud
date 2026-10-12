@@ -2,8 +2,8 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"strings"
-	"time"
 
 	"haruki-cloud/database/sekai/cardsupplie"
 	"haruki-cloud/database/sekai/event"
@@ -27,31 +27,37 @@ func (p *dbCardProvider) GetSupplyType(ctx context.Context, cardInfo *masterdata
 		return cardNormalizeSupplyType("")
 	}
 
-	p.supplyMu.RLock()
-	if cached, ok := p.supplyByID[cardInfo.CardSupplyID]; ok {
-		p.supplyMu.RUnlock()
-		if cached == "term_limited" && p.isWorldLink3Card(ctx, cardInfo.ID) {
-			return cardNormalizeSupplyType("unit_event_limited")
-		}
-		return cached
-	}
-	p.supplyMu.RUnlock()
-
-	entity, err := p.client.Cardsupplie.Query().
-		Where(cardsupplie.ServerRegionEQ(p.region.String()), cardsupplie.GameIDEQ(int64(cardInfo.CardSupplyID))).
-		Only(ctx)
+	// An unknown supply id reads as a normal card, as the per-id lookup
+	// this index replaced did on a missing row.
+	supplies, err := p.supplies.get(ctx, "cards.supply_type_index", p.loadSupplyTypes)
 	if err != nil {
 		return cardNormalizeSupplyType("")
 	}
-
-	value := cardNormalizeSupplyType(entity.CardSupplyType)
-	p.supplyMu.Lock()
-	p.supplyByID[cardInfo.CardSupplyID] = value
-	p.supplyMu.Unlock()
+	value, ok := supplies[cardInfo.CardSupplyID]
+	if !ok {
+		return cardNormalizeSupplyType("")
+	}
 	if value == "term_limited" && p.isWorldLink3Card(ctx, cardInfo.ID) {
 		return cardNormalizeSupplyType("unit_event_limited")
 	}
 	return value
+}
+
+// loadSupplyTypes indexes the region's card supplies by id with their
+// normalised supply type.
+func (p *dbCardProvider) loadSupplyTypes(ctx context.Context) (map[int]string, error) {
+	entities, err := p.client.Cardsupplie.Query().
+		Where(cardsupplie.ServerRegionEQ(p.region.String())).
+		Select(cardsupplie.FieldGameID, cardsupplie.FieldCardSupplyType).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("query card supplies for region %s: %w", p.region, err)
+	}
+	byID := make(map[int]string, len(entities))
+	for _, entity := range entities {
+		byID[int(entity.GameID)] = cardNormalizeSupplyType(entity.CardSupplyType)
+	}
+	return byID, nil
 }
 
 func (p *dbCardProvider) isWorldLink3Card(ctx context.Context, cardID int) bool {
@@ -86,7 +92,7 @@ func (p *dbCardProvider) loadWorldLink3Cards(ctx context.Context) bool {
 func (p *dbCardProvider) worldLink3CardsFresh() bool {
 	p.worldLink3Mu.RLock()
 	defer p.worldLink3Mu.RUnlock()
-	return dbBulkIndexFresh(p.worldLink3Loaded, p.worldLink3LoadedAt)
+	return p.worldLink3Loaded
 }
 
 func (p *dbCardProvider) refreshWorldLink3Cards(ctx context.Context) error {
@@ -106,7 +112,6 @@ func (p *dbCardProvider) refreshWorldLink3Cards(ctx context.Context) error {
 	p.worldLink3Mu.Lock()
 	p.worldLink3ByCard = cards
 	p.worldLink3Loaded = true
-	p.worldLink3LoadedAt = time.Now()
 	p.worldLink3Mu.Unlock()
 	return nil
 }

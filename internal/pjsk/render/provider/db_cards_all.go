@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"time"
 
 	"haruki-cloud/database/sekai/card"
 	"haruki-cloud/internal/observability/commandtrace"
@@ -21,10 +20,11 @@ func cardFilterUsesAllCards(f *CardFilter) bool {
 		f.Year == 0 && f.EventID == 0
 }
 
-// getAllCards serves the region's card index. After the TTL the previous
-// index keeps being served while one shared flight reloads it (a load is
-// 0.5-2 s for JP); only the first load and a reset make readers wait.
-func (p *dbCardProvider) getAllCards(ctx context.Context, limit int) ([]*masterdata.Card, error) {
+// cardIndex serves the region's card index: every card in release order,
+// loaded once per generation by one shared flight. The slice and its models
+// are shared with every caller and must not be mutated; a reset drops the
+// index and the next reader waits for the reload.
+func (p *dbCardProvider) cardIndex(ctx context.Context) ([]*masterdata.Card, error) {
 	for {
 		if err := ctx.Err(); err != nil {
 			return nil, err
@@ -32,47 +32,55 @@ func (p *dbCardProvider) getAllCards(ctx context.Context, limit int) ([]*masterd
 		p.cardMu.RLock()
 		generation := p.cardGeneration
 		cards := p.allCards
-		fresh := dbBulkIndexFresh(cards != nil, p.allCardsLoadedAt)
 		p.cardMu.RUnlock()
-		if !fresh {
-			caller := new(dbBulkIndexFlightToken)
-			result := p.startAllCardsLoad(generation, caller)
-			if cards == nil {
-				if err := waitDBBulkIndexFlight(ctx, result, caller, "cards.all_index_wait", "cards.all_index_shared"); err != nil {
-					return nil, err
-				}
-				// A reset during loading discards that generation; retry the current one.
-				continue
-			}
-			commandtrace.RecordOperation(ctx, "cards.all_index_stale", 0)
+		if cards != nil {
+			return cards, nil
 		}
-		if limit > 0 && limit < len(cards) {
-			cards = cards[:limit]
+		caller := new(dbBulkIndexFlightToken)
+		result := p.startAllCardsLoad(generation, caller)
+		if err := waitDBBulkIndexFlight(ctx, result, caller, "cards.all_index_wait", "cards.all_index_shared"); err != nil {
+			return nil, err
 		}
-		result := make([]*masterdata.Card, len(cards))
-		for i, model := range cards {
-			result[i] = common.CloneCard(model)
-		}
-		return result, nil
+		// A reset during loading discards that generation; retry the current one.
 	}
 }
 
+// getAllCards returns clones of the region's cards in release order, cut to
+// limit when it is positive.
+func (p *dbCardProvider) getAllCards(ctx context.Context, limit int) ([]*masterdata.Card, error) {
+	cards, err := p.cardIndex(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if limit > 0 && limit < len(cards) {
+		cards = cards[:limit]
+	}
+	result := make([]*masterdata.Card, len(cards))
+	for i, model := range cards {
+		result[i] = common.CloneCard(model)
+	}
+	return result, nil
+}
+
 // startAllCardsLoad joins or starts the shared load for generation. It runs
-// detached from the caller, so a reader holding a stale index need not wait.
+// detached from the caller so a cancelled reader does not fail the others.
 func (p *dbCardProvider) startAllCardsLoad(generation uint64, caller *dbBulkIndexFlightToken) <-chan singleflight.Result {
 	return p.cardLoads.DoChan(strconv.FormatUint(generation, 10), func() (any, error) {
 		return runDBBulkIndexFlight(caller, func(loadCtx context.Context) error {
 			p.cardMu.RLock()
-			fresh := dbBulkIndexFresh(p.allCards != nil, p.allCardsLoadedAt)
+			loaded := p.allCards != nil
 			current := p.cardGeneration
 			p.cardMu.RUnlock()
-			if fresh || current != generation {
+			if loaded || current != generation {
 				return nil
 			}
 			finish := commandtrace.MeasureOperation(loadCtx, "cards.all_index")
 			defer finish()
+			// game_id breaks release_at ties so the order is stable across
+			// reloads; the filtered SQL path this index replaced left ties
+			// to the planner.
 			entities, err := p.client.Card.Query().Where(card.ServerRegionEQ(p.region.String())).
-				Order(card.ByReleaseAt()).All(loadCtx)
+				Order(card.ByReleaseAt(), card.ByGameID()).All(loadCtx)
 			if err != nil {
 				return fmt.Errorf("filter cards: %w", err)
 			}
@@ -90,11 +98,9 @@ func (p *dbCardProvider) startAllCardsLoad(generation uint64, caller *dbBulkInde
 			p.cardMu.Lock()
 			defer p.cardMu.Unlock()
 			if p.cardGeneration == generation {
-				now := time.Now()
-				p.allCards, p.allCardsLoadedAt = models, now
+				p.allCards = models
 				for _, model := range models {
 					p.cardCache[model.ID] = model
-					p.cardCachedAt[model.ID] = now
 				}
 			}
 			return nil

@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
+	"sync"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/virtuallive"
@@ -19,6 +21,12 @@ type dbVLiveProvider struct {
 	// rows serves the columns and tables the ent schema does not model yet
 	// (solo cheer-point columns, virtualLiveGroups); nil disables them.
 	rows MasterRowSource
+
+	// lives caches each queried region's virtual lives (sorted, with the
+	// solo fields applied) until the next masterdata reset. The table
+	// carries large JSON columns, so it is read once per generation.
+	livesMu sync.Mutex
+	lives   map[renderregion.Value]*dbMasterIndex[[]*VLive]
 }
 
 func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Value) ([]*VLive, error) {
@@ -27,8 +35,32 @@ func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Valu
 	}
 
 	queryRegion := renderregion.WithDefault(region)
+	lives, err := p.livesIndex(queryRegion).get(ctx, "vlives.index", func(loadCtx context.Context) ([]*VLive, error) {
+		return p.loadLives(loadCtx, queryRegion)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return cloneVLives(lives), nil
+}
+
+func (p *dbVLiveProvider) livesIndex(region renderregion.Value) *dbMasterIndex[[]*VLive] {
+	p.livesMu.Lock()
+	defer p.livesMu.Unlock()
+	if p.lives == nil {
+		p.lives = make(map[renderregion.Value]*dbMasterIndex[[]*VLive])
+	}
+	index, ok := p.lives[region]
+	if !ok {
+		index = &dbMasterIndex[[]*VLive]{}
+		p.lives[region] = index
+	}
+	return index
+}
+
+func (p *dbVLiveProvider) loadLives(ctx context.Context, region renderregion.Value) ([]*VLive, error) {
 	entities, err := p.client.Virtuallive.Query().
-		Where(virtuallive.ServerRegionEQ(queryRegion.String())).
+		Where(virtuallive.ServerRegionEQ(region.String())).
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query virtual lives: %w", err)
@@ -47,6 +79,42 @@ func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Valu
 		return lives[i].StartAt < lives[j].StartAt
 	})
 	return lives, nil
+}
+
+func (p *dbVLiveProvider) resetMasterdataCache() {
+	if p == nil {
+		return
+	}
+	p.livesMu.Lock()
+	defer p.livesMu.Unlock()
+	for _, index := range p.lives {
+		index.reset()
+	}
+}
+
+// cloneVLives copies the cached lives so callers can mutate their result.
+func cloneVLives(lives []*VLive) []*VLive {
+	result := make([]*VLive, 0, len(lives))
+	for _, live := range lives {
+		if live == nil {
+			continue
+		}
+		clone := *live
+		clone.Schedules = slices.Clone(live.Schedules)
+		clone.Rewards = slices.Clone(live.Rewards)
+		clone.Characters = slices.Clone(live.Characters)
+		clone.TotalCheerPointRewards = slices.Clone(live.TotalCheerPointRewards)
+		if live.TotalCheerPointSurplusReward != nil {
+			surplus := *live.TotalCheerPointSurplusReward
+			clone.TotalCheerPointSurplusReward = &surplus
+		}
+		if live.VirtualItemOverrideCost != nil {
+			cost := *live.VirtualItemOverrideCost
+			clone.VirtualItemOverrideCost = &cost
+		}
+		result = append(result, &clone)
+	}
+	return result
 }
 
 func convertDBVLive(entity *sekaiDB.Virtuallive) *VLive {

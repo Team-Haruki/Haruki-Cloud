@@ -61,7 +61,7 @@ func TestBuildHonorRequestAppliesSelectedBackgroundWordAndMedal(t *testing.T) {
 	if len(req.HonorImgPath) != 2 || !strings.HasSuffix(req.HonorImgPath[0], "honor_background/honor_bg_style_02_01/degree_main.png") || !strings.HasSuffix(req.HonorImgPath[1], "honor/honor_0004/degree_main.png") {
 		t.Fatalf("honor_img_path = %#v, want the background then the classic art", req.HonorImgPath)
 	}
-	if req.WordImgPath == nil || !strings.HasSuffix(*req.WordImgPath, "honor_word/honor_word_01_02_4.png") {
+	if req.WordImgPath == nil || !strings.HasSuffix(*req.WordImgPath, "honor_word/honor_word_01_02_04.png") {
 		t.Fatalf("word_img_path = %v", req.WordImgPath)
 	}
 	if req.MedalImgPath == nil || !strings.HasSuffix(*req.MedalImgPath, "honor_medal/medal/icon_degree_medal1.png") {
@@ -137,5 +137,30 @@ func TestBuildHonorRequestNonCharacterGroupIgnoresLayers(t *testing.T) {
 	}
 	if len(req.HonorImgPath) != 1 || req.WordImgPath != nil {
 		t.Fatalf("non-character group must keep classic art: %#v word=%v", req.HonorImgPath, req.WordImgPath)
+	}
+}
+
+// These names match exported production textures, not client bundle names.
+func TestBuildMainHonorWordUsesExportedRarityTexture(t *testing.T) {
+	for _, tc := range []struct{ rarity, filename string }{
+		{"low", "honor_word_01_01_01.png"},
+		{"middle", "honor_word_01_01_02.png"},
+		{"high", "honor_word_01_01_03.png"},
+		{"highest", "honor_word_01_01_04.png"},
+	} {
+		t.Run(tc.rarity, func(t *testing.T) {
+			source := &rowHonorSource{testHonorSource: characterHonorSource(renderregion.JP), rows: jp700HonorRows()}
+			source.honors[4].HonorRarity = tc.rarity
+			req, err := NewBuilder(source, assets.NewAssetHelper("", nil)).BuildHonorRequest(Query{
+				Region: renderregion.JP, HonorID: 4, HonorLevel: 1, IsMain: true,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := "asset/jp-assets/startapp/honor_word/" + tc.filename
+			if req.WordImgPath == nil || *req.WordImgPath != want {
+				t.Fatalf("word_img_path = %v, want %s", req.WordImgPath, want)
+			}
+		})
 	}
 }

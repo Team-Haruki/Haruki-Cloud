@@ -15,7 +15,7 @@ func TestNewResourceIconRelPath(t *testing.T) {
 		want string
 	}{
 		{"honor_background", 10101, "honor_background/honor_bg_style_01_01/degree_sub.png"},
-		{"honor_word", 10101, "honor_word/honor_word_01_01_1.png"},
+		{"honor_word", 10101, "honor_word/honor_word_01_01_01.png"},
 		{"virtual_item", 222, "thumbnail/virtual_live_item/fan_ichika.png"},
 		{"virtual_item", 999, ""},
 		{"material", 1, ""},

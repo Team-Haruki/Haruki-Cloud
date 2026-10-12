@@ -116,12 +116,10 @@ func honorBackgroundImagePath(layer honorLayer, mode string) string {
 	return fmt.Sprintf("honor_background/%s/degree_%s.png", layer.assetBundleName, mode)
 }
 
-// honorWordImagePath is the honor_word bundle for a rarity: the client loads
-// "honor_word/{0}_{1}" with {1} = rarity index + 1 (low 1 .. highest 4, no
-// zero padding) and takes the bundle's single texture, assumed exported as
-// honor_word/<assetbundleName>_<n>.png.
+// honorWordImagePath uses the exported texture name, whose rarity suffix is
+// zero-padded (low 01 through highest 04), unlike the client bundle index.
 func honorWordImagePath(layer honorLayer, rarity string) string {
-	return fmt.Sprintf("honor_word/%s_%d.png", layer.assetBundleName, mapHonorRarity(rarity))
+	return fmt.Sprintf("honor_word/%s_%02d.png", layer.assetBundleName, mapHonorRarity(rarity))
 }
 
 func rowInt(value any) int {

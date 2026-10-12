@@ -208,8 +208,6 @@ func TestProfileSettingsHandlersRejectInvalidSelectors(t *testing.T) {
 
 	ctx = additionalProfileContext("unexpected", "")
 	for _, handler := range []HarukiSekaiCommandHandler{
-		sekaiHandlers{}.ProfileEnableModularHandle(),
-		sekaiHandlers{}.ProfileDisableModularHandle(),
 		sekaiHandlers{}.ProfileVerifyListHandle(),
 	} {
 		{
@@ -361,10 +359,6 @@ func TestProfileAndCheckDataExecutionGuards(t *testing.T) {
 
 		_, _, err := renderProfileMessageForQuery(rc, userQueryParams{}, "jp", false)
 		testutil.RequireArgs(t, !(err == nil), "missing profile services unexpectedly rendered")
-	}
-	{
-		testutil.RequireArgs(t, !(isRequesterModularProfileEnabled(nil, userQueryParams{})), "missing binding service reported modular profile")
-		testutil.RequireArgs(t, !(isRequesterModularProfileEnabled(rc, userQueryParams{})), "missing binding service reported modular profile")
 	}
 
 	for _, tt := range []struct {

@@ -40,47 +40,6 @@ func minimalProfileResponse() *sekai.GetAnotherProfileResponse {
 	}
 }
 
-func TestModularProfileBuildAndPureHelpers(t *testing.T) {
-	controller := minimalProfileController(nil)
-	img := "background.png"
-	payload, err := controller.BuildModularProfileRequestFromAPIWithSnapshot(Query{
-		Region:     "jp",
-		Visible:    true,
-		BgSettings: &drawing.ProfileBgSettings{ImgPath: &img},
-	}, minimalProfileResponse(), nil)
-	testutil.Require(t, !(err != nil), "BuildModularProfileRequestFromAPIWithSnapshot() error = %v", err)
-	{
-		testutil.Require(t, !(payload.Profile.ID != "42"), "unexpected modular payload: %+v", payload)
-		testutil.Require(t, !(payload.Profile.IsHideUID), "unexpected modular payload: %+v", payload)
-		testutil.Require(t, !(payload.Preset.ID == ""), "unexpected modular payload: %+v", payload)
-		testutil.Require(t, !(len(payload.Preset.Widgets) != 7), "unexpected modular payload: %+v", payload)
-	}
-	{
-		testutil.Require(t, !(payload.BgSettings == nil), "background settings = %+v", payload.BgSettings)
-		testutil.Require(t, !(payload.BgSettings.ImgPath == nil), "background settings = %+v", payload.BgSettings)
-		testutil.Require(t, !(*payload.BgSettings.ImgPath != "asset/background.png"), "background settings = %+v", payload.BgSettings)
-	}
-
-	widget := modularWidget("id", "type", "family", "Title", 1, 2, 3, 4, map[string]any{"a": 1}, map[string]any{"b": 2})
-	{
-		testutil.Require(t, !(widget.Title == nil), "widget = %+v", widget)
-		testutil.Require(t, !(*widget.Title != "Title"), "widget = %+v", widget)
-		testutil.Require(t, !(widget.Frame.W != 3), "widget = %+v", widget)
-	}
-	{
-		testutil.RequireArgs(t, !(firstCharacterRank(nil) != nil), "empty focus helpers returned an item")
-		testutil.RequireArgs(t, !(firstDeckCard(nil) != nil), "empty focus helpers returned an item")
-	}
-
-	ranks := []drawing.CharacterRank{{}, {CharacterID: 3}}
-	cards := []drawing.CardFullThumbnailRequest{{}, {CardID: 4}}
-	{
-		testutil.RequireArgs(t, !(firstCharacterRank(ranks).CharacterID != 3), "focus helpers did not skip empty entries")
-		testutil.RequireArgs(t, !(firstDeckCard(cards).CardID != 4), "focus helpers did not skip empty entries")
-	}
-
-}
-
 func TestProfilePublicBuildEntrypointsAndValidation(t *testing.T) {
 	controller := minimalProfileController(nil)
 	resp := minimalProfileResponse()
@@ -99,21 +58,6 @@ func TestProfilePublicBuildEntrypointsAndValidation(t *testing.T) {
 			testutil.Require(t, !(card.Profile == nil), "profile card = %+v, %v", card, err)
 			testutil.Require(t, !(card.Profile.ID != "42"), "profile card = %+v, %v", card, err)
 		}
-	}
-	{
-
-		_, err := (*Controller)(nil).BuildModularProfileRequestFromAPIWithSnapshot(Query{}, resp, nil)
-		testutil.RequireArgs(t, !(err == nil), "nil modular controller unexpectedly succeeded")
-	}
-	{
-
-		_, err := controller.BuildModularProfileRequestFromAPIWithSnapshot(Query{}, nil, nil)
-		testutil.RequireArgs(t, !(err == nil), "nil modular response unexpectedly succeeded")
-	}
-	{
-
-		_, err := NewController(nil, nil, nil, nil).BuildModularProfileRequestFromAPIWithSnapshot(Query{}, resp, nil)
-		testutil.RequireArgs(t, !(err == nil), "missing modular source unexpectedly succeeded")
 	}
 	{
 
@@ -150,9 +94,6 @@ func TestProfileRenderEntrypoints(t *testing.T) {
 		"profile snapshot": func() ([]byte, error) {
 			return controller.RenderProfileFromAPIWithSnapshot(Query{Region: "jp"}, resp, nil)
 		},
-		"modular": func() ([]byte, error) {
-			return controller.RenderModularProfileFromAPIWithSnapshot(Query{Region: "jp"}, resp, nil)
-		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			got, err := render()
@@ -168,10 +109,7 @@ func TestProfileRenderEntrypoints(t *testing.T) {
 	for name, render := range map[string]func() ([]byte, error){
 		"profile":          func() ([]byte, error) { return withoutDrawing.RenderProfileFromAPI(Query{}, resp, nil) },
 		"profile snapshot": func() ([]byte, error) { return withoutDrawing.RenderProfileFromAPIWithSnapshot(Query{}, resp, nil) },
-		"modular": func() ([]byte, error) {
-			return withoutDrawing.RenderModularProfileFromAPIWithSnapshot(Query{}, resp, nil)
-		},
-		"local": func() ([]byte, error) { return withoutDrawing.RenderProfile(Query{}) },
+		"local":            func() ([]byte, error) { return withoutDrawing.RenderProfile(Query{}) },
 	} {
 		t.Run("missing drawing "+name, func(t *testing.T) {
 			{
@@ -184,11 +122,6 @@ func TestProfileRenderEntrypoints(t *testing.T) {
 	{
 		_, err := controller.RenderProfileFromAPI(Query{}, nil, nil)
 		testutil.RequireArgs(t, !(err == nil), "render with invalid payload unexpectedly succeeded")
-	}
-	{
-
-		_, err := controller.RenderModularProfileFromAPIWithSnapshot(Query{}, nil, nil)
-		testutil.RequireArgs(t, !(err == nil), "modular render with invalid payload unexpectedly succeeded")
 	}
 
 }

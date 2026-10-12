@@ -3,7 +3,7 @@
 `pjsk_render.player_frame_overrides` in the Cloud YAML file lets an operator replace
 an account's equipped player frame with six local sprites. Entries match the
 resolved server (`jp`, `cn`, `tw`, `en`, `kr`) and actual game UID, not the QQ user
-or request-supplied profile UID. The override applies to live, snapshot, modular
+or request-supplied profile UID. The override applies to live, snapshot
 profiles and profile cards.
 Every builder resolves frames through `playerframe.ResolveAccount`, so the
 suite-backed info panel on card, deck, education, event, inventory, MySekai and

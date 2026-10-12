@@ -10,7 +10,6 @@ import (
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
-	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/profile"
@@ -267,8 +266,6 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		accountdata.ProfileModeSetTimeZone,
 		accountdata.ProfileModeSetArrestDiff,
 		accountdata.ProfileModeSetChartStyle,
-		accountdata.ProfileModeEnableModular,
-		accountdata.ProfileModeDisableModular,
 		accountdata.ProfileModeBGUpload, accountdata.ProfileModeBGClear:
 		if rc.App.Bindings == nil {
 			return nil, accountdata.ErrBindingServiceUnavailable
@@ -374,12 +371,7 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 		BgSettings:       target.BgSettings,
 		VerticalOverride: p.ProfileVertical,
 	}
-	var data drawing.ImageResult
-	if isRequesterModularProfileEnabled(rc, p) {
-		data, err = profileCtrl.RenderModularProfileFromAPIWithSnapshotImage(q, resp, profileSnapshot)
-	} else {
-		data, err = profileCtrl.RenderProfileFromAPIWithSnapshotImage(q, resp, profileSnapshot)
-	}
+	data, err := profileCtrl.RenderProfileFromAPIWithSnapshotImage(q, resp, profileSnapshot)
 	if err != nil {
 		return zeroTarget, nil, err
 	}
@@ -414,23 +406,4 @@ func fetchProfileAndTargetSnapshot(rc *RequestContext, p userQueryParams, target
 		return nil, nil, err
 	}
 	return resp, profileSnapshot, nil
-}
-
-func isRequesterModularProfileEnabled(rc *RequestContext, p userQueryParams) bool {
-	if rc == nil || rc.App == nil || rc.App.Bindings == nil {
-		return false
-	}
-	platform := strings.TrimSpace(p.Platform)
-	platformUserID := strings.TrimSpace(p.PlatformUserID)
-	if platform == "" {
-		platform = rc.Platform
-	}
-	if platformUserID == "" {
-		platformUserID = rc.PlatformUserID
-	}
-	if platform == "" || platformUserID == "" {
-		return false
-	}
-	settings, _, err := rc.App.Bindings.GetUserSettings(rc.Ctx, platform, platformUserID)
-	return err == nil && settings != nil && settings.ModularProfileEnabled
 }

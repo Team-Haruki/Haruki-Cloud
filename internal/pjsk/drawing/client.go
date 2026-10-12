@@ -710,10 +710,6 @@ func (c *HarukiDrawingClient) GenerateProfile(req *ProfileRequest) ([]byte, erro
 	return c.cachedPost("/api/pjsk/profile", req)
 }
 
-func (c *HarukiDrawingClient) GenerateModularProfile(req *ModularProfileRenderRequest) ([]byte, error) {
-	return c.cachedPost("/api/pjsk/profile/modular", req)
-}
-
 func (c *HarukiDrawingClient) GenerateCustomProfileCard(req *CustomProfileCardRenderRequest) ([]byte, error) {
 	return c.cachedPost("/api/pjsk/profile/custom-profile-card", req)
 }
@@ -997,10 +993,6 @@ func (c *HarukiDrawingClient) GenerateMusicBriefListImage(req *MusicBriefListReq
 
 func (c *HarukiDrawingClient) GenerateProfileImage(req *ProfileRequest) (ImageResult, error) {
 	return c.cachedPostImage("/api/pjsk/profile", req)
-}
-
-func (c *HarukiDrawingClient) GenerateModularProfileImage(req *ModularProfileRenderRequest) (ImageResult, error) {
-	return c.cachedPostImage("/api/pjsk/profile/modular", req)
 }
 
 func (c *HarukiDrawingClient) GenerateCustomProfileCardImage(req *CustomProfileCardRenderRequest) (ImageResult, error) {

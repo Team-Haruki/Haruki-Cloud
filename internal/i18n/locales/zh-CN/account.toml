@@ -1,5 +1,5 @@
 # 账号：绑定、解绑、默认绑定、绑定列表、验证、可见性和个人设置（时区、逮捕难度、谱面样式、
-# 模块化个人信息、个人信息背景）的成功回复，以及 Bot 客户端接口（登录、会话、注销、统计、
+# 个人信息背景）的成功回复，以及 Bot 客户端接口（登录、会话、注销、统计、
 # 群绑定检查）返回给 Bot 运营者的 message。
 # 账号相关的错误提示在 binding.toml，封禁相关在 moderation.toml。
 
@@ -242,16 +242,6 @@ other = "无"
 [account.settings.chart_style_set]
 description = "/谱面样式 设置成功。占位符：Style=谱面样式名（英文代码，例如“black”）。"
 other = "已将谱面样式设为 {{.Style}}"
-
-[account.settings.modular_enabled]
-description = "/开启模块化个人信息 成功。"
-other = "已开启模块化个人信息，之后 /个人信息 会使用模块化布局"
-
-[account.settings.modular_disabled]
-description = "/关闭模块化个人信息 成功。"
-other = "已关闭模块化个人信息，之后 /个人信息 会使用经典布局"
-
-# ---- 个人信息背景（/上传个人信息背景、/清除个人信息背景、/调整个人信息背景） ----
 
 [account.bg.uploaded]
 description = "上传个人信息背景成功。占位符：Region=区服显示名。"

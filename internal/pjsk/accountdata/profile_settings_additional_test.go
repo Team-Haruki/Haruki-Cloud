@@ -51,7 +51,7 @@ func TestDecodeProfileSettingsParamsValidationAndNormalization(t *testing.T) {
 	}
 }
 
-func TestExecuteProfileSettingsVisibilityAndModularModes(t *testing.T) {
+func TestExecuteProfileSettingsVisibilityModes(t *testing.T) {
 	service := newProfileBindingTestService(t, map[string]map[string]string{
 		"jp": {"12345678901234": "JP User"},
 	})
@@ -73,21 +73,11 @@ func TestExecuteProfileSettingsVisibilityAndModularModes(t *testing.T) {
 		accountdata.ProfileModeShowSuite,
 		accountdata.ProfileModeHideMySekai,
 		accountdata.ProfileModeShowMySekai,
-		accountdata.ProfileModeEnableModular,
-		accountdata.ProfileModeDisableModular,
 	} {
 		text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, mode, params)
 		if err != nil || len(text) == 0 {
 			t.Fatalf("execute %s = %q, %v", mode, text, err)
 		}
-	}
-
-	settings, _, err := service.GetUserSettings(ctx, "qq", "42")
-	if err != nil {
-		t.Fatalf("get modular settings: %v", err)
-	}
-	if settings.ModularProfileEnabled {
-		t.Fatal("modular profile remained enabled after disable command")
 	}
 
 	service.SetReadOnly(true)

@@ -80,7 +80,6 @@ func TestDrawingClientEndpointWrappers(t *testing.T) {
 		{"music rewards detail", func() ([]byte, error) { return client.GenerateDetailMusicRewards(nil) }},
 		{"music rewards basic", func() ([]byte, error) { return client.GenerateBasicMusicRewards(nil) }},
 		{"profile", func() ([]byte, error) { return client.GenerateProfile(nil) }},
-		{"modular profile", func() ([]byte, error) { return client.GenerateModularProfile(nil) }},
 		{"custom profile", func() ([]byte, error) { return client.GenerateCustomProfileCard(nil) }},
 		{"card detail", func() ([]byte, error) { return client.GenerateCardDetail(nil) }},
 		{"card list", func() ([]byte, error) { return client.GenerateCardList(nil) }},

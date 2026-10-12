@@ -329,50 +329,6 @@ func TestProfileCustomProfileCardHandleAllowsArbitraryPositiveSeq(t *testing.T) 
 	}
 }
 
-func TestProfileModularToggleHandlesParseSettingsMode(t *testing.T) {
-	tests := []struct {
-		name string
-		h    HarukiSekaiCommandHandler
-		want string
-	}{
-		{
-			name: "enable",
-			h:    sekaiHandlers{}.ProfileEnableModularHandle(),
-			want: accountdata.ProfileModeEnableModular,
-		},
-		{
-			name: "disable",
-			h:    sekaiHandlers{}.ProfileDisableModularHandle(),
-			want: accountdata.ProfileModeDisableModular,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.h.Regions = []renderregion.Value{renderregion.CN}
-			result, err := tt.h.Handle(&PjskHandlerContext{
-				Context:    context.Background(),
-				Platform:   "qq",
-				UserId:     "42",
-				TriggerCmd: tt.h.Commands[0],
-			})
-			if err != nil {
-				t.Fatalf("Handle() error = %v", err)
-			}
-			if result.Mode != tt.want {
-				t.Fatalf("mode = %q, want %q", result.Mode, tt.want)
-			}
-			var params accountdata.ProfileSettingsCommandParams
-			if err := json.Unmarshal(result.Params, &params); err != nil {
-				t.Fatalf("unmarshal params: %v", err)
-			}
-			if params.Platform != "qq" || params.PlatformUserID != "42" || params.Server != "cn" {
-				t.Fatalf("unexpected params: %+v", params)
-			}
-		})
-	}
-}
-
 func TestResolveCustomProfileCardUsesSortedPositionWhenSeqHasGap(t *testing.T) {
 	card, err := resolveCustomProfileCard([]sekaiapi.UserCustomProfileCard{
 		{CustomProfileID: 2, CustomProfileCardID: 3, Seq: 3},

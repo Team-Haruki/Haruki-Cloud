@@ -371,38 +371,6 @@ func (sekaiHandlers) ProfileChartStyleHandle() HarukiSekaiCommandHandler {
 	}, executeProfile)
 }
 
-func (sekaiHandlers) ProfileEnableModularHandle() HarukiSekaiCommandHandler {
-	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		Commands: []string{
-			"/开启模块个人信息", "/开启模块化个人信息", "/pjsk modular profile on", "/开启模块化资料",
-		},
-		Path:        "profile/modular/enable",
-		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, usererror.Misuse(i18n.M("common.no_args"))
-			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeEnableModular, newProfileSettingsParams(ctx)), nil
-		},
-	}, executeProfile)
-}
-
-func (sekaiHandlers) ProfileDisableModularHandle() HarukiSekaiCommandHandler {
-	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		Commands: []string{
-			"/关闭模块个人信息", "/关闭模块化个人信息", "/pjsk modular profile off", "/关闭模块化资料",
-		},
-		Path:        "profile/modular/disable",
-		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, usererror.Misuse(i18n.M("common.no_args"))
-			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeDisableModular, newProfileSettingsParams(ctx)), nil
-		},
-	}, executeProfile)
-}
-
 func (sekaiHandlers) ProfileArrestDifficultyHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		Commands: []string{

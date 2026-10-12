@@ -50,13 +50,6 @@ func TestProfileBuildersUseActualAccountInsteadOfQueryUID(t *testing.T) {
 	if detail.FramePaths == nil || detail.FramePaths.Horizontal == nil || !detail.HasFrame {
 		t.Fatal("card override missing")
 	}
-	modular, err := c.BuildModularProfileRequestFromAPIWithSnapshot(query, resp, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if modular.Profile.FramePaths == nil || modular.Profile.FramePaths.Horizontal == nil || !modular.Profile.HasFrame {
-		t.Fatal("modular override missing")
-	}
 	query.UserID = "12345"
 	resp.User.UserID = 99999
 	other, err := c.BuildDetailedProfileCardFromAPI(query, resp, nil)

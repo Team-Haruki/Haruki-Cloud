@@ -67,7 +67,7 @@ func (o Overrides) Lookup(region renderregion.Value, userID string) (*drawing.Pl
 
 // ResolveAccount is the one place an account's displayed frame is decided: a file override
 // for (region, uid) wins, otherwise the frame the account has equipped in game. Every
-// profile builder — live, snapshot, modular and the snapshot-backed info panel used by
+// profile builder — live, snapshot and the snapshot-backed info panel used by
 // card, deck, education, mysekai and the other commands — must come through here, or the
 // same account renders with a frame in one command and without it in another.
 func ResolveAccount(source Source, overrides Overrides, region renderregion.Value, userID string, frames []UserFrame) *drawing.PlayerFramePaths {

@@ -1,4 +1,4 @@
-# 个人信息与个人设置：个人信息、个人信息背景、时区、谱面样式、逮捕难度、模块化个人信息、自定义个人信息。
+# 个人信息与个人设置：个人信息、个人信息背景、时区、谱面样式、逮捕难度、自定义个人信息。
 
 [profile.bg.binding_missing]
 description = "设置、清除或调整个人信息背景时找不到对应的绑定账号。"
@@ -190,10 +190,6 @@ other = "烤森数据"
 [profile.data_source.public]
 description = "图片：个人信息卡片上的数据来源名称：游戏里公开的玩家信息（没有用户上传的数据时）。"
 other = "公开信息"
-
-[profile.image.modular_default_name]
-description = "图片：模块化个人信息默认布局的名称。"
-other = "默认模块化个人信息"
 
 [profile.image.rank_level]
 description = "图片：个人信息卡片上游戏账号等级的标签。占位符：Level=游戏账号等级。"

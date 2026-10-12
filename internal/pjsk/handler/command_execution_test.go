@@ -1666,7 +1666,7 @@ func TestExecuteProfileBGAdjustReturnsPreviewImage(t *testing.T) {
 	}
 }
 
-func TestExecuteProfileUsesModularRendererWhenEnabled(t *testing.T) {
+func TestExecuteProfileUsesSupportedRenderer(t *testing.T) {
 	ctx := context.Background()
 	const cnUID = "7488328100774779663"
 	service := newHandlerTestBindingServiceWithValidator(t, handlerMultiRegionBindingValidator{
@@ -1676,13 +1676,6 @@ func TestExecuteProfileUsesModularRendererWhenEnabled(t *testing.T) {
 	})
 	if _, err := service.Bind(ctx, "qq", "42", cnUID); err != nil {
 		t.Fatalf("bind: %v", err)
-	}
-	if _, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeEnableModular, accountdata.ProfileSettingsCommandParams{
-		Platform:       "qq",
-		PlatformUserID: "42",
-		Server:         "cn",
-	}); err != nil {
-		t.Fatalf("enable modular profile: %v", err)
 	}
 
 	apiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1697,7 +1690,7 @@ func TestExecuteProfileUsesModularRendererWhenEnabled(t *testing.T) {
 				Rank:   321,
 			},
 			UserProfile: sekaiapi.UserProfile{
-				Word:      "modular profile",
+				Word:      "profile",
 				TwitterID: "tester",
 			},
 			UserDeck: sekaiapi.UserDeck{
@@ -1738,14 +1731,14 @@ func TestExecuteProfileUsesModularRendererWhenEnabled(t *testing.T) {
 		config.Cfg.SekaiAPI.Token = oldToken
 	}()
 
-	var captured drawing.ModularProfileRenderRequest
+	var captured drawing.ProfileRequest
 	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/pjsk/profile/modular" {
+		if r.URL.Path != "/api/pjsk/profile" {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		defer r.Body.Close()
 		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
-			t.Fatalf("decode modular profile request: %v", err)
+			t.Fatalf("decode profile request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
 		_, _ = w.Write([]byte("png"))
@@ -1789,32 +1782,14 @@ func TestExecuteProfileUsesModularRendererWhenEnabled(t *testing.T) {
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}))
 	if err != nil {
-		t.Fatalf("executeProfile modular: %v", err)
+		t.Fatalf("executeProfile: %v", err)
 	}
 	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected message: %+v", message)
 	}
-	if captured.Kind != drawing.ModularProfileRequestKind || captured.RenderVersion != drawing.ModularProfileRenderVersion {
-		t.Fatalf("unexpected modular request header: %+v", captured)
-	}
-	if captured.Profile.ID != cnUID || captured.Profile.Nickname != "CN Tester" || captured.Region != "cn" {
+	if captured.Profile.ID != cnUID || captured.Profile.Nickname != "CN Tester" || captured.Profile.Region != "CN" {
 		t.Fatalf("unexpected profile metadata: %+v", captured)
 	}
-	if captured.Preset.Grid.Columns != 4 || len(captured.Preset.Widgets) < 6 {
-		t.Fatalf("unexpected preset: %+v", captured.Preset)
-	}
-	if !hasModularWidget(captured.Preset.Widgets, "deck_cards") || !hasModularWidget(captured.Preset.Widgets, "fc_ap_clear") {
-		t.Fatalf("expected deck and clear widgets, got %+v", captured.Preset.Widgets)
-	}
-}
-
-func hasModularWidget(widgets []drawing.ModularProfileWidget, widgetType string) bool {
-	for _, widget := range widgets {
-		if widget.Type == widgetType {
-			return true
-		}
-	}
-	return false
 }
 
 func TestExecuteMusicProgressRequiresSuiteData(t *testing.T) {

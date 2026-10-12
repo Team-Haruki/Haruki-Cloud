@@ -232,7 +232,6 @@ var regionAgnosticHelpRoutes = []string{
 	"profile/arrest-difficulty",
 	"profile/bind",
 	"profile/chart-style",
-	"profile/modular/",
 	"profile/timezone",
 }
 

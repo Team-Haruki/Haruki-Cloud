@@ -271,7 +271,7 @@ func testProfileSettingsStableErrors(t *testing.T) {
 func testProfileSettingsMutationClassification(t *testing.T) {
 	t.Helper()
 	params := ProfileSettingsCommandParams{}
-	for _, mode := range []string{ProfileModeHideID, ProfileModeShowID, ProfileModeHideSuite, ProfileModeShowSuite, ProfileModeHideMySekai, ProfileModeShowMySekai, ProfileModeSetTimeZone, ProfileModeSetArrestDiff, ProfileModeSetChartStyle, ProfileModeEnableModular, ProfileModeDisableModular, ProfileModeBGUpload, ProfileModeBGClear} {
+	for _, mode := range []string{ProfileModeHideID, ProfileModeShowID, ProfileModeHideSuite, ProfileModeShowSuite, ProfileModeHideMySekai, ProfileModeShowMySekai, ProfileModeSetTimeZone, ProfileModeSetArrestDiff, ProfileModeSetChartStyle, ProfileModeBGUpload, ProfileModeBGClear} {
 		if !profileSettingsModeMutates(mode, params) {
 			t.Fatalf("mode %q should mutate", mode)
 		}

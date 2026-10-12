@@ -18,31 +18,29 @@ import (
 )
 
 const (
-	ProfileModeHideID         = "profile-hide-id"
-	ProfileModeShowID         = "profile-show-id"
-	ProfileModeHideSK         = "profile-hide-sk"
-	ProfileModeShowSK         = "profile-show-sk"
-	ProfileModeHideInfo       = "profile-hide-info"
-	ProfileModeShowInfo       = "profile-show-info"
-	ProfileModeHideArrest     = "profile-hide-arrest"
-	ProfileModeShowArrest     = "profile-show-arrest"
-	ProfileModeHideAll        = "profile-hide-all"
-	ProfileModeShowAll        = "profile-show-all"
-	ProfileModeVisibility     = "profile-visibility"
-	ProfileModeHideSuite      = "profile-hide-suite"
-	ProfileModeShowSuite      = "profile-show-suite"
-	ProfileModeHideMySekai    = "profile-hide-mysekai"
-	ProfileModeShowMySekai    = "profile-show-mysekai"
-	ProfileModeVerify         = "profile-verify"
-	ProfileModeVerifyList     = "profile-verify-list"
-	ProfileModeSetTimeZone    = "profile-set-timezone"
-	ProfileModeSetArrestDiff  = "profile-set-arrest-difficulty"
-	ProfileModeSetChartStyle  = "profile-set-chart-style"
-	ProfileModeEnableModular  = "profile-enable-modular"
-	ProfileModeDisableModular = "profile-disable-modular"
-	ProfileModeBGUpload       = "profile-bg-upload"
-	ProfileModeBGClear        = "profile-bg-clear"
-	ProfileModeBGAdjust       = "profile-bg-adjust"
+	ProfileModeHideID        = "profile-hide-id"
+	ProfileModeShowID        = "profile-show-id"
+	ProfileModeHideSK        = "profile-hide-sk"
+	ProfileModeShowSK        = "profile-show-sk"
+	ProfileModeHideInfo      = "profile-hide-info"
+	ProfileModeShowInfo      = "profile-show-info"
+	ProfileModeHideArrest    = "profile-hide-arrest"
+	ProfileModeShowArrest    = "profile-show-arrest"
+	ProfileModeHideAll       = "profile-hide-all"
+	ProfileModeShowAll       = "profile-show-all"
+	ProfileModeVisibility    = "profile-visibility"
+	ProfileModeHideSuite     = "profile-hide-suite"
+	ProfileModeShowSuite     = "profile-show-suite"
+	ProfileModeHideMySekai   = "profile-hide-mysekai"
+	ProfileModeShowMySekai   = "profile-show-mysekai"
+	ProfileModeVerify        = "profile-verify"
+	ProfileModeVerifyList    = "profile-verify-list"
+	ProfileModeSetTimeZone   = "profile-set-timezone"
+	ProfileModeSetArrestDiff = "profile-set-arrest-difficulty"
+	ProfileModeSetChartStyle = "profile-set-chart-style"
+	ProfileModeBGUpload      = "profile-bg-upload"
+	ProfileModeBGClear       = "profile-bg-clear"
+	ProfileModeBGAdjust      = "profile-bg-adjust"
 )
 
 type ProfileDifficultyToggle struct {
@@ -123,8 +121,6 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 		return executeProfileArrestDifficultyMode(ctx, service, params)
 	case ProfileModeSetChartStyle:
 		return executeProfileChartStyleMode(ctx, service, params)
-	case ProfileModeEnableModular, ProfileModeDisableModular:
-		return executeProfileModularMode(ctx, service, params, mode == ProfileModeEnableModular)
 	case ProfileModeBGUpload, ProfileModeBGClear, ProfileModeBGAdjust:
 		return executeProfileBackgroundMode(ctx, service, mode, params, resolveBinding)
 	default:
@@ -371,21 +367,6 @@ func executeProfileChartStyleMode(ctx context.Context, service *BindingService, 
 	return []byte(i18n.T("account.settings.chart_style_set", i18n.Data{"Style": style})), nil
 }
 
-func executeProfileModularMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams, enabled bool) ([]byte, error) {
-	userID, settings, err := loadProfileUserSettings(ctx, service, params)
-	if err != nil {
-		return nil, err
-	}
-	settings.ModularProfileEnabled = enabled
-	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
-		return nil, usererror.Wrap(usererror.CodeUnavailable, i18n.M("profile.settings.save_failed"), fmt.Errorf("save modular profile setting: %w", err))
-	}
-	if enabled {
-		return []byte(i18n.T("account.settings.modular_enabled")), nil
-	}
-	return []byte(i18n.T("account.settings.modular_disabled")), nil
-}
-
 func executeProfileBackgroundMode(ctx context.Context, service *BindingService, mode string, params ProfileSettingsCommandParams, resolve profileBindingResolver) ([]byte, error) {
 	binding, err := resolve()
 	if err != nil {
@@ -441,8 +422,6 @@ func profileSettingsModeMutates(mode string, params ProfileSettingsCommandParams
 		ProfileModeSetTimeZone,
 		ProfileModeSetArrestDiff,
 		ProfileModeSetChartStyle,
-		ProfileModeEnableModular,
-		ProfileModeDisableModular,
 		ProfileModeBGUpload,
 		ProfileModeBGClear:
 		return true

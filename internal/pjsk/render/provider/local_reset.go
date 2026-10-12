@@ -1,8 +1,6 @@
 package provider
 
 import (
-	"time"
-
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -44,6 +42,7 @@ func (p *DatabaseProvider) ResetMasterdataCache() {
 	p.gachas.resetMasterdataCache()
 	p.stamps.resetMasterdataCache()
 	p.playerFrames.resetMasterdataCache()
+	p.vlives.resetMasterdataCache()
 	p.honors.resetLocalMasterdataCache()
 	p.education.resetLocalMasterdataCache()
 	p.musics.resetLocalMasterdataCache()
@@ -58,23 +57,18 @@ func (p *dbCardProvider) resetMasterdataCache() {
 	p.init()
 	p.cardMu.Lock()
 	p.cardCache = make(map[int]*masterdata.Card)
-	p.cardCachedAt = make(map[int]time.Time)
 	p.allCards = nil
-	p.allCardsLoadedAt = time.Time{}
 	p.cardGeneration++
 	p.cardMu.Unlock()
 	p.episodeMu.Lock()
 	p.episodesByCard = make(map[int][]*masterdata.CardEpisode)
 	p.episodesLoaded = false
-	p.episodesLoadedAt = time.Time{}
 	p.episodeMu.Unlock()
-	p.supplyMu.Lock()
-	p.supplyByID = make(map[int]string)
-	p.supplyMu.Unlock()
+	p.supplies.reset()
+	p.eventCards.reset()
 	p.worldLink3Mu.Lock()
 	p.worldLink3ByCard = make(map[int]bool)
 	p.worldLink3Loaded = false
-	p.worldLink3LoadedAt = time.Time{}
 	p.worldLink3Mu.Unlock()
 	p.gachaMu.Lock()
 	p.gachaByCard = make(map[int]*masterdata.Gacha)
@@ -108,9 +102,7 @@ func (p *dbSkillProvider) resetMasterdataCache() {
 	p.init()
 	p.mu.Lock()
 	p.cache = make(map[int]*masterdata.Skill)
-	p.cacheLoadedAt = make(map[int]time.Time)
 	p.allLoaded = false
-	p.allLoadedAt = time.Time{}
 	p.mu.Unlock()
 }
 
@@ -290,18 +282,15 @@ func (p *dbMusicProvider) resetLocalMasterdataCache() {
 	p.localizedTitles.reset()
 	p.difficultyMu.Lock()
 	p.difficultyIndex = nil
-	p.difficultyLoadedAt = time.Time{}
 	p.difficultyGeneration++
 	p.difficultyMu.Unlock()
 	p.limitedMu.Lock()
 	p.limitedByMusic = make(map[int][]*masterdata.LimitedTimeMusic)
 	p.limitedLoaded = false
-	p.limitedLoadedAt = time.Time{}
 	p.limitedMu.Unlock()
 	p.categoryMu.Lock()
 	p.categoriesByMusic = make(map[int][]string)
 	p.categoriesLoaded = false
-	p.categoriesLoadedAt = time.Time{}
 	p.categoryMu.Unlock()
 }
 

@@ -85,6 +85,8 @@ func (a *App) startRegistryMasterdataRefresh(ctx context.Context, cfg Config) {
 	}
 	state := newRegistryMasterdataRefreshState(baseURL, nil, masterdataResettersByRegion(a.Providers), a.masterdataAdditionalResetters()...)
 	state.settleDelays = resolveMasterdataRegistrySettleDelays(cfg.MasterdataRegistry.SettleDelays)
+	state.versioners = masterdataIngestVersionersByRegion(a.Providers)
+	state.warm = func(region renderregion.Value) { a.warmRegionAsync(ctx, region) }
 	if len(state.providers) == 0 {
 		return
 	}
@@ -120,6 +122,24 @@ func (a *App) masterdataAdditionalResetters() []masterdataCacheResetter {
 	return resetters
 }
 
+// masterdataIngestVersioner is implemented by providers that can read the
+// content hash the database ingest last committed for their region.
+type masterdataIngestVersioner interface {
+	MasterdataIngestHash(ctx context.Context) (string, bool)
+}
+
+func masterdataIngestVersionersByRegion(providers map[renderregion.Value]provider.MasterDataProvider) map[renderregion.Value]masterdataIngestVersioner {
+	versioners := make(map[renderregion.Value]masterdataIngestVersioner, len(providers))
+	for region, src := range providers {
+		versioner, ok := src.(masterdataIngestVersioner)
+		if !ok || versioner == nil {
+			continue
+		}
+		versioners[renderregion.WithDefault(region)] = versioner
+	}
+	return versioners
+}
+
 func masterdataResettersByRegion(providers map[renderregion.Value]provider.MasterDataProvider) map[renderregion.Value]masterdataCacheResetter {
 	resetters := make(map[renderregion.Value]masterdataCacheResetter, len(providers))
 	for region, src := range providers {
@@ -138,13 +158,24 @@ type registryMasterdataRefreshState struct {
 	providers           map[renderregion.Value]masterdataCacheResetter
 	additionalResetters []masterdataCacheResetter
 	settleDelays        []time.Duration
+	// versioners read each region's committed ingest hash; regions without
+	// one (or whose hash is unknown) fall back to the time-driven resets.
+	versioners map[renderregion.Value]masterdataIngestVersioner
+	// warm, when set, reloads a region's indexes after it was reset.
+	warm func(region renderregion.Value)
 
 	mu       sync.Mutex
 	etags    map[renderregion.Value]string
 	signals  map[renderregion.Value]string
 	failures map[renderregion.Value]int
 	settling map[renderregion.Value][]*time.Timer
-	stopped  bool
+	// loaded records, per region, the ingest hash the caches are known to
+	// hold: the hash observed when they were last reset, or on the first
+	// poll for caches filled lazily since startup. An empty entry marks a
+	// reset made while the hash was unknown, so the next known hash must
+	// reset again; a missing entry means no hash was observed yet.
+	loaded  map[renderregion.Value]string
+	stopped bool
 }
 
 type registryMasterdataPointer struct {
@@ -165,6 +196,7 @@ func newRegistryMasterdataRefreshState(baseURL string, client *http.Client, prov
 		signals:             make(map[renderregion.Value]string, len(providers)),
 		failures:            make(map[renderregion.Value]int, len(providers)),
 		settling:            make(map[renderregion.Value][]*time.Timer, len(providers)),
+		loaded:              make(map[renderregion.Value]string, len(providers)),
 	}
 	for region, resetter := range providers {
 		if resetter == nil {
@@ -175,15 +207,18 @@ func newRegistryMasterdataRefreshState(baseURL string, client *http.Client, prov
 	return state
 }
 
-// poll checks every region once. The first signal seen for a region is only
-// recorded; every later change resets that region's caches right away and
-// schedules the settle follow-ups. The shared controllers are reset with
-// every region reset.
+// poll checks every region once. The ingest hash is consulted first: a
+// change since the caches were last reset reloads them on its own. Then the
+// registry pointer is polled; its first signal is only recorded, every later
+// change resets the region (unless the ingest hash shows the database has
+// not changed) and schedules the settle follow-ups. The shared controllers
+// are reset with every region reset.
 func (s *registryMasterdataRefreshState) poll(ctx context.Context) {
 	if s == nil {
 		return
 	}
 	for region := range s.providers {
+		s.pollIngest(ctx, region)
 		signal, updated, err := s.pollRegion(ctx, region)
 		if err != nil {
 			s.recordFailure(region, err)
@@ -193,12 +228,73 @@ func (s *registryMasterdataRefreshState) poll(ctx context.Context) {
 		if !updated {
 			continue
 		}
-		s.resetRegion(region, "registry_changed", signal)
+		s.resetRegionIfChanged(ctx, region, "registry_changed", signal)
 		s.scheduleSettleResets(region, signal)
 	}
 }
 
-func (s *registryMasterdataRefreshState) resetRegion(region renderregion.Value, reason, signal string) {
+// pollIngest resets the region when its committed ingest hash differs from
+// the one the caches hold. The first hash observed is only recorded: the
+// caches filled since startup were read from that version. When the hash
+// is unknown at the first observation (Cloud started mid-ingest, or the
+// ingest failed), the region is recorded as unknown so that the first hash
+// seen afterwards resets it instead of becoming the baseline.
+func (s *registryMasterdataRefreshState) pollIngest(ctx context.Context, region renderregion.Value) {
+	hash, known := s.ingestedHash(ctx, region)
+	s.mu.Lock()
+	previous, seen := s.loaded[region]
+	if !seen {
+		s.loaded[region] = ""
+		if known {
+			s.loaded[region] = hash
+		}
+	}
+	s.mu.Unlock()
+	if !known || !seen || previous == hash {
+		return
+	}
+	s.resetRegion(region, "ingest_changed", hash, hash, true)
+}
+
+// resetRegionIfChanged resets the region unless its ingest hash is known
+// and the caches were already reset for that hash. An unknown hash resets
+// as before, so a database without the ingest version table keeps the
+// time-driven behaviour.
+func (s *registryMasterdataRefreshState) resetRegionIfChanged(ctx context.Context, region renderregion.Value, reason, signal string) bool {
+	hash, known := s.ingestedHash(ctx, region)
+	if known {
+		s.mu.Lock()
+		loaded := s.loaded[region]
+		s.mu.Unlock()
+		if loaded == hash {
+			logger.Info("masterdata cache reset skipped",
+				"reason", reason,
+				"region", region,
+				"signal", signal,
+				"ingest_hash", hash,
+			)
+			return false
+		}
+	}
+	s.resetRegion(region, reason, signal, hash, known)
+	return true
+}
+
+func (s *registryMasterdataRefreshState) ingestedHash(ctx context.Context, region renderregion.Value) (string, bool) {
+	versioner := s.versioners[region]
+	if versioner == nil {
+		return "", false
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return versioner.MasterdataIngestHash(ctx)
+}
+
+// resetRegion drops the region's caches and the shared controllers, records
+// the ingest hash the reset was made at (empty when unknown) and starts the
+// region's reload when a warmer is configured.
+func (s *registryMasterdataRefreshState) resetRegion(region renderregion.Value, reason, signal, ingestHash string, ingestKnown bool) {
 	resetter := s.providers[region]
 	if resetter == nil {
 		return
@@ -209,15 +305,28 @@ func (s *registryMasterdataRefreshState) resetRegion(region renderregion.Value, 
 			additional.ResetMasterdataCache()
 		}
 	}
+	s.mu.Lock()
+	if ingestKnown {
+		s.loaded[region] = ingestHash
+	} else {
+		s.loaded[region] = ""
+	}
+	s.mu.Unlock()
 	logger.Info("masterdata cache reset",
 		"reason", reason,
 		"region", region,
 		"signal", signal,
+		"ingest_hash", ingestHash,
 	)
+	if s.warm != nil {
+		s.warm(region)
+	}
 }
 
 // scheduleSettleResets replaces any follow-ups still pending for the region,
 // so a second change inside the settle window yields one series, not two.
+// Each follow-up skips its reset when the ingest hash shows the database
+// has not changed since the caches were last reset.
 func (s *registryMasterdataRefreshState) scheduleSettleResets(region renderregion.Value, signal string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -231,7 +340,7 @@ func (s *registryMasterdataRefreshState) scheduleSettleResets(region renderregio
 	timers := make([]*time.Timer, 0, len(s.settleDelays))
 	for _, delay := range s.settleDelays {
 		timers = append(timers, time.AfterFunc(delay, func() {
-			s.resetRegion(region, "registry_settle", signal)
+			s.resetRegionIfChanged(context.Background(), region, "registry_settle", signal)
 		}))
 	}
 	s.settling[region] = timers

@@ -62,6 +62,7 @@ func Run(ctx context.Context) {
 	wireEventStreams(renderRuntime, eventStreamCloser(embeddedEvents))
 	wireAliasCacheInvalidation(renderRuntime, redisClient)
 	startRenderHostProbers(ctx, renderRuntime)
+	startMasterdataWarmup(ctx, app, renderRuntime)
 	startStorageDiagnostics(ctx, renderRuntime, mainLogger)
 	if renderRuntime != nil && renderRuntime.Bindings != nil && !harukiConfig.Cfg.Node.ReadOnly {
 		go renderRuntime.Bindings.RunProfileBGCleanup(ctx)

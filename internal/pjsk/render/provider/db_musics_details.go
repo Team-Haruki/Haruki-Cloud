@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	json "haruki-cloud/internal/jsonutil"
 
@@ -33,7 +32,7 @@ func (p *dbMusicProvider) GetDifficulties(ctx context.Context, musicID int) ([]*
 	}
 
 	p.difficultyMu.RLock()
-	indexed := dbBulkIndexFresh(p.difficultyIndex != nil, p.difficultyLoadedAt)
+	indexed := p.difficultyIndex != nil
 	indexedItems := p.difficultyIndex[musicID]
 	p.difficultyMu.RUnlock()
 	if indexed {
@@ -231,7 +230,7 @@ func (p *dbMusicProvider) GetLimitedTimeMusics(ctx context.Context, musicID int)
 
 func (p *dbMusicProvider) ensureLimitedTimeMusicsLoaded(ctx context.Context) error {
 	p.limitedMu.RLock()
-	loaded := dbBulkIndexFresh(p.limitedLoaded, p.limitedLoadedAt)
+	loaded := p.limitedLoaded
 	p.limitedMu.RUnlock()
 	if loaded {
 		return nil
@@ -243,7 +242,7 @@ func (p *dbMusicProvider) ensureLimitedTimeMusicsLoaded(ctx context.Context) err
 			finishIndex := commandtrace.MeasureOperation(loadCtx, "musics.limited_time_index")
 			defer finishIndex()
 			p.limitedMu.RLock()
-			alreadyLoaded := dbBulkIndexFresh(p.limitedLoaded, p.limitedLoadedAt)
+			alreadyLoaded := p.limitedLoaded
 			p.limitedMu.RUnlock()
 			if alreadyLoaded {
 				return nil
@@ -270,7 +269,6 @@ func (p *dbMusicProvider) ensureLimitedTimeMusicsLoaded(ctx context.Context) err
 			p.limitedMu.Lock()
 			p.limitedByMusic = byMusic
 			p.limitedLoaded = true
-			p.limitedLoadedAt = time.Now()
 			p.limitedMu.Unlock()
 			return nil
 		})

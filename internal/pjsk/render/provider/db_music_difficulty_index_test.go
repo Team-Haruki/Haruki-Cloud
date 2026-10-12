@@ -14,7 +14,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-func TestMusicDifficultyBulkIndexLoadsOnceAndRefreshes(t *testing.T) {
+func TestMusicDifficultyBulkIndexLoadsOnceAndReloadsOnReset(t *testing.T) {
 	ctx := t.Context()
 	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:difficulty_bulk_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
 	defer client.Close()
@@ -60,15 +60,20 @@ func TestMusicDifficultyBulkIndexLoadsOnceAndRefreshes(t *testing.T) {
 	if _, err := client.Musicdifficultie.Update().SetPlayLevel(31).Save(ctx); err != nil {
 		t.Fatal(err)
 	}
-	p.difficultyMu.Lock()
-	p.difficultyLoadedAt = time.Now().Add(-dbBulkIndexTTL)
-	p.difficultyMu.Unlock()
+	if err := p.PreloadDifficulties(ctx); err != nil {
+		t.Fatal(err)
+	}
+	rows, err = p.GetDifficulties(ctx, 1)
+	if err != nil || rows[0].PlayLevel != 30 || queries.Load() != 1 {
+		t.Fatalf("loaded index must be served until reset: rows=%v err=%v queries=%d", rows, err, queries.Load())
+	}
+	p.resetLocalMasterdataCache()
 	if err := p.PreloadDifficulties(ctx); err != nil {
 		t.Fatal(err)
 	}
 	rows, err = p.GetDifficulties(ctx, 1)
 	if err != nil || rows[0].PlayLevel != 31 || queries.Load() != 2 {
-		t.Fatalf("refresh rows=%v err=%v queries=%d", rows, err, queries.Load())
+		t.Fatalf("reset rows=%v err=%v queries=%d", rows, err, queries.Load())
 	}
 }
 

@@ -141,9 +141,16 @@ func TestDBSkillBulkIndexRetriesAfterFailure(t *testing.T) {
 	}
 }
 
-func TestDBSkillBulkIndexRefreshesAfterTTL(t *testing.T) {
+func TestDBSkillBulkIndexServedUntilReset(t *testing.T) {
 	ctx := context.Background()
-	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_skill_ttl_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_skill_until_reset_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	var queries atomic.Int32
+	client.Skill.Intercept(ent.InterceptFunc(func(next ent.Querier) ent.Querier {
+		return ent.QuerierFunc(func(ctx context.Context, query ent.Query) (ent.Value, error) {
+			queries.Add(1)
+			return next.Query(ctx, query)
+		})
+	}))
 	provider := &dbSkillProvider{client: client, region: renderregion.JP}
 	if _, err := provider.matchingTypeIDs(ctx, "score_up"); err != nil {
 		t.Fatalf("initial matchingTypeIDs() error = %v", err)
@@ -155,21 +162,33 @@ func TestDBSkillBulkIndexRefreshesAfterTTL(t *testing.T) {
 		Save(ctx); err != nil {
 		t.Fatalf("create skill: %v", err)
 	}
-	provider.mu.Lock()
-	provider.allLoadedAt = time.Now().Add(-dbBulkIndexTTL)
-	provider.mu.Unlock()
+	// The (empty) index is a complete answer until the masterdata changes:
+	// no time-based refresh and no per-id query for the unknown skill.
+	if ids, err := provider.matchingTypeIDs(ctx, "score_up"); err != nil || len(ids) != 0 {
+		t.Fatalf("loaded index must be served until reset: ids=%v err=%v", ids, err)
+	}
+	if _, err := provider.GetByID(ctx, 11); err == nil {
+		t.Fatal("complete index must answer an unknown skill without a query")
+	}
+	if queries.Load() != 1 {
+		t.Fatalf("queries = %d, want 1", queries.Load())
+	}
+	provider.resetMasterdataCache()
 	ids, err := provider.matchingTypeIDs(ctx, "score_up")
 	if err != nil {
-		t.Fatalf("refreshed matchingTypeIDs() error = %v", err)
+		t.Fatalf("reset matchingTypeIDs() error = %v", err)
 	}
 	if _, ok := ids[11]; !ok {
-		t.Fatalf("refreshed skill index did not contain new skill: %+v", ids)
+		t.Fatalf("reset skill index did not contain new skill: %+v", ids)
+	}
+	if queries.Load() != 2 {
+		t.Fatalf("queries after reset = %d, want 2", queries.Load())
 	}
 }
 
-func TestDBSkillPositiveCacheRefreshesAfterTTL(t *testing.T) {
+func TestDBSkillPositiveCacheServedUntilReset(t *testing.T) {
 	ctx := context.Background()
-	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_skill_positive_ttl_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_skill_positive_until_reset_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
 	entity, err := client.Skill.Create().
 		SetGameID(11).
 		SetDescriptionSpriteName("score_up").
@@ -185,21 +204,22 @@ func TestDBSkillPositiveCacheRefreshesAfterTTL(t *testing.T) {
 	if _, err := entity.Update().SetDescriptionSpriteName("life_recovery").Save(ctx); err != nil {
 		t.Fatalf("update skill: %v", err)
 	}
-	provider.mu.Lock()
-	provider.cacheLoadedAt[11] = time.Now().Add(-dbBulkIndexTTL)
-	provider.mu.Unlock()
+	if skillInfo, err := provider.GetByID(ctx, 11); err != nil || skillInfo.DescriptionSpriteName != "score_up" {
+		t.Fatalf("cached skill must be served until reset: %+v, err=%v", skillInfo, err)
+	}
+	provider.resetMasterdataCache()
 	skillInfo, err := provider.GetByID(ctx, 11)
 	if err != nil {
-		t.Fatalf("refreshed GetByID() error = %v", err)
+		t.Fatalf("reset GetByID() error = %v", err)
 	}
 	if skillInfo.DescriptionSpriteName != "life_recovery" {
-		t.Fatalf("refreshed skill sprite = %q", skillInfo.DescriptionSpriteName)
+		t.Fatalf("reset skill sprite = %q", skillInfo.DescriptionSpriteName)
 	}
 }
 
-func TestDBCardPositiveCacheRefreshesAfterTTL(t *testing.T) {
+func TestDBCardPositiveCacheServedUntilReset(t *testing.T) {
 	ctx := context.Background()
-	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_card_positive_ttl_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_card_positive_until_reset_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
 	entity, err := client.Card.Create().
 		SetGameID(101).
 		SetCharacterID(1).
@@ -215,15 +235,16 @@ func TestDBCardPositiveCacheRefreshesAfterTTL(t *testing.T) {
 	if _, err := entity.Update().SetCharacterID(2).Save(ctx); err != nil {
 		t.Fatalf("update card: %v", err)
 	}
-	provider.cardMu.Lock()
-	provider.cardCachedAt[101] = time.Now().Add(-dbBulkIndexTTL)
-	provider.cardMu.Unlock()
+	if cardInfo, err := provider.GetByID(ctx, 101); err != nil || cardInfo.CharacterID != 1 {
+		t.Fatalf("cached card must be served until reset: %+v, err=%v", cardInfo, err)
+	}
+	provider.resetMasterdataCache()
 	cardInfo, err := provider.GetByID(ctx, 101)
 	if err != nil {
-		t.Fatalf("refreshed GetByID() error = %v", err)
+		t.Fatalf("reset GetByID() error = %v", err)
 	}
 	if cardInfo.CharacterID != 2 {
-		t.Fatalf("refreshed card character_id = %d", cardInfo.CharacterID)
+		t.Fatalf("reset card character_id = %d", cardInfo.CharacterID)
 	}
 }
 
@@ -328,9 +349,9 @@ func TestDBCardEpisodeBulkIndexRetriesAfterFailure(t *testing.T) {
 	}
 }
 
-func TestDBCardEpisodeBulkIndexRefreshesAfterTTL(t *testing.T) {
+func TestDBCardEpisodeBulkIndexServedUntilReset(t *testing.T) {
 	ctx := context.Background()
-	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_episode_ttl_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_episode_until_reset_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
 	provider := &dbCardProvider{client: client, region: renderregion.JP}
 	if episodes, err := provider.GetEpisodesByCardID(ctx, 1001); err != nil || len(episodes) != 0 {
 		t.Fatalf("initial episodes = %+v, err=%v", episodes, err)
@@ -343,15 +364,16 @@ func TestDBCardEpisodeBulkIndexRefreshesAfterTTL(t *testing.T) {
 		Save(ctx); err != nil {
 		t.Fatalf("create card episode: %v", err)
 	}
-	provider.episodeMu.Lock()
-	provider.episodesLoadedAt = time.Now().Add(-dbBulkIndexTTL)
-	provider.episodeMu.Unlock()
+	if episodes, err := provider.GetEpisodesByCardID(ctx, 1001); err != nil || len(episodes) != 0 {
+		t.Fatalf("loaded episode index must be served until reset: %+v, err=%v", episodes, err)
+	}
+	provider.resetMasterdataCache()
 	episodes, err := provider.GetEpisodesByCardID(ctx, 1001)
 	if err != nil {
-		t.Fatalf("refreshed GetEpisodesByCardID() error = %v", err)
+		t.Fatalf("reset GetEpisodesByCardID() error = %v", err)
 	}
 	if len(episodes) != 1 || episodes[0].ID != 10001 {
-		t.Fatalf("refreshed episode index did not contain new episode: %+v", episodes)
+		t.Fatalf("reset episode index did not contain new episode: %+v", episodes)
 	}
 }
 
@@ -519,9 +541,9 @@ func TestDBCardWorldLinkIndexSurvivesLeaderCancellation(t *testing.T) {
 	assertOperationCount(t, followerTrace.Snapshot(), "cards.supply_index_wait", 1)
 }
 
-func TestDBCardWorldLinkIndexRefreshesAfterTTL(t *testing.T) {
+func TestDBCardWorldLinkIndexServedUntilReset(t *testing.T) {
 	ctx := context.Background()
-	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_world_link_ttl_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_world_link_until_reset_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
 	provider := &dbCardProvider{client: client, region: renderregion.JP}
 	if provider.isWorldLink3Card(ctx, 31) {
 		t.Fatal("empty world link index unexpectedly contained card")
@@ -542,11 +564,12 @@ func TestDBCardWorldLinkIndexRefreshesAfterTTL(t *testing.T) {
 		Save(ctx); err != nil {
 		t.Fatalf("create event card: %v", err)
 	}
-	provider.worldLink3Mu.Lock()
-	provider.worldLink3LoadedAt = time.Now().Add(-dbBulkIndexTTL)
-	provider.worldLink3Mu.Unlock()
+	if provider.isWorldLink3Card(ctx, 31) {
+		t.Fatal("loaded world link index must be served until reset")
+	}
+	provider.resetMasterdataCache()
 	if !provider.isWorldLink3Card(ctx, 31) {
-		t.Fatal("refreshed world link index did not contain new card")
+		t.Fatal("reset world link index did not contain new card")
 	}
 }
 

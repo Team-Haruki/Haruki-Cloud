@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	"entgo.io/ent"
 	"haruki-cloud/database/sekai/eventcard"
@@ -158,18 +157,16 @@ func TestEventRelationIndexesDoNotCacheFailuresAndRefreshEmptyRows(t *testing.T)
 	if _, err := provider.client.Card.Create().SetGameID(1).SetCharacterID(1).SetCardRarityType("rarity_4").SetServerRegion("jp").Save(ctx); err != nil {
 		t.Fatal(err)
 	}
-	provider.events.cardLinks.mu.Lock()
-	provider.events.cardLinks.loadedAt = time.Now().Add(-dbBulkIndexTTL)
-	provider.events.cardLinks.mu.Unlock()
-	if _, err := provider.events.GetCards(ctx, 1); err == nil {
-		t.Fatal("expired index must be served while it refreshes")
+	if _, err := provider.events.GetCards(ctx, 1); err == nil || calls.Load() != 2 {
+		t.Fatalf("empty index must be served until reset: err=%v calls=%d", err, calls.Load())
 	}
-	waitForIndexRefresh(t, func() bool {
-		cards, err := provider.events.GetCards(ctx, 1)
-		return err == nil && len(cards) == 1
-	})
+	provider.events.resetLocalMasterdataCache()
+	cards, err := provider.events.GetCards(ctx, 1)
+	if err != nil || len(cards) != 1 {
+		t.Fatalf("reset index cards=%v err=%v", cards, err)
+	}
 	if calls.Load() != 3 {
-		t.Fatalf("expired empty index queries=%d", calls.Load())
+		t.Fatalf("reset empty index queries=%d", calls.Load())
 	}
 }
 

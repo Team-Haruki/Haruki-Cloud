@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	"entgo.io/ent"
 	"haruki-cloud/database/sekai/music"
@@ -100,7 +99,7 @@ func TestMusicLocalizedTitlesUseOneNarrowIndexQuery(t *testing.T) {
 	}
 }
 
-func TestMusicTitleIndexRetriesFailureAndExpires(t *testing.T) {
+func TestMusicTitleIndexRetriesFailureAndReloadsOnReset(t *testing.T) {
 	ctx := t.Context()
 	provider := openProviderBehaviorDB(t, "music_title_retry")
 	var fail atomic.Bool
@@ -128,18 +127,16 @@ func TestMusicTitleIndexRetriesFailureAndExpires(t *testing.T) {
 	if _, err := provider.client.Music.Create().SetGameID(1).SetTitle("new title").SetServerRegion("jp").Save(ctx); err != nil {
 		t.Fatal(err)
 	}
-	provider.musics.localizedTitles.mu.Lock()
-	provider.musics.localizedTitles.loadedAt = time.Now().Add(-dbBulkIndexTTL)
-	provider.musics.localizedTitles.mu.Unlock()
-	if titles, err := provider.musics.GetLocalizedTitles(ctx, 1); err != nil || len(titles) != 0 {
-		t.Fatalf("expired title index was not served while refreshing: %v, %v", titles, err)
+	if titles, err := provider.musics.GetLocalizedTitles(ctx, 1); err != nil || len(titles) != 0 || calls.Load() != 2 {
+		t.Fatalf("loaded title index must be served until reset: %v, %v, calls=%d", titles, err, calls.Load())
 	}
-	waitForIndexRefresh(t, func() bool {
-		titles, err := provider.musics.GetLocalizedTitles(ctx, 1)
-		return err == nil && reflect.DeepEqual(titles, []string{"new title"})
-	})
+	provider.musics.resetLocalMasterdataCache()
+	titles, err := provider.musics.GetLocalizedTitles(ctx, 1)
+	if err != nil || !reflect.DeepEqual(titles, []string{"new title"}) {
+		t.Fatalf("reset title index = %v, %v", titles, err)
+	}
 	if calls.Load() != 3 {
-		t.Fatalf("expired title index calls=%d", calls.Load())
+		t.Fatalf("reset title index calls=%d", calls.Load())
 	}
 }
 

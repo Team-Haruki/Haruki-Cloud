@@ -3,7 +3,6 @@ package provider
 import (
 	"errors"
 	"testing"
-	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -135,19 +134,16 @@ func TestLocalProviderResetMasterdataCacheClearsEveryCache(t *testing.T) {
 }
 
 func TestDatabaseProviderResetMasterdataCacheClearsAllCachesAndFallbacks(t *testing.T) {
-	dirtyAt := time.Now()
-
 	cards := &dbCardProvider{}
 	cards.init()
 	cards.cardCache[1] = &masterdata.Card{ID: 1}
-	cards.cardCachedAt[1] = dirtyAt
+	cards.allCards = []*masterdata.Card{{ID: 1}}
 	cards.episodesByCard[1] = []*masterdata.CardEpisode{{ID: 1}}
 	cards.episodesLoaded = true
-	cards.episodesLoadedAt = dirtyAt
-	cards.supplyByID[1] = "limited"
+	cards.supplies.value, cards.supplies.loaded = map[int]string{1: "limited"}, true
+	cards.eventCards.value, cards.eventCards.loaded = map[int][]int{1: {1}}, true
 	cards.worldLink3ByCard[1] = true
 	cards.worldLink3Loaded = true
-	cards.worldLink3LoadedAt = dirtyAt
 	cards.gachaByCard[1] = &masterdata.Gacha{ID: 1}
 	cards.gachaCache[1] = &masterdata.Gacha{ID: 1}
 	cards.costumeByCard[1] = []*masterdata.Costume3d{{ID: 1}}
@@ -161,9 +157,7 @@ func TestDatabaseProviderResetMasterdataCacheClearsAllCachesAndFallbacks(t *test
 	skills := &dbSkillProvider{}
 	skills.init()
 	skills.cache[1] = &masterdata.Skill{ID: 1}
-	skills.cacheLoadedAt[1] = dirtyAt
 	skills.allLoaded = true
-	skills.allLoadedAt = dirtyAt
 
 	gachas := &dbGachaProvider{}
 	gachas.init()
@@ -193,7 +187,6 @@ func TestDatabaseProviderResetMasterdataCacheClearsAllCachesAndFallbacks(t *test
 	musics.difficultiesByID[1] = []*masterdata.MusicDifficulty{{ID: 1}}
 	musics.limitedByMusic = map[int][]*masterdata.LimitedTimeMusic{1: {{ID: 1}}}
 	musics.limitedLoaded = true
-	musics.limitedLoadedAt = dirtyAt
 
 	eventStore := resetTestDirtyStore("event")
 	eventFallbackCards := &localCardProvider{store: eventStore}
@@ -280,14 +273,12 @@ func TestDatabaseProviderResetMasterdataCacheClearsAllCachesAndFallbacks(t *test
 	provider.ResetMasterdataCache()
 
 	resetTestRequireEmptyMap(t, "cards.cardCache", cards.cardCache)
-	resetTestRequireEmptyMap(t, "cards.cardCachedAt", cards.cardCachedAt)
 	resetTestRequireEmptyMap(t, "cards.episodesByCard", cards.episodesByCard)
-	resetTestRequireEmptyMap(t, "cards.supplyByID", cards.supplyByID)
 	resetTestRequireEmptyMap(t, "cards.worldLink3ByCard", cards.worldLink3ByCard)
 	resetTestRequireEmptyMap(t, "cards.gachaByCard", cards.gachaByCard)
 	resetTestRequireEmptyMap(t, "cards.gachaCache", cards.gachaCache)
 	resetTestRequireEmptyMap(t, "cards.costumeByCard", cards.costumeByCard)
-	if cards.episodesLoaded || !cards.episodesLoadedAt.IsZero() || cards.worldLink3Loaded || !cards.worldLink3LoadedAt.IsZero() {
+	if cards.allCards != nil || cards.episodesLoaded || cards.worldLink3Loaded || cards.supplies.isLoaded() || cards.eventCards.isLoaded() {
 		t.Errorf("card bulk-cache state was not reset")
 	}
 
@@ -296,8 +287,7 @@ func TestDatabaseProviderResetMasterdataCacheClearsAllCachesAndFallbacks(t *test
 	resetTestRequireEmptyMap(t, "characters.colorCache", characters.colorCache)
 
 	resetTestRequireEmptyMap(t, "skills.cache", skills.cache)
-	resetTestRequireEmptyMap(t, "skills.cacheLoadedAt", skills.cacheLoadedAt)
-	if skills.allLoaded || !skills.allLoadedAt.IsZero() {
+	if skills.allLoaded {
 		t.Errorf("skill bulk-cache state was not reset")
 	}
 
@@ -316,12 +306,12 @@ func TestDatabaseProviderResetMasterdataCacheClearsAllCachesAndFallbacks(t *test
 	resetTestRequireStoreReset(t, "music fallback", musicStore)
 	resetTestRequireEmptyMap(t, "musics.musicByID", musics.musicByID)
 	resetTestRequireEmptyMap(t, "musics.outsideByID", musics.outsideByID)
-	if len(musics.localizedTitles.value) != 0 || musics.localizedTitles.loaded || !musics.localizedTitles.loadedAt.IsZero() {
+	if len(musics.localizedTitles.value) != 0 || musics.localizedTitles.loaded {
 		t.Error("localized titles index was not reset")
 	}
 	resetTestRequireEmptyMap(t, "musics.difficultiesByID", musics.difficultiesByID)
 	resetTestRequireEmptyMap(t, "musics.limitedByMusic", musics.limitedByMusic)
-	if musics.musicList != nil || musics.limitedLoaded || !musics.limitedLoadedAt.IsZero() {
+	if musics.musicList != nil || musics.limitedLoaded {
 		t.Errorf("music list/bulk-cache state was not reset")
 	}
 

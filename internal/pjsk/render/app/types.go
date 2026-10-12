@@ -225,6 +225,7 @@ type App struct {
 	AssetReader     *assets.AssetReader
 	AssetIndex      *assetindex.Manager
 	lifecycleCancel context.CancelFunc
+	masterdataWarm  *masterdataWarmup
 	Config          Config
 
 	// initErr records a non-fatal initialisation failure (today: the image

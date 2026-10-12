@@ -142,6 +142,9 @@ type FixtureDetailQuery struct {
 	Query  string `json:"query"`
 	// NowMillis overrides the clock for the blueprint term lines (tests).
 	NowMillis int64 `json:"-"`
+	// WithUserData adds the user's first-craft state from the controller's
+	// snapshot. Without a usable snapshot the detail stays static.
+	WithUserData bool `json:"-"`
 }
 
 type DoorUpgradeQuery struct {

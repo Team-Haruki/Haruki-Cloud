@@ -170,6 +170,7 @@ func (sekaiHandlers) MysekaiFixtureListHandle() HarukiSekaiCommandHandler {
 			if strings.Contains(strings.ToLower(args), "craft") {
 				onlyCraftable = true
 			}
+			category := mysekaiFixtureListCategory(args)
 			showProfile := false
 			showProgress := false
 			showObtained := false
@@ -182,6 +183,9 @@ func (sekaiHandlers) MysekaiFixtureListHandle() HarukiSekaiCommandHandler {
 			}
 			if fullList {
 				params["only_craftable"] = false
+			}
+			if category != "" {
+				params["category_query"] = category
 			}
 			if err := embedSelfQuery(params, ctx); err != nil {
 				return nil, err
@@ -207,7 +211,7 @@ func (sekaiHandlers) MysekaiFurnitureHandle() HarukiSekaiCommandHandler {
 			}
 
 			if ids := parseMysekaiFixtureIDs(args); len(ids) > 0 {
-				resolved := makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-detail", selfParams)
+				resolved := makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiFixtureDetailCommand, selfParams)
 				resolved.Query = strings.Join(strings.Fields(args), " ")
 				return resolved, nil
 			}
@@ -228,6 +232,29 @@ func (sekaiHandlers) MysekaiFurnitureHandle() HarukiSekaiCommandHandler {
 				selfParams["category_query"] = cleaned
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiFixtureListCommand, selfParams), nil
+		},
+	}, executeMysekai)
+}
+
+func (sekaiHandlers) MysekaiFirstCraftHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		Path: "mysekai/first-craft",
+		Commands: []string{
+			"/pjsk mysekai firstcraft", "/mysekai-first-craft", "/mysekai首次制作", "/烤森首次制作", "/msfc",
+		},
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			showAll, cleaned := extractMysekaiFullFlag(strings.TrimSpace(ctx.GetArgs()))
+			params := map[string]any{}
+			if err := embedSelfQuery(params, ctx); err != nil {
+				return nil, err
+			}
+			if showAll {
+				params["show_all"] = true
+			}
+			if category := cleanMysekaiArgs(cleaned); category != "" {
+				params["category_query"] = category
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiFirstCraftCommand, params), nil
 		},
 	}, executeMysekai)
 }
@@ -638,7 +665,7 @@ func mysekaiRenderContextOptionsForMode(mode string) mySekaiRenderContextOptions
 			MySekaiPayloadOnly:   true,
 		}
 	case mySekaiResourceCommand, mySekaiResourceMapCommand, mySekaiFixtureListCommand,
-		mySekaiMusicRecordCommand:
+		mySekaiMusicRecordCommand, mySekaiFirstCraftCommand:
 		return mySekaiRenderContextOptions{
 			NeedProfile:          true,
 			PreferMySekaiPayload: true,
@@ -790,11 +817,16 @@ func executeStaticMysekaiMode(rc *RequestContext, region string) (onebot11.Messa
 		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureListImage(query)
 		message, err := mysekaiRenderedImageResult(rc, data, err)
 		return message, true, err
-	case "mysekai-fixture-detail":
+	case mySekaiFixtureDetailCommand:
 		query := rendermysekai.FixtureDetailQuery{Region: region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &query)
 		query.Region = defaultMysekaiQueryRegion(query.Region, region)
-		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureDetailImage(query)
+		controller := mysekaiFixtureDetailController(rc, query.Region)
+		query.WithUserData = controller != nil
+		if controller == nil {
+			controller = rc.App.MySekai.WithContext(rc.Ctx)
+		}
+		data, err := controller.RenderFixtureDetailImage(query)
 		message, err := mysekaiRenderedImageResult(rc, data, err)
 		return message, true, err
 	case mySekaiBlueprintTermCommand:
@@ -877,6 +909,8 @@ func executeResolvedMysekaiMode(rc *RequestContext, renderCtx mySekaiRenderConte
 		query.Profile = renderCtx.Profile
 		data, err := renderCtx.Controller.RenderFixtureListImage(query)
 		return mysekaiRenderedImageResult(rc, data, err)
+	case mySekaiFirstCraftCommand:
+		return executeMysekaiFirstCraft(rc, renderCtx)
 	case mySekaiDoorUpgradeCommand:
 		query := rendermysekai.DoorUpgradeQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &query)
@@ -904,6 +938,55 @@ func executeResolvedMysekaiMode(rc *RequestContext, renderCtx mySekaiRenderConte
 	default:
 		return nil, unsupportedModeError("mysekai", rc.Cmd.Mode)
 	}
+}
+
+// executeMysekaiFirstCraft replies with the first-craft summary and, when
+// anything is left to draw, the fixture grid.
+func executeMysekaiFirstCraft(rc *RequestContext, renderCtx mySekaiRenderContext) (onebot11.Message, error) {
+	query := rendermysekai.FirstCraftListQuery{Region: renderCtx.Region}
+	mergeParams(rc.Cmd.Params, &query)
+	query.Region = renderCtx.Region
+	query.Profile = renderCtx.Profile
+	finishBuild := measurePayloadBuild(rc.Ctx)
+	list, err := renderCtx.Controller.BuildFirstCraftList(query)
+	finishBuild()
+	if err != nil {
+		return nil, err
+	}
+	summary := onebot11.Text(i18n.LinesText(rendermysekai.FirstCraftSummaryLines(list.Summary)))
+	if list.Request == nil {
+		return onebot11.Message{summary}, nil
+	}
+	data, err := renderCtx.Controller.RenderFirstCraftList(list)
+	image, err := mysekaiRenderedImageResult(rc, data, err)
+	if err != nil {
+		return nil, err
+	}
+	return append(onebot11.Message{summary}, image...), nil
+}
+
+// mysekaiFixtureDetailController is the controller with the requester's
+// MySekai data for the fixture detail's first-craft tag, or nil when there is
+// none to use (not bound, nothing uploaded, another region, any failure): the
+// detail itself never needs user data.
+func mysekaiFixtureDetailController(rc *RequestContext, region string) *rendermysekai.Controller {
+	if rc == nil || rc.App == nil || rc.App.MySekai == nil || rc.Cmd == nil {
+		return nil
+	}
+	if !isMySekaiRegionAllowedForMode(rc.Cmd, region) {
+		return nil
+	}
+	renderCtx, err := resolveMySekaiRenderContextWithOptions(rc.Ctx, rc.App, mysekaiUserQueryParams(rc), region, rc.Cmd.RegionExplicit, mySekaiRenderContextOptions{
+		PreferMySekaiPayload: true,
+		MySekaiPayloadOnly:   true,
+	})
+	if err != nil || renderCtx.Controller == nil || renderCtx.Binding == nil {
+		return nil
+	}
+	if !strings.EqualFold(renderCtx.Region, region) {
+		return nil
+	}
+	return renderCtx.Controller
 }
 
 func executeMysekaiResource(rc *RequestContext, renderCtx mySekaiRenderContext) (onebot11.Message, error) {

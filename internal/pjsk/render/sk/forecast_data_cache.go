@@ -42,8 +42,7 @@ type forecastDataCache struct {
 	generation    uint64
 
 	refreshTasks        cachepersist.Tasks
-	legacyKey           storage.Key
-	legacyLoaded        bool
+	restore             cachepersist.SnapshotRestorer
 	persistenceDisabled bool
 	persistenceMu       sync.Mutex
 	persistMu           sync.Mutex
@@ -111,7 +110,7 @@ func (c *forecastDataCache) loadLocalSnapshot() {
 		return
 	}
 	c.loadPersisted()
-	c.legacyLoaded = true
+	c.restore.MarkLegacyLoaded()
 }
 
 // newForecastDataCacheWithStore persists the cache as one JSON object at key
@@ -125,6 +124,7 @@ func newForecastDataCacheWithStore(provider ForecastProvider, store storage.Stor
 		cache.store = store
 		cache.storeKey = key
 		cache.persistenceDisabled = true
+		cache.restore = cachepersist.SnapshotRestorer{Read: cache.loadPersistedContext, Legacy: key, Cache: "sk"}
 	}
 	return cache
 }

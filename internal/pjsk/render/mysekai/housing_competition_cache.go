@@ -47,8 +47,7 @@ type housingCompetitionStatsCache struct {
 
 	refreshes           singleflight.Group
 	refreshTasks        cachepersist.Tasks
-	legacyKey           storage.Key
-	legacyLoaded        bool
+	restore             cachepersist.SnapshotRestorer
 	persistenceDisabled bool
 	persistenceMu       sync.Mutex
 	persistMu           sync.Mutex
@@ -123,7 +122,7 @@ func (c *housingCompetitionStatsCache) loadLocalSnapshot() {
 		return
 	}
 	c.loadPersisted()
-	c.legacyLoaded = true
+	c.restore.MarkLegacyLoaded()
 }
 
 // localHousingCompetitionCacheStore opens a local store at the directory of
@@ -163,6 +162,9 @@ func newHousingCompetitionStatsCacheWithStore(store storage.Store, key storage.K
 		maxEntries:          housingCompetitionStatsMaxEntries,
 		maxBucketEntries:    housingCompetitionStatsMaxEntriesPerBucket,
 		maxBuckets:          housingCompetitionStatsMaxBuckets,
+	}
+	if store != nil {
+		cache.restore = cachepersist.SnapshotRestorer{Read: cache.loadPersistedContext, Legacy: key, Cache: "mysekai"}
 	}
 	return cache
 }

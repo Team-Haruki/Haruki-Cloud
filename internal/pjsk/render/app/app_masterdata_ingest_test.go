@@ -141,6 +141,53 @@ func TestRegistryMasterdataRefreshKeepsTimeDrivenResetsWhenHashUnknown(t *testin
 	}
 }
 
+func TestRegistryMasterdataRefreshResetsOnFirstKnownHashAfterStartingMidIngest(t *testing.T) {
+	registry := &fakeMasterdataRegistry{hashes: map[string]string{"jp": "sha256:jp-2"}}
+	state, resetters, versions := newIngestRegistryTestState(t, registry, []time.Duration{20 * time.Millisecond}, renderregion.JP)
+	jp, version := resetters[renderregion.JP], versions[renderregion.JP]
+	ctx := context.Background()
+
+	// Cloud starts while the ingest is still writing: the registry already
+	// points at jp-2, the version row is not "ok" yet, and the caches fill
+	// from whatever the database holds.
+	state.poll(ctx)
+	if loaded, ok := loadedIngestHash(state, renderregion.JP); !ok || loaded != "" || jp.resets() != 0 {
+		t.Fatalf("unknown hash at startup must be recorded as unknown without a reset: %q, %v, resets=%d", loaded, ok, jp.resets())
+	}
+	state.poll(ctx)
+	if jp.resets() != 0 {
+		t.Fatalf("a still-unknown hash must not reset, got %d", jp.resets())
+	}
+
+	// The ingest commits: the first known hash must reload the caches
+	// instead of becoming their baseline, even without a registry change.
+	version.set("sha256:jp-2")
+	state.poll(ctx)
+	if loaded, _ := loadedIngestHash(state, renderregion.JP); jp.resets() != 1 || loaded != "sha256:jp-2" {
+		t.Fatalf("first known hash after an unknown start must reset: resets=%d loaded=%q", jp.resets(), loaded)
+	}
+	state.poll(ctx)
+	time.Sleep(40 * time.Millisecond)
+	if jp.resets() != 1 {
+		t.Fatalf("tracked hash must not reset again, got %d", jp.resets())
+	}
+
+	// The same holds when the registry moves while the hash is unknown and
+	// the ingest only commits after the settle follow-ups fired.
+	version.set("")
+	registry.set("jp", "sha256:jp-3")
+	state.poll(ctx)
+	waitForResets(t, jp, 3)
+	if loaded, ok := loadedIngestHash(state, renderregion.JP); !ok || loaded != "" {
+		t.Fatalf("resets at an unknown hash must leave the region unknown: %q, %v", loaded, ok)
+	}
+	version.set("sha256:jp-3")
+	state.poll(ctx)
+	if loaded, _ := loadedIngestHash(state, renderregion.JP); jp.resets() != 4 || loaded != "sha256:jp-3" {
+		t.Fatalf("late ingest commit must reload once more: resets=%d loaded=%q", jp.resets(), loaded)
+	}
+}
+
 func TestRegistryMasterdataRefreshWarmsResetRegions(t *testing.T) {
 	registry := &fakeMasterdataRegistry{hashes: map[string]string{"jp": "sha256:jp-1", "cn": "sha256:cn-1"}}
 	state, resetters, _, _ := newRegistryTestState(t, registry, nil, renderregion.JP, renderregion.CN)

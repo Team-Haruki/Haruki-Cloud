@@ -637,7 +637,7 @@ Toolbox 在内容变化时推进 `upload_time`，Cloud 沿用该值标识版本�
 
 数据库 provider 的所有整表索引（卡牌、技能、卡牌剧情、供给、事件卡、曲目难度、曲目分类、限时曲目、虚拟演唱会等）没有时间 TTL：加载后一直服务，只在主数据变化时失效（ResetMasterdataCache，由 registry 轮询和 ingest 版本驱动）；generation 检查阻止重置前的旧加载覆盖新缓存。
 
-registry 轮询循环每轮先读 sekai 库的 `master_ingest_version`（ingest 服务写入，状态为 ok 的 contentHash）：第一次观察到的 hash 记为缓存当前所持版本；此后 hash 变化即重置该区服（`ingest_changed`）。registry 指针变化触发的立即重置和 settle 跟进重置在执行前都比较该 hash，与缓存所持版本相同则跳过（日志 `masterdata cache reset skipped`）；hash 未知（无原始连接池、表不存在、ingest 非 ok 状态）时按原逻辑重置。每次重置后会在后台异步重新加载该区服的索引。
+registry 轮询循环每轮先读 sekai 库的 `master_ingest_version`（ingest 服务写入，状态为 ok 的 contentHash）：第一次观察到的 hash 记为缓存当前所持版本（第一次观察时 hash 未知，例如 Cloud 在 ingest 进行中启动，则记为未知，之后第一次读到 hash 即重置）；此后 hash 变化即重置该区服（`ingest_changed`）。registry 指针变化触发的立即重置和 settle 跟进重置在执行前都比较该 hash，与缓存所持版本相同则跳过（日志 `masterdata cache reset skipped`）；hash 未知（无原始连接池、表不存在、ingest 非 ok 状态）时按原逻辑重置。每次重置后会在后台异步重新加载该区服的索引。
 
 HTTP 监听建立后（fiber OnListen 钩子），各区服的卡牌索引和相关小表在后台预热，预热不阻塞就绪，并发上限为 2 个区服，与重置后的重新加载共用同一个名额。
 

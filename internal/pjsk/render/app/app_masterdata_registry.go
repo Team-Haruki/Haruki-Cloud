@@ -235,19 +235,22 @@ func (s *registryMasterdataRefreshState) poll(ctx context.Context) {
 
 // pollIngest resets the region when its committed ingest hash differs from
 // the one the caches hold. The first hash observed is only recorded: the
-// caches filled since startup were read from that version.
+// caches filled since startup were read from that version. When the hash
+// is unknown at the first observation (Cloud started mid-ingest, or the
+// ingest failed), the region is recorded as unknown so that the first hash
+// seen afterwards resets it instead of becoming the baseline.
 func (s *registryMasterdataRefreshState) pollIngest(ctx context.Context, region renderregion.Value) {
 	hash, known := s.ingestedHash(ctx, region)
-	if !known {
-		return
-	}
 	s.mu.Lock()
 	previous, seen := s.loaded[region]
 	if !seen {
-		s.loaded[region] = hash
+		s.loaded[region] = ""
+		if known {
+			s.loaded[region] = hash
+		}
 	}
 	s.mu.Unlock()
-	if !seen || previous == hash {
+	if !known || !seen || previous == hash {
 		return
 	}
 	s.resetRegion(region, "ingest_changed", hash, hash, true)

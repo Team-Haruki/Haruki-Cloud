@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	harukiConfig "haruki-cloud/config"
+	usersDB "haruki-cloud/database/users"
 	harukiLogger "haruki-cloud/utils/logger"
 )
 
@@ -127,5 +128,111 @@ func TestMigrateRoleAppliesSQLiteSchemas(t *testing.T) {
 		if !strings.Contains(output.String(), want) {
 			t.Fatalf("migration log missing %q:\n%s", want, output.String())
 		}
+	}
+}
+
+func TestMigrateRoleAppliesEveryConfiguredSQLiteSchema(t *testing.T) {
+	preserveServerConfig(t)
+	harukiConfig.Cfg = harukiConfig.Config{}
+	harukiConfig.Cfg.UsersDB.DBType = "sqlite3"
+	harukiConfig.Cfg.UsersDB.DBURL = serverCoverageSQLiteDSN(t, "migrate-users")
+	harukiConfig.Cfg.Chunithm.Enabled = true
+	harukiConfig.Cfg.Chunithm.BindingDBType = "sqlite3"
+	harukiConfig.Cfg.Chunithm.BindingDBURL = serverCoverageSQLiteDSN(t, "migrate-chunithm-main")
+	harukiConfig.Cfg.Chunithm.MusicDBType = "sqlite3"
+	harukiConfig.Cfg.Chunithm.MusicDBURL = serverCoverageSQLiteDSN(t, "migrate-chunithm-music")
+	harukiConfig.Cfg.PJSK.Enabled = true
+	harukiConfig.Cfg.PJSK.DBType = "sqlite3"
+	harukiConfig.Cfg.PJSK.DBURL = serverCoverageSQLiteDSN(t, "migrate-pjsk")
+	harukiConfig.Cfg.Sekai.Enabled = true
+	harukiConfig.Cfg.Sekai.AutoMigrate = true
+	harukiConfig.Cfg.Sekai.DBType = "sqlite3"
+	harukiConfig.Cfg.Sekai.DBURL = serverCoverageSQLiteDSN(t, "migrate-sekai")
+	harukiConfig.Cfg.Censor.CensorDBType = "sqlite3"
+	harukiConfig.Cfg.Censor.CensorDBURL = serverCoverageSQLiteDSN(t, "migrate-censor")
+	harukiConfig.Cfg.HarukiBotDB.DBType = "sqlite3"
+	harukiConfig.Cfg.HarukiBotDB.DBURL = serverCoverageSQLiteDSN(t, "migrate-bot")
+
+	var output bytes.Buffer
+	if err := runSchemaMigrations(context.Background(), startupTestLogger(&output), schemaMigrations()); err != nil {
+		t.Fatalf("runSchemaMigrations: %v\n%s", err, output.String())
+	}
+	for _, name := range []string{"Users", "Chunithm main", "Chunithm music", "PJSK", "Sekai", "Censor", "Bot"} {
+		if !strings.Contains(output.String(), "database migration applied") || !strings.Contains(output.String(), name) {
+			t.Fatalf("migration of %q not logged:\n%s", name, output.String())
+		}
+	}
+}
+
+func TestSchemaMigrationsSurfaceConnectAndSchemaFailures(t *testing.T) {
+	preserveServerConfig(t)
+	harukiConfig.Cfg = harukiConfig.Config{}
+	logger := startupTestLogger(&bytes.Buffer{})
+	ctx := context.Background()
+
+	// An unsupported driver fails at connect for every open helper.
+	harukiConfig.Cfg.UsersDB.DBType = "missing-driver"
+	harukiConfig.Cfg.UsersDB.DBURL = "dsn"
+	harukiConfig.Cfg.Chunithm.BindingDBType = "missing-driver"
+	harukiConfig.Cfg.Chunithm.MusicDBType = "missing-driver"
+	harukiConfig.Cfg.PJSK.DBType = "missing-driver"
+	harukiConfig.Cfg.Sekai.DBType = "missing-driver"
+	harukiConfig.Cfg.Censor.CensorDBType = "missing-driver"
+	harukiConfig.Cfg.HarukiBotDB.DBType = "missing-driver"
+	if _, err := openUsersClient(); err == nil {
+		t.Fatal("users: unsupported driver accepted")
+	}
+	if _, err := openChunithmMainClient(); err == nil {
+		t.Fatal("chunithm main: unsupported driver accepted")
+	}
+	if _, err := openChunithmMusicClient(); err == nil {
+		t.Fatal("chunithm music: unsupported driver accepted")
+	}
+	if _, _, err := openPJSKClient(); err == nil {
+		t.Fatal("pjsk: unsupported driver accepted")
+	}
+	if _, err := openSekaiClient(); err == nil {
+		t.Fatal("sekai: unsupported driver accepted")
+	}
+	if _, err := openCensorClient(); err == nil {
+		t.Fatal("censor: unsupported driver accepted")
+	}
+	if _, err := openBotClient(); err == nil {
+		t.Fatal("bot: unsupported driver accepted")
+	}
+	if err := migratePJSK(ctx, logger); err == nil || !strings.HasPrefix(err.Error(), "connect: ") {
+		t.Fatalf("migratePJSK connect error = %v", err)
+	}
+	run := migrateClient(openUsersClient, func(context.Context, *harukiLogger.Logger, *usersDB.Client) error { return nil })
+	if err := run(ctx, logger); err == nil || !strings.HasPrefix(err.Error(), "connect: ") {
+		t.Fatalf("migrateClient connect error = %v", err)
+	}
+
+	// A migration step failure is reported as a schema error and the client is closed.
+	client := &startupTestClient{}
+	wantErr := errors.New("create failed")
+	run = migrateClient(func() (*startupTestClient, error) { return client, nil },
+		func(context.Context, *harukiLogger.Logger, *startupTestClient) error { return wantErr })
+	if err := run(ctx, logger); !errors.Is(err, wantErr) || !strings.HasPrefix(err.Error(), "schema: ") {
+		t.Fatalf("migrateClient schema error = %v", err)
+	}
+	if !client.closed {
+		t.Fatal("client was not closed after a failed migration")
+	}
+
+	// Schema.Create on a closed PJSK client fails inside migratePJSKSchema.
+	harukiConfig.Cfg.PJSK.DBType = "sqlite3"
+	harukiConfig.Cfg.PJSK.DBURL = serverCoverageSQLiteDSN(t, "migrate-pjsk-closed")
+	pjskClient, drv, err := openPJSKClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = pjskClient.Close()
+	if err := migratePJSKSchema(ctx, logger, pjskClient, drv); err == nil {
+		t.Fatal("Schema.Create on a closed client succeeded")
+	}
+	harukiConfig.Cfg.PJSK.DBURL = "file:" + t.TempDir() + "/missing/pjsk.db?mode=ro"
+	if err := migratePJSK(ctx, logger); err == nil {
+		t.Fatal("migratePJSK against an unopenable database succeeded")
 	}
 }

@@ -177,3 +177,7 @@ func TestForecastNamespaceReadFailureKeepsPersistenceDisabled(t *testing.T) {
 		t.Fatalf("namespaced snapshot was replaced: %v", err)
 	}
 }
+
+func TestForecastLoadLocalSnapshotNilReceiver(t *testing.T) {
+	(*forecastDataCache)(nil).loadLocalSnapshot()
+}

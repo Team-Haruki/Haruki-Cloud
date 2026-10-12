@@ -131,3 +131,7 @@ func TestHousingBannerCacheThroughMemoryStore(t *testing.T) {
 		t.Fatalf("absolute path key = %q", key)
 	}
 }
+
+func TestHousingLoadLocalSnapshotNilReceiver(t *testing.T) {
+	(*housingCompetitionStatsCache)(nil).loadLocalSnapshot()
+}

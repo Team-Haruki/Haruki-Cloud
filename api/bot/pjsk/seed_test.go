@@ -2,6 +2,7 @@ package pjsk
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"testing"
@@ -154,4 +155,59 @@ func TestManifestRowMatchesRouteTreatsNilAndEmptyAlike(t *testing.T) {
 	if manifestRowMatchesRoute(row, route) {
 		t.Fatal("different mode should not match")
 	}
+}
+
+// failingManifestHook fails every mutation of the given operation.
+func failingManifestHook(op ent.Op, err error) ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			if m.Op().Is(op) {
+				return nil, err
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
+}
+
+func TestSeedCommandManifestsSurfacesStoreFailures(t *testing.T) {
+	ctx := context.Background()
+	pjskhandler.EnsureCommandHandlersRegistered()
+	wantErr := errors.New("store down")
+
+	// Bulk create failure on an empty table.
+	client := botenttest.Open(t, "sqlite3", fmt.Sprintf("file:bot_manifest_fail_create_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	defer client.Close()
+	client.CommandManifest.Use(failingManifestHook(ent.OpCreate, wantErr))
+	if _, err := seedCommandManifests(ctx, client); !errors.Is(err, wantErr) {
+		t.Fatalf("create failure = %v, want %v", err, wantErr)
+	}
+
+	// Update failure on a drifted row.
+	client2 := botenttest.Open(t, "sqlite3", fmt.Sprintf("file:bot_manifest_fail_update_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	defer client2.Close()
+	if _, err := seedCommandManifests(ctx, client2); err != nil {
+		t.Fatal(err)
+	}
+	row, err := client2.CommandManifest.Query().
+		Where(commandmanifest.CommandModule(pjskhandler.BotModulePJSK), commandmanifest.CommandPath(birthdayMonitorCommandPath)).
+		Only(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := row.Update().SetCommandPrefixes([]string{"/stale"}).Save(ctx); err != nil {
+		t.Fatal(err)
+	}
+	client2.CommandManifest.Use(failingManifestHook(ent.OpUpdateOne, wantErr))
+	if _, err := seedCommandManifests(ctx, client2); !errors.Is(err, wantErr) {
+		t.Fatalf("update failure = %v, want %v", err, wantErr)
+	}
+
+	// Query failure on a closed client, and the startup wrapper only warns.
+	closed := botenttest.Open(t, "sqlite3", fmt.Sprintf("file:bot_manifest_closed_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	_ = closed.Close()
+	if err := SeedCommandManifests(ctx, closed); err == nil {
+		t.Fatal("seed on a closed client succeeded")
+	}
+	seedBotCommandManifests(ctx, closed)
+	seedBotCommandManifests(ctx, nil)
 }

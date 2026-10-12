@@ -254,7 +254,7 @@ event name).
   `initDBClient` helper calls `Schema.Create(ctx)` for every DB while
   `database.auto_migrate` (`HARUKI_DB_AUTO_MIGRATE`, default `true`) is on.
   Production turns it off and applies the same schemas with the **migrate
-  role** (`haruki-cloud migrate` or `HARUKI_ROLE=migrate`,
+  role** (`haruki-server migrate` or `HARUKI_ROLE=migrate`,
   `internal/server/run_migrate.go`): it opens each configured DB, runs
   `Schema.Create` plus the PJSK data steps, logs one line per DB and exits.
   Run it once per deploy before the new API container starts. There is no

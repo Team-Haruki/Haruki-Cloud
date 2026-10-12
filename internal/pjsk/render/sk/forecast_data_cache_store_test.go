@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/internal/storage/storagetest"
 )
@@ -84,14 +85,20 @@ func TestForecastCacheStoreDisabledAndFailing(t *testing.T) {
 	if err := failing.RefreshNow(context.Background(), "jp", 1); err != nil {
 		t.Fatalf("refresh with failing store: %v", err)
 	}
-	if err := failing.closePersistence(t.Context()); err == nil {
-		t.Fatal("failed persistence should report error")
+	// Persistence never started, so there is no writer to flush or fail.
+	if err := failing.closePersistence(t.Context()); err != nil {
+		t.Fatalf("close without a writer: %v", err)
 	}
 	if failing.persistedGeneration != 0 {
 		t.Fatalf("failed put recorded a persisted generation %d", failing.persistedGeneration)
 	}
-	if len(memory.Calls()) != 3 {
-		t.Fatalf("store calls = %+v", memory.Calls())
+	// The namespaced read failed for a reason other than absence, so neither
+	// the legacy fallback read nor any write happens.
+	if calls := memory.Calls(); len(calls) != 1 || calls[0].Method != "Get" {
+		t.Fatalf("store calls = %+v", calls)
+	}
+	if !failing.persistenceDisabled {
+		t.Fatal("read failure did not keep persistence disabled")
 	}
 }
 
@@ -121,5 +128,52 @@ func TestForecastCacheStoreGuards(t *testing.T) {
 	}
 	if got := memory.Calls(); len(got) != 2 {
 		t.Fatalf("expected the namespaced read and the legacy fallback read, got %+v", got)
+	}
+}
+
+func TestForecastNamespaceReadFailureKeepsPersistenceDisabled(t *testing.T) {
+	memory := storagetest.NewMemory()
+	source := newForecastDataCache(&keyedForecastProvider{})
+	if err := source.RefreshNow(t.Context(), "jp", 8); err != nil {
+		t.Fatal(err)
+	}
+	source.mu.Lock()
+	payload, err := json.Marshal(source.snapshotForPersistenceLocked())
+	source.mu.Unlock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	memory.Seed(map[string][]byte{"forecast.json": payload, "instances/node-a/forecast.json": payload})
+	memory.FailGet = func(key storage.Key) error {
+		if key == "instances/node-a/forecast.json" {
+			return errors.New("transient read failure")
+		}
+		return nil
+	}
+	cache := newForecastDataCacheWithStore(&keyedForecastProvider{}, memory, "forecast.json")
+	if err := cache.configurePersistence(t.Context(), "node-a"); err != nil {
+		t.Fatal(err)
+	}
+	if !cache.persistenceDisabled {
+		t.Fatal("transient namespaced read failure did not keep persistence disabled")
+	}
+	if len(cache.entries) != 0 {
+		t.Fatal("legacy snapshot was read although the namespaced one exists")
+	}
+	if err := cache.RefreshNow(t.Context(), "jp", 9); err != nil {
+		t.Fatal(err)
+	}
+	cache.persistLatest(t.Context(), 1)
+	if err := cache.closePersistence(t.Context()); err != nil {
+		t.Fatalf("close without a writer: %v", err)
+	}
+	for _, call := range memory.Calls() {
+		if call.Method != "Get" || call.Key != "instances/node-a/forecast.json" {
+			t.Fatalf("unexpected store call after a failed namespaced read: %+v", memory.Calls())
+		}
+	}
+	memory.FailGet = nil
+	if stored, err := memory.Get(t.Context(), "instances/node-a/forecast.json"); err != nil || !bytes.Equal(stored, payload) {
+		t.Fatalf("namespaced snapshot was replaced: %v", err)
 	}
 }

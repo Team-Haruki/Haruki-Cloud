@@ -243,7 +243,7 @@ users_db:
 # haruki_bot). The sekai database keeps its own sekai.auto_migrate.
 database:
   # Run Schema.Create (and the data steps that follow it) at API startup.
-  # Default true. Production: false, and run `haruki-cloud migrate` (or
+  # Default true. Production: false, and run `haruki-server migrate` (or
   # HARUKI_ROLE=migrate) once per deploy before starting the API container;
   # the migrate role applies exactly the same schemas and exits.
   auto_migrate: true            # env HARUKI_DB_AUTO_MIGRATE

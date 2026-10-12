@@ -114,7 +114,8 @@ func TestOpenAppImageStoreErrors(t *testing.T) {
 		schemaSteps(mock)
 		for i := range imagecache.RenderIndexDDL() {
 			if i == 5 {
-				mock.ExpectExec("CREATE INDEX IF NOT EXISTS idx_ice_storage_backend_pending").WillReturnResult(sqlmock.NewResult(0, 0))
+				mock.ExpectExec("CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ice_storage_backend_pending").WillReturnResult(sqlmock.NewResult(0, 0))
+				mock.ExpectQuery("NOT i.indisvalid").WillReturnRows(sqlmock.NewRows([]string{"?column?"}))
 				mock.ExpectQuery("storage_backend IS NULL LIMIT 1").WillReturnRows(sqlmock.NewRows([]string{"?column?"}))
 				continue
 			}

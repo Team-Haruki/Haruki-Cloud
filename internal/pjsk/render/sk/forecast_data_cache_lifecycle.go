@@ -53,18 +53,22 @@ func (c *forecastDataCache) configurePersistence(ctx context.Context, namespace 
 	}
 	c.legacyKey = c.storeKey
 	c.storeKey = key
-	c.persistenceDisabled = false
-	// A readable namespaced object takes precedence. Only when it cannot be
-	// read does the pre-namespace shared object serve as the migration
-	// snapshot, so the common case is a single store read.
+	// A readable namespaced object takes precedence; a missing one falls back
+	// to the pre-namespace shared object as the migration snapshot, so the
+	// common case is a single store read. Any other read error leaves
+	// persistence disabled: the namespaced snapshot may exist unread, and a
+	// later write must not replace it with older data.
 	err = c.readSnapshot(ctx, key, true)
-	if err == nil {
-		return nil
+	switch {
+	case err == nil:
+		c.persistenceDisabled = false
+	case errors.Is(err, storage.ErrNotExist):
+		c.persistenceDisabled = false
+		c.loadLegacySnapshot(ctx)
+	default:
+		c.persistenceDisabled = true
+		logger.WarnContext(ctx, "Cache snapshot namespace read failed; persistence stays disabled", slog.String("cache", "sk"), slog.String("error_type", fmt.Sprintf("%T", err)))
 	}
-	if !errors.Is(err, storage.ErrNotExist) {
-		logger.WarnContext(ctx, "Cache snapshot namespace read failed", slog.String("cache", "sk"), slog.String("error_type", fmt.Sprintf("%T", err)))
-	}
-	c.loadLegacySnapshot(ctx)
 	return nil
 }
 

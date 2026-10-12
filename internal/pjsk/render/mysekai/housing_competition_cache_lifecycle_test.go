@@ -1,7 +1,9 @@
 package mysekai
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"haruki-cloud/config"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"net/http"
@@ -116,6 +118,47 @@ func TestHousingNamespaceMigrationAndUnconfiguredReadOnly(t *testing.T) {
 	}
 	if len(reloaded.buckets) != 1 {
 		t.Fatal("namespace snapshot was not loaded")
+	}
+}
+
+func TestHousingNamespaceReadFailureKeepsPersistenceDisabled(t *testing.T) {
+	memory := storagetest.NewMemory()
+	source := newHousingCompetitionStatsCache("", time.Minute)
+	seedHousingStatsForPersist(source)
+	payload, err := json.Marshal(source.snapshotForPersistenceLocked())
+	if err != nil {
+		t.Fatal(err)
+	}
+	memory.Seed(map[string][]byte{"housing.json": payload, "instances/node-a/housing.json": payload})
+	memory.FailGet = func(key storage.Key) error {
+		if key == "instances/node-a/housing.json" {
+			return errors.New("transient read failure")
+		}
+		return nil
+	}
+	cache := newHousingCompetitionStatsCacheWithStore(memory, "housing.json", time.Minute)
+	if err := cache.configurePersistence(t.Context(), "node-a"); err != nil {
+		t.Fatal(err)
+	}
+	if !cache.persistenceDisabled {
+		t.Fatal("transient namespaced read failure did not keep persistence disabled")
+	}
+	if len(cache.buckets) != 0 {
+		t.Fatal("legacy snapshot was read although the namespaced one exists")
+	}
+	seedHousingStatsForPersist(cache)
+	cache.persistLatest(t.Context(), 1)
+	if err := cache.closePersistence(t.Context()); err != nil {
+		t.Fatalf("close without a writer: %v", err)
+	}
+	for _, call := range memory.Calls() {
+		if call.Method != "Get" || call.Key != "instances/node-a/housing.json" {
+			t.Fatalf("unexpected store call after a failed namespaced read: %+v", memory.Calls())
+		}
+	}
+	memory.FailGet = nil
+	if stored, err := memory.Get(t.Context(), "instances/node-a/housing.json"); err != nil || !bytes.Equal(stored, payload) {
+		t.Fatalf("namespaced snapshot was replaced: %v", err)
 	}
 }
 

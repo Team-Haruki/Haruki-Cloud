@@ -231,7 +231,7 @@ func (s *PGStore) Init(ctx context.Context) error {
 // the one-shot backfill the index stays empty and the probe costs one
 // round-trip.
 func (s *PGStore) backfillLegacyBackend(ctx context.Context) error {
-	if _, err := s.executor().ExecContext(ctx, legacyBackfillIndexSQL); err != nil {
+	if err := s.ensureLegacyBackfillIndex(ctx); err != nil {
 		return err
 	}
 	var one int
@@ -243,6 +243,33 @@ func (s *PGStore) backfillLegacyBackend(ctx context.Context) error {
 		return err
 	}
 	_, err = s.executor().ExecContext(ctx, legacyBackfillSQL)
+	return err
+}
+
+// ensureLegacyBackfillIndex creates the pending-row index. Without an open
+// transaction it builds CONCURRENTLY (writers keep going) and rebuilds an
+// index a previous interrupted build left invalid; inside a transaction only
+// the plain form is allowed.
+func (s *PGStore) ensureLegacyBackfillIndex(ctx context.Context) error {
+	if s.tx != nil {
+		_, err := s.tx.ExecContext(ctx, legacyBackfillIndexSQL)
+		return err
+	}
+	if _, err := s.db.ExecContext(ctx, legacyBackfillIndexConcurrentlySQL); err != nil {
+		return err
+	}
+	var one int
+	err := s.db.QueryRowContext(ctx, legacyBackfillIndexInvalidSQL).Scan(&one)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil
+	case err != nil:
+		return err
+	}
+	if _, err := s.db.ExecContext(ctx, legacyBackfillIndexDropSQL); err != nil {
+		return err
+	}
+	_, err = s.db.ExecContext(ctx, legacyBackfillIndexConcurrentlySQL)
 	return err
 }
 

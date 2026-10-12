@@ -57,10 +57,19 @@ var renderIndexDDL = []string{
 // happened, so it is gated on legacyBackfillPendingSQL, which the partial
 // index below answers from an (empty) index instead of the heap. The index
 // is Cloud-side only and not part of the cross-repo contract text.
+//
+// Outside a transaction the index is built CONCURRENTLY so Drawing's writes
+// are not blocked during the one-off build; an interrupted concurrent build
+// leaves an invalid index that IF NOT EXISTS would keep forever, so Init
+// checks pg_index and rebuilds it once. Inside a transaction (lifecycle
+// callers) CONCURRENTLY is not allowed and the plain form runs.
 const (
-	legacyBackfillSQL        = `UPDATE image_cache_entries SET storage_backend = 'legacy_disk' WHERE storage_backend IS NULL`
-	legacyBackfillIndexSQL   = `CREATE INDEX IF NOT EXISTS idx_ice_storage_backend_pending ON image_cache_entries (hash) WHERE storage_backend IS NULL`
-	legacyBackfillPendingSQL = `SELECT 1 FROM image_cache_entries WHERE storage_backend IS NULL LIMIT 1`
+	legacyBackfillSQL                  = `UPDATE image_cache_entries SET storage_backend = 'legacy_disk' WHERE storage_backend IS NULL`
+	legacyBackfillIndexSQL             = `CREATE INDEX IF NOT EXISTS idx_ice_storage_backend_pending ON image_cache_entries (hash) WHERE storage_backend IS NULL`
+	legacyBackfillIndexConcurrentlySQL = `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ice_storage_backend_pending ON image_cache_entries (hash) WHERE storage_backend IS NULL`
+	legacyBackfillIndexInvalidSQL      = `SELECT 1 FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid WHERE c.relname = 'idx_ice_storage_backend_pending' AND NOT i.indisvalid`
+	legacyBackfillIndexDropSQL         = `DROP INDEX CONCURRENTLY IF EXISTS idx_ice_storage_backend_pending`
+	legacyBackfillPendingSQL           = `SELECT 1 FROM image_cache_entries WHERE storage_backend IS NULL LIMIT 1`
 )
 
 // RenderIndexDDL returns a copy of the canonical render index DDL, one

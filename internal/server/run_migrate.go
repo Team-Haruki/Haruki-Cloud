@@ -16,7 +16,7 @@ import (
 	harukiLogger "haruki-cloud/utils/logger"
 )
 
-// RoleMigrate applies the ent schemas and exits (`haruki-cloud migrate`). It
+// RoleMigrate applies the ent schemas and exits (`haruki-server migrate`). It
 // is how schema changes reach a deployment that runs the API role with
 // database.auto_migrate off: run it once per deploy before the new API
 // container starts.

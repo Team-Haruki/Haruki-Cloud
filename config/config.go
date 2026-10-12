@@ -438,6 +438,9 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envPool("HARUKI_CHUNITHM_MUSIC_DB", &cfg.Chunithm.MusicDBPool)
 	envPool("HARUKI_CHUNITHM_BINDING_DB", &cfg.Chunithm.BindingDBPool)
 
+	// Shared ent database settings
+	envBoolPtr("HARUKI_DB_AUTO_MIGRATE", &cfg.Database.AutoMigrate)
+
 	// Users DB
 	envStr("HARUKI_USERS_DB_TYPE", &cfg.UsersDB.DBType)
 	envStr("HARUKI_USERS_DB_URL", &cfg.UsersDB.DBURL)
@@ -1209,6 +1212,24 @@ type UsersDBConfig struct {
 	Pool   dbpool.Config `yaml:"pool"`
 }
 
+// DatabaseConfig holds settings shared by every ent database the API role
+// opens (users, pjsk, chunithm, censor, bot). The sekai database keeps its own
+// sekai.auto_migrate because SekaiAPI owns that schema.
+type DatabaseConfig struct {
+	// AutoMigrate runs Schema.Create (and the data steps that follow it) for
+	// every ent database at API startup. nil keeps the default (enabled).
+	// Production sets it to false and applies schema changes with the
+	// `migrate` role once per deploy, which keeps startup free of the schema
+	// inspection round-trips.
+	AutoMigrate *bool `yaml:"auto_migrate"`
+}
+
+// AutoMigrateEnabled reports whether the API role migrates the ent databases
+// at startup; unset means enabled.
+func (c DatabaseConfig) AutoMigrateEnabled() bool {
+	return c.AutoMigrate == nil || *c.AutoMigrate
+}
+
 type ModerationConfig struct {
 	AdminQQIDs []string `yaml:"admin_qq_ids"`
 }
@@ -1272,6 +1293,7 @@ type Config struct {
 	Security    SecurityConfig    `yaml:"security"`
 	Diagnostics DiagnosticsConfig `yaml:"diagnostics"`
 	UsersDB     UsersDBConfig     `yaml:"users_db"`
+	Database    DatabaseConfig    `yaml:"database"`
 	Moderation  ModerationConfig  `yaml:"moderation"`
 	Redis       RedisConfig       `yaml:"redis"`
 	Toolbox     ToolboxConfig     `yaml:"toolbox"`

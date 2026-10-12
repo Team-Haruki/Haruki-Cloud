@@ -216,20 +216,20 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot
 	md := resolver.Resolve(region)
 	reader := assets.ReaderOr(mdOpts.AssetReader, assetHelper)
 	cacheStore, statsKey := housingCompetitionCacheStore(mdOpts)
+	stats := newHousingCompetitionStatsCacheWithStore(cacheStore, statsKey, mdOpts.HousingCompetitionRefreshInterval)
+	if mdOpts.HousingCompetitionCacheStore == nil {
+		stats.loadLocalSnapshot()
+	}
 	return &Controller{
-		drawing:       drawingClient,
-		snapshot:      snapshot,
-		masterdata:    md,
-		resolver:      resolver,
-		defaultRegion: region,
-		nicknames:     cloneNicknames(defaultNicknames),
-		assets:        assetHelper,
-		assetReader:   reader,
-		housingCompetitionStats: newHousingCompetitionStatsCacheWithStore(
-			cacheStore,
-			statsKey,
-			mdOpts.HousingCompetitionRefreshInterval,
-		),
+		drawing:                 drawingClient,
+		snapshot:                snapshot,
+		masterdata:              md,
+		resolver:                resolver,
+		defaultRegion:           region,
+		nicknames:               cloneNicknames(defaultNicknames),
+		assets:                  assetHelper,
+		assetReader:             reader,
+		housingCompetitionStats: stats,
 		housingCompetitionBanners: newHousingCompetitionBannerCache(
 			cacheStore,
 			reader,

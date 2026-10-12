@@ -239,6 +239,15 @@ users_db:
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_users sslmode=disable"
   pool: {max_open: 8}           # env HARUKI_USERS_DB_MAX_OPEN, ...
 
+# Settings shared by the ent databases above (users, pjsk, chunithm, censor,
+# haruki_bot). The sekai database keeps its own sekai.auto_migrate.
+database:
+  # Run Schema.Create (and the data steps that follow it) at API startup.
+  # Default true. Production: false, and run `haruki-cloud migrate` (or
+  # HARUKI_ROLE=migrate) once per deploy before starting the API container;
+  # the migrate role applies exactly the same schemas and exits.
+  auto_migrate: true            # env HARUKI_DB_AUTO_MIGRATE
+
 moderation:
   # QQ accounts allowed to run /kill and /back. Empty means nobody can use them.
   admin_qq_ids: []

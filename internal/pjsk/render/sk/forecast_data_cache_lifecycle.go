@@ -38,6 +38,9 @@ func (c *forecastDataCache) configurePersistence(ctx context.Context, namespace 
 		c.persistenceDisabled = true
 		c.persistenceMu.Unlock()
 		logger.WarnContext(ctx, "Cache persistence disabled: invalid instance namespace", slog.String("cache", "sk"))
+		// Read-only: the shared snapshot still warms the cache, as it did when
+		// the constructor read it.
+		c.loadLegacySnapshot(ctx)
 		return err
 	}
 	c.persistenceMu.Lock()
@@ -48,18 +51,44 @@ func (c *forecastDataCache) configurePersistence(ctx context.Context, namespace 
 	if c.persistence != nil || busy {
 		return errors.New("cache persistence must be configured before refresh")
 	}
+	c.legacyKey = c.storeKey
 	c.storeKey = key
 	c.persistenceDisabled = false
-	// Constructors loaded the old shared key. A readable namespaced object takes
-	// precedence; only a missing object uses that legacy migration snapshot.
-	readCtx, cancel := context.WithTimeout(storage.WithBackgroundIO(ctx), 10*time.Second)
-	err = c.loadPersistedContext(readCtx, key, true)
-	cancel()
-	if err != nil && !errors.Is(err, storage.ErrNotExist) {
+	// A readable namespaced object takes precedence. Only when it cannot be
+	// read does the pre-namespace shared object serve as the migration
+	// snapshot, so the common case is a single store read.
+	err = c.readSnapshot(ctx, key, true)
+	if err == nil {
+		return nil
+	}
+	if !errors.Is(err, storage.ErrNotExist) {
 		logger.WarnContext(ctx, "Cache snapshot namespace read failed", slog.String("cache", "sk"), slog.String("error_type", fmt.Sprintf("%T", err)))
 	}
-
+	c.loadLegacySnapshot(ctx)
 	return nil
+}
+
+// loadLegacySnapshot reads the pre-namespace shared object once, merging it
+// into whatever the cache holds. It is the fallback when the namespaced
+// object cannot be read and the warm start of a cache that stays read-only.
+func (c *forecastDataCache) loadLegacySnapshot(ctx context.Context) {
+	if c.legacyLoaded || c.store == nil {
+		return
+	}
+	c.legacyLoaded = true
+	key := c.legacyKey
+	if key == "" {
+		key = c.storeKey
+	}
+	_ = c.readSnapshot(ctx, key, false)
+}
+
+// readSnapshot is one bounded startup read of a persisted snapshot on the
+// background I/O budget.
+func (c *forecastDataCache) readSnapshot(ctx context.Context, key storage.Key, replace bool) error {
+	readCtx, cancel := context.WithTimeout(storage.WithBackgroundIO(ctx), 10*time.Second)
+	defer cancel()
+	return c.loadPersistedContext(readCtx, key, replace)
 }
 
 func (c *Controller) FlushCachePersistence(ctx context.Context) error {

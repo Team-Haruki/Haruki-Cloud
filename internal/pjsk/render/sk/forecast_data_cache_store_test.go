@@ -113,7 +113,13 @@ func TestForecastCacheStoreGuards(t *testing.T) {
 	memory := storagetest.NewMemory()
 	memory.Seed(map[string][]byte{"sk_forecast_cache.json": []byte("{")})
 	cache := newForecastDataCacheWithStore(nil, memory, "sk_forecast_cache.json")
+	if err := cache.configurePersistence(t.Context(), "test-node"); err != nil {
+		t.Fatal(err)
+	}
 	if len(cache.entries) != 0 {
 		t.Fatal("malformed persisted payload produced entries")
+	}
+	if got := memory.Calls(); len(got) != 2 {
+		t.Fatalf("expected the namespaced read and the legacy fallback read, got %+v", got)
 	}
 }

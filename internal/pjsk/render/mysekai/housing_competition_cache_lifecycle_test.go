@@ -89,8 +89,8 @@ func TestHousingNamespaceMigrationAndUnconfiguredReadOnly(t *testing.T) {
 	}
 	memory.Seed(map[string][]byte{"housing.json": payload})
 	cache := newHousingCompetitionStatsCacheWithStore(memory, "housing.json", time.Minute)
-	if len(cache.buckets) != 1 {
-		t.Fatal("legacy snapshot not loaded")
+	if len(cache.buckets) != 0 {
+		t.Fatal("unconfigured shared store read the snapshot before configuration")
 	}
 	cache.persistLatest(t.Context(), 1)
 	if cache.persistence != nil {

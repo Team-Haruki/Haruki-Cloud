@@ -805,7 +805,7 @@ go generate ./ent/sekai/...
 go generate ./ent/users/...
 ```
 
-数据库迁移没有单独的命令：服务启动时 `internal/server/init_database.go` 对每个库调用 `Schema.Create(ctx)` 自动迁移。
+数据库迁移默认在服务启动时进行：`internal/server/init_database.go` 对每个库调用 `Schema.Create(ctx)` 自动迁移（`database.auto_migrate` / `HARUKI_DB_AUTO_MIGRATE`，默认 `true`）。生产环境把它关掉，改由 **migrate 角色**（`haruki-cloud migrate` 或 `HARUKI_ROLE=migrate`，`internal/server/run_migrate.go`）在每次部署前执行一次：它按同样的顺序打开各个已配置的库、执行 `Schema.Create` 和 PJSK 的数据步骤，每个库打一行日志后退出。`sekai` 库仍由 `sekai.auto_migrate` 单独控制。
 
 ---
 

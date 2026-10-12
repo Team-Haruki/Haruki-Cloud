@@ -66,6 +66,9 @@ func TestRenderIndexDDLCanonicalText(t *testing.T) {
 	if got := strings.Count(all, "CREATE INDEX IF NOT EXISTS"); got != 7 {
 		t.Fatalf("index count = %d, want 7", got)
 	}
+	if renderIndexDDL[5] != legacyBackfillSQL {
+		t.Fatalf("statement 6 = %q, want the legacy backfill", renderIndexDDL[5])
+	}
 	for _, stmt := range renderIndexDDL {
 		upper := strings.ToUpper(stmt)
 		idempotent := strings.Contains(upper, "IF NOT EXISTS") || strings.Contains(upper, "DROP NOT NULL") ||
@@ -97,9 +100,7 @@ func TestPGStoreInitRunsRenderIndexDDLInOrder(t *testing.T) {
 	store, mock := newEqualMockPGStore(t, PGStoreOptions{RenderIndexDDL: true})
 	mock.ExpectExec(initSQL).WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec(migrateSQL).WillReturnResult(sqlmock.NewResult(0, 0))
-	for _, stmt := range renderIndexDDL {
-		mock.ExpectExec(stmt).WillReturnResult(sqlmock.NewResult(0, 0))
-	}
+	expectRenderIndexDDL(mock, false)
 	mock.ExpectQuery(widenedProbeSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
 	mock.ExpectQuery(inspectLifecycleSQL).WillReturnRows(sqlmock.NewRows([]string{"ready"}).AddRow(true))
 	if err := store.Init(ctx); err != nil {
@@ -107,6 +108,61 @@ func TestPGStoreInitRunsRenderIndexDDLInOrder(t *testing.T) {
 	}
 	if !store.Widened() {
 		t.Fatal("widened schema not detected after DDL")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// expectRenderIndexDDL expects the canonical statements in order. The
+// backfill UPDATE is preceded by the partial index and the pending probe,
+// and runs only when a row is pending.
+func expectRenderIndexDDL(mock sqlmock.Sqlmock, backfillPending bool) {
+	for _, stmt := range renderIndexDDL {
+		if stmt != legacyBackfillSQL {
+			mock.ExpectExec(stmt).WillReturnResult(sqlmock.NewResult(0, 0))
+			continue
+		}
+		mock.ExpectExec(legacyBackfillIndexSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+		pending := sqlmock.NewRows([]string{"?column?"})
+		if backfillPending {
+			pending.AddRow(1)
+		}
+		mock.ExpectQuery(legacyBackfillPendingSQL).WillReturnRows(pending)
+		if backfillPending {
+			mock.ExpectExec(legacyBackfillSQL).WillReturnResult(sqlmock.NewResult(0, 3))
+		}
+	}
+}
+
+func TestPGStoreInitBackfillsLegacyBackendOnlyWhenPending(t *testing.T) {
+	ctx := context.Background()
+	store, mock := newEqualMockPGStore(t, PGStoreOptions{RenderIndexDDL: true})
+	mock.ExpectExec(initSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec(migrateSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	expectRenderIndexDDL(mock, true)
+	mock.ExpectQuery(widenedProbeSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
+	mock.ExpectQuery(inspectLifecycleSQL).WillReturnRows(sqlmock.NewRows([]string{"ready"}).AddRow(true))
+	if err := store.Init(ctx); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+
+	// A failing probe surfaces as the backfill step's error.
+	store, mock = newEqualMockPGStore(t, PGStoreOptions{RenderIndexDDL: true})
+	wantErr := errors.New("probe down")
+	mock.ExpectExec(initSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec(migrateSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	for _, stmt := range renderIndexDDL[:5] {
+		mock.ExpectExec(stmt).WillReturnResult(sqlmock.NewResult(0, 0))
+	}
+	mock.ExpectExec(legacyBackfillIndexSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectQuery(legacyBackfillPendingSQL).WillReturnError(wantErr)
+	err := store.Init(ctx)
+	if !errors.Is(err, wantErr) || !strings.Contains(err.Error(), "step 6") {
+		t.Fatalf("Init() error = %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)

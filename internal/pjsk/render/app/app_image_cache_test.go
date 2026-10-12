@@ -108,9 +108,16 @@ func TestOpenAppImageStoreErrors(t *testing.T) {
 	}
 
 	// ddl_enabled reaches Init: the render index DDL runs before the probe.
+	// The backfill step (statement 6) is the partial index plus the pending
+	// probe; with nothing pending the UPDATE itself does not run.
 	open, mock = mockOpener(t, func(mock sqlmock.Sqlmock) {
 		schemaSteps(mock)
-		for range imagecache.RenderIndexDDL() {
+		for i := range imagecache.RenderIndexDDL() {
+			if i == 5 {
+				mock.ExpectExec("CREATE INDEX IF NOT EXISTS idx_ice_storage_backend_pending").WillReturnResult(sqlmock.NewResult(0, 0))
+				mock.ExpectQuery("storage_backend IS NULL LIMIT 1").WillReturnRows(sqlmock.NewRows([]string{"?column?"}))
+				continue
+			}
 			mock.ExpectExec(".").WillReturnResult(sqlmock.NewResult(0, 0))
 		}
 		mock.ExpectQuery("information_schema.columns").WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))

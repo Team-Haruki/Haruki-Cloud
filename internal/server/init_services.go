@@ -608,23 +608,38 @@ func parseNoisePrivateKey(mainLogger *harukiLogger.Logger, field string, keyHex 
 	return kp
 }
 
-func initCensorIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App) *censor.Service {
+func censorDBConfigured() bool {
 	cfg := harukiConfig.Cfg.Censor
-	if strings.TrimSpace(cfg.CensorDBType) == "" || strings.TrimSpace(cfg.CensorDBURL) == "" {
+	return strings.TrimSpace(cfg.CensorDBType) != "" && strings.TrimSpace(cfg.CensorDBURL) != ""
+}
+
+func openCensorClient() (*censorDB.Client, error) {
+	cfg := harukiConfig.Cfg.Censor
+	drv, err := openEntDriver("censor", cfg.CensorDBType, cfg.CensorDBURL, cfg.DBPool())
+	if err != nil {
+		return nil, err
+	}
+	return censorDB.NewClient(censorDB.Driver(drv)), nil
+}
+
+func initCensorIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App) *censor.Service {
+	if !censorDBConfigured() {
 		return nil
 	}
 	ctx = ensureContext(ctx)
+	cfg := harukiConfig.Cfg.Censor
 
-	drv, err := openEntDriver("censor", cfg.CensorDBType, cfg.CensorDBURL, cfg.DBPool())
+	censorClient, err := openCensorClient()
 	if err != nil {
 		mainLogger.Error("failed to connect to Censor DB", "error_type", fmt.Sprintf("%T", err))
 		return nil
 	}
-	censorClient := censorDB.NewClient(censorDB.Driver(drv))
-	if err := censorClient.Schema.Create(ctx); err != nil {
-		mainLogger.Error("failed to create schema for Censor DB", "error_type", fmt.Sprintf("%T", err))
-		_ = censorClient.Close()
-		return nil
+	if autoMigrateEnabled() {
+		if err := censorClient.Schema.Create(ctx); err != nil {
+			mainLogger.Error("failed to create schema for Censor DB", "error_type", fmt.Sprintf("%T", err))
+			_ = censorClient.Close()
+			return nil
+		}
 	}
 	installEntTracing(censorClient)
 

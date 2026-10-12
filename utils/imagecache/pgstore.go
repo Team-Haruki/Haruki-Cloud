@@ -208,7 +208,13 @@ func (s *PGStore) Init(ctx context.Context) error {
 	}
 	if s.ddlEnabled {
 		for i, stmt := range renderIndexDDL {
-			if _, err := s.executor().ExecContext(ctx, stmt); err != nil {
+			var err error
+			if stmt == legacyBackfillSQL {
+				err = s.backfillLegacyBackend(ctx)
+			} else {
+				_, err = s.executor().ExecContext(ctx, stmt)
+			}
+			if err != nil {
 				return fmt.Errorf("imagecache pgstore: render index ddl step %d: %w", i+1, err)
 			}
 		}
@@ -217,6 +223,27 @@ func (s *PGStore) Init(ctx context.Context) error {
 		return err
 	}
 	return s.probeLifecycleSchema(ctx)
+}
+
+// backfillLegacyBackend runs the storage_backend backfill only while a row
+// still needs it. The partial index over the NULL rows is created first so
+// the existence probe (and the UPDATE itself) never scans the table; after
+// the one-shot backfill the index stays empty and the probe costs one
+// round-trip.
+func (s *PGStore) backfillLegacyBackend(ctx context.Context) error {
+	if _, err := s.executor().ExecContext(ctx, legacyBackfillIndexSQL); err != nil {
+		return err
+	}
+	var one int
+	err := s.executor().QueryRowContext(ctx, legacyBackfillPendingSQL).Scan(&one)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil
+	case err != nil:
+		return err
+	}
+	_, err = s.executor().ExecContext(ctx, legacyBackfillSQL)
+	return err
 }
 
 func (s *PGStore) probeSchema(ctx context.Context) error {

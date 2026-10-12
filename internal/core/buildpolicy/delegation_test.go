@@ -85,7 +85,7 @@ func TestVerifierDelegatedReleaseKey(t *testing.T) {
 
 	t.Run("root-direct still verifies with a keyset loaded", func(t *testing.T) {
 		doc, err := Parse(rootSigned, verifier(keyset, inWindow))
-		if err != nil || doc.SignedBy != "root-test" {
+		if err != nil || doc.SignedBy != "root-test" || doc.VerifiedUntil != 0 {
 			t.Fatalf("Parse = %+v, %v", doc, err)
 		}
 	})
@@ -96,8 +96,13 @@ func TestVerifierDelegatedReleaseKey(t *testing.T) {
 	})
 	t.Run("delegated verifies inside the window", func(t *testing.T) {
 		doc, err := Parse(delegated, verifier(keyset, inWindow))
-		if err != nil || doc.SignedBy != "release-test" {
+		if err != nil || doc.SignedBy != "release-test" || doc.VerifiedUntil != keyValidTo {
 			t.Fatalf("Parse = %+v, %v", doc, err)
+		}
+		tight := keysetWith(releaseEntry(release))
+		tight.ExpiresAt = keyValidTo - 1000
+		if doc, err := Parse(delegated, verifier(tight, inWindow)); err != nil || doc.VerifiedUntil != tight.ExpiresAt-1 {
+			t.Fatalf("keyset-bounded Parse = %+v, %v", doc, err)
 		}
 	})
 	t.Run("delegated rejected without a keyset", func(t *testing.T) {
@@ -261,4 +266,49 @@ func TestStoreRejectsBrokenKeyset(t *testing.T) {
 			t.Fatalf("decision = %+v", d)
 		}
 	})
+}
+
+func TestStoreDropsCachedPolicyWhenReleaseKeyLapses(t *testing.T) {
+	root := throwawaySigner(t, "root-test")
+	release := throwawaySigner(t, "release-test")
+	dir := t.TempDir()
+	policyPath := filepath.Join(dir, "policy.signed.json")
+	keysetPath := filepath.Join(dir, "keyset.signed.json")
+	mtime := time.Now().Add(-time.Hour)
+	writeFile(t, policyPath, signPolicy(t, release, trustsign.DomainRelease), mtime)
+	writeFile(t, keysetPath, signKeyset(t, root, keysetWith(releaseEntry(release))), mtime)
+
+	now := time.Unix(keyValidTo-1, 0)
+	store := NewStore(policyPath, ModeEnforce, root.PublicKey(), keysetPath)
+	store.now = func() time.Time { return now }
+	req := Request{BotID: "42", ClientVersion: "3.1.0", BuildID: "b-310-linux"}
+	if d := store.Evaluate(req); d.Code != CodeOK {
+		t.Fatalf("before expiry = %+v", d)
+	}
+
+	// Neither file changes; only the clock passes not_after.
+	now = time.Unix(keyValidTo+1, 0)
+	if d := store.Evaluate(req); d.Code != CodeOK {
+		t.Fatalf("inside the reload interval the cache still serves: %+v", d)
+	}
+	now = now.Add(defaultReloadInterval)
+	d := store.Evaluate(req)
+	if d.Code != CodePolicyUnavailable || !strings.Contains(d.Reason, "validity window") {
+		t.Fatalf("after expiry = %+v", d)
+	}
+
+	// Same with the keyset's own expiry bounding an otherwise valid key.
+	tight := keysetWith(releaseEntry(release))
+	tight.ExpiresAt = keyValidTo - 10_000
+	writeFile(t, keysetPath, signKeyset(t, root, tight), mtime.Add(time.Minute))
+	now = time.Unix(tight.ExpiresAt-1, 0)
+	store = NewStore(policyPath, ModeEnforce, root.PublicKey(), keysetPath)
+	store.now = func() time.Time { return now }
+	if d := store.Evaluate(req); d.Code != CodeOK {
+		t.Fatalf("before keyset expiry = %+v", d)
+	}
+	now = time.Unix(tight.ExpiresAt, 0).Add(defaultReloadInterval)
+	if d := store.Evaluate(req); d.Code != CodePolicyUnavailable || !strings.Contains(d.Reason, "keyset has expired") {
+		t.Fatalf("after keyset expiry = %+v", d)
+	}
 }

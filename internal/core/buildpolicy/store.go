@@ -177,7 +177,7 @@ func (s *Store) load(now time.Time) (*Document, error) {
 		}
 		keysetModTime = keysetInfo.ModTime()
 	}
-	if s.doc != nil && info.ModTime().Equal(s.modTime) && keysetModTime.Equal(s.keysetModTime) {
+	if s.doc != nil && info.ModTime().Equal(s.modTime) && keysetModTime.Equal(s.keysetModTime) && !s.doc.signerLapsed(now) {
 		return s.doc, nil
 	}
 	verifier, err := s.verifier(now)
@@ -234,8 +234,10 @@ type Verifier struct {
 // verify checks the envelope's key_id against the keyset's release keys
 // first; a listed key is bound to that id and never falls back to the root,
 // so dropping a key from the keyset (or letting its window lapse) revokes it
-// outright. An unlisted key_id must verify under the root key.
-func (v *Verifier) verify(env trustsign.Envelope) error {
+// outright. An unlisted key_id must verify under the root key. For a
+// delegated signer it returns the last unix second its validity covers (the
+// earlier of the key's not_after and the keyset's expiry); 0 for the root.
+func (v *Verifier) verify(env trustsign.Envelope) (int64, error) {
 	now := v.Now
 	if now.IsZero() {
 		now = time.Now()
@@ -243,19 +245,26 @@ func (v *Verifier) verify(env trustsign.Envelope) error {
 	if v.Keyset != nil {
 		if key, listed := v.Keyset.ReleaseKey(env.KeyID); listed {
 			if v.Keyset.ExpiredAt(now) {
-				return fmt.Errorf("buildpolicy: release key %q: trust keyset has expired", env.KeyID)
+				return 0, fmt.Errorf("buildpolicy: release key %q: trust keyset has expired", env.KeyID)
 			}
 			if !key.ValidAt(now) {
-				return fmt.Errorf("buildpolicy: release key %q is outside its validity window", env.KeyID)
+				return 0, fmt.Errorf("buildpolicy: release key %q is outside its validity window", env.KeyID)
 			}
 			pub, err := trustsign.ParsePublicKeyHex(key.PublicKey)
 			if err != nil {
-				return fmt.Errorf("buildpolicy: release key %q: %w", env.KeyID, err)
+				return 0, fmt.Errorf("buildpolicy: release key %q: %w", env.KeyID, err)
 			}
-			return trustsign.Verify(pub, env, trustsign.DomainRelease)
+			return min(key.NotAfter, v.Keyset.ExpiresAt-1), trustsign.Verify(pub, env, trustsign.DomainRelease)
 		}
 	}
-	return trustsign.Verify(v.Root, env, trustsign.DomainRelease)
+	return 0, trustsign.Verify(v.Root, env, trustsign.DomainRelease)
+}
+
+// signerLapsed reports whether a delegated signer's validity has run out
+// since the document was verified, so the cached copy must be re-checked
+// (and rejected) even though neither file changed.
+func (d *Document) signerLapsed(now time.Time) bool {
+	return d.VerifiedUntil != 0 && now.Unix() > d.VerifiedUntil
 }
 
 // Parse decodes a policy file. It accepts a bare Document, or a trustsign
@@ -266,14 +275,17 @@ func Parse(raw []byte, verifier *Verifier) (*Document, error) {
 	var env trustsign.Envelope
 	payload := raw
 	signedBy := ""
+	var verifiedUntil int64
 	if err := json.Unmarshal(raw, &env); err == nil && env.Algorithm == trustsign.Algorithm && len(env.Signature) > 0 {
 		if env.Domain != trustsign.DomainRelease {
 			return nil, fmt.Errorf("buildpolicy: envelope domain %q is not %q", env.Domain, trustsign.DomainRelease)
 		}
 		if verifier != nil {
-			if err := verifier.verify(env); err != nil {
+			until, err := verifier.verify(env)
+			if err != nil {
 				return nil, fmt.Errorf("buildpolicy: signature rejected: %w", err)
 			}
+			verifiedUntil = until
 		}
 		payload, signedBy = env.Payload, env.KeyID
 	} else if verifier != nil {
@@ -286,7 +298,7 @@ func Parse(raw []byte, verifier *Verifier) (*Document, error) {
 	if err := doc.Validate(); err != nil {
 		return nil, err
 	}
-	doc.SignedBy = signedBy
+	doc.SignedBy, doc.VerifiedUntil = signedBy, verifiedUntil
 	return &doc, nil
 }
 

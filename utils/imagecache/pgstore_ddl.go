@@ -19,7 +19,7 @@ var renderIndexDDL = []string{
 	`ALTER TABLE image_cache_entries ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ NULL`,
 	`ALTER TABLE image_cache_entries ADD COLUMN IF NOT EXISTS last_referenced_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
 	`ALTER TABLE image_cache_entries ALTER COLUMN file_path DROP NOT NULL`,
-	`UPDATE image_cache_entries SET storage_backend = 'legacy_disk' WHERE storage_backend IS NULL`,
+	legacyBackfillSQL,
 	`CREATE INDEX IF NOT EXISTS idx_ice_group_created ON image_cache_entries (group_name, created_at)`,
 	`CREATE INDEX IF NOT EXISTS idx_ice_expires ON image_cache_entries (expires_at) WHERE expires_at IS NOT NULL`,
 	`CREATE INDEX IF NOT EXISTS idx_ice_last_referenced ON image_cache_entries (last_referenced_at)`,
@@ -50,6 +50,27 @@ var renderIndexDDL = []string{
 	`ALTER TABLE image_cache_entries ADD COLUMN IF NOT EXISTS writer_node TEXT NULL`,
 	`ALTER TABLE image_cache_entries ADD COLUMN IF NOT EXISTS written_at TIMESTAMPTZ NULL`,
 }
+
+// legacyBackfillSQL is the one-shot storage_backend backfill of the canonical
+// DDL. Init runs it through backfillLegacyBackend: the statement is a full
+// scan of image_cache_entries that updates nothing once the backfill has
+// happened, so it is gated on legacyBackfillPendingSQL, which the partial
+// index below answers from an (empty) index instead of the heap. The index
+// is Cloud-side only and not part of the cross-repo contract text.
+//
+// Outside a transaction the index is built CONCURRENTLY so Drawing's writes
+// are not blocked during the one-off build; an interrupted concurrent build
+// leaves an invalid index that IF NOT EXISTS would keep forever, so Init
+// checks pg_index and rebuilds it once. Inside a transaction (lifecycle
+// callers) CONCURRENTLY is not allowed and the plain form runs.
+const (
+	legacyBackfillSQL                  = `UPDATE image_cache_entries SET storage_backend = 'legacy_disk' WHERE storage_backend IS NULL`
+	legacyBackfillIndexSQL             = `CREATE INDEX IF NOT EXISTS idx_ice_storage_backend_pending ON image_cache_entries (hash) WHERE storage_backend IS NULL`
+	legacyBackfillIndexConcurrentlySQL = `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ice_storage_backend_pending ON image_cache_entries (hash) WHERE storage_backend IS NULL`
+	legacyBackfillIndexInvalidSQL      = `SELECT 1 FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid WHERE c.relname = 'idx_ice_storage_backend_pending' AND NOT i.indisvalid`
+	legacyBackfillIndexDropSQL         = `DROP INDEX CONCURRENTLY IF EXISTS idx_ice_storage_backend_pending`
+	legacyBackfillPendingSQL           = `SELECT 1 FROM image_cache_entries WHERE storage_backend IS NULL LIMIT 1`
+)
 
 // RenderIndexDDL returns a copy of the canonical render index DDL, one
 // statement per element, in execution order.

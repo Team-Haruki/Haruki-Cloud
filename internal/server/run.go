@@ -19,8 +19,12 @@ import (
 )
 
 func Run(ctx context.Context) {
-	if ResolveRole(os.Args[1:], os.Getenv("HARUKI_ROLE")) == RoleEvents {
+	switch ResolveRole(os.Args[1:], os.Getenv("HARUKI_ROLE")) {
+	case RoleEvents:
 		RunEvents(ctx)
+		return
+	case RoleMigrate:
+		RunMigrate(ctx)
 		return
 	}
 	loggerWriter := setupLogging()
@@ -28,21 +32,32 @@ func Run(ctx context.Context) {
 	defer closeMainLogFile(mainLogger)
 	defer closeAccessLogFile(mainLogger)
 	logStartupInfo(mainLogger)
+	timer := newStartupTimer(mainLogger)
+	if !autoMigrateEnabled() {
+		mainLogger.Info("database auto-migrate disabled; apply schema changes with the migrate role")
+	}
 	stopDiagnostics := startDiagnosticsServer(mainLogger, harukiConfig.Cfg.Diagnostics)
 	defer stopDiagnostics()
 	redisClient := initRedis(ctx, mainLogger)
 	app := createFiberApp(mainLogger)
+	timer.phase("redis")
 	usersClient := initUsers(ctx, mainLogger)
 	banChecker := accountdata.NewBanService(usersClient)
 	banChecker.SetReadOnly(harukiConfig.Cfg.Node.ReadOnly)
 	banChecker.SetAdminQQIDs(harukiConfig.Cfg.Moderation.AdminQQIDs)
+	timer.phase("users_db")
 	chunithmMainClient, chunithmMusicClient := initChunithmIfEnabled(ctx, mainLogger, app, redisClient)
+	timer.phase("chunithm_db")
 	pjskClient := initPJSKIfEnabled(ctx, mainLogger, app, redisClient)
+	timer.phase("pjsk_db")
 	embeddedEvents := initEmbeddedEvents(ctx, mainLogger, app, pjskClient)
 	startSekaiDBRemoteSync(ctx, mainLogger)
 	sekaiClient := initSekaiIfEnabled(ctx, mainLogger)
+	timer.phase("sekai_db")
 	renderRuntime := initPJSKRenderIfEnabled(ctx, mainLogger, sekaiClient, pjskClient)
+	timer.phase("render_runtime")
 	censorService := initCensorIfEnabled(ctx, mainLogger, renderRuntime)
+	timer.phase("censor_db")
 	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, banChecker, censorService)
 	wireEventStreams(renderRuntime, eventStreamCloser(embeddedEvents))
 	wireAliasCacheInvalidation(renderRuntime, redisClient)
@@ -61,6 +76,7 @@ func Run(ctx context.Context) {
 	buildPolicy := initBuildPolicy(mainLogger)
 	securityMonitor := initSecurityMonitor(mainLogger, redisClient)
 	authIPBan := initAuthIPBan(ctx, mainLogger, app, redisClient, securityMonitor)
+	timer.phase("auth_setup")
 	botDBClient := initBot(ctx, mainLogger, app, redisClient, botAuth.BotAuthOptions{
 		NoiseKeys:   noiseKeys,
 		BanChecker:  banChecker,
@@ -68,6 +84,7 @@ func Run(ctx context.Context) {
 		Security:    securityMonitor,
 		IPBan:       authIPBan,
 	})
+	timer.phase("bot_db")
 	botRouteDispatchers := botPJSK.RegisterPJSKBotRoutesWithOptions(ctx, app, renderRuntime, redisClient, botDBClient, botPJSK.BotRouteOptions{
 		NoiseKeys:      noiseKeys,
 		ManifestSigner: manifestSigner,
@@ -77,6 +94,7 @@ func Run(ctx context.Context) {
 	trustAPI.RegisterTrustRoutes(app, harukiConfig.Cfg.HarukiBotDB.TrustKeysetPath)
 
 	registerImageCacheRoute(app, harukiConfig.Cfg.PJSKRender.ImageCache, renderImageHosts(renderRuntime), mainLogger)
+	timer.phase("bot_routes")
 
 	defer closeClients(redisClient, censorService, usersClient, chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
 	if botRouteDispatchers != nil {
@@ -89,6 +107,7 @@ func Run(ctx context.Context) {
 	if renderRuntime != nil {
 		mainLogger.Info("PJSK render runtime ready")
 	}
+	timer.done()
 
 	startServer(ctx, mainLogger, app)
 }

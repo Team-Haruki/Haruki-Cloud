@@ -173,10 +173,15 @@ func seedBotCommandManifests(ctx context.Context, client *botDB.Client) {
 	if client == nil || cluster.IsReadOnly() {
 		return
 	}
-	if err := SeedCommandManifests(ctx, client); err != nil {
+	startedAt := time.Now()
+	stats, err := seedCommandManifests(ctx, client)
+	if err != nil {
 		// Non-fatal: manifest table seed failure should not block startup.
 		logger.Warn("bot manifest seed failed", "error_type", fmt.Sprintf("%T", err))
+		return
 	}
+	logger.Info("bot command manifests seeded", "created", stats.created, "updated", stats.updated,
+		"unchanged", stats.unchanged, "elapsed_ms", time.Since(startedAt).Milliseconds())
 }
 
 // headerSessionMiddleware authenticates body-less routes (the manifest GET)

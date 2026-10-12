@@ -39,6 +39,10 @@ func TestResolveRole(t *testing.T) {
 		{[]string{"api"}, "events", RoleAPI},
 		{[]string{"-unknown"}, " events ", RoleEvents},
 		{nil, "api", RoleAPI},
+		{[]string{"migrate"}, "", RoleMigrate},
+		{[]string{"Migrate"}, "events", RoleMigrate},
+		{nil, " MIGRATE ", RoleMigrate},
+		{[]string{"api"}, "migrate", RoleAPI},
 	}
 	for _, tc := range cases {
 		if got := ResolveRole(tc.args, tc.env); got != tc.want {

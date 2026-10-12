@@ -31,11 +31,11 @@ func TestMusicMetaPersistencePrefersStore(t *testing.T) {
 }
 
 func TestNewThreadsHousingCacheStore(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+	// The snapshot reads now honour the init context (they used to run on a
+	// background context from the constructors), so it must be live here.
 	memory := storagetest.NewMemory()
 	runtime := New(nil, nil, Config{
-		InitContext:                         ctx,
+		InitContext:                         context.Background(),
 		MetaLoader:                          nil,
 		MusicMetaStore:                      storage.Disabled(),
 		MySekaiHousingCompetitionCacheStore: memory,

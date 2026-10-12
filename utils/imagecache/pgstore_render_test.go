@@ -66,6 +66,9 @@ func TestRenderIndexDDLCanonicalText(t *testing.T) {
 	if got := strings.Count(all, "CREATE INDEX IF NOT EXISTS"); got != 7 {
 		t.Fatalf("index count = %d, want 7", got)
 	}
+	if renderIndexDDL[5] != legacyBackfillSQL {
+		t.Fatalf("statement 6 = %q, want the legacy backfill", renderIndexDDL[5])
+	}
 	for _, stmt := range renderIndexDDL {
 		upper := strings.ToUpper(stmt)
 		idempotent := strings.Contains(upper, "IF NOT EXISTS") || strings.Contains(upper, "DROP NOT NULL") ||
@@ -97,9 +100,7 @@ func TestPGStoreInitRunsRenderIndexDDLInOrder(t *testing.T) {
 	store, mock := newEqualMockPGStore(t, PGStoreOptions{RenderIndexDDL: true})
 	mock.ExpectExec(initSQL).WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec(migrateSQL).WillReturnResult(sqlmock.NewResult(0, 0))
-	for _, stmt := range renderIndexDDL {
-		mock.ExpectExec(stmt).WillReturnResult(sqlmock.NewResult(0, 0))
-	}
+	expectRenderIndexDDL(mock, false)
 	mock.ExpectQuery(widenedProbeSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
 	mock.ExpectQuery(inspectLifecycleSQL).WillReturnRows(sqlmock.NewRows([]string{"ready"}).AddRow(true))
 	if err := store.Init(ctx); err != nil {
@@ -107,6 +108,95 @@ func TestPGStoreInitRunsRenderIndexDDLInOrder(t *testing.T) {
 	}
 	if !store.Widened() {
 		t.Fatal("widened schema not detected after DDL")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// expectRenderIndexDDL expects the canonical statements in order. The
+// backfill UPDATE is preceded by the concurrent partial index build, its
+// validity check and the pending probe, and runs only when a row is pending.
+func expectRenderIndexDDL(mock sqlmock.Sqlmock, backfillPending bool) {
+	for _, stmt := range renderIndexDDL {
+		if stmt != legacyBackfillSQL {
+			mock.ExpectExec(stmt).WillReturnResult(sqlmock.NewResult(0, 0))
+			continue
+		}
+		mock.ExpectExec(legacyBackfillIndexConcurrentlySQL).WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectQuery(legacyBackfillIndexInvalidSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}))
+		pending := sqlmock.NewRows([]string{"?column?"})
+		if backfillPending {
+			pending.AddRow(1)
+		}
+		mock.ExpectQuery(legacyBackfillPendingSQL).WillReturnRows(pending)
+		if backfillPending {
+			mock.ExpectExec(legacyBackfillSQL).WillReturnResult(sqlmock.NewResult(0, 3))
+		}
+	}
+}
+
+func TestPGStoreInitBackfillsLegacyBackendOnlyWhenPending(t *testing.T) {
+	ctx := context.Background()
+	store, mock := newEqualMockPGStore(t, PGStoreOptions{RenderIndexDDL: true})
+	mock.ExpectExec(initSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec(migrateSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	expectRenderIndexDDL(mock, true)
+	mock.ExpectQuery(widenedProbeSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
+	mock.ExpectQuery(inspectLifecycleSQL).WillReturnRows(sqlmock.NewRows([]string{"ready"}).AddRow(true))
+	if err := store.Init(ctx); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+
+	// A failing probe surfaces as the backfill step's error.
+	store, mock = newEqualMockPGStore(t, PGStoreOptions{RenderIndexDDL: true})
+	wantErr := errors.New("probe down")
+	mock.ExpectExec(initSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec(migrateSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	for _, stmt := range renderIndexDDL[:5] {
+		mock.ExpectExec(stmt).WillReturnResult(sqlmock.NewResult(0, 0))
+	}
+	mock.ExpectExec(legacyBackfillIndexConcurrentlySQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectQuery(legacyBackfillIndexInvalidSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}))
+	mock.ExpectQuery(legacyBackfillPendingSQL).WillReturnError(wantErr)
+	err := store.Init(ctx)
+	if !errors.Is(err, wantErr) || !strings.Contains(err.Error(), "step 6") {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestPGStoreRebuildsInvalidLegacyBackfillIndex(t *testing.T) {
+	ctx := context.Background()
+	store, mock := newEqualMockPGStore(t, PGStoreOptions{RenderIndexDDL: true})
+	// An interrupted concurrent build left an invalid index: drop and rebuild once.
+	mock.ExpectExec(legacyBackfillIndexConcurrentlySQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectQuery(legacyBackfillIndexInvalidSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
+	mock.ExpectExec(legacyBackfillIndexDropSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec(legacyBackfillIndexConcurrentlySQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	if err := store.ensureLegacyBackfillIndex(ctx); err != nil {
+		t.Fatalf("ensureLegacyBackfillIndex() error = %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Inside a transaction only the plain CREATE INDEX is allowed.
+	store, mock = newEqualMockPGStore(t, PGStoreOptions{RenderIndexDDL: true})
+	mock.ExpectBegin()
+	mock.ExpectExec(legacyBackfillIndexSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	tx, err := store.db.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.tx = tx
+	if err := store.ensureLegacyBackfillIndex(ctx); err != nil {
+		t.Fatalf("ensureLegacyBackfillIndex() in tx error = %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
@@ -467,6 +557,68 @@ func TestPGStoreLiveEntryPaths(t *testing.T) {
 		AddRow("h1", "p").RowError(0, iterErr))
 	if _, err := store.LiveEntryPaths(ctx, []string{"h1"}); !errors.Is(err, iterErr) {
 		t.Fatalf("rows error = %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestEnsureLegacyBackfillIndexSurfacesEachFailure(t *testing.T) {
+	ctx := context.Background()
+	wantErr := errors.New("index down")
+	for _, tc := range []struct {
+		name   string
+		expect func(mock sqlmock.Sqlmock)
+	}{
+		{"concurrent build", func(mock sqlmock.Sqlmock) {
+			mock.ExpectExec(legacyBackfillIndexConcurrentlySQL).WillReturnError(wantErr)
+		}},
+		{"validity probe", func(mock sqlmock.Sqlmock) {
+			mock.ExpectExec(legacyBackfillIndexConcurrentlySQL).WillReturnResult(sqlmock.NewResult(0, 0))
+			mock.ExpectQuery(legacyBackfillIndexInvalidSQL).WillReturnError(wantErr)
+		}},
+		{"drop of an invalid index", func(mock sqlmock.Sqlmock) {
+			mock.ExpectExec(legacyBackfillIndexConcurrentlySQL).WillReturnResult(sqlmock.NewResult(0, 0))
+			mock.ExpectQuery(legacyBackfillIndexInvalidSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
+			mock.ExpectExec(legacyBackfillIndexDropSQL).WillReturnError(wantErr)
+		}},
+		{"rebuild", func(mock sqlmock.Sqlmock) {
+			mock.ExpectExec(legacyBackfillIndexConcurrentlySQL).WillReturnResult(sqlmock.NewResult(0, 0))
+			mock.ExpectQuery(legacyBackfillIndexInvalidSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
+			mock.ExpectExec(legacyBackfillIndexDropSQL).WillReturnResult(sqlmock.NewResult(0, 0))
+			mock.ExpectExec(legacyBackfillIndexConcurrentlySQL).WillReturnError(wantErr)
+		}},
+	} {
+		store, mock := newEqualMockPGStore(t, PGStoreOptions{RenderIndexDDL: true})
+		tc.expect(mock)
+		if err := store.ensureLegacyBackfillIndex(ctx); !errors.Is(err, wantErr) {
+			t.Fatalf("%s: error = %v, want %v", tc.name, err, wantErr)
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%s: %v", tc.name, err)
+		}
+	}
+
+	// The in-transaction form surfaces its error too, and a pending backfill
+	// whose UPDATE fails is reported.
+	store, mock := newEqualMockPGStore(t, PGStoreOptions{RenderIndexDDL: true})
+	mock.ExpectBegin()
+	mock.ExpectExec(legacyBackfillIndexSQL).WillReturnError(wantErr)
+	tx, err := store.db.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.tx = tx
+	if err := store.ensureLegacyBackfillIndex(ctx); !errors.Is(err, wantErr) {
+		t.Fatalf("in-tx error = %v", err)
+	}
+	store, mock = newEqualMockPGStore(t, PGStoreOptions{RenderIndexDDL: true})
+	mock.ExpectExec(legacyBackfillIndexConcurrentlySQL).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectQuery(legacyBackfillIndexInvalidSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}))
+	mock.ExpectQuery(legacyBackfillPendingSQL).WillReturnRows(sqlmock.NewRows([]string{"?column?"}).AddRow(1))
+	mock.ExpectExec(legacyBackfillSQL).WillReturnError(wantErr)
+	if err := store.backfillLegacyBackend(ctx); !errors.Is(err, wantErr) {
+		t.Fatalf("pending backfill error = %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)

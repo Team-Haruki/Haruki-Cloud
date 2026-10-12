@@ -47,6 +47,7 @@ type housingCompetitionStatsCache struct {
 
 	refreshes           singleflight.Group
 	refreshTasks        cachepersist.Tasks
+	restore             cachepersist.SnapshotRestorer
 	persistenceDisabled bool
 	persistenceMu       sync.Mutex
 	persistMu           sync.Mutex
@@ -109,7 +110,19 @@ func newHousingCompetitionStatsCache(cachePath string, refreshInterval time.Dura
 	store, key := localHousingCompetitionCacheStore(cachePath)
 	cache := newHousingCompetitionStatsCacheWithStore(store, key, refreshInterval)
 	cache.persistenceDisabled = false // Explicit local file has a single owner.
+	cache.loadLocalSnapshot()
 	return cache
+}
+
+// loadLocalSnapshot reads the object at construction. An explicit local file
+// is single-owner and cheap to read, so it keeps being loaded eagerly; only
+// a configured (remote) store defers the read to configurePersistence.
+func (c *housingCompetitionStatsCache) loadLocalSnapshot() {
+	if c == nil {
+		return
+	}
+	c.loadPersisted()
+	c.restore.MarkLegacyLoaded()
 }
 
 // localHousingCompetitionCacheStore opens a local store at the directory of
@@ -129,6 +142,9 @@ func localHousingCompetitionCacheStore(cachePath string) (storage.Store, storage
 
 // newHousingCompetitionStatsCacheWithStore persists the stats as one JSON
 // object at key in store; a nil store or an empty key disables persistence.
+// The shared object is not read here: configurePersistence reads the
+// namespaced object first and falls back to this key only when that read
+// fails, so a start costs one store round-trip instead of two.
 func newHousingCompetitionStatsCacheWithStore(store storage.Store, key storage.Key, refreshInterval time.Duration) *housingCompetitionStatsCache {
 	if refreshInterval <= 0 {
 		refreshInterval = DefaultHousingCompetitionRefreshInterval
@@ -147,7 +163,9 @@ func newHousingCompetitionStatsCacheWithStore(store storage.Store, key storage.K
 		maxBucketEntries:    housingCompetitionStatsMaxEntriesPerBucket,
 		maxBuckets:          housingCompetitionStatsMaxBuckets,
 	}
-	cache.loadPersisted()
+	if store != nil {
+		cache.restore = cachepersist.SnapshotRestorer{Read: cache.loadPersistedContext, Legacy: key, Cache: "mysekai"}
+	}
 	return cache
 }
 

@@ -250,11 +250,17 @@ event name).
 - Seven ent clients live under `database/`: `bot`, `censor`, `chunithm/maindb`,
   `chunithm/music`, `pjsk`, `sekai`, `users`. Schemas are in `ent/<db>/schema/`
   (for CHUNITHM: `ent/chunithm/maindb/schema/` and `ent/chunithm/music/schema/`).
-- **Auto-migrate runs at startup.** `internal/server/init_database.go`'s
-  `initDBClient` helper calls `Schema.Create(ctx)` for every DB. There is no
-  separate `cmd/migrate` tool any more (it was removed). Only the API role
-  migrates; the events role opens the PJSK DB without `Schema.Create`, so
-  schema changes it depends on must be additive and ship in the API role
+- **Auto-migrate runs at startup by default.** `internal/server/init_database.go`'s
+  `initDBClient` helper calls `Schema.Create(ctx)` for every DB while
+  `database.auto_migrate` (`HARUKI_DB_AUTO_MIGRATE`, default `true`) is on.
+  Production turns it off and applies the same schemas with the **migrate
+  role** (`haruki-server migrate` or `HARUKI_ROLE=migrate`,
+  `internal/server/run_migrate.go`): it opens each configured DB, runs
+  `Schema.Create` plus the PJSK data steps, logs one line per DB and exits.
+  Run it once per deploy before the new API container starts. There is no
+  separate `cmd/migrate` tool (it was removed; the role replaces it). The
+  events role opens the PJSK DB without `Schema.Create`, so schema changes it
+  depends on must be additive and ship in the API role (or the migrate role)
   first.
 - After editing any `ent/<db>/schema/*.go`, run `go generate ./ent/<db>/...`
   and commit both the schema change **and** the regenerated files under
@@ -441,7 +447,8 @@ As of this revision the project is **considered functionally complete**:
   character aliases, 12 985 music aliases, 6 354 group aliases, 114 804
   default-binding rows across 52 002 users).
 - Asset migration completed via parallel rsync to the new host.
-- `cmd/migrate` removed (auto-migrate at startup). The remaining data tools are
+- `cmd/migrate` removed (auto-migrate at startup, or the `migrate` role when
+  `database.auto_migrate` is off). The remaining data tools are
   `cmd/importer` (legacy import), `cmd/asset-index` (catalog bootstrap) and
   `cmd/image-cache-reconcile` (render-cache index repair).
 

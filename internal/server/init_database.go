@@ -40,9 +40,16 @@ func ensureContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-// initDBClient opens a database connection and creates its schema.
-// On failure it emits a synchronous fatal record and terminates after a
-// bounded best-effort log flush.
+// autoMigrateEnabled reports whether this process applies ent schema changes
+// at startup (database.auto_migrate / HARUKI_DB_AUTO_MIGRATE, default on).
+// The migrate role ignores it: applying the schema is its whole job.
+func autoMigrateEnabled() bool {
+	return harukiConfig.Cfg.Database.AutoMigrateEnabled()
+}
+
+// initDBClient opens a database connection and, when auto-migrate is enabled,
+// creates its schema. On failure it emits a synchronous fatal record and
+// terminates after a bounded best-effort log flush.
 func initDBClient[T interface {
 	Close() error
 }](ctx context.Context, logger *harukiLogger.Logger, name string, openFn func() (T, error), schemaFn func(T, context.Context) error) T {
@@ -50,8 +57,10 @@ func initDBClient[T interface {
 	if err != nil {
 		fatalStartup(logger, "failed to connect to database", "database", name, "error_type", fmt.Sprintf("%T", err))
 	}
-	if err := schemaFn(client, ctx); err != nil {
-		fatalStartup(logger, "failed to create database schema", "database", name, "error_type", fmt.Sprintf("%T", err))
+	if autoMigrateEnabled() {
+		if err := schemaFn(client, ctx); err != nil {
+			fatalStartup(logger, "failed to create database schema", "database", name, "error_type", fmt.Sprintf("%T", err))
+		}
 	}
 	installEntTracing(client)
 	return client
@@ -94,33 +103,71 @@ func initRedis(ctx context.Context, mainLogger *harukiLogger.Logger) *redis.Clie
 	return redisClient
 }
 
+// The open* helpers build one ent client each from config. The API role and
+// the migrate role share them, so both connect with the same pool limits.
+
+func openChunithmMainClient() (*chunithmMainDB.Client, error) {
+	cfg := harukiConfig.Cfg.Chunithm
+	drv, err := openEntDriver("chunithm_main", cfg.BindingDBType, cfg.BindingDBURL, cfg.BindingDBPoolConfig())
+	if err != nil {
+		return nil, err
+	}
+	return chunithmMainDB.NewClient(chunithmMainDB.Driver(drv)), nil
+}
+
+func openChunithmMusicClient() (*chunithmMusicDB.Client, error) {
+	cfg := harukiConfig.Cfg.Chunithm
+	drv, err := openEntDriver("chunithm_music", cfg.MusicDBType, cfg.MusicDBURL, cfg.MusicDBPoolConfig())
+	if err != nil {
+		return nil, err
+	}
+	return chunithmMusicDB.NewClient(chunithmMusicDB.Driver(drv)), nil
+}
+
+func openUsersClient() (*usersDB.Client, error) {
+	cfg := harukiConfig.Cfg.UsersDB
+	drv, err := openEntDriver("users", cfg.DBType, cfg.DBURL, cfg.DBPool())
+	if err != nil {
+		return nil, err
+	}
+	return usersDB.NewClient(usersDB.Driver(drv)), nil
+}
+
+// openPJSKClient also returns the driver because the PJSK data migration
+// step runs raw SQL against it.
+func openPJSKClient() (*pjskDB.Client, *entsql.Driver, error) {
+	cfg := harukiConfig.Cfg.PJSK
+	drv, err := openEntDriver("pjsk", cfg.DBType, cfg.DBURL, cfg.DBPool())
+	if err != nil {
+		return nil, nil, err
+	}
+	return pjskDB.NewClient(pjskDB.Driver(drv)), drv, nil
+}
+
+func openBotClient() (*botDB.Client, error) {
+	cfg := harukiConfig.Cfg.HarukiBotDB
+	drv, err := openEntDriver("bot", cfg.DBType, cfg.DBURL, cfg.DBPool())
+	if err != nil {
+		return nil, err
+	}
+	return botDB.NewClient(botDB.Driver(drv)), nil
+}
+
+func usersDBConfigured() bool {
+	return strings.TrimSpace(harukiConfig.Cfg.UsersDB.DBType) != "" && strings.TrimSpace(harukiConfig.Cfg.UsersDB.DBURL) != ""
+}
+
 func initChunithmIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis.Client) (*chunithmMainDB.Client, *chunithmMusicDB.Client) {
 	if !harukiConfig.Cfg.Chunithm.Enabled {
 		return nil, nil
 	}
 	ctx = ensureContext(ctx)
 
-	chunithmMainClient := initDBClient(ctx, mainLogger, "Chunithm main",
-		func() (*chunithmMainDB.Client, error) {
-			cfg := harukiConfig.Cfg.Chunithm
-			drv, err := openEntDriver("chunithm_main", cfg.BindingDBType, cfg.BindingDBURL, cfg.BindingDBPoolConfig())
-			if err != nil {
-				return nil, err
-			}
-			return chunithmMainDB.NewClient(chunithmMainDB.Driver(drv)), nil
-		},
+	chunithmMainClient := initDBClient(ctx, mainLogger, "Chunithm main", openChunithmMainClient,
 		func(c *chunithmMainDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
 	)
 
-	chunithmMusicClient := initDBClient(ctx, mainLogger, "Chunithm music",
-		func() (*chunithmMusicDB.Client, error) {
-			cfg := harukiConfig.Cfg.Chunithm
-			drv, err := openEntDriver("chunithm_music", cfg.MusicDBType, cfg.MusicDBURL, cfg.MusicDBPoolConfig())
-			if err != nil {
-				return nil, err
-			}
-			return chunithmMusicDB.NewClient(chunithmMusicDB.Driver(drv)), nil
-		},
+	chunithmMusicClient := initDBClient(ctx, mainLogger, "Chunithm music", openChunithmMusicClient,
 		func(c *chunithmMusicDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
 	)
 
@@ -129,21 +176,13 @@ func initChunithmIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger,
 }
 
 func initUsers(ctx context.Context, mainLogger *harukiLogger.Logger) *usersDB.Client {
-	if strings.TrimSpace(harukiConfig.Cfg.UsersDB.DBType) == "" || strings.TrimSpace(harukiConfig.Cfg.UsersDB.DBURL) == "" {
+	if !usersDBConfigured() {
 		mainLogger.Warn("users database is not configured", "profile_binding_available", false)
 		return nil
 	}
 	ctx = ensureContext(ctx)
 
-	return initDBClient(ctx, mainLogger, "Users",
-		func() (*usersDB.Client, error) {
-			cfg := harukiConfig.Cfg.UsersDB
-			drv, err := openEntDriver("users", cfg.DBType, cfg.DBURL, cfg.DBPool())
-			if err != nil {
-				return nil, err
-			}
-			return usersDB.NewClient(usersDB.Driver(drv)), nil
-		},
+	return initDBClient(ctx, mainLogger, "Users", openUsersClient,
 		func(c *usersDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
 	)
 }
@@ -157,24 +196,29 @@ func initPJSKIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app
 	var pjskDriver *entsql.Driver
 	pjskClient := initDBClient(ctx, mainLogger, "PJSK",
 		func() (*pjskDB.Client, error) {
-			cfg := harukiConfig.Cfg.PJSK
-			drv, err := openEntDriver("pjsk", cfg.DBType, cfg.DBURL, cfg.DBPool())
+			client, drv, err := openPJSKClient()
 			if err != nil {
 				return nil, err
 			}
 			pjskDriver = drv
-			return pjskDB.NewClient(pjskDB.Driver(drv)), nil
+			return client, nil
 		},
 		func(c *pjskDB.Client, ctx context.Context) error {
-			if err := c.Schema.Create(ctx); err != nil {
-				return err
-			}
-			return migratePJSKData(ctx, mainLogger, pjskDriver)
+			return migratePJSKSchema(ctx, mainLogger, c, pjskDriver)
 		},
 	)
 
 	publicPJSK.RegisterPJSKRoutes(app, pjskClient, redisClient)
 	return pjskClient
+}
+
+// migratePJSKSchema is the PJSK database's auto-migrate: Schema.Create plus
+// the idempotent data steps that must follow it.
+func migratePJSKSchema(ctx context.Context, logger *harukiLogger.Logger, client *pjskDB.Client, drv *entsql.Driver) error {
+	if err := client.Schema.Create(ctx); err != nil {
+		return err
+	}
+	return migratePJSKData(ctx, logger, drv)
 }
 
 // migratePJSKData runs the idempotent data steps that follow an auto-migrate
@@ -228,15 +272,7 @@ func initSekaiIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger) *s
 func initBot(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis.Client, authOpts botAuth.BotAuthOptions) *botDB.Client {
 	ctx = ensureContext(ctx)
 
-	botDBClient := initDBClient(ctx, mainLogger, "Bot",
-		func() (*botDB.Client, error) {
-			cfg := harukiConfig.Cfg.HarukiBotDB
-			drv, err := openEntDriver("bot", cfg.DBType, cfg.DBURL, cfg.DBPool())
-			if err != nil {
-				return nil, err
-			}
-			return botDB.NewClient(botDB.Driver(drv)), nil
-		},
+	botDBClient := initDBClient(ctx, mainLogger, "Bot", openBotClient,
 		func(c *botDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
 	)
 

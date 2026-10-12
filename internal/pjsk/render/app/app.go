@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	pjskDB "haruki-cloud/database/pjsk"
@@ -126,14 +127,10 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		}
 	}
 
-	for name, configure := range map[string]func(context.Context, string) error{
+	configureAppCachePersistence(initCtx, cfg.CachePersistenceNamespace, map[string]func(context.Context, string) error{
 		"sk":      skController.ConfigureCachePersistence,
 		"mysekai": mysekaiController.ConfigureCachePersistence,
-	} {
-		if err := configure(initCtx, cfg.CachePersistenceNamespace); err != nil {
-			logger.WarnContext(initCtx, "cache persistence configuration failed", "cache", name, "error_type", fmt.Sprintf("%T", err))
-		}
-	}
+	})
 	skController.StartDefaultPredictWarmupContext(initCtx)
 
 	runtime := &App{
@@ -184,6 +181,25 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	runtime.startRegistryMasterdataRefresh(initCtx, cfg)
 	mysekaiController.StartHousingCompetitionStatsRefresh(initCtx, cfg.SekaiAPI, cfg.DefaultRegion.String())
 	return runtime
+}
+
+// configureAppCachePersistence restores the persisted private caches. The
+// caches are independent, so their store reads run concurrently and startup
+// waits for the slowest one instead of their sum.
+func configureAppCachePersistence(initCtx context.Context, namespace string, caches map[string]func(context.Context, string) error) {
+	startedAt := time.Now()
+	var wg sync.WaitGroup
+	for name, configure := range caches {
+		wg.Add(1)
+		go func(name string, configure func(context.Context, string) error) {
+			defer wg.Done()
+			if err := configure(initCtx, namespace); err != nil {
+				logger.WarnContext(initCtx, "cache persistence configuration failed", "cache", name, "error_type", fmt.Sprintf("%T", err))
+			}
+		}(name, configure)
+	}
+	wg.Wait()
+	logger.InfoContext(initCtx, "cache persistence configured", "caches", len(caches), "elapsed_ms", time.Since(startedAt).Milliseconds())
 }
 
 type appDependencies struct {
@@ -481,6 +497,7 @@ func openAppImageStoreWith(initCtx context.Context, dsn string, opts imagecache.
 		logger.WarnContext(initCtx, "image cache index disabled: pjsk_render.image_cache.pg_url is empty")
 		return nil, nil
 	}
+	startedAt := time.Now()
 	store, err := open(dsn, opts)
 	if err != nil {
 		return nil, fmt.Errorf("image cache index: %w", err)
@@ -489,6 +506,7 @@ func openAppImageStoreWith(initCtx context.Context, dsn string, opts imagecache.
 		_ = store.Close()
 		return nil, fmt.Errorf("image cache index schema: %w", err)
 	}
+	logger.InfoContext(initCtx, "image cache index ready", "render_index_ddl", opts.RenderIndexDDL, "elapsed_ms", time.Since(startedAt).Milliseconds())
 	return store, nil
 }
 

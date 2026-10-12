@@ -78,11 +78,14 @@ func TestHousingStatsCacheStoreDisabledAndFailing(t *testing.T) {
 	}
 	seedHousingStatsForPersist(failing)
 	failing.persistLatest(context.Background(), 1)
-	if err := failing.closePersistence(t.Context()); err == nil {
-		t.Fatal("failed persistence should report error")
+	// Persistence never started, so there is no writer to flush or fail.
+	if err := failing.closePersistence(t.Context()); err != nil {
+		t.Fatalf("close without a writer: %v", err)
 	}
-	if failing.persistedGeneration != 0 || len(memory.Calls()) != 3 {
-		t.Fatalf("failing store generation=%d calls=%+v", failing.persistedGeneration, memory.Calls())
+	// The namespaced read failed for a reason other than absence, so neither
+	// the legacy fallback read nor any write happens.
+	if calls := memory.Calls(); failing.persistedGeneration != 0 || len(calls) != 1 || calls[0].Method != "Get" || !failing.persistenceDisabled {
+		t.Fatalf("failing store generation=%d disabled=%v calls=%+v", failing.persistedGeneration, failing.persistenceDisabled, calls)
 	}
 
 	if cache := newHousingCompetitionStatsCacheWithStore(memory, "", time.Second); cache.store != nil {
@@ -127,4 +130,8 @@ func TestHousingBannerCacheThroughMemoryStore(t *testing.T) {
 	if key := cache.cacheKey("/abs/banner.png"); len(key) == 0 || !bytes.HasPrefix([]byte(key), []byte(housingCompetitionBannerCacheDirName+"/by_hash/")) {
 		t.Fatalf("absolute path key = %q", key)
 	}
+}
+
+func TestHousingLoadLocalSnapshotNilReceiver(t *testing.T) {
+	(*housingCompetitionStatsCache)(nil).loadLocalSnapshot()
 }

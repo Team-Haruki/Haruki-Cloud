@@ -66,7 +66,7 @@
 
 ```
 Haruki-Cloud/
-├── main.go                       # ── 进程入口：默认 API 角色；`haruki-server events`（或 HARUKI_ROLE=events）启动 events 角色 ──
+├── main.go                       # ── 进程入口：默认 API 角色；`haruki-server events`（或 HARUKI_ROLE=events）启动 events 角色；`haruki-server migrate` 只做迁移后退出 ──
 │
 ├── cmd/                          # ── 一次性 CLI 工具 ──
 │   ├── trust-signer/             #   离线 Ed25519 签名工具（keyset / manifest）
@@ -460,7 +460,7 @@ domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1" }
 
 ### 5.7 实时事件（events 角色）
 
-events 角色与 API 角色是同一镜像的两个进程（`haruki-server events`），只打开 PJSK 数据库，不做迁移、不启动 Redis 和渲染运行时；`events.embedded=true` 时同样的路由挂在主应用上。只有 API 角色执行（只增不改的）迁移，所以先部署 API 角色，再部署 events 角色。
+events 角色与 API 角色是同一镜像的两个进程（`haruki-server events`），只打开 PJSK 数据库，不做迁移、不启动 Redis 和渲染运行时；`events.embedded=true` 时同样的路由挂在主应用上。只有 API 角色（`database.auto_migrate` 开启时）或 migrate 角色执行（只增不改的）迁移，所以先部署 API 角色或先跑一次 `haruki-server migrate`，再部署 events 角色。
 
 | 方法 | 路径 | 鉴权 | 说明 |
 |------|------|------|------|

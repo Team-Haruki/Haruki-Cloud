@@ -3,12 +3,9 @@ package mysekai
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
-	"time"
 
 	"haruki-cloud/internal/cachepersist"
-	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
 )
 
@@ -38,6 +35,9 @@ func (c *housingCompetitionStatsCache) configurePersistence(ctx context.Context,
 		c.persistenceDisabled = true
 		c.persistenceMu.Unlock()
 		logger.WarnContext(ctx, "Cache persistence disabled: invalid instance namespace", slog.String("cache", "mysekai"))
+		// Read-only: the shared snapshot still warms the cache, as it did when
+		// the constructor read it.
+		c.restore.LoadLegacy(ctx)
 		return err
 	}
 	c.persistenceMu.Lock()
@@ -49,16 +49,7 @@ func (c *housingCompetitionStatsCache) configurePersistence(ctx context.Context,
 		return errors.New("cache persistence must be configured before refresh")
 	}
 	c.storeKey = key
-	c.persistenceDisabled = false
-	// Constructors loaded the old shared key. A readable namespaced object takes
-	// precedence; only a missing object uses that legacy migration snapshot.
-	readCtx, cancel := context.WithTimeout(storage.WithBackgroundIO(ctx), 10*time.Second)
-	err = c.loadPersistedContext(readCtx, key, true)
-	cancel()
-	if err != nil && !errors.Is(err, storage.ErrNotExist) {
-		logger.WarnContext(ctx, "Cache snapshot namespace read failed", slog.String("cache", "mysekai"), slog.String("error_type", fmt.Sprintf("%T", err)))
-	}
-
+	c.persistenceDisabled = !c.restore.Restore(ctx, key)
 	return nil
 }
 

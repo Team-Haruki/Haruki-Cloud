@@ -17,9 +17,24 @@ import (
 //
 // This is called automatically by RegisterPJSKBotRoutes when a botDBClient is provided.
 func SeedCommandManifests(ctx context.Context, client *botDB.Client) error {
+	_, err := seedCommandManifests(ctx, client)
+	return err
+}
+
+// manifestSeedStats counts what one seed run did to command_manifests.
+type manifestSeedStats struct {
+	created, updated, unchanged int
+}
+
+// seedCommandManifests reads the table once, creates missing rows in one bulk
+// insert and updates only rows whose protocol fields differ from the
+// registered route. A steady-state start therefore does no writes at all,
+// where it used to issue one UPDATE per route.
+func seedCommandManifests(ctx context.Context, client *botDB.Client) (manifestSeedStats, error) {
+	var stats manifestSeedStats
 	rows, err := client.CommandManifest.Query().All(ctx)
 	if err != nil {
-		return err
+		return stats, err
 	}
 
 	routes := commandManifestRoutes()
@@ -32,14 +47,19 @@ func SeedCommandManifests(ctx context.Context, client *botDB.Client) error {
 	for _, route := range routes {
 		key := manifestKey(route.Module, route.Path)
 		if row, ok := existingByKey[key]; ok {
+			delete(existingByKey, key)
+			if manifestRowMatchesRoute(row, route) {
+				stats.unchanged++
+				continue
+			}
 			if _, err := client.CommandManifest.UpdateOneID(row.ID).
 				SetCommandPrefixes(route.Commands).
 				SetCommandMode(route.CommandMode).
 				SetCommandAdditionalParams(route.AdditionalParams).
 				Save(ctx); err != nil {
-				return err
+				return stats, err
 			}
-			delete(existingByKey, key)
+			stats.updated++
 			continue
 		}
 
@@ -54,10 +74,22 @@ func SeedCommandManifests(ctx context.Context, client *botDB.Client) error {
 	}
 
 	if len(bulk) == 0 {
-		return nil
+		return stats, nil
 	}
-	_, err = client.CommandManifest.CreateBulk(bulk...).Save(ctx)
-	return err
+	if _, err := client.CommandManifest.CreateBulk(bulk...).Save(ctx); err != nil {
+		return stats, err
+	}
+	stats.created = len(bulk)
+	return stats, nil
+}
+
+// manifestRowMatchesRoute reports whether the stored protocol fields already
+// equal the route's; nil and empty lists compare equal because the JSON
+// columns round-trip both as an empty array.
+func manifestRowMatchesRoute(row *botDB.CommandManifest, route commandhandler.BotRoute) bool {
+	return row.CommandMode == route.CommandMode &&
+		slices.Equal(row.CommandPrefixes, route.Commands) &&
+		slices.Equal(row.CommandAdditionalParams, route.AdditionalParams)
 }
 
 func commandManifestRoutes() []commandhandler.BotRoute {

@@ -42,6 +42,7 @@ type forecastDataCache struct {
 	generation    uint64
 
 	refreshTasks        cachepersist.Tasks
+	restore             cachepersist.SnapshotRestorer
 	persistenceDisabled bool
 	persistenceMu       sync.Mutex
 	persistMu           sync.Mutex
@@ -97,19 +98,34 @@ func newForecastDataCacheWithPath(provider ForecastProvider, cachePath string) *
 	}
 	cache := newForecastDataCacheWithStore(provider, store, storage.Key(filepath.Base(cachePath)))
 	cache.persistenceDisabled = false // Explicit local file has a single owner.
+	cache.loadLocalSnapshot()
 	return cache
 }
 
+// loadLocalSnapshot reads the object at construction. An explicit local file
+// is single-owner and cheap to read, so it keeps being loaded eagerly; only
+// a configured (remote) store defers the read to configurePersistence.
+func (c *forecastDataCache) loadLocalSnapshot() {
+	if c == nil {
+		return
+	}
+	c.loadPersisted()
+	c.restore.MarkLegacyLoaded()
+}
+
 // newForecastDataCacheWithStore persists the cache as one JSON object at key
-// in store; a nil store or an empty key disables persistence.
+// in store; a nil store or an empty key disables persistence. The shared
+// object is not read here: configurePersistence reads the namespaced object
+// first and falls back to this key only when that read fails, so a start
+// costs one store round-trip instead of two.
 func newForecastDataCacheWithStore(provider ForecastProvider, store storage.Store, key storage.Key) *forecastDataCache {
 	cache := newForecastDataCache(provider)
 	if store != nil && key != "" {
 		cache.store = store
 		cache.storeKey = key
 		cache.persistenceDisabled = true
+		cache.restore = cachepersist.SnapshotRestorer{Read: cache.loadPersistedContext, Legacy: key, Cache: "sk"}
 	}
-	cache.loadPersisted()
 	return cache
 }
 

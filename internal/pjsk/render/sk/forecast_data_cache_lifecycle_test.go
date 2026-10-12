@@ -98,8 +98,8 @@ func TestForecastNamespaceMigrationAndUnconfiguredReadOnly(t *testing.T) {
 	}
 	memory.Seed(map[string][]byte{"forecast.json": payload})
 	cache := newForecastDataCacheWithStore(&keyedForecastProvider{}, memory, "forecast.json")
-	if _, err := cache.CachedBySource("jp", 8, []int{100}); err != nil {
-		t.Fatal(err)
+	if len(cache.entries) != 0 {
+		t.Fatal("unconfigured shared store read the snapshot before configuration")
 	}
 	cache.persistLatest(t.Context(), 1)
 	if cache.persistence != nil {

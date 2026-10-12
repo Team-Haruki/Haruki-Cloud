@@ -23,7 +23,8 @@ import (
 )
 
 // Process roles. The API role is the default; the events role serves only
-// the realtime SSE gateway (`haruki-server events` or HARUKI_ROLE=events).
+// the realtime SSE gateway (`haruki-server events` or HARUKI_ROLE=events);
+// the migrate role (RoleMigrate) applies the schemas and exits.
 const (
 	RoleAPI    = "api"
 	RoleEvents = "events"
@@ -37,12 +38,13 @@ const eventsBodyLimit = 64 << 10
 // falling back to the HARUKI_ROLE value.
 func ResolveRole(args []string, env string) string {
 	if len(args) > 0 {
-		if role := strings.ToLower(strings.TrimSpace(args[0])); role == RoleEvents || role == RoleAPI {
+		if role := strings.ToLower(strings.TrimSpace(args[0])); role == RoleEvents || role == RoleAPI || role == RoleMigrate {
 			return role
 		}
 	}
-	if strings.EqualFold(strings.TrimSpace(env), RoleEvents) {
-		return RoleEvents
+	switch role := strings.ToLower(strings.TrimSpace(env)); role {
+	case RoleEvents, RoleMigrate:
+		return role
 	}
 	return RoleAPI
 }

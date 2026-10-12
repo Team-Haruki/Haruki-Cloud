@@ -101,34 +101,57 @@ func NewLoader(log *logger.Logger, options ...LoaderOption) *Loader {
 	return l
 }
 
-// LoadAll fetches all known regions concurrently.
-// It returns the first error encountered, but always attempts every region.
+// LoadAll fetches all known regions concurrently (one goroutine per region;
+// the region list is small and fixed). It returns the first error
+// encountered, but always attempts every region, and logs one summary line
+// with the total and slowest region so startup and refresh timings are
+// visible without per-region arithmetic.
 func (l *Loader) LoadAll(ctx context.Context) error {
 	type result struct {
-		region string
-		err    error
+		region  string
+		err     error
+		elapsed time.Duration
 	}
 
-	results := make(chan result, len(Regions()))
-	for _, region := range Regions() {
+	regions := Regions()
+	startedAt := time.Now()
+	results := make(chan result, len(regions))
+	for _, region := range regions {
 		go func(r string) {
-			results <- result{r, l.load(ctx, r)}
+			began := time.Now()
+			err := l.load(ctx, r)
+			results <- result{r, err, time.Since(began)}
 		}(region)
 	}
 
 	var firstErr error
-	for range Regions() {
-		if res := <-results; res.err != nil {
+	failed := 0
+	var slowest result
+	for range regions {
+		res := <-results
+		if res.elapsed > slowest.elapsed {
+			slowest = res
+		}
+		if res.err != nil {
+			failed++
 			if l.logger != nil {
 				l.logger.WarnContext(ctx, "music metadata load failed",
 					"region", res.region,
 					"error_type", fmt.Sprintf("%T", res.err),
+					"elapsed_ms", res.elapsed.Milliseconds(),
 				)
 			}
 			if firstErr == nil {
 				firstErr = res.err
 			}
 		}
+	}
+	if l.logger != nil {
+		l.logger.InfoContext(ctx, "music metadata load complete",
+			"regions", len(regions), "failed", failed,
+			"elapsed_ms", time.Since(startedAt).Milliseconds(),
+			"slowest_region", slowest.region, "slowest_ms", slowest.elapsed.Milliseconds(),
+		)
 	}
 	return firstErr
 }

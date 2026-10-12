@@ -315,8 +315,20 @@ func (c *Controller) BuildFirstCraftList(query FirstCraftListQuery) (*FirstCraft
 		ProgressMessage: &message,
 		ShowID:          true,
 		MainGenres:      collector.mainGenres(mainGenreMap, subGenreMap),
+		// Without 全部 every tile carries the ribbon and the scope sentence
+		// already says so; with it the ribbon tells the bright tiles apart.
+		Labels: c.fixtureListLabels(firstCraftListScope(query.ShowAll), query.ShowAll && collector.hasFirstCraft),
 	}
 	return result, nil
+}
+
+// firstCraftListScope is the legend of the first-craft list: every tile can
+// be crafted now, or with ShowAll the grey ones cannot.
+func firstCraftListScope(showAll bool) []i18n.Message {
+	if showAll {
+		return []i18n.Message{i18n.M("mysekai.image.fixture_list.legend.grey_not_craftable")}
+	}
+	return []i18n.Message{i18n.M("mysekai.image.fixture_list.legend.first_craft_only")}
 }
 
 // RenderFirstCraftList renders the image of a first-craft list.

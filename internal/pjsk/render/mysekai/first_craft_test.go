@@ -475,3 +475,154 @@ func TestFixtureDetailShowsTheFirstCraftState(t *testing.T) {
 func isFirstCraftTag(info string) bool {
 	return strings.Contains(info, "首次制作")
 }
+
+// fixtureFirstCrafts lists the tiles that carry the first-craft ribbon.
+func fixtureFirstCrafts(req *drawing.MysekaiFixtureListRequest) map[int]bool {
+	result := map[int]bool{}
+	for _, mainGenre := range req.MainGenres {
+		for _, subGenre := range mainGenre.SubGenres {
+			for _, fixture := range subGenre.Fixtures {
+				if fixture.FirstCraft {
+					result[fixture.ID] = true
+				}
+			}
+		}
+	}
+	return result
+}
+
+func legendOf(sentences ...string) string {
+	return strings.Join(sentences, legendSeparator)
+}
+
+func requireFixtureListLabels(t *testing.T, name string, req *drawing.MysekaiFixtureListRequest, legend, badge string) {
+	t.Helper()
+	if req.Labels[fixtureListLegendLabel] != legend {
+		t.Errorf("%s legend = %q, want %q", name, req.Labels[fixtureListLegendLabel], legend)
+	}
+	if req.Labels[fixtureListFirstCraftLabel] != badge {
+		t.Errorf("%s badge = %q, want %q", name, req.Labels[fixtureListFirstCraftLabel], badge)
+	}
+}
+
+func TestFixtureListsMarkCraftableFirstCraftsAndLabelTheView(t *testing.T) {
+	controller := newFirstCraftTestController(t, firstCraftExpRows, firstCraftTestSnapshot)
+	badge := i18n.T("mysekai.image.fixture_list.first_craft_badge", i18n.Data{"Exp": 1234})
+	ribbon := i18n.T("mysekai.image.fixture_list.legend.first_craft_badge", i18n.Data{"Badge": badge})
+	birthday := i18n.T("mysekai.image.fixture_list.legend.birthday_icon")
+	onlyCraftable := i18n.T("mysekai.image.fixture_list.legend.only_craftable")
+	// 12 (blueprint owned), 14 (party blueprint, open) and canvas 41 are never held and craftable now.
+	craftableNow := map[int]bool{12: true, 14: true, 41: true}
+
+	collection, err := controller.BuildFixtureListRequest(FixtureListQuery{Region: "jp", ObtainedSource: "fixture"})
+	if err != nil {
+		t.Fatalf("BuildFixtureListRequest(fixture): %v", err)
+	}
+	if got := fixtureFirstCrafts(collection); !reflect.DeepEqual(got, craftableNow) {
+		t.Fatalf("collection ribbons = %v, want %v", got, craftableNow)
+	}
+	neverHeld := legendOf(i18n.T("mysekai.image.fixture_list.legend.grey_never_held"), ribbon, birthday)
+	requireFixtureListLabels(t, "collection", collection, neverHeld, badge)
+
+	// Without a source the snapshot decides: it lists fixtures, so grey means never held.
+	defaulted, err := controller.BuildFixtureListRequest(FixtureListQuery{Region: "jp"})
+	if err != nil {
+		t.Fatalf("BuildFixtureListRequest(default): %v", err)
+	}
+	requireFixtureListLabels(t, "default source", defaulted, neverHeld, badge)
+
+	yes := true
+	blueprints, err := controller.BuildFixtureListRequest(FixtureListQuery{Region: "jp", ObtainedSource: "blueprint", OnlyCraftable: &yes})
+	if err != nil {
+		t.Fatalf("BuildFixtureListRequest(blueprint): %v", err)
+	}
+	if got := fixtureFirstCrafts(blueprints); !reflect.DeepEqual(got, craftableNow) {
+		t.Fatalf("blueprint list ribbons = %v, want %v", got, craftableNow)
+	}
+	requireFixtureListLabels(t, "blueprint list", blueprints,
+		legendOf(onlyCraftable, i18n.T("mysekai.image.fixture_list.legend.grey_no_blueprint"), ribbon, birthday), badge)
+
+	// The static catalog has no user data: nothing is grey and nothing carries a ribbon.
+	no := false
+	static := FixtureListQuery{Region: "jp", ShowProfile: &no, ShowProgress: &no, ShowObtained: &no}
+	catalog, err := controller.BuildFixtureListRequest(static)
+	if err != nil {
+		t.Fatalf("BuildFixtureListRequest(catalog): %v", err)
+	}
+	if got := fixtureFirstCrafts(catalog); len(got) != 0 {
+		t.Fatalf("catalog ribbons = %v, want none", got)
+	}
+	requireFixtureListLabels(t, "catalog", catalog, birthday, badge)
+	static.OnlyCraftable = &yes
+	craft, err := controller.BuildFixtureListRequest(static)
+	if err != nil {
+		t.Fatalf("BuildFixtureListRequest(catalog craft): %v", err)
+	}
+	requireFixtureListLabels(t, "catalog craft", craft, legendOf(onlyCraftable, birthday), badge)
+}
+
+func TestFirstCraftListLabels(t *testing.T) {
+	controller := newFirstCraftTestController(t, firstCraftExpRows, firstCraftTestSnapshot)
+	badge := i18n.T("mysekai.image.fixture_list.first_craft_badge", i18n.Data{"Exp": 1234})
+	birthday := i18n.T("mysekai.image.fixture_list.legend.birthday_icon")
+	craftableNow := map[int]bool{12: true, 14: true, 41: true}
+
+	list, err := controller.BuildFirstCraftList(FirstCraftListQuery{Region: "jp"})
+	if err != nil {
+		t.Fatalf("BuildFirstCraftList: %v", err)
+	}
+	if got := fixtureFirstCrafts(list.Request); !reflect.DeepEqual(got, craftableNow) {
+		t.Fatalf("ribbons = %v, want every listed tile %v", got, craftableNow)
+	}
+	// Every tile carries the ribbon, so the legend does not explain it again.
+	requireFixtureListLabels(t, "first-craft list", list.Request,
+		legendOf(i18n.T("mysekai.image.fixture_list.legend.first_craft_only"), birthday), badge)
+
+	all, err := controller.BuildFirstCraftList(FirstCraftListQuery{Region: "jp", ShowAll: true})
+	if err != nil {
+		t.Fatalf("BuildFirstCraftList(all): %v", err)
+	}
+	if got := fixtureFirstCrafts(all.Request); !reflect.DeepEqual(got, craftableNow) {
+		t.Fatalf("ribbons = %v, want the greyed 13 without one", got)
+	}
+	requireFixtureListLabels(t, "first-craft list all", all.Request, legendOf(
+		i18n.T("mysekai.image.fixture_list.legend.grey_not_craftable"),
+		i18n.T("mysekai.image.fixture_list.legend.first_craft_badge", i18n.Data{"Badge": badge}),
+		birthday,
+	), badge)
+
+	noExp := newFirstCraftTestController(t, nil, firstCraftTestSnapshot)
+	plain, err := noExp.BuildFirstCraftList(FirstCraftListQuery{Region: "jp", ShowAll: true})
+	if err != nil {
+		t.Fatalf("BuildFirstCraftList(no exp): %v", err)
+	}
+	word := i18n.T("mysekai.image.fixture_list.first_craft_badge_no_exp")
+	requireFixtureListLabels(t, "first-craft list without exp", plain.Request, legendOf(
+		i18n.T("mysekai.image.fixture_list.legend.grey_not_craftable"),
+		i18n.T("mysekai.image.fixture_list.legend.first_craft_badge", i18n.Data{"Badge": word}),
+		birthday,
+	), word)
+}
+
+func TestFixtureListCarriesTheBirthdayIconPath(t *testing.T) {
+	characters := map[int]map[string]any{6: {"id": 6, "givenName": "遥"}}
+	collector := newFixtureListCollector(&Controller{}, renderregion.JP, fixtureListOptions{}, nil, nil, nil, characters)
+	collector.add(map[string]any{
+		"id": 7, "name": "バースデーケーキ（遥）", "assetbundleName": "cake", "mysekaiFixtureType": "normal",
+		"mysekaiFixtureMainGenreId": 2, "mysekaiFixtureSubGenreId": 4,
+	})
+	collector.add(map[string]any{
+		"id": 8, "name": "チェア", "assetbundleName": "chair", "mysekaiFixtureType": "normal",
+		"mysekaiFixtureMainGenreId": 2, "mysekaiFixtureSubGenreId": 4,
+	})
+	fixtures := collector.grouped[2][4]
+	if len(fixtures) != 2 || fixtures[0].CharacterID == nil || *fixtures[0].CharacterID != 6 {
+		t.Fatalf("fixtures = %+v", fixtures)
+	}
+	if fixtures[0].CharaIconPath == nil || !strings.HasSuffix(*fixtures[0].CharaIconPath, "chara_icon/hrk.png") {
+		t.Fatalf("birthday fixture icon = %v, want the character icon", fixtures[0].CharaIconPath)
+	}
+	if fixtures[1].CharacterID != nil || fixtures[1].CharaIconPath != nil {
+		t.Fatalf("a plain fixture has no character icon: %+v", fixtures[1])
+	}
+}

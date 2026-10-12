@@ -12,13 +12,6 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 )
 
-func (c *Controller) obtainedMysekaiFixtureIDs(merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {
-	if fixtures := nestedList(merged, "userMysekaiFixtures"); fixtures != nil {
-		return userMysekaiHeldFixtureIDs(merged)
-	}
-	return userMysekaiBlueprintFixtureIDs(merged, blueprints)
-}
-
 // userMysekaiHeldFixtureIDs is every fixture the user has held: a
 // userMysekaiFixtures row (any colour, quantity 0 included) or, for
 // canvases, a userMysekaiCanvases row.

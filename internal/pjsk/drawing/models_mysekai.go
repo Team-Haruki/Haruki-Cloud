@@ -166,6 +166,9 @@ type MysekaiFixture struct {
 	CharacterID   *int    `json:"character_id,omitempty"`
 	CharaIconPath *string `json:"chara_icon_path,omitempty"`
 	Obtained      bool    `json:"obtained"`
+	// FirstCraft marks a fixture the user can craft now for the one-off
+	// first-craft MySekai rank exp; Drawing draws a ribbon on its tile.
+	FirstCraft bool `json:"first_craft,omitempty"`
 }
 
 type MysekaiFixtureSubGenre struct {
@@ -187,6 +190,9 @@ type MysekaiFixtureListRequest struct {
 	ProgressMessage *string                   `json:"progress_message,omitempty"`
 	ShowID          bool                      `json:"show_id"`
 	MainGenres      []MysekaiFixtureMainGenre `json:"main_genres"`
+	// Labels are Drawing's own labels for this list: the legend of the view
+	// and the first-craft ribbon text (Drawing AGENTS.md "Caller labels").
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 type MysekaiFixtureColorImage struct {

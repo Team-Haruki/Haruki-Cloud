@@ -346,6 +346,42 @@ other = "总收集进度（不含生日家具）：{{.Obtained}}/{{.Total}}（{{
 description = "图片：/msf、/msb 家具列表顶部的收集进度，后面接着现在就能制作、还能拿首次制作经验的家具数量。渲染服务用第一个“数/数”画进度条，其余文字画在进度条下面。占位符：Obtained=已获得数量；Total=总数；Percent=百分比，例如“42.5%”；Count=现在可以制作且还能拿首次制作经验的件数；Exp=这些首次制作的经验合计，w/kw 写法。"
 other = "总收集进度（不含生日家具）：{{.Obtained}}/{{.Total}}（{{.Percent}}）；现在可以制作、还能拿首次制作经验的有 {{.Count}} 件（共 +{{.Exp}} 经验）"
 
+[mysekai.image.fixture_list.first_craft_badge]
+description = "图片：家具列表里首次制作标记的文字，画在现在可以制作、还能拿首次制作经验的家具图标左下角。占位符：Exp=首次制作经验，例如 1000。"
+other = "+{{.Exp}}"
+
+[mysekai.image.fixture_list.first_craft_badge_no_exp]
+description = "图片：游戏数据里没有首次制作经验时 mysekai.image.fixture_list.first_craft_badge 的写法。"
+other = "首次"
+
+[mysekai.image.fixture_list.legend.only_craftable]
+description = "图片：家具列表图例的一句（/msb、/烤森家具列表 craft）：只列出有蓝图、可以制作的家具。各句用“；”连接后画在进度条下面。"
+other = "只列出可制作（有蓝图）的家具"
+
+[mysekai.image.fixture_list.legend.grey_never_held]
+description = "图片：家具列表图例的一句（/msf）：灰色是从未获得过的家具（分解到 0 件也算获得过）。"
+other = "灰色为未获得过的家具"
+
+[mysekai.image.fixture_list.legend.grey_no_blueprint]
+description = "图片：家具列表图例的一句（/msb）：灰色是还没有蓝图的家具。"
+other = "灰色为还没有蓝图的家具"
+
+[mysekai.image.fixture_list.legend.first_craft_only]
+description = "图片：家具列表图例的一句（/烤森首次制作，没写“全部”）：图里只有现在可以制作、还能拿首次制作经验的家具。"
+other = "只列出现在可以制作、还能拿首次制作经验的家具"
+
+[mysekai.image.fixture_list.legend.grey_not_craftable]
+description = "图片：家具列表图例的一句（/烤森首次制作 全部）：灰色是还能拿首次制作经验、但现在不能制作的家具。"
+other = "灰色为现在不能制作的家具（还没有蓝图，或限时开放还没开始）"
+
+[mysekai.image.fixture_list.legend.first_craft_badge]
+description = "图片：家具列表图例的一句：带首次制作标记的家具现在可以制作，制作可得首次制作经验。占位符：Badge=标记文字，取自 mysekai.image.fixture_list.first_craft_badge。"
+other = "带 {{.Badge}} 标记的家具现在可以制作，制作可得首次制作经验"
+
+[mysekai.image.fixture_list.legend.birthday_icon]
+description = "图片：家具列表图例的一句（所有视图）：右上角头像表示生日家具。"
+other = "右上角头像表示生日家具"
+
 [mysekai.image.first_craft.header]
 description = "图片：/烤森首次制作家具图顶部的说明。占位符：Craftable=现在可以制作且还能拿首次制作经验的件数；Exp=这些首次制作的经验合计，w/kw 写法。"
 other = "首次制作经验：现在可以制作 {{.Craftable}} 件，共 +{{.Exp}} 经验"

@@ -38,8 +38,9 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 	characters := c.masterdata.loadMapByID("gameCharacters.json")
 	obtainedFixtureIDs := map[int]struct{}{}
 	var firstCraft *firstCraftTally
+	source := fixtureListObtainedSource(query.ObtainedSource, merged)
 	if options.showObtained {
-		obtainedFixtureIDs = c.fixtureListObtainedIDs(query.ObtainedSource, merged, blueprints)
+		obtainedFixtureIDs = c.fixtureListObtainedIDs(source, merged, blueprints)
 		firstCraft = c.newFirstCraftTally(merged, blueprints, time.Now())
 	}
 	collector := newFixtureListCollector(c, region, options, categoryFilter, c.craftableMysekaiFixtureIDs(blueprints), obtainedFixtureIDs, characters)
@@ -62,7 +63,63 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		message := c.fixtureListProgressMessage(collector).String()
 		request.ProgressMessage = &message
 	}
+	request.Labels = c.fixtureListLabels(fixtureListScope(options, source), collector.hasFirstCraft)
 	return request, nil
+}
+
+// Drawing label keys of the fixture list (Drawing AGENTS.md "Caller labels
+// and raw keys").
+const (
+	fixtureListLegendLabel     = "mysekai.fixture_list.legend"
+	fixtureListFirstCraftLabel = "mysekai.fixture_list.first_craft_badge"
+)
+
+// legendSeparator joins the legend's sentences; it is punctuation, not copy.
+const legendSeparator = "；"
+
+// fixtureListScope is the legend of a fixture list: what it lists and what
+// grey means for its obtained source. A static catalog greys nothing.
+func fixtureListScope(options fixtureListOptions, source string) []i18n.Message {
+	scope := make([]i18n.Message, 0, 2)
+	if options.onlyCraftable {
+		scope = append(scope, i18n.M("mysekai.image.fixture_list.legend.only_craftable"))
+	}
+	if options.showObtained {
+		if source == obtainedSourceBlueprint {
+			scope = append(scope, i18n.M("mysekai.image.fixture_list.legend.grey_no_blueprint"))
+		} else {
+			scope = append(scope, i18n.M("mysekai.image.fixture_list.legend.grey_never_held"))
+		}
+	}
+	return scope
+}
+
+// fixtureListLabels are the Drawing labels of a fixture list: the legend
+// (the view's scope, the ribbon sentence when ribbons are drawn and need
+// explaining, the birthday icon) and the first-craft ribbon text.
+func (c *Controller) fixtureListLabels(scope []i18n.Message, explainRibbon bool) map[string]string {
+	badge := c.firstCraftBadge()
+	legend := make([]string, 0, len(scope)+2)
+	for _, sentence := range scope {
+		legend = append(legend, sentence.String())
+	}
+	if explainRibbon {
+		legend = append(legend, i18n.T("mysekai.image.fixture_list.legend.first_craft_badge", i18n.Data{"Badge": badge}))
+	}
+	legend = append(legend, i18n.T("mysekai.image.fixture_list.legend.birthday_icon"))
+	return map[string]string{
+		fixtureListLegendLabel:     strings.Join(legend, legendSeparator),
+		fixtureListFirstCraftLabel: badge,
+	}
+}
+
+// firstCraftBadge is the ribbon text of a tile whose first craft is
+// available now: the exp it pays, or a plain word when master lacks it.
+func (c *Controller) firstCraftBadge() string {
+	if exp := c.firstCraftBonusExp(); exp > 0 {
+		return i18n.T("mysekai.image.fixture_list.first_craft_badge", i18n.Data{"Exp": exp})
+	}
+	return i18n.T("mysekai.image.fixture_list.first_craft_badge_no_exp")
 }
 
 // fixtureListProgressMessage is the total progress line, followed by the
@@ -140,6 +197,9 @@ type fixtureListCollector struct {
 	// whose blueprint is missing.
 	firstCraftOnly    bool
 	firstCraftShowAll bool
+	// hasFirstCraft is set once a listed fixture carries the first-craft
+	// ribbon, so the legend explains it only when it is drawn.
+	hasFirstCraft bool
 }
 
 func newFixtureListCollector(
@@ -186,12 +246,22 @@ func (c *fixtureListCollector) add(item map[string]any) {
 		obtained = status.Craftable
 	}
 	c.ensureGenre(mainGenreID)
+	firstCraft := status.Known && status.Available && status.Craftable
+	if firstCraft {
+		c.hasFirstCraft = true
+	}
 	characterID := fixtureBirthdayCharacterID(c.characters, item)
+	var charaIconPath *string
+	if characterID != nil {
+		charaIconPath = drawing.StringPtr(c.controller.staticPath(fmt.Sprintf("chara_icon/%s.png", charaIconName(*characterID))))
+	}
 	c.grouped[mainGenreID][subGenreID] = append(c.grouped[mainGenreID][subGenreID], drawing.MysekaiFixture{
-		ID:          fixtureID,
-		ImagePath:   fixtureThumbnailPath(func(path string) string { return c.controller.regionPath(c.region, path) }, item),
-		CharacterID: characterID,
-		Obtained:    obtained,
+		ID:            fixtureID,
+		ImagePath:     fixtureThumbnailPath(func(path string) string { return c.controller.regionPath(c.region, path) }, item),
+		CharacterID:   characterID,
+		CharaIconPath: charaIconPath,
+		Obtained:      obtained,
+		FirstCraft:    firstCraft,
 	})
 	if characterID == nil {
 		c.addProgress(mainGenreID, subGenreID, obtained)
@@ -330,15 +400,33 @@ func sortedIntKeys[T any](values map[int]T) []int {
 	return keys
 }
 
-func (c *Controller) fixtureListObtainedIDs(source string, merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {
+// The obtained sources of a fixture list: the fixtures the user has held
+// (any colour, quantity 0 included) or the blueprints the user owns.
+const (
+	obtainedSourceFixture   = "fixture"
+	obtainedSourceBlueprint = "blueprint"
+)
+
+// fixtureListObtainedSource resolves a query's obtained source. Without one,
+// held fixtures decide when the snapshot lists them, else blueprints.
+func fixtureListObtainedSource(source string, merged map[string]any) string {
 	switch strings.ToLower(strings.TrimSpace(source)) {
 	case "fixture", "fixtures", "crafted", "craft":
-		return userMysekaiHeldFixtureIDs(merged)
+		return obtainedSourceFixture
 	case "blueprint", "blueprints":
-		return userMysekaiBlueprintFixtureIDs(merged, blueprints)
-	default:
-		return c.obtainedMysekaiFixtureIDs(merged, blueprints)
+		return obtainedSourceBlueprint
 	}
+	if nestedList(merged, "userMysekaiFixtures") != nil {
+		return obtainedSourceFixture
+	}
+	return obtainedSourceBlueprint
+}
+
+func (c *Controller) fixtureListObtainedIDs(source string, merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {
+	if source == obtainedSourceBlueprint {
+		return userMysekaiBlueprintFixtureIDs(merged, blueprints)
+	}
+	return userMysekaiHeldFixtureIDs(merged)
 }
 
 // RenderFixtureList renders the MySekai fixture list view.

@@ -84,17 +84,52 @@ haruki_bot:
 
 ## 签名发布
 
-策略文件可以用离线根密钥签名，签名域为 `haruki-cloud/release/v1`：
+策略文件可以签名，签名域为 `haruki-cloud/release/v1`。Cloud 配置了
+`build_policy_root_public_key` 后只接受验签通过的信封；未配置时接受裸 JSON，也接受
+未验签的信封（此时安全性取决于主机文件系统）。`sign` 会先按文档规则校验，非法文档
+不会生成信封。
+
+验签接受两种签名者，按信封 `key_id` 区分：
+
+1. **委托的发布密钥**：`key_id` 出现在 `trust_keyset_path` 所指 keyset 的
+   `release_signing_keys` 里。Cloud 先用根公钥验 keyset 信封，再检查该 key 的
+   `not_before` / `not_after` 与 keyset 自身的 `expires_at`，最后用它验策略。
+   这是日常发布的路径，根 seed 不必上线。
+2. **根密钥直签**：`key_id` 不在 keyset 里时回退到 `build_policy_root_public_key`。
+   兼容已部署的根签策略，也是 keyset 损坏时的兜底（紧急撤销可以直接用根签）。
+
+keyset 里列出的 `key_id` 只绑定该条目，不会再回退到根：从 keyset 删掉它、或者
+`not_after` 到期，用它签的策略立即失效。两个文件都按 mtime 热加载（最多 30 秒）；
+keyset 读不到或验签失败时策略整体视为不可用（放行并记 `policy_unavailable`），不会
+悄悄退化成只认根。
 
 ```bash
-trust-signer sign --key root.seed --key-id root-2026-09 --domain release \
+# 一次性：生成发布密钥并由根签入 keyset（根 seed 的最后一次日常使用）
+trust-signer keygen --out release-2026-10.seed --key-id release-2026-10
+trust-signer keyset-add-release-key --in keyset-v3.json --out keyset-v4.json \
+  --seed release-2026-10.seed --key-id release-2026-10 --not-after 2027-04-01T00:00:00Z
+trust-signer sign --key root.seed --key-id root-2026-09 --domain keyset \
+  --in keyset-v4.json --out keyset-v4.signed.json
+
+# 每次发布：用发布密钥签策略，并按 Cloud 的方式验一遍
+trust-signer sign --key release-2026-10.seed --key-id release-2026-10 --domain release \
   --in build-policy.json --out build-policy.signed.json
-trust-signer verify --public <root-pub-hex> --in build-policy.signed.json --domain release
+trust-signer verify --public <root-pub-hex> --keyset keyset-v4.signed.json \
+  --in build-policy.signed.json --domain release
 ```
 
-`sign` 会先按文档规则校验，非法文档不会生成信封。Cloud 配置了
-`build_policy_root_public_key` 后只接受验签通过的信封；未配置时接受裸 JSON，也接受
-未验签的信封（此时安全性取决于主机文件系统）。
+`keyset-add-release-key` 复制 keyset 文档、追加公钥、`version` 加一并刷新
+`issued_at`；`release_signing_keys` 条目必须带 `not_after`。客户端会忽略这个列表。
+启动日志 `client build policy loaded` 的 `signed_by` 字段显示当前策略由哪个
+`key_id` 验过。
+
+### 发布密钥轮换与撤销
+
+| 目标 | 操作 |
+|------|------|
+| 轮换 | 生成新 seed，`keyset-add-release-key` 追加（新旧并存），根签 keyset v(N+1) 并部署；之后的策略改用新密钥签；下一次 keyset 再去掉旧条目。 |
+| 撤销 | 根签一份不含该条目的 keyset 并部署。注意当前策略若正是它签的，会在 30 秒内变成 `policy_unavailable`（放行），所以要同时部署一份用根或新发布密钥签的策略。 |
+| 泄露的影响 | 发布密钥只能签策略（放行/撤销构建、bot、来源），签不了 keyset；有效期窗口限定暴露时间。 |
 
 ## 会话内撤销
 

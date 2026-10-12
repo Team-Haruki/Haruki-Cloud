@@ -47,7 +47,7 @@ func policyStore(t *testing.T, mode buildpolicy.Mode, doc buildpolicy.Document) 
 	if err := os.WriteFile(path, raw, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	return buildpolicy.NewStore(path, mode, nil)
+	return buildpolicy.NewStore(path, mode, nil, "")
 }
 
 func releasedPolicy() buildpolicy.Document {
@@ -165,7 +165,7 @@ func TestAuthV3BuildPolicyLogOnlyAdmitsAndReports(t *testing.T) {
 	}
 
 	// A missing policy file is reported as unavailable, never as a rejection.
-	env.svc.WithBuildPolicy(buildpolicy.NewStore(filepath.Join(t.TempDir(), "missing.json"), buildpolicy.ModeEnforce, nil))
+	env.svc.WithBuildPolicy(buildpolicy.NewStore(filepath.Join(t.TempDir(), "missing.json"), buildpolicy.ModeEnforce, nil, ""))
 	if status, _ := env.send(t, env.current, "", env.basePayload(t)); status != fiber.StatusOK {
 		t.Fatalf("missing policy must fail open: status %d", status)
 	}

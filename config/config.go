@@ -1099,7 +1099,9 @@ type HarukiBotDBConfig struct {
 	ManifestSigningKey   string `yaml:"manifest_signing_key"`
 	ManifestSigningKeyID string `yaml:"manifest_signing_key_id"`
 	// TrustKeysetPath points at the offline-signed keyset envelope produced by
-	// cmd/trust-signer. It is served verbatim at GET /api/v3/trust/keyset.
+	// cmd/trust-signer. It is served verbatim at GET /api/v3/trust/keyset and,
+	// when BuildPolicyRootPublicKey is set, verified against that root so its
+	// release_signing_keys may sign the build policy in the root's place.
 	TrustKeysetPath        string        `yaml:"trust_keyset_path"`
 	ResponseElectionWindow time.Duration `yaml:"response_election_window"`
 	// ResponseElectionRoster enables the learned per-group bot roster: groups
@@ -1125,8 +1127,9 @@ type HarukiBotDBConfig struct {
 	// policy file starts by measuring before it starts rejecting logins.
 	BuildPolicyMode string `yaml:"build_policy_mode"`
 	// BuildPolicyRootPublicKey (hex, 32 bytes) makes the Cloud verify the
-	// policy file's signature against the offline root; without it the file
-	// is trusted as-is (host filesystem integrity only).
+	// policy file's signature: directly against the offline root, or against
+	// a release key the root delegated through the keyset at TrustKeysetPath.
+	// Without it the file is trusted as-is (host filesystem integrity only).
 	BuildPolicyRootPublicKey string `yaml:"build_policy_root_public_key"`
 }
 

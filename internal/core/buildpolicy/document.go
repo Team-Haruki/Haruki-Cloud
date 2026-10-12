@@ -60,6 +60,10 @@ type Document struct {
 	RevokedBots []string `json:"revoked_bots,omitempty"`
 	// BlockedSources lists client IPs or CIDRs refused at login.
 	BlockedSources []string `json:"blocked_sources,omitempty"`
+
+	// SignedBy is the envelope key_id the loaded document was verified with
+	// (empty for a bare document). Set by Parse; not part of the file.
+	SignedBy string `json:"-"`
 }
 
 var (

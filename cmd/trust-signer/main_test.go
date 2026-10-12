@@ -167,3 +167,103 @@ func TestSignReleasePolicyValidatesAndRoundTrips(t *testing.T) {
 		t.Fatalf("domain = %q", envelope.Domain)
 	}
 }
+
+func TestKeysetAddReleaseKeyAndDelegatedVerify(t *testing.T) {
+	dir := t.TempDir()
+	rootSeed := filepath.Join(dir, "root.seed")
+	releaseSeed := filepath.Join(dir, "release.seed")
+	var root, release struct {
+		PublicKey string `json:"public_key"`
+	}
+	if err := json.Unmarshal([]byte(runOK(t, "keygen", "--out", rootSeed, "--key-id", "root")), &root); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal([]byte(runOK(t, "keygen", "--out", releaseSeed, "--key-id", "release-test")), &release); err != nil {
+		t.Fatal(err)
+	}
+
+	keysetV3 := filepath.Join(dir, "keyset-v3.json")
+	v3 := trustsign.KeysetDocument{
+		Version:   3,
+		IssuedAt:  1_700_000_000,
+		ExpiresAt: 4_000_000_000,
+		NoiseKeys: []trustsign.KeysetKey{{KeyID: "noise", PublicKey: root.PublicKey}},
+		Endpoints: map[string]string{"production": "https://api.example.com"},
+	}
+	rawV3, _ := json.Marshal(v3)
+	if err := os.WriteFile(keysetV3, rawV3, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	keysetV4 := filepath.Join(dir, "keyset-v4.json")
+	var added struct {
+		KeyID       string `json:"key_id"`
+		PublicKey   string `json:"public_key"`
+		NotBefore   int64  `json:"not_before"`
+		NotAfter    int64  `json:"not_after"`
+		Version     int64  `json:"version"`
+		ReleaseKeys int    `json:"release_keys"`
+	}
+	out := runOK(t, "keyset-add-release-key", "--in", keysetV3, "--out", keysetV4, "--seed", releaseSeed,
+		"--key-id", "release-test", "--not-before", "2026-01-01T00:00:00Z", "--not-after", "3900000000")
+	if err := json.Unmarshal([]byte(out), &added); err != nil {
+		t.Fatalf("decode output %q: %v", out, err)
+	}
+	if added.KeyID != "release-test" || added.PublicKey != release.PublicKey || added.Version != 4 || added.ReleaseKeys != 1 ||
+		added.NotBefore != 1_767_225_600 || added.NotAfter != 3_900_000_000 {
+		t.Fatalf("output = %+v", added)
+	}
+	rawV4, _ := os.ReadFile(keysetV4)
+	var v4 trustsign.KeysetDocument
+	if err := json.Unmarshal(rawV4, &v4); err != nil {
+		t.Fatal(err)
+	}
+	if v4.Version != 4 || v4.IssuedAt <= v3.IssuedAt || v4.ExpiresAt != v3.ExpiresAt || len(v4.NoiseKeys) != 1 ||
+		v4.Endpoints["production"] != "https://api.example.com" || len(v4.ReleaseSigningKeys) != 1 ||
+		v4.ReleaseSigningKeys[0].PublicKey != release.PublicKey {
+		t.Fatalf("keyset v4 = %+v", v4)
+	}
+	if msg := runFail(t, "keyset-add-release-key", "--in", keysetV3, "--out", keysetV4, "--seed", releaseSeed, "--key-id", "x", "--not-after", "1"); !strings.Contains(msg, "refusing to overwrite") {
+		t.Fatalf("overwrite message = %q", msg)
+	}
+	runFail(t, "keyset-add-release-key", "--in", keysetV3, "--out", filepath.Join(dir, "v4b.json"), "--seed", releaseSeed, "--key-id", "x")
+	runFail(t, "keyset-add-release-key", "--in", keysetV3, "--out", filepath.Join(dir, "v4c.json"), "--seed", releaseSeed, "--key-id", "x", "--not-after", "soon")
+	if msg := runFail(t, "keyset-add-release-key", "--in", keysetV3, "--out", filepath.Join(dir, "v4d.json"), "--seed", releaseSeed, "--key-id", "x", "--not-after", "1", "--version", "3"); !strings.Contains(msg, "must exceed") {
+		t.Fatalf("version message = %q", msg)
+	}
+
+	// Root signs the keyset; the release key signs the policy; verify checks
+	// the chain the way the Cloud does.
+	signedKeyset := filepath.Join(dir, "keyset-v4.signed.json")
+	runOK(t, "sign", "--key", rootSeed, "--key-id", "root", "--domain", "keyset", "--in", keysetV4, "--out", signedKeyset)
+	policy := filepath.Join(dir, "policy.json")
+	payload := []byte(`{"version":9,"builds":[{"build_id":"b1","version":"3.2.0"}]}`)
+	if err := os.WriteFile(policy, payload, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	signedPolicy := filepath.Join(dir, "policy.signed.json")
+	runOK(t, "sign", "--key", releaseSeed, "--key-id", "release-test", "--domain", "release", "--in", policy, "--out", signedPolicy)
+
+	if got := runOK(t, "verify", "--public", root.PublicKey, "--keyset", signedKeyset, "--in", signedPolicy, "--domain", "release"); got != string(payload) {
+		t.Fatalf("delegated verify printed %q", got)
+	}
+	// Without the keyset the release key is unknown to the root.
+	if msg := runFail(t, "verify", "--public", root.PublicKey, "--in", signedPolicy, "--domain", "release"); !strings.Contains(msg, "verification failed") {
+		t.Fatalf("root-only verify message = %q", msg)
+	}
+	// Root-signed policies still verify through the keyset path.
+	rootPolicy := filepath.Join(dir, "policy.root.signed.json")
+	runOK(t, "sign", "--key", rootSeed, "--key-id", "root", "--domain", "release", "--in", policy, "--out", rootPolicy)
+	if got := runOK(t, "verify", "--public", root.PublicKey, "--keyset", signedKeyset, "--in", rootPolicy, "--domain", "release"); got != string(payload) {
+		t.Fatalf("root verify through keyset printed %q", got)
+	}
+	// A keyset signed by someone else is rejected before the policy is looked at.
+	otherKeyset := filepath.Join(dir, "keyset.other.signed.json")
+	runOK(t, "sign", "--key", releaseSeed, "--key-id", "release-test", "--domain", "keyset", "--in", keysetV4, "--out", otherKeyset)
+	if msg := runFail(t, "verify", "--public", root.PublicKey, "--keyset", otherKeyset, "--in", signedPolicy, "--domain", "release"); !strings.Contains(msg, "keyset rejected") {
+		t.Fatalf("foreign keyset message = %q", msg)
+	}
+	if msg := runFail(t, "verify", "--public", root.PublicKey, "--keyset", signedKeyset, "--in", signedKeyset, "--domain", "keyset"); !strings.Contains(msg, "release only") {
+		t.Fatalf("keyset flag on keyset domain message = %q", msg)
+	}
+}

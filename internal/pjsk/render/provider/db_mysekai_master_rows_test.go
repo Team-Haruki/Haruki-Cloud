@@ -175,3 +175,19 @@ func TestPlayerFramePartsUseRegionGroupAndMasterdataRefresh(t *testing.T) {
 		t.Fatalf("stale frame parts after refresh: %+v, %v", parts, err)
 	}
 }
+
+func TestMysekaiRankObtainedExpsRawTable(t *testing.T) {
+	p := openMasterRowsProvider(t, "rank_obtained_exps")
+	for _, statement := range []string{
+		`CREATE TABLE mysekairankobtainedexps (game_id INTEGER, server_region TEXT, mysekai_rank_obtained_exp_type TEXT, quantity INTEGER)`,
+		`INSERT INTO mysekairankobtainedexps VALUES (1,'jp','craft_mysekai_fixture_first_bonus',1000),(1,'tw','craft_mysekai_fixture_first_bonus',900)`,
+	} {
+		if _, err := p.mysekai.db.ExecContext(t.Context(), statement); err != nil {
+			t.Fatal(err)
+		}
+	}
+	rows := p.mysekai.LoadListContext(t.Context(), "mysekaiRankObtainedExps.json")
+	if len(rows) != 1 || rows[0]["mysekaiRankObtainedExpType"] != "craft_mysekai_fixture_first_bonus" || rows[0]["quantity"] != int64(1000) {
+		t.Fatal(rows)
+	}
+}

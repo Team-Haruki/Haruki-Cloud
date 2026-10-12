@@ -124,6 +124,20 @@ func cleanMysekaiArgs(args string) string {
 	return strings.TrimSpace(strings.Join(kept, " "))
 }
 
+// mysekaiFixtureListCategory is what remains of the fixture catalog's
+// arguments after its own switches: the category to filter by.
+func mysekaiFixtureListCategory(args string) string {
+	kept := make([]string, 0)
+	for _, field := range strings.Fields(cleanMysekaiArgs(args)) {
+		switch strings.ToLower(field) {
+		case "craft", "noid", "full":
+			continue
+		}
+		kept = append(kept, field)
+	}
+	return strings.Join(kept, " ")
+}
+
 func extractMysekaiFullFlag(args string) (bool, string) {
 	fields := strings.Fields(strings.TrimSpace(args))
 	if len(fields) == 0 {

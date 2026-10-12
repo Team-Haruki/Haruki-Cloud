@@ -60,6 +60,54 @@ other = "未找到对应的家具分类"
 description = "找不到对应的家具分类（没有可显示的查询内容）。"
 other = "未找到对应的家具分类"
 
+[mysekai.first_craft.no_history]
+description = "/烤森首次制作：上传的烤森数据里既没有家具持有记录（userMysekaiFixtures），也没有画布持有记录（userMysekaiCanvases），无法判断。"
+other = "上传的数据缺少家具持有记录，请在 Haruki 工具箱重新上传完整的烤森（MySekai）数据"
+
+[mysekai.first_craft.none_left]
+description = "/烤森首次制作：（所选分类里）没有还能拿首次制作经验的家具或画布。"
+other = "没有还能拿首次制作经验的家具了"
+
+[mysekai.first_craft.bonus]
+description = "/烤森首次制作回复的第一行：首次制作一件家具或画布得到的烤森经验，取自游戏数据。占位符：Exp=每次首次制作的经验，例如 1000。"
+other = "首次制作一件家具或画布可得 {{.Exp}} 经验"
+
+[mysekai.first_craft.craftable]
+description = "/烤森首次制作：现在就能制作（已有蓝图，或不需要蓝图）且还能拿首次制作经验的数量。占位符：Count=件数；Exp=这些首次制作的经验合计，w/kw 写法。"
+other = "现在可以制作：{{.Count}} 件，共 {{.Exp}} 经验"
+
+[mysekai.first_craft.not_owned]
+description = "/烤森首次制作：还能拿首次制作经验、但还没有蓝图的数量。占位符：Count=件数；Exp=这些首次制作的经验合计，w/kw 写法。"
+other = "还没有蓝图：{{.Count}} 件，共 {{.Exp}} 经验"
+
+[mysekai.first_craft.limited]
+description = "/烤森首次制作：还能拿首次制作经验、不需要蓝图但只在限时开放期间（生日、周年派对）能制作，现在没有开放的数量。占位符：Count=件数；Exp=这些首次制作的经验合计，w/kw 写法。"
+other = "限时开放、现在不能制作：{{.Count}} 件，共 {{.Exp}} 经验"
+
+[mysekai.first_craft.craftable_no_exp]
+description = "/烤森首次制作：游戏数据里没有首次制作经验，或现在可以制作的是 0 件时，mysekai.first_craft.craftable 的写法。占位符：Count=件数。"
+other = "现在可以制作：{{.Count}} 件"
+
+[mysekai.first_craft.not_owned_no_exp]
+description = "/烤森首次制作：游戏数据里没有首次制作经验时，mysekai.first_craft.not_owned 的写法。占位符：Count=件数。"
+other = "还没有蓝图：{{.Count}} 件"
+
+[mysekai.first_craft.limited_no_exp]
+description = "/烤森首次制作：游戏数据里没有首次制作经验时，mysekai.first_craft.limited 的写法。占位符：Count=件数。"
+other = "限时开放、现在不能制作：{{.Count}} 件"
+
+[mysekai.first_craft.hint_all]
+description = "/烤森首次制作（没写“全部”）：图里只画了现在可以制作的，另有现在不能制作的（还没有蓝图，或限时开放还没开始）。"
+other = "图中只有现在可以制作的；加上“全部”可以一起显示现在不能制作的（灰色）"
+
+[mysekai.first_craft.hint_all_only]
+description = "/烤森首次制作（没写“全部”）：现在可以制作的已经没有了，只剩现在不能制作的，所以没有发图。"
+other = "加上“全部”可以查看现在不能制作的家具"
+
+[mysekai.first_craft.hint_grey]
+description = "/烤森首次制作 全部：图里灰色的是现在不能制作的（还没有蓝图，或限时开放还没开始）。"
+other = "图中灰色的家具现在不能制作"
+
 [mysekai.gate.max_level]
 description = "烤森大门升级：指定的大门已经满级。"
 other = "指定的大门已经满级"
@@ -293,6 +341,54 @@ other = "【无制作次数限制】"
 [mysekai.image.fixture.progress]
 description = "图片：烤森家具列表顶部的收集进度。占位符：Obtained=已获得数量；Total=总数；Percent=百分比，例如“42.5%”。"
 other = "总收集进度（不含生日家具）：{{.Obtained}}/{{.Total}}（{{.Percent}}）"
+
+[mysekai.image.fixture.progress_first_craft]
+description = "图片：/msf、/msb 家具列表顶部的收集进度，后面接着现在就能制作、还能拿首次制作经验的家具数量。渲染服务用第一个“数/数”画进度条，其余文字画在进度条下面。占位符：Obtained=已获得数量；Total=总数；Percent=百分比，例如“42.5%”；Count=现在可以制作且还能拿首次制作经验的件数；Exp=这些首次制作的经验合计，w/kw 写法。"
+other = "总收集进度（不含生日家具）：{{.Obtained}}/{{.Total}}（{{.Percent}}）；现在可以制作、还能拿首次制作经验的有 {{.Count}} 件（共 +{{.Exp}} 经验）"
+
+[mysekai.image.first_craft.header]
+description = "图片：/烤森首次制作家具图顶部的说明。占位符：Craftable=现在可以制作且还能拿首次制作经验的件数；Exp=这些首次制作的经验合计，w/kw 写法。"
+other = "首次制作经验：现在可以制作 {{.Craftable}} 件，共 +{{.Exp}} 经验"
+
+[mysekai.image.first_craft.header_all]
+description = "图片：/烤森首次制作 全部 的家具图顶部的说明，灰色的是现在不能制作的。占位符：Craftable=现在可以制作且还能拿首次制作经验的件数；Exp=这些首次制作的经验合计，w/kw 写法；Waiting=现在不能制作的件数（还没有蓝图，或限时开放还没开始）。"
+other = "首次制作经验：现在可以制作 {{.Craftable}} 件，共 +{{.Exp}} 经验；灰色的 {{.Waiting}} 件现在不能制作"
+
+[mysekai.image.first_craft.header_no_exp]
+description = "图片：游戏数据里没有首次制作经验时 mysekai.image.first_craft.header 的写法。占位符：Craftable=现在可以制作且还能拿首次制作经验的件数。"
+other = "首次制作经验：现在可以制作 {{.Craftable}} 件"
+
+[mysekai.image.first_craft.header_all_no_exp]
+description = "图片：游戏数据里没有首次制作经验时 mysekai.image.first_craft.header_all 的写法。占位符：Craftable=现在可以制作且还能拿首次制作经验的件数；Waiting=现在不能制作的件数。"
+other = "首次制作经验：现在可以制作 {{.Craftable}} 件；灰色的 {{.Waiting}} 件现在不能制作"
+
+[mysekai.image.fixture.first_craft_available]
+description = "图片：/msf 家具详情的标签（有烤森数据时）：还能拿首次制作经验，现在就能制作。渲染服务把以“无”开头或含“不可”的标签画成灰色，其余画成绿色。占位符：Exp=首次制作经验，例如 1000。"
+other = "【首次制作 +{{.Exp}} 经验】"
+
+[mysekai.image.fixture.first_craft_available_no_blueprint]
+description = "图片：/msf 家具详情的标签（有烤森数据时）：还能拿首次制作经验，但还没有蓝图。占位符：Exp=首次制作经验，例如 1000。"
+other = "【首次制作 +{{.Exp}} 经验（需先获得蓝图）】"
+
+[mysekai.image.fixture.first_craft_available_limited]
+description = "图片：/msf 家具详情的标签（有烤森数据时）：还能拿首次制作经验，不需要蓝图，但只在限时开放期间（生日、周年派对）能制作，现在没有开放。占位符：Exp=首次制作经验，例如 1000。"
+other = "【首次制作 +{{.Exp}} 经验（限时开放期间可制作）】"
+
+[mysekai.image.fixture.first_craft_available_no_exp]
+description = "图片：游戏数据里没有首次制作经验时 mysekai.image.fixture.first_craft_available 的写法。"
+other = "【可获得首次制作经验】"
+
+[mysekai.image.fixture.first_craft_available_no_exp_no_blueprint]
+description = "图片：游戏数据里没有首次制作经验时 mysekai.image.fixture.first_craft_available_no_blueprint 的写法。"
+other = "【可获得首次制作经验（需先获得蓝图）】"
+
+[mysekai.image.fixture.first_craft_available_no_exp_limited]
+description = "图片：游戏数据里没有首次制作经验时 mysekai.image.fixture.first_craft_available_limited 的写法。"
+other = "【可获得首次制作经验（限时开放期间可制作）】"
+
+[mysekai.image.fixture.first_craft_used]
+description = "图片：/msf 家具详情的标签（有烤森数据时）：已经持有过这件家具（任何颜色，分解到 0 件也算；送礼、兑换、奖励得到的也算），再制作没有首次制作经验。以“无”开头，渲染服务画成灰色。"
+other = "【无首次制作经验（已持有过）】"
 
 [mysekai.image.music_record.progress]
 description = "图片：烤森唱片列表顶部的收集进度。占位符：Obtained=已获得数量；Total=总数；Percent=百分比，例如“42.5%”。"

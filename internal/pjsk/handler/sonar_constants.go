@@ -23,6 +23,8 @@ const (
 	mySekaiPhotoCommand         = "mysekai-photo"
 	mySekaiShopCommand          = "mysekai-shop"
 	mySekaiBlueprintTermCommand = "mysekai-blueprint-term"
+	mySekaiFirstCraftCommand    = "mysekai-first-craft"
+	mySekaiFixtureDetailCommand = "mysekai-fixture-detail"
 	drawingClientNotConfigured  = "drawing client is not configured"
 	pointsPerTimeMetric         = "pt/time"
 	skQueryCommand              = "sk-query"

@@ -14,9 +14,20 @@ import (
 
 func (c *Controller) obtainedMysekaiFixtureIDs(merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {
 	if fixtures := nestedList(merged, "userMysekaiFixtures"); fixtures != nil {
-		return userMysekaiFixtureIDs(fixtures)
+		return userMysekaiHeldFixtureIDs(merged)
 	}
 	return userMysekaiBlueprintFixtureIDs(merged, blueprints)
+}
+
+// userMysekaiHeldFixtureIDs is every fixture the user has held: a
+// userMysekaiFixtures row (any colour, quantity 0 included) or, for
+// canvases, a userMysekaiCanvases row.
+func userMysekaiHeldFixtureIDs(merged map[string]any) map[int]struct{} {
+	result := userMysekaiFixtureIDs(nestedList(merged, "userMysekaiFixtures"))
+	for id := range userMysekaiFixtureIDs(nestedList(merged, "userMysekaiCanvases")) {
+		result[id] = struct{}{}
+	}
+	return result
 }
 
 func userMysekaiFixtureIDs(fixtures []any) map[int]struct{} {
@@ -42,7 +53,7 @@ func userMysekaiBlueprintFixtureIDs(merged map[string]any, blueprints map[int]ma
 		}
 		blueprintID := intNumber(item["mysekaiBlueprintId"], 0)
 		blueprint := blueprints[blueprintID]
-		if len(blueprint) == 0 || stringValue(blueprint["mysekaiCraftType"]) != "mysekai_fixture" {
+		if len(blueprint) == 0 || !craftsFixture(blueprint) {
 			continue
 		}
 		targetID := intNumber(blueprint["craftTargetId"], 0)
@@ -51,6 +62,17 @@ func userMysekaiBlueprintFixtureIDs(merged map[string]any, blueprints map[int]ma
 		}
 	}
 	return result
+}
+
+// craftsFixture reports whether a blueprint crafts something listed in
+// mysekaiFixtures: a fixture or a canvas (tools are not fixtures).
+func craftsFixture(blueprint map[string]any) bool {
+	switch stringValue(blueprint["mysekaiCraftType"]) {
+	case craftTypeFixture, craftTypeCanvas:
+		return true
+	default:
+		return false
+	}
 }
 
 func userMysekaiFixtureID(item map[string]any) int {
@@ -75,7 +97,7 @@ func userMysekaiFixtureID(item map[string]any) int {
 func (c *Controller) craftableMysekaiFixtureIDs(blueprints map[int]map[string]any) map[int]struct{} {
 	result := map[int]struct{}{}
 	for _, blueprint := range blueprints {
-		if stringValue(blueprint["mysekaiCraftType"]) != "mysekai_fixture" {
+		if !craftsFixture(blueprint) {
 			continue
 		}
 		targetID := intNumber(blueprint["craftTargetId"], 0)

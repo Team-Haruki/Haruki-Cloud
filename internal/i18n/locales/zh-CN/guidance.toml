@@ -153,9 +153,13 @@ other = "无法识别参数，请写团体（ln、mmj、vbs、ws、25h），可�
 description = "路由 mysekai/fixture-detail（烤森家具）的参数无法识别时的原因行。"
 other = "无法识别参数，请使用一个或多个家具 ID，或帮助中列出的家具分类；full 查看全部家具"
 
+[guidance.mysekai_first_craft]
+description = "路由 mysekai/first-craft（烤森首次制作）的参数无法识别时的原因行。"
+other = "无法识别参数，请写帮助中列出的家具分类，可以加“全部”"
+
 [guidance.mysekai_fixture_list]
 description = "路由 mysekai/fixture-list（烤森家具列表）的参数无法识别时的原因行。"
-other = "无法识别参数，请使用 craft、full 或 noid"
+other = "无法识别参数，请使用 craft、full、noid 或帮助中列出的家具分类"
 
 [guidance.mysekai_housing_sk]
 description = "路由 mysekai/housing-sk（百景 SK）的参数无法识别时的原因行。"

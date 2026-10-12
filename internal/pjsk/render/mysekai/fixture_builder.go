@@ -37,10 +37,13 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 	blueprints := c.masterdata.loadMapByID("mysekaiBlueprints.json")
 	characters := c.masterdata.loadMapByID("gameCharacters.json")
 	obtainedFixtureIDs := map[int]struct{}{}
+	var firstCraft *firstCraftTally
 	if options.showObtained {
 		obtainedFixtureIDs = c.fixtureListObtainedIDs(query.ObtainedSource, merged, blueprints)
+		firstCraft = c.newFirstCraftTally(merged, blueprints, time.Now())
 	}
 	collector := newFixtureListCollector(c, region, options, categoryFilter, c.craftableMysekaiFixtureIDs(blueprints), obtainedFixtureIDs, characters)
+	collector.firstCraft = firstCraft
 	for _, item := range fixturesData {
 		collector.add(item)
 	}
@@ -56,10 +59,26 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		MainGenres: collector.mainGenres(mainGenreMap, subGenreMap),
 	}
 	if options.showProgress && collector.totalAll > 0 {
-		message := i18n.T("mysekai.image.fixture.progress", i18n.Data{"Obtained": collector.totalObtained, "Total": collector.totalAll, "Percent": i18n.Percent(percent(collector.totalObtained, collector.totalAll))})
+		message := c.fixtureListProgressMessage(collector).String()
 		request.ProgressMessage = &message
 	}
 	return request, nil
+}
+
+// fixtureListProgressMessage is the total progress line, followed by the
+// first-craft bonuses the user can still collect when there are any.
+func (c *Controller) fixtureListProgressMessage(collector *fixtureListCollector) i18n.Message {
+	data := i18n.Data{"Obtained": collector.totalObtained, "Total": collector.totalAll, "Percent": i18n.Percent(percent(collector.totalObtained, collector.totalAll))}
+	if collector.firstCraft == nil || collector.firstCraft.Craftable == 0 {
+		return i18n.M("mysekai.image.fixture.progress", data)
+	}
+	bonusExp := c.firstCraftBonusExp()
+	if bonusExp <= 0 {
+		return i18n.M("mysekai.image.fixture.progress", data)
+	}
+	data["Count"] = collector.firstCraft.Craftable
+	data["Exp"] = i18n.Wan(float64(collector.firstCraft.Craftable * bonusExp))
+	return i18n.M("mysekai.image.fixture.progress_first_craft", data)
 }
 
 type fixtureListOptions struct {
@@ -113,6 +132,14 @@ type fixtureListCollector struct {
 	subObtained    map[int]map[int]int
 	totalAll       int
 	totalObtained  int
+	// firstCraft counts the first-craft bonuses still available among the
+	// listed fixtures; nil without user data.
+	firstCraft *firstCraftTally
+	// firstCraftOnly lists only fixtures whose first-craft bonus is still
+	// available, bright when craftable now; firstCraftShowAll adds the ones
+	// whose blueprint is missing.
+	firstCraftOnly    bool
+	firstCraftShowAll bool
 }
 
 func newFixtureListCollector(
@@ -149,8 +176,16 @@ func (c *fixtureListCollector) add(item map[string]any) {
 	if !c.categoryFilter.allows(mainGenreID, subGenreID) {
 		return
 	}
-	c.ensureGenre(mainGenreID)
+	status := c.firstCraft.statusOf(fixtureID)
+	c.firstCraft.count(status)
 	obtained := !c.options.showObtained || hasFixture(c.obtainedIDs, fixtureID)
+	if c.firstCraftOnly {
+		if !status.Known || !status.Available || (!status.Craftable && !c.firstCraftShowAll) {
+			return
+		}
+		obtained = status.Craftable
+	}
+	c.ensureGenre(mainGenreID)
 	characterID := fixtureBirthdayCharacterID(c.characters, item)
 	c.grouped[mainGenreID][subGenreID] = append(c.grouped[mainGenreID][subGenreID], drawing.MysekaiFixture{
 		ID:          fixtureID,
@@ -298,7 +333,7 @@ func sortedIntKeys[T any](values map[int]T) []int {
 func (c *Controller) fixtureListObtainedIDs(source string, merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {
 	switch strings.ToLower(strings.TrimSpace(source)) {
 	case "fixture", "fixtures", "crafted", "craft":
-		return userMysekaiFixtureIDs(nestedList(merged, "userMysekaiFixtures"))
+		return userMysekaiHeldFixtureIDs(merged)
 	case "blueprint", "blueprints":
 		return userMysekaiBlueprintFixtureIDs(merged, blueprints)
 	default:
@@ -352,6 +387,7 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 	if now == 0 {
 		now = time.Now().UnixMilli()
 	}
+	firstCraft, bonusExp := c.fixtureDetailFirstCraft(query, now)
 
 	requests := make([]drawing.MysekaiFixtureDetailRequest, 0, len(fixtureIDs))
 	for _, fixtureID := range fixtureIDs {
@@ -399,6 +435,9 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 				boolValue(blueprint["isEnableSketch"]),
 			)
 		}
+		if info := fixtureFirstCraftInfo(firstCraft.statusOf(fixtureID), bonusExp); info != "" {
+			request.BasicInfo = append(request.BasicInfo, info)
+		}
 		requests = append(requests, request)
 	}
 
@@ -406,6 +445,24 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 		return nil, usererror.New(usererror.CodeNotFound, i18n.M("mysekai.fixture.not_found"))
 	}
 	return requests, nil
+}
+
+// fixtureDetailFirstCraft reads the user's first-craft state for the detail.
+// The detail is static without it, so a missing or unreadable snapshot only
+// leaves the first-craft tag out.
+func (c *Controller) fixtureDetailFirstCraft(query FixtureDetailQuery, now int64) (*firstCraftTally, int) {
+	if !query.WithUserData {
+		return nil, 0
+	}
+	merged, _, err := c.prepareSnapshotOnly(query.Region)
+	if err != nil {
+		return nil, 0
+	}
+	tally := c.newFirstCraftTally(merged, c.masterdata.loadMapByID("mysekaiBlueprints.json"), time.UnixMilli(now))
+	if tally == nil {
+		return nil, 0
+	}
+	return tally, c.firstCraftBonusExp()
 }
 
 // RenderFixtureDetail renders the MySekai fixture detail view.

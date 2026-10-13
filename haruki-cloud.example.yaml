@@ -286,6 +286,10 @@ toolbox:
   # （Haruki-Toolbox-Backend PR #58 及之后）；关闭时用 upload_time 探测模拟
   # 相同语义（旧的两跳流程）。
   conditional_fetch: false
+  # 完整 Suite 读取请求的 Toolbox profile（?profile=）。不写时为 "cloud"：
+  # 完整文档减去 Cloud 不读取的字段（userCostume3dStatuses、userCostume3dShopItems）。
+  # 写空串读取完整 Suite（回滚开关）。字段投影和 MySekai 读取不带 profile。
+  # suite_profile: ""
   retry: {}                       # see sekai_api.retry
 
 tracker:

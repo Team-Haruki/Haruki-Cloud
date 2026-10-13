@@ -50,6 +50,8 @@ type authorizedSnapshotClient struct {
 	calls atomic.Int32
 }
 
+func (c *authorizedSnapshotClient) SuiteProfile() string { return "" }
+
 func (c *authorizedSnapshotClient) GetSuiteDataConditionalContext(_ context.Context, _ string, _ int64, _, requester string, known int64) ([]byte, bool, error) {
 	c.calls.Add(1)
 	if requester == "revoked" {

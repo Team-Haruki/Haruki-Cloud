@@ -190,6 +190,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			NoStorePaths:    harukiConfig.Cfg.PJSKRender.DrawingArtifact.NoStorePaths,
 			StoreRefPaths:   harukiConfig.Cfg.PJSKRender.DrawingArtifact.EffectiveStoreRefPaths(),
 			StoreRefBucket:  imageCacheBucket(harukiConfig.Cfg.PJSKRender.Storage.ImageCache),
+			CacheRefPaths:   harukiConfig.Cfg.PJSKRender.DrawingArtifact.EffectiveCacheRefPaths(),
 		},
 		DrawingCache: drawing.RenderCacheConfig{
 			TTL:            harukiConfig.Cfg.PJSKRender.DrawingCache.TTL,

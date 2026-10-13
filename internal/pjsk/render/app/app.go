@@ -461,8 +461,8 @@ func appDrawingOptions(initCtx context.Context, cfg Config, imageStore *imagecac
 }
 
 // appArtifactConfig fills the artifact read-back dependencies from the
-// image_cache slot and the per-node image hosts, and the store-ref indexer
-// from the image cache index.
+// image_cache slot and the per-node image hosts, and the store-ref and
+// cache-ref indexers from the image cache index.
 func appArtifactConfig(initCtx context.Context, cfg Config, imageStore *imagecache.PGStore) drawing.ArtifactConfig {
 	artifact := cfg.DrawingArtifact
 	if artifact.Objects == nil {
@@ -480,6 +480,20 @@ func appArtifactConfig(initCtx context.Context, cfg Config, imageStore *imagecac
 			artifact.StoreRefPaths = nil
 		case artifact.StoreRefIndexer == nil && imageStore != nil:
 			artifact.StoreRefIndexer = imageStore
+		}
+	}
+	if len(artifact.CacheRefPaths) > 0 {
+		switch {
+		case strings.TrimSpace(cfg.ImageCacheLocalRoot) != "" || cfg.Stores.ImageCache == nil || cfg.Stores.ImageCache == storage.Disabled() ||
+			strings.TrimSpace(artifact.StoreRefBucket) == "":
+			logger.WarnContext(initCtx, "drawing cache-ref disabled: the image_cache slot is not a remote object store with a bucket")
+			artifact.CacheRefPaths = nil
+		case imageStore == nil || !cfg.ImageCacheRenderIndexLookup:
+			// Rows Cloud never reads back would only defeat Drawing's own cache.
+			logger.WarnContext(initCtx, "drawing cache-ref disabled: the render index is not in use")
+			artifact.CacheRefPaths = nil
+		case artifact.CacheRefIndexer == nil:
+			artifact.CacheRefIndexer = imageStore
 		}
 	}
 	return artifact

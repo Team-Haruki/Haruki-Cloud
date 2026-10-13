@@ -37,7 +37,7 @@ func (c *BuiltSnapshotCache) getOrBuild(ctx context.Context, key builtSnapshotKe
 		return snapshot, true, nil
 	}
 	commandtrace.RecordOperation(ctx, "snapshot.built_cache_miss", 0)
-	flightKey := fmt.Sprintf("%s:%d:%d:%t:%d:%s", key.Region, key.UID, key.SuiteUploadTime, key.NeedMySekai, key.MySekaiUploadTime, key.SuiteProjection)
+	flightKey := fmt.Sprintf("%s:%d:%d:%t:%d:%s:%s", key.Region, key.UID, key.SuiteUploadTime, key.NeedMySekai, key.MySekaiUploadTime, key.SuiteProjection, key.SuiteProfile)
 	// Keep only logging attributes, not request caches or the initiating request's
 	// cancellation. Every waiter still selects on its own context below.
 	base := logger.DetachedContext(ctx)

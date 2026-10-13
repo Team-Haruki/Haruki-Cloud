@@ -222,20 +222,43 @@ func (c *HarukiToolboxClient) GetPrivateDataContext(ctx context.Context, server 
 // while the emulation — like the legacy flow it preserves — sees an equal
 // timestamp and reports notModified. A knownUploadTime of 0 always performs a
 // plain full fetch.
+//
+// It always reads the whole document; whole-Suite reads that should carry the
+// configured Suite profile go through GetSuiteDataConditionalContext.
 func (c *HarukiToolboxClient) GetPrivateDataConditionalContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
-	return c.getPrivateDataConditionalContext(ctx, server, dataType, userID, platform, platformUserID, knownUploadTime, "")
+	return c.getPrivateDataConditionalContext(ctx, server, dataType, userID, platform, platformUserID, knownUploadTime, privateDataQuery{})
 }
 
 // GetSuiteDataFieldsConditionalContext reads a Suite projection. Fields must be
 // top-level keys and include upload_time so a 200 body owns its cache version.
 // The snapshot provider supplies a normalized field set, including userGamedata.
 func (c *HarukiToolboxClient) GetSuiteDataFieldsConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64, fields []string) ([]byte, bool, error) {
-	return c.getPrivateDataConditionalContext(ctx, server, ToolboxDataTypeSuite, userID, platform, platformUserID, knownUploadTime, strings.Join(fields, ","))
+	return c.getPrivateDataConditionalContext(ctx, server, ToolboxDataTypeSuite, userID, platform, platformUserID, knownUploadTime, privateDataQuery{key: strings.Join(fields, ",")})
 }
 
-func (c *HarukiToolboxClient) getPrivateDataConditionalContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64, key string) ([]byte, bool, error) {
+// privateDataQuery selects the shape of a private game-data read: a ?key=
+// projection, a server-defined ?profile= view of the whole Suite, or (both
+// empty) the whole document. Toolbox refuses a profile combined with a key or
+// on MySekai, so callers set at most one, and profile only for Suite.
+type privateDataQuery struct {
+	key     string
+	profile string
+}
+
+// SuiteProfile is the Toolbox profile whole-Suite reads request
+// (toolbox.suite_profile), or "" for the whole document. Callers that cache
+// Suite bodies keep it in the cache key: bodies of different profiles are not
+// interchangeable even at the same upload_time.
+func (c *HarukiToolboxClient) SuiteProfile() string {
+	if c == nil {
+		return ""
+	}
+	return c.config.ResolvedSuiteProfile()
+}
+
+func (c *HarukiToolboxClient) getPrivateDataConditionalContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64, query privateDataQuery) ([]byte, bool, error) {
 	if knownUploadTime > 0 && c != nil && c.config != nil && c.config.ConditionalFetch {
-		data, notModified, err := c.getPrivateDataWithKey(ctx, server, dataType, userID, platform, platformUserID, knownUploadTime, key)
+		data, notModified, err := c.getPrivateDataWithKey(ctx, server, dataType, userID, platform, platformUserID, knownUploadTime, query)
 		if err == nil {
 			if notModified {
 				commandtrace.RecordOperation(ctx, "toolbox.conditional_not_modified", 0)
@@ -258,13 +281,17 @@ func (c *HarukiToolboxClient) getPrivateDataConditionalContext(ctx context.Conte
 			return nil, true, nil
 		}
 	}
-	data, _, err := c.getPrivateDataWithKey(ctx, server, dataType, userID, platform, platformUserID, 0, key)
+	data, _, err := c.getPrivateDataWithKey(ctx, server, dataType, userID, platform, platformUserID, 0, query)
 	return data, false, err
 }
 
-// GetSuiteDataConditionalContext is the conditional form of GetSuiteDataContext.
+// GetSuiteDataConditionalContext is the conditional form of GetSuiteDataContext
+// for the whole Suite in the configured profile (see SuiteProfile). The
+// profile changes only which keys the body carries; authorization, the 304
+// answer to known_upload_time and the upload_time it reports are the same as
+// for the whole document.
 func (c *HarukiToolboxClient) GetSuiteDataConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
-	return c.GetPrivateDataConditionalContext(ctx, server, ToolboxDataTypeSuite, userID, platform, platformUserID, knownUploadTime)
+	return c.getPrivateDataConditionalContext(ctx, server, ToolboxDataTypeSuite, userID, platform, platformUserID, knownUploadTime, privateDataQuery{profile: c.SuiteProfile()})
 }
 
 // GetMySekaiDataConditionalContext is the conditional form of GetMySekaiDataContext.
@@ -276,10 +303,10 @@ func (c *HarukiToolboxClient) GetMySekaiDataConditionalContext(ctx context.Conte
 // knownUploadTime is forwarded as the known_upload_time query parameter, in
 // which case a 304 response reports notModified=true with no payload.
 func (c *HarukiToolboxClient) getPrivateData(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
-	return c.getPrivateDataWithKey(ctx, server, dataType, userID, platform, platformUserID, knownUploadTime, "")
+	return c.getPrivateDataWithKey(ctx, server, dataType, userID, platform, platformUserID, knownUploadTime, privateDataQuery{})
 }
 
-func (c *HarukiToolboxClient) getPrivateDataWithKey(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64, key string) ([]byte, bool, error) {
+func (c *HarukiToolboxClient) getPrivateDataWithKey(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64, query privateDataQuery) ([]byte, bool, error) {
 	r, err := c.internalRequest(ctx)
 	if err != nil {
 		return nil, false, err
@@ -292,8 +319,11 @@ func (c *HarukiToolboxClient) getPrivateDataWithKey(ctx context.Context, server 
 	if knownUploadTime > 0 {
 		params["known_upload_time"] = strconv.FormatInt(knownUploadTime, 10)
 	}
-	if key != "" {
-		params["key"] = key
+	switch {
+	case query.key != "":
+		params["key"] = query.key
+	case query.profile != "" && dataType == ToolboxDataTypeSuite:
+		params["profile"] = query.profile
 	}
 
 	finishHTTP := commandtrace.MeasureOperation(ctx, toolboxHTTPStage)

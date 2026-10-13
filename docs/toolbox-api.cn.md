@@ -31,10 +31,12 @@ toolbox:
   base_url: "https://toolbox.haruki.example.com"
   api_token: "Bearer xxxxxxxx"
   user_agent: "haruki-cloud/1.0"
+  # suite_profile: ""   # 不写时为 "cloud"；写空串读取完整 Suite
 ```
 
-对应 Go 类型：`config.ToolboxConfig{BaseURL, APIToken, UserAgent, ConditionalFetch, Retry}`
-（`conditional_fetch` 见下文“条件拉取”；`retry` 为 `config.UpstreamRetryConfig`）。
+对应 Go 类型：`config.ToolboxConfig{BaseURL, APIToken, UserAgent, ConditionalFetch, SuiteProfile, Retry}`
+（`conditional_fetch` 见下文“条件拉取”；`suite_profile` 见下文“Suite profile”；
+`retry` 为 `config.UpstreamRetryConfig`）。
 
 请求默认启用：
 
@@ -85,6 +87,7 @@ GET /api/private/game-data/{server}/{data_type}/{user_id}
     ?platform={platform}
     &platform_user_id={platform_user_id}
     [&key={key}]
+    [&profile={profile}]
     [&known_upload_time={unix_seconds}]
 ```
 
@@ -103,6 +106,7 @@ GET /api/private/game-data/{server}/{data_type}/{user_id}
 | `platform` | string | ✅ | 调用方 IM 平台标识 |
 | `platform_user_id` | string | ✅ | 调用方 IM 用户 ID |
 | `key` | string | ❌ | 若指定，只返回该顶级字段的值（不含完整 JSON） |
+| `profile` | string | ❌ | 服务端定义的完整 Suite 视图（目前只有 `cloud`）。只用于 `suite`，不能与 `key` 同时使用，否则返回 `400` |
 | `known_upload_time` | int64 | ❌ | 条件拉取：调用方已持有快照的 `upload_time`（unix 秒）。与存储文档一致时返回 `304`，不传输快照体 |
 
 #### 响应
@@ -123,6 +127,24 @@ GET /api/private/game-data/{server}/{data_type}/{user_id}
 每个独立请求仍携带自己的平台身份完成上游鉴权，304 只能复用相同字段集的数据。
 当前已核对依赖的烤森商店、对话列表和大门升级使用各自字段集，其余命令保持全量。
 MySekai 始终完整读取，合并时仍保留 `updatedResources` 中尚未建模的字段。
+
+#### Suite profile
+
+- 由 `toolbox.suite_profile`（env `HARUKI_TOOLBOX_SUITE_PROFILE`）控制。不配置时为
+  `cloud`；显式写空串（YAML `suite_profile: ""` 或 env 设为空值）时读取完整 Suite，
+  即启用 profile 之前的行为，用作回滚开关。只接受 `cloud` 和空串，其他值启动时报错
+  （Toolbox 对未知 profile 返回 `400`，会让所有完整 Suite 读取失败）。
+- 只加在完整 Suite 读取上（`GetSuiteDataConditionalContext`）。字段投影
+  （`key`）、MySekai、`upload_time` 探测和其他 `key` 读取都不带 `profile`。
+  旧的两跳模拟（`conditional_fetch` 关闭）中，`key=upload_time` 探测不带
+  `profile`，随后的数据请求带。
+- `cloud` 是完整文档减去 `userCostume3dStatuses` 和 `userCostume3dShopItems`。
+  Cloud 的类型化快照（`RawUserData`）、渲染、组卡服务请求体和其他读取都不使用这两个字段；
+  新增读取这两个字段的功能前必须先把 `suite_profile` 设为空串，或改为字段投影。
+- 鉴权、`known_upload_time` 的 `304` 判断和 `upload_time` 与完整文档相同，
+  因此同一 `upload_time` 下两种形状的响应体不能互换：profile 参与请求缓存、
+  跨请求原始数据缓存、构建缓存及其重新验证索引和并发构建的缓存键。
+- Toolbox 侧对 profile 响应体使用与完整响应体相同的缓存时长，并原样透传 zstd。
 
 #### 条件拉取（Cloud 侧行为）
 

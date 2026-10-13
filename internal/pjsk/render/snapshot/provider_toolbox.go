@@ -25,7 +25,11 @@ type bindingLookup interface {
 // instead of resending an unchanged payload (see
 // sekai.GetPrivateDataConditionalContext, which also emulates the contract for
 // Toolbox deployments without conditional read support).
+//
+// GetSuiteDataConditionalContext reads the whole Suite in the client's Suite
+// profile, which SuiteProfile reports so the caches can key on it.
 type privateDataClient interface {
+	SuiteProfile() string
 	GetSuiteDataConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error)
 	GetSuiteDataFieldsConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64, fields []string) ([]byte, bool, error)
 	GetMySekaiDataConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error)
@@ -114,6 +118,11 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	}
 	opts.SuiteFields = fields
 	projection := strings.Join(fields, ",")
+	// A profile applies only to whole-Suite reads; Toolbox refuses it with ?key=.
+	suiteProfile := ""
+	if len(fields) == 0 {
+		suiteProfile = p.client.SuiteProfile()
+	}
 
 	tResolve := time.Now()
 	region := renderregion.WithDefault(selector.Region)
@@ -123,14 +132,14 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	}
 
 	snapshotRegion := snapshotRegionForBinding(region, binding.Server)
-	built, hasBuilt := p.revalidationCandidate(snapshotRegion, uid, projection, opts)
+	built, hasBuilt := p.revalidationCandidate(snapshotRegion, uid, projection, suiteProfile, opts)
 	fetchSuite := func(knownUploadTime int64) ([]byte, bool, error) {
 		if len(fields) > 0 {
 			return p.client.GetSuiteDataFieldsConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime, fields)
 		}
 		return p.client.GetSuiteDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
 	}
-	suiteRequest := privateDataRequest{server: binding.Server, dataType: "suite", uid: uid, platform: platform, imUserID: imUserID, projection: projection}
+	suiteRequest := privateDataRequest{server: binding.Server, dataType: "suite", uid: uid, platform: platform, imUserID: imUserID, projection: projection, profile: suiteProfile}
 	if hasBuilt {
 		suiteRequest.fallbackKnown = built.SuiteUploadTime
 	}
@@ -152,7 +161,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		return nil, err
 	}
 	if suiteResult.versionOnly || mysekaiJSON.versionOnly {
-		if snapshot := p.revalidatedSnapshot(ctx, snapshotRegion, uid, suiteResult.privateDataPayload, mysekaiJSON, opts); snapshot != nil {
+		if snapshot := p.revalidatedSnapshot(ctx, snapshotRegion, uid, suiteResult.privateDataPayload, mysekaiJSON, suiteProfile, opts); snapshot != nil {
 			return snapshot, nil
 		}
 		if suiteResult, mysekaiJSON, err = p.refetchVersionOnly(ctx, suiteRequest, fetchSuite, suiteResult, mysekaiJSON); err != nil {
@@ -160,13 +169,13 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		}
 	}
 	snapshotRegion, musicMetaJSON := p.resolveSupplementalData(region, binding.Server, opts)
-	return p.resolveBuiltSnapshot(ctx, tResolve, snapshotRegion, uid, suiteResult.privateDataPayload, mysekaiJSON, musicMetaJSON, opts)
+	return p.resolveBuiltSnapshot(ctx, tResolve, snapshotRegion, uid, suiteResult.privateDataPayload, mysekaiJSON, musicMetaJSON, suiteProfile, opts)
 }
 
 // revalidationCandidate returns the newest memoized snapshot key for this
 // account and field set, whose upload_times a raw-cache miss can revalidate
 // instead of transferring a body the built snapshot already covers.
-func (p *ToolboxSnapshotProvider) revalidationCandidate(region renderregion.Value, uid int64, projection string, opts ResolveOptions) (builtSnapshotKey, bool) {
+func (p *ToolboxSnapshotProvider) revalidationCandidate(region renderregion.Value, uid int64, projection, profile string, opts ResolveOptions) (builtSnapshotKey, bool) {
 	if opts.NeedMusicMeta {
 		return builtSnapshotKey{}, false
 	}
@@ -174,6 +183,7 @@ func (p *ToolboxSnapshotProvider) revalidationCandidate(region renderregion.Valu
 		Region:          region.String(),
 		UID:             uid,
 		SuiteProjection: projection,
+		SuiteProfile:    profile,
 		NeedMySekai:     opts.NeedMySekai,
 	})
 }
@@ -182,11 +192,11 @@ func (p *ToolboxSnapshotProvider) revalidationCandidate(region renderregion.Valu
 // request just confirmed. A versionOnly result can also come from this
 // command's request cache for a resolve the built cache does not memoize
 // (music meta), so that case never serves an entry.
-func (p *ToolboxSnapshotProvider) revalidatedSnapshot(ctx context.Context, region renderregion.Value, uid int64, suite, mysekai privateDataPayload, opts ResolveOptions) Snapshot {
+func (p *ToolboxSnapshotProvider) revalidatedSnapshot(ctx context.Context, region renderregion.Value, uid int64, suite, mysekai privateDataPayload, suiteProfile string, opts ResolveOptions) Snapshot {
 	if opts.NeedMusicMeta {
 		return nil
 	}
-	snapshot := p.builtCache.Get(newBuiltSnapshotKey(region, uid, suite, mysekai, opts))
+	snapshot := p.builtCache.Get(newBuiltSnapshotKey(region, uid, suite, mysekai, suiteProfile, opts))
 	if snapshot != nil {
 		commandtrace.RecordOperation(ctx, "snapshot.built_cache_revalidated", 0)
 	}
@@ -218,12 +228,13 @@ func (p *ToolboxSnapshotProvider) refetchVersionOnly(
 	return suite, mysekai, err
 }
 
-func newBuiltSnapshotKey(region renderregion.Value, uid int64, suite, mysekai privateDataPayload, opts ResolveOptions) builtSnapshotKey {
+func newBuiltSnapshotKey(region renderregion.Value, uid int64, suite, mysekai privateDataPayload, suiteProfile string, opts ResolveOptions) builtSnapshotKey {
 	return builtSnapshotKey{
 		Region:            region.String(),
 		UID:               uid,
 		SuiteUploadTime:   suite.uploadTime,
 		SuiteProjection:   strings.Join(opts.SuiteFields, ","),
+		SuiteProfile:      suiteProfile,
 		NeedMySekai:       opts.NeedMySekai,
 		MySekaiUploadTime: mysekai.uploadTime,
 	}
@@ -261,13 +272,16 @@ func (p *ToolboxSnapshotProvider) resolveAccount(
 	return binding, uid, nil
 }
 
-// privateDataRequest identifies one private-data read. fallbackKnown is the
-// upload_time of a built snapshot to revalidate when the raw entry is gone.
+// privateDataRequest identifies one private-data read. projection and profile
+// select the body's shape (at most one is set, profile only for a whole-Suite
+// read). fallbackKnown is the upload_time of a built snapshot to revalidate
+// when the raw entry is gone.
 type privateDataRequest struct {
 	server, dataType   string
 	uid                int64
 	platform, imUserID string
 	projection         string
+	profile            string
 	fallbackKnown      int64
 }
 
@@ -292,11 +306,12 @@ func (p *ToolboxSnapshotProvider) fetchPrivateDataMode(ctx context.Context, requ
 		Platform:       request.platform,
 		PlatformUserID: request.imUserID,
 		Projection:     request.projection,
+		Profile:        request.profile,
 	}
 	load := func() (privateDataPayload, error) {
 		data, cross, ferr := p.privateCache.fetchPayloadWithFallback(
 			ctx,
-			PrivateDataKey{Server: server, DataType: dataType, UID: request.uid, Projection: request.projection},
+			PrivateDataKey{Server: server, DataType: dataType, UID: request.uid, Projection: request.projection, Profile: request.profile},
 			request.fallbackKnown,
 			fetch,
 		)
@@ -389,12 +404,13 @@ func (p *ToolboxSnapshotProvider) resolveBuiltSnapshot(
 	uid int64,
 	suite, mysekai privateDataPayload,
 	musicMetaJSON []byte,
+	suiteProfile string,
 	opts ResolveOptions,
 ) (Snapshot, error) {
 	// Toolbox advances upload_time whenever the payload changes. Reuse the
 	// version parsed at ingestion; every request has already authorized its read.
 	memoizable := !opts.NeedMusicMeta && suite.uploadTime > 0 && (!opts.NeedMySekai || mysekai.uploadTime > 0)
-	memoKey := newBuiltSnapshotKey(region, uid, suite, mysekai, opts)
+	memoKey := newBuiltSnapshotKey(region, uid, suite, mysekai, suiteProfile, opts)
 	build := func(buildCtx context.Context) (Snapshot, error) {
 		return p.factory.Build(buildCtx, BuildInput{
 			Region:        region,

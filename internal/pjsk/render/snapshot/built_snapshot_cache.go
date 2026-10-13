@@ -14,7 +14,7 @@ import (
 // transforms.
 //
 // Correctness comes from the key: a built snapshot is fully determined by its
-// region, account, Suite field set, and the upload_time of each source payload, so an entry can
+// region, account, Suite field set or profile, and the upload_time of each source payload, so an entry can
 // only ever be reused for byte-identical inputs. Freshness is inherited from the
 // private-data layer — the caller reaches this cache only after an authorized
 // upload_time probe validated those same upload_times for this request, so a
@@ -46,6 +46,7 @@ type builtSnapshotKey struct {
 	UID               int64
 	SuiteUploadTime   int64
 	SuiteProjection   string
+	SuiteProfile      string
 	NeedMySekai       bool
 	MySekaiUploadTime int64
 }
@@ -55,11 +56,12 @@ type builtSnapshotIdentity struct {
 	Region          string
 	UID             int64
 	SuiteProjection string
+	SuiteProfile    string
 	NeedMySekai     bool
 }
 
 func (k builtSnapshotKey) identity() builtSnapshotIdentity {
-	return builtSnapshotIdentity{Region: k.Region, UID: k.UID, SuiteProjection: k.SuiteProjection, NeedMySekai: k.NeedMySekai}
+	return builtSnapshotIdentity{Region: k.Region, UID: k.UID, SuiteProjection: k.SuiteProjection, SuiteProfile: k.SuiteProfile, NeedMySekai: k.NeedMySekai}
 }
 
 type builtSnapshotEntry struct {

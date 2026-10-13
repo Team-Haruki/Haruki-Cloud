@@ -63,6 +63,15 @@ func envStr(name string, dst *string) {
 	}
 }
 
+// envStrPtr sets *dst to the named env var whenever it is present, including
+// an explicit empty value, so an unset variable keeps the YAML (or nil default)
+// and an empty one can switch a non-empty default off.
+func envStrPtr(name string, dst **string) {
+	if v, ok := os.LookupEnv(name); ok {
+		*dst = &v
+	}
+}
+
 // envInt overrides dst with the integer value of the named env var if set and valid.
 func envInt(name string, dst *int) {
 	if v := os.Getenv(name); v != "" {
@@ -491,6 +500,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_TOOLBOX_API_TOKEN", &cfg.Toolbox.APIToken)
 	envStr("HARUKI_TOOLBOX_USER_AGENT", &cfg.Toolbox.UserAgent)
 	envBool("HARUKI_TOOLBOX_CONDITIONAL_FETCH", &cfg.Toolbox.ConditionalFetch)
+	envStrPtr("HARUKI_TOOLBOX_SUITE_PROFILE", &cfg.Toolbox.SuiteProfile)
 	envRetry("HARUKI_TOOLBOX", &cfg.Toolbox.Retry)
 
 	// HMES
@@ -1272,8 +1282,43 @@ type ToolboxConfig struct {
 	// unchanged snapshot answers 304 without a payload. Requires a Toolbox
 	// deployment with conditional read support; when false the same semantics
 	// are emulated with the legacy upload_time probe.
-	ConditionalFetch bool                `yaml:"conditional_fetch"`
-	Retry            UpstreamRetryConfig `yaml:"retry"`
+	ConditionalFetch bool `yaml:"conditional_fetch"`
+	// SuiteProfile is the Toolbox profile requested on whole-Suite reads
+	// (?profile=). Toolbox renders it as the full document minus keys Cloud
+	// never reads. nil (unset) means DefaultToolboxSuiteProfile; an explicit
+	// empty string reads the whole document (the pre-profile behaviour).
+	// Field projections (?key=) and MySekai reads never carry a profile.
+	SuiteProfile *string             `yaml:"suite_profile"`
+	Retry        UpstreamRetryConfig `yaml:"retry"`
+}
+
+// DefaultToolboxSuiteProfile is the Suite profile used when
+// toolbox.suite_profile is unset.
+const DefaultToolboxSuiteProfile = "cloud"
+
+// toolboxSuiteProfiles lists the profiles Cloud may request. Toolbox answers
+// 400 to an unknown name, which would fail every whole-Suite read, so an
+// unsupported value is rejected at startup instead.
+var toolboxSuiteProfiles = map[string]bool{"": true, DefaultToolboxSuiteProfile: true}
+
+// ResolvedSuiteProfile returns the profile to request on whole-Suite reads,
+// or "" for the whole document. A nil receiver means no profile.
+func (c *ToolboxConfig) ResolvedSuiteProfile() string {
+	if c == nil {
+		return ""
+	}
+	if c.SuiteProfile == nil {
+		return DefaultToolboxSuiteProfile
+	}
+	return strings.TrimSpace(*c.SuiteProfile)
+}
+
+// ValidateSuiteProfile rejects a toolbox.suite_profile Cloud does not support.
+func (c *ToolboxConfig) ValidateSuiteProfile() error {
+	if profile := c.ResolvedSuiteProfile(); !toolboxSuiteProfiles[profile] {
+		return fmt.Errorf("toolbox.suite_profile: unsupported profile %q (use %q, or \"\" for the whole document)", profile, DefaultToolboxSuiteProfile)
+	}
+	return nil
 }
 
 type HMESConfig struct {
@@ -1390,6 +1435,9 @@ func ReadConfig(path string) (Config, error) {
 	ApplyProfileDefaults(&cfg)
 	if err := ApplyEnvOverrides(&cfg); err != nil {
 		return Config{}, fmt.Errorf("invalid environment override: %w", err)
+	}
+	if err := cfg.Toolbox.ValidateSuiteProfile(); err != nil {
+		return Config{}, err
 	}
 	if cfg.PJSKRender.Enabled {
 		if err := cfg.PJSKRender.ValidateCacheVersions(); err != nil {

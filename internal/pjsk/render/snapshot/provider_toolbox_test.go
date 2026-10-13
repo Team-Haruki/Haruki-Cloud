@@ -76,7 +76,13 @@ type fakePrivateDataClient struct {
 	uploadTimeErr      error
 	suiteErr           error
 	mysekaiErr         error
+	// suiteProfile is what SuiteProfile reports; suiteProfiles records the
+	// profile in effect for each whole-Suite read.
+	suiteProfile  string
+	suiteProfiles []string
 }
+
+func (f *fakePrivateDataClient) SuiteProfile() string { return f.suiteProfile }
 
 func (f *fakePrivateDataClient) parseUploadTime() (int64, error) {
 	if f.uploadTimeErr != nil {
@@ -102,7 +108,12 @@ func (f *fakePrivateDataClient) checkNotModified(knownUploadTime int64) (bool, e
 	return current == knownUploadTime, nil
 }
 
-func (f *fakePrivateDataClient) GetSuiteDataConditionalContext(ctx context.Context, server string, _ int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
+func (f *fakePrivateDataClient) GetSuiteDataConditionalContext(ctx context.Context, server string, uid int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
+	f.suiteProfiles = append(f.suiteProfiles, f.suiteProfile)
+	return f.readSuite(ctx, server, uid, platform, platformUserID, knownUploadTime)
+}
+
+func (f *fakePrivateDataClient) readSuite(ctx context.Context, server string, _ int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
 	f.suiteCtx = ctx
 	f.suiteKnownTimes = append(f.suiteKnownTimes, knownUploadTime)
 	if f.suiteErr != nil {
@@ -121,7 +132,7 @@ func (f *fakePrivateDataClient) GetSuiteDataConditionalContext(ctx context.Conte
 }
 
 func (f *fakePrivateDataClient) GetSuiteDataFieldsConditionalContext(ctx context.Context, server string, uid int64, platform, requester string, known int64, fields []string) ([]byte, bool, error) {
-	data, unchanged, err := f.GetSuiteDataConditionalContext(ctx, server, uid, platform, requester, known)
+	data, unchanged, err := f.readSuite(ctx, server, uid, platform, requester, known)
 	if err != nil || unchanged {
 		return data, unchanged, err
 	}

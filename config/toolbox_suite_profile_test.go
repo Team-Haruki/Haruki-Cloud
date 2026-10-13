@@ -16,6 +16,18 @@ func readToolboxConfig(t *testing.T, yaml string) (Config, error) {
 	return ReadConfig(path)
 }
 
+const suiteProfileEnv = "HARUKI_TOOLBOX_SUITE_PROFILE"
+
+// withoutSuiteProfileEnv unsets an inherited HARUKI_TOOLBOX_SUITE_PROFILE for
+// the test, so a YAML case is not overridden; t.Setenv restores it afterwards.
+func withoutSuiteProfileEnv(t *testing.T) {
+	t.Helper()
+	t.Setenv(suiteProfileEnv, "")
+	if err := os.Unsetenv(suiteProfileEnv); err != nil {
+		t.Fatalf("unset %s: %v", suiteProfileEnv, err)
+	}
+}
+
 func TestToolboxSuiteProfileResolution(t *testing.T) {
 	empty, cloud, spaced := "", "cloud", "  cloud "
 	for _, tc := range []struct {
@@ -39,6 +51,7 @@ func TestToolboxSuiteProfileResolution(t *testing.T) {
 }
 
 func TestReadConfigToolboxSuiteProfileFromYAML(t *testing.T) {
+	withoutSuiteProfileEnv(t)
 	for _, tc := range []struct {
 		name, yaml, want string
 	}{
@@ -59,7 +72,7 @@ func TestReadConfigToolboxSuiteProfileFromYAML(t *testing.T) {
 
 func TestReadConfigToolboxSuiteProfileFromEnv(t *testing.T) {
 	t.Run("explicit empty overrides YAML", func(t *testing.T) {
-		t.Setenv("HARUKI_TOOLBOX_SUITE_PROFILE", "")
+		t.Setenv(suiteProfileEnv, "")
 		cfg, err := readToolboxConfig(t, "profile: dev\ntoolbox:\n  suite_profile: cloud\n")
 		if err != nil {
 			t.Fatalf("ReadConfig() error = %v", err)
@@ -69,7 +82,7 @@ func TestReadConfigToolboxSuiteProfileFromEnv(t *testing.T) {
 		}
 	})
 	t.Run("value overrides YAML", func(t *testing.T) {
-		t.Setenv("HARUKI_TOOLBOX_SUITE_PROFILE", "cloud")
+		t.Setenv(suiteProfileEnv, "cloud")
 		cfg, err := readToolboxConfig(t, "profile: dev\ntoolbox:\n  suite_profile: \"\"\n")
 		if err != nil {
 			t.Fatalf("ReadConfig() error = %v", err)
@@ -79,6 +92,7 @@ func TestReadConfigToolboxSuiteProfileFromEnv(t *testing.T) {
 		}
 	})
 	t.Run("unset keeps YAML", func(t *testing.T) {
+		withoutSuiteProfileEnv(t)
 		cfg, err := readToolboxConfig(t, "profile: dev\ntoolbox:\n  suite_profile: \"\"\n")
 		if err != nil {
 			t.Fatalf("ReadConfig() error = %v", err)
@@ -90,11 +104,12 @@ func TestReadConfigToolboxSuiteProfileFromEnv(t *testing.T) {
 }
 
 func TestReadConfigRejectsUnknownToolboxSuiteProfile(t *testing.T) {
+	withoutSuiteProfileEnv(t)
 	_, err := readToolboxConfig(t, "profile: dev\ntoolbox:\n  suite_profile: nope\n")
 	if err == nil || !strings.Contains(err.Error(), "toolbox.suite_profile") {
 		t.Fatalf("ReadConfig() error = %v, want an unsupported suite_profile error", err)
 	}
-	t.Setenv("HARUKI_TOOLBOX_SUITE_PROFILE", "nope")
+	t.Setenv(suiteProfileEnv, "nope")
 	if _, err := readToolboxConfig(t, "profile: dev\n"); err == nil {
 		t.Fatal("ReadConfig() accepted an unknown suite profile from the environment")
 	}

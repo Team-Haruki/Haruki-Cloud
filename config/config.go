@@ -923,22 +923,37 @@ type DrawingArtifactStoreRefConfig struct {
 	// Enabled is the master switch; default false.
 	Enabled bool `yaml:"enabled"`
 	// Paths lists api path prefixes (matched per path segment) to roll out
-	// gradually. Absent = the effective no_store_paths; [] = none. Paths that
-	// are not sent with Cache-Store: 0 (no_store_paths and the uncached
-	// endpoints event/detail and misc/alias-list) are unaffected.
+	// gradually. Absent = the effective no_store_paths plus
+	// DefaultDrawingArtifactStoreRefUncachedPaths; [] = none. Only renders
+	// sent with Cache-Store: 0 (no_store_paths and the uncached endpoints
+	// event/detail and misc/alias-list) are affected.
 	Paths []string `yaml:"paths"`
 }
 
 // EffectiveStoreRefPaths is the store-ref path list in force: nil while
-// store_ref is disabled, no_store_paths while store_ref.paths is absent.
+// store_ref is disabled; while store_ref.paths is absent, the effective
+// no_store_paths followed by DefaultDrawingArtifactStoreRefUncachedPaths.
 func (c DrawingArtifactConfig) EffectiveStoreRefPaths() []string {
 	if !c.StoreRef.Enabled {
 		return nil
 	}
 	if c.StoreRef.Paths == nil {
-		return c.NoStorePaths
+		uncached := DefaultDrawingArtifactStoreRefUncachedPaths()
+		paths := make([]string, 0, len(c.NoStorePaths)+len(uncached))
+		paths = append(paths, c.NoStorePaths...)
+		return append(paths, uncached...)
 	}
 	return c.StoreRef.Paths
+}
+
+// DefaultDrawingArtifactStoreRefUncachedPaths are the uncached endpoints that
+// store_ref covers when store_ref.paths is absent. They are never stored, so
+// every render is already sent with Cache-Store: 0 and they are not part of
+// no_store_paths. event/detail answers a 270-350 KB JPEG that otherwise
+// crosses the WAN to Cloud only to be PUT back to the image cache.
+// misc/alias-list stays opt-in.
+func DefaultDrawingArtifactStoreRefUncachedPaths() []string {
+	return []string{"api/pjsk/event/detail"}
 }
 
 // DefaultDrawingArtifactNoStorePaths are the per-user renders whose render

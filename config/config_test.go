@@ -5,6 +5,7 @@ import (
 	"haruki-cloud/internal/testutil"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -816,13 +817,22 @@ func TestDrawingArtifactStoreRefDefaultsYAMLAndEnv(t *testing.T) {
 	testutil.Require(t, yaml.Unmarshal([]byte("pjsk_render:\n  drawing_artifact:\n    store_ref:\n      enabled: true\n"), &decoded) == nil, "yaml")
 	ApplyProfileDefaults(&decoded)
 	got := decoded.PJSKRender.DrawingArtifact.EffectiveStoreRefPaths()
-	testutil.Require(t, len(got) == len(DefaultDrawingArtifactNoStorePaths()) && got[0] == "api/pjsk/deck", "absent paths = no_store_paths, got %v", got)
+	testutil.Require(t, len(got) == len(DefaultDrawingArtifactNoStorePaths())+1 && got[0] == "api/pjsk/deck", "absent paths = no_store_paths + uncached defaults, got %v", got)
+	testutil.Require(t, got[len(got)-1] == "api/pjsk/event/detail", "absent paths must cover event/detail, got %v", got)
+	testutil.Require(t, !slices.Contains(got, "api/pjsk/misc/alias-list"), "alias-list stays opt-in, got %v", got)
+	testutil.Require(t, !slices.Contains(decoded.PJSKRender.DrawingArtifact.NoStorePaths, "api/pjsk/event/detail"), "no_store_paths must not grow: %v", decoded.PJSKRender.DrawingArtifact.NoStorePaths)
 
 	decoded = Config{}
 	testutil.Require(t, yaml.Unmarshal([]byte("pjsk_render:\n  drawing_artifact:\n    no_store_paths: [\"api/pjsk/sk\"]\n    store_ref:\n      enabled: true\n"), &decoded) == nil, "yaml")
 	ApplyProfileDefaults(&decoded)
 	got = decoded.PJSKRender.DrawingArtifact.EffectiveStoreRefPaths()
-	testutil.Require(t, len(got) == 1 && got[0] == "api/pjsk/sk", "absent paths follow the configured no_store_paths, got %v", got)
+	testutil.Require(t, len(got) == 2 && got[0] == "api/pjsk/sk" && got[1] == "api/pjsk/event/detail", "absent paths follow the configured no_store_paths, got %v", got)
+
+	decoded = Config{}
+	testutil.Require(t, yaml.Unmarshal([]byte("pjsk_render:\n  drawing_artifact:\n    no_store_paths: []\n    store_ref:\n      enabled: true\n"), &decoded) == nil, "yaml")
+	ApplyProfileDefaults(&decoded)
+	got = decoded.PJSKRender.DrawingArtifact.EffectiveStoreRefPaths()
+	testutil.Require(t, len(got) == 1 && got[0] == "api/pjsk/event/detail", "no_store_paths: [] still leaves event/detail, got %v", got)
 
 	decoded = Config{}
 	testutil.Require(t, yaml.Unmarshal([]byte("pjsk_render:\n  drawing_artifact:\n    store_ref:\n      enabled: true\n      paths: []\n"), &decoded) == nil, "yaml")
@@ -835,7 +845,14 @@ func TestDrawingArtifactStoreRefDefaultsYAMLAndEnv(t *testing.T) {
 	ApplyProfileDefaults(&decoded)
 	testutil.Require(t, decoded.PJSKRender.DrawingArtifact.EffectiveStoreRefPaths() == nil, "paths without enabled must stay off")
 
+	// Production shape: only the env switch, no paths anywhere.
 	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_STORE_REF_ENABLED", "true")
+	cfg = &Config{}
+	ApplyProfileDefaults(cfg)
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	got = cfg.PJSKRender.DrawingArtifact.EffectiveStoreRefPaths()
+	testutil.Require(t, slices.Contains(got, "api/pjsk/event/detail") && slices.Contains(got, "api/pjsk/sk"), "env switch only = %v", got)
+
 	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_STORE_REF_PATHS", "api/pjsk/sk, api/pjsk/event/detail")
 	cfg = &Config{}
 	ApplyProfileDefaults(cfg)

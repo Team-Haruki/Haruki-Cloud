@@ -373,8 +373,9 @@ pjsk_render:
     # Deploy every Drawing node with store-ref support before enabling, then widen `paths` one prefix at a time.
     store_ref:
       enabled: false          # env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_STORE_REF_ENABLED
-      # Omit for "all of no_store_paths"; [] = none. The uncached endpoints api/pjsk/event/detail and
-      # api/pjsk/misc/alias-list may be listed too. Paths that store (Cache-Store: 1) are never affected.
+      # Omit for "all of no_store_paths plus the uncached endpoint api/pjsk/event/detail"; [] = none. The uncached
+      # api/pjsk/misc/alias-list may be listed too (an explicit list replaces the default, so name event/detail
+      # there if you still want it). Paths that store (Cache-Store: 1) are never affected.
       # (env HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_STORE_REF_PATHS, comma-separated; "[]" = none)
       paths:
         - "api/pjsk/sk"

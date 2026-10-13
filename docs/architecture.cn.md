@@ -567,7 +567,7 @@ Bot 的共享执行会给内部操作添加 `command.shared.operation.` 前缀�
 
 **缺素材占位图。** Drawing 渲染时若有素材缺失，会画问号占位图，并在 `Cache-Store: 0` 之外回 `X-Haruki-Render-Missing-Assets: <数量>`（只在数量大于 0 时发送；store-ref 的 ArtifactRef 另带 `missing_assets`）。渲染缓存键只由请求决定，素材到位后键不变，所以这类结果不能按规则 TTL 缓存，更不能进 `render_cache_index`（命中会续期）。缺省（`drawing_cache.placeholder_ttl` 为 0 或负数）Cloud 不缓存这类结果，进程内缓存和索引都不进，所有端点（含 `Infinite` 端点）都一样，与没有该头的旧 Drawing 行为相同：素材到位后的第一次请求就得到正确图片。`placeholder_ttl` 设为正数时，这类结果只放进进程内缓存（索引模式下是单独的 placeholder 缓存，上限 256 条 / 64 MiB），寿命固定为该值与端点 TTL 的较小值（`Infinite` 端点也不会永久缓存），命中不续期；到期后的下一次请求重新渲染。不存储路径无论如何都不缓存。每次收到带该头的结果都记一条 Info 日志（`metric=drawing_placeholder_render`，带 `upstream_path`、`api_path`、`node`、`missing_assets`）和 trace 操作 `drawing.placeholder_render`；启用短期缓存时命中记 `drawing.cache_placeholder_hit`。缓存路径上，Drawing 对这类结果回字节，不上传 Garage、不写索引，所以即使启用短期缓存也只是进程内字节，不会留下孤立对象或悬空索引行；字节发给 bot 前经 image cache 按内容哈希存储，重复发送同一张图只复用同一行和对象，之后由 GC 照常回收。store-ref 路径不变：Drawing 照旧上传，Cloud 记 `image_cache_entries` 行，不进任何渲染缓存。已经在 `render_cache_index` 里的问号图无法按内容识别（占位图合成在整页里，整图哈希和大小都不特殊）。Drawing 只为没有缺素材的渲染写索引行，所以索引里只可能残留计数遗漏的占位图；发现时用 `--force`（强制刷新）重渲染，Drawing 以 upsert 覆盖该行，或按 `api_path` 与 `created_at` 时间窗删除对应行。
 
-**Store-ref（节点本地上传、返回引用）。** `drawing_artifact.store_ref`（`enabled` 默认关闭；`paths` 按整段前缀匹配，缺省等于生效的 `no_store_paths`，显式 `[]` 关闭）只作用于本来就带 `X-Haruki-Cache-Store: 0` 的渲染，即不存储路径，以及列入后的不缓存端点 `api/pjsk/event/detail`、`api/pjsk/misc/alias-list`；存储路径（`Cache-Store: 1`）永不受影响。
+**Store-ref（节点本地上传、返回引用）。** `drawing_artifact.store_ref`（`enabled` 默认关闭；`paths` 按整段前缀匹配，缺省等于生效的 `no_store_paths` 加不缓存端点 `api/pjsk/event/detail`，显式 `[]` 关闭，显式列表整体替换缺省值）只作用于本来就带 `X-Haruki-Cache-Store: 0` 的渲染，即不存储路径，以及不缓存端点 `api/pjsk/event/detail`（缺省包含）、`api/pjsk/misc/alias-list`（需显式列入）；存储路径（`Cache-Store: 1`）永不受影响。
 
 这类请求额外带 `X-Haruki-Artifact-Mode: store-ref`。之所以用独立头，是因为旧 Drawing 对 `X-Haruki-Artifact` 的未知值回 400，对未知头则忽略并回 `Cache-Store: 0` 字节。
 
@@ -604,7 +604,7 @@ Cloud 的处理：
 
 **字节与暂存。** 渲染缓存只在 `render_index.lookup_enabled` 打开且索引可用时启用；`ImageResult` 要么携带字节，要么携带 ArtifactRef（只有字节消费者调用 `Bytes(ctx)` 时才从 `image_cache` 槽位或主机读回）。暂存缓存最多 128 项、64 MiB，有效期不超过 120 秒与业务 TTL；新 ArtifactRef 暂存节点提示，即使 Drawing 已写入索引也保留到该期限。索引保存短期有效的 writer node 提示，使其他 Cloud 实例优先访问刚写入的节点。Drawing 响应明确 `Cache-Store: 0` 时不进入持久或暂存缓存。
 
-Bot 命令和生日推送使用控制器的 `Render*Image` 与 Drawing 客户端的 `Generate*Image` 入口，将 `ImageResult` 保留到消息构建阶段；多图结果逐张选择公开 URL。旧 `[]byte` 入口保留兼容，通过 `Bytes(ctx)` 读取图片。没有可用公开主机时也会读取字节，沿用图片存储回退。活动详情与别名列表继续使用不缓存的字节响应（列入 `store_ref.paths` 后其 `Generate*Image` 入口可返回 store-ref；旧 `[]byte` 入口从不请求 store-ref）。
+Bot 命令和生日推送使用控制器的 `Render*Image` 与 Drawing 客户端的 `Generate*Image` 入口，将 `ImageResult` 保留到消息构建阶段；多图结果逐张选择公开 URL。旧 `[]byte` 入口保留兼容，通过 `Bytes(ctx)` 读取图片。没有可用公开主机时也会读取字节，沿用图片存储回退。活动详情与别名列表继续不缓存（启用 store-ref 且未写 `store_ref.paths` 时活动详情的 `Generate*Image` 入口返回 store-ref，别名列表需列入 `store_ref.paths`；旧 `[]byte` 入口从不请求 store-ref）。
 
 命令计时中，`drawing.http` 是 Drawing 请求的完整往返；`drawing.artifact_fetch` 单独统计引用转为字节时的等待与下载，`drawing.artifact_store` 与 `drawing.artifact_public` 分别统计对象存储读取和公开主机读取。共享下载的内部操作会并入各等待请求的 trace，因此这些操作时长可能重叠，不能直接相加作为总耗时。直接返回图片引用的路径没有图片下载操作。
 

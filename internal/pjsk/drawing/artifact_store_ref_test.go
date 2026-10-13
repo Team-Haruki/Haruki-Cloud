@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/config"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/imagecache"
 )
@@ -387,6 +388,35 @@ func TestStoreRefOnUncachedEndpoints(t *testing.T) {
 		t.Fatalf("[]byte API sent %v", harukiHeaders(headers))
 	}
 	// An unlisted uncached endpoint keeps returning bytes.
+	image, err = client.GenerateAliasListImage(&AliasListRequest{})
+	if err != nil || image.Ref() != nil {
+		t.Fatalf("alias list ref = %+v, err = %v", image.Ref(), err)
+	}
+	if len(indexer.adopted()) != 1 {
+		t.Fatalf("adopted = %+v", indexer.adopted())
+	}
+}
+
+// TestStoreRefDefaultPathsCoverEventDetail is the production shape: store_ref
+// enabled with no paths and the default no_store_paths. Event detail asks for
+// a store-ref; alias-list stays on bytes.
+func TestStoreRefDefaultPathsCoverEventDetail(t *testing.T) {
+	artifactCfg := config.DrawingArtifactConfig{
+		NoStorePaths: config.DefaultDrawingArtifactNoStorePaths(),
+		StoreRef:     config.DrawingArtifactStoreRefConfig{Enabled: true},
+	}
+	server := newStoreRefDrawingServer(t, storeRefServe)
+	indexer := &fakeStoreRefIndexer{}
+	client := storeRefTestClient(t, server, &fakeRenderIndex{}, storeRefConfig(indexer, artifactCfg.EffectiveStoreRefPaths()...)).WithContext(t.Context())
+
+	image, err := client.GenerateEventDetailImage(&EventDetailRequest{})
+	if err != nil || image.Ref() == nil || image.Ref().CDNPath != storeRefPath {
+		t.Fatalf("event detail ref = %+v, err = %v", image.Ref(), err)
+	}
+	headers, _ := server.seen("/api/pjsk/event/detail")
+	if got := harukiHeaders(headers); got[http.CanonicalHeaderKey(headerArtifactMode)] != artifactModeStoreRef || got[headerCacheStore] != "0" {
+		t.Fatalf("event detail headers = %v", got)
+	}
 	image, err = client.GenerateAliasListImage(&AliasListRequest{})
 	if err != nil || image.Ref() != nil {
 		t.Fatalf("alias list ref = %+v, err = %v", image.Ref(), err)

@@ -32,14 +32,14 @@ func TestLoaderConfigurationAndCacheGuards(t *testing.T) {
 }
 
 func TestLoaderPersistenceGuardEdges(t *testing.T) {
-	if err := (*Loader)(nil).persist(context.Background(), "jp", []byte("[]")); err != nil {
+	if err := (*Loader)(nil).persist(context.Background(), "jp", &regionEntry{data: []byte("[]")}); err != nil {
 		t.Fatalf("nil loader persist = %v", err)
 	}
-	if err := NewLoader(nil).persist(context.Background(), "jp", []byte("[]")); err != nil {
+	if err := NewLoader(nil).persist(context.Background(), "jp", &regionEntry{data: []byte("[]")}); err != nil {
 		t.Fatalf("disabled persist = %v", err)
 	}
 	loader := NewLoader(nil, WithOutputDir(t.TempDir()))
-	if err := loader.persist(context.Background(), "unknown", []byte("[]")); err == nil {
+	if err := loader.persist(context.Background(), "unknown", &regionEntry{data: []byte("[]")}); err == nil {
 		t.Fatal("unknown persist region unexpectedly succeeded")
 	}
 	if err := NewLoader(nil).loadPersisted(context.Background(), "jp"); err == nil {

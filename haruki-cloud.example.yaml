@@ -381,7 +381,7 @@ pjsk_render:
         - "api/pjsk/sk"
   music_meta:
     refresh_interval: "30m"   # how often to re-check the upstream for music_metas updates
-    output_dir: ""            # optional: persist music_metas*.json into this directory after updates
+    output_dir: ""            # optional: persist music_metas*.json (+ *.validator ETags) here after updates; startup serves these copies at once and refreshes from the source in the background
     source: "legacy"          # legacy = sekai-data.3-3.dev file layout; registry = Haruki master registry (/v1/metas/{region}/music_metas.json, omakase rows already included)
     base_url: ""              # required for source=registry (e.g. http://100.76.159.97:9998); optional mirror host for legacy
   sk_forecast:

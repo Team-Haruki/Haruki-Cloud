@@ -502,3 +502,30 @@ func TestLoaderPublishesStatus(t *testing.T) {
 		t.Fatal("digest/time helpers")
 	}
 }
+
+func TestLoaderRetriesRegionsServedFromFallback(t *testing.T) {
+	var requests atomic.Int64
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if requests.Add(1) == 1 {
+			http.Error(w, "unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		_, _ = w.Write([]byte(metaRows("11")))
+	}))
+	defer server.Close()
+
+	// The persisted copy appears only after startup tried to read it, so the
+	// first remote failure is answered from the fallback inside load.
+	memory := storagetest.NewMemory()
+	loader := NewLoader(nil, WithStore(memory), WithSource(SourceRegistry), WithBaseURL(server.URL))
+	loader.retryBackoff = []time.Duration{time.Millisecond}
+	memory.Seed(map[string][]byte{"music_metas-kr.json": []byte(metaRows("1"))})
+	round := loader.loadRegions(context.Background(), []string{"kr"})
+	if round.firstErr != nil || len(round.failed) != 1 || loader.Status()["kr"].Source != SourcePersisted {
+		t.Fatalf("fallback round = %+v, status = %+v", round, loader.Status()["kr"])
+	}
+	loader.refresh(context.Background(), nil)
+	if status := loader.Status()["kr"]; status.Source != SourceRemote || tapCount(t, loader, "kr") != 11 {
+		t.Fatalf("fallback region was not retried: %+v", status)
+	}
+}

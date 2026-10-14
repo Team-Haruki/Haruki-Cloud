@@ -287,9 +287,10 @@ func (l *Loader) LoadAll(ctx context.Context) error {
 
 func (l *Loader) loadRegions(ctx context.Context, regions []string) loadRound {
 	type result struct {
-		region  string
-		err     error
-		elapsed time.Duration
+		region   string
+		err      error
+		fellBack bool
+		elapsed  time.Duration
 	}
 
 	startedAt := time.Now()
@@ -300,8 +301,8 @@ func (l *Loader) loadRegions(ctx context.Context, regions []string) loadRound {
 			slots <- struct{}{}
 			defer func() { <-slots }()
 			began := time.Now()
-			err := l.load(ctx, r)
-			results <- result{r, err, time.Since(began)}
+			fellBack, err := l.loadRegion(ctx, r)
+			results <- result{r, err, fellBack, time.Since(began)}
 		}(region)
 	}
 
@@ -311,6 +312,10 @@ func (l *Loader) loadRegions(ctx context.Context, regions []string) loadRound {
 		res := <-results
 		if res.elapsed > slowest.elapsed {
 			slowest = res
+		}
+		if res.fellBack {
+			// Usable from the persisted copy, but the remote still failed.
+			round.failed = append(round.failed, res.region)
 		}
 		if res.err == nil {
 			continue
@@ -388,11 +393,19 @@ func (l *Loader) activeSource(region string) string {
 // On 200 the body is processed (omakase injected) and cached.
 // Without any cached payload a failed fetch falls back to the persisted copy.
 func (l *Loader) load(ctx context.Context, region string) error {
+	_, err := l.loadRegion(ctx, region)
+	return err
+}
+
+// loadRegion is load that also reports whether the remote failed and the
+// region was served from the persisted fallback instead (err is then nil).
+func (l *Loader) loadRegion(ctx context.Context, region string) (bool, error) {
 	url, err := ResolveURL(l.source, l.baseURL, region)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return l.withRegionLock(region, func() error {
+	fellBack := false
+	err = l.withRegionLock(region, func() error {
 		existing := l.entry(region)
 		err := l.loadRemote(ctx, region, url, existing)
 		if err == nil {
@@ -411,11 +424,11 @@ func (l *Loader) load(ctx context.Context, region string) error {
 				"error_type", fmt.Sprintf("%T", err),
 			)
 		}
-		// The fallback keeps the region usable; the remote failure still
-		// counts so the refresh round retries it.
 		l.recordFailure(region, err)
+		fellBack = true
 		return nil
 	})
+	return fellBack, err
 }
 
 func (l *Loader) loadRemote(ctx context.Context, region, url string, existing *regionEntry) error {

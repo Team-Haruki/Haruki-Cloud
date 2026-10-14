@@ -594,10 +594,7 @@ func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refresh
 	}
 
 	loader := meta.NewLoader(logger.NewLoggerFromGlobal("PJSKMeta"), persistence, meta.WithSource(source), meta.WithBaseURL(baseURL))
-	if err := loader.LoadAll(initCtx); err != nil {
-		logger.WarnContext(initCtx, "music metadata initial load failed", "error_type", fmt.Sprintf("%T", err))
-	}
-	loader.StartBackgroundRefresh(initCtx, refreshInterval)
+	loader.Start(initCtx, refreshInterval)
 	return loader
 }
 

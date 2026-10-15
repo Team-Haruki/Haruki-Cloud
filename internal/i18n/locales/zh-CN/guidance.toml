@@ -127,7 +127,7 @@ other = "无法识别参数，请使用歌曲 ID、歌曲名或别名"
 
 [guidance.music_list]
 description = "路由 music/list（歌曲列表）的参数无法识别时的原因行。"
-other = "无法识别参数，请使用歌曲、难度、等级、成绩筛选或“全部”"
+other = "无法识别参数，请使用难度、等级、成绩筛选或“全部”"
 
 [guidance.music_note_count]
 description = "路由 music/note-count（查物量）的参数无法识别时的原因行。"

@@ -300,6 +300,18 @@ func TestBuildMusicListRequestFiltersByResultStatus(t *testing.T) {
 		wantStatuses map[int]any
 	}{
 		{
+			name: "ap", filter: "ap", wantIDs: []int{1},
+			wantStatuses: map[int]any{1: "ap"},
+		},
+		{
+			name: "fc includes ap", filter: "fc", wantIDs: []int{1, 2},
+			wantStatuses: map[int]any{1: "ap", 2: "fc"},
+		},
+		{
+			name: "clear includes fc and ap", filter: "clear", wantIDs: []int{1, 2, 3},
+			wantStatuses: map[int]any{1: "ap", 2: "fc", 3: "clear"},
+		},
+		{
 			name:    "not ap",
 			filter:  "not_ap",
 			wantIDs: []int{2, 3, 4},
@@ -443,3 +455,35 @@ func (s *musicListSnapshotStub) RawData() *snapshot.RawUserData { return nil }
 func (s *musicListSnapshotStub) MusicMetaBytes() []byte { return nil }
 
 func (s *musicListSnapshotStub) MusicMetaPath() string { return "" }
+
+func TestBuildMusicListFCCombinesLevelAndDefaultDifficulty(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Seq: 1, Title: "AP 28"},
+			2: {ID: 2, Seq: 2, Title: "FC 28"},
+			3: {ID: 3, Seq: 3, Title: "Clear 28"},
+			4: {ID: 4, Seq: 4, Title: "FC 29"},
+			5: {ID: 5, Seq: 5, Title: "Unplayed 28"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {{MusicID: 1, MusicDifficulty: "master", PlayLevel: 28}, {MusicID: 1, MusicDifficulty: "expert", PlayLevel: 28}},
+			2: {{MusicID: 2, MusicDifficulty: "master", PlayLevel: 28}},
+			3: {{MusicID: 3, MusicDifficulty: "master", PlayLevel: 28}},
+			4: {{MusicID: 4, MusicDifficulty: "master", PlayLevel: 29}},
+			5: {{MusicID: 5, MusicDifficulty: "master", PlayLevel: 28}},
+		},
+	}
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	req, err := controller.BuildMusicListRequest(ListQuery{Region: "jp", Level: 28, ResultFilter: "fc", UserResults: map[int]string{1: "ap", 2: "fc", 3: "clear", 4: "fc"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(req.MusicList) != 2 {
+		t.Fatalf("unexpected list: %+v", req.MusicList)
+	}
+	for i, item := range req.MusicList {
+		if item["id"] != i+1 || item["difficulty"] != 28 || item["difficulty_type"] != "master" {
+			t.Fatalf("unexpected item: %+v", item)
+		}
+	}
+}

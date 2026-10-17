@@ -14,11 +14,17 @@ func (c *Controller) SetFrameOverrides(entries []config.PlayerFrameOverride) {
 	c.frameOverrides = playerframe.NewOverrides(entries)
 }
 
+func (c *Controller) SetFramePreferences(preferences playerframe.Preferences) {
+	if c != nil {
+		c.framePreferences = preferences
+	}
+}
+
 func (c *Controller) buildAccountFramePaths(source DataSource, frames []snapshot.RawUserFrame, server, userID string) (*drawing.PlayerFramePaths, bool) {
 	var frameSource playerframe.Source
 	if source != nil {
 		frameSource = source
 	}
-	paths := playerframe.ResolveAccount(frameSource, c.frameOverrides, renderregion.Normalize(server), userID, frames)
+	paths := playerframe.ResolvePreferredAccount(c.contextOrBackground(), c.framePreferences, frameSource, c.frameOverrides, renderregion.Normalize(server), userID, frames)
 	return paths, paths != nil
 }

@@ -32,6 +32,10 @@ const (
 	// with bytes, which Cloud already handles.
 	headerArtifactMode   = "X-Haruki-Artifact-Mode"
 	artifactModeStoreRef = "store-ref"
+	// artifactModeCacheRef asks Drawing for store-ref's upload on a render
+	// Cloud caches (Cache-Store: 1): Cloud writes both index rows. A Drawing
+	// that predates it ignores the value and writes the rows itself.
+	artifactModeCacheRef = "cache-ref"
 	directiveCacheGroup  = "pjsk"
 )
 
@@ -53,16 +57,21 @@ type renderDirective struct {
 	// StoreRef asks for a store-ref (X-Haruki-Artifact-Mode: store-ref); only
 	// sent with Store false, and only by callers that accept a ref result.
 	StoreRef bool
+	// CacheRef asks for a cache-ref (X-Haruki-Artifact-Mode: cache-ref); only
+	// sent with Store true, from the render cache's miss path.
+	CacheRef bool
 	outcome  *renderOutcome
 }
 
 // renderOutcome is written by postPrepared only. Node carries X-Haruki-Node
 // on the branches without a ref; on the ref branch it fills an empty NodeName.
 // StoreRef marks Ref as a store-ref whose row Cloud has recorded: it is never
-// a render cache entry.
+// a render cache entry. CacheRef marks Ref as a cache-ref whose rows Cloud
+// recorded (or failed to record) itself.
 type renderOutcome struct {
 	Ref         *ArtifactRef
 	StoreRef    bool
+	CacheRef    bool
 	Degraded    bool
 	NoStore     bool
 	ContentType string
@@ -140,8 +149,11 @@ func (d *renderDirective) apply(request *resty.Request) {
 		SetHeader(headerCacheGroup, d.Group).
 		SetHeader(headerAPIPath, d.APIPath).
 		SetHeader(headerUserID, d.UserID)
-	if d.StoreRef && !d.Store {
+	switch {
+	case d.StoreRef && !d.Store:
 		request.SetHeader(headerArtifactMode, artifactModeStoreRef)
+	case d.CacheRef && d.Store:
+		request.SetHeader(headerArtifactMode, artifactModeCacheRef)
 	}
 }
 

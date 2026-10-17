@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -206,15 +207,34 @@ type ArtifactConfig struct {
 	// Nil writes no row, which matches a Cloud image cache without an index.
 	StoreRefIndexer StoreRefIndexer
 	// StoreRefBucket is the bucket of Cloud's image_cache slot. A store-ref
-	// naming another bucket (or another backend) is rejected and the render
-	// is requested again without the mode. Empty disables store-ref.
+	// or cache-ref naming another bucket (or another backend) is rejected and
+	// the render is requested again without the mode. Empty disables both.
 	StoreRefBucket string
+	// CacheRefPaths lists api path prefixes (matched like NoStorePaths; "*"
+	// is every path) whose cached renders (Cache-Store: 1) ask Drawing for a
+	// cache-ref (X-Haruki-Artifact-Mode: cache-ref). Drawing uploads the
+	// bytes like a store-ref and makes no index round trip; Cloud writes the
+	// image_cache_entries and render_cache_index rows through CacheRefIndexer
+	// in one content-locked transaction. Renders Drawing may not cache
+	// (missing assets, stale renderer) are still answered store0 bytes. It
+	// narrows Endpoints and never applies to NoStorePaths. Empty = off.
+	CacheRefPaths []string
+	// CacheRefIndexer records both rows of a cache-ref (*imagecache.PGStore).
+	// Nil disables cache-ref.
+	CacheRefIndexer CacheRefIndexer
 }
 
 // StoreRefIndexer records the image_cache_entries row for an object Drawing
 // uploaded in store-ref mode and returns where to serve it from.
 type StoreRefIndexer interface {
 	AdoptObject(ctx context.Context, obj imagecache.AdoptedObject, now time.Time) (imagecache.AdoptedLocation, error)
+}
+
+// CacheRefIndexer records the image_cache_entries and render_cache_index rows
+// for an object Drawing uploaded in cache-ref mode and returns where to serve
+// it from.
+type CacheRefIndexer interface {
+	AdoptRender(ctx context.Context, obj imagecache.AdoptedObject, render imagecache.AdoptedRender, now time.Time) (imagecache.AdoptedLocation, error)
 }
 
 // WithArtifactConfig enables artifact mode for the allow-listed endpoints.
@@ -300,6 +320,9 @@ type artifactSettings struct {
 	storeRef        apiPathPrefixList
 	storeRefIndexer StoreRefIndexer
 	storeRefBucket  string
+	cacheRef        apiPathPrefixList
+	cacheRefAll     bool
+	cacheRefIndexer CacheRefIndexer
 	// storeRefRejected counts drawing_store_ref_rejected; shared by clones.
 	storeRefRejected atomic.Int64
 	artifactTimeout  time.Duration
@@ -315,15 +338,28 @@ func newArtifactSettings(cfg ArtifactConfig) *artifactSettings {
 	if artifactTimeout <= 0 {
 		artifactTimeout = defaultArtifactRenderTimeout
 	}
-	return &artifactSettings{
+	settings := &artifactSettings{
 		allow:           allow,
 		noStore:         newAPIPathPrefixList(cfg.NoStorePaths),
 		storeRef:        newAPIPathPrefixList(cfg.StoreRefPaths),
 		storeRefIndexer: cfg.StoreRefIndexer,
 		storeRefBucket:  strings.TrimSpace(cfg.StoreRefBucket),
+		cacheRef:        newAPIPathPrefixList(cfg.CacheRefPaths),
 		artifactTimeout: artifactTimeout,
 		fetcher:         newArtifactFetcher(cfg.Objects, cfg.Hosts, cfg.FetchTimeout),
 	}
+	for _, path := range cfg.CacheRefPaths {
+		settings.cacheRefAll = settings.cacheRefAll || strings.TrimSpace(path) == artifactAllowAll
+	}
+	if indexer := cfg.CacheRefIndexer; indexer != nil && !isNilPointer(indexer) {
+		settings.cacheRefIndexer = indexer
+	}
+	return settings
+}
+
+func isNilPointer(value any) bool {
+	v := reflect.ValueOf(value)
+	return v.Kind() == reflect.Pointer && v.IsNil()
 }
 
 func (s *artifactSettings) allowsEndpoint(endpoint string) bool {
@@ -347,6 +383,13 @@ func (s *artifactSettings) skipsStore(apiPath string) bool {
 // ask Drawing for a store-ref.
 func (s *artifactSettings) storeRefFor(apiPath string) bool {
 	return s != nil && s.storeRefBucket != "" && s.allow.has(apiPath) && s.storeRef.has(apiPath)
+}
+
+// cacheRefFor reports an allow-listed, stored api path whose renders ask
+// Drawing for a cache-ref.
+func (s *artifactSettings) cacheRefFor(apiPath string) bool {
+	return s != nil && s.storeRefBucket != "" && s.cacheRefIndexer != nil && s.allow.has(apiPath) &&
+		!s.noStore.has(apiPath) && (s.cacheRefAll || s.cacheRef.has(apiPath))
 }
 
 type artifactModeCtxKey struct{}

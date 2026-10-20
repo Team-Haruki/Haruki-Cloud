@@ -18,6 +18,7 @@ func buildDeckQueryParams(ctx HarrukiSekaiHandlerContext, mode string) (deckAuto
 	args := strings.TrimSpace(strings.ToLower(ctx.GetArgs()))
 	params := deckAutoQueryParams{}
 	var err error
+	args = extractDeckMemoryEvent(args, &params, mode)
 
 	switch mode {
 	case "deck-event":
@@ -48,6 +49,9 @@ func buildDeckQueryParams(ctx HarrukiSekaiHandlerContext, mode string) (deckAuto
 func validateDeckQueryParams(params *deckAutoQueryParams) error {
 	if params == nil {
 		return nil
+	}
+	if params.EventMEUnit != "" && params.EventID != nil {
+		return usererror.Misuse(i18n.M("deck.me.conflict"))
 	}
 	if len(params.MusicCompareQueries) > deckMusicCompareMaxQueries {
 		return usererror.Invalid(i18n.M("deck.compare.too_many", i18n.Data{"Max": deckMusicCompareMaxQueries}))

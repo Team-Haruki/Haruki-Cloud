@@ -37,6 +37,7 @@ type deckAutoQueryParams struct {
 	MusicQuery                   string                             `json:"music_query,omitempty"`
 	MusicID                      *int                               `json:"music_id,omitempty"`
 	MusicDiff                    string                             `json:"music_diff,omitempty"`
+	EventMEUnit                  string                             `json:"event_me_unit,omitempty"`
 	EventAttr                    string                             `json:"event_attr,omitempty"`
 	EventUnit                    string                             `json:"event_unit,omitempty"`
 	WorldBloomCharacterID        *int                               `json:"world_bloom_character_id,omitempty"`

@@ -20,6 +20,9 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 	c.applyChallengeRecommendMetadata(request, region, recType, option)
 	c.applyRecommendFilterMetadata(request, option)
 	c.applyRecommendEventMetadata(request, region, finalEventID)
+	if unit := optionString(option, "event_me_unit"); unit != "" {
+		request.EventName = drawing.StringPtr(MemoryEventLabel(unit))
+	}
 }
 
 func applyRecommendLiveMetadata(request *drawing.DeckRequest, recType string, option map[string]any) {
@@ -126,7 +129,10 @@ func (c *Controller) applyChallengeRecommendMetadata(request *drawing.DeckReques
 }
 
 func (c *Controller) applyRecommendFilterMetadata(request *drawing.DeckRequest, option map[string]any) {
-	unit := optionString(option, "event_unit")
+	unit := optionString(option, "event_me_unit")
+	if unit == "" {
+		unit = optionString(option, "event_unit")
+	}
 	if unit == "" {
 		unit = optionString(option, "unit_filter")
 	}
@@ -182,7 +188,7 @@ func optionHasSimulatedEvent(option map[string]any) bool {
 	if option == nil {
 		return false
 	}
-	return optionHasUnitAttrEvent(option) ||
+	return optionString(option, "event_me_unit") != "" || optionHasUnitAttrEvent(option) ||
 		optionInt(option, "world_bloom_event_turn") > 0 ||
 		optionInt(option, "world_bloom_finale_turn") > 0
 }
@@ -202,4 +208,13 @@ func optionHasWorldBloom(option map[string]any) bool {
 		optionInt(option, "world_bloom_event_turn") > 0 ||
 		optionInt(option, "world_bloom_finale_turn") > 0 ||
 		optionInt(option, "event_id") == 180
+}
+
+// MemoryEventLabel identifies a simulated event without borrowing a live event name.
+func MemoryEventLabel(unit string) string {
+	names := map[string]string{
+		"light_sound": "L/n", "idol": "MMJ", "street": "VBS",
+		"theme_park": "WxS", "school_refusal": "25h", "piapro": "VS",
+	}
+	return i18n.T("deck.me.label", i18n.Data{"Unit": names[normalizeRecommendUnit(unit)]})
 }

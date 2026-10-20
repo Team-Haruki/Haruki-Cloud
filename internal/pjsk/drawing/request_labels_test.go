@@ -136,6 +136,17 @@ func TestPreparedBodyCarriesEndpointLabels(t *testing.T) {
 	}
 }
 
+func TestPreparedDeckPreservesSimulationTitle(t *testing.T) {
+	root := preparedLabelsRoot(t, "/api/pjsk/deck/recommend", &DeckRequest{
+		RecommendType: "event",
+		Labels:        map[string]string{"deck.title.event": "总集篇活动模拟{noun}"},
+	})
+	labels := preparedDrawingLabels(t, root)
+	if labels["deck.title.event"] != "总集篇活动模拟{noun}" || labels["deck.noun.deck"] != "组卡" {
+		t.Fatalf("simulation title lost during preparation: %v", labels)
+	}
+}
+
 func TestPreparedListPayloadLabelsEveryItem(t *testing.T) {
 	prepared := prepareDrawingRequestBody("/api/pjsk/vlive/list", []any{map[string]any{"region": "jp"}, map[string]any{"region": "cn"}}, time.Unix(1710000000, 0), context.Background())
 	items := sliceAt(prepared)

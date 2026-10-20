@@ -25,6 +25,9 @@ func TestMemoryEventOptionsAndMetadata(t *testing.T) {
 			}
 			request := &drawing.DeckRequest{}
 			c.applyCommonRecommendMetadata(request, renderregion.JP, mode, option, q)
+			if request.Labels["deck.title.event"] != "总集篇活动模拟{noun}" || request.Labels["deck.title.bonus"] != "总集篇活动模拟加成{noun}" {
+				t.Fatalf("unexpected simulation titles: %+v", request.Labels)
+			}
 			if request.EventID != nil || request.IsWl || request.EventName == nil || !strings.Contains(*request.EventName, "总集篇模拟") {
 				t.Fatalf("unexpected event metadata: %+v", request)
 			}

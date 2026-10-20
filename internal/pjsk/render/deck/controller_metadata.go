@@ -22,6 +22,11 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 	c.applyRecommendEventMetadata(request, region, finalEventID)
 	if unit := optionString(option, "event_me_unit"); unit != "" {
 		request.EventName = drawing.StringPtr(MemoryEventLabel(unit))
+		if request.Labels == nil {
+			request.Labels = make(map[string]string)
+		}
+		request.Labels["deck.title.event"] = i18n.T("deck.image.title.me_event", i18n.Data{"Noun": "{noun}"})
+		request.Labels["deck.title.bonus"] = i18n.T("deck.image.title.me_bonus", i18n.Data{"Noun": "{noun}"})
 	}
 }
 

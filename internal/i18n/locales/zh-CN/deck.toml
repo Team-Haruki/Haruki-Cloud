@@ -336,6 +336,14 @@ other = "WL 活动 #{{.EventID}} 加成{{.Noun}}"
 description = "图片：活动组卡/规划的标题。占位符：EventID=活动 ID；Noun=功能名（组卡或规划）。"
 other = "活动 #{{.EventID}} {{.Noun}}"
 
+[deck.image.title.me_event]
+description = "图片：总集篇活动模拟的标题。占位符：Noun=功能名（组卡或规划）。"
+other = "总集篇活动模拟{{.Noun}}"
+
+[deck.image.title.me_bonus]
+description = "图片：总集篇活动模拟加成的标题。占位符：Noun=功能名（组卡或规划）。"
+other = "总集篇活动模拟加成{{.Noun}}"
+
 [deck.image.title.wl_event]
 description = "图片：WL 活动组卡/规划的标题。占位符：EventID=活动 ID；Noun=功能名（组卡或规划）。"
 other = "WL 活动 #{{.EventID}} {{.Noun}}"

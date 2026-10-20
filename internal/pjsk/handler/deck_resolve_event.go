@@ -150,7 +150,7 @@ type deckEventSelectionResolver struct {
 }
 
 func (r *deckEventSelectionResolver) resolve() error {
-	if r.query == nil {
+	if r.query == nil || r.query.EventMEUnit != "" {
 		return nil
 	}
 	if stop, err := r.resolveFinaleSelection(); stop || err != nil {

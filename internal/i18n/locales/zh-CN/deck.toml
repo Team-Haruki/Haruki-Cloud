@@ -423,3 +423,11 @@ other = "当前 {{.Point}} pt"
 [deck.image.planner.remaining]
 description = "图片：活动规划图片里还需要的 PT。占位符：Point=还需的 PT，带千分位。"
 other = "还需 {{.Point}} pt"
+
+[deck.me.conflict]
+description = "总集篇模拟与其他活动选择条件混用。"
+other = "me 总集篇模拟不能重复指定，或与活动 ID、WL 章节混用；筛卡请使用纯团名、纯属性"
+
+[deck.me.label]
+description = "总集篇模拟标题。占位符：Unit=团体简称。"
+other = "{{.Unit}} 总集篇模拟（ME）"

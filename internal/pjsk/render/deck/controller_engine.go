@@ -243,11 +243,11 @@ func (c *Controller) runStandardRecommendExecution(ctx context.Context, prepared
 
 func (c *Controller) buildRecommendOption(region renderregion.Value, recType string, query AutoQuery) (map[string]any, error) {
 	if query.EventMEUnit != "" {
-		if normalizeRecommendUnit(query.EventMEUnit) == "" || (recType != "event" && recType != "bonus") ||
+		if normalizeRecommendUnit(query.EventMEUnit) == "" || (recType != "event" && recType != "bonus" && recType != "mysekai") ||
 			query.EventID != nil || query.EventAttr != "" || query.EventUnit != "" ||
 			query.WorldBloomEventTurn != nil || query.WorldBloomFinaleTurn != nil ||
 			query.WorldBloomCharacterID != nil || query.WorldBloomCharacterQuery != "" {
-			return nil, fmt.Errorf("event_me_unit requires an event/bonus marathon simulation without other event selectors")
+			return nil, fmt.Errorf("event_me_unit requires an event/bonus/mysekai marathon simulation without other event selectors")
 		}
 	}
 	eventID := 0

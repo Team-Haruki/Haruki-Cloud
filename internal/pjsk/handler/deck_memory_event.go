@@ -3,7 +3,7 @@ package handler
 import "strings"
 
 func extractDeckMemoryEvent(args string, params *deckAutoQueryParams, mode string) string {
-	if mode != deckEventCommand && mode != deckBonusCommand {
+	if mode != deckEventCommand && mode != deckBonusCommand && mode != deckMySekaiCommand {
 		return args
 	}
 	fields := strings.Fields(args)

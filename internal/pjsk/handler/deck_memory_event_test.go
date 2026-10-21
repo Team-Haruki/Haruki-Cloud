@@ -104,7 +104,7 @@ func TestMemoryEventPreservesSongAliases(t *testing.T) {
 			}
 		}
 	}
-	for _, mode := range []string{deckNoEventCommand, deckChallengeCommand, deckMySekaiCommand} {
+	for _, mode := range []string{deckNoEventCommand, deckChallengeCommand} {
 		params := deckAutoQueryParams{}
 		if got := extractDeckMemoryEvent("me vbs", &params, mode); got != "me vbs" || params.EventMEUnit != "" {
 			t.Fatalf("%s should not consume ME syntax", mode)

@@ -11,7 +11,7 @@ import (
 func TestMemoryEventOptionsAndMetadata(t *testing.T) {
 	c := newTestDeckController(t, RecommendConfig{})
 	for _, unit := range []string{"light_sound", "idol", "street", "theme_park", "school_refusal", "piapro"} {
-		for _, mode := range []string{"event", "bonus"} {
+		for _, mode := range []string{"event", "bonus", "mysekai"} {
 			q := AutoQuery{EventMEUnit: unit, RecommendType: mode}
 			option, err := c.buildRecommendOption(renderregion.JP, mode, q)
 			if err != nil {

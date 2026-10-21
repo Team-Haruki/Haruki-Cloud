@@ -28,6 +28,28 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 		request.Labels["deck.title.event"] = i18n.T("deck.image.title.me_event", i18n.Data{"Noun": "{noun}"})
 		request.Labels["deck.title.bonus"] = i18n.T("deck.image.title.me_bonus", i18n.Data{"Noun": "{noun}"})
 	}
+	applyMysekaiSimulationTitle(request, recType, option)
+}
+
+func applyMysekaiSimulationTitle(request *drawing.DeckRequest, recType string, option map[string]any) {
+	if recType != "mysekai" {
+		return
+	}
+	var title string
+	switch {
+	case optionString(option, "event_me_unit") != "":
+		title = i18n.T("deck.image.title.mysekai_me", i18n.Data{"Noun": "{noun}"})
+	case optionInt(option, "world_bloom_finale_turn") > 0:
+		title = i18n.T("deck.image.title.mysekai_wl_finale", i18n.Data{"Turn": optionInt(option, "world_bloom_finale_turn"), "Noun": "{noun}"})
+	case optionInt(option, "world_bloom_event_turn") > 0:
+		title = i18n.T("deck.image.title.mysekai_wl", i18n.Data{"Turn": optionInt(option, "world_bloom_event_turn"), "Noun": "{noun}"})
+	}
+	if title != "" {
+		if request.Labels == nil {
+			request.Labels = make(map[string]string)
+		}
+		request.Labels["deck.title.mysekai_simulated"] = title
+	}
 }
 
 func applyRecommendLiveMetadata(request *drawing.DeckRequest, recType string, option map[string]any) {

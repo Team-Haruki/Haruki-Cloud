@@ -159,6 +159,20 @@ var scoreDrawingLabels = []drawingLabel{
 	{key: "score.target_pt", msg: i18n.M("score.image.target_pt")},
 }
 
+var mysekaiConvertDrawingLabels = []drawingLabel{
+	{key: "mysekai.convert.inputs", msg: i18n.M("mysekai.image.convert.inputs")},
+	{key: "mysekai.convert.outputs", msg: i18n.M("mysekai.image.convert.outputs")},
+	{key: "mysekai.convert.duration", msg: i18n.M("mysekai.image.convert.duration", i18n.Data{"Duration": slot("duration")})},
+	{key: "mysekai.convert.level", msg: i18n.M("mysekai.image.convert.level", i18n.Data{"Level": slot("level")})},
+	{key: "mysekai.convert.limits", msg: i18n.M("mysekai.image.convert.limits", i18n.Data{"Limits": slot("limits")})},
+	{key: "mysekai.convert.total", msg: i18n.M("mysekai.image.convert.total", i18n.Data{"Total": slot("total")})},
+	{key: "mysekai.convert.group_count", msg: i18n.M("mysekai.image.convert.group_count", i18n.Data{"Count": slot("count")})},
+	{key: "mysekai.convert.other", msg: i18n.M("mysekai.image.convert.other_category")},
+	{key: "mysekai.convert.filter", msg: i18n.M("mysekai.image.convert.filter", i18n.Data{"Filter": slot("filter")})},
+	{key: "mysekai.convert.note", msg: i18n.M("mysekai.image.convert.note")},
+	{key: "mysekai.convert.empty", msg: i18n.M("mysekai.image.convert.empty")},
+}
+
 var vliveDrawingLabels = []drawingLabel{
 	{key: "vlive.type.solo_virtual_live", msg: i18n.M("vlive.image.type.solo_virtual_live")},
 	{key: "vlive.type.virtual_message", msg: i18n.M("vlive.image.type.virtual_message")},
@@ -170,26 +184,27 @@ var vliveDrawingLabels = []drawingLabel{
 // drawingEndpointLabels lists, per Drawing endpoint path, the label groups
 // sent at the request root (and on every item of a list payload).
 var drawingEndpointLabels = map[string][][]drawingLabel{
-	"/api/pjsk/sk/line":           {skCountdownDrawingLabels, skPredictionDrawingLabels},
-	"/api/pjsk/sk/query":          {skCountdownDrawingLabels},
-	"/api/pjsk/sk/check-room":     {skCountdownDrawingLabels},
-	"/api/pjsk/sk/csb":            {skCountdownDrawingLabels},
-	"/api/pjsk/sk/speed":          {skCountdownDrawingLabels},
-	"/api/pjsk/sk/winrate":        {skCountdownDrawingLabels},
-	"/api/pjsk/sk/player-trace":   {skPlayerTraceDrawingLabels},
-	"/api/pjsk/sk/rank-trace":     {skRankTraceDrawingLabels},
-	"/api/pjsk/deck/recommend":    {deckDrawingLabels},
-	"/api/pjsk/event/planner":     {deckDrawingLabels, plannerDrawingLabels},
-	"/api/pjsk/gacha/detail":      {gachaDrawingLabels},
-	"/api/pjsk/inventory/list":    {inventoryDrawingLabels},
-	"/api/pjsk/costume/list":      {costumeDrawingLabels},
-	"/api/pjsk/card/list":         {cardListDrawingLabels},
-	"/api/pjsk/card/box":          {cardBoxDrawingLabels},
-	"/api/pjsk/score/control":     {scoreDrawingLabels},
-	"/api/pjsk/score/custom-room": {scoreDrawingLabels},
-	"/api/pjsk/vlive/list":        {vliveDrawingLabels},
-	"/api/pjsk/vlive/detail":      {vliveDrawingLabels},
-	InfoPanelEndpoint:             {profileDrawingLabels},
+	"/api/pjsk/mysekai/convert-recipes": {mysekaiConvertDrawingLabels},
+	"/api/pjsk/sk/line":                 {skCountdownDrawingLabels, skPredictionDrawingLabels},
+	"/api/pjsk/sk/query":                {skCountdownDrawingLabels},
+	"/api/pjsk/sk/check-room":           {skCountdownDrawingLabels},
+	"/api/pjsk/sk/csb":                  {skCountdownDrawingLabels},
+	"/api/pjsk/sk/speed":                {skCountdownDrawingLabels},
+	"/api/pjsk/sk/winrate":              {skCountdownDrawingLabels},
+	"/api/pjsk/sk/player-trace":         {skPlayerTraceDrawingLabels},
+	"/api/pjsk/sk/rank-trace":           {skRankTraceDrawingLabels},
+	"/api/pjsk/deck/recommend":          {deckDrawingLabels},
+	"/api/pjsk/event/planner":           {deckDrawingLabels, plannerDrawingLabels},
+	"/api/pjsk/gacha/detail":            {gachaDrawingLabels},
+	"/api/pjsk/inventory/list":          {inventoryDrawingLabels},
+	"/api/pjsk/costume/list":            {costumeDrawingLabels},
+	"/api/pjsk/card/list":               {cardListDrawingLabels},
+	"/api/pjsk/card/box":                {cardBoxDrawingLabels},
+	"/api/pjsk/score/control":           {scoreDrawingLabels},
+	"/api/pjsk/score/custom-room":       {scoreDrawingLabels},
+	"/api/pjsk/vlive/list":              {vliveDrawingLabels},
+	"/api/pjsk/vlive/detail":            {vliveDrawingLabels},
+	InfoPanelEndpoint:                   {profileDrawingLabels},
 }
 
 // applyDrawingEndpointLabels adds the endpoint's label groups to body.

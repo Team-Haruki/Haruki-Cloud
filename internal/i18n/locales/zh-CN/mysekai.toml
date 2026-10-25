@@ -1,5 +1,49 @@
 # 烤森（MySekai）：总览、地图、资源、家具、蓝图、商店、对话、照片、百景、大门升级。
 
+[mysekai.image.convert.inputs]
+description = "转换器合成表的投入材料格标题。"
+other = "投入材料"
+
+[mysekai.image.convert.outputs]
+description = "转换器合成表的产物格标题。"
+other = "转换产物"
+
+[mysekai.image.convert.duration]
+description = "转换器配方基础耗时。占位符：Duration=已格式化的时长。"
+other = "基础耗时：{{.Duration}}"
+
+[mysekai.image.convert.level]
+description = "转换器配方要求的机器等级。占位符：Level=转换器等级。"
+other = "转换器等级 {{.Level}}"
+
+[mysekai.image.convert.limits]
+description = "转换器配方的转换次数限制。占位符：Limits=已格式化的限额。"
+other = "限额：{{.Limits}}"
+
+[mysekai.image.convert.total]
+description = "转换器合成表匹配的配方总数。占位符：Total=配方总数。"
+other = "共 {{.Total}} 条配方"
+
+[mysekai.image.convert.group_count]
+description = "转换器合成表每个分类标题旁的配方数量。占位符：Count=该分类的配方数量。"
+other = "{{.Count}} 条配方"
+
+[mysekai.image.convert.other_category]
+description = "转换器合成表缺少分类名称时显示的分组标题。"
+other = "其他"
+
+[mysekai.image.convert.filter]
+description = "转换器合成表图片上正在使用的筛选。占位符：Filter=筛选条件。"
+other = "筛选：{{.Filter}}"
+
+[mysekai.image.convert.note]
+description = "转换器合成表图片的用量和时间说明。"
+other = "数量为单次转换用量，耗时为基础值"
+
+[mysekai.image.convert.empty]
+description = "转换器合成表图片没有匹配配方时的提示。"
+other = "暂无匹配的转换配方"
+
 [mysekai.data_invalid]
 description = "烤森数据无法解析（上传的数据损坏）。"
 other = "烤森（MySekai）数据无法解析，请在 Haruki 工具箱重新上传"

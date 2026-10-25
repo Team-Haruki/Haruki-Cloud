@@ -1,0 +1,121 @@
+# 烤森转换器配方：筛选、材料、等级和转换限额。
+
+[convert.error.data_unavailable]
+description = "转换器合成表需要的游戏数据暂时无法读取。"
+other = "转换器合成表数据暂时不可用，请稍后再试"
+
+[convert.error.none_current]
+description = "转换器合成表没有当前开放的配方。"
+other = "该区服当前没有开放的转换器配方"
+
+[convert.error.not_found]
+description = "转换器合成表的查询没有匹配到当前开放的配方。"
+other = "未找到该产物当前开放的转换器配方，请填写产物名称的一部分，例如“蓝图”"
+
+[convert.image.title]
+description = "转换器合成表图片及文字回复的标题。占位符：Region=区服显示名，由 RegionLabel 生成。"
+other = "{{.Region}} 烤森转换器合成表"
+
+[convert.image.note]
+description = "转换器合成表说明，明确材料数量和时间的计算单位。"
+other = "以下为每次转换的投入和产出；基础耗时未计入加速"
+
+[convert.image.unknown]
+description = "转换器合成表中未知的耗时或等级。"
+other = "未知"
+
+[convert.image.level]
+description = "转换器合成表的等级文字。占位符：Level=配方要求的转换器等级。"
+other = "Lv.{{.Level}}"
+
+[convert.text.total]
+description = "转换器合成表文字回复中的配方总数。占位符：Count=筛选后的配方总数。"
+other = "共 {{.Count}} 条配方"
+
+[convert.text.filter]
+description = "转换器合成表文字回复中的筛选条件。占位符：UserQuery=用户输入的筛选条件。"
+other = "筛选：{{.UserQuery}}"
+
+[convert.text.filter_no_echo]
+description = "convert.text.filter 的不回显形式：不显示筛选条件原文。"
+other = "已应用筛选条件"
+
+[convert.text.recipe]
+description = "转换器合成表文字回复中的一条完整配方。占位符：ID=配方编号；Name=产出名称；Category=分类名称；Inputs=投入材料及数量；Outputs=产出材料及数量；Duration=格式化的基础耗时；Level=转换器等级文字；Limits=转换限额。"
+other = "\n[{{.ID}}] {{.Name}} · {{.Category}}\n投入：{{.Inputs}}\n产出：{{.Outputs}}\n基础耗时：{{.Duration}}；转换器等级：{{.Level}}\n限额：{{.Limits}}"
+
+[convert.category.normal]
+description = "转换器的普通道具分类名称。"
+other = "道具"
+
+[convert.category.mysekai_material]
+description = "转换器按产物类型分组时的烤森素材分类名称。"
+other = "烤森素材"
+
+[convert.category.blueprint]
+description = "转换器的蓝图分类名称。"
+other = "蓝图"
+
+[convert.category.music_record]
+description = "转换器的唱片分类名称。"
+other = "唱片"
+
+[convert.limit.unlimited]
+description = "转换器配方没有总转换次数限制。"
+other = "无总次数限制"
+
+[convert.limit.total]
+description = "转换器配方的总转换次数上限。占位符：Count=总次数上限。"
+other = "总计最多 {{.Count}} 次"
+
+[convert.limit.daily]
+description = "转换器配方每天刷新的次数上限。占位符：Count=每日次数上限。"
+other = "每日最多 {{.Count}} 次"
+
+[convert.limit.weekly]
+description = "转换器配方每周刷新的次数上限。占位符：Count=每周次数上限。"
+other = "每周最多 {{.Count}} 次"
+
+[convert.limit.monthly]
+description = "转换器配方每月刷新的次数上限。占位符：Count=每月次数上限。"
+other = "每月最多 {{.Count}} 次"
+
+[convert.limit.cycle]
+description = "转换器配方遇到尚未命名的刷新周期时的次数上限。占位符：Cycle=游戏数据中的周期名称；Count=周期次数上限。"
+other = "周期 {{.Cycle}} 最多 {{.Count}} 次"
+
+[convert.limit.combined]
+description = "转换器配方同时显示单次转换数量上限和总次数限制。占位符：Count=单次转换数量上限；Total=总次数或周期次数的限制文字。"
+other = "单次最多 {{.Count}} 次；{{.Total}}"
+
+[convert.output.blueprint_random]
+description = "转换器随机蓝图的产出名称。"
+other = "随机蓝图"
+
+[convert.output.blueprint_choice]
+description = "转换器可选择家具分类的蓝图产出名称。"
+other = "自选分类蓝图"
+
+[convert.output.blueprint_blank]
+description = "转换器空白蓝图的产出名称。"
+other = "空白蓝图"
+
+[convert.output.record_random]
+description = "转换器随机唱片的产出名称。"
+other = "随机唱片"
+
+[convert.output.record_choice]
+description = "转换器可选择唱片分类的产出名称。"
+other = "自选分类唱片"
+
+[convert.resource.missing]
+description = "转换器配方缺少材料详情时保留一项提示。占位符：Type=资源盒类型；ID=资源盒编号。"
+other = "资源数据缺失（{{.Type}}/{{.ID}}）"
+
+[convert.resource.quantity_unknown]
+description = "转换器合成表文字回复中数量未知的材料。占位符：Name=材料名称。"
+other = "{{.Name}} × 数量未知"
+
+[convert.resource.quantity]
+description = "转换器合成表文字回复中的材料数量。占位符：Name=材料名称；Quantity=由 Wan 格式化的材料数量。"
+other = "{{.Name}} × {{.Quantity}}"

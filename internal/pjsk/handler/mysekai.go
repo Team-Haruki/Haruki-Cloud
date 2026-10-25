@@ -807,6 +807,9 @@ func mysekaiUserQueryParams(rc *RequestContext) userQueryParams {
 
 func executeStaticMysekaiMode(rc *RequestContext, region string) (onebot11.Message, bool, error) {
 	switch rc.Cmd.Mode {
+	case mySekaiConvertRecipeCommand:
+		message, err := executeMysekaiConvertRecipes(rc, region)
+		return message, true, err
 	case mySekaiFixtureListCommand:
 		query := rendermysekai.FixtureListQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &query)

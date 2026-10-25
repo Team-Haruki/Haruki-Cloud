@@ -72,6 +72,7 @@ var (
 
 func newMasterdataResolver(opts MasterdataOptions) *masterdataResolver {
 	return &masterdataResolver{
+		registryURL:   strings.TrimSpace(opts.RegistryURL),
 		dsn:           strings.TrimSpace(opts.SekaiDSN),
 		pool:          opts.SekaiPool,
 		localDir:      cleanMasterdataDir(opts.LocalDir),
@@ -194,16 +195,18 @@ func (r *masterdataResolver) build(ctx context.Context, region renderregion.Valu
 		}
 	}
 
+	var source masterdataSource
 	switch {
 	case primary != nil && fallback != nil:
-		return newLayeredMasterdataSource(primary, fallback)
+		source = newLayeredMasterdataSource(primary, fallback)
 	case primary != nil:
-		return primary
+		source = primary
 	case fallback != nil:
-		return fallback
+		source = fallback
 	default:
 		return nil
 	}
+	return newRegistryMasterdataStore(r.registryURL, region.String(), source)
 }
 
 // NewController creates a mysekai Controller. If SekaiDSN is non-empty the

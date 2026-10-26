@@ -11,9 +11,11 @@ Toolbox accepts a paid Afdian order number, or OAuth2 when application credentia
 are configured, to associate sponsorship with a Toolbox account. The order flow
 requires a verified email and rechecks the order with the creator's OpenAPI credentials.
 Only order verification is shown while OAuth2 is unconfigured.
-Toolbox determines eligibility from the linked Afdian account's sponsorship history;
-past sponsorship remains eligible after expiry. It returns no custom frame for an
-unlinked, banned or unverified owner. Reassigning a game account clears its selection.
+Toolbox determines eligibility from historical sponsorship or an administrator's
+manual confirmation. Past sponsorship remains eligible after expiry; manual grants
+do not require an Afdian link. An administrative block overrides either proof until
+access is restored. Banned owners and unverified game accounts receive no custom
+frame. Reassigning a game account clears its selection.
 Selections are cached for 15 seconds, separately per server/UID. An unavailable
 Toolbox falls back to the operator/game frame without failing the image request.
 Returned asset paths must be clean PNG paths under `static_images/custom_frames/`.

@@ -7,6 +7,10 @@ the selection using the actual game server and UID, with this priority:
 2. The operator's `pjsk_render.player_frame_overrides` entry.
 3. The frame equipped in game.
 
+Toolbox accepts a paid Afdian order number, or OAuth2 when application credentials
+are configured, to associate sponsorship with a Toolbox account. The order flow
+requires a verified email and rechecks the order with the creator's OpenAPI credentials.
+Only order verification is shown while OAuth2 is unconfigured.
 Toolbox determines eligibility from the linked Afdian account's sponsorship history;
 past sponsorship remains eligible after expiry. It returns no custom frame for an
 unlinked, banned or unverified owner. Reassigning a game account clears its selection.

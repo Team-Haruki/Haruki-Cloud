@@ -62,6 +62,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	localMasterdataDir := dependencies.localMasterdataDir
 	inventoryMasterdataDir := dependencies.inventoryMasterdataDir
 	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.DefaultRegion, assetHelper, mysekai.MasterdataOptions{
+		RegistryURL:                       resolveMasterdataRegistryURL(cfg),
 		SekaiDSN:                          cfg.SekaiDSN,
 		SekaiPool:                         cfg.SekaiMySekaiPool,
 		LocalDir:                          localMasterdataDir,

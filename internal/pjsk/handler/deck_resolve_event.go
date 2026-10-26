@@ -150,7 +150,7 @@ type deckEventSelectionResolver struct {
 }
 
 func (r *deckEventSelectionResolver) resolve() error {
-	if r.query == nil {
+	if r.query == nil || r.query.EventMEUnit != "" {
 		return nil
 	}
 	if stop, err := r.resolveFinaleSelection(); stop || err != nil {
@@ -1076,7 +1076,8 @@ func shouldKeepDeckWorldBloomSimulationSelection(q *deck.AutoQuery) bool {
 	if q == nil {
 		return false
 	}
-	return strings.EqualFold(strings.TrimSpace(q.RecommendType), "event")
+	return strings.EqualFold(strings.TrimSpace(q.RecommendType), "event") ||
+		strings.EqualFold(strings.TrimSpace(q.RecommendType), "mysekai")
 }
 
 func queryDeckWorldBloomEvents(ctx context.Context, app *renderapp.App, region renderregion.Value) ([]*sekaidb.Event, error) {

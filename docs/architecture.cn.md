@@ -762,7 +762,7 @@ internal/pjsk/render/
 ├── profile/              # 个人名片
 ├── stamp/                # 贴纸
 ├── misc/                 # 杂项（角色生日）
-├── mysekai/              # MySekai（资源, 家具, 大门, 唱片, 对话）
+├── mysekai/              # MySekai（资源, 家具, 大门, 唱片, 对话, 转换器配方）
 └── vlive/                # Virtual Live（当前仅文本查询）
 ```
 
@@ -902,3 +902,9 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 **维护者**：Haruki-Cloud Team  
 **文档版本**：v2.0  
 **创建日期**：2026-03-23
+
+### 转换器合成表
+
+`/烤森合成表` 对应 `mysekai/convert-recipes`，不读取用户快照，仅接受可选的产物名称，按名称子串筛选，不带名称时返回全部当前有效配方；全部匹配配方按产物分类分区汇总为单张宽幅图片，同一产物的不同转换配方保留在同一分类中。Cloud 发送结构化投入、产出、图标、数量、基础耗时、转换器等级及限额，Drawing 的 `/api/pjsk/mysekai/convert-recipes` 用商店卡片风格按实际数量绘制材料图标、箭头和产物图标，不补空槽；根据结果数量采用 1~6 列，每个分类单独显示标题和数量。图片不可用时返回全部配方的文字结果。
+
+未建模的转换器和小型名称表复用现有主数据 Registry 地址（`masterdata_registry`、组卡 Registry 或 Registry 模式音乐 meta 地址），按区服读取，使用 ETag 和 5 分钟缓存。资源盒按用途和 ID 匹配，数据库查询仅取转换器消耗、产出两个用途。Registry 包装层参与现有主数据更新失效机制，继续保留 DB/local 分层、连接池和缓存填充行为。

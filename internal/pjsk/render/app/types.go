@@ -198,6 +198,7 @@ type App struct {
 	Aliases            *pjskalias.Service
 	Profiles           *profile.Controller
 	FrameOverrides     playerframe.Overrides // file-configured account frames; see playerframe.ResolveAccount
+	FramePreferences   playerframe.Preferences
 	Score              *score.Controller
 	SK                 *sk.Controller
 	Stamps             *stamp.Controller

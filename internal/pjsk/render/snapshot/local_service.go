@@ -223,15 +223,20 @@ func (s *Service) MusicMetaPath() string {
 // WithPlayerFrames returns a request-local copy; cached snapshots stay immutable.
 // Resolve against current masterdata after the snapshot-cache lookup so asset
 // and masterdata refreshes do not leave a cached snapshot permanently frameless.
-// Frames go through playerframe.ResolveAccount, the same resolver the profile
-// controller uses, so file-configured account overrides apply here as well.
-func (s *Service) WithPlayerFrames(ctx context.Context, p provider.PlayerFrameProvider, overrides playerframe.Overrides) *Service {
-	if s == nil || s.baseProfile == nil || s.rawData == nil || (p == nil && len(overrides) == 0) {
+// The same preference > file override > equipped frame chain is used by the
+// profile controller. Decoration is applied after the snapshot cache lookup.
+func (s *Service) WithPlayerFrames(ctx context.Context, p provider.PlayerFrameProvider, overrides playerframe.Overrides, preferences ...playerframe.Preferences) *Service {
+	if s == nil || s.baseProfile == nil || s.rawData == nil || (p == nil && len(overrides) == 0 && len(preferences) == 0) {
 		return s
 	}
 	copy := *s
 	copy.baseProfile = new(*s.baseProfile)
 	paths := playerframe.ResolveAccountFromProvider(ctx, p, overrides, renderregion.Normalize(s.baseProfile.Region), s.baseProfile.ID, s.rawData.UserFrames)
+	if len(preferences) > 0 && preferences[0] != nil {
+		if selected := preferences[0].Lookup(ctx, renderregion.Normalize(s.baseProfile.Region), s.baseProfile.ID); selected != nil {
+			paths = selected
+		}
+	}
 	copy.baseProfile.FramePaths = paths
 	copy.baseProfile.HasFrame = paths != nil
 	copy.baseProfile.FramePath = nil

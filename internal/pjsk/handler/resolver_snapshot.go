@@ -57,7 +57,7 @@ func resolveSnapshotBySelectorWithError(ctx context.Context, app *renderapp.App,
 		if master := app.ProviderForRegion(selector.Region); master != nil {
 			frames = master.PlayerFrames()
 		}
-		snap = service.WithPlayerFrames(ctx, frames, app.FrameOverrides)
+		snap = service.WithPlayerFrames(ctx, frames, app.FrameOverrides, app.FramePreferences)
 	}
 	return snap, nil
 }

@@ -2,10 +2,14 @@ package mysekai
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"haruki-cloud/internal/i18n"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/utils/logger"
 )
 
 func birthdayCharacterID(characters map[int]map[string]any, fixtureName string) int {
@@ -16,6 +20,33 @@ func birthdayCharacterID(characters map[int]map[string]any, fixtureName string) 
 		}
 	}
 	return 0
+}
+
+// fixtureImageResolver resolves fixture thumbnails from the region's own
+// assets. A region's master can list fixtures before its CDN ships their
+// thumbnails: TW lists Ena's birthday set (mdl_bir1119_*, party 16) while only
+// JP has the files. A definite miss falls back to JP's thumbnail of the same
+// bundle (the same model render), else to the static unknown image, and is
+// logged. An unknown answer (no probe, or a store failure) keeps the region
+// path, so Drawing's own placeholder still covers it.
+func (c *Controller) fixtureImageResolver(region renderregion.Value) pathResolver {
+	return func(relPath string) string {
+		path, presence := assets.ResolveRegionAssetPresence(c.assets, region.String(), relPath)
+		if presence != assets.AssetMissing {
+			return path
+		}
+		if region != renderregion.JP {
+			if jpPath, jpPresence := assets.ResolveRegionAssetPresence(c.assets, renderregion.JP.String(), relPath); jpPresence == assets.AssetPresent {
+				logger.InfoContext(c.requestCtx, "MySekai fixture image missing in its region, using the JP image",
+					slog.String("region", region.String()), slog.String("path", path), slog.String("fallback", jpPath))
+				return jpPath
+			}
+		}
+		placeholder := c.staticPath("unknown.jpg")
+		logger.WarnContext(c.requestCtx, "MySekai fixture image missing, using the placeholder",
+			slog.String("region", region.String()), slog.String("path", path), slog.String("fallback", placeholder))
+		return placeholder
+	}
 }
 
 func fixtureThumbnailPath(resolve pathResolver, item map[string]any) string {

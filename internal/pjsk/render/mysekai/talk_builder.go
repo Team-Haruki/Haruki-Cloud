@@ -321,11 +321,12 @@ func (c *Controller) buildTalkFixtures(
 	obtainedFixtureIDs map[int]struct{},
 ) []drawing.MysekaiFixture {
 	fixtures := make([]drawing.MysekaiFixture, 0, len(fixtureIDs))
+	fixtureImage := c.fixtureImageResolver(region)
 	for _, fixtureID := range fixtureIDs {
 		fixture := fixtureMap[fixtureID]
 		fixtures = append(fixtures, drawing.MysekaiFixture{
 			ID:        fixtureID,
-			ImagePath: fixtureThumbnailPath(func(path string) string { return c.regionPath(region, path) }, fixture),
+			ImagePath: fixtureThumbnailPath(fixtureImage, fixture),
 			Obtained:  hasFixture(obtainedFixtureIDs, fixtureID),
 		})
 	}

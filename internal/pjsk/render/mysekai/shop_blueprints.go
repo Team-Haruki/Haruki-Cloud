@@ -72,7 +72,7 @@ func (c *Controller) buildBlueprintShopGroups(query ShopQuery, merged map[string
 		_, jewelImage := resolver.resolve("jewel", 0)
 		item := drawing.MysekaiShopItem{
 			ID: id, Name: &name, Quantity: 1,
-			ImagePath:         drawing.AssetPath(fixtureThumbnailPath(func(p string) string { return c.regionPath(resolver.region, p) }, fixture)),
+			ImagePath:         drawing.AssetPath(fixtureThumbnailPath(c.fixtureImageResolver(resolver.region), fixture)),
 			Costs:             []drawing.MysekaiShopCost{{ImagePath: drawing.AssetPath(jewelImage), Quantity: intNumber(rule["consumeJewelQuantity"], 0)}},
 			ExchangeLimitType: period, ExchangeLimitValue: new(1), ExchangedCount: &count,
 			Owned: &owned, IsBought: &bought, Available: &available, RemainingCount: &remaining,

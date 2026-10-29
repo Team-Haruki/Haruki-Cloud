@@ -44,6 +44,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 	harvestMapsBySite := indexMysekaiHarvestMaps(merged)
 	assets := c.loadMysekaiMapAssets()
 	assets.highlightMaterials = intSet(query.HighlightMaterialIDs)
+	assets.activeBirthdayParty = activeMysekaiBirthdayParty(assets.birthdayParties, mysekaiMapSnapshotTimeMs(merged))
 	maps := make([]drawing.MysekaiMsrMapData, 0, len(siteOrder))
 	for _, siteID := range siteOrder {
 		if site := c.buildMysekaiMapSite(region, merged, siteID, harvestMapsBySite[siteID], assets); site != nil {
@@ -84,44 +85,130 @@ type mysekaiMapAssets struct {
 	// birthdayPlantAssets maps a birthday_plant harvest fixture ID to the
 	// party assetbundle (e.g. haruka_2026) that holds its refresh icon.
 	birthdayPlantAssets map[int]string
+	// birthdayParties are the region's party windows.
+	birthdayParties []mysekaiBirthdayPartyWindow
+	// activeBirthdayParty is the assetbundle of the only party whose window
+	// holds the snapshot time, the last resort for an unbound plant.
+	activeBirthdayParty string
 	// highlightMaterials are mysekai_material IDs drawn as rare on this map.
 	highlightMaterials map[int]struct{}
 }
 
 func (c *Controller) loadMysekaiMapAssets() mysekaiMapAssets {
-	deliveries, plantAssets := c.loadMysekaiBirthdayParties()
+	harvestFixtures := c.masterdata.loadMapByID("mysekaiSiteHarvestFixtures.json")
+	parties := c.loadMysekaiBirthdayParties(harvestFixtures)
 	return mysekaiMapAssets{
-		birthdayDeliveries:  deliveries,
-		birthdayPlantAssets: plantAssets,
+		birthdayDeliveries:  parties.deliveries,
+		birthdayPlantAssets: parties.plantAssets,
+		birthdayParties:     parties.windows,
 		materials:           c.loadIconNameMap("mysekaiMaterials.json", "iconAssetbundleName"),
 		materialRarity:      c.loadFieldMap("mysekaiMaterials.json", "mysekaiMaterialRarityType"),
 		items:               c.loadIconNameMap("mysekaiItems.json", "iconAssetbundleName"),
 		fixtures:            c.loadIconNameMap("mysekaiFixtures.json", "assetbundleName"),
 		musicRecords:        c.loadMusicRecordJacketMap(),
-		harvestFixtures:     c.masterdata.loadMapByID("mysekaiSiteHarvestFixtures.json"),
+		harvestFixtures:     harvestFixtures,
 		characters:          c.masterdata.loadMapByID("gameCharacters.json"),
 	}
+}
+
+// mysekaiBirthdayPlantFixtureBase is the offset of a party's plant fixture:
+// every party that names its mysekaiSiteHarvestFixtureId (jp 28, tw 16, cn 15,
+// kr 15 on 2026-10-30) uses 8000 + its own ID.
+const mysekaiBirthdayPlantFixtureBase = 8000
+
+type mysekaiBirthdayPartyWindow struct {
+	startAt         int64
+	closedAt        int64
+	assetbundleName string
+}
+
+type mysekaiBirthdayPartyIndex struct {
+	// deliveries maps a delivery material ID to its game character ID.
+	deliveries map[int]int
+	// plantAssets maps a birthday_plant harvest fixture ID to its party's
+	// assetbundle.
+	plantAssets map[int]string
+	windows     []mysekaiBirthdayPartyWindow
 }
 
 // loadMysekaiBirthdayParties indexes birthdayParties.json. Each yearly party
 // has its own delivery material and harvest fixture (Haruka 2025 drops 179 from
 // fixture 8001, Haruka 2026 drops 297 from fixture 8027), so neither can be
-// derived from a fixed ID range.
-func (c *Controller) loadMysekaiBirthdayParties() (map[int]int, map[int]string) {
+// derived from a fixed ID range. EN's parties carry no
+// mysekaiSiteHarvestFixtureId at all; for a party without it the plant is
+// 8000 + the party ID, taken only when the region's harvest fixtures hold a
+// birthday_plant with that ID. A named fixture always wins over a derived one.
+func (c *Controller) loadMysekaiBirthdayParties(harvestFixtures map[int]map[string]any) mysekaiBirthdayPartyIndex {
 	parties := c.masterdata.loadMapByID("birthdayParties.json")
-	deliveries := make(map[int]int, len(parties))
-	plantAssets := make(map[int]string, len(parties))
-	for _, party := range parties {
+	index := mysekaiBirthdayPartyIndex{
+		deliveries:  make(map[int]int, len(parties)),
+		plantAssets: make(map[int]string, len(parties)),
+		windows:     make([]mysekaiBirthdayPartyWindow, 0, len(parties)),
+	}
+	derived := make(map[int]string)
+	for id, party := range parties {
 		characterID := c.gameCharacterIDByUnitID(intNumber(party["gameCharacterUnitId"], 0))
 		if materialID := intNumber(party["deliveryItemMaterialId"], 0); materialID > 0 && characterID > 0 {
-			deliveries[materialID] = characterID
+			index.deliveries[materialID] = characterID
 		}
-		fixtureID := intNumber(party["mysekaiSiteHarvestFixtureId"], 0)
-		if assetbundleName := strings.TrimSpace(stringValue(party["assetbundleName"])); fixtureID > 0 && assetbundleName != "" {
-			plantAssets[fixtureID] = assetbundleName
+		assetbundleName := strings.TrimSpace(stringValue(party["assetbundleName"]))
+		if assetbundleName == "" {
+			continue
+		}
+		index.windows = append(index.windows, mysekaiBirthdayPartyWindow{
+			startAt:         int64Number(party["startAt"], 0),
+			closedAt:        int64Number(party["closedAt"], 0),
+			assetbundleName: assetbundleName,
+		})
+		if fixtureID := intNumber(party["mysekaiSiteHarvestFixtureId"], 0); fixtureID > 0 {
+			index.plantAssets[fixtureID] = assetbundleName
+			continue
+		}
+		fixtureID := mysekaiBirthdayPlantFixtureBase + id
+		if id > 0 && stringValue(harvestFixtures[fixtureID]["mysekaiSiteHarvestFixtureType"]) == "birthday_plant" {
+			derived[fixtureID] = assetbundleName
 		}
 	}
-	return deliveries, plantAssets
+	for fixtureID, assetbundleName := range derived {
+		if _, named := index.plantAssets[fixtureID]; !named {
+			index.plantAssets[fixtureID] = assetbundleName
+		}
+	}
+	return index
+}
+
+// mysekaiMapSnapshotTimeMs is the game time the snapshot describes: the
+// server's "now", else the upload time (a late upload can pass a party's
+// closedAt), else the current time for a snapshot that carries neither.
+func mysekaiMapSnapshotTimeMs(merged map[string]any) int64 {
+	gameNow := normalizeMySekaiTimestampMs(int64Number(merged["now"], 0))
+	if updated, ok := merged["updatedResources"].(map[string]any); ok {
+		gameNow = max(gameNow, normalizeMySekaiTimestampMs(int64Number(updated["now"], 0)))
+	}
+	if gameNow > 0 {
+		return gameNow
+	}
+	if upload := normalizeMySekaiTimestampMs(int64Number(merged["upload_time"], 0)); upload > 0 {
+		return upload
+	}
+	return time.Now().UnixMilli()
+}
+
+// activeMysekaiBirthdayParty returns the assetbundle of the party whose
+// [startAt, closedAt] holds atMs. Overlapping parties (Rin and Len share a
+// birthday) are ambiguous, so it returns "" unless exactly one matches.
+func activeMysekaiBirthdayParty(windows []mysekaiBirthdayPartyWindow, atMs int64) string {
+	active := ""
+	for _, window := range windows {
+		if window.startAt <= 0 || window.closedAt < window.startAt || atMs < window.startAt || atMs > window.closedAt {
+			continue
+		}
+		if active != "" {
+			return ""
+		}
+		active = window.assetbundleName
+	}
+	return active
 }
 
 func intSet(values []int) map[int]struct{} {
@@ -239,7 +326,8 @@ func (c *Controller) buildMysekaiMapHarvestPoint(region renderregion.Value, poin
 	}
 	positionX := floatNumber(point["positionX"], floatNumber(point["position_x"], 0))
 	positionZ := floatNumber(point["positionZ"], floatNumber(point["position_z"], 0))
-	imagePath, fallback, size, offsetX, offsetZ := c.mysekaiHarvestPointImage(region, fixtureType, rarityType, assetbundleName, assets.birthdayPlantAssets[fixtureID], positionX, positionZ, birthdayCharacters, assets.characters)
+	parties := mysekaiPlantParties{bound: assets.birthdayPlantAssets[fixtureID], active: assets.activeBirthdayParty}
+	imagePath, fallback, size, offsetX, offsetZ := c.mysekaiHarvestPointImage(region, fixtureType, rarityType, assetbundleName, parties, positionX, positionZ, birthdayCharacters, assets.characters)
 	return &drawing.MysekaiMsrMapHarvestPoint{
 		ID: positiveIntPointer(fixtureID), ImagePath: imagePath, FallbackImagePath: fallback,
 		PositionX: positionX, PositionZ: positionZ, Status: mysekaiHarvestPointStatus(point),
@@ -270,7 +358,15 @@ func mysekaiHarvestPointStatus(point map[string]any) string {
 	return status
 }
 
-func (c *Controller) mysekaiHarvestPointImage(region renderregion.Value, fixtureType, rarityType, assetbundleName, partyAsset string, positionX, positionZ float64, birthdayCharacters map[string]int, characters map[int]map[string]any) (drawing.AssetKey, *string, *int, float64, float64) {
+// mysekaiPlantParties names the party icons a birthday plant can use.
+type mysekaiPlantParties struct {
+	// bound is the party the plant fixture belongs to.
+	bound string
+	// active is the only party running at the snapshot time.
+	active string
+}
+
+func (c *Controller) mysekaiHarvestPointImage(region renderregion.Value, fixtureType, rarityType, assetbundleName string, parties mysekaiPlantParties, positionX, positionZ float64, birthdayCharacters map[string]int, characters map[int]map[string]any) (drawing.AssetKey, *string, *int, float64, float64) {
 	imageRelPath := fmt.Sprintf("mysekai/harvest_fixture_icon/%s/%s.png", rarityType, assetbundleName)
 	if fixtureType != "birthday_plant" {
 		return drawing.AssetPath(c.staticPath(imageRelPath)), nil, nil, 0, -48
@@ -278,14 +374,22 @@ func (c *Controller) mysekaiHarvestPointImage(region renderregion.Value, fixture
 	fallback := new(c.staticPath("mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png"))
 	// The party bound to this fixture names its own icon directory; the
 	// character's year window stays behind it for regions lacking that party.
-	candidates := mysekaiBirthdayPartyIconCandidates(region.String(), partyAsset)
-	if characterID := birthdayCharacters[mysekaiHarvestPosKey(positionX, positionZ)]; characterID > 0 {
-		imageName := mysekaiBirthdayCharacterImageName(characters[characterID])
-		for _, candidate := range mysekaiBirthdayIconCandidates(region.String(), imageName, time.Now()) {
+	// An unbound plant (no party maps to its fixture) also tries the party
+	// running at the snapshot time.
+	candidates := mysekaiBirthdayPartyIconCandidates(region.String(), parties.bound)
+	appendCandidates := func(paths []string) {
+		for _, candidate := range paths {
 			if !slices.Contains(candidates, candidate) {
 				candidates = append(candidates, candidate)
 			}
 		}
+	}
+	if characterID := birthdayCharacters[mysekaiHarvestPosKey(positionX, positionZ)]; characterID > 0 {
+		imageName := mysekaiBirthdayCharacterImageName(characters[characterID])
+		appendCandidates(mysekaiBirthdayIconCandidates(region.String(), imageName, time.Now()))
+	}
+	if parties.bound == "" {
+		appendCandidates(mysekaiBirthdayPartyIconCandidates(region.String(), parties.active))
 	}
 	if len(candidates) > 0 {
 		// C1: Drawing takes the first existing candidate and falls back to

@@ -3,6 +3,7 @@ package assets
 import (
 	"container/list"
 	"context"
+	"errors"
 	"io/fs"
 	"net/url"
 	"os"
@@ -207,10 +208,11 @@ func (h *AssetHelper) ProbesStore() bool {
 // resolveStorePath returns the first candidate Drawing path whose object
 // exists in the store, with each segment's case corrected to the stored
 // spelling. A store failure ends the search (the probe logs it) so the caller
-// falls back to its first candidate.
-func (h *AssetHelper) resolveStorePath(candidates []string) (string, bool) {
+// falls back to its first candidate. definite reports a miss the store
+// answered for every candidate, as opposed to one cut short by a failure.
+func (h *AssetHelper) resolveStorePath(candidates []string) (path string, found, definite bool) {
 	if !h.ProbesStore() {
-		return "", false
+		return "", false, false
 	}
 	ctx := h.ctx
 	if ctx == nil {
@@ -232,10 +234,11 @@ func (h *AssetHelper) resolveStorePath(candidates []string) (string, bool) {
 	}
 	if resolved, ok := h.store.selections.lookup(selectionKey, h.store.now()); ok && !indexed {
 		commandtrace.RecordOperation(ctx, "asset.store_selection_cache_hit", 0)
-		return resolved, true
+		return resolved, true, true
 	}
 	commandtrace.RecordOperation(ctx, "asset.store_selection_cache_miss", 0)
 	expiresAt := h.store.now().Add(min(h.store.cfg.ListingTTL, h.store.cfg.PositiveTTL))
+	probed := false
 	for _, candidate := range candidates {
 		key, ok := candidateKey(candidate)
 		if !ok {
@@ -243,17 +246,18 @@ func (h *AssetHelper) resolveStorePath(candidates []string) (string, bool) {
 		}
 		resolved, found, err := h.store.resolve(ctx, key)
 		if err != nil {
-			return "", false
+			return "", false, false
 		}
+		probed = true
 		if found {
 			path := replaceDrawingKey(candidate, key, resolved)
 			if !indexed && ctx.Err() == nil {
 				h.store.selections.store(selectionKey, path, len(selectionKey)+len(path), expiresAt, generation)
 			}
-			return path, true
+			return path, true, true
 		}
 	}
-	return "", false
+	return "", false, probed
 }
 
 // replaceDrawingKey swaps the object key at the end of candidate for its
@@ -896,12 +900,33 @@ func preferredRegionAssetModes(relPath string) []string {
 // segment's case corrected to the stored spelling. A store failure, a
 // helper without a store or a total miss all yield the first candidate.
 func ResolveRegionAssetPath(helper *AssetHelper, region string, relPaths ...string) string {
+	path, _ := ResolveRegionAssetPresence(helper, region, relPaths...)
+	return path
+}
+
+// AssetPresence is what a region path lookup learned about its candidates.
+type AssetPresence uint8
+
+const (
+	// AssetPresenceUnknown means nothing answered: no probe is configured, or
+	// the store failed, refused the probe budget or has its circuit open.
+	AssetPresenceUnknown AssetPresence = iota
+	// AssetPresent means a candidate exists; the returned path names it.
+	AssetPresent
+	// AssetMissing means every candidate was probed and none exists.
+	AssetMissing
+)
+
+// ResolveRegionAssetPresence is ResolveRegionAssetPath that also reports
+// whether the chosen path is known to exist. The path is the same: the first
+// existing candidate, else the first candidate.
+func ResolveRegionAssetPresence(helper *AssetHelper, region string, relPaths ...string) (string, AssetPresence) {
 	if len(relPaths) == 0 {
-		return ""
+		return "", AssetPresenceUnknown
 	}
 	candidates := RegionAssetCandidates(region, relPaths...)
 	if len(candidates) == 0 {
-		return ""
+		return "", AssetPresenceUnknown
 	}
 	return resolveRegionAssetCandidates(helper, candidates)
 }
@@ -924,26 +949,60 @@ func RegionAssetCandidates(region string, relPaths ...string) []string {
 	return candidates
 }
 
-func resolveRegionAssetCandidates(helper *AssetHelper, candidates []string) string {
+func resolveRegionAssetCandidates(helper *AssetHelper, candidates []string) (string, AssetPresence) {
 	// Probe local existence to choose the right candidate, but keep the returned
 	// path relative for DrawingAPI callers that cannot access host-local absolute paths.
 	// A store-backed helper without local roots skips the (cwd-relative) disk probe.
-	if helper != nil {
-		if !helper.ProbesStore() || helperHasLocalRoots(helper) {
-			for _, candidate := range candidates {
-				if helper.FirstExisting(candidate) != "" {
-					return candidate
-				}
-			}
-		}
-		if resolved, ok := helper.resolveStorePath(candidates); ok {
-			return resolved
-		}
-	}
 	// Fall back to the first candidate as a relative path so that callers forwarding
 	// the result to the Drawing API always receive a relative path, not an absolute
 	// local path that the Drawing API container cannot access.
-	return candidates[0]
+	if helper == nil {
+		return candidates[0], AssetPresenceUnknown
+	}
+	if !helper.ProbesStore() || helperHasLocalRoots(helper) {
+		for _, candidate := range candidates {
+			if helper.FirstExisting(candidate) != "" {
+				return candidate, AssetPresent
+			}
+		}
+	}
+	if helper.ProbesStore() {
+		resolved, found, definite := helper.resolveStorePath(candidates)
+		switch {
+		case found:
+			return resolved, AssetPresent
+		case definite:
+			return candidates[0], AssetMissing
+		default:
+			return candidates[0], AssetPresenceUnknown
+		}
+	}
+	if localMissIsDefinite(helper, candidates) {
+		return candidates[0], AssetMissing
+	}
+	return candidates[0], AssetPresenceUnknown
+}
+
+// localMissIsDefinite reports whether a store-less helper's local miss over
+// candidates proves absence: every root is a configured filesystem root (the
+// cwd-relative default and URL roots prove nothing) and every stat failed
+// with not-exist rather than, say, a permission error.
+func localMissIsDefinite(helper *AssetHelper, candidates []string) bool {
+	for _, root := range helper.roots {
+		if root == "." || isAssetURL(root) {
+			return false
+		}
+	}
+	for _, candidate := range candidates {
+		for _, rel := range assetPathCandidates(candidate) {
+			for _, path := range helper.localCandidatePaths(rel) {
+				if _, err := helper.stat(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+					return false
+				}
+			}
+		}
+	}
+	return len(helper.roots) > 0
 }
 
 func ResolveEventBannerPath(helper *AssetHelper, region, assetBundleName string) string {

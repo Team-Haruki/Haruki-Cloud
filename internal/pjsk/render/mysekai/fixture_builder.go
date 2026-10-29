@@ -197,6 +197,8 @@ type fixtureListCollector struct {
 	// whose blueprint is missing.
 	firstCraftOnly    bool
 	firstCraftShowAll bool
+	// fixtureImage resolves each listed thumbnail (fixtureImageResolver).
+	fixtureImage pathResolver
 	// hasFirstCraft is set once a listed fixture carries the first-craft
 	// ribbon, so the legend explains it only when it is drawn.
 	hasFirstCraft bool
@@ -219,6 +221,7 @@ func newFixtureListCollector(
 		craftableIDs:   craftableIDs,
 		obtainedIDs:    obtainedIDs,
 		characters:     characters,
+		fixtureImage:   controller.fixtureImageResolver(region),
 		grouped:        map[int]map[int][]drawing.MysekaiFixture{},
 		mainAll:        map[int]int{},
 		mainObtained:   map[int]int{},
@@ -257,7 +260,7 @@ func (c *fixtureListCollector) add(item map[string]any) {
 	}
 	c.grouped[mainGenreID][subGenreID] = append(c.grouped[mainGenreID][subGenreID], drawing.MysekaiFixture{
 		ID:            fixtureID,
-		ImagePath:     fixtureThumbnailPath(func(path string) string { return c.controller.regionPath(c.region, path) }, item),
+		ImagePath:     fixtureThumbnailPath(c.fixtureImage, item),
 		CharacterID:   characterID,
 		CharaIconPath: charaIconPath,
 		Obtained:      obtained,
@@ -490,7 +493,7 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 
 		request := drawing.MysekaiFixtureDetailRequest{
 			Title:              i18n.T("mysekai.image.fixture.title", i18n.Data{"Region": i18n.RegionLabel(region.String()), "ID": fixtureID, "Name": stringValue(fixture["name"])}),
-			Images:             fixtureColorImages(func(p string) string { return c.regionPath(region, p) }, fixture),
+			Images:             fixtureColorImages(c.fixtureImageResolver(region), fixture),
 			MainGenreName:      stringValue(mainGenre["name"]),
 			MainGenreImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(mainGenre["assetbundleName"]))),
 			Size: map[string]int{

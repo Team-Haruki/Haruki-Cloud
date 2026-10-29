@@ -70,6 +70,15 @@ func TestBuildFixtureListRequestFallsBackForMissingRegionThumbnails(t *testing.T
 			t.Fatalf("fixture %d image = %q, want %q (all %v)", id, images[id], path, images)
 		}
 	}
+
+	details, err := controller.BuildFixtureDetailRequests(FixtureDetailQuery{Region: "tw", Query: "914 919", NowMillis: 1})
+	if err != nil {
+		t.Fatalf("BuildFixtureDetailRequests() error = %v", err)
+	}
+	if len(details) != 2 || len(details[0].Images) != 1 || len(details[1].Images) != 1 ||
+		details[0].Images[0].ImagePath != want[914] || details[1].Images[0].ImagePath != want[919] {
+		t.Fatalf("detail images = %+v", details)
+	}
 }
 
 func TestFixtureImageResolverKeepsTheRegionPathWhenNothingAnswers(t *testing.T) {

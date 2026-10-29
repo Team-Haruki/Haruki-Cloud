@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -249,5 +250,22 @@ func TestActiveMysekaiBirthdayPartyNeedsOneMatch(t *testing.T) {
 		if got := activeMysekaiBirthdayParty(windows, at); got != want {
 			t.Fatalf("active party at %d = %q, want %q", at, got, want)
 		}
+	}
+}
+
+func TestMysekaiMapSnapshotTimePrefersGameTime(t *testing.T) {
+	// A late upload must not push the map past the party it was taken in.
+	if got := mysekaiMapSnapshotTimeMs(map[string]any{"now": int64(1793332800000), "upload_time": int64(1793350000000)}); got != 1793332800000 {
+		t.Fatalf("game now = %d", got)
+	}
+	if got := mysekaiMapSnapshotTimeMs(map[string]any{"updatedResources": map[string]any{"now": int64(1793332800000)}}); got != 1793332800000 {
+		t.Fatalf("updatedResources now = %d", got)
+	}
+	if got := mysekaiMapSnapshotTimeMs(map[string]any{"upload_time": int64(1793350000000)}); got != 1793350000000 {
+		t.Fatalf("upload time = %d", got)
+	}
+	before := time.Now().UnixMilli()
+	if got := mysekaiMapSnapshotTimeMs(nil); got < before || got > time.Now().UnixMilli() {
+		t.Fatalf("no snapshot time = %d", got)
 	}
 }

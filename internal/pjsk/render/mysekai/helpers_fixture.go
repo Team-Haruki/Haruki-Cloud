@@ -90,13 +90,15 @@ func fixtureColorImages(resolve pathResolver, item map[string]any) []drawing.Mys
 	for index, raw := range rawColors {
 		color, _ := raw.(map[string]any)
 		colorCode := stringValueFrom(color, "colorCode", "color_code")
-		path := resolve(fmt.Sprintf("mysekai/thumbnail/fixture/%s_%d.png", assetbundleName, index+2))
+		var path string
 		if stringValueFrom(item, "mysekaiFixtureType", "mysekai_fixture_type") == "surface_appearance" {
 			layoutType := stringValueFrom(item, "mysekaiSettableLayoutType", "mysekai_settable_layout_type")
 			if layoutType == "" {
 				layoutType = "floor_appearance"
 			}
 			path = resolve(fmt.Sprintf("mysekai/thumbnail/surface_appearance/%s/tex_%s_%s_%d.png", assetbundleName, assetbundleName, layoutType, index+2))
+		} else {
+			path = resolve(fmt.Sprintf("mysekai/thumbnail/fixture/%s_%d.png", assetbundleName, index+2))
 		}
 		images = append(images, drawing.MysekaiFixtureColorImage{
 			ImagePath: path,

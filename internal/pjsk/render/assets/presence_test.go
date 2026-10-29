@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/storage"
@@ -37,6 +38,24 @@ func TestResolveRegionAssetPresence(t *testing.T) {
 		t.Fatalf("failing store = %q, %v", path, presence)
 	}
 
+	// A later candidate's failure also leaves the answer open: the ondemand
+	// miss alone does not prove the startapp copy is absent.
+	partial := storagetest.NewMemory()
+	partial.Seed(map[string][]byte{
+		"tw-assets/ondemand/mysekai/other.png": []byte("x"),
+		"tw-assets/startapp/other.png":         []byte("x"),
+	})
+	failStartapp := func(key storage.Key) error {
+		if strings.HasPrefix(string(key), "tw-assets/startapp") {
+			return errors.New("down")
+		}
+		return nil
+	}
+	partial.FailListDir, partial.FailList, partial.FailStat = failStartapp, failStartapp, failStartapp
+	if path, presence := ResolveRegionAssetPresence(storeOnlyHelper(t, partial, StoreProbeConfig{}), "tw", missing); path != missingPath || presence != AssetPresenceUnknown {
+		t.Fatalf("later candidate failing = %q, %v", path, presence)
+	}
+
 	// Without a store only a configured filesystem root answers.
 	root := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, "tw-assets", "ondemand", "mysekai", "thumbnail", "fixture"), 0o755); err != nil {
@@ -57,6 +76,19 @@ func TestResolveRegionAssetPresence(t *testing.T) {
 	}
 	if path, presence := ResolveRegionAssetPresence(NewAssetHelper("https://assets.example", nil), "tw", missing); path != missingPath || presence != AssetPresenceUnknown {
 		t.Fatalf("URL root = %q, %v", path, presence)
+	}
+	// A URL root is never checked, so a local miss beside it proves nothing.
+	if path, presence := ResolveRegionAssetPresence(NewAssetHelper(root, []string{"https://assets.example"}), "tw", missing); path != missingPath || presence != AssetPresenceUnknown {
+		t.Fatalf("filesystem and URL roots = %q, %v", path, presence)
+	}
+	// Only not-exist counts as a miss; here a file stands where a directory
+	// should be.
+	blocked := t.TempDir()
+	if err := os.WriteFile(filepath.Join(blocked, "tw-assets"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if path, presence := ResolveRegionAssetPresence(NewAssetHelper(blocked, nil), "tw", missing); path != missingPath || presence != AssetPresenceUnknown {
+		t.Fatalf("stat error = %q, %v", path, presence)
 	}
 	if path, presence := ResolveRegionAssetPresence(nil, "tw", missing); path != missingPath || presence != AssetPresenceUnknown {
 		t.Fatalf("nil helper = %q, %v", path, presence)

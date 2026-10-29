@@ -3,6 +3,7 @@ package assets
 import (
 	"container/list"
 	"context"
+	"errors"
 	"io/fs"
 	"net/url"
 	"os"
@@ -976,21 +977,32 @@ func resolveRegionAssetCandidates(helper *AssetHelper, candidates []string) (str
 			return candidates[0], AssetPresenceUnknown
 		}
 	}
-	// Without a store only a configured filesystem root makes a local miss
-	// definite; the cwd-relative default root proves nothing.
-	if helperHasFilesystemRoots(helper) {
+	if localMissIsDefinite(helper, candidates) {
 		return candidates[0], AssetMissing
 	}
 	return candidates[0], AssetPresenceUnknown
 }
 
-func helperHasFilesystemRoots(helper *AssetHelper) bool {
+// localMissIsDefinite reports whether a store-less helper's local miss over
+// candidates proves absence: every root is a configured filesystem root (the
+// cwd-relative default and URL roots prove nothing) and every stat failed
+// with not-exist rather than, say, a permission error.
+func localMissIsDefinite(helper *AssetHelper, candidates []string) bool {
 	for _, root := range helper.roots {
-		if !isAssetURL(root) && root != "." {
-			return true
+		if root == "." || isAssetURL(root) {
+			return false
 		}
 	}
-	return false
+	for _, candidate := range candidates {
+		for _, rel := range assetPathCandidates(candidate) {
+			for _, path := range helper.localCandidatePaths(rel) {
+				if _, err := helper.stat(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+					return false
+				}
+			}
+		}
+	}
+	return len(helper.roots) > 0
 }
 
 func ResolveEventBannerPath(helper *AssetHelper, region, assetBundleName string) string {

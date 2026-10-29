@@ -177,11 +177,19 @@ func (c *Controller) loadMysekaiBirthdayParties(harvestFixtures map[int]map[stri
 	return index
 }
 
-// mysekaiMapSnapshotTimeMs is the time the snapshot describes, or now when it
-// carries none.
+// mysekaiMapSnapshotTimeMs is the game time the snapshot describes: the
+// server's "now", else the upload time (a late upload can pass a party's
+// closedAt), else the current time for a snapshot that carries neither.
 func mysekaiMapSnapshotTimeMs(merged map[string]any) int64 {
-	if snapshotMs := resolveMysekaiSnapshotTimeMs(merged); snapshotMs > 0 {
-		return snapshotMs
+	gameNow := normalizeMySekaiTimestampMs(int64Number(merged["now"], 0))
+	if updated, ok := merged["updatedResources"].(map[string]any); ok {
+		gameNow = max(gameNow, normalizeMySekaiTimestampMs(int64Number(updated["now"], 0)))
+	}
+	if gameNow > 0 {
+		return gameNow
+	}
+	if upload := normalizeMySekaiTimestampMs(int64Number(merged["upload_time"], 0)); upload > 0 {
+		return upload
 	}
 	return time.Now().UnixMilli()
 }

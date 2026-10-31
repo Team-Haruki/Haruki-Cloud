@@ -269,6 +269,10 @@ func verifyBotOwnerNotBanned(botDBClient *botDB.Client, checker *accountdata.Ban
 }
 
 func botRouteEnabled(path string, preview3DEnabled bool) bool {
+	// Older releases persist this retired route in command_manifests.
+	if path == "admin/kill" {
+		return false
+	}
 	return preview3DEnabled || !strings.HasPrefix(path, "costume/")
 }
 

@@ -467,9 +467,8 @@ func ExecuteCommandRequest(ctx context.Context, resolved *CommandRequest, app *r
 | 删除角色别名 | `alias/character/del` | 仅管理员可用，只删除已审核别名 |
 | 待审核列表 | `alias/pending` | 仅管理员可用，返回全部已支持类型 |
 | 通过别名审核 | `alias/approve` | 仅管理员可用，支持批量 |
-| 拒绝别名审核 | `alias/reject` | 仅管理员可用，单条 + 原因 |
+| 拒绝别名审核 | `alias/reject` | 仅管理员可用，支持单条或批量，原因可选 |
 | 批量拒绝别名审核 | `alias/batch-reject` | 仅管理员可用，空格分隔的参数全部视为审核 ID，事务内全部拒绝 |
-| 全局封禁 | `admin/kill` | 仅显式配置的全局管理员可用，封禁 QQ 的全部功能和其拥有的 Bot |
 | 全局解封 | `admin/back` | 仅显式配置的全局管理员可用，清理全局封禁状态 |
 
 对应用户指令当前包括：
@@ -477,7 +476,7 @@ func ExecuteCommandRequest(ctx context.Context, resolved *CommandRequest, app *r
 1. 歌曲：`/music alias`、`/music alias add`、`/music alias del`
 2. 角色：`/chara alias`、`/chara alias add`、`/chara alias del`
 3. 审核：`/待审核别名`、`/同意别名 ...`、`/拒绝别名 ...`、`/批量拒绝别名 ...`
-4. 全局管理：`/kill QQ号 原因 [天数]`、`/back QQ号`
+4. 全局管理：`/back QQ号`
 
 ### 12.2 解析与执行边界
 
@@ -525,7 +524,7 @@ internal/pjsk/handler/alias.go
 6. 删除命令当前支持歌曲别名与角色别名，且仅审核管理员可用
 7. 审核管理员身份通过 `(platform, user_id) -> haruki_user_id -> alias_admins` 校验
 8. 批量拒绝会先校验全部审核 ID，再在同一事务内写入拒绝记录并删除待审记录
-9. `/kill` 与 `/back` 仅允许 `moderation.admin_qq_ids` 中的 QQ 使用；全局封禁同时覆盖用户命令、Bot 登录、Bot 会话校验和 Bot 请求
+9. `/back` 仅允许 `moderation.admin_qq_ids` 中的 QQ 使用；全局封禁同时覆盖用户命令、Bot 登录、Bot 会话校验和 Bot 请求
 
 ## 13. 绑定可见性（隐私设置）
 

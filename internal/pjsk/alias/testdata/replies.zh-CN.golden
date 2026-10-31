@@ -39,13 +39,12 @@ tyw
 待审核 ID 1：歌曲「Tell Your World」（ID 74）的别名“告诉你的世界”
 待审核 ID 3：角色「初音ミク」（ID 21）的别名“葱”
 == reject
-已拒绝别名：
+已拒绝 1 条别名：
 待审核 ID 2：歌曲「Tell Your World」（ID 74）的别名“世界”
 原因：与已有别名重复
 == batch reject
 已拒绝 1 条别名：
 待审核 ID 4：角色「初音ミク」（ID 21）的别名“公主殿下”
-原因：批量拒绝
 == ban submitter
 已禁止用户 qq:10001 提交别名
 == delete music

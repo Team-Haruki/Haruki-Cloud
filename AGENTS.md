@@ -539,7 +539,7 @@ As of this revision the project is **considered functionally complete**:
 ### 12.2 目录约定
 
 - **ID**：小写字母、数字、下划线，用点分段，第一段等于文件名：
-  `<领域>.<子域>.<名称>`，例如 `moderation.kill.done_until`。ID 一旦被代码使用
+  `<领域>.<子域>.<名称>`，例如 `moderation.back.done`。ID 一旦被代码使用
   就保持稳定；措辞变了也不改 ID。不要用 go-i18n 的保留字（`id`、`other`、
   `one`、`description` 等）作 ID 段。
 - **description**：每条都必须有，写清出现在哪里（哪条指令、什么情况），再写

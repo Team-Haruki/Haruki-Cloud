@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -153,47 +152,6 @@ func TestCostumeRequestHelpersAndExecutionGuards(t *testing.T) {
 
 func TestModerationParsingHandlersAndExecutionGuards(t *testing.T) {
 	{
-		_, _, _, err := parseGlobalKillArgs("")
-		testutil.RequireArgs(t, !(err == nil), "empty kill args unexpectedly succeeded")
-	}
-	{
-
-		_, _, _, err := parseGlobalKillArgs("1 reason 2 extra")
-		testutil.RequireArgs(t, !(err == nil), "too many kill args unexpectedly succeeded")
-	}
-	{
-
-		_, _, _, err := parseGlobalKillArgs("bad reason")
-		testutil.RequireArgs(t, !(err == nil), "invalid QQ unexpectedly succeeded")
-	}
-
-	for _, args := range []string{"1 reason 0", "1 reason nope"} {
-		{
-			_, _, _, err := parseGlobalKillArgs(args)
-			testutil.Check(t, !(err == nil), "invalid days in %q unexpectedly succeeded", args)
-		}
-
-	}
-	{
-		_, _, _, err := parseGlobalKillArgs("1 " + strings.Repeat("理", 256))
-		testutil.RequireArgs(t, !(err == nil), "overlong reason unexpectedly succeeded")
-	}
-
-	qqID, reason, days, err := parseGlobalKillArgs("00012 spam 3")
-	{
-		testutil.Require(t, !(err != nil), "timed kill args = %q, %q, %v, %v", qqID, reason, days, err)
-		testutil.Require(t, !(qqID != "12"), "timed kill args = %q, %q, %v, %v", qqID, reason, days, err)
-		testutil.Require(t, !(reason != "spam"), "timed kill args = %q, %q, %v, %v", qqID, reason, days, err)
-		testutil.Require(t, !(days == nil), "timed kill args = %q, %q, %v, %v", qqID, reason, days, err)
-		testutil.Require(t, !(*days != 3), "timed kill args = %q, %q, %v, %v", qqID, reason, days, err)
-	}
-
-	_, _, days, err = parseGlobalKillArgs("12 spam")
-	{
-		testutil.Require(t, !(err != nil), "permanent kill args days = %v, err = %v", days, err)
-		testutil.Require(t, !(days != nil), "permanent kill args days = %v, err = %v", days, err)
-	}
-	{
 
 		_, err := parseQQIDArg("")
 		testutil.RequireArgs(t, !(err == nil), "empty QQ arg unexpectedly succeeded")
@@ -220,21 +178,8 @@ func TestModerationParsingHandlersAndExecutionGuards(t *testing.T) {
 
 	}
 
-	killCtx := additionalModuleContext("10001 spam", "/kill", renderregion.JP)
-	{
-		_, err := (sekaiHandlers{}).GlobalKillHandle().handleFunc(killCtx)
-		testutil.RequireArgs(t, !(err == nil), "self-kill handler unexpectedly succeeded")
-	}
-
-	killCtx.ArgText = "12 spam 2"
-	request, err := (sekaiHandlers{}).GlobalKillHandle().handleFunc(killCtx)
-	{
-		testutil.Require(t, !(err != nil), "kill request = %+v, %v", request, err)
-		testutil.Require(t, !(request.Mode != modeGlobalKill), "kill request = %+v, %v", request, err)
-	}
-
 	backCtx := additionalModuleContext("00012", "/back", renderregion.JP)
-	request, err = (sekaiHandlers{}).GlobalBackHandle().handleFunc(backCtx)
+	request, err := (sekaiHandlers{}).GlobalBackHandle().handleFunc(backCtx)
 	{
 		testutil.Require(t, !(err != nil), "back request = %+v, %v", request, err)
 		testutil.Require(t, !(request.Mode != modeGlobalBack), "back request = %+v, %v", request, err)
@@ -246,26 +191,8 @@ func TestModerationParsingHandlersAndExecutionGuards(t *testing.T) {
 	}
 
 	service := &accountdata.BanService{}
-	rc := &RequestContext{Ctx: context.Background(), App: &renderapp.App{BanChecker: service}, Cmd: &CommandRequest{Mode: modeGlobalKill, Params: json.RawMessage(`{`)}}
-	{
-		_, err := executeGlobalModeration(rc)
-		testutil.RequireArgs(t, !(err == nil), "malformed kill params unexpectedly succeeded")
-	}
-
-	rc.Cmd.Params = json.RawMessage(`{"platform":"qq","platform_user_id":"not-admin","qq_id":"12","reason":"spam"}`)
-	{
-		_, err := executeGlobalModeration(rc)
-		testutil.RequireArgs(t, !(err == nil), "non-admin kill unexpectedly succeeded")
-	}
-
 	service.SetAdminQQIDs([]string{"bad", "10001", "0"})
-	rc.Cmd.Params = json.RawMessage(`{"platform":"qq","platform_user_id":"10001","qq_id":"12","reason":"spam","days":2}`)
-	{
-		_, err := executeGlobalModeration(rc)
-		testutil.RequireArgs(t, !(err == nil), "unconfigured admin kill unexpectedly succeeded")
-	}
-
-	rc.Cmd = &CommandRequest{Mode: modeGlobalBack, Params: json.RawMessage(`{`)}
+	rc := &RequestContext{Ctx: context.Background(), App: &renderapp.App{BanChecker: service}, Cmd: &CommandRequest{Mode: modeGlobalBack, Params: json.RawMessage(`{`)}}
 	{
 		_, err := executeGlobalModeration(rc)
 		testutil.RequireArgs(t, !(err == nil), "malformed back params unexpectedly succeeded")

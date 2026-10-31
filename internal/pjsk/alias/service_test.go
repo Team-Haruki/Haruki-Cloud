@@ -453,7 +453,7 @@ func TestServiceRejectManyIsAtomic(t *testing.T) {
 		t.Fatalf("Submit() error = %v", err)
 	}
 
-	_, err = deps.service.RejectMany(ctx, "qq", "9011", []int64{records[0].ReviewID, records[1].ReviewID + 1000}, "批量拒绝")
+	_, err = deps.service.RejectMany(ctx, "qq", "9011", []int64{records[0].ReviewID, records[1].ReviewID + 1000}, "")
 	if err == nil || testutil.MessageID(err) != "alias.review_not_found" {
 		t.Fatalf("expected missing ID error, got %v", err)
 	}
@@ -469,7 +469,7 @@ func TestServiceRejectManyIsAtomic(t *testing.T) {
 		t.Fatalf("partial batch mutation detected: pending=%d rejected=%d", pendingCount, rejectedCount)
 	}
 
-	rejected, err := deps.service.RejectMany(ctx, "qq", "9011", []int64{records[1].ReviewID, records[0].ReviewID}, "批量拒绝")
+	rejected, err := deps.service.RejectMany(ctx, "qq", "9011", []int64{records[1].ReviewID, records[0].ReviewID}, "")
 	if err != nil {
 		t.Fatalf("RejectMany() error = %v", err)
 	}
@@ -480,7 +480,7 @@ func TestServiceRejectManyIsAtomic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("query rejected aliases: %v", err)
 	}
-	if len(rows) != 2 || rows[0].Reason != "批量拒绝" || rows[0].ReviewedBy != "Batch Reviewer" {
+	if len(rows) != 2 || rows[0].Reason != "" || rows[0].ReviewedBy != "Batch Reviewer" {
 		t.Fatalf("unexpected rejected rows: %+v", rows)
 	}
 }

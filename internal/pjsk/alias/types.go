@@ -76,10 +76,11 @@ type ApproveCommandParams struct {
 }
 
 type RejectCommandParams struct {
-	Platform       string `json:"platform"`
-	PlatformUserID string `json:"platform_user_id"`
-	ReviewID       int64  `json:"review_id"`
-	Reason         string `json:"reason"`
+	Platform       string  `json:"platform"`
+	PlatformUserID string  `json:"platform_user_id"`
+	ReviewID       int64   `json:"review_id,omitempty"`
+	ReviewIDs      []int64 `json:"review_ids,omitempty"`
+	Reason         string  `json:"reason"`
 }
 
 type BatchRejectCommandParams struct {

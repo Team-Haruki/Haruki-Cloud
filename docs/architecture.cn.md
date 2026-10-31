@@ -232,7 +232,7 @@ users_db:                  # 通用用户数据库（身份、绑定与全局封
   db_url: "..."
 
 moderation:                # 高权限全局管理命令
-  admin_qq_ids: []         # 可执行 /kill 与 /back 的 QQ 白名单；空列表默认拒绝全部
+  admin_qq_ids: []         # 可执行 /back 的 QQ 白名单；空列表默认拒绝全部
 
 censor:                    # 内容审核（百度/腾讯凭据 + censor DB）
   censor_db_url: "..."

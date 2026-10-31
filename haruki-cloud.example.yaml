@@ -251,7 +251,7 @@ database:
   auto_migrate: true            # env HARUKI_DB_AUTO_MIGRATE
 
 moderation:
-  # QQ accounts allowed to run /kill and /back. Empty means nobody can use them.
+  # QQ accounts allowed to run /back. Empty means nobody can use it.
   admin_qq_ids: []
 
 sekai_api:

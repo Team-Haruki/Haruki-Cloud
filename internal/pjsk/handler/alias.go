@@ -166,14 +166,14 @@ func (sekaiHandlers) AliasRejectHandle() HarukiSekaiCommandHandler {
 		},
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			reviewID, reason, err := parseAliasRejectArgs(strings.TrimSpace(ctx.GetArgs()))
+			reviewIDs, reason, err := parseAliasRejectArgs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleAlias, aliases.ModeReject, aliases.RejectCommandParams{
 				Platform:       ctx.GetPlatform(),
 				PlatformUserID: ctx.GetUserId(),
-				ReviewID:       reviewID,
+				ReviewIDs:      reviewIDs,
 				Reason:         reason,
 			}), nil
 		},
@@ -346,24 +346,27 @@ func parseAliasSubmissionTarget(args, currentPlatform string, atIDs []string) (s
 	return currentPlatform, target, nil
 }
 
-func parseAliasRejectArgs(args string) (int64, string, error) {
+func parseAliasRejectArgs(args string) ([]int64, string, error) {
 	args = strings.TrimSpace(args)
 	if args == "" {
-		return 0, "", usererror.Misuse(i18n.M("alias.reject_usage"))
+		return nil, "", usererror.Misuse(i18n.M("alias.reject_usage"))
 	}
-	parts := strings.Fields(args)
-	if len(parts) < 2 {
-		return 0, "", usererror.Misuse(i18n.M("alias.reject_usage"))
+	var reviewIDs []int64
+	for _, field := range strings.Fields(args) {
+		reviewID, err := strconv.ParseInt(field, 10, 64)
+		if err != nil {
+			if len(reviewIDs) == 0 || strings.ContainsAny(field[:1], "+-0123456789") {
+				return nil, "", usererror.Invalid(i18n.M("alias.review_id_positive"))
+			}
+			return reviewIDs, args, nil
+		}
+		if reviewID <= 0 {
+			return nil, "", usererror.Invalid(i18n.M("alias.review_id_positive"))
+		}
+		reviewIDs = append(reviewIDs, reviewID)
+		args = strings.TrimSpace(strings.TrimPrefix(args, field))
 	}
-	reviewID, err := strconv.ParseInt(parts[0], 10, 64)
-	if err != nil || reviewID <= 0 {
-		return 0, "", usererror.Invalid(i18n.M("alias.review_id_positive"))
-	}
-	reason := strings.TrimSpace(strings.TrimPrefix(args, parts[0]))
-	if reason == "" {
-		return 0, "", usererror.Misuse(i18n.M("alias.reject_reason_required"))
-	}
-	return reviewID, reason, nil
+	return reviewIDs, "", nil
 }
 
 func executeAlias(rc *RequestContext) (onebot11.Message, error) {

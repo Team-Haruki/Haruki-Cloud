@@ -17,7 +17,7 @@ import (
 	"haruki-cloud/utils/usererror"
 )
 
-// BanReasonMaxRunes is the longest ban reason /kill accepts.
+// BanReasonMaxRunes is the longest ban reason the service accepts.
 const BanReasonMaxRunes = 255
 
 // BanService checks per-user feature ban states stored in the users database.
@@ -46,7 +46,7 @@ func (s *BanService) SetAdminQQIDs(qqIDs []string) {
 }
 
 // IsAdmin reports whether an identity is explicitly authorized for global
-// moderation. Only QQ identities are supported by /kill and /back.
+// moderation. Only QQ identities are supported by /back.
 func (s *BanService) IsAdmin(platform, userID string) bool {
 	if s == nil || strings.TrimSpace(platform) != "qq" {
 		return false
@@ -119,7 +119,7 @@ func (s *BanService) Kill(ctx context.Context, qqID, reason string, expiresAt *t
 	qqID = strings.TrimSpace(qqID)
 	reason = strings.TrimSpace(reason)
 	if qqID == "" || reason == "" {
-		return GlobalBanStatus{}, usererror.Usage(i18n.M("moderation.kill.usage_reason"), "/kill")
+		return GlobalBanStatus{}, usererror.Invalid(i18n.M("moderation.kill.usage_reason"))
 	}
 	if len([]rune(reason)) > BanReasonMaxRunes {
 		return GlobalBanStatus{}, usererror.Invalid(i18n.M("moderation.kill.reason_too_long", i18n.Data{"Max": BanReasonMaxRunes}))

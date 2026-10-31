@@ -174,3 +174,51 @@ func TestAliasCommandDecodersRejectInvalidParams(t *testing.T) {
 		})
 	}
 }
+
+func TestRejectCommandsWithoutReason(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		mode  string
+		count int
+	}{
+		{"single", ModeReject, 1},
+		{"multiple", ModeReject, 2},
+		{"batch", ModeBatchReject, 2},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			deps := newAliasTestDeps(t)
+			deps.addMusic(t, ctx, 7001, "测试歌曲")
+			deps.addAdmin(t, ctx, "qq", "admin", "Reviewer")
+			records, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "user", "7001", []string{"别名一", "别名二"}[:tc.count])
+			if err != nil {
+				t.Fatal(err)
+			}
+			ids := []int64{records[0].ReviewID}
+			if tc.count == 2 {
+				ids = append(ids, records[1].ReviewID, records[0].ReviewID)
+			}
+			var params any = RejectCommandParams{Platform: "qq", PlatformUserID: "admin", ReviewIDs: ids}
+			if tc.mode == ModeBatchReject {
+				params = BatchRejectCommandParams{Platform: "qq", PlatformUserID: "admin", ReviewIDs: ids}
+			}
+			message := executeAliasCommand(t, ctx, deps.service, tc.mode, params, i18n.T("alias.batch_reject.done", i18n.Data{"Count": tc.count, "Records": ""}))
+			if strings.Contains(message, "原因") {
+				t.Fatalf("unexpected reason in response: %s", message)
+			}
+			rows, err := deps.pjsk.RejectedAlias.Query().All(ctx)
+			if err != nil || len(rows) != tc.count {
+				t.Fatalf("rejected rows: %v, %v", rows, err)
+			}
+			for _, row := range rows {
+				if row.Reason != "" || row.ReviewedBy != "Reviewer" {
+					t.Fatalf("unexpected rejection: %+v", row)
+				}
+			}
+			pending, err := deps.pjsk.PendingAlias.Query().Count(ctx)
+			if err != nil || pending != 0 {
+				t.Fatalf("pending = %d, %v", pending, err)
+			}
+		})
+	}
+}

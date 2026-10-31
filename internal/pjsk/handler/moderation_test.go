@@ -5,110 +5,14 @@ import (
 	"errors"
 	"strings"
 	"testing"
-	"time"
 
-	"haruki-cloud/internal/i18n"
+	registryhandler "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/pjsk/accountdata"
-	"haruki-cloud/internal/pjsk/displaytime"
-	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/utils/usererror"
 
 	json "haruki-cloud/internal/jsonutil"
 )
-
-func TestGlobalKillHandleParsesPermanentBan(t *testing.T) {
-	h := sekaiHandlers{}.GlobalKillHandle()
-	result, err := h.Handle(&PjskHandlerContext{
-		Context:    context.Background(),
-		Platform:   "qq",
-		UserId:     "9001",
-		TriggerCmd: "/kill",
-		ArgText:    "123456789 恶意滥用",
-	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
-	if result.Module != parser.ModuleAdmin {
-		t.Fatalf("unexpected module: %v", result.Module)
-	}
-	var params globalKillParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
-	}
-	if params.QQID != "123456789" || params.Reason != "恶意滥用" || params.Days != nil {
-		t.Fatalf("unexpected params: %+v", params)
-	}
-}
-
-func TestGlobalKillHandleParsesLastIntegerAsDays(t *testing.T) {
-	h := sekaiHandlers{}.GlobalKillHandle()
-	result, err := h.Handle(&PjskHandlerContext{
-		Context:    context.Background(),
-		Platform:   "qq",
-		UserId:     "9001",
-		TriggerCmd: "/kill",
-		ArgText:    "00123456789 频繁攻击服务 30",
-	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
-	var params globalKillParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
-	}
-	if params.QQID != "123456789" || params.Reason != "频繁攻击服务" || params.Days == nil || *params.Days != 30 {
-		t.Fatalf("unexpected params: %+v", params)
-	}
-}
-
-func TestGlobalKillHandleRejectsSelfBan(t *testing.T) {
-	h := sekaiHandlers{}.GlobalKillHandle()
-	_, err := h.Handle(&PjskHandlerContext{
-		Context:    context.Background(),
-		Platform:   "qq",
-		UserId:     "123456789",
-		TriggerCmd: "/kill",
-		ArgText:    "123456789 测试",
-	})
-	requireUserError(t, err, usererror.CodeForbidden, "moderation.kill.self")
-}
-
-func TestGlobalKillHandleKeepsNumericReasonWhenDurationIsOmitted(t *testing.T) {
-	h := sekaiHandlers{}.GlobalKillHandle()
-	result, err := h.Handle(&PjskHandlerContext{
-		Context:    context.Background(),
-		Platform:   "qq",
-		UserId:     "9001",
-		TriggerCmd: "/kill",
-		ArgText:    "123456789 404",
-	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
-	var params globalKillParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
-	}
-	if params.Reason != "404" || params.Days != nil {
-		t.Fatalf("unexpected numeric reason params: %+v", params)
-	}
-}
-
-func TestGlobalKillHandleRejectsMalformedDuration(t *testing.T) {
-	h := sekaiHandlers{}.GlobalKillHandle()
-	_, err := h.Handle(&PjskHandlerContext{
-		Context:    context.Background(),
-		Platform:   "qq",
-		UserId:     "9001",
-		TriggerCmd: "/kill",
-		ArgText:    "123456789 滥用 999999999999999999999999999999",
-	})
-	requireUserError(t, err, usererror.CodeBadParam, "common.bad_param")
-	if typed, _ := usererror.As(err); typed.Message.Data["Reason"].(i18n.Message).ID != "moderation.kill.days_invalid" {
-		t.Fatalf("bad duration reason = %+v", typed.Message)
-	}
-}
 
 func TestGlobalBackHandleRequiresOneQQID(t *testing.T) {
 	h := sekaiHandlers{}.GlobalBackHandle()
@@ -149,8 +53,6 @@ func TestModerationUsageErrorsPointToHelp(t *testing.T) {
 		name string
 		err  error
 	}{
-		{"kill without reason", func() error { _, _, _, err := parseGlobalKillArgs("123"); return err }()},
-		{"kill with extra args", func() error { _, _, _, err := parseGlobalKillArgs("1 a 2 3"); return err }()},
 		{"back without qq", func() error { _, err := parseQQIDArg(""); return err }()},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -162,8 +64,6 @@ func TestModerationUsageErrorsPointToHelp(t *testing.T) {
 	}
 	_, err := parseQQIDArg("abc")
 	requireUserError(t, err, usererror.CodeBadParam, "common.bad_param")
-	_, _, _, err = parseGlobalKillArgs("1 " + strings.Repeat("理", accountdata.BanReasonMaxRunes+1))
-	requireUserError(t, err, usererror.CodeInput, "moderation.kill.reason_too_long")
 }
 
 func TestGlobalModerationErrorsAreTyped(t *testing.T) {
@@ -174,7 +74,7 @@ func TestGlobalModerationErrorsAreTyped(t *testing.T) {
 	}
 
 	service := &accountdata.BanService{}
-	rc := &RequestContext{Ctx: context.Background(), App: &renderapp.App{BanChecker: service}, Cmd: &CommandRequest{Mode: modeGlobalKill, Params: json.RawMessage(`{`)}}
+	rc := &RequestContext{Ctx: context.Background(), App: &renderapp.App{BanChecker: service}, Cmd: &CommandRequest{Mode: modeGlobalBack, Params: json.RawMessage(`{`)}}
 	_, err = executeGlobalModeration(rc)
 	requireUserError(t, err, usererror.CodeInternal, "common.request_failed")
 
@@ -204,11 +104,20 @@ func TestModerationFailureHidesUntypedCauses(t *testing.T) {
 	}
 }
 
-func TestGlobalKillReplyUsesRequesterTimeZone(t *testing.T) {
-	expiresAt := time.Date(2026, 10, 9, 6, 5, 0, 0, time.UTC)
-	ctx := displaytime.WithRequestTimeZone(context.Background(), "Asia/Tokyo")
-	got := i18n.FormatUserTime(expiresAt, displaytime.RequestLocation(ctx)).String()
-	if got != "2026-10-09 15:05 (UTC+9)" {
-		t.Fatalf("FormatUserTime() = %q", got)
+func TestGlobalKillCommandRemoved(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+	if _, ok := registryhandler.LookupCommandHandler("/kill"); ok {
+		t.Fatal("removed kill command is still registered")
+	}
+	if _, ok := registryhandler.LookupCommandHandler("/back"); !ok {
+		t.Fatal("back command is missing")
+	}
+	_, err := executeGlobalModeration(&RequestContext{
+		Ctx: context.Background(),
+		App: &renderapp.App{BanChecker: &accountdata.BanService{}},
+		Cmd: &CommandRequest{Mode: "global-kill", Params: json.RawMessage(`{}`)},
+	})
+	if err == nil || !strings.Contains(usererror.LogText(err), "unsupported global moderation mode") {
+		t.Fatalf("removed kill mode should be unsupported, got %v", err)
 	}
 }

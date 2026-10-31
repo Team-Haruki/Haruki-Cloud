@@ -393,6 +393,9 @@ func reviewAliasRecordMessages(records []PjskAliasRecord) []i18n.Message {
 }
 
 func rejectedAliasRecordMessage(record PjskAliasRecord, reason string) i18n.Message {
+	if reason == "" {
+		return reviewAliasRecordMessage(record)
+	}
 	return i18n.M("alias.record.rejected", i18n.Data{"Record": reviewAliasRecordMessage(record), "Reason": reason})
 }
 

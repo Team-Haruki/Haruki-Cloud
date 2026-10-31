@@ -182,8 +182,6 @@ var userWrittenOutsideEchoRule = map[string]string{
 	"deck.summary.wl_character.Character":        "success summary",
 	"deck.summary.leader.Character":              "success summary",
 	"deck.summary.challenge_character.Character": "success summary",
-	"moderation.kill.done_permanent.Reason":      "the admin's own reason in a success reply",
-	"moderation.kill.done_until.Reason":          "the admin's own reason in a success reply",
 	"moderation.banned_reason.Reason":            "ban notice written by an admin",
 	"moderation.banned_reason_until.Reason":      "ban notice written by an admin",
 	"music.lookup_list.bpm.BPM":                  "image title of a successful lookup",

@@ -15,10 +15,10 @@ func TestCredentialVerificationBranches(t *testing.T) {
 	if !verifyCredential(string(hashed), "secret") || verifyCredential(string(hashed), "wrong") {
 		t.Fatal("bcrypt credential verification returned the wrong result")
 	}
-	if !verifyCredential("legacy-secret", "legacy-secret") || verifyCredential("legacy-secret", "wrong") {
-		t.Fatal("legacy credential verification returned the wrong result")
+	if verifyCredential("legacy-secret", "legacy-secret") || verifyCredential("legacy-secret", "wrong") {
+		t.Fatal("plaintext stored credential was accepted")
 	}
-	if verifyCredential("", "") || verifyCredential("legacy-secret", "") {
+	if verifyCredential("", "") || verifyCredential(string(hashed), "") {
 		t.Fatal("empty credentials were accepted")
 	}
 }

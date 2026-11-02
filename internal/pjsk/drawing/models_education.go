@@ -113,6 +113,7 @@ type BondsRequest struct {
 type LeaderCountInfo struct {
 	CharaID       int    `json:"chara_id"`
 	CharaIconPath string `json:"chara_icon_path"`
+	CharaName     string `json:"chara_name,omitempty"`
 	PlayCount     int    `json:"play_count"`
 	ExLevel       int    `json:"ex_level"`
 	ExCount       int    `json:"ex_count"`

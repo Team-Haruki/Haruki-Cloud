@@ -1,5 +1,17 @@
 # 养成：区域道具、羁绊等级、挑战等级、角色任务、队长次数、综合力加成。
 
+[education.image.leader.total]
+description = "队长统计图片顶部的总队长次数（包含 EX 次数）。占位符：Count=队长次数合计。"
+other = "总队长次数：{{.Count}} 次"
+
+[education.image.leader.entry]
+description = "队长统计图片占比条下前五名的角色图例。占位符：Name=角色名；Count=普通与 EX 队长次数合计；Percent=占比（整数，不含百分号）。"
+other = "{{.Name}} {{.Count}} 次（{{.Percent}}%）"
+
+[education.image.leader.other_characters]
+description = "队长统计图片占比条下除前五名以外角色的合并图例。占位符：Count=其余角色普通与 EX 队长次数合计；Percent=合并占比（整数，不含百分号）。"
+other = "其他 {{.Count}} 次（{{.Percent}}%）"
+
 [education.character_mission.usage]
 description = "角色任务指令参数不对。"
 other = "请写角色名，可加 all 和任务分类"

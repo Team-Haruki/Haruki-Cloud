@@ -130,6 +130,7 @@ func (c *Controller) buildLeaderCounts(progress *leaderMissionProgress) []drawin
 		leaders = append(leaders, drawing.LeaderCountInfo{
 			CharaID:       charID,
 			CharaIconPath: c.characterIconPath(charID),
+			CharaName:     characterMissionDisplayName(charID),
 			PlayCount:     progress.playCounts[charID],
 			ExLevel:       progress.exLevels[charID],
 			ExCount:       progress.exCounts[charID],

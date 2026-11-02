@@ -159,6 +159,12 @@ var scoreDrawingLabels = []drawingLabel{
 	{key: "score.target_pt", msg: i18n.M("score.image.target_pt")},
 }
 
+var leaderCountDrawingLabels = []drawingLabel{
+	{key: "education.leader.total", msg: i18n.M("education.image.leader.total", i18n.Data{"Count": slot("count")})},
+	{key: "education.leader.entry", msg: i18n.M("education.image.leader.entry", i18n.Data{"Name": slot("name"), "Count": slot("count"), "Percent": slot("percent")})},
+	{key: "education.leader.other", msg: i18n.M("education.image.leader.other_characters", i18n.Data{"Count": slot("count"), "Percent": slot("percent")})},
+}
+
 var mysekaiConvertDrawingLabels = []drawingLabel{
 	{key: "mysekai.convert.inputs", msg: i18n.M("mysekai.image.convert.inputs")},
 	{key: "mysekai.convert.outputs", msg: i18n.M("mysekai.image.convert.outputs")},
@@ -184,6 +190,7 @@ var vliveDrawingLabels = []drawingLabel{
 // drawingEndpointLabels lists, per Drawing endpoint path, the label groups
 // sent at the request root (and on every item of a list payload).
 var drawingEndpointLabels = map[string][][]drawingLabel{
+	"/api/pjsk/education/leader-count":  {leaderCountDrawingLabels},
 	"/api/pjsk/mysekai/convert-recipes": {mysekaiConvertDrawingLabels},
 	"/api/pjsk/sk/line":                 {skCountdownDrawingLabels, skPredictionDrawingLabels},
 	"/api/pjsk/sk/query":                {skCountdownDrawingLabels},

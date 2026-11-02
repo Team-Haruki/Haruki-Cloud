@@ -24,7 +24,8 @@ import (
 // the i18n catalog; version 6: raw keys and region/account labels sent next
 // to the labels, catalog supply labels; version 7: Drawing's own labels sent
 // as labels, data source labels, spec typography in Drawing's text; version 8:
-// MySekai fixture lists carry first-craft ribbons and a per-view legend).
+// MySekai fixture lists carry first-craft ribbons and a per-view legend; version 9:
+// leader counts add the total, character share bar and ranked legend).
 
 func renderCacheKeyGoldenFixtures() []struct {
 	name, endpoint string
@@ -83,19 +84,19 @@ func renderCacheKeyGoldenFixtures() []struct {
 }
 
 var renderCacheKeyGoldenValues = map[string]string{
-	"Profile/Asia/Tokyo":        "de89dfc1c9d86a9abcdd3ee1c18d38724f0339e28ed3629c63e40d8c624ba2ff",
-	"Profile/Asia/Shanghai":     "8044c3ef9f9e01f5cdfd3f8bcf9d63c9ef248a44ec5c50152cf6c5baff324144",
-	"CardBox100/Asia/Tokyo":     "32e0d69c12671cc42e776e6481558071a9f05d2169eb9d435992948f4bfba31f",
-	"CardBox100/Asia/Shanghai":  "e7117bebd1abcc3974c9c0e24965f27fe979ebd5e8404cc461c1f03d317d07d4",
-	"CardBox1000/Asia/Tokyo":    "cd1b4179dd4f679ec7f7039eb2400ccd5c3ffece526e1bee15d91b30a9225767",
-	"CardBox1000/Asia/Shanghai": "046d1fa72d1ac38c01a9723f67ef96fa772515515b8a5e8f4ca5aa28c191517c",
+	"Profile/Asia/Tokyo":        "5eb51240c28517f3718f9e8ba4f24475aaea6d6cc433b9c809c49ebf7dc72e67",
+	"Profile/Asia/Shanghai":     "cbe0b1e97763ebf86e4d5980e914c633814a3fab13241e433bbb519d6326818e",
+	"CardBox100/Asia/Tokyo":     "6da682f1552c7fc30de341f35fcb29a7c6c645a8c0f18cf427c2b226deaa507a",
+	"CardBox100/Asia/Shanghai":  "d9da2ddd06deafd57cddf837dec23808d279803dff3b423495cdbab9998f49d1",
+	"CardBox1000/Asia/Tokyo":    "5964cd27c0275918f4e8b47d837e1991e40b432dfefdc4db017466f747c3bdf8",
+	"CardBox1000/Asia/Shanghai": "5329966c05e47a64b00f581c0a6666673a3560e6a998f5aa1036cba15ec7960d",
 	"EventList/Asia/Tokyo":      "683ea9922ab0b86fcc6ba00b696ae861fba0e3fa816a3b73e7a80de40e6200fa",
 	"EventList/Asia/Shanghai":   "59d87ab661bc720d7f9003994e941676288f39bc375b0d3b28972c68e5f7c4b3",
-	"MusicList/Asia/Tokyo":      "dd8099e71376ee546db73e2ac6c1fe02ad6a6c1b94bab38d117288e94fcd41f3",
-	"MusicList/Asia/Shanghai":   "76cc07f5984227f7a678adc8d172c3df549d1610fd5de9b527e3933b6ea55468",
+	"MusicList/Asia/Tokyo":      "a6497496de068b183ad16af5bfdcc69b6086c1f59e91c55ddb26bb797a36603c",
+	"MusicList/Asia/Shanghai":   "0fa25c6636ff6178f4ee3c3482e879d1ca4c958279d6a185399636205a375d33",
 	// The /api/pjsk/chart rule changes only the TTL, never the key.
-	"Chart/Asia/Tokyo":    "d1e28b5f5ccedcb89bf493c00e1246a5c7b9d63115a761e01ea464399ac5ba0c",
-	"Chart/Asia/Shanghai": "bd5068744016453d7d753c55930e7c762410f51b29199abaf284eaf01f950a00",
+	"Chart/Asia/Tokyo":    "251bda25aa7ffa13e1e7c7d0ddc753d9135137b643837f2864f02be33baa45aa",
+	"Chart/Asia/Shanghai": "ff7f53468c5e438c50c68c9a36026fa238b5855bf9461f7bee718a3c6837357b",
 }
 
 func computeRenderCacheGoldenKey(t *testing.T, endpoint string, request any, zone string) string {
@@ -140,9 +141,9 @@ func TestRenderCacheKeyGolden(t *testing.T) {
 
 // TestRenderCacheKeyGoldenEventListUsesVersionFive proves the event/list
 // golden key is derived from key version 5 while every other endpoint is on
-// version 8 (the event list draws nothing that versions 6 to 8 changed).
+// version 9 (the event list draws nothing that versions 6 to 9 changed).
 func TestRenderCacheKeyGoldenEventListUsesVersionFive(t *testing.T) {
-	if renderCacheKeyVersion != 8 || renderCacheEventListKeyVersion != 5 {
+	if renderCacheKeyVersion != 9 || renderCacheEventListKeyVersion != 5 {
 		t.Fatalf("key versions changed: default=%d event/list=%d", renderCacheKeyVersion, renderCacheEventListKeyVersion)
 	}
 	for _, fixture := range renderCacheKeyGoldenFixtures() {

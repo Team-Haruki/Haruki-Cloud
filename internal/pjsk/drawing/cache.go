@@ -519,6 +519,9 @@ func (c *RenderCacheClient) renderRemoteMiss(ctx context.Context, endpoint, key 
 		// uploads them and Cloud records the image cache row, never a render
 		// cache entry.
 		directive.StoreRef = !directive.Store && mode.storeRefFor(policy.APIPath)
+		// Cache-ref replaces Drawing's own index write for a stored render:
+		// Drawing uploads, Cloud writes both rows before this returns.
+		directive.CacheRef = directive.Store && mode.cacheRefFor(policy.APIPath)
 		renderCtx = withDirective(ctx, directive)
 	}
 	image, err := render(renderCtx)

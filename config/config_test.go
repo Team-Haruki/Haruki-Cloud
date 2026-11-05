@@ -898,3 +898,31 @@ func TestExampleConfigAuthIPBanDefaults(t *testing.T) {
 		ban.MaxBanDuration == 24*time.Hour && ban.EscalationWindow == 168*time.Hour && !ban.BlockBotRoutes,
 		"example auth_ip_ban = %+v", ban)
 }
+
+func TestDrawingArtifactCacheRefDefaultsYAMLAndEnv(t *testing.T) {
+	cfg := &Config{}
+	ApplyProfileDefaults(cfg)
+	testutil.Require(t, cfg.PJSKRender.DrawingArtifact.EffectiveCacheRefPaths() == nil, "cache_ref must default off")
+
+	var decoded Config
+	testutil.Require(t, yaml.Unmarshal([]byte("pjsk_render:\n  drawing_artifact:\n    cache_ref:\n      enabled: true\n"), &decoded) == nil, "yaml")
+	got := decoded.PJSKRender.DrawingArtifact.EffectiveCacheRefPaths()
+	testutil.Require(t, len(got) == 1 && got[0] == "*", "absent paths = every endpoint, got %v", got)
+
+	decoded = Config{}
+	testutil.Require(t, yaml.Unmarshal([]byte("pjsk_render:\n  drawing_artifact:\n    cache_ref:\n      enabled: true\n      paths: []\n"), &decoded) == nil, "yaml")
+	got = decoded.PJSKRender.DrawingArtifact.EffectiveCacheRefPaths()
+	testutil.Require(t, got != nil && len(got) == 0, "explicit [] must disable, got %v", got)
+
+	decoded = Config{}
+	testutil.Require(t, yaml.Unmarshal([]byte("pjsk_render:\n  drawing_artifact:\n    cache_ref:\n      paths: [\"api/pjsk/card\"]\n"), &decoded) == nil, "yaml")
+	testutil.Require(t, decoded.PJSKRender.DrawingArtifact.EffectiveCacheRefPaths() == nil, "paths without enabled must stay off")
+
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_CACHE_REF_ENABLED", "true")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_CACHE_REF_PATHS", "api/pjsk/card, api/pjsk/profile")
+	cfg = &Config{}
+	ApplyProfileDefaults(cfg)
+	testutil.Require(t, ApplyEnvOverrides(cfg) == nil, "ApplyEnvOverrides failed")
+	got = cfg.PJSKRender.DrawingArtifact.EffectiveCacheRefPaths()
+	testutil.Require(t, len(got) == 2 && got[1] == "api/pjsk/profile", "env list = %v", got)
+}

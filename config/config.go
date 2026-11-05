@@ -559,6 +559,10 @@ func ApplyEnvOverrides(cfg *Config) error {
 	if err := envStringSlice("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_STORE_REF_PATHS", &cfg.PJSKRender.DrawingArtifact.StoreRef.Paths); err != nil {
 		return err
 	}
+	envBool("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_CACHE_REF_ENABLED", &cfg.PJSKRender.DrawingArtifact.CacheRef.Enabled)
+	if err := envStringSlice("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_CACHE_REF_PATHS", &cfg.PJSKRender.DrawingArtifact.CacheRef.Paths); err != nil {
+		return err
+	}
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_FETCH_TIMEOUT", &cfg.PJSKRender.DrawingArtifact.FetchTimeout)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_ARTIFACT_ARTIFACT_TIMEOUT", &cfg.PJSKRender.DrawingArtifact.ArtifactTimeout)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_URI", &cfg.PJSKRender.ImageCache.URI)
@@ -904,6 +908,44 @@ type DrawingArtifactConfig struct {
 	NoStorePaths []string `yaml:"no_store_paths"`
 	// StoreRef lets Drawing deliver those Cache-Store: 0 renders itself.
 	StoreRef DrawingArtifactStoreRefConfig `yaml:"store_ref"`
+	// CacheRef moves the render index write of stored renders from Drawing
+	// to Cloud.
+	CacheRef DrawingArtifactCacheRefConfig `yaml:"cache_ref"`
+}
+
+// DrawingArtifactCacheRefConfig is pjsk_render.drawing_artifact.cache_ref.
+//
+// For a matching render sent with X-Haruki-Cache-Store: 1, Cloud also sends
+// X-Haruki-Artifact-Mode: cache-ref. Drawing then uploads the image as for a
+// store-ref and makes no render index round trip; Cloud, next to the
+// database, writes the image_cache_entries and render_cache_index rows in one
+// content-locked transaction. Renders Drawing may not cache (missing assets,
+// stale renderer) are answered store0 as before, so the placeholder rule is
+// unchanged.
+//
+// This removes Drawing's index round trips from every cached render. A
+// Drawing without the mode writes the rows itself (today's path). It needs a
+// remote (non-local) image_cache slot and render_index.lookup_enabled.
+type DrawingArtifactCacheRefConfig struct {
+	// Enabled is the master switch; default false.
+	Enabled bool `yaml:"enabled"`
+	// Paths lists api path prefixes (matched per path segment) to roll out
+	// gradually. Absent = every artifact endpoint; [] = none. no_store_paths
+	// are never affected.
+	Paths []string `yaml:"paths"`
+}
+
+// EffectiveCacheRefPaths is the cache-ref path list in force: nil while
+// cache_ref is disabled, ["*"] (every artifact endpoint) while
+// cache_ref.paths is absent.
+func (c DrawingArtifactConfig) EffectiveCacheRefPaths() []string {
+	if !c.CacheRef.Enabled {
+		return nil
+	}
+	if c.CacheRef.Paths == nil {
+		return []string{"*"}
+	}
+	return c.CacheRef.Paths
 }
 
 // DrawingArtifactStoreRefConfig is pjsk_render.drawing_artifact.store_ref.

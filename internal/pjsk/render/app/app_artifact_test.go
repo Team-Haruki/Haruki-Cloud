@@ -84,3 +84,36 @@ func TestAppArtifactConfigWiresStoreRef(t *testing.T) {
 		t.Fatalf("disabled image cache must disable store-ref: %+v", got.StoreRefPaths)
 	}
 }
+
+func TestAppArtifactConfigWiresCacheRef(t *testing.T) {
+	index := &imagecache.PGStore{}
+	base := Config{
+		DrawingArtifact:             drawing.ArtifactConfig{Endpoints: []string{"*"}, CacheRefPaths: []string{"*"}, StoreRefBucket: "image-cache"},
+		Stores:                      storage.Set{ImageCache: storagetest.NewMemory()},
+		ImageHosts:                  urlhost.Single("https://ic.example"),
+		ImageCacheRenderIndexLookup: true,
+	}
+	got := appArtifactConfig(context.Background(), base, index)
+	if len(got.CacheRefPaths) != 1 || got.CacheRefIndexer != drawing.CacheRefIndexer(index) {
+		t.Fatalf("remote image cache with the render index: %+v", got)
+	}
+	noIndex := base
+	if got := appArtifactConfig(context.Background(), noIndex, nil); got.CacheRefPaths != nil {
+		t.Fatalf("no image cache index must disable cache-ref: %+v", got.CacheRefPaths)
+	}
+	noLookup := base
+	noLookup.ImageCacheRenderIndexLookup = false
+	if got := appArtifactConfig(context.Background(), noLookup, index); got.CacheRefPaths != nil {
+		t.Fatalf("an unread render index must disable cache-ref: %+v", got.CacheRefPaths)
+	}
+	local := base
+	local.ImageCacheLocalRoot = "/srv/ic"
+	if got := appArtifactConfig(context.Background(), local, index); got.CacheRefPaths != nil {
+		t.Fatalf("local image cache must disable cache-ref: %+v", got.CacheRefPaths)
+	}
+	noBucket := base
+	noBucket.DrawingArtifact.StoreRefBucket = ""
+	if got := appArtifactConfig(context.Background(), noBucket, index); got.CacheRefPaths != nil {
+		t.Fatalf("unknown bucket must disable cache-ref: %+v", got.CacheRefPaths)
+	}
+}

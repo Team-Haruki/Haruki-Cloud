@@ -215,3 +215,189 @@ func TestLifecyclePGAdoptedObjectsFollowGC(t *testing.T) {
 		t.Fatalf("retired adopted object survived GC: %v", err)
 	}
 }
+
+func adoptRender() AdoptedRender {
+	return AdoptedRender{
+		RequestKey: strings.Repeat("c", 64), APIPath: "api/pjsk/card/detail", UserID: "public",
+		GroupName: "pjsk", KeyVersion: 8, TTLSeconds: 43200,
+	}
+}
+
+func expectUpsertRender(mock sqlmock.Sqlmock, render AdoptedRender, hash string) *sqlmock.ExpectedExec {
+	return mock.ExpectExec(upsertRenderSQL).
+		WithArgs(render.RequestKey, hash, render.APIPath, render.UserID, render.GroupName, render.KeyVersion, render.TTLSeconds)
+}
+
+func TestAdoptRenderWritesBothRowsInOneLockedTransaction(t *testing.T) {
+	store, mock := lockedMockPGStore(t)
+	render := adoptRender()
+	expectContentLock(mock, adoptHash)
+	mock.ExpectQuery(lookupWidenedSQL).WithArgs(adoptHash).WillReturnRows(sqlmock.NewRows(widenedLookupColumns))
+	mock.ExpectExec(insertWidenedWithWriterSQL).
+		WithArgs(adoptHash, "pjsk", adoptPath, nil, int64(270000), BackendGarage, "image/jpeg", "gw-1", adoptNow).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	expectUpsertRender(mock, render, adoptHash).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	ctx, trace := commandtrace.WithNewTrace(t.Context())
+	got, err := store.AdoptRender(ctx, adoptObject(), render, adoptNow)
+	if err != nil || got != (AdoptedLocation{CDNPath: adoptPath, WriterNode: "gw-1"}) {
+		t.Fatalf("AdoptRender() = %+v, %v", got, err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+	ops := map[string]int{}
+	for _, op := range trace.Snapshot().Operations {
+		ops[op.Name] += op.Count
+	}
+	if ops["image.render_index"] != 1 || ops["image.ref_index"] != 0 || ops["image.content_lock"] != 1 {
+		t.Fatalf("trace ops = %v", ops)
+	}
+}
+
+func TestAdoptRenderPointsAtAnExistingGarageRow(t *testing.T) {
+	store, mock := lockedMockPGStore(t)
+	render := adoptRender()
+	existing := "pjsk/api/pjsk/card/detail/" + adoptHash + "-0123456789abcdef.jpg"
+	expectContentLock(mock, adoptHash)
+	mock.ExpectQuery(lookupWidenedSQL).WithArgs(adoptHash).WillReturnRows(sqlmock.NewRows(widenedLookupColumns).
+		AddRow(existing, "", 1, BackendGarage, "image/jpeg", nil, "gw-2", adoptNow.Add(-time.Hour)))
+	mock.ExpectExec(touchEntrySQL).WithArgs(adoptHash).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(registerUploadSQL).WithArgs(adoptHash, adoptPath).WillReturnResult(sqlmock.NewResult(0, 1))
+	expectUpsertRender(mock, render, adoptHash).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	got, err := store.AdoptRender(t.Context(), adoptObject(), render, adoptNow)
+	if err != nil || got != (AdoptedLocation{CDNPath: existing, Duplicate: true}) {
+		t.Fatalf("AdoptRender() = %+v, %v", got, err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAdoptRenderUpgradesALegacyDiskRow(t *testing.T) {
+	store, mock := lockedMockPGStore(t)
+	render := adoptRender()
+	render.TTLSeconds = 0
+	expectContentLock(mock, adoptHash)
+	mock.ExpectQuery(lookupWidenedSQL).WithArgs(adoptHash).WillReturnRows(sqlmock.NewRows(widenedLookupColumns).
+		AddRow("pjsk/"+adoptHash+".jpg", "/data/ic/x.jpg", 1, BackendLegacyDisk, "image/jpeg", nil, nil, nil))
+	mock.ExpectExec(insertWidenedWithWriterSQL).WillReturnResult(sqlmock.NewResult(0, 1))
+	expectUpsertRender(mock, render, adoptHash).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	got, err := store.AdoptRender(t.Context(), adoptObject(), render, adoptNow)
+	if err != nil || got.Duplicate || got.CDNPath != adoptPath {
+		t.Fatalf("AdoptRender() = %+v, %v", got, err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAdoptRenderFailureRollsBackBothRows(t *testing.T) {
+	store, mock := lockedMockPGStore(t)
+	render := adoptRender()
+	expectContentLock(mock, adoptHash)
+	mock.ExpectQuery(lookupWidenedSQL).WithArgs(adoptHash).WillReturnRows(sqlmock.NewRows(widenedLookupColumns))
+	mock.ExpectExec(insertWidenedWithWriterSQL).WillReturnResult(sqlmock.NewResult(0, 1))
+	expectUpsertRender(mock, render, adoptHash).WillReturnError(errors.New("relation render_cache_index does not exist"))
+	mock.ExpectRollback()
+
+	got, err := store.AdoptRender(t.Context(), adoptObject(), render, adoptNow)
+	if err == nil || got.CDNPath != adoptPath {
+		t.Fatalf("AdoptRender() = %+v, %v", got, err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAdoptRenderRejectsAnIncompleteRow(t *testing.T) {
+	store, mock := lockedMockPGStore(t)
+	for name, mutate := range map[string]func(*AdoptedRender){
+		"no key":   func(r *AdoptedRender) { r.RequestKey = "" },
+		"no path":  func(r *AdoptedRender) { r.APIPath = " " },
+		"no user":  func(r *AdoptedRender) { r.UserID = "" },
+		"no group": func(r *AdoptedRender) { r.GroupName = "" },
+	} {
+		render := adoptRender()
+		mutate(&render)
+		if _, err := store.AdoptRender(t.Context(), adoptObject(), render, adoptNow); err == nil {
+			t.Errorf("%s: accepted %+v", name, render)
+		}
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// A cache-ref render is protected by its render row exactly like Drawing's own
+// write: GC keeps the content row and object while the row lives, the hit
+// slides it, and once it expires and retention passes both are collected.
+func TestLifecyclePGAdoptedRendersFollowGC(t *testing.T) {
+	store := lifecyclePG(t)
+	memory := storagetest.NewMemory()
+	ctx := context.Background()
+	obj := adoptObject()
+	if err := memory.Put(ctx, storage.Key(obj.CDNPath), []byte("jpeg"), storage.PutOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	render := adoptRender()
+	if got, err := store.AdoptRender(ctx, obj, render, time.Now()); err != nil || got.Duplicate || got.CDNPath != obj.CDNPath {
+		t.Fatalf("AdoptRender() = %+v, %v", got, err)
+	}
+	entry, ok, err := store.LookupRender(ctx, render.RequestKey)
+	if err != nil || !ok {
+		t.Fatalf("LookupRender() = %+v, %v, %v", entry, ok, err)
+	}
+	if entry.ContentHash != adoptHash || entry.APIPath != render.APIPath || entry.KeyVersion != 8 || entry.TTLSeconds != 43200 ||
+		entry.Entry.CDNPath != obj.CDNPath || entry.Entry.WriterNode != "gw-1" {
+		t.Fatalf("render row = %+v", entry)
+	}
+	if left := time.Until(entry.ExpiresAt); left < 11*time.Hour || left > 13*time.Hour {
+		t.Fatalf("expires_at = %v, want about now + 12h", entry.ExpiresAt)
+	}
+	// A second render of the same key (forced, say) with an infinite TTL replaces the row.
+	infinite := render
+	infinite.TTLSeconds = 0
+	if _, err := store.AdoptRender(ctx, obj, infinite, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if entry, _, _ = store.LookupRender(ctx, render.RequestKey); !entry.ExpiresAt.IsZero() || entry.TTLSeconds != 0 {
+		t.Fatalf("re-adopted row = %+v", entry)
+	}
+
+	gc := NewGC(store, memory, GCConfig{Enabled: true, ObjectDeleteEnabled: true}, nil)
+	if _, err := store.db.ExecContext(ctx, `UPDATE image_cache_entries SET last_referenced_at = NOW() - INTERVAL '60 days'`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := gc.RunOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok, _ := store.Lookup(ctx, adoptHash); !ok {
+		t.Fatal("GC retired a content row its render row still references")
+	}
+	if _, err := store.db.ExecContext(ctx, `UPDATE render_cache_index SET expires_at = NOW() - INTERVAL '1 second'`); err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		if _, err := gc.RunOnce(ctx); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.db.ExecContext(ctx, `UPDATE image_cache_object_deletions SET next_attempt_at = NOW() - INTERVAL '1 second'`); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := gc.RunOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok, _ := store.LookupRender(ctx, render.RequestKey); ok {
+		t.Fatal("expired render row survived GC")
+	}
+	if _, err := memory.Stat(ctx, storage.Key(obj.CDNPath)); !errors.Is(err, storage.ErrNotExist) {
+		t.Fatalf("unreferenced adopted object survived GC: %v", err)
+	}
+}

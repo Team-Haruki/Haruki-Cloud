@@ -27,6 +27,9 @@ func formatDeckQuerySummary(q deck.AutoQuery) string {
 		parts = append(parts, i18n.RegionLabel(region).String())
 	}
 	parts = append(parts, deckRecommendTypeLabel(q.RecommendType).String())
+	if q.EventMEUnit != "" {
+		parts = append(parts, deck.MemoryEventLabel(q.EventMEUnit))
+	}
 	if q.EventID != nil && *q.EventID > 0 {
 		parts = append(parts, i18n.T("deck.summary.event", i18n.Data{"ID": *q.EventID}))
 	}

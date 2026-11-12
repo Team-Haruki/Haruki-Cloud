@@ -405,6 +405,7 @@ type AutoQuery struct {
 	MusicDiff                     string                              `json:"music_diff,omitempty"`
 	MusicTitle                    string                              `json:"music_title,omitempty"`
 	MusicCoverPath                string                              `json:"music_cover_path,omitempty"`
+	EventMEUnit                   string                              `json:"event_me_unit,omitempty"`
 	EventAttr                     string                              `json:"event_attr,omitempty"`
 	EventUnit                     string                              `json:"event_unit,omitempty"`
 	WorldBloomCharacterID         *int                                `json:"world_bloom_character_id,omitempty"`

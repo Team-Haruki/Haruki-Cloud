@@ -1,10 +1,13 @@
 package mysekai
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -121,5 +124,148 @@ func TestBirthdayDeliveryCharacter(t *testing.T) {
 	}
 	if mysekaiBirthdayPartyIconCandidates("jp", "  ") != nil {
 		t.Fatal("blank party asset must not produce candidates")
+	}
+}
+
+// EN's birthdayParties carry no mysekaiSiteHarvestFixtureId, and its plants
+// stand on tiles without a delivery dewdrop, so neither the master link nor
+// the dewdrop fallback finds the party (2026-10-24..27 Honami party: every EN
+// map drew the generic tree). The plant is 8000 + the party ID, and a plant
+// no party maps to uses the party running at the snapshot time.
+func TestBuildMapRequestBindsENBirthdayPlantsWithoutTheMasterField(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]any{
+		{"id": 8001, "assetbundleName": "mdl_site_dewdrop_birthday_plant106", "mysekaiSiteHarvestFixtureType": "birthday_plant", "mysekaiSiteHarvestFixtureRarityType": "rarity_2"},
+		{"id": 8002, "assetbundleName": "mdl_site_dewdrop_birthday_plant103", "mysekaiSiteHarvestFixtureType": "birthday_plant", "mysekaiSiteHarvestFixtureRarityType": "rarity_2"},
+		{"id": 8003, "assetbundleName": "mdl_site_rock_common_stone01", "mysekaiSiteHarvestFixtureType": "mineral", "mysekaiSiteHarvestFixtureRarityType": "rarity_1"},
+		{"id": 8099, "assetbundleName": "mdl_site_dewdrop_birthday_plant149", "mysekaiSiteHarvestFixtureType": "birthday_plant", "mysekaiSiteHarvestFixtureRarityType": "rarity_2"},
+	})
+	// The EN rows of 2026-10-30, minus the fields the map does not read.
+	writeTestJSON(t, filepath.Join(masterdataDir, "birthdayParties.json"), []map[string]any{
+		{"id": 1, "gameCharacterUnitId": 6, "startAt": int64(1790924400000), "closedAt": int64(1791442799000), "deliveryItemMaterialId": 179, "assetbundleName": "haruka_2025"},
+		{"id": 2, "gameCharacterUnitId": 3, "startAt": int64(1792825200000), "closedAt": int64(1793343599000), "deliveryItemMaterialId": 176, "assetbundleName": "honami_2025"},
+		{"id": 3, "gameCharacterUnitId": 49, "startAt": int64(1793606400000), "closedAt": int64(1794124799000), "deliveryItemMaterialId": 198, "assetbundleName": "meiko_2025"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacterUnits.json"), []map[string]any{{"id": 3, "gameCharacterId": 3}, {"id": 6, "gameCharacterId": 6}})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{{"id": 3, "givenNameEnglish": "Honami"}, {"id": 6, "givenNameEnglish": "Haruka"}})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{
+		{"id": 6, "iconAssetbundleName": "item_stone", "mysekaiMaterialRarityType": "rarity_1"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]any{})
+
+	// 2026-10-30 12:00 CST: inside the Honami party only. No dewdrop lies on
+	// either plant's tile.
+	mysekaiJSON := `{"updatedResources": {"now": 1793332800000, "userMysekaiHarvestMaps": [{
+  "mysekaiSiteId": 5,
+  "userMysekaiSiteHarvestFixtures": [
+    {"mysekaiSiteHarvestFixtureId": 8002, "positionX": 3, "positionZ": 4},
+    {"mysekaiSiteHarvestFixtureId": 8099, "positionX": 9, "positionZ": 9},
+    {"mysekaiSiteHarvestFixtureId": 8003, "positionX": 5, "positionZ": 6}
+  ],
+  "userMysekaiSiteHarvestResourceDrops": [
+    {"resourceType": "mysekai_material", "resourceId": 6, "positionX": 5, "positionZ": 6, "quantity": 2}
+  ]
+}]}}`
+	controller := NewController(nil, nil, renderregion.EN, assets.NewAssetHelper(filepath.Join(root, "asset"), nil), MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}).WithMySekaiData([]byte(mysekaiJSON))
+
+	req, err := controller.BuildMapRequest(MapQuery{Region: "en", MapIDs: []int{5}})
+	if err != nil {
+		t.Fatalf("BuildMapRequest() error = %v", err)
+	}
+	site := req.Maps[0]
+	honami := "asset/en-assets/ondemand/mysekai/birthday/honami_2025/icon_refresh.png"
+	if plant := findMapHarvestPoint(site.HarvestPoints, 8002); plant == nil || !slices.Equal(plant.ImagePath, drawing.AssetKey{honami}) || plant.FallbackImagePath == nil {
+		t.Fatalf("party 2 plant (fixture 8002) = %+v", plant)
+	}
+	if plant := findMapHarvestPoint(site.HarvestPoints, 8099); plant == nil || !slices.Equal(plant.ImagePath, drawing.AssetKey{honami}) {
+		t.Fatalf("unbound plant during the Honami party = %+v", plant)
+	}
+	for _, point := range site.HarvestPoints {
+		for _, path := range point.ImagePath {
+			if strings.Contains(path, "mdl_site_dewdrop_birthday_plant") {
+				t.Fatalf("plant %d still asks for the model-named static icon: %q", *point.ID, point.ImagePath)
+			}
+		}
+	}
+
+	// Outside every party window the unbound plant keeps today's path.
+	outside := strings.Replace(mysekaiJSON, "1793332800000", "1795000000000", 1)
+	req, err = controller.WithMySekaiData([]byte(outside)).BuildMapRequest(MapQuery{Region: "en", MapIDs: []int{5}})
+	if err != nil {
+		t.Fatalf("BuildMapRequest(outside) error = %v", err)
+	}
+	if plant := findMapHarvestPoint(req.Maps[0].HarvestPoints, 8099); plant == nil || plant.ImagePath.First() != "static_images/mysekai/harvest_fixture_icon/rarity_2/mdl_site_dewdrop_birthday_plant149.png" {
+		t.Fatalf("unbound plant outside a party = %+v", plant)
+	}
+	if plant := findMapHarvestPoint(req.Maps[0].HarvestPoints, 8002); plant == nil || plant.ImagePath.First() != honami {
+		t.Fatalf("bound plant outside its party = %+v", plant)
+	}
+}
+
+func TestLoadMysekaiBirthdayPartiesDerivesOnlyMissingPlantFixtures(t *testing.T) {
+	root := t.TempDir()
+	writeTestJSON(t, filepath.Join(root, "birthdayParties.json"), []map[string]any{
+		// JP/TW/CN/KR shape: the named fixture is used as is.
+		{"id": 1, "assetbundleName": "haruka_2025", "mysekaiSiteHarvestFixtureId": 8001},
+		{"id": 27, "assetbundleName": "haruka_2026", "mysekaiSiteHarvestFixtureId": 8027},
+		// EN shape: 8000 + id, when that fixture is a birthday plant.
+		{"id": 2, "assetbundleName": "honami_2025"},
+		{"id": 3, "assetbundleName": "meiko_2025", "mysekaiSiteHarvestFixtureId": 0},
+		{"id": 4, "assetbundleName": "akito_2025"},
+		// A named fixture wins over a derived one.
+		{"id": 5, "assetbundleName": "shizuku_2025"},
+		{"id": 40, "assetbundleName": "named_8005", "mysekaiSiteHarvestFixtureId": 8005},
+		{"id": 6, "assetbundleName": "  "},
+	})
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: root, AllowFallback: true}).withRegion("jp")
+	harvestFixtures := map[int]map[string]any{
+		8002: {"mysekaiSiteHarvestFixtureType": "birthday_plant"},
+		8003: {"mysekaiSiteHarvestFixtureType": "birthday_plant"},
+		8004: {"mysekaiSiteHarvestFixtureType": "mineral"},
+		8005: {"mysekaiSiteHarvestFixtureType": "birthday_plant"},
+		8006: {"mysekaiSiteHarvestFixtureType": "birthday_plant"},
+	}
+	got := controller.loadMysekaiBirthdayParties(harvestFixtures).plantAssets
+	want := map[int]string{8001: "haruka_2025", 8027: "haruka_2026", 8002: "honami_2025", 8003: "meiko_2025", 8005: "named_8005"}
+	if !maps.Equal(got, want) {
+		t.Fatalf("plant assets = %v, want %v", got, want)
+	}
+}
+
+func TestActiveMysekaiBirthdayPartyNeedsOneMatch(t *testing.T) {
+	windows := []mysekaiBirthdayPartyWindow{
+		{startAt: 100, closedAt: 200, assetbundleName: "honami_2025"},
+		{startAt: 300, closedAt: 400, assetbundleName: "rin_2025"},
+		{startAt: 300, closedAt: 400, assetbundleName: "len_2025"},
+		{startAt: 0, closedAt: 999, assetbundleName: "unscheduled"},
+	}
+	cases := map[int64]string{99: "", 100: "honami_2025", 200: "honami_2025", 201: "", 350: ""}
+	for at, want := range cases {
+		if got := activeMysekaiBirthdayParty(windows, at); got != want {
+			t.Fatalf("active party at %d = %q, want %q", at, got, want)
+		}
+	}
+}
+
+func TestMysekaiMapSnapshotTimePrefersGameTime(t *testing.T) {
+	// A late upload must not push the map past the party it was taken in.
+	if got := mysekaiMapSnapshotTimeMs(map[string]any{"now": int64(1793332800000), "upload_time": int64(1793350000000)}); got != 1793332800000 {
+		t.Fatalf("game now = %d", got)
+	}
+	if got := mysekaiMapSnapshotTimeMs(map[string]any{"updatedResources": map[string]any{"now": int64(1793332800000)}}); got != 1793332800000 {
+		t.Fatalf("updatedResources now = %d", got)
+	}
+	if got := mysekaiMapSnapshotTimeMs(map[string]any{"upload_time": int64(1793350000000)}); got != 1793350000000 {
+		t.Fatalf("upload time = %d", got)
+	}
+	before := time.Now().UnixMilli()
+	if got := mysekaiMapSnapshotTimeMs(nil); got < before || got > time.Now().UnixMilli() {
+		t.Fatalf("no snapshot time = %d", got)
 	}
 }

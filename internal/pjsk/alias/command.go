@@ -152,11 +152,19 @@ func executeRejectCommand(ctx context.Context, service *Service, raw json.RawMes
 	if err != nil {
 		return i18n.Message{}, err
 	}
-	record, err := service.Reject(ctx, params.Platform, params.PlatformUserID, params.ReviewID, params.Reason)
+	reviewIDs := params.ReviewIDs
+	if params.ReviewID != 0 {
+		reviewIDs = append(reviewIDs, params.ReviewID)
+	}
+	records, err := service.RejectMany(ctx, params.Platform, params.PlatformUserID, reviewIDs, params.Reason)
 	if err != nil {
 		return i18n.Message{}, err
 	}
-	return i18n.M("alias.reject.done", i18n.Data{"Record": rejectedAliasRecordMessage(*record, params.Reason)}), nil
+	lines := make([]i18n.Message, 0, len(records))
+	for _, record := range records {
+		lines = append(lines, rejectedAliasRecordMessage(record, params.Reason))
+	}
+	return i18n.M("alias.reject.done", i18n.Data{"Count": len(records), "Records": lines}), nil
 }
 
 func executeBatchRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) (i18n.Message, error) {
@@ -164,7 +172,7 @@ func executeBatchRejectCommand(ctx context.Context, service *Service, raw json.R
 	if err != nil {
 		return i18n.Message{}, err
 	}
-	reason := i18n.T("alias.batch_reject.reason")
+	const reason = ""
 	records, err := service.RejectMany(ctx, params.Platform, params.PlatformUserID, params.ReviewIDs, reason)
 	if err != nil {
 		return i18n.Message{}, err

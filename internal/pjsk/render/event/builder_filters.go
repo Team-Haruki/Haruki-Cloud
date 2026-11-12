@@ -1,6 +1,7 @@
 package event
 
 import (
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -186,7 +187,7 @@ func (b *Builder) isWorldBloomFinaleEvent(eventID int) bool {
 	return false
 }
 
-func (b *Builder) extractEventBonuses(eventID int) (string, []int) {
+func (b *Builder) extractEventBonuses(eventID int) ([]string, []int) {
 	attr, _, charSet := b.extractEventBonusMeta(eventID)
 	if len(charSet) == 0 {
 		return attr, nil
@@ -200,22 +201,24 @@ func (b *Builder) extractEventBonuses(eventID int) (string, []int) {
 	return attr, chars
 }
 
-func (b *Builder) extractEventBonusMeta(eventID int) (string, map[string]struct{}, map[int]struct{}) {
+func (b *Builder) extractEventBonusMeta(eventID int) ([]string, map[string]struct{}, map[int]struct{}) {
 	bonuses, err := b.source.GetEventDeckBonuses(eventID)
 	if err != nil {
-		return "", nil, nil
+		return nil, nil, nil
 	}
 
-	attr := ""
+	attrs := make([]string, 0, 5)
 	units := make(map[string]struct{})
 	charSet := make(map[int]struct{})
 	for _, bonus := range bonuses {
-		if attr == "" {
-			attr = strings.ToLower(bonus.CardAttr)
+		attr := strings.ToLower(strings.TrimSpace(bonus.CardAttr))
+		if attr != "" && !slices.Contains(attrs, attr) {
+			attrs = append(attrs, attr)
 		}
 		b.addEventBonusCharacter(units, charSet, bonus.GameCharacterUnitID, bonus.GameCharacterID)
 	}
-	return attr, units, charSet
+	sort.Strings(attrs)
+	return attrs, units, charSet
 }
 
 func (b *Builder) addEventBonusCharacter(units map[string]struct{}, characters map[int]struct{}, characterUnitID, characterID int) {
@@ -254,11 +257,11 @@ func (b *Builder) matchEventBonus(eventType string, eventID int, eventUnit strin
 }
 
 func (b *Builder) matchEventBonusMeta(eventType string, eventID int, eventUnit, unit string, blend bool, attr string) bool {
-	bonusAttr, units, characters := b.extractEventBonusMeta(eventID)
-	if len(units) == 0 && len(characters) == 0 && bonusAttr == "" {
+	bonusAttrs, units, characters := b.extractEventBonusMeta(eventID)
+	if len(units) == 0 && len(characters) == 0 && len(bonusAttrs) == 0 {
 		return false
 	}
-	if attr != "" && !strings.EqualFold(bonusAttr, attr) {
+	if attr != "" && !slices.Contains(bonusAttrs, strings.ToLower(strings.TrimSpace(attr))) {
 		return false
 	}
 	return b.matchEventBonusUnit(eventType, eventID, eventUnit, unit, blend, units)

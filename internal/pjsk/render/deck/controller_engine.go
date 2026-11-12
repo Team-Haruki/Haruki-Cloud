@@ -3,6 +3,7 @@ package deck
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -241,11 +242,19 @@ func (c *Controller) runStandardRecommendExecution(ctx context.Context, prepared
 }
 
 func (c *Controller) buildRecommendOption(region renderregion.Value, recType string, query AutoQuery) (map[string]any, error) {
+	if query.EventMEUnit != "" {
+		if normalizeRecommendUnit(query.EventMEUnit) == "" || (recType != "event" && recType != "bonus" && recType != "mysekai") ||
+			query.EventID != nil || query.EventAttr != "" || query.EventUnit != "" ||
+			query.WorldBloomEventTurn != nil || query.WorldBloomFinaleTurn != nil ||
+			query.WorldBloomCharacterID != nil || query.WorldBloomCharacterQuery != "" {
+			return nil, fmt.Errorf("event_me_unit requires an event/bonus/mysekai marathon simulation without other event selectors")
+		}
+	}
 	eventID := 0
 	if query.EventID != nil && *query.EventID > 0 {
 		eventID = *query.EventID
 	}
-	if eventID == 0 && recType != "no_event" && recType != "challenge" {
+	if eventID == 0 && query.EventMEUnit == "" && recType != "no_event" && recType != "challenge" {
 		if id := c.pickCurrentOrNextEventID(region); id > 0 {
 			eventID = id
 		}

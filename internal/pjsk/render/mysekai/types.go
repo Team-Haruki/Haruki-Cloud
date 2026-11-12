@@ -34,6 +34,7 @@ type Controller struct {
 }
 
 type masterdataResolver struct {
+	registryURL   string
 	dsn           string
 	pool          dbpool.Config
 	localDir      string
@@ -56,7 +57,8 @@ type mysekaiMapSiteConfig struct {
 }
 
 type MasterdataOptions struct {
-	SekaiDSN string
+	RegistryURL string
+	SekaiDSN    string
 	// SekaiPool bounds each region's store opened from SekaiDSN; zero
 	// fields take dbpool.Defaults(3).
 	SekaiPool     dbpool.Config

@@ -61,6 +61,7 @@ func (c *Controller) BuildBlueprintTermRequest(query BlueprintTermQuery) (*drawi
 	costGroups := blueprintTermCostGroups(c.masterdata.loadList("mysekaiBlueprintTermMysekaiMaterialCosts.json"))
 	materialIcons := c.loadIconNameMap("mysekaiMaterials.json", "iconAssetbundleName")
 	resolve := func(p string) string { return c.regionPath(region, p) }
+	fixtureImage := c.fixtureImageResolver(region)
 
 	tabs := map[string]*drawing.MysekaiBlueprintTermTab{}
 	for _, term := range sortedBlueprintTerms(terms) {
@@ -80,7 +81,7 @@ func (c *Controller) BuildBlueprintTermRequest(query BlueprintTermQuery) (*drawi
 		}
 		if fixture := fixtures[intNumber(blueprints[entry.ID]["craftTargetId"], 0)]; fixture != nil {
 			entry.Name = stringValue(fixture["name"])
-			entry.ImagePath = drawing.AssetPath(fixtureThumbnailPath(resolve, fixture))
+			entry.ImagePath = drawing.AssetPath(fixtureThumbnailPath(fixtureImage, fixture))
 		}
 		if limit := intNumber(term["craftLimit"], 0); limit > 0 {
 			entry.CraftLimit = &limit

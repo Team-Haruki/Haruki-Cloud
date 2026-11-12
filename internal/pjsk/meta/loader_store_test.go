@@ -42,7 +42,7 @@ func TestLoaderPersistsAndLoadsThroughStore(t *testing.T) {
 
 func TestLoaderStoreDisabledAndFailing(t *testing.T) {
 	disabled := NewLoader(nil, WithStore(storage.Disabled()))
-	if err := disabled.persist(context.Background(), "jp", []byte("[]")); err != nil {
+	if err := disabled.persist(context.Background(), "jp", &regionEntry{data: []byte("[]")}); err != nil {
 		t.Fatalf("disabled store persist = %v", err)
 	}
 	if err := disabled.loadPersisted(context.Background(), "jp"); !errors.Is(err, storage.ErrNotConfigured) {
@@ -52,7 +52,7 @@ func TestLoaderStoreDisabledAndFailing(t *testing.T) {
 	memory := storagetest.NewMemory()
 	memory.FailPut = func(storage.Key) error { return errors.New("put down") }
 	failing := NewLoader(nil, WithStore(memory))
-	if err := failing.persist(context.Background(), "jp", []byte("[]")); err == nil {
+	if err := failing.persist(context.Background(), "jp", &regionEntry{data: []byte("[]")}); err == nil {
 		t.Fatal("failing store persist succeeded")
 	}
 

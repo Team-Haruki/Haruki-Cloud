@@ -179,6 +179,16 @@ Redis client, and runtime config.
     - `sekaiapi.NewSekaiAPIClient(*config.SekaiAPIConfig)`
     - `sekaiapi.NewToolboxClient(*config.ToolboxConfig)`
     - `sekaiapi.NewTrackerClient(*config.TrackerConfig)`
+- With two or more `sekai_api` targets (`targets[]`, optionally `backup: true`,
+  or `base_url` + `backup_base_url` / `HARUKI_SEKAI_API_BACKUP_BASE_URL`), the
+  Sekai API client fails over only when a target cannot be reached (dial
+  error incl. its 2 s connect timeout, refused/reset, EOF before a response;
+  `isNoRouteFailure`): passive 30 s down window, GETs move to the next
+  target, POSTs are never replayed on another target (the same-URL retry
+  policy still applies to them). Response timeouts and any HTTP status
+  (503 maintenance included) never mark down or fail over. See
+  "Sekai API 入口故障转移" in `docs/architecture.cn.md`. `backup` is honoured
+  only by `upstream.Pool.AcquireHealthy`; other pool users are unaffected.
 - All methods are **nil-receiver safe**; nil clients return
   `ErrClientNotConfigured` (defined in `internal/pjsk/sekai/errors.go`).
 - When writing tests that exercise a real Sekai HTTP server
@@ -539,7 +549,7 @@ As of this revision the project is **considered functionally complete**:
 ### 12.2 目录约定
 
 - **ID**：小写字母、数字、下划线，用点分段，第一段等于文件名：
-  `<领域>.<子域>.<名称>`，例如 `moderation.kill.done_until`。ID 一旦被代码使用
+  `<领域>.<子域>.<名称>`，例如 `moderation.back.done`。ID 一旦被代码使用
   就保持稳定；措辞变了也不改 ID。不要用 go-i18n 的保留字（`id`、`other`、
   `one`、`description` 等）作 ID 段。
 - **description**：每条都必须有，写清出现在哪里（哪条指令、什么情况），再写

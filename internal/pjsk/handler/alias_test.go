@@ -277,7 +277,7 @@ func TestAliasRejectHandleParsesReason(t *testing.T) {
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
-	if params.ReviewID != 21 || params.Reason != "与现有别名冲突" {
+	if len(params.ReviewIDs) != 1 || params.ReviewIDs[0] != 21 || params.Reason != "与现有别名冲突" {
 		t.Fatalf("unexpected params: %+v", params)
 	}
 }
@@ -415,5 +415,35 @@ func TestBuildAliasListImageRequestCharacterIncludesTrimTimezoneAndSilhouette(t 
 	}
 	if req.CharacterSilhouettePath == nil || *req.CharacterSilhouettePath != wantTrim {
 		t.Fatalf("unexpected silhouette path: %+v", req.CharacterSilhouettePath)
+	}
+}
+
+func TestAliasRejectHandleAcceptsMultipleIDsAndOptionalReason(t *testing.T) {
+	for _, tc := range []struct {
+		args   string
+		count  int
+		reason string
+	}{
+		{"21", 1, ""},
+		{" 21  22\n23 ", 3, ""},
+		{"21 22 与现有别名冲突", 2, "与现有别名冲突"},
+	} {
+		t.Run(tc.args, func(t *testing.T) {
+			h := sekaiHandlers{}.AliasRejectHandle()
+			request, err := h.Handle(&PjskHandlerContext{
+				Context: context.Background(), Platform: "qq", UserId: "admin",
+				TriggerCmd: "/拒绝别名", ArgText: tc.args,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var params aliases.RejectCommandParams
+			if err := json.Unmarshal(request.Params, &params); err != nil {
+				t.Fatal(err)
+			}
+			if len(params.ReviewIDs) != tc.count || params.ReviewIDs[0] != 21 || params.Reason != tc.reason {
+				t.Fatalf("unexpected rejection params: %+v", params)
+			}
+		})
 	}
 }

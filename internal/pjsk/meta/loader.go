@@ -2,43 +2,111 @@ package meta
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"expvar"
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"haruki-cloud/config"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/storage"
 	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
 )
 
-const musicMetaMaxResponseBytes = 64 << 20
+const (
+	musicMetaMaxResponseBytes = 64 << 20
+
+	// musicMetaFetchTimeout bounds one region's request, body included. A
+	// region is a few MB uncompressed; nothing waits on the fetch, so the
+	// bound only has to catch a stalled transfer on a slow link.
+	musicMetaFetchTimeout = 60 * time.Second
+
+	// musicMetaFetchConcurrency limits the regions fetched at once. On a
+	// bandwidth-bound link more parallel transfers do not finish sooner, they
+	// only make every request slower and push all of them towards the
+	// timeout; two keeps one request's round trip and parsing overlapped
+	// with another's transfer.
+	musicMetaFetchConcurrency = 2
+
+	// musicMetaInitialWait bounds how long Start blocks for regions that have
+	// no persisted copy (a first boot). Regions with a copy never wait.
+	musicMetaInitialWait = 15 * time.Second
+
+	// validatorSuffix names the object holding the HTTP validators of a
+	// persisted payload, next to it in the same store.
+	validatorSuffix = ".validator"
+)
+
+// Active sources of a region's data.
+const (
+	SourcePersisted = "persisted"
+	SourceRemote    = "remote"
+)
+
+// defaultRetryBackoff is the wait before each retry of the regions a refresh
+// round could not fetch; the next round starts at the refresh interval.
+var defaultRetryBackoff = []time.Duration{5 * time.Second, 15 * time.Second, 45 * time.Second}
 
 // regionEntry holds a fetched music_metas payload together with the
-// HTTP caching headers used for conditional re-fetches.
+// HTTP caching headers used for conditional re-fetches. Entries are never
+// mutated after they are installed; updates install a new entry.
 type regionEntry struct {
 	data         []byte // processed JSON (omakase entry injected)
 	view         *View
 	etag         string
 	lastModified string
+	digest       string    // sha256 of data
+	source       string    // SourcePersisted or SourceRemote
+	loadedAt     time.Time // when this payload was installed
+	checkedAt    time.Time // last remote 200/304 for this payload
 }
+
+// regionFailure records the last failed remote fetch of a region.
+type regionFailure struct {
+	at        time.Time
+	errorType string
+}
+
+// persistedValidators is stored next to a persisted payload. sha256 binds the
+// validators to the exact bytes they were stored with: a payload written
+// without its validators (or with a failed validator write) does not match
+// and is revalidated with a full fetch instead of a 304 pinning wrong data.
+type persistedValidators struct {
+	SHA256       string `json:"sha256"`
+	ETag         string `json:"etag,omitempty"`
+	LastModified string `json:"last_modified,omitempty"`
+}
+
+// persistError marks a remote payload that was installed but could not be
+// written to the store; retrying the fetch would not help.
+type persistError struct{ err error }
+
+func (e *persistError) Error() string { return e.err.Error() }
+func (e *persistError) Unwrap() error { return e.err }
 
 // Loader fetches and caches music_metas JSON per region.
 // It uses ETag / Last-Modified for conditional HTTP requests so
 // unchanged responses cost only a single round-trip with no body transfer.
 type Loader struct {
-	http      *resty.Client
-	mu        sync.RWMutex
-	cache     map[string]*regionEntry
-	loadMu    sync.Mutex
-	loadLocks map[string]*sync.Mutex
-	logger    *logger.Logger
-	store     storage.Store
-	source    string
-	baseURL   string
+	http         *resty.Client
+	mu           sync.RWMutex
+	cache        map[string]*regionEntry
+	failures     map[string]regionFailure
+	loadMu       sync.Mutex
+	loadLocks    map[string]*sync.Mutex
+	logger       *logger.Logger
+	store        storage.Store
+	source       string
+	baseURL      string
+	retryBackoff []time.Duration
+	initialWait  time.Duration
+	concurrency  int
 }
 
 type LoaderOption func(*Loader)
@@ -86,12 +154,19 @@ func WithStore(store storage.Store) LoaderOption {
 // Pass nil for log to silence all output.
 func NewLoader(log *logger.Logger, options ...LoaderOption) *Loader {
 	l := &Loader{
+		// No Accept-Encoding is set by hand: net/http then asks for gzip and
+		// decompresses transparently, and the body limit applies to the
+		// decompressed payload.
 		http: resty.New().
-			SetTimeout(config.HTTPClientTimeout).
+			SetTimeout(musicMetaFetchTimeout).
 			SetResponseBodyLimit(musicMetaMaxResponseBytes),
-		cache:     make(map[string]*regionEntry),
-		loadLocks: make(map[string]*sync.Mutex),
-		logger:    log,
+		cache:        make(map[string]*regionEntry),
+		failures:     make(map[string]regionFailure),
+		loadLocks:    make(map[string]*sync.Mutex),
+		logger:       log,
+		retryBackoff: defaultRetryBackoff,
+		initialWait:  musicMetaInitialWait,
+		concurrency:  musicMetaFetchConcurrency,
 	}
 	for _, option := range options {
 		if option != nil {
@@ -101,69 +176,178 @@ func NewLoader(log *logger.Logger, options ...LoaderOption) *Loader {
 	return l
 }
 
-// LoadAll fetches all known regions concurrently (one goroutine per region;
-// the region list is small and fixed). It returns the first error
-// encountered, but always attempts every region, and logs one summary line
-// with the total and slowest region so startup and refresh timings are
-// visible without per-region arithmetic.
+// Start installs every region's persisted copy, then fetches all regions from
+// the remote source in the background (retrying failed regions with backoff)
+// and keeps refreshing them every interval until ctx is cancelled. Startup
+// only waits, at most musicMetaInitialWait, when a region has no persisted
+// copy; the fetch carries on in the background either way.
+func (l *Loader) Start(ctx context.Context, interval time.Duration) {
+	if l == nil {
+		return
+	}
+	missing := l.LoadPersistedAll(ctx)
+	firstPass := make(chan struct{})
+	go func() {
+		l.refresh(ctx, func() { close(firstPass) })
+		l.refreshEvery(ctx, interval)
+	}()
+	if missing == 0 {
+		return
+	}
+	timer := time.NewTimer(l.initialWait)
+	defer timer.Stop()
+	select {
+	case <-firstPass:
+	case <-timer.C:
+		if l.logger != nil {
+			l.logger.WarnContext(ctx, "music metadata without a persisted copy still loading in the background",
+				"regions_without_copy", missing, "waited_ms", l.initialWait.Milliseconds())
+		}
+	case <-ctx.Done():
+	}
+}
+
+// LoadPersistedAll installs the persisted copy of every region that has none
+// cached yet and returns how many regions are still without data.
+func (l *Loader) LoadPersistedAll(ctx context.Context) int {
+	missing := 0
+	for _, region := range Regions() {
+		err := l.withRegionLock(region, func() error {
+			if l.entry(region) != nil {
+				return nil
+			}
+			return l.loadPersisted(ctx, region)
+		})
+		if err != nil {
+			missing++
+			if l.logger != nil && l.store != nil && !errors.Is(err, storage.ErrNotExist) {
+				l.logger.WarnContext(ctx, "music metadata persisted copy unusable",
+					"region", region, "error_type", fmt.Sprintf("%T", err))
+			}
+		}
+	}
+	return missing
+}
+
+// refresh runs one refresh round: every region once, then the failed ones
+// again after each retry backoff. firstPass, when set, runs after the first
+// attempt of every region.
+func (l *Loader) refresh(ctx context.Context, firstPass func()) {
+	failed := l.loadRegions(ctx, Regions()).failed
+	if firstPass != nil {
+		firstPass()
+	}
+	for _, delay := range l.retryBackoff {
+		if len(failed) == 0 || ctx.Err() != nil {
+			return
+		}
+		timer := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return
+		case <-timer.C:
+		}
+		failed = l.loadRegions(ctx, failed).failed
+	}
+	if len(failed) > 0 && ctx.Err() == nil && l.logger != nil {
+		l.logger.WarnContext(ctx, "music metadata refresh retries exhausted; keeping the active data until the next refresh",
+			"regions", strings.Join(failed, ","))
+	}
+}
+
+func (l *Loader) refreshEvery(ctx context.Context, interval time.Duration) {
+	if interval <= 0 {
+		return
+	}
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			l.refresh(ctx, nil)
+		}
+	}
+}
+
+type loadRound struct {
+	failed   []string
+	firstErr error
+}
+
+// LoadAll fetches all known regions (at most l.concurrency at a time). It
+// returns the first error encountered, but always attempts every region,
+// and logs one summary line with the total and slowest region so startup
+// and refresh timings are visible without per-region arithmetic.
 func (l *Loader) LoadAll(ctx context.Context) error {
+	return l.loadRegions(ctx, Regions()).firstErr
+}
+
+func (l *Loader) loadRegions(ctx context.Context, regions []string) loadRound {
 	type result struct {
-		region  string
-		err     error
-		elapsed time.Duration
+		region   string
+		err      error
+		fellBack bool
+		elapsed  time.Duration
 	}
 
-	regions := Regions()
 	startedAt := time.Now()
 	results := make(chan result, len(regions))
+	slots := make(chan struct{}, max(l.concurrency, 1))
 	for _, region := range regions {
 		go func(r string) {
+			slots <- struct{}{}
+			defer func() { <-slots }()
 			began := time.Now()
-			err := l.load(ctx, r)
-			results <- result{r, err, time.Since(began)}
+			fellBack, err := l.loadRegion(ctx, r)
+			results <- result{r, err, fellBack, time.Since(began)}
 		}(region)
 	}
 
-	var firstErr error
-	failed := 0
+	var round loadRound
 	var slowest result
 	for range regions {
 		res := <-results
 		if res.elapsed > slowest.elapsed {
 			slowest = res
 		}
-		if res.err != nil {
-			failed++
-			if l.logger != nil {
-				l.logger.WarnContext(ctx, "music metadata load failed",
-					"region", res.region,
-					"error_type", fmt.Sprintf("%T", res.err),
-					"elapsed_ms", res.elapsed.Milliseconds(),
-				)
-			}
-			if firstErr == nil {
-				firstErr = res.err
-			}
+		if res.fellBack {
+			// Usable from the persisted copy, but the remote still failed.
+			round.failed = append(round.failed, res.region)
+		}
+		if res.err == nil {
+			continue
+		}
+		if round.firstErr == nil {
+			round.firstErr = res.err
+		}
+		var persistErr *persistError
+		if !errors.As(res.err, &persistErr) {
+			round.failed = append(round.failed, res.region)
+			l.recordFailure(res.region, res.err)
+		}
+		if l.logger != nil {
+			l.logger.WarnContext(ctx, "music metadata load failed",
+				"region", res.region,
+				"error_type", fmt.Sprintf("%T", res.err),
+				"elapsed_ms", res.elapsed.Milliseconds(),
+				"active_source", l.activeSource(res.region),
+			)
 		}
 	}
 	if l.logger != nil {
 		l.logger.InfoContext(ctx, "music metadata load complete",
-			"regions", len(regions), "failed", failed,
+			"regions", len(regions), "failed", len(round.failed),
 			"elapsed_ms", time.Since(startedAt).Milliseconds(),
 			"slowest_region", slowest.region, "slowest_ms", slowest.elapsed.Milliseconds(),
 		)
 	}
-	return firstErr
+	return round
 }
 
-// load performs a single conditional HTTP GET for one region.
-// On 304 Not Modified the existing cache entry is kept as-is.
-// On 200 the body is processed (omakase injected) and cached.
-func (l *Loader) load(ctx context.Context, region string) error {
-	url, err := ResolveURL(l.source, l.baseURL, region)
-	if err != nil {
-		return err
-	}
+func (l *Loader) withRegionLock(region string, fn func() error) error {
 	l.loadMu.Lock()
 	loadLock := l.loadLocks[region]
 	if loadLock == nil {
@@ -173,15 +357,62 @@ func (l *Loader) load(ctx context.Context, region string) error {
 	l.loadMu.Unlock()
 	loadLock.Lock()
 	defer loadLock.Unlock()
+	return fn()
+}
 
+func (l *Loader) entry(region string) *regionEntry {
 	l.mu.RLock()
-	existing := l.cache[region]
-	l.mu.RUnlock()
-	if err := l.loadRemote(ctx, region, url, existing); err != nil {
-		l.mu.RLock()
-		hasCached := l.cache[region] != nil
-		l.mu.RUnlock()
-		if hasCached {
+	defer l.mu.RUnlock()
+	return l.cache[region]
+}
+
+func (l *Loader) install(region string, entry *regionEntry) {
+	l.mu.Lock()
+	l.cache[region] = entry
+	if entry.source == SourceRemote {
+		delete(l.failures, region)
+	}
+	l.mu.Unlock()
+}
+
+func (l *Loader) recordFailure(region string, err error) {
+	l.mu.Lock()
+	l.failures[region] = regionFailure{at: time.Now(), errorType: fmt.Sprintf("%T", err)}
+	l.mu.Unlock()
+}
+
+func (l *Loader) activeSource(region string) string {
+	if entry := l.entry(region); entry != nil {
+		return entry.source
+	}
+	return "none"
+}
+
+// load performs a single conditional HTTP GET for one region.
+// On 304 Not Modified the existing payload is kept.
+// On 200 the body is processed (omakase injected) and cached.
+// Without any cached payload a failed fetch falls back to the persisted copy.
+func (l *Loader) load(ctx context.Context, region string) error {
+	_, err := l.loadRegion(ctx, region)
+	return err
+}
+
+// loadRegion is load that also reports whether the remote failed and the
+// region was served from the persisted fallback instead (err is then nil).
+func (l *Loader) loadRegion(ctx context.Context, region string) (bool, error) {
+	url, err := ResolveURL(l.source, l.baseURL, region)
+	if err != nil {
+		return false, err
+	}
+	fellBack := false
+	err = l.withRegionLock(region, func() error {
+		existing := l.entry(region)
+		err := l.loadRemote(ctx, region, url, existing)
+		if err == nil {
+			return nil
+		}
+		var persistErr *persistError
+		if l.entry(region) != nil || errors.As(err, &persistErr) {
 			return err
 		}
 		if fallbackErr := l.loadPersisted(ctx, region); fallbackErr != nil {
@@ -193,8 +424,11 @@ func (l *Loader) load(ctx context.Context, region string) error {
 				"error_type", fmt.Sprintf("%T", err),
 			)
 		}
-	}
-	return nil
+		l.recordFailure(region, err)
+		fellBack = true
+		return nil
+	})
+	return fellBack, err
 }
 
 func (l *Loader) loadRemote(ctx context.Context, region, url string, existing *regionEntry) error {
@@ -215,8 +449,20 @@ func (l *Loader) loadRemote(ctx context.Context, region, url string, existing *r
 
 	switch resp.StatusCode() {
 	case 304:
+		if existing == nil {
+			return fmt.Errorf("meta: fetch %s returned 304 without a cached payload", region)
+		}
+		confirmed := *existing
+		confirmed.checkedAt = time.Now()
+		confirmed.source = SourceRemote
+		l.install(region, &confirmed)
 		if l.logger != nil {
-			l.logger.DebugContext(ctx, "music metadata unchanged", "region", region, "status_code", 304)
+			if existing.source == SourcePersisted {
+				l.logger.InfoContext(ctx, "music metadata persisted copy confirmed by remote",
+					"region", region, "status_code", 304, "sha256", shortDigest(existing.digest))
+			} else {
+				l.logger.DebugContext(ctx, "music metadata unchanged", "region", region, "status_code", 304)
+			}
 		}
 		return nil
 
@@ -225,20 +471,30 @@ func (l *Loader) loadRemote(ctx context.Context, region, url string, existing *r
 		if err != nil {
 			return fmt.Errorf("meta: parse %s: %w", region, err)
 		}
+		now := time.Now()
 		entry := &regionEntry{
 			data:         processed,
 			view:         view,
 			etag:         resp.Header().Get("ETag"),
 			lastModified: resp.Header().Get("Last-Modified"),
+			digest:       digestOf(processed),
+			source:       SourceRemote,
+			loadedAt:     now,
+			checkedAt:    now,
 		}
-		l.mu.Lock()
-		l.cache[region] = entry
-		l.mu.Unlock()
-		if err := l.persist(ctx, region, processed); err != nil {
-			return fmt.Errorf("meta: persist %s: %w", region, err)
-		}
+		l.install(region, entry)
 		if l.logger != nil {
-			l.logger.InfoContext(ctx, "music metadata updated", "region", region, "response_bytes", len(processed))
+			previous := "none"
+			if existing != nil {
+				previous = existing.source
+			}
+			l.logger.InfoContext(ctx, "music metadata updated",
+				"region", region, "source", SourceRemote, "previous_source", previous,
+				"response_bytes", len(processed), "sha256", shortDigest(entry.digest),
+				"unchanged", existing != nil && existing.digest == entry.digest)
+		}
+		if err := l.persist(ctx, region, entry); err != nil {
+			return &persistError{fmt.Errorf("meta: persist %s: %w", region, err)}
 		}
 		return nil
 
@@ -263,13 +519,40 @@ func (l *Loader) loadPersisted(ctx context.Context, region string) error {
 	if err != nil {
 		return err
 	}
-	l.mu.Lock()
-	l.cache[region] = &regionEntry{data: processed, view: view}
-	l.mu.Unlock()
+	entry := &regionEntry{
+		data:     processed,
+		view:     view,
+		digest:   digestOf(processed),
+		source:   SourcePersisted,
+		loadedAt: time.Now(),
+	}
+	// Validators only count for the exact bytes they were stored with.
+	if validators, ok := l.loadValidators(ctx, filename); ok && validators.SHA256 == entry.digest && digestOf(payload) == entry.digest {
+		entry.etag = validators.ETag
+		entry.lastModified = validators.LastModified
+	}
+	l.install(region, entry)
+	if l.logger != nil {
+		l.logger.InfoContext(ctx, "music metadata loaded from persisted copy",
+			"region", region, "source", SourcePersisted, "bytes", len(processed),
+			"sha256", shortDigest(entry.digest), "revalidatable", entry.etag != "" || entry.lastModified != "")
+	}
 	return nil
 }
 
-func (l *Loader) persist(ctx context.Context, region string, data []byte) error {
+func (l *Loader) loadValidators(ctx context.Context, filename string) (persistedValidators, bool) {
+	raw, err := l.store.Get(ctx, storage.Key(filename+validatorSuffix))
+	if err != nil {
+		return persistedValidators{}, false
+	}
+	var validators persistedValidators
+	if err := json.Unmarshal(raw, &validators); err != nil || validators.SHA256 == "" {
+		return persistedValidators{}, false
+	}
+	return validators, true
+}
+
+func (l *Loader) persist(ctx context.Context, region string, entry *regionEntry) error {
 	if l == nil || l.store == nil {
 		return nil
 	}
@@ -277,11 +560,22 @@ func (l *Loader) persist(ctx context.Context, region string, data []byte) error 
 	if !ok {
 		return fmt.Errorf("unknown region %q", region)
 	}
-	err := l.store.Put(context.WithoutCancel(ctx), storage.Key(filename), data, storage.PutOptions{ContentType: "application/json"})
+	ctx = context.WithoutCancel(ctx)
+	err := l.store.Put(ctx, storage.Key(filename), entry.data, storage.PutOptions{ContentType: "application/json"})
 	if errors.Is(err, storage.ErrNotConfigured) {
 		return nil
 	}
-	return err
+	if err != nil {
+		return err
+	}
+	if entry.etag == "" && entry.lastModified == "" {
+		return nil
+	}
+	validators, err := json.Marshal(persistedValidators{SHA256: entry.digest, ETag: entry.etag, LastModified: entry.lastModified})
+	if err != nil {
+		return err
+	}
+	return l.store.Put(ctx, storage.Key(filename+validatorSuffix), validators, storage.PutOptions{ContentType: "application/json"})
 }
 
 // Get returns a copy of the cached music_metas JSON for region.
@@ -290,9 +584,7 @@ func (l *Loader) Get(region string) []byte {
 	if l == nil {
 		return nil
 	}
-	l.mu.RLock()
-	entry := l.cache[region]
-	l.mu.RUnlock()
+	entry := l.entry(region)
 	if entry == nil {
 		return nil
 	}
@@ -307,32 +599,93 @@ func (l *Loader) View(region string) *View {
 	if l == nil {
 		return nil
 	}
-	l.mu.RLock()
-	entry := l.cache[region]
-	l.mu.RUnlock()
+	entry := l.entry(region)
 	if entry == nil {
 		return nil
 	}
 	return entry.view
 }
 
-// StartBackgroundRefresh spawns a goroutine that calls LoadAll on every interval.
-// The goroutine exits when ctx is cancelled. Typical interval: 30 minutes.
-func (l *Loader) StartBackgroundRefresh(ctx context.Context, interval time.Duration) {
-	go func() {
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				if err := l.LoadAll(ctx); err != nil && l.logger != nil {
-					l.logger.WarnContext(ctx, "music metadata background refresh failed",
-						"error_type", fmt.Sprintf("%T", err),
-					)
-				}
-			}
+// RegionStatus describes the data a region is served from.
+type RegionStatus struct {
+	Source        string `json:"source"` // SourcePersisted, SourceRemote or "none"
+	SHA256        string `json:"sha256,omitempty"`
+	Bytes         int    `json:"bytes"`
+	ETag          string `json:"etag,omitempty"`
+	LoadedAt      string `json:"loaded_at,omitempty"`
+	CheckedAt     string `json:"checked_at,omitempty"`
+	LastErrorAt   string `json:"last_error_at,omitempty"`
+	LastErrorType string `json:"last_error_type,omitempty"`
+	RemoteSource  string `json:"remote_source,omitempty"`
+	Revalidatable bool   `json:"revalidatable"`
+}
+
+// Status reports, per region, which source is active and when the remote
+// last confirmed it.
+func (l *Loader) Status() map[string]RegionStatus {
+	if l == nil {
+		return nil
+	}
+	remote := l.source
+	if remote == "" {
+		remote = SourceLegacy
+	}
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	out := make(map[string]RegionStatus, len(regionFilenames))
+	for _, region := range Regions() {
+		status := RegionStatus{Source: "none", RemoteSource: remote}
+		if entry := l.cache[region]; entry != nil {
+			status.Source = entry.source
+			status.SHA256 = entry.digest
+			status.Bytes = len(entry.data)
+			status.ETag = entry.etag
+			status.LoadedAt = formatTime(entry.loadedAt)
+			status.CheckedAt = formatTime(entry.checkedAt)
+			status.Revalidatable = entry.etag != "" || entry.lastModified != ""
 		}
-	}()
+		if failure, ok := l.failures[region]; ok {
+			status.LastErrorAt = formatTime(failure.at)
+			status.LastErrorType = failure.errorType
+		}
+		out[region] = status
+	}
+	return out
+}
+
+const musicMetasExpvarKey = "music_metas"
+
+var (
+	publishedLoader   atomic.Pointer[Loader]
+	publishStatusOnce sync.Once
+)
+
+// PublishStatus exposes l.Status() on /debug/vars as "music_metas". The last
+// loader published wins.
+func (l *Loader) PublishStatus() {
+	publishedLoader.Store(l)
+	publishStatusOnce.Do(func() {
+		expvar.Publish(musicMetasExpvarKey, expvar.Func(func() any {
+			return publishedLoader.Load().Status()
+		}))
+	})
+}
+
+func digestOf(data []byte) string {
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
+}
+
+func shortDigest(digest string) string {
+	if len(digest) > 12 {
+		return digest[:12]
+	}
+	return digest
+}
+
+func formatTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.UTC().Format(time.RFC3339)
 }

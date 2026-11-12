@@ -20,6 +20,36 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 	c.applyChallengeRecommendMetadata(request, region, recType, option)
 	c.applyRecommendFilterMetadata(request, option)
 	c.applyRecommendEventMetadata(request, region, finalEventID)
+	if unit := optionString(option, "event_me_unit"); unit != "" {
+		request.EventName = drawing.StringPtr(MemoryEventLabel(unit))
+		if request.Labels == nil {
+			request.Labels = make(map[string]string)
+		}
+		request.Labels["deck.title.event"] = i18n.T("deck.image.title.me_event", i18n.Data{"Noun": "{noun}"})
+		request.Labels["deck.title.bonus"] = i18n.T("deck.image.title.me_bonus", i18n.Data{"Noun": "{noun}"})
+	}
+	applyMysekaiSimulationTitle(request, recType, option)
+}
+
+func applyMysekaiSimulationTitle(request *drawing.DeckRequest, recType string, option map[string]any) {
+	if recType != "mysekai" {
+		return
+	}
+	var title string
+	switch {
+	case optionString(option, "event_me_unit") != "":
+		title = i18n.T("deck.image.title.mysekai_me", i18n.Data{"Noun": "{noun}"})
+	case optionInt(option, "world_bloom_finale_turn") > 0:
+		title = i18n.T("deck.image.title.mysekai_wl_finale", i18n.Data{"Turn": optionInt(option, "world_bloom_finale_turn"), "Noun": "{noun}"})
+	case optionInt(option, "world_bloom_event_turn") > 0:
+		title = i18n.T("deck.image.title.mysekai_wl", i18n.Data{"Turn": optionInt(option, "world_bloom_event_turn"), "Noun": "{noun}"})
+	}
+	if title != "" {
+		if request.Labels == nil {
+			request.Labels = make(map[string]string)
+		}
+		request.Labels["deck.title.mysekai_simulated"] = title
+	}
 }
 
 func applyRecommendLiveMetadata(request *drawing.DeckRequest, recType string, option map[string]any) {
@@ -126,7 +156,10 @@ func (c *Controller) applyChallengeRecommendMetadata(request *drawing.DeckReques
 }
 
 func (c *Controller) applyRecommendFilterMetadata(request *drawing.DeckRequest, option map[string]any) {
-	unit := optionString(option, "event_unit")
+	unit := optionString(option, "event_me_unit")
+	if unit == "" {
+		unit = optionString(option, "event_unit")
+	}
 	if unit == "" {
 		unit = optionString(option, "unit_filter")
 	}
@@ -182,7 +215,7 @@ func optionHasSimulatedEvent(option map[string]any) bool {
 	if option == nil {
 		return false
 	}
-	return optionHasUnitAttrEvent(option) ||
+	return optionString(option, "event_me_unit") != "" || optionHasUnitAttrEvent(option) ||
 		optionInt(option, "world_bloom_event_turn") > 0 ||
 		optionInt(option, "world_bloom_finale_turn") > 0
 }
@@ -202,4 +235,13 @@ func optionHasWorldBloom(option map[string]any) bool {
 		optionInt(option, "world_bloom_event_turn") > 0 ||
 		optionInt(option, "world_bloom_finale_turn") > 0 ||
 		optionInt(option, "event_id") == 180
+}
+
+// MemoryEventLabel identifies a simulated event without borrowing a live event name.
+func MemoryEventLabel(unit string) string {
+	names := map[string]string{
+		"light_sound": "L/n", "idol": "MMJ", "street": "VBS",
+		"theme_park": "WxS", "school_refusal": "25h", "piapro": "VS",
+	}
+	return i18n.T("deck.me.label", i18n.Data{"Unit": names[normalizeRecommendUnit(unit)]})
 }

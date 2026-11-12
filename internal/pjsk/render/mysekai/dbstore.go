@@ -15,6 +15,8 @@ import (
 )
 
 var fileToTable = map[string]string{
+	"resourceBoxes.json":                                      "resourceboxes",
+	"boostItems.json":                                         "boostitems",
 	"birthdayParties.json":                                    "birthdayparties",
 	"birthdayPartyDeliveryTotalRewards.json":                  "birthdaypartydeliverytotalrewards",
 	"mysekaiFixtures.json":                                    "mysekaifixtures",
@@ -347,6 +349,10 @@ func (s *dbMasterdataStore) queryTable(ctx context.Context, table string) ([]map
 // Keep complete statements in this whitelist because SQL identifiers cannot be
 // passed as bind parameters.
 var masterdataTableQueries = map[string]string{
+	// This MySekai provider only needs the converter's resource boxes.
+	"resourceboxes": `SELECT * FROM "resourceboxes" WHERE server_region = $1 AND resource_box_purpose IN ('mysekai_convert_consumption', 'mysekai_convert_obtain')`,
+	"boostitems":    `SELECT * FROM "boostitems" WHERE server_region = $1`,
+
 	"birthdayparties":                                    `SELECT * FROM "birthdayparties" WHERE server_region = $1`,
 	"birthdaypartydeliverytotalrewards":                  `SELECT * FROM "birthdaypartydeliverytotalrewards" WHERE server_region = $1`,
 	"characterarchivemysekaicharactertalkgroups":         `SELECT * FROM "characterarchivemysekaicharactertalkgroups" WHERE server_region = $1`,

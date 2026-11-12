@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/trustsign"
+	json "haruki-cloud/internal/jsonutil"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -120,5 +121,39 @@ func TestBotManifestEndpointETagAndNotModified(t *testing.T) {
 	}
 	if stale, _ := get(`"stale"`); stale.StatusCode != http.StatusOK {
 		t.Fatalf("a stale ETag gets the full manifest, got %d", stale.StatusCode)
+	}
+}
+
+func TestManifestOmitsPersistedKillCommand(t *testing.T) {
+	ctx := context.Background()
+	client := newBotCommandTestClient(t, "manifest_retired_kill")
+	t.Cleanup(func() { _ = client.Close() })
+	for _, route := range []struct{ path, command string }{
+		{"admin/kill", "/kill"}, {"admin/back", "/back"},
+	} {
+		_, err := client.CommandManifest.Create().
+			SetCommandPrefixes([]string{route.command}).
+			SetCommandPriority(0).
+			SetCommandMode("POST").
+			SetCommandModule("pjsk").
+			SetCommandPath(route.path).
+			SetCommandAdditionalParams([]string{}).
+			Save(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, previewEnabled := range []bool{false, true} {
+		payload, failure := buildManifestPayload(ctx, client, previewEnabled)
+		if failure != "" {
+			t.Fatal(failure)
+		}
+		var manifest ManifestResponse
+		if err := json.Unmarshal(payload, &manifest); err != nil {
+			t.Fatal(err)
+		}
+		if len(manifest.Entries) != 1 || manifest.Entries[0].CommandPath != "admin/back" {
+			t.Fatalf("unexpected manifest entries: %+v", manifest.Entries)
+		}
 	}
 }

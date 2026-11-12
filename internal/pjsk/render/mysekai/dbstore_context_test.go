@@ -58,6 +58,9 @@ func TestMasterdataTableQueryWhitelistMatchesFileMapping(t *testing.T) {
 			continue
 		}
 		want := `SELECT * FROM "` + table + `" WHERE server_region = $1`
+		if table == "resourceboxes" {
+			want += ` AND resource_box_purpose IN ('mysekai_convert_consumption', 'mysekai_convert_obtain')`
+		}
 		if query != want {
 			t.Errorf("fixed query for table %q = %q, want %q", table, query, want)
 		}

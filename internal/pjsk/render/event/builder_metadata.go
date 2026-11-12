@@ -34,11 +34,13 @@ func (b *Builder) buildEventInfo(eventInfo *masterdata.Event) (drawing.EventInfo
 		}
 	}
 
-	if attr, chars := b.extractEventBonuses(eventInfo.ID); attr != "" {
-		info.BonusAttr = attr
-		if chars != nil {
-			info.BonusCharaID = chars
-		}
+	attrs, chars := b.extractEventBonuses(eventInfo.ID)
+	info.BonusAttrs = attrs
+	if len(attrs) > 0 {
+		info.BonusAttr = attrs[0]
+	}
+	if chars != nil {
+		info.BonusCharaID = chars
 	}
 	if wlTimeline := b.buildWorldBloomTimeline(eventInfo.ID); len(wlTimeline) > 0 {
 		info.WlTimeList = wlTimeline
@@ -65,8 +67,11 @@ func (b *Builder) buildEventAssets(eventInfo *masterdata.Event, info drawing.Eve
 		result.EventStoryBgPath = assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join("event_story", assetName, "screen_image", "story_bg.png"))
 		result.EventBanCharaImg = assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join("event", assetName, "screen", "character.png"))
 	}
-	if info.BonusAttr != "" {
-		result.EventAttrImagePath = assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", strings.ToLower(info.BonusAttr))))
+	for _, attr := range info.BonusAttrs {
+		result.EventAttrImagePaths = append(result.EventAttrImagePaths, assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", attr))))
+	}
+	if len(result.EventAttrImagePaths) > 0 {
+		result.EventAttrImagePath = result.EventAttrImagePaths[0]
 	}
 	if info.BannerCid != 0 {
 		result.BanCharaIconPath = b.characterIconPath(info.BannerCid, region)
@@ -96,8 +101,12 @@ func (b *Builder) buildEventBrief(eventInfo *masterdata.Event, region renderregi
 	if err == nil && len(cards) > 0 {
 		brief.EventCards = b.eventCardThumbnails(cards, region)
 	}
-	if attr, _ := b.extractEventBonuses(eventInfo.ID); attr != "" {
-		brief.EventAttrPath = new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_%s.png", strings.ToLower(attr)))))
+	attrs, _ := b.extractEventBonuses(eventInfo.ID)
+	for _, attr := range attrs {
+		brief.EventAttrPaths = append(brief.EventAttrPaths, assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_%s.png", attr))))
+	}
+	if len(brief.EventAttrPaths) > 0 {
+		brief.EventAttrPath = new(brief.EventAttrPaths[0])
 	}
 
 	isWLEvent := strings.EqualFold(eventInfo.EventType, "world_bloom")

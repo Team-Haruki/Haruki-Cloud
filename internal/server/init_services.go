@@ -139,10 +139,10 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		meta.WithSource(metaSource),
 		meta.WithBaseURL(metaBaseURL),
 	)
-	if err := metaLoader.LoadAll(ctx); err != nil {
-		mainLogger.Warn("music meta initial load partially failed", "error_type", fmt.Sprintf("%T", err))
-	}
-	metaLoader.StartBackgroundRefresh(ctx, metaRefreshInterval)
+	// Persisted copies are served at once; the remote fetch runs in the
+	// background and swaps each region in when it arrives.
+	metaLoader.Start(ctx, metaRefreshInterval)
+	metaLoader.PublishStatus()
 	mainLogger.Info("music meta loader started", "refresh_interval", metaRefreshInterval, "has_output_dir", strings.TrimSpace(metaOutputDir) != "", "persisted", cacheTargets.musicMeta != nil, "source", strings.TrimSpace(metaSource), "has_base_url", strings.TrimSpace(metaBaseURL) != "")
 
 	sekaiAPIClient := sekaiAPI.NewSekaiAPIClient(&harukiConfig.Cfg.SekaiAPI)

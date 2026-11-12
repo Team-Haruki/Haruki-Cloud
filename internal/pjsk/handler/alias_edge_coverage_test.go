@@ -50,12 +50,12 @@ func TestAliasParsingEdgeBranches(t *testing.T) {
 		t.Fatalf("plain submission target = %q, %q, %v", platform, userID, err)
 	}
 
-	for _, input := range []string{"", "1", "nope reason", "0 reason"} {
+	for _, input := range []string{"", "nope reason", "0 reason", "1 0", "1 -2", "1 999999999999999999999999"} {
 		if _, _, err := parseAliasRejectArgs(input); err == nil {
 			t.Fatalf("parseAliasRejectArgs(%q) unexpectedly succeeded", input)
 		}
 	}
-	if id, reason, err := parseAliasRejectArgs("7   useful reason"); err != nil || id != 7 || reason != "useful reason" {
+	if id, reason, err := parseAliasRejectArgs("7   useful reason"); err != nil || len(id) != 1 || id[0] != 7 || reason != "useful reason" {
 		t.Fatalf("reject parse = %d, %q, %v", id, reason, err)
 	}
 }

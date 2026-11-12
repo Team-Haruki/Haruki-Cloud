@@ -47,6 +47,9 @@ func (sekaiHandlers) MusicListHandle() HarukiSekaiCommandHandler {
 					params[key] = value
 				}
 			}
+			if strings.TrimSpace(args) != "" {
+				return nil, usererror.Unrecognized()
+			}
 			ctx.SetArgs(args)
 			return makeCommandRequestWithParams(ctx, parser.ModuleMusic, "music-list", params), nil
 		},
@@ -214,13 +217,8 @@ func (sekaiHandlers) MusicCoverHandle() HarukiSekaiCommandHandler {
 func extractMusicListResultFilter(args string) (string, string, bool) {
 	tokens := strings.Fields(strings.TrimSpace(args))
 	for idx, token := range tokens {
-		switch normalizeMusicListResultFilterToken(token) {
-		case "not_ap":
-			return "not_ap", joinMusicListTokensExcluding(tokens, idx), true
-		case "not_fc":
-			return "not_fc", joinMusicListTokensExcluding(tokens, idx), true
-		case "not_clear":
-			return "not_clear", joinMusicListTokensExcluding(tokens, idx), true
+		if filter := normalizeMusicListResultFilterToken(token); filter != "" {
+			return filter, joinMusicListTokensExcluding(tokens, idx), true
 		}
 	}
 	return "", strings.TrimSpace(args), false
@@ -232,6 +230,12 @@ func normalizeMusicListResultFilterToken(token string) string {
 	normalized = strings.ReplaceAll(normalized, "-", "")
 	normalized = strings.ReplaceAll(normalized, " ", "")
 	switch normalized {
+	case "ap", "已ap", "已allperfect", "已全perfect", "已全p": //copylint:ignore 解析关键字
+		return "ap"
+	case "fc", "已fc", "已fullcombo": //copylint:ignore 解析关键字
+		return "fc"
+	case "clear", "已完成", "已clear", "已通关": //copylint:ignore 解析关键字
+		return "clear"
 	case "未ap", "未allperfect", "未全perfect", "未全p", "notap": //copylint:ignore 解析关键字
 		return "not_ap"
 	case "未fc", "未fullcombo", "notfc": //copylint:ignore 解析关键字
@@ -490,15 +494,15 @@ func executeMusicDetail(rc *RequestContext, musicCtrl *rendermusic.Controller) (
 func executeMusicListMessage(rc *RequestContext, musicCtrl *rendermusic.Controller) (onebot11.Message, error) {
 	q := rendermusic.ListQuery{Region: rc.Cmd.Region}
 	mergeParams(rc.Cmd.Params, &q)
+	if strings.TrimSpace(rc.Cmd.Query) != "" || strings.TrimSpace(q.Keyword) != "" {
+		return nil, usererror.Unrecognized()
+	}
 	suiteSnapshot, err := musicListSnapshot(rc, q.Full)
 	if err != nil {
 		return nil, err
 	}
 	if suiteSnapshot != nil {
 		musicCtrl = musicCtrl.WithSnapshot(suiteSnapshot)
-	}
-	if strings.TrimSpace(q.Keyword) == "" {
-		q.Keyword = strings.TrimSpace(rc.Cmd.Query)
 	}
 	if !q.Full {
 		q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, suiteSnapshot)

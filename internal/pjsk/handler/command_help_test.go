@@ -266,7 +266,7 @@ func TestCommandHelpGeneratesRegionSection(t *testing.T) {
 		t.Fatalf("JP-only help lacks the region-only line:\n%s", md)
 	}
 
-	for _, path := range []string{"admin/kill", "alias/music", "profile/timezone"} {
+	for _, path := range []string{"admin/back", "alias/music", "profile/timezone"} {
 		md, err := commandHelpMarkdown(&CommandRequest{CommandPath: path})
 		if err != nil {
 			t.Fatal(err)

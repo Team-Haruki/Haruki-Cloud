@@ -135,6 +135,10 @@ func (c *HarukiDrawingClient) GenerateMysekaiShopImage(req *MysekaiShopRequest) 
 	return c.cachedPostImage("/api/pjsk/mysekai/shop", req)
 }
 
+func (c *HarukiDrawingClient) GenerateMysekaiConvertRecipesImage(req *MysekaiConvertRecipesRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/mysekai/convert-recipes", req)
+}
+
 func (c *HarukiDrawingClient) GenerateMysekaiBlueprintTermImage(req *MysekaiBlueprintTermRequest) (ImageResult, error) {
 	return c.cachedPostImage("/api/pjsk/mysekai/blueprint-term", req)
 }

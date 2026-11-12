@@ -1215,6 +1215,9 @@ func TestBuildLeaderCountRequestFromSnapshot(t *testing.T) {
 	if first.CharaID != 2 {
 		t.Fatalf("unexpected first character: %+v", first)
 	}
+	if first.CharaName != characterMissionDisplayName(2) {
+		t.Fatalf("unexpected character display name: %q", first.CharaName)
+	}
 	if first.PlayCount != 66 {
 		t.Fatalf("unexpected play count: %+v", first)
 	}

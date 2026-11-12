@@ -301,7 +301,6 @@ func TestHelpDocTriggerExtraction(t *testing.T) {
 	for trigger, want := range map[string]bool{
 		"/查曲":         true,
 		"/jp查曲 tyw":   true,
-		"/kill":       true,
 		"/sk100":      true,
 		"/查服装123":     true,
 		"/pjsk vlive": true,

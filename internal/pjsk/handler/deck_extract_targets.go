@@ -100,6 +100,23 @@ func (t deckFixedTargets) apply(params *deckAutoQueryParams) {
 }
 
 func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {
+	if params.EventMEUnit != "" {
+		if eventID, _ := extractDeckExplicitEventID(args); eventID != nil {
+			return "", usererror.Misuse(i18n.M("deck.me.conflict"))
+		}
+		fields := strings.Fields(args)
+		if len(fields) > 0 {
+			if _, ok := parseDeckWorldBloomTurn(fields[0]); ok || fields[0] == "wl" {
+				return "", usererror.Misuse(i18n.M("deck.me.conflict"))
+			}
+			if len(fields) > 1 && fields[0] == "me" {
+				if _, ok := educationAreaUnitAliases[fields[1]]; ok {
+					return "", usererror.Misuse(i18n.M("deck.me.conflict"))
+				}
+			}
+		}
+		return args, nil
+	}
 	if remaining, handled, err := applyDeckWorldBloomFinaleSelection(args, params); handled {
 		return remaining, err
 	}

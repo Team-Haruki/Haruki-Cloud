@@ -181,9 +181,6 @@ func (s *Service) RejectMany(ctx context.Context, platform, platformUserID strin
 		return nil, err
 	}
 	reason = strings.TrimSpace(reason)
-	if reason == "" {
-		return nil, usererror.Misuse(i18n.M("alias.reject_reason_required"))
-	}
 	if strings.TrimSpace(admin.Name) != "" {
 		reviewer = strings.TrimSpace(admin.Name)
 	}

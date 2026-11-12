@@ -197,6 +197,7 @@ type DeckData struct {
 }
 
 type DeckRequest struct {
+	Labels                       map[string]string          `json:"labels,omitempty"`
 	AutoScoreNotice              *string                    `json:"auto_score_notice,omitempty"`
 	Region                       string                     `json:"region"`
 	Profile                      DetailedProfileCardRequest `json:"profile"`

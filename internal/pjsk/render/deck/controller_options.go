@@ -91,6 +91,12 @@ func applyRecommendProfileOverrides(option map[string]any, query AutoQuery) {
 }
 
 func applyRecommendEventOverrides(option map[string]any, recType string, query AutoQuery) {
+	if query.EventMEUnit != "" {
+		option["event_me_unit"] = normalizeRecommendUnit(query.EventMEUnit)
+		option["event_type"] = "marathon"
+		delete(option, "event_id")
+		return
+	}
 	explicitEventID := query.EventID != nil && *query.EventID > 0
 	if explicitEventID {
 		option["event_id"] = *query.EventID

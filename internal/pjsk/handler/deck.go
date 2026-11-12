@@ -343,6 +343,7 @@ func prepareMySekaiDeckQuery(rc *RequestContext, query *deck.AutoQuery) error {
 
 func hasExplicitMySekaiEventSelection(query deck.AutoQuery) bool {
 	return query.EventID != nil ||
+		strings.TrimSpace(query.EventMEUnit) != "" ||
 		strings.TrimSpace(query.EventUnit) != "" ||
 		strings.TrimSpace(query.EventAttr) != "" ||
 		query.WorldBloomEventTurn != nil ||

@@ -469,10 +469,6 @@ type bridgeMusicSource struct {
 	difficulties map[int][]*masterdata.MusicDifficulty
 }
 
-type bridgeMusicAliasResolver struct {
-	ids map[string]int
-}
-
 type bridgeAmbiguousMusicAliasResolver struct{}
 
 type musicDrawingServerConfig struct {
@@ -599,22 +595,6 @@ func (c musicDrawingServerConfig) captureTitle(title *string) {
 }
 
 func (s *bridgeMusicSource) DefaultRegion() renderregion.Value { return renderregion.JP }
-
-func (r *bridgeMusicAliasResolver) TryResolveMusicID(_ context.Context, token string) (int, bool, error) {
-	if r == nil {
-		return 0, false, nil
-	}
-	id, ok := r.ids[strings.ToLower(strings.TrimSpace(token))]
-	return id, ok, nil
-}
-
-func (r *bridgeMusicAliasResolver) TryResolveMusicTitleOrAliasID(_ context.Context, token string) (int, bool, error) {
-	if r == nil {
-		return 0, false, nil
-	}
-	id, ok := r.ids[strings.ToLower(strings.TrimSpace(token))]
-	return id, ok, nil
-}
 
 func (r *bridgeAmbiguousMusicAliasResolver) TryResolveMusicID(_ context.Context, token string) (int, bool, error) {
 	return r.TryResolveMusicTitleOrAliasID(context.Background(), token)
@@ -1050,66 +1030,25 @@ func TestExecuteMusicNoteCountUsesSingleMusicListImageWithoutSummaryText(t *test
 	}
 }
 
-func TestExecuteMusicListUsesQueryKeywordAndAlias(t *testing.T) {
-	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/pjsk/music/list" {
-			t.Fatalf("unexpected path: %s", r.URL.Path)
-		}
-		var req drawing.MusicListRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			t.Fatalf("decode request: %v", err)
-		}
-		if len(req.MusicList) != 1 {
-			t.Fatalf("expected 1 music item, got %d", len(req.MusicList))
-		}
-		if id, ok := req.MusicList[0]["id"].(float64); !ok || int(id) != 1 {
-			t.Fatalf("unexpected music list item: %+v", req.MusicList[0])
-		}
-		_, _ = w.Write([]byte("png"))
-	}))
-	defer drawingServer.Close()
-
-	source := &bridgeMusicSource{
-		musics: map[int]*masterdata.Music{
-			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
-			2: {ID: 2, Title: "Song B", AssetBundleName: "jacket_b"},
-		},
-		difficulties: map[int][]*masterdata.MusicDifficulty{
-			1: {
-				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
-			},
-			2: {
-				{MusicID: 2, MusicDifficulty: "master", PlayLevel: 30},
-			},
-		},
-	}
-	controller := music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), nil, nil)
-	controller.SetAliasResolver(&bridgeMusicAliasResolver{
-		ids: map[string]int{"blue song": 1},
-	})
-
-	app := &renderapp.App{
-		Music:      controller,
-		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
-	}
-
-	params, err := json.Marshal(map[string]string{"difficulty": "master"})
-	if err != nil {
-		t.Fatalf("marshal params: %v", err)
-	}
-
-	message, err := executeMusic(NewRequestContext(context.Background(), &CommandRequest{
-		Module: parser.ModuleMusic,
-		Mode:   "music-list",
-		Query:  "blue song",
-		Region: "jp",
-		Params: params,
-	}, app))
-	if err != nil {
-		t.Fatalf("executeMusic list: %v", err)
-	}
-	if len(message) != 1 || message[0].Type != "image" {
-		t.Fatalf("unexpected list message: %+v", message)
+func TestExecuteMusicListRejectsSongSearchBeforeDataAccess(t *testing.T) {
+	for _, tc := range []struct{ name, query, keyword string }{
+		{name: "raw query", query: "blue song"},
+		{name: "keyword parameter", keyword: "shared alias"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			params, err := json.Marshal(map[string]any{"full": true, "keyword": tc.keyword})
+			if err != nil {
+				t.Fatal(err)
+			}
+			// No controller or data clients: invalid text must fail before any search,
+			// snapshot access or drawing request, even on the public full-list path.
+			message, err := executeMusicListMessage(NewRequestContext(t.Context(), &CommandRequest{
+				Module: parser.ModuleMusic, Mode: "music-list", Region: "jp", Query: tc.query, Params: params,
+			}, &renderapp.App{}), nil)
+			if usererror.CodeOf(err) != usererror.CodeUsage || message != nil {
+				t.Fatalf("expected parameter error, message=%+v err=%v", message, err)
+			}
+		})
 	}
 }
 

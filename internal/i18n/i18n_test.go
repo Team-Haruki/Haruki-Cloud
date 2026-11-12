@@ -128,7 +128,7 @@ func TestMessageRenderingAndFallbacks(t *testing.T) {
 	if !(Message{}).IsZero() || M("x").IsZero() {
 		t.Fatal("IsZero")
 	}
-	merged := M("moderation.kill.done_permanent", Data{"QQ": "1"}, Data{"Reason": "r"})
+	merged := M("moderation.banned_reason", Data{"Feature": "1"}, Data{"Reason": "r"})
 	if got := merged.String(); !strings.Contains(got, "1") || !strings.Contains(got, "r") {
 		t.Fatalf("merged data = %q", got)
 	}

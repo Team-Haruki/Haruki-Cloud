@@ -37,24 +37,22 @@ func TestAppCloseCancelsInternallyCreatedMetaRefresh(t *testing.T) {
 		MusicMetaRefreshInterval: 20 * time.Millisecond,
 	})
 	t.Cleanup(func() { _ = runtime.Close() })
+	// The refresh fetches a few regions at a time; one request in flight is
+	// enough to see Close cancel it.
 	deadline := time.NewTimer(5 * time.Second)
 	defer deadline.Stop()
-	for range regionCount {
-		select {
-		case <-started:
-		case <-deadline.C:
-			t.Fatal("metadata background refresh did not start")
-		}
+	select {
+	case <-started:
+	case <-deadline.C:
+		t.Fatal("metadata background refresh did not start")
 	}
 	if err := runtime.Close(); err != nil {
 		t.Fatal(err)
 	}
-	for range regionCount {
-		select {
-		case <-canceled:
-		case <-deadline.C:
-			t.Fatal("App.Close did not cancel metadata HTTP requests")
-		}
+	select {
+	case <-canceled:
+	case <-deadline.C:
+		t.Fatal("App.Close did not cancel metadata HTTP requests")
 	}
 	if lifecycle.Err() != nil {
 		t.Fatal("App.Close canceled the caller-owned context")

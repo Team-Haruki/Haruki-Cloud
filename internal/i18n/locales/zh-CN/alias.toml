@@ -132,10 +132,6 @@ other = "未找到待审核别名 ID：{{.UserIDs}}"
 description = "alias.review_not_found 的不回显形式：客户端没有开启参数回显（enableParamEcho）时使用，不显示用户输入。"
 other = "未找到对应的待审核别名"
 
-[alias.reject_reason_required]
-description = "/拒绝别名 没有写拒绝原因。"
-other = "请写拒绝原因"
-
 [alias.ban_target_required]
 description = "禁止提交别名时没有写用户。"
 other = "请写要禁止提交别名的用户（@群友或 QQ 号）"
@@ -162,7 +158,7 @@ other = "第一行写歌曲或角色，第二行起每行写一个别名"
 
 [alias.reject_usage]
 description = "/拒绝别名 的格式不对。"
-other = "请写待审核 ID 和拒绝原因"
+other = "请写一个或多个待审核 ID，拒绝原因可选"
 
 [alias.single_review_id]
 description = "需要一个待审核 ID 的指令写了多个或没写。"
@@ -227,7 +223,7 @@ description = "一条已删除的已审核别名，用在 /删除歌曲别名、
 other = "别名 ID {{.AliasID}}：{{.Kind}}「{{.Name}}」（ID {{.EntityID}}）的别名“{{.Alias}}”"
 
 [alias.record.rejected]
-description = "一条被拒绝的别名及拒绝原因。占位符：Record=待审核别名（alias.record.review）；Reason=拒绝原因（管理员输入的原文，批量拒绝时为 alias.batch_reject.reason）。"
+description = "一条被拒绝的别名及拒绝原因。占位符：Record=待审核别名（alias.record.review）；Reason=拒绝原因（管理员输入的原文）。"
 other = "{{.Record}}\n原因：{{.Reason}}"
 
 [alias.add.done]
@@ -259,13 +255,9 @@ description = "/同意别名 成功。占位符：Count=通过的别名数量；
 other = "已通过 {{.Count}} 条别名：\n{{.Records}}"
 
 [alias.reject.done]
-description = "/拒绝别名 成功。占位符：Record=被拒绝的别名及原因（alias.record.rejected）。"
-other = "已拒绝别名：\n{{.Record}}"
-
-[alias.batch_reject.done]
-description = "/批量拒绝别名 成功。占位符：Count=拒绝的别名数量；Records=被拒绝的别名及原因，每条见 alias.record.rejected。"
+description = "/拒绝别名 成功。占位符：Count=拒绝的别名数量；Records=被拒绝的别名，每条见 alias.record.review，有原因时见 alias.record.rejected。"
 other = "已拒绝 {{.Count}} 条别名：\n{{.Records}}"
 
-[alias.batch_reject.reason]
-description = "/批量拒绝别名 记录的固定拒绝原因（会保存到审核记录里）。"
-other = "批量拒绝"
+[alias.batch_reject.done]
+description = "/批量拒绝别名 成功。占位符：Count=拒绝的别名数量；Records=被拒绝的别名，每条见 alias.record.review。"
+other = "已拒绝 {{.Count}} 条别名：\n{{.Records}}"

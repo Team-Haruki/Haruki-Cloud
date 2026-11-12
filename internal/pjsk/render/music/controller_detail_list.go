@@ -468,13 +468,10 @@ func buildMusicListUserResults(primary map[int]string, fallback map[int]string) 
 }
 
 func normalizeMusicListResultFilter(value string) string {
-	switch strings.ToLower(strings.TrimSpace(value)) {
-	case "not_ap":
-		return "not_ap"
-	case "not_fc":
-		return "not_fc"
-	case "not_clear":
-		return "not_clear"
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	switch normalized {
+	case "ap", "fc", "clear", "not_ap", "not_fc", "not_clear":
+		return normalized
 	default:
 		return ""
 	}
@@ -495,6 +492,13 @@ func normalizeMusicListResultValue(value string) string {
 
 func matchesMusicListResultFilter(filter string, result string) bool {
 	switch normalizeMusicListResultFilter(filter) {
+	case "ap":
+		return normalizeMusicListResultValue(result) == "ap"
+	case "fc":
+		status := normalizeMusicListResultValue(result)
+		return status == "fc" || status == "ap"
+	case "clear":
+		return normalizeMusicListResultValue(result) != "not_clear"
 	case "not_ap":
 		return normalizeMusicListResultValue(result) != "ap"
 	case "not_fc":

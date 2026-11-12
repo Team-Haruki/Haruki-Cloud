@@ -1,11 +1,31 @@
 # Account player-frame overrides
 
+Toolbox supporters can select a frame for each verified game account. Cloud resolves
+the selection using the actual game server and UID, with this priority:
+
+1. The verified account owner's saved Toolbox supporter frame.
+2. The operator's `pjsk_render.player_frame_overrides` entry.
+3. The frame equipped in game.
+
+Toolbox accepts a paid Afdian order number, or OAuth2 when application credentials
+are configured, to associate sponsorship with a Toolbox account. The order flow
+requires a verified email and rechecks the order with the creator's OpenAPI credentials.
+Only order verification is shown while OAuth2 is unconfigured.
+Toolbox determines eligibility from historical sponsorship or an administrator's
+manual confirmation. Past sponsorship remains eligible after expiry; manual grants
+do not require an Afdian link. An administrative block overrides either proof until
+access is restored. Banned owners and unverified game accounts receive no custom
+frame. Reassigning a game account clears its selection.
+Selections are cached for 15 seconds, separately per server/UID. An unavailable
+Toolbox falls back to the operator/game frame without failing the image request.
+Returned asset paths must be clean PNG paths under `static_images/custom_frames/`.
+
 `pjsk_render.player_frame_overrides` in the Cloud YAML file lets an operator replace
 an account's equipped player frame with six local sprites. Entries match the
 resolved server (`jp`, `cn`, `tw`, `en`, `kr`) and actual game UID, not the QQ user
 or request-supplied profile UID. The override applies to live, snapshot
 profiles and profile cards.
-Every builder resolves frames through `playerframe.ResolveAccount`, so the
+Every builder resolves the same preference and fallback chain, so the
 suite-backed info panel on card, deck, education, event, inventory, MySekai and
 `/信息面板` renders shows the same frame as `/profile`. Other accounts keep their game-equipped frames.
 
@@ -39,8 +59,9 @@ For the finale horizontal format the base is 60×60, the four corner sprites are
 536×82 and the top-centre sprite is 62×36. Drawing retains its existing native
 slice/anchor layout and unreadable-asset fallback.
 
-There is no environment override, database field, API setter or bot command for
-these settings. Cloud loads the file at startup: restart Cloud after edits.
+There is no environment override, API setter or bot command for the operator
+configuration. Cloud loads that file at startup: restart Cloud after edits.
+Toolbox selections are independent and require no Cloud restart.
 Remove an entry (or use an empty list) to restore the game's equipped frame.
 This is a game-account setting and applies to every binding of the same server/UID.
 

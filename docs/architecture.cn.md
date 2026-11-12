@@ -251,6 +251,8 @@ events:                    # 实时事件角色（SSE 网关）；字段说明�
 
 sekai_api:                 # 上游 Sekai API 客户端
   base_url: ""
+  backup_base_url: ""      # 备用入口节点（HARUKI_SEKAI_API_BACKUP_BASE_URL），只在未配置 targets 时生效：目标为 base_url 加这个备用目标
+  targets: []              # name / base_url / concurrency / backup；backup: true 为备用目标，故障转移规则见下文“Sekai API 入口故障转移”
   retry: {}                # 重试策略（toolbox / tracker 同结构）：默认 max_retries 4、wait 1s、max_wait 2s、不设 budget（即 3.7.18 及之前的行为）；任何 5xx 与传输错误（含客户端超时）都会重试，调用方取消不重试；budget 为正时首个请求开始超过 budget 后不再重试；max_retries 为负关闭
 
 tracker:                   # SK Tracker 客户端
@@ -595,6 +597,8 @@ Cloud 的处理：
 - `drawing.store_ref`、`drawing.store_ref_degraded`、`drawing.store_ref_unsupported`、`image.ref_duplicate`、`image.ref_index_error` 为计数事件。
 
 **节点故障转移。** 配置了多个 `drawing_targets` 时，一次渲染请求如果在目标节点上失败，且能证明该节点没有收到完整请求，就换一个节点重发一次同样的请求（只重发一次，请求上下文已取消或到期时不重发）。这类失败包括：没有拿到连接（拨号失败、连接被拒、DNS 或 TLS 握手失败），或请求还没写完连接就断开且没有收到任何响应字节。拿到连接后的超时、请求已完整发出后的断开，以及任何 HTTP 响应（包括 5xx 和 503）都不重发，因为节点可能已经处理了请求。失败的节点在 30 秒内被后续请求跳过（全部节点都在冷却时仍照常选一个），节点一旦有响应就恢复。第一个节点没有收到请求，所以不会写入任何对象；产物 key 按内容 hash 计算，重发也不会重复发布。trace 计数事件为 `drawing.failover`，`drawing.http` 每次尝试各计一次，WARN 日志 `drawing request failed` 带 `target`、`connection_failure`、`failover` 字段。
+
+**Sekai API 入口故障转移。** `sekai_api` 有两个及以上目标时（`targets`，或 `base_url` 加 `backup_base_url`），客户端按目标名被动记录健康状态：一次调用明确无法到达该目标（拨号失败，包括 2 秒的连接超时；连接被拒；收到任何响应之前连接被重置或 EOF）时，该目标在 30 秒内被后续调用跳过，之后重新可选，一次成功的响应立即恢复。备用目标（`backup: true`）只在没有健康的非备用目标时才接流量；健康的非备用目标之间仍按最少在途、轮转、`concurrency` 分配。GET 遇到这类失败立即换下一个目标（每个目标每次调用最多试一次），还有其他目标可试时不在同一 URL 上重试这类失败，最后一个目标保留完整的 `retry` 策略；5xx 的同 URL 重试不变。连接建立之后的超时（等待响应、单次 5 秒超时、调用方期限）不标记下线、不转移，照旧在同一 URL 重试：游戏区服慢时备用入口转发主入口同样慢，多一跳没有意义。已接受的边界情况：请求写进一个已池化、但对端已静默失联的连接时只会超时，这一次不标记下线；重试会新建连接，命中连接超时后再标记下线并转移。Sekai API 客户端的连接（拨号）超时为 2 秒，其他传输参数不变。POST 不会在别的目标上重发（同一 URL 上仍按 `retry` 策略重试），但同样会标记目标下线。任何 HTTP 响应（包括 5xx 和表示游戏维护的 503）都不会标记下线或触发转移，因为备用入口在主入口存活时只是转发主入口，答复相同。全部目标都下线时仍按非备用优先的顺序尝试。调用方取消或到期不算目标故障。只有一个目标时行为与以前完全相同（不记录健康状态）。`upstream.Pool` 的其他使用者（Drawing、组卡服务）不受影响：`backup` 只对 `AcquireHealthy` 生效。trace 计数事件为 `sekai.failover`；目标下线时记一条 WARN `sekai api target marked down`，恢复时记一条 INFO `sekai api target recovered`，都只带目标名（`target`），不带 URL 或令牌。
 
 **GC。** `utils/imagecache.GC` 由应用生命周期管理，`gc_enabled` 默认关闭，`gc_dry_run` 默认开启。过期渲染索引的 DELETE 原子复核选取时的过期条件，避免删除已续期的行。物理对象回收另外受 `gc_object_delete_enabled` 控制，只有所有 Cloud 与 Drawing 写入者采用同一生命周期协议后才能开启。内容写入与回收按内容 hash 使用 PostgreSQL 事务锁；回收先提交索引退役与持久 outbox，再在新事务中复核引用并删除旧 generation 对象。删除失败的债务保存在数据库，重启后继续处理。随机 generation key 使超时后晚到的旧 DELETE 无法命中新写入的对象。上传前独立提交意图记录，上传与索引成功后消费；进程崩溃或索引失败留下的意图可在期限后回收。
 

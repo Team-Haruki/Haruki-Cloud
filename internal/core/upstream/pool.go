@@ -17,6 +17,10 @@ type TargetConfig struct {
 	Name        string `yaml:"name"`
 	BaseURL     string `yaml:"base_url"`
 	Concurrency int    `yaml:"concurrency"`
+	// Backup marks a standby target. Only AcquireHealthy honours it: a
+	// backup gets no traffic while a non-backup target is healthy. The other
+	// Acquire methods treat it like any target.
+	Backup bool `yaml:"backup"`
 }
 
 type Lease struct {
@@ -114,6 +118,7 @@ func NewPoolWithResources(targets []TargetConfig, shared *SharedResources) *Pool
 				Name:        name,
 				BaseURL:     baseURL,
 				Concurrency: concurrency,
+				Backup:      target.Backup,
 			},
 			resourceKey: resourceKey,
 			resource:    shared.resolve(resourceKey, concurrency),

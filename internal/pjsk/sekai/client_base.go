@@ -56,9 +56,13 @@ func requestContextError(service upstreamerr.Service, ctxErr error) error {
 // retry policy. Each client may further configure timeout, headers, etc. on
 // the returned instance.
 func newRestyClient(retry config.UpstreamRetryConfig) *resty.Client {
+	return newRestyClientWithTransport(retry, upstream.TunedTransportConfig{})
+}
+
+func newRestyClientWithTransport(retry config.UpstreamRetryConfig, transport upstream.TunedTransportConfig) *resty.Client {
 	retry = retry.WithDefaults()
 	client := resty.New().
-		SetTransport(upstream.NewTunedTransport(upstream.TunedTransportConfig{})).
+		SetTransport(upstream.NewTunedTransport(transport)).
 		SetLogger(restyLogger).
 		SetResponseBodyLimit(maxUpstreamResponseBytes).
 		OnAfterResponse(logRestyResponse).
@@ -114,9 +118,56 @@ func (p retryPolicy) shouldRetry(r *resty.Response, err error) bool {
 		}
 	}
 	if err != nil {
+		if skip, _ := r.Request.Context().Value(skipTransportRetryKey{}).(bool); skip && isNoRouteFailure(r, err) {
+			return false
+		}
 		return isRetryableTransportError(err)
 	}
 	return r.StatusCode() >= http.StatusInternalServerError
+}
+
+// skipTransportRetryKey marks a request whose no-route failures are not
+// retried on the same URL because the caller moves on to another target.
+// Timeouts after a connection was made keep the same-URL retries.
+type skipTransportRetryKey struct{}
+
+// isNoRouteFailure reports that an attempt clearly could not reach its
+// target: no HTTP response arrived and the error is a dial failure (connect
+// timeout, refused connection, unknown host) or a connection that was reset
+// or closed before any response. A timeout after the connection was made
+// (waiting for the response, the per-attempt timeout, the caller's
+// deadline) is not one: a slow game region must not mark a healthy entry
+// down, and the standby, which forwards to it, would be just as slow.
+//
+// Accepted edge: a request written to an already pooled connection of a host
+// that died silently only times out, so that attempt does not mark the host
+// down; the retry dials a new connection, hits the connect timeout and is
+// then classified as no-route.
+func isNoRouteFailure(resp *resty.Response, err error) bool {
+	if err == nil || (resp != nil && resp.RawResponse != nil) {
+		return false
+	}
+	if opErr, ok := errors.AsType[*net.OpError](err); ok && opErr.Op == "dial" {
+		return true
+	}
+	if errors.Is(err, syscall.ECONNREFUSED) {
+		return true
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	if netErr, ok := errors.AsType[net.Error](err); ok && netErr.Timeout() {
+		return false
+	}
+	if errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) || errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		return true
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "connection refused") ||
+		strings.Contains(msg, "connection reset") ||
+		strings.Contains(msg, "broken pipe") ||
+		strings.Contains(msg, "no such host") ||
+		strings.HasSuffix(msg, "EOF")
 }
 
 func logRestyRetry(resp *resty.Response, err error) {

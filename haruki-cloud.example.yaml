@@ -275,7 +275,8 @@ sekai_api:
   # attempt timeout) never marks a target down or fails over; it keeps the retries below. Backup
   # targets get no traffic while a non-backup target is healthy. A GET that fails that way moves
   # at once to the next target (each target at most once per call; the last one keeps the full
-  # retry policy below); a POST is never replayed elsewhere. Any HTTP answer, 5xx and 503
+  # retry policy below); a POST is never replayed on another target
+  # (the same-URL retry policy still applies to it). Any HTTP answer, 5xx and 503
   # (maintenance) included, never fails over or marks a target down. When every target is down
   # they are still tried, non-backup first. A single target behaves exactly as before.
   token: "your-haruki-sekai-api-token"

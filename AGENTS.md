@@ -184,7 +184,8 @@ Redis client, and runtime config.
   Sekai API client fails over only when a target cannot be reached (dial
   error incl. its 2 s connect timeout, refused/reset, EOF before a response;
   `isNoRouteFailure`): passive 30 s down window, GETs move to the next
-  target, POSTs are never replayed. Response timeouts and any HTTP status
+  target, POSTs are never replayed on another target (the same-URL retry
+  policy still applies to them). Response timeouts and any HTTP status
   (503 maintenance included) never mark down or fail over. See
   "Sekai API 入口故障转移" in `docs/architecture.cn.md`. `backup` is honoured
   only by `upstream.Pool.AcquireHealthy`; other pool users are unaffected.

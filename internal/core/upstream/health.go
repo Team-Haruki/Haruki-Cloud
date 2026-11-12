@@ -83,6 +83,11 @@ func (h *Health) MarkUp(name string) {
 // round-robins among the healthy non-backup targets only. A down target is
 // still used when nothing better is left, so down state alone never fails a
 // call. It returns ErrNoAvailableTargets once every target is excluded.
+//
+// A caller may wait for a slot of a concurrency-limited target. If that
+// target went down meanwhile and a healthy target that is not excluded
+// exists, the lease is released and that target is leased instead. This
+// reselection happens at most once per call, before anything is sent.
 func (p *Pool) AcquireHealthy(ctx context.Context, health *Health, exclude []string) (*Lease, error) {
 	if p == nil || len(p.targets) == 0 {
 		return nil, ErrNoTargetsConfigured
@@ -94,7 +99,16 @@ func (p *Pool) AcquireHealthy(ctx context.Context, health *Health, exclude []str
 	if slot == nil {
 		return nil, ErrNoAvailableTargets
 	}
-	return slot.acquire(ctx, false)
+	lease, err := slot.acquire(ctx, false)
+	if err != nil || health.Healthy(slot.target.Name) {
+		return lease, err
+	}
+	alternative := p.pickHealthySlot(health, append(slices.Clip(exclude), slot.target.Name))
+	if alternative == nil || !health.Healthy(alternative.target.Name) {
+		return lease, nil
+	}
+	lease.Release()
+	return alternative.acquire(ctx, false)
 }
 
 func (p *Pool) pickHealthySlot(health *Health, exclude []string) *targetSlot {

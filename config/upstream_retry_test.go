@@ -88,6 +88,34 @@ func TestSekaiAPIBackupTargetWiring(t *testing.T) {
 			},
 		},
 		{name: "nothing configured", cfg: SekaiAPIConfig{}, want: nil},
+		{
+			name: "duplicate names are made unique",
+			cfg: SekaiAPIConfig{Targets: []upstream.TargetConfig{
+				{Name: "entry", BaseURL: "https://p.example.com"},
+				{Name: "entry", BaseURL: "https://s.example.com", Backup: true},
+			}},
+			want: []upstream.TargetConfig{
+				{Name: "entry", BaseURL: "https://p.example.com"},
+				{Name: "entry#2", BaseURL: "https://s.example.com", Backup: true},
+			},
+		},
+		{
+			name: "renaming skips names in use",
+			cfg: SekaiAPIConfig{Targets: []upstream.TargetConfig{
+				{Name: "a", BaseURL: "https://1.example.com"},
+				{Name: "a", BaseURL: "https://2.example.com"},
+				{Name: "a#2", BaseURL: "https://3.example.com"},
+				{BaseURL: "https://4.example.com"},
+				{Name: "sekai-api-4", BaseURL: "https://5.example.com"},
+			}},
+			want: []upstream.TargetConfig{
+				{Name: "a", BaseURL: "https://1.example.com"},
+				{Name: "a#3", BaseURL: "https://2.example.com"},
+				{Name: "a#2", BaseURL: "https://3.example.com"},
+				{Name: "sekai-api-4", BaseURL: "https://4.example.com"},
+				{Name: "sekai-api-4#2", BaseURL: "https://5.example.com"},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

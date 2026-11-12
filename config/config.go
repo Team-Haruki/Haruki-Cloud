@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -1279,17 +1280,53 @@ type SekaiAPIConfig struct {
 	Retry         UpstreamRetryConfig     `yaml:"retry"`
 }
 
+// uniqueTargetNames renames every repeat of a target name to "<name>#<n>"
+// (n = 2, 3, ... in config order, skipping names already in use) and logs one
+// warning per repeated name. The first occurrence keeps its name.
+func uniqueTargetNames(targets []upstream.TargetConfig, section string) []upstream.TargetConfig {
+	used := make(map[string]bool, len(targets))
+	for _, target := range targets {
+		used[target.Name] = true
+	}
+	seen := make(map[string]int, len(targets))
+	var warned []string
+	for i := range targets {
+		name := targets[i].Name
+		seen[name]++
+		if seen[name] == 1 {
+			continue
+		}
+		if !slices.Contains(warned, name) {
+			warned = append(warned, name)
+			logger.NewLoggerFromGlobal("Config").Warn("duplicate upstream target name renamed",
+				"section", section,
+				"target", name,
+			)
+		}
+		n := seen[name]
+		renamed := name + "#" + strconv.Itoa(n)
+		for used[renamed] {
+			n++
+			renamed = name + "#" + strconv.Itoa(n)
+		}
+		used[renamed] = true
+		targets[i].Name = renamed
+	}
+	return targets
+}
+
 // SekaiAPIBackupTargetName names the backup target built from
 // backup_base_url.
 const SekaiAPIBackupTargetName = "sekai-api-backup"
 
 // EffectiveTargets resolves the Sekai API targets: targets when any has a
 // base_url, else base_url, plus backup_base_url as a backup target in that
-// case.
+// case. Target names key failover health, so a repeated name is made unique
+// (see uniqueTargetNames).
 func (c SekaiAPIConfig) EffectiveTargets() []upstream.TargetConfig {
 	const prefix = "sekai-api"
 	if explicit := upstream.ResolveTargets("", c.Targets, prefix); len(explicit) > 0 {
-		return explicit
+		return uniqueTargetNames(explicit, "sekai_api.targets")
 	}
 	if strings.TrimSpace(c.BackupBaseURL) == "" {
 		return upstream.ResolveTargets(c.BaseURL, nil, prefix)

@@ -149,3 +149,50 @@ func TestBackupFlagIsNeutralForOtherAcquires(t *testing.T) {
 	}
 	testutil.Require(t, seen["a"] && seen["standby"], "Acquire keeps plain rotation over every target, saw %v", seen)
 }
+
+func TestAcquireHealthyReselectsWhenQueuedTargetWentDown(t *testing.T) {
+	cases := []struct {
+		name        string
+		standbyDown bool
+		want        string
+	}{
+		{name: "healthy alternative", want: "standby"},
+		{name: "no healthy alternative keeps the lease", standbyDown: true, want: "primary"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			pool := NewPool([]TargetConfig{
+				{Name: "primary", BaseURL: "https://p.example.com", Concurrency: 1},
+				{Name: "standby", BaseURL: "https://s.example.com", Backup: true},
+			})
+			health := NewHealth(time.Minute, nil, nil)
+			if tc.standbyDown {
+				health.MarkDown("standby")
+			}
+			first, err := pool.AcquireHealthy(context.Background(), health, nil)
+			testutil.Require(t, err == nil && first.Target.Name == "primary", "first lease = %+v, %v", first, err)
+
+			got := make(chan *Lease, 1)
+			go func() {
+				lease, err := pool.AcquireHealthy(context.Background(), health, nil)
+				if err != nil {
+					t.Errorf("queued AcquireHealthy: %v", err)
+				}
+				got <- lease
+			}()
+			deadline := time.Now().Add(5 * time.Second)
+			for pool.targets[0].resource.pending.Load() < 2 {
+				testutil.Require(t, time.Now().Before(deadline), "second caller never queued on the primary")
+				time.Sleep(time.Millisecond)
+			}
+			health.MarkDown("primary")
+			first.Release()
+
+			lease := <-got
+			testutil.Require(t, lease != nil, "queued caller got no lease")
+			testutil.Check(t, lease.Target.Name == tc.want, "queued caller leased %q, want %q", lease.Target.Name, tc.want)
+			lease.Release()
+			testutil.Check(t, pool.targets[0].resource.pending.Load() == 0 && pool.targets[1].resource.pending.Load() == 0, "every slot must be released")
+		})
+	}
+}

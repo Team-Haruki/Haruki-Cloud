@@ -356,7 +356,8 @@ func (c *HarukiSekaiAPIClient) get(path string) ([]byte, error) {
 	return c.send(resty.MethodGet, path, nil)
 }
 
-// post executes a POST request. It is never replayed on another target.
+// post executes a POST request. It is never replayed on another target;
+// the same-URL retry policy still applies.
 func (c *HarukiSekaiAPIClient) post(path string, body any) ([]byte, error) {
 	return c.send(resty.MethodPost, path, body)
 }

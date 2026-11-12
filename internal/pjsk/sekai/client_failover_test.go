@@ -403,3 +403,61 @@ func TestIsNoRouteFailure(t *testing.T) {
 		})
 	}
 }
+
+func TestSekaiAPIQueuedRequestSkipsPrimaryMarkedDownWhileWaiting(t *testing.T) {
+	inFlight := make(chan struct{})
+	fail := make(chan struct{})
+	var once sync.Once
+	primary := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		once.Do(func() { close(inFlight) })
+		<-fail
+		if conn, _, err := w.(http.Hijacker).Hijack(); err == nil {
+			_ = conn.Close()
+		}
+	}))
+	t.Cleanup(primary.Close)
+	standby := newSekaiNode(t, false)
+	client := NewSekaiAPIClient(&config.SekaiAPIConfig{Targets: []upstream.TargetConfig{
+		{Name: "primary", BaseURL: primary.URL, Concurrency: 1},
+		{Name: "standby", BaseURL: standby.URL(), Backup: true},
+	}})
+	attempts := countAttempts(client)
+
+	firstErr := make(chan error, 1)
+	go func() { _, err := client.GetSystem("jp"); firstErr <- err }()
+	<-inFlight
+
+	type result struct {
+		body []byte
+		err  error
+	}
+	second := make(chan result, 1)
+	go func() {
+		body, err := client.EnterMySekaiHousingCompetitionEntry("jp", 1, 2, 3, false)
+		second <- result{body, err}
+	}()
+	// Give the POST time to queue behind the primary's only slot. If it is
+	// slower than this it sees the primary down at pick time, which must end
+	// the same way.
+	time.Sleep(50 * time.Millisecond)
+	close(fail)
+
+	testutil.Require(t, <-firstErr == nil, "first GET must fail over to the backup")
+	got := <-second
+	testutil.Require(t, got.err == nil, "queued POST must go to the backup, got %v", got.err)
+	testutil.Check(t, attempts.of(primary.URL) == 1, "the queued request must not dial the down primary, primary attempts = %d", attempts.of(primary.URL))
+	testutil.Check(t, attempts.of(standby.URL()) == 2, "backup must serve the failed-over GET and the queued POST, got %d", attempts.of(standby.URL()))
+}
+
+func TestSekaiAPIDuplicateTargetNamesStillFailOver(t *testing.T) {
+	primary := newSekaiNode(t, true)
+	standby := newSekaiNode(t, false)
+	client := NewSekaiAPIClient(&config.SekaiAPIConfig{Targets: []upstream.TargetConfig{
+		{Name: "entry", BaseURL: primary.URL()},
+		{Name: "entry", BaseURL: standby.URL(), Backup: true},
+	}})
+
+	_, err := client.GetSystem("jp")
+	testutil.Require(t, err == nil, "GET must fail over to the same-named backup, got %v", err)
+	testutil.Check(t, !client.health.Healthy("entry") && client.health.Healthy("entry#2"), "health must be tracked per renamed target")
+}

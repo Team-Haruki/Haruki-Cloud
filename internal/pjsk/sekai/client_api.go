@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/internal/core/upstreamerr"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -19,12 +20,19 @@ import (
 const (
 	apiTimeout  = 5 * time.Second
 	tokenHeader = "X-Haruki-Sekai-Token"
+	// sekaiTargetDownWindow is how long a target that could not be reached
+	// (isNoRouteFailure) is skipped by later calls.
+	sekaiTargetDownWindow = 30 * time.Second
+	// sekaiDialTimeout bounds connecting to a Sekai API entry, so a dark
+	// host is detected on a new connection well inside apiTimeout.
+	sekaiDialTimeout = 2 * time.Second
 )
 
 type HarukiSekaiAPIClient struct {
 	http       *resty.Client
 	config     *config.SekaiAPIConfig
 	pool       *upstream.Pool
+	health     *upstream.Health // nil unless the pool has two or more targets
 	requestCtx context.Context
 }
 
@@ -34,13 +42,38 @@ type HarukiSekaiAPIClient struct {
 func NewSekaiAPIClient(cfg *config.SekaiAPIConfig) *HarukiSekaiAPIClient {
 	var resolvedTargets []upstream.TargetConfig
 	if cfg != nil {
-		resolvedTargets = upstream.ResolveTargets(cfg.BaseURL, cfg.Targets, "sekai-api")
+		resolvedTargets = cfg.EffectiveTargets()
+	}
+	pool := upstream.NewPool(resolvedTargets)
+	var health *upstream.Health
+	if pool.Size() > 1 {
+		health = upstream.NewHealth(sekaiTargetDownWindow, nil, logSekaiTargetHealth)
 	}
 	return &HarukiSekaiAPIClient{
-		http:   newRestyClient(retryConfig(cfg)).SetTimeout(apiTimeout),
+		http:   newRestyClientWithTransport(retryConfig(cfg), upstream.TunedTransportConfig{DialTimeout: sekaiDialTimeout}).SetTimeout(apiTimeout),
 		config: cfg,
-		pool:   upstream.NewPool(resolvedTargets),
+		pool:   pool,
+		health: health,
 	}
+}
+
+var sekaiAPILogger = logger.NewLoggerFromGlobal("SekaiAPI")
+
+// logSekaiTargetHealth logs a target going down or coming back. The target
+// name is logged, never its URL.
+func logSekaiTargetHealth(name string, down bool) {
+	if down {
+		sekaiAPILogger.Warn("sekai api target marked down",
+			"upstream", "sekai_api",
+			"target", name,
+			"down_window_ms", sekaiTargetDownWindow.Milliseconds(),
+		)
+		return
+	}
+	sekaiAPILogger.Info("sekai api target recovered",
+		"upstream", "sekai_api",
+		"target", name,
+	)
 }
 
 func (c *HarukiSekaiAPIClient) WithContext(ctx context.Context) *HarukiSekaiAPIClient {
@@ -317,52 +350,62 @@ func (c *HarukiSekaiAPIClient) GetCustomMusicScore(server, scorePath string) ([]
 	return c.get(url)
 }
 
-// get executes a GET request with auth and maps HTTP status codes to typed errors.
+// get executes a GET request with auth and maps HTTP status codes to typed
+// errors. A transport failure moves the request to the next target.
 func (c *HarukiSekaiAPIClient) get(path string) ([]byte, error) {
-	baseURL, lease, err := c.acquireTarget()
-	if err != nil {
-		return nil, err
-	}
-	if lease != nil {
-		defer lease.Release()
-	}
-
-	finishHTTP := commandtrace.MeasureOperation(c.requestContext(), "sekai.http")
-	resp, err := c.authReq().Get(baseURL + path)
-	finishHTTP()
-	if err != nil {
-		if ctxErr := c.requestContext().Err(); ctxErr != nil {
-			return nil, requestContextError(upstreamerr.ServiceGameData, ctxErr)
-		}
-		return nil, sanitizeNetworkError(upstreamerr.ServiceGameData, "sekai api: request failed after retries", err)
-	}
-
-	return handleSekaiAPIResponse(resp)
+	return c.send(resty.MethodGet, path, nil)
 }
 
+// post executes a POST request. It is never replayed on another target.
 func (c *HarukiSekaiAPIClient) post(path string, body any) ([]byte, error) {
-	baseURL, lease, err := c.acquireTarget()
-	if err != nil {
-		return nil, err
-	}
-	if lease != nil {
-		defer lease.Release()
-	}
+	return c.send(resty.MethodPost, path, body)
+}
 
-	request := c.authReq()
-	if body != nil {
-		request.SetBody(body)
-	}
-	finishHTTP := commandtrace.MeasureOperation(c.requestContext(), "sekai.http")
-	resp, err := request.Post(baseURL + path)
-	finishHTTP()
-	if err != nil {
+// send runs one call. With several targets, a no-route failure
+// (isNoRouteFailure: the target could not be reached at all) marks the
+// target down for sekaiTargetDownWindow; a GET then moves at once to the
+// next target, each target tried at most once, while a POST returns the
+// error. Any HTTP response, 5xx and 503 included, and any timeout after the
+// connection was made keep the target up and end the call (after the usual
+// same-URL retries). While another target is left to try, the attempt skips
+// resty's same-URL retries of no-route failures only; the last target keeps
+// the full retry policy, so a single-target client behaves as before.
+func (c *HarukiSekaiAPIClient) send(method, path string, body any) ([]byte, error) {
+	failover := method == resty.MethodGet
+	var tried []string
+	for {
+		target, lease, err := c.acquireTarget(tried)
+		if err != nil {
+			return nil, err
+		}
+		request := c.authReq()
+		if failover && c.health != nil && len(tried)+1 < c.pool.Size() {
+			request.SetContext(context.WithValue(request.Context(), skipTransportRetryKey{}, true))
+		}
+		if body != nil {
+			request.SetBody(body)
+		}
+		finishHTTP := commandtrace.MeasureOperation(c.requestContext(), "sekai.http")
+		resp, err := request.Execute(method, target.BaseURL+path)
+		finishHTTP()
+		lease.Release()
+		if err == nil {
+			c.health.MarkUp(target.Name)
+			return handleSekaiAPIResponse(resp)
+		}
 		if ctxErr := c.requestContext().Err(); ctxErr != nil {
 			return nil, requestContextError(upstreamerr.ServiceGameData, ctxErr)
 		}
+		if c.health != nil && isNoRouteFailure(resp, err) {
+			c.health.MarkDown(target.Name)
+			tried = append(tried, target.Name)
+			if failover && len(tried) < c.pool.Size() {
+				commandtrace.RecordOperation(c.requestContext(), "sekai.failover", 0)
+				continue
+			}
+		}
 		return nil, sanitizeNetworkError(upstreamerr.ServiceGameData, "sekai api: request failed after retries", err)
 	}
-	return handleSekaiAPIResponse(resp)
 }
 
 func handleSekaiAPIResponse(resp *resty.Response) ([]byte, error) {
@@ -379,25 +422,34 @@ func handleSekaiAPIResponse(resp *resty.Response) ([]byte, error) {
 	}
 }
 
-func (c *HarukiSekaiAPIClient) acquireTarget() (string, *upstream.Lease, error) {
+// acquireTarget leases a target not in tried. Without health tracking
+// (fewer than two targets) it is the plain pool pick, or the legacy
+// base_url when no pool is configured.
+func (c *HarukiSekaiAPIClient) acquireTarget(tried []string) (upstream.TargetConfig, *upstream.Lease, error) {
 	if c == nil {
-		return "", nil, ErrClientNotConfigured
+		return upstream.TargetConfig{}, nil, ErrClientNotConfigured
 	}
 	if c.pool != nil && c.pool.Enabled() {
 		finishQueue := commandtrace.MeasureOperation(c.requestContext(), "sekai.queue")
-		lease, err := c.pool.Acquire(c.requestContext())
+		var lease *upstream.Lease
+		var err error
+		if c.health != nil {
+			lease, err = c.pool.AcquireHealthy(c.requestContext(), c.health, tried)
+		} else {
+			lease, err = c.pool.Acquire(c.requestContext())
+		}
 		finishQueue()
 		if err != nil {
-			return "", nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindUnavailable, "", fmt.Errorf("sekai api: upstream unavailable: %w", err))
+			return upstream.TargetConfig{}, nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindUnavailable, "", fmt.Errorf("sekai api: upstream unavailable: %w", err))
 		}
-		return lease.Target.BaseURL, lease, nil
+		return lease.Target, lease, nil
 	}
 	if c.config == nil {
-		return "", nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindNotConfigured, "sekai api: base_url is empty", nil)
+		return upstream.TargetConfig{}, nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindNotConfigured, "sekai api: base_url is empty", nil)
 	}
 	baseURL := strings.TrimRight(strings.TrimSpace(c.config.BaseURL), "/")
 	if baseURL == "" {
-		return "", nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindNotConfigured, "sekai api: base_url is empty", nil)
+		return upstream.TargetConfig{}, nil, upstreamerr.Tag(upstreamerr.ServiceGameData, upstreamerr.KindNotConfigured, "sekai api: base_url is empty", nil)
 	}
-	return baseURL, nil, nil
+	return upstream.TargetConfig{BaseURL: baseURL}, nil, nil
 }

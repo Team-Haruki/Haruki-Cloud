@@ -179,6 +179,15 @@ Redis client, and runtime config.
     - `sekaiapi.NewSekaiAPIClient(*config.SekaiAPIConfig)`
     - `sekaiapi.NewToolboxClient(*config.ToolboxConfig)`
     - `sekaiapi.NewTrackerClient(*config.TrackerConfig)`
+- With two or more `sekai_api` targets (`targets[]`, optionally `backup: true`,
+  or `base_url` + `backup_base_url` / `HARUKI_SEKAI_API_BACKUP_BASE_URL`), the
+  Sekai API client fails over only when a target cannot be reached (dial
+  error incl. its 2 s connect timeout, refused/reset, EOF before a response;
+  `isNoRouteFailure`): passive 30 s down window, GETs move to the next
+  target, POSTs are never replayed. Response timeouts and any HTTP status
+  (503 maintenance included) never mark down or fail over. See
+  "Sekai API 入口故障转移" in `docs/architecture.cn.md`. `backup` is honoured
+  only by `upstream.Pool.AcquireHealthy`; other pool users are unaffected.
 - All methods are **nil-receiver safe**; nil clients return
   `ErrClientNotConfigured` (defined in `internal/pjsk/sekai/errors.go`).
 - When writing tests that exercise a real Sekai HTTP server

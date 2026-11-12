@@ -256,6 +256,9 @@ moderation:
 
 sekai_api:
   base_url: "https://api.sekai.haruki.example.com"
+  # Standby entry node, used only when `targets` is not set: the targets are then base_url plus
+  # this URL as a backup target (named "sekai-api-backup"). Env: HARUKI_SEKAI_API_BACKUP_BASE_URL.
+  # backup_base_url: "https://api-standby.sekai.haruki.example.com"
   # targets:
   #   - name: "sekai-a"
   #     base_url: "https://api-a.sekai.haruki.example.com"
@@ -263,6 +266,18 @@ sekai_api:
   #   - name: "sekai-b"
   #     base_url: "https://api-b.sekai.haruki.example.com"
   #     concurrency: 8
+  #   - name: "sekai-standby"
+  #     base_url: "https://api-standby.sekai.haruki.example.com"
+  #     backup: true
+  # Failover (two or more targets): a target that cannot be reached (dial error incl. the 2 s
+  # connect timeout, refused or reset connection, EOF before any response) is skipped for 30 s; a
+  # success brings it back at once. A timeout after the connection was made (slow region, the 5 s
+  # attempt timeout) never marks a target down or fails over; it keeps the retries below. Backup
+  # targets get no traffic while a non-backup target is healthy. A GET that fails that way moves
+  # at once to the next target (each target at most once per call; the last one keeps the full
+  # retry policy below); a POST is never replayed elsewhere. Any HTTP answer, 5xx and 503
+  # (maintenance) included, never fails over or marks a target down. When every target is down
+  # they are still tried, non-backup first. A single target behaves exactly as before.
   token: "your-haruki-sekai-api-token"
   # Retries (same block and defaults for toolbox and tracker): any 5xx answer or transport
   # failure, client timeouts included, is retried up to max_retries times with a backoff from

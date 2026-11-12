@@ -85,7 +85,7 @@ func TestSekaiAPINilReceiverScoreMethods(t *testing.T) {
 	if client.WithContext(context.Background()) != nil {
 		t.Fatal("nil client context clone must stay nil")
 	}
-	if _, _, err := client.acquireTarget(); !errors.Is(err, ErrClientNotConfigured) {
+	if _, _, err := client.acquireTarget(nil); !errors.Is(err, ErrClientNotConfigured) {
 		t.Fatalf("target error = %v", err)
 	}
 	if client.authReq() == nil {

@@ -492,6 +492,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 
 	// Sekai API
 	envStr("HARUKI_SEKAI_API_BASE_URL", &cfg.SekaiAPI.BaseURL)
+	envStr("HARUKI_SEKAI_API_BACKUP_BASE_URL", &cfg.SekaiAPI.BackupBaseURL)
 	envStr("HARUKI_SEKAI_API_TOKEN", &cfg.SekaiAPI.Token)
 	envRetry("HARUKI_SEKAI_API", &cfg.SekaiAPI.Retry)
 
@@ -1269,10 +1270,34 @@ type RedisConfig struct {
 }
 
 type SekaiAPIConfig struct {
-	BaseURL string                  `yaml:"base_url"`
-	Token   string                  `yaml:"token"`
-	Targets []upstream.TargetConfig `yaml:"targets"`
-	Retry   UpstreamRetryConfig     `yaml:"retry"`
+	BaseURL string `yaml:"base_url"`
+	// BackupBaseURL is a standby entry used only when targets is not set:
+	// the effective targets are then base_url plus this URL as a backup.
+	BackupBaseURL string                  `yaml:"backup_base_url"`
+	Token         string                  `yaml:"token"`
+	Targets       []upstream.TargetConfig `yaml:"targets"`
+	Retry         UpstreamRetryConfig     `yaml:"retry"`
+}
+
+// SekaiAPIBackupTargetName names the backup target built from
+// backup_base_url.
+const SekaiAPIBackupTargetName = "sekai-api-backup"
+
+// EffectiveTargets resolves the Sekai API targets: targets when any has a
+// base_url, else base_url, plus backup_base_url as a backup target in that
+// case.
+func (c SekaiAPIConfig) EffectiveTargets() []upstream.TargetConfig {
+	const prefix = "sekai-api"
+	if explicit := upstream.ResolveTargets("", c.Targets, prefix); len(explicit) > 0 {
+		return explicit
+	}
+	if strings.TrimSpace(c.BackupBaseURL) == "" {
+		return upstream.ResolveTargets(c.BaseURL, nil, prefix)
+	}
+	return upstream.ResolveTargets("", []upstream.TargetConfig{
+		{BaseURL: c.BaseURL},
+		{Name: SekaiAPIBackupTargetName, BaseURL: c.BackupBaseURL, Backup: true},
+	}, prefix)
 }
 
 type TrackerConfig struct {

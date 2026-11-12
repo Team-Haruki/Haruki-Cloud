@@ -2,6 +2,8 @@ module haruki-cloud
 
 go 1.27.0
 
+toolchain go1.27.3
+
 require (
 	entgo.io/ent v0.14.6
 	github.com/BurntSushi/toml v1.6.0

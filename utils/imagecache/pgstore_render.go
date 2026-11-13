@@ -14,10 +14,23 @@ import (
 // into an error.
 var ErrIndexMiss = errors.New("imagecache: render index miss")
 
-// Render index queries (section 5.4). Cloud never INSERTs into
-// render_cache_index: Drawing owns the writes. Cloud only touches rows on a
-// hit and deletes them during GC.
+// Render index queries (section 5.4). Drawing writes render_cache_index rows
+// in artifact mode; in cache-ref mode Cloud writes them through AdoptRender.
+// Cloud also touches rows on a hit and deletes them during GC.
 const (
+	// upsertRenderSQL is Drawing's request-row upsert: a re-render of the key
+	// replaces the row and restarts its lifetime.
+	upsertRenderSQL = `INSERT INTO render_cache_index
+       (request_key, content_hash, api_path, user_id, group_name, key_version, ttl_seconds, expires_at,
+        created_at, last_used_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7::bigint,
+        CASE WHEN $7::bigint > 0 THEN now() + ($7::bigint || ' seconds')::interval ELSE NULL END,
+        now(), now())
+ON CONFLICT (request_key) DO UPDATE
+   SET content_hash = EXCLUDED.content_hash, api_path = EXCLUDED.api_path, user_id = EXCLUDED.user_id,
+       group_name = EXCLUDED.group_name, key_version = EXCLUDED.key_version,
+       ttl_seconds = EXCLUDED.ttl_seconds, expires_at = EXCLUDED.expires_at, last_used_at = now()`
+
 	lookupRenderSQL = `SELECT r.content_hash, r.api_path, r.user_id, r.group_name, r.key_version, r.ttl_seconds,
        r.expires_at, r.last_used_at,
        e.group_name, e.cdn_path, e.storage_backend, e.media_type, e.size_bytes, COALESCE(e.file_path, ''),
@@ -132,6 +145,17 @@ func (s *PGStore) LookupRender(ctx context.Context, requestKey string) (RenderIn
 	out.Entry.WrittenAt = nullTime(writtenAt)
 	out.Entry.ExpiresAt = nullTime(entryExpiresAt)
 	return out, true, nil
+}
+
+// upsertRender writes the render_cache_index row for hash. Callers hold the
+// hash's content lock (AdoptRender).
+func (s *PGStore) upsertRender(ctx context.Context, hash string, render AdoptedRender) error {
+	_, err := s.executor().ExecContext(ctx, upsertRenderSQL, render.RequestKey, hash, render.APIPath, render.UserID,
+		render.GroupName, render.KeyVersion, max(render.TTLSeconds, 0))
+	if err != nil {
+		return fmt.Errorf("imagecache pgstore: upsert render: %w", err)
+	}
+	return nil
 }
 
 // TouchRender slides the TTL of the given request keys and returns the number

@@ -31,7 +31,8 @@ const (
 )
 
 // RenderIndex is the consumer-side view of the PostgreSQL render index
-// (*imagecache.PGStore implements it). Cloud never inserts rows: Drawing does.
+// (*imagecache.PGStore implements it). Rows are inserted by Drawing, or by
+// Cloud's CacheRefIndexer for a cache-ref; never through this interface.
 type RenderIndex interface {
 	LookupRender(ctx context.Context, requestKey string) (imagecache.RenderIndexEntry, bool, error)
 	TouchRender(ctx context.Context, keys []string) (int64, error)

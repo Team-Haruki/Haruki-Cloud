@@ -295,13 +295,27 @@ func (c *HarukiDrawingClient) StoreRefRejectedCount() int64 {
 // bytes, so the render is requested once more without the store-ref mode and
 // its bytes take the ordinary image cache PUT. Re-rendering costs a render,
 // but the image is still delivered; failing the image instead would turn a
-// Drawing misconfiguration into user-visible errors.
+// Drawing misconfiguration into user-visible errors. An unusable cache-ref is
+// requested again the same way, and Drawing then writes the index itself.
 func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]byte, error) {
 	data, err := c.postPreparedOnce(endpoint, requestBody)
 	if !errors.Is(err, errStoreRefUnusable) {
 		return data, err
 	}
 	directive := c.activeDirective()
+	if directive != nil && directive.CacheRef {
+		commandtrace.RecordOperation(c.requestCtx, "drawing.cache_ref_rejected", 0)
+		c.logger.WarnContext(c.requestCtx, "drawing cache-ref rejected; rendering again without cache-ref",
+			"upstream", "drawing",
+			"upstream_path", endpoint,
+			"api_path", directive.APIPath,
+			"error", err,
+			"metric", "drawing_cache_ref_rejected",
+		)
+		directive.CacheRef = false
+		*directive.outcome = renderOutcome{}
+		return c.postPreparedOnce(endpoint, requestBody)
+	}
 	if directive == nil || !directive.StoreRef {
 		return data, err
 	}
@@ -455,9 +469,14 @@ func (c *HarukiDrawingClient) successBody(endpoint string, d *renderDirective, r
 		if d.StoreRef {
 			commandtrace.RecordOperation(c.requestCtx, "drawing.store_ref_degraded", 0)
 		}
+		if d.CacheRef {
+			commandtrace.RecordOperation(c.requestCtx, "drawing.cache_ref_degraded", 0)
+		}
 		return resp.Body(), nil
 	case d != nil && d.StoreRef && strings.EqualFold(strings.TrimSpace(resp.Header().Get(headerArtifactMode)), artifactModeStoreRef):
 		return nil, c.acceptStoreRef(endpoint, d, resp, node, contentType, missingAssets)
+	case d != nil && d.CacheRef && strings.EqualFold(strings.TrimSpace(resp.Header().Get(headerArtifactMode)), artifactModeCacheRef):
+		return nil, c.acceptCacheRef(endpoint, d, resp, node, contentType, noStore || missingAssets > 0)
 	case d != nil && d.Artifact && strings.HasPrefix(strings.ToLower(strings.TrimSpace(contentType)), "application/json"):
 		finishDecode := commandtrace.MeasureOperation(c.requestCtx, "drawing.decode")
 		ref, err := parseArtifactRef(resp.Body())
@@ -467,6 +486,10 @@ func (c *HarukiDrawingClient) successBody(endpoint string, d *renderDirective, r
 		}
 		if ref.NodeName == "" {
 			ref.NodeName = node
+		}
+		if d.CacheRef {
+			// A Drawing that predates cache-ref wrote both index rows itself.
+			commandtrace.RecordOperation(c.requestCtx, "drawing.cache_ref_unsupported", 0)
 		}
 		d.outcome.Ref = ref
 		d.outcome.Node = ref.NodeName
@@ -543,8 +566,69 @@ func (c *HarukiDrawingClient) acceptStoreRef(endpoint string, d *renderDirective
 	return nil
 }
 
+// acceptCacheRef validates a cache-ref, records its image_cache_entries and
+// render_cache_index rows in one content-locked transaction (the write Drawing
+// makes in artifact mode) and lands the served location on the outcome. The
+// row carries Cloud's own directive values, never the ref's. As for a
+// store-ref, a failed write is logged and the ref is still used: the image is
+// delivered, only the cache entry is missing and GC loses sight of the object.
+func (c *HarukiDrawingClient) acceptCacheRef(endpoint string, d *renderDirective, resp *resty.Response, node, contentType string, uncacheable bool) error {
+	finishDecode := commandtrace.MeasureOperation(c.requestCtx, "drawing.decode")
+	ref, err := parseArtifactRef(resp.Body())
+	finishDecode()
+	if err != nil {
+		return errDrawingBadArtifact(err)
+	}
+	if ref.NodeName == "" {
+		ref.NodeName = node
+	}
+	object := imagecache.AdoptedObject{
+		Hash: ref.Hash, Group: directiveCacheGroup, CDNPath: ref.CDNPath,
+		MediaType: ref.MediaType, SizeBytes: ref.SizeBytes, WriterNode: ref.NodeName,
+	}
+	if err := validateStoreRef(ref, object, c.artifact.storeRefBucket); err != nil {
+		return fmt.Errorf("%w: %w", errStoreRefUnusable, err)
+	}
+	// A placeholder render must never be keyed under the request. Drawing
+	// answers those store0, so a cache-ref that is not cacheable, or names
+	// another key, breaks the contract: render again without the mode.
+	if uncacheable || ref.MissingAssets != 0 || !strings.EqualFold(ref.CacheKey, d.Key) {
+		return fmt.Errorf("%w: cache-ref is not cacheable under this request key", errStoreRefUnusable)
+	}
+	commandtrace.RecordOperation(c.requestCtx, "drawing.cache_ref", 0)
+	render := imagecache.AdoptedRender{
+		RequestKey: d.Key, APIPath: d.APIPath, UserID: d.UserID, GroupName: d.Group,
+		KeyVersion: d.KeyVersion, TTLSeconds: d.wireTTLSeconds(),
+	}
+	// Same detached budget as a store-ref row: the object exists either way.
+	indexCtx, cancel := context.WithTimeout(context.WithoutCancel(c.requestCtx), storeRefIndexTimeout)
+	location, err := c.artifact.cacheRefIndexer.AdoptRender(indexCtx, object, render, time.Now())
+	cancel()
+	if err != nil {
+		commandtrace.RecordOperation(c.requestCtx, "image.render_index_error", 0)
+		c.logger.ErrorContext(c.requestCtx, "cache-ref index rows not written; render not cached and object invisible to GC",
+			"upstream", "drawing",
+			"upstream_path", endpoint,
+			"api_path", d.APIPath,
+			"hash", ref.Hash,
+			"cdn_path", ref.CDNPath,
+			"writer_node", ref.NodeName,
+			"error", err,
+			"metric", "drawing_cache_ref_unindexed",
+		)
+	} else {
+		ref.CDNPath, ref.ObjectKey, ref.NodeName = location.CDNPath, location.CDNPath, location.WriterNode
+		ref.IndexWritten = true
+	}
+	d.outcome.Ref = ref
+	d.outcome.CacheRef = true
+	d.outcome.Node = node
+	d.outcome.ContentType = contentType
+	return nil
+}
+
 // errStoreRefUnusable marks a well-formed ref that Cloud cannot adopt. The
-// render is requested again without the store-ref mode.
+// render is requested again without the store-ref (or cache-ref) mode.
 var errStoreRefUnusable = errors.New("drawing store-ref is unusable")
 
 // validateStoreRef rejects a store-ref Cloud could not have written itself:

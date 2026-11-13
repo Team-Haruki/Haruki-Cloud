@@ -63,6 +63,32 @@ func ValidateAdoptedObject(obj AdoptedObject) error {
 	return nil
 }
 
+// AdoptedRender is the render_cache_index row recorded together with an
+// adopted object (Drawing's cache-ref mode): the caller's own directive for
+// the render the object answers.
+type AdoptedRender struct {
+	RequestKey string
+	APIPath    string
+	UserID     string
+	GroupName  string
+	KeyVersion int
+	// TTLSeconds <= 0 is infinite; otherwise expires_at = now() + TTL.
+	TTLSeconds int64
+}
+
+// ValidateAdoptedRender checks the fields render_cache_index requires.
+func ValidateAdoptedRender(render AdoptedRender) error {
+	switch {
+	case strings.TrimSpace(render.RequestKey) == "":
+		return fmt.Errorf("imagecache: adopted render has no request key")
+	case strings.TrimSpace(render.APIPath) == "":
+		return fmt.Errorf("imagecache: adopted render has no api path")
+	case strings.TrimSpace(render.UserID) == "" || strings.TrimSpace(render.GroupName) == "":
+		return fmt.Errorf("imagecache: adopted render has no user or group")
+	}
+	return nil
+}
+
 // AdoptObject records the image_cache_entries row for an object another
 // writer uploaded. It writes the same row as storeHashed, under the same
 // content lock, so retention and GC treat the object like Cloud's own
@@ -75,6 +101,26 @@ func ValidateAdoptedObject(obj AdoptedObject) error {
 func (s *PGStore) AdoptObject(ctx context.Context, obj AdoptedObject, now time.Time) (AdoptedLocation, error) {
 	finish := commandtrace.MeasureOperation(ctx, "image.ref_index")
 	defer finish()
+	return s.adopt(ctx, obj, nil, now)
+}
+
+// AdoptRender is AdoptObject plus the render_cache_index row for render, in
+// the same content-lock transaction: GC (which retires only rows no render
+// index row references, under the same lock) never sees the content row
+// without its reference. It is the write Drawing's artifact mode makes, done
+// by the caller instead (cache-ref). A legacy_disk row for the hash is
+// upgraded to the adopted object, as Drawing's own write does; a garage row
+// keeps its path and the render row points at it.
+func (s *PGStore) AdoptRender(ctx context.Context, obj AdoptedObject, render AdoptedRender, now time.Time) (AdoptedLocation, error) {
+	finish := commandtrace.MeasureOperation(ctx, "image.render_index")
+	defer finish()
+	if err := ValidateAdoptedRender(render); err != nil {
+		return AdoptedLocation{CDNPath: obj.CDNPath, WriterNode: obj.WriterNode}, err
+	}
+	return s.adopt(ctx, obj, &render, now)
+}
+
+func (s *PGStore) adopt(ctx context.Context, obj AdoptedObject, render *AdoptedRender, now time.Time) (AdoptedLocation, error) {
 	if err := ValidateAdoptedObject(obj); err != nil {
 		return AdoptedLocation{}, err
 	}
@@ -96,7 +142,7 @@ func (s *PGStore) AdoptObject(ctx context.Context, obj AdoptedObject, now time.T
 		if err != nil {
 			return err
 		}
-		if found && existing.CDNPath != obj.CDNPath {
+		if found && existing.CDNPath != obj.CDNPath && (render == nil || existing.StorageBackend == BackendGarage) {
 			location = AdoptedLocation{CDNPath: existing.CDNPath, WriterNode: existing.FreshWriterNode(now), Duplicate: true}
 			commandtrace.RecordOperation(ctx, "image.ref_duplicate", 0)
 			if existing.StorageBackend == BackendGarage {
@@ -106,14 +152,22 @@ func (s *PGStore) AdoptObject(ctx context.Context, obj AdoptedObject, now time.T
 			}
 			if index.tx != nil {
 				// Not a recorded path: GC deletes it once the intent is due.
-				return index.registerUpload(ctx, obj.Hash, obj.CDNPath)
+				if err := index.registerUpload(ctx, obj.Hash, obj.CDNPath); err != nil {
+					return err
+				}
 			}
+		} else {
+			finishIndex := commandtrace.MeasureOperation(ctx, "image.index")
+			err = index.InsertEntry(ctx, entry)
+			finishIndex()
+			if err != nil {
+				return err
+			}
+		}
+		if render == nil {
 			return nil
 		}
-		finishIndex := commandtrace.MeasureOperation(ctx, "image.index")
-		err = index.InsertEntry(ctx, entry)
-		finishIndex()
-		return err
+		return index.upsertRender(ctx, obj.Hash, *render)
 	})
 	if err != nil {
 		return own, err

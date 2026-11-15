@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"haruki-cloud/internal/i18n"
+	"reflect"
 	"testing"
 
 	"haruki-cloud/internal/core/upstreamerr"
@@ -130,5 +132,18 @@ func TestExecuteDeckReturnsStandardSuiteReplayError(t *testing.T) {
 		Visibility: accountdata.UniformVisibility(false),
 	}).String() {
 		t.Fatalf("unexpected suite reply: %s", typed.Message)
+	}
+}
+
+func TestNormalizeDeckUserFacingErrorPreservesCardConflictDetails(t *testing.T) {
+	conflicts := []i18n.Message{
+		i18n.M("deck.fixed.character_conflict", i18n.Data{"Name": "Character A", "CardIDs": "1001, 1003, 1005"}),
+		i18n.M("deck.fixed.character_conflict", i18n.Data{"Name": "Character B", "CardIDs": "1002, 1004"}),
+	}
+	original := usererror.Invalid(i18n.M("deck.fixed.character_conflicts", i18n.Data{"Conflicts": conflicts}))
+	err := normalizeDeckUserFacingError(fmt.Errorf("prepare deck: %w", original))
+	typed := testutil.RequireUserError(t, err, usererror.CodeInput, "deck.fixed.character_conflicts")
+	if !reflect.DeepEqual(typed.Message.Data["Conflicts"], conflicts) {
+		t.Fatalf("conflict details lost: %#v", typed.Message.Data)
 	}
 }

@@ -84,6 +84,9 @@ func (c *Controller) prepareAutoRecommendExecution(ctx context.Context, query Au
 	if err != nil {
 		return autoRecommendExecution{}, err
 	}
+	if err := c.validateFixedCardCharacters(resources.region, resources.recType, option); err != nil {
+		return autoRecommendExecution{}, err
+	}
 	if err := ctx.Err(); err != nil {
 		return autoRecommendExecution{}, err
 	}

@@ -451,3 +451,15 @@ other = "烤森 WL{{.Turn}} 活动模拟{{.Noun}}"
 [deck.image.title.mysekai_wl_finale]
 description = "图片：烤森 WL 终章模拟标题。占位符：Turn=轮次；Noun=功能名。"
 other = "烤森 WL{{.Turn}} 终章活动模拟{{.Noun}}"
+
+[deck.fixed.character_conflicts]
+description = "普通组卡固定了同一角色的多张卡牌，列出全部冲突分组。占位符：Conflicts=按角色分组的冲突卡牌列表。"
+other = "固定卡牌中包含同一角色的多张卡牌：\n{{.Conflicts}}\n请为每个角色只保留一张卡牌后重试"
+
+[deck.fixed.character_conflict]
+description = "固定卡牌冲突列表中的一行。应用户要求，始终列出主数据确认的卡牌 ID，方便逐张移除冲突卡牌。占位符：Name=主数据中的角色名或角色 ID 标签；CardIDs=属于该角色的冲突卡牌 ID 列表。"
+other = "{{.Name}}：卡牌 ID {{.CardIDs}}"
+
+[deck.fixed.character_label]
+description = "冲突卡牌的角色名称不可用时显示角色 ID。占位符：ID=卡牌主数据中的角色 ID。"
+other = "角色 ID {{.ID}}"

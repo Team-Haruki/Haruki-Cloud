@@ -29,6 +29,20 @@ func TestCommandErrorTextShowsTypedReplies(t *testing.T) {
 	}
 }
 
+func TestCommandErrorTextPreservesFixedCardConflictGroups(t *testing.T) {
+	message := i18n.M("deck.fixed.character_conflicts", i18n.Data{"Conflicts": []i18n.Message{
+		i18n.M("deck.fixed.character_conflict", i18n.Data{"Name": "Character A", "CardIDs": "1001, 1003, 1005"}),
+		i18n.M("deck.fixed.character_conflict", i18n.Data{"Name": "Character B", "CardIDs": "1002, 1004"}),
+	}})
+	for _, echo := range []bool{false, true} {
+		ctx := i18n.WithParamEcho(context.Background(), echo)
+		got := commandErrorText(ctx, usererror.Invalid(message), "deck/event", "/组卡 #1001 1002 1003 1004 1005")
+		if got != message.String() {
+			t.Fatalf("echo=%v: conflict groups changed in reply: %q", echo, got)
+		}
+	}
+}
+
 func TestCommandErrorTextReplacesUnrecognizedWithRouteGuidance(t *testing.T) {
 	commandhandler.EnsureCommandHandlersRegistered()
 	ctx := context.Background()

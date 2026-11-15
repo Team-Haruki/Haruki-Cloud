@@ -22,23 +22,7 @@ func (c *Controller) validateFixedCardCharacters(region renderregion.Value, recT
 	if err != nil {
 		return err
 	}
-	var characterIDs []int
-	byCharacter := make(map[int][]int)
-	seen := make(map[int]bool)
-	for _, id := range cardIDs {
-		if seen[id] {
-			continue
-		}
-		seen[id] = true
-		card, err := c.cardByIDWithFallback(source, region, id)
-		if err != nil || card == nil || card.CharacterID <= 0 {
-			continue
-		}
-		if len(byCharacter[card.CharacterID]) == 0 {
-			characterIDs = append(characterIDs, card.CharacterID)
-		}
-		byCharacter[card.CharacterID] = append(byCharacter[card.CharacterID], id)
-	}
+	characterIDs, byCharacter := c.groupFixedCardsByCharacter(source, region, cardIDs)
 	var conflicts []i18n.Message
 	for _, id := range characterIDs {
 		if len(byCharacter[id]) > 1 {
@@ -59,4 +43,25 @@ func (c *Controller) validateFixedCardCharacters(region renderregion.Value, recT
 		return usererror.Invalid(i18n.M("deck.fixed.character_conflicts", i18n.Data{"Conflicts": conflicts}))
 	}
 	return nil
+}
+
+func (c *Controller) groupFixedCardsByCharacter(source CardSource, region renderregion.Value, cardIDs []int) ([]int, map[int][]int) {
+	var characterIDs []int
+	byCharacter := make(map[int][]int)
+	seen := make(map[int]bool)
+	for _, id := range cardIDs {
+		if seen[id] {
+			continue
+		}
+		seen[id] = true
+		card, err := c.cardByIDWithFallback(source, region, id)
+		if err != nil || card == nil || card.CharacterID <= 0 {
+			continue
+		}
+		if len(byCharacter[card.CharacterID]) == 0 {
+			characterIDs = append(characterIDs, card.CharacterID)
+		}
+		byCharacter[card.CharacterID] = append(byCharacter[card.CharacterID], id)
+	}
+	return characterIDs, byCharacter
 }
